@@ -1,8 +1,8 @@
 # test_log.md — Append-only verification record
 
-## Current status — 2026-10-17 (takes precedence over historical entries)
+## Current status — B04, 2026-10-17 (takes precedence over history)
 
-B03-R acceptance:135 PASS /0 FAIL /0 SKIP (77 unit/58 real integration including actual restart/recreation), all prior89 tests unchanged. Strengthened template run22 PASS; both SPEC validators PASS. Exact commands/results in TEST-20261017-B03R-*;55 legacy defects remain OPEN. Historical results below retained.
+Final B04 acceptance run258 PASS /0 FAIL /0 SKIP in151.63s (189 unit/69 real integration, including actual restart/recreation). Both SPEC validators PASS. Three full benchmark trials and6 no-op repeats PASS; exact timings/limitations and intermediate failed attempts retained below. All prior135 tests preserved.
 
 ---
 
@@ -355,3 +355,79 @@ PY
   all87 entries match the original ZIP. Preserved this separate extracted review
   copy and explicitly excluded it from the corrective source diff; no application
   change or test failure resulted. Final source/secret/protected-file audit passed.
+
+### TEST-20261017-B04-01 — Accepted baseline / source protection
+- `backend/.venv/bin/python -m pytest backend/tests -v -s --run-persistence`:
+ 135 PASS/0 FAIL/0 SKIP in131.08s before B04; real restart/recreation included.
+- `backend/.venv/bin/civicly schema-status`:0001 READY;91 index groups/182
+  OPERATIONAL constraints;0 canonical domain nodes. Baseline hashes and test output
+  in docs/evidence/B04-baseline-*. Local baseline commit09482e2 created after exclusion/
+  secret scan; no push. Frozen registry/migration/access policy/benchmark plan and
+  original v1/v2 fixtures rehashed unchanged at end. Review ZIP/extracted copy ignored
+  and preserved; no database volume contents included.
+
+### TEST-20261017-B04-02 — Audit, conversion and interim failures
+- Exact preparation commands: docs/evidence/B04-COMMANDS.md. Original v1 conversion
+ 42nodes/51edges,0 quarantine. Expanded original:731nodes/1013edges,342 quarantines
+  (109 pickup nodes,218 dependent links,15 REPORTS chronology errors). New generator
+  revision:858nodes/1246edges including2 receipt/source nodes +18 real Document refs,
+ 0 quarantines. All55 original numeric measurements/units/observed dates preserved.
+- Two intermediate unit test-fixture failures corrected: missing pickup membership
+  in synthetic example; tamper test changed an undeclared property instead of a
+  declared field. No passing prior tests removed. Final targeted units supersede them.
+- First real importer run:1 FAIL in2.10s (B04-import-first-failure.txt), manifest edge
+  digest omitted outer public id. Corrected to exact EdgeRecord serialization;
+  rerun8 real tests PASS in21.09s (B04-import-tests.txt).
+- First benchmark attempt FAIL at LOC-004:82.96839999999999 returns82.9684. Stopped
+  on exact content conflict, retained graph407a845eafb843b7955dcc4bd00335e0. DEC-016
+  records parameterized RO probes and explicit coordinate precision normalization;
+  measurements never rounded. Progress preserved in B04-benchmark-first-failure.txt.
+
+### TEST-20261017-B04-03 — Real full-dataset benchmarks
+- Command: `PYTHONPATH=backend backend/.venv/bin/python -m app.ingestion.benchmark --retain-last`
+  (pipefail/tee progress wrapper in B04-COMMANDS.md). Real FalkorDB6.0.2/module60002,
+  Redis8.10.2, official Python client1.8.0, redis8.1.0, Pydantic2.14.1, Python3.12.1.
+  macOS26.5 arm64,8CPU/8GiB, existing pinned image/volumes, AOF/fsync always.
+- Pilot106nodes/100edges:4.809s. Three fresh full imports:172.941/171.731/172.195s;
+  median172.195s. Full repeats:12.092/12.063;11.864/11.590;11.848/11.929s.
+  Every full create2104; every repeat create0/match2104. Revision2104/audit2104 and
+  content hashes unchanged. Final audit560586bytes; peak Python~4.33MiB, max same-kind
+  scan259. Proposed initial/repeat/memory targets met, not a production scale claim.
+- Raw JSON/progress/AOF rewrite logs and B04-PERFORMANCE.md record latency quantiles,
+  memory/AOF net snapshots, query/byte totals and limitations. Query counters include
+  repeats; wall/latency/peak/storage are initial-only. Automatic rewrites explain
+  negative net AOF deltas; cumulative disk I/O is not measured. Lock-wait and cycle/
+  schedule comparison counters remain explicitly unverified.
+- Later final hardening adds malformed-root/envelope rejection and verification-read
+  failure classification; unchanged successful domain-write path. Final regression
+  exercises those guards; quoted timing trials precede that report/input hardening.
+
+### TEST-20261017-B04-04 — Regression and specification gates
+- Interim complete run before last seven envelope-unit cases:251 PASS/0 FAIL/0 SKIP
+  in152.14s (B04-regression-before-envelope-tests.txt), including all42/47 types through
+  real importer, concurrent equal writers, interrupted prefix, lost reply before/
+  after actual commit, final verification read failure/retry, real path preservation,
+  invalid temporal source, coordinate hash roundtrip and actual restart/recreation.
+- Final expanded complete command: `backend/.venv/bin/python -m pytest backend/tests -v -s --run-persistence`.
+  258 PASS/0 FAIL/0 SKIP in151.63s;189 unit/69 real integration. B04 adds112 unit/11 real integration cases. All prior135 tests retained.
+- `make test-spec`: both SPEC validators PASS, including offline strict v3 bundle/hash
+  and55 lossless values checks. SPEC is not MCP/agent/frontend proof. Exact output in
+  B04-spec-validation.txt. `compileall` and `git diff --check` PASS.
+- Secret scan: candidate source/tracked+untracked files exclude.env, virtual env/cache,
+  Git internals/review distributions; no actual local-secret/private-key matches.
+  B04-security-audit.json records counts, no secret values. Runtime MCP/live LLM/
+  GraphRAG/API/frontend tests NOT IMPLEMENTED/NOT RUN; no mocked success substituted.
+
+### TEST-20261017-B04-05 — Final review truth
+- Final source suite:258 PASS/0 FAIL/0 SKIP in151.63s.189 unit/69 real integration;
+  B04 adds112 unit +11 DB cases. Both SPEC validators PASS. No old passing tests removed.
+- All six engineering tracking files updated; B04 exact file inventory/Git diff and
+  source-security/protection audit provided under docs/evidence. No remote push.
+- Human acceptance is pending. B05 remains TODO; no algorithms/counterfactual feature,
+  MCP, agents, GraphRAG, operations, API or frontend implemented during B04.
+- Post-recreation real CLI command:
+  `PYTHONPATH=backend backend/.venv/bin/python -m app.ingestion import --graph civicly_b04_test_a84beda80da64aacbc367a9399e07a97 --bundle data/ingestion/city-v3.json --report docs/evidence/B04-retained-post-recreation.json`
+  PASS:0 created/2104 matched,858nodes/1246edges, revision/audit2104 and exact manifest
+  content hash preserved. `civicly health`/`schema-status` PASS; fresh canonical count0
+  and original B01-PERSISTENCE/SYNTHETIC/B01 row intact. Browser HTTP200/volume PASS in
+  lifecycle tests. No preexisting graph/volume removed; final isolated city remains.

@@ -250,3 +250,96 @@ Decisions are recorded chronologically. Codex must append an entry whenever a si
 - Original B03 review ZIP/evidence remains unchanged. Corrective diff is against the
   pre-B03-R source snapshot, not a claim of a new Git commit. No push. R01–R18 remain
   mandatory; no product capability is declared complete by these corrections.
+
+### DEC-014 — B04 authorization and conversion plan before ingestion | 2026-10-17
+- B03-R accepted. Baseline135 tests PASS in131.08s including real lifecycle; catalog
+  0001 READY. Secret scan152 files PASS; external review distributions/caches/env
+  excluded. Local accepted baseline09482e2, no push. Source/registry/plan/fixture
+  hashes recorded in B04-baseline-hashes.json. All18 requirements remain mandatory.
+- B04 only: exhaustive offline audit, explicit legacy conversion, repository importer,
+  dataset/scenario manifests, unit/real integration, pilot/full/repeat benchmarks.
+  No B05 algorithms, MCP/agents/GraphRAG, operational workflows, API or frontend.
+- Original seed_graph/expanded fixtures remain frozen evidence. Generator will emit
+  a distinct corrected synthetic source revision to data/generated, never overwrite
+  originals. It fixes value_number->value, missing version-aware required checks,
+  MISSED timestamps and internally inconsistent pickup route construction. The old
+  55-defect regression remains valid against the original fixture, not canonical data.
+- Conversion maps all55 numeric values losslessly, preserves units and source JSON
+  pointers/hashes, adds fixed scope/v3/stable hashed edge IDs. Canonical created/
+  updated times describe materialization at explicit conversion_at; historical event/
+  observation/recorded dates remain original. Actual DB import times/audit are separate.
+- Legacy verified inventory evidence lacks observed_at; never synthesize a measurement
+  date. Unsupported verification claims are explicitly downgraded to UNVERIFIED
+  evidence/CANDIDATE edges, with original values retained in field reports. No hidden
+  truth informs conversion. Missing dates/topology/history are gaps, not fabricated.
+- Original pickup route disagreements and MISSED-with-actual_at are quarantined,
+  not repaired by guessing actual execution. Corrected generator data is a new
+  synthetic revision (declared differences), not a claim of recovered historical fact.
+- Runtime bundle includes only canonical validated records and non-answer provenance;
+  it never embeds catalog expected actions, hidden truth, delayed reveal text or
+  scenario titles that reveal causes. Offline audit/readiness sees these files only
+  to report availability/opaque hashes and counts; staged release manifest carries
+  deterministic references, not payload text. Full runtime mount isolation remains B19.
+- No invented physical connections: original SERVES is insufficient for S07's full
+  waste/drain/road path. Preserve topology and report the gap for B19; use explicit
+  purpose-built network fixtures to verify importer path preservation/disconnection.
+- Importer targets only new B04 disposable names. All writes go through unchanged
+  fence/intent/audit/policies; equal records no-op, changed records conflict explicitly,
+  partial prefixes resume by stable IDs/hashes, uncertain outcomes stop for recovery.
+  Native inline enum validation in schema adapter must also be enforced (no registry
+  or migration change). No raw bulk shortcut or policy/audit-cap relaxation.
+
+### DEC-015 — B04 additional preflight temporal findings | 2026-10-17
+- REPORTS links whose report precedes the linked incident start are inconsistent and
+  quarantined on legacy conversion. Corrected generator revision2.1 constructs new
+  synthetic report times from their explicitly linked event start plus a declared
+  offset, rather than cycling unrelated dates. This is new synthetic source authoring,
+  not recovered historical fact; original dates stay frozen and revision deltas are
+  reported. Observation/measurement dates and values are not changed.
+- Converter preserves exact per-service names (WASTE_PICKUP/WASTE_COLLECTION); aliases
+  are a reported nomenclature gap, not silently normalized. Schedule recurrence text
+  is opaque; pickup time/schedule discrepancies are audit warnings, not invented
+  execution corrections. Missing observation-to-asset links and scenario binding
+  mismatches are explicitly reported for B08/B19.
+- Materialization_at defaults to actual UTC at preparation. An early draft used a
+  supplied demonstration timestamp; discarded before any DB import and rebuilt with
+  the actual captured timestamp. Import repeats reuse that immutable bundle. File
+  byte hashes and canonical-JSON source hashes are distinguished in input manifest.
+
+### DEC-016 — B04 verified numeric wire precision | 2026-10-17
+- First real pilot retained graph civicly_b04_test_407a845eafb843b7955dcc4bd00335e0
+  stopped at LOC-004: source longitude82.96839999999999 returns82.9684. Real
+  parameterized RO probes also return1.23456789012346 for1.2345678901234567.
+  FalkorDB6.0.2 numeric responses expose15 significant decimal digits here.
+- Converter explicitly normalizes only latitude/longitude to that verified decimal
+  representation; every changed coordinate is recorded with its original value.
+  This removes binary generator arithmetic residue, never supplies missing geography.
+  Other non-roundtrippable floats are quarantined as unsupported precision, rather
+  than rounding measurements or relaxing exact content-hash verification. All55
+  original Observation measurements remain exactly unchanged. Registry/migration and
+  accepted repository digest semantics stay unchanged. The failed pilot is retained.
+
+### DEC-017 — B04 remaining source ambiguity and benchmark interpretation | 2026-10-17
+- Preserve110 pickup scheduled timestamps even though local clocks differ from their
+  linked schedule text. These are explicit warnings; recurrence expression/window
+  interpretation is deferred to B08/B19, not silently guessed in conversion.
+- Source has5 synthetic operators versus older4-operator prose; retain source IDs
+  and report discrepancy for B13/B19. No authentication product capability claimed.
+- Full import targets only isolated B04 graphs. Canonical promotion remains a future
+  explicit review decision; retained final graph permits review without overwrites.
+- Benchmark measures actual largest same-kind scans and query/parameter totals,
+  not uninstrumented cycle comparison counts or lock-wait distribution. AOF snapshots
+  are net server file size, not bytes written; actual rewrite logs retained. No claim
+  that negative net AOF delta means negative I/O. The O(N²) audit rewrite remains a
+  known scale limitation despite satisfying provisional small-demo timing targets.
+
+### DEC-018 — B04 final input/report boundary checks | 2026-10-17
+- Compiled bundles require exact node/relationship envelope keys as well as strict
+  property validation. Unknown envelope metadata cannot hide behind a valid property
+  hash. Malformed roots/record arrays fail explicitly before database mutations;
+  source/bundle record counts remain bounded at5,000. No coercion/drop behavior.
+- A final-verification connection loss is DATABASE_UNAVAILABLE with phase recorded,
+  distinct from uncertain mutation replies. All confirmed writes remain intact;
+  proof-driven unchanged rerun matches them without new domain mutations. Added real
+  failure-after-writes test and malformed/unknown-envelope unit cases. No accepted
+  repository, migration, query or graph-access-policy contract weakened.

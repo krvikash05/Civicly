@@ -1,0 +1,58 @@
+{
+  "version": 1,
+  "registry_version": 3,
+  "migration": "0001",
+  "source_profile": "Civicly synthetic JSON v1/v2; supplied v3 records strictly validated",
+  "original_sources": [
+    "contracts/seed_graph.json",
+    "contracts/seed_graph_expanded.json"
+  ],
+  "corrected_generator_output": "data/generated/source_city_v2.json",
+  "converter_version": "1.0",
+  "source_hash": "SHA256 of sorted compact canonical JSON; raw file SHA256 recorded separately",
+  "materialization": "created_at/updated_at are explicit conversion time, never manufactured historical event dates; actual persistence times are repository audit/import report timestamps",
+  "numeric_mapping": {
+    "Observation.value_number": "Observation.value"
+  },
+  "verification": "Preserve genuinely dated/attributed proof; downgrade incomplete VERIFIED claims explicitly, never derive evidence from evaluation truth",
+  "identity": "REL- plus 40 SHA256 hex characters over type/source/target/source validity bounds; metadata changes do not alter identity",
+  "source_change_policy": "equal persisted content is a no-op; any changed content conflicts and requires explicit review, no automatic update",
+  "quarantine": [
+    "unknown properties",
+    "missing mandatory values",
+    "invalid types/enums/dates",
+    "invalid source scope",
+    "missing endpoints/provenance",
+    "ambiguous numeric fields",
+    "duplicate identities",
+    "source policy conflicts",
+    "MISSED with actual completion",
+    "pickup route disagreement",
+    "report preceding incident",
+    "noninitial stage",
+    "undeclared inspection stage",
+    "unsupported non-coordinate numeric wire precision"
+  ],
+  "initial_stages": [
+    "BASELINE_VISIBLE",
+    "HISTORICAL"
+  ],
+  "excluded_inputs": [
+    "contracts/demo_scenarios.json",
+    "contracts/scenarios/catalog.json",
+    "data/scenarios/hidden_truth.json",
+    "data/scenarios/event_reveals.json"
+  ],
+  "release_manifest": "opaque stage/hash/reference only; payload release and runtime file isolation remain B19",
+  "targets": "only validated civicly_b04_test_<UUIDv4> graphs during B04",
+  "write_boundary": "accepted GraphRepository only, no raw bulk writes; preserve fence, CAS, policies, intent, audit and revision",
+  "limits": {
+    "bundle_records": 5000,
+    "repository_limits": "unchanged graph_access.json"
+  },
+  "numeric_wire_precision": {
+    "coordinate_only": "latitude/longitude explicitly normalized to15 significant digits; all deltas retained",
+    "other_floats": "non-roundtrippable precision rejected, measurements never rounded",
+    "runtime_evidence": "DEC-016 real parameterized FalkorDB6.0.2 RO probes"
+  }
+}

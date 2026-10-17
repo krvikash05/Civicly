@@ -1,8 +1,8 @@
 # implementation_status.md — Current implementation truth
 
-## Current status — 2026-10-17 (takes precedence over historical entries)
+## Current status — B04, 2026-10-17 (takes precedence over history)
 
-B03-R implemented and tested; human review pending. Cardinality, total-path budgets/default6, search metadata and shared milestone02–25 UUIDv4 target guard corrected.135 tests PASS (77 unit/58 real integration); canonical0001 READY,91 index groups/182 constraints OPERATIONAL,0 domain nodes. B04 is only a documented benchmark plan, not started.
+B04 implemented and tested:strict conversion/provenance, repository-only resumable import, isolated full-city858nodes/1246edges;258 PASS (189 unit/69 real integration),0 FAIL/0 SKIP; both SPEC validators PASS. Canonical0001 and original B01 evidence preserved. No MCP/agent/GraphRAG/operations/API/frontend capability claimed complete. STOP for human B04 review.
 
 ---
 
@@ -96,3 +96,29 @@ Per task, update: implemented paths, exact tests, pass/fail/skip, screenshots/lo
  unverified. Original55 defects and remaining DEC-004 findings remain OPEN.
 - B03-R complete for human review, not human-accepted. B04 remains TODO and blocked
  on explicit continuation. Source changes remain local/uncommitted; no push.
+
+## B04 implementation delivered for review | 2026-10-17
+- Implemented only dataset audit/versioned conversion, corrected independent synthetic
+  generator revision, strict manifests, staged/evaluator exclusion, validated
+  dependency-ordered repository import, deterministic identities, exact no-op/conflict
+  behavior, resumable prefix/failure reports and real performance runner. Current
+  source and originals are distinguishable and hash-attributed; no registry or0001 edit.
+- 858node/1246edge reviewed runtime bundle; actual three full imports verified every
+  hash/count, repeated twice without domain/revision/audit changes. Final isolated
+  graph civicly_b04_test_a84beda80da64aacbc367a9399e07a97 retained for human review.
+  Canonical promotion not performed. Both original B01 evidence and retained volumes
+  remain intact, with lifecycle regressions exercised. See evidence for final checks.
+- All42node/47edge types exercised by unit and real importer tests; all55 original
+  measurements preserved. Inline enum validation now enforces existing registry enum
+  declarations; no public entity, enum, relationship or migration changed.
+- Runtime source has24node/23edge types; absence of other domain types is reported,
+  not seeded with invented history.18 actual MD source references, no fake PDFs.
+  Physical topology is unchanged and unsupported verification is explicitly qualified.
+- R01–R18 remain mandatory. This phase supplies graph data support, not completed
+  complaint/recurrence/agent/scenario behavior. B05 algorithms, MCP, agents/memory,
+  GraphRAG, approval/operations/events/API/frontend remain unimplemented later gates.
+- Final post-recreation CLI rerun matched2104/created0, exact full content hash and
+  node858/edge1246 counts retained; revision/audit2104 unchanged. Fresh original
+  B01-PERSISTENCE row preserved. Canonical0001 READY,91 index groups/182 constraints,
+ 0 domain nodes; Browser lifecycle HTTP200/storage checks PASS. Runtime evidence
+  in B04-retained-post-recreation.json, B04-runtime.json and B04-canonical-status.json.

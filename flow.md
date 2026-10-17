@@ -163,3 +163,44 @@ connection.connect(Settings) -> official FalkorDB client
 - backend/B04_BENCHMARK_PLAN.md documents the future pilot/full/repeat benchmark,
   O(E_k²) repeated scans and O(N²) audit serialization costs. It performs no import
   and supplies no bulk path; current writer fence/intent/audit/strict policy remains.
+
+## B04 implemented conversion/import flow | 2026-10-17
+
+- `scripts/generate_demo_seed.py` -> distinct `data/generated/source_city_v2.json`
+  (revision2.1); originals under contracts are immutable. It imports the registry for
+  required legacy shape, does not connect to DB or read evaluator truth.
+- `backend/app/ingestion/__main__.py` imports conversion, audit, settings, connection,
+  MigrationRunner and GraphRepository. `audit.py` is offline-only and reads source/
+  manifest/scenario inventory; `conversion.py` imports Registry, digest and temporal
+  interval helpers. No scenario oracle is imported by converter or importer.
+- prepare: allowlisted source envelope -> explicit field rules/quarantine -> node
+  reference order -> relationship/temporal/cardinality/DAG preflight -> final strict
+  Registry validation -> deterministic NodeRecord/EdgeRecord manifest. Actual source
+  pointers/hashes and field deltas remain outside runtime graph in conversion reports.
+ 18 hash-verified Markdown references become Document nodes; no PDF/measurement added.
+- `importer.py` imports validated bundle, repository errors and graph target guard.
+  B04-only UUID target -> operational0001 -> explicit pending-intent reconciliation ->
+  dependency-ordered create/get nodes -> create/get relationships -> equality/hash
+  no-op or explicit changed-source conflict -> complete count/hash/revision audit.
+  All mutations pass existing lock/fence/intent/atomic commit and policy validation.
+  Whole-file import is not atomic: completed prefixes persist and resume safely.
+- `benchmark.py` invokes the same importer/repository on one pilot and three fresh
+  full targets, twice repeats each unchanged source, records wall/latencies/scans/
+  parameter bytes/audit/AOF/memory. Instrumentation adds overhead; no bulk path exists.
+  Only its successful scratch graphs are deleted; final and failed graphs retained.
+- `tests/ingestion_examples.py` supplies synthetic test shapes. Unit conversion tests
+  exercise all42/47 types and original55 numbers; real integration tests cover every
+  type, interruption, uncertain replies, concurrent imports, exact hashes and paths.
+  Both SPEC scripts invoke `scripts/validate_dataset.py` in addition to frozen-source
+  structure checks. Their outputs remain distinct from live DB proof.
+- `data/ingestion/`: runtime city-v3 bundle; external input/conversion/generator delta
+  manifests; offline source audit, scenario-readiness and release references;
+  legacy-conversion/legacy-v1 preserve rejected originals. Reports must not be mounted
+  as agent inputs. `contracts/dataset_ingestion.json` fixes this boundary.
+- Persistence: existing Compose named volumes unchanged. B01 probe and canonical
+  knowledge graph preserved; B04 city is retained in its isolated graph, not promoted
+  to canonical. Restart/recreation regression rechecks volume retention. Actual graph
+  names/counts/hashes are recorded in evidence, not assumed from source counts.
+- Current product reach: data support for R01–R05/R09/R14/R15; no end-to-end requirement
+  is completed by ingestion. MCP, agents, GraphRAG, operations, API and frontend remain
+  later tasks. B05 is proposed only after human B04 review.

@@ -1,8 +1,8 @@
 # task_board.md — Human-reviewed task queue
 
-## Current status — 2026-10-17 (takes precedence over historical entries)
+## Current status — B04, 2026-10-17 (takes precedence over history)
 
-B03 provisionally accepted. B03-R PASS — human review pending:135 tests PASS (77 unit/58 real integration), strengthened templates22 PASS, both SPEC validators PASS. Exact next task B04 TODO; STOP until human review. No B04 import/fixture correction started.
+B03-R accepted. B04 PASS — human review pending.258 tests PASS (189 unit/69 real integration), both SPEC validators PASS;3 full imports/6 no-op repeats verified. Exact next task B05 TODO, only after explicit human review. No B05 work started.
 
 ---
 
@@ -74,3 +74,14 @@ started. No completion of a product capability is inferred from graph access tes
 
 STOP here. A test graph named for milestone04/25 verifies namespace authorization;
 it does not implement that milestone. No city graph ingestion or B04 repair started.
+
+## B04 review ledger | 2026-10-17
+| Task | State | Human accepted? | Evidence / boundary |
+|---|---|---|---|
+| B03-R | PASS | Yes | Accepted in B04 authorization |
+| B04 | PASS — review pending | No | Explicit conversion/import;3 real full trials +6 no-op repeats; source-quality gaps retained |
+| B05 | TODO | No | Algorithms/case retrieval and isolated counterfactual clone only after human authorization |
+
+Review source audit, field deltas/quarantines, scenario-readiness matrix, retained
+isolated graph and real test/benchmark output. Do not interpret data ingestion as
+working scenario, agent, MCP or operations capability. STOP for human B04 review.

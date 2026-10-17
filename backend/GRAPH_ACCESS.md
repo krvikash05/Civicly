@@ -228,3 +228,12 @@ O(N²) cumulative serialization/transport. Schedule grouping adds bounded compar
 and target-read costs. No performance claim, full-data import, bulk writer, policy
 bypass or audit truncation was implemented during B03-R. Later optimization needs
 separate measured justification and the same real atomicity/recovery guarantees.
+
+## B04 ingestion consumer
+
+`app.ingestion.Importer` uses this repository unchanged for every accepted create.
+Equal exact public-record hashes no-op; changed values require explicit review.
+Only validated milestone04 disposable graphs are currently authorized for its data
+imports. See INGESTION.md and contracts/dataset_ingestion.json for provenance,
+precision, quarantine, interruption and staged-data boundaries. No raw bulk write,
+policy cap relaxation, new migration or canonical promotion is implemented.

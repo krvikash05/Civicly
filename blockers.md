@@ -1,8 +1,8 @@
 # blockers.md — Current blockers and verification spikes
 
-## Current status — 2026-10-17 (takes precedence over historical entries)
+## Current status — B04, 2026-10-17 (takes precedence over history)
 
-No active B03-R environment blocker; corrective contract tests/regressions PASS. BLOCK-B00-02 stays OPEN for55 Observation defects and deferred DEC-004 findings. B04 performance remains unverified: benchmark plan only. Schedule text/aliases, bounded-search/global-absence distinction and privileged raw-write limitations remain explicit. STOP for human B03-R review.
+B04 implementation/tests PASS; human review pending. BLOCK-B00-02 numeric conversion portion RESOLVED with exact55 value/unit/date preservation; remaining DEC-004 findings OPEN at assigned milestones. Source/history/S07 proof/schedule/binding gaps and benchmark instrumentation/scale limits remain explicit BLOCK-B04-DATA/PERF findings. No B05 started.
 
 ---
 
@@ -103,3 +103,30 @@ No active implementation blocker is claimed. Verification spikes (NOT defects) a
   prevents treating empty results as global absence. Historical node snapshots are
   not reconstructed. Privileged raw DB access still bypasses application policy;
   the namespace guard is not authorization/RBAC. These limits remain documented.
+
+## B04 source findings and retained limitations | 2026-10-17
+- BLOCK-B00-02 numeric portion RESOLVED in explicit B04 conversion:55 measurements
+  preserve values/units/observed dates; originals remain frozen as regression evidence.
+  DEC-004 aggregate remains OPEN for designated MCP traces/transport (B06/B07),
+  GraphRAG source ownership/version/PDF completeness (B11), approval binding (B12/B13),
+  event durability (B15), API mapping (B16/B17), historical fixtures and evaluator
+  runtime isolation (B19). Source visibility guards are not runtime mount isolation.
+- BLOCK-B04-DATA — OPEN: legacy109 pickup inconsistencies,15 report chronology
+  conflicts quarantined (342 records including218 dependent edges). New generator
+  revision explicitly authors corrected synthetic data, not a historical recovery.
+ 68 unsupported verified associations downgraded;154 unknown statuses made CANDIDATE.
+ 25 coordinate binary residues explicitly normalized at verified wire precision.
+ 110 pickup local-clock/schedule-text warnings, service aliases,55 unlinked
+  observations, binding/incident differences, absent historical WorkOrder/AgentDecision
+  chains and S07 physical topology gaps remain for B08/B11/B19. No invented dates,
+  inspections, physical connections, licensed source claims or PDF evidence.
+- BLOCK-B04-PERF — OPEN LIMITATION: single-scalar audit and same-kind scans scale
+  quadratically;10,000 audit/2,000 per-kind/policy-step limits remain unchanged. Timing
+  targets do not establish larger-city readiness. Largest scans/query/byte totals are
+  measured; cycle/schedule comparison totals and lock-wait distributions are not.
+  AOF delta is server-wide net snapshot affected by verified automatic rewrites,
+  not cumulative I/O. No untested bulk/audit optimization introduced.
+- First pilot precision failure retained graph
+  civicly_b04_test_407a845eafb843b7955dcc4bd00335e0. No source conflicts are “repaired”
+  by deleting it. Canonical promotion of B04 fixture is intentionally unperformed;
+  review retained isolated final graph before any later authorization.

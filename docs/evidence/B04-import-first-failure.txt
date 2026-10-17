@@ -1,0 +1,110 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.1, pytest-9.1.1, pluggy-1.7.0 -- /Users/vikashkumar/Desktop/Civicly/backend/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/vikashkumar/Desktop/Civicly/backend
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 8 items
+
+backend/tests/integration/test_ingestion.py::test_real_counts_hashes_and_noop_repeats FAILED
+
+=================================== FAILURES ===================================
+___________________ test_real_counts_hashes_and_noop_repeats ___________________
+
+self = <app.ingestion.importer.Importer object at 0x10559e0f0>
+bundle = {'contract_version': 1, 'converter_version': '1.0', 'conversion_at': '2026-10-17T00:00:00Z', 'source_hash': '227f932d7de23cf5b34200428f5796905f78bc2cc2dcb105c6cfa2375b5e300b', ...}
+after_record = None
+
+    def run(self,bundle,*,after_record=None):
+        started=time.perf_counter();report={'graph':self.repo.graph.name,'source_hash':bundle.get('source_hash'),
+            'started_at':utc_now(),'created':0,'matched':0,'errors':[],'latencies_seconds':[],'last_record_id':None}
+        try:nodes=validate_bundle(bundle)
+        except (ValueError,TypeError,KeyError) as error:
+            report['errors'].append({'code':'INVALID_SOURCE','reason':str(error)})
+            raise ImportFailure('INVALID_SOURCE',report) from error
+        records=[('node',n) for n in nodes]+[('edge',e) for e in bundle['relationships']]
+        try:
+            # Recovery is proof-driven; no retry of uncertain writes occurs here.
+            self.repo.recover_pending()
+            for kind,record in records:
+                at=time.perf_counter();id=record['properties']['id'];report['last_record_id']=id
+                expected=bundle['manifest']['record_hashes'][id]
+                get=self.repo.get_node if kind=='node' else self.repo.get_relationship
+                try:existing=get(id)
+                except NotFound:existing=None
+                if existing is not None:
+                    if existing.content_hash!=expected:raise Conflict('Changed record requires explicit conflict/update/version review')
+                    report['matched']+=1
+                else:
+                    try:
+                        if kind=='node':actual=self.repo.create_node(record['label'],record['properties'])
+                        else:actual=self.repo.create_relationship(record['type'],record['source_id'],record['target_id'],record['properties'])
+>                       if actual.content_hash!=expected:raise Conflict('Concurrent post-write content differs from source')
+                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E                       app.graph.repository.Conflict: Concurrent post-write content differs from source
+
+backend/app/ingestion/importer.py:47: Conflict
+
+The above exception was the direct cause of the following exception:
+
+repo = <app.graph.repository.GraphRepository object at 0x1029daab0>
+
+    def test_real_counts_hashes_and_noop_repeats(repo):
+        bundle,_=convert(tiny(),COMPILED);importer=Importer(repo)
+>       first=importer.run(bundle);again=importer.run(bundle);third=importer.run(bundle)
+              ^^^^^^^^^^^^^^^^^^^^
+
+backend/tests/integration/test_ingestion.py:40: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <app.ingestion.importer.Importer object at 0x10559e0f0>
+bundle = {'contract_version': 1, 'converter_version': '1.0', 'conversion_at': '2026-10-17T00:00:00Z', 'source_hash': '227f932d7de23cf5b34200428f5796905f78bc2cc2dcb105c6cfa2375b5e300b', ...}
+after_record = None
+
+    def run(self,bundle,*,after_record=None):
+        started=time.perf_counter();report={'graph':self.repo.graph.name,'source_hash':bundle.get('source_hash'),
+            'started_at':utc_now(),'created':0,'matched':0,'errors':[],'latencies_seconds':[],'last_record_id':None}
+        try:nodes=validate_bundle(bundle)
+        except (ValueError,TypeError,KeyError) as error:
+            report['errors'].append({'code':'INVALID_SOURCE','reason':str(error)})
+            raise ImportFailure('INVALID_SOURCE',report) from error
+        records=[('node',n) for n in nodes]+[('edge',e) for e in bundle['relationships']]
+        try:
+            # Recovery is proof-driven; no retry of uncertain writes occurs here.
+            self.repo.recover_pending()
+            for kind,record in records:
+                at=time.perf_counter();id=record['properties']['id'];report['last_record_id']=id
+                expected=bundle['manifest']['record_hashes'][id]
+                get=self.repo.get_node if kind=='node' else self.repo.get_relationship
+                try:existing=get(id)
+                except NotFound:existing=None
+                if existing is not None:
+                    if existing.content_hash!=expected:raise Conflict('Changed record requires explicit conflict/update/version review')
+                    report['matched']+=1
+                else:
+                    try:
+                        if kind=='node':actual=self.repo.create_node(record['label'],record['properties'])
+                        else:actual=self.repo.create_relationship(record['type'],record['source_id'],record['target_id'],record['properties'])
+                        if actual.content_hash!=expected:raise Conflict('Concurrent post-write content differs from source')
+                        report['created']+=1
+                    except Conflict:
+                        # A concurrent equal writer may win CREATE; reread actual persisted content.
+                        if get(id).content_hash!=expected:raise
+                        report['matched']+=1
+                report['latencies_seconds'].append(time.perf_counter()-at)
+                if after_record is not None:after_record(kind,id,report)
+        except OutcomeUnknown as error:
+            report['errors'].append({'code':'DATABASE_OUTCOME_UNKNOWN','id':report['last_record_id']})
+            report['wall_seconds']=time.perf_counter()-started
+            raise ImportFailure('DATABASE_OUTCOME_UNKNOWN',report) from error
+        except (Conflict,PreconditionFailed,SchemaError,NotFound) as error:
+            report['errors'].append({'code':'SOURCE_CONFLICT_OR_PRECONDITION','id':report['last_record_id'],'reason':str(error)})
+            report['wall_seconds']=time.perf_counter()-started
+>           raise ImportFailure('SOURCE_CONFLICT_OR_PRECONDITION',report) from error
+E           app.ingestion.importer.ImportFailure: SOURCE_CONFLICT_OR_PRECONDITION
+
+backend/app/ingestion/importer.py:62: ImportFailure
+=========================== short test summary info ============================
+FAILED backend/tests/integration/test_ingestion.py::test_real_counts_hashes_and_noop_repeats
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+============================== 1 failed in 2.10s ===============================

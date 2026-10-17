@@ -100,6 +100,8 @@ class Registry:
                         raise SchemaError("Invalid point coordinate")
             if "const" in desc and value != desc["const"]:
                 raise SchemaError(f"Incorrect fixed property: {field}")
+            if "enum" in desc and value not in desc["enum"]:
+                raise SchemaError(f"Invalid enum: {field}")
             if "enum_ref" in desc and value not in self.data["enums"][desc["enum_ref"]]:
                 raise SchemaError(f"Invalid enum: {field}")
             if kind in ("integer", "number"):

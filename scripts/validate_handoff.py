@@ -115,7 +115,12 @@ if errors:
 print(f'PASS: {len(N)} entity types, {len(R)} relationships, {len(mcp["tools"])} custom MCP tools, {len(apis["routes"])} planned API routes, {len(api_models["$defs"])} typed request/response schemas, {len(events["types"])} event types')
 print(f'PASS: {len(seed["nodes"])} seeded nodes, {len(seed["relationships"])} seeded relationships, {len(scs)} scenario bindings+hidden truths, {len(manifest)} sourced synthetic documents')
 print('PASS: codex log files + B00-B25 microtasks + work-order approval invariant')
-print(f'WARN: {len(known_observation_defects)} explicitly tracked legacy Observation.value_number defects; canonical import rejected until B04.')
+print(f'NOTE: {len(known_observation_defects)} frozen legacy Observation.value_number defects retained as regression evidence; B04 converted artifact is validated separately.')
 for warning in warn:print('WARN:',warning)
-print('NOTE: Supplied v1/v2 seed structure only; canonical v3 scope/edge conversion and 55 known Observation.value_number defects remain B04 blockers.')
+print('NOTE: Above counts describe frozen legacy source structure; B04 canonical artifact and real import evidence are separate checks.')
 print('NOTE: This is STATIC blueprint verification, not a running FalkorDB/MCP/GraphRAG/AI acceptance test.')
+
+# B04 artifact is checked in addition to the frozen historical fixture.
+import subprocess
+sys.stdout.flush()
+raise SystemExit(subprocess.call([sys.executable,str(ROOT/'scripts/validate_dataset.py')]))

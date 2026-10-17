@@ -7,6 +7,7 @@ This script generates demonstration *data fixtures*, not Civicly's running backe
 import json
 import pathlib
 import collections
+import argparse
 from datetime import datetime,timedelta,timezone
 
 ROOT=pathlib.Path(__file__).resolve().parents[1]
@@ -21,7 +22,7 @@ def add(label,id,**props):
     if id in NODE_IDS: return id
     shape=REG['node_types'][label]
     d={'id':id,'schema_version':2,'created_at':iso(),'updated_at':iso(),**props}
-    miss=set(shape['required'])-d.keys()
+    miss={f for f in shape['required'] if shape['properties'][f].get('introduced_in',1)<=2}-d.keys()
     if miss: raise ValueError(f'{label} {id}: missing {miss}')
     NODES.append({'label':label,'properties':d});NODE_IDS.add(id)
     return id
@@ -82,9 +83,9 @@ for i in range(24):
 src='SRC-MUNI-SEED'
 for i in range(110):
   target=waste[i%len(waste)]
-  route=routes[i%len(routes)]
+  route=next(e['target_id'] for e in EDGES if e['type']=='COLLECTED_BY' and e['source_id']==target)
   state='MISSED' if i in (3,8,14,20,29,52,72,86) else ('PARTIAL' if i in (32,62,91) else 'COMPLETED')
-  ex=add('PickupExecution',f'PICK-{i+1:04d}',route_id=route,scheduled_at=iso(i%90,hours=7),status=state,actual_at=iso(i%90,hours=8) if state!='MISSED' else iso(i%90,hours=7),source_record_id=f'DEMO_PICK_{i+1:04d}')
+  ex=add('PickupExecution',f'PICK-{i+1:04d}',route_id=route,scheduled_at=iso(i%90,hours=7),status=state,**({'actual_at':iso(i%90,hours=8)} if state!='MISSED' else {}),source_record_id=f'DEMO_PICK_{i+1:04d}')
   edge('PICKUP_FOR',ex,target);edge('ROUTE_EXECUTION',ex,route)
 
 for i in range(30):
@@ -106,12 +107,12 @@ for i in range(85):
 
 # multiple reports per incident; never each automatically becomes another occurrence
 for i in range(254):
- target=incidents[i%len(incidents)];obj=add('Complaint',f'CMP-{i+1000:04d}',description=f'Synthetic report {i+1000} about repeated public issue linked to incident {target}',reported_at=iso(i%90,hours=9),source_channel='DEMO_PORTAL',source_kind='SYNTHETIC',status='ACCEPTED')
+ target=incidents[i%len(incidents)];obj=add('Complaint',f'CMP-{i+1000:04d}',description=f'Synthetic report {i+1000} about repeated public issue linked to incident {target}',reported_at=(datetime.fromisoformat(next(n['properties']['started_at'] for n in NODES if n['properties']['id']==target).replace('Z','+00:00'))+timedelta(hours=3,minutes=i//len(incidents))).strftime('%Y-%m-%dT%H:%M:%SZ'),source_channel='DEMO_PORTAL',source_kind='SYNTHETIC',status='ACCEPTED')
  edge('REPORTS',obj,target)
 
 for i in range(55):
   type=['WATER_DEPTH_CM','ROAD_CONDITION','WASTE_VOLUME_L'][i%3]
-  obs=add('Observation',f'OBS-{i+100:04d}',observation_type=type,observed_at=iso(i%90,hours=10),source_kind='SYNTHETIC',observation_basis='REPORTED',value_number=round((i%8+1)*3.5,1),unit={'WATER_DEPTH_CM':'cm','ROAD_CONDITION':'index','WASTE_VOLUME_L':'L'}[type])
+  obs=add('Observation',f'OBS-{i+100:04d}',observation_type=type,observed_at=iso(i%90,hours=10),source_kind='SYNTHETIC',observation_basis='REPORTED',value=round((i%8+1)*3.5,1),unit={'WATER_DEPTH_CM':'cm','ROAD_CONDITION':'index','WASTE_VOLUME_L':'L'}[type])
 
 for i in range(45):
  t=(all_drains+roads+waste+pipes)[(i*7)%(len(all_drains)+len(roads)+len(waste)+len(pipes))]
@@ -122,8 +123,11 @@ for name,role,dept in [('analyst','ANALYST','DEPT-COORD'),('drain-lead','DEPARTM
  uid=add('OperatorAccount',f'OP-{name.upper()}',display_name=f'Synthetic {name}',role=role,department_id=dept,enabled=True)
  edge('HAS_OPERATOR',dept,uid)
 
-obj={'schema_version':2,'fixture_id':'CIVICLY-SYNTHETIC-CITY-V2','description':'Deterministic synthetic 5-ward municipal network. No hidden causes/delayed inspection results are included. Results are illustrative, not real Varanasi infrastructure.','nodes':NODES,'relationships':EDGES,'ground_truth_visible_to_agent':False,'generator_version':'2.0','seed_city':'Fictional Civicly Demo City'}
-out=ROOT/'contracts/seed_graph_expanded.json'
+obj={'schema_version':2,'fixture_id':'CIVICLY-SYNTHETIC-CITY-V2','description':'Deterministic synthetic 5-ward municipal network. No hidden causes/delayed inspection results are included. Results are illustrative, not real Varanasi infrastructure.','nodes':NODES,'relationships':EDGES,'ground_truth_visible_to_agent':False,'generator_version':'2.1','seed_city':'Fictional Civicly Demo City'}
+parser=argparse.ArgumentParser();parser.add_argument('--output',default=str(ROOT/'data/generated/source_city_v2.json'));args=parser.parse_args()
+out=pathlib.Path(args.output)
+if out.resolve() in {(ROOT/'contracts/seed_graph.json').resolve(),(ROOT/'contracts/seed_graph_expanded.json').resolve()}:raise ValueError('Frozen legacy source cannot be overwritten')
+out.parent.mkdir(parents=True,exist_ok=True)
 out.write_text(json.dumps(obj,indent=2)+'\n')
 print('Seed created',len(NODES),'nodes',len(EDGES),'edges')
 print('node labels:',dict(collections.Counter(n['label'] for n in NODES)))

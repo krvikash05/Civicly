@@ -208,10 +208,14 @@ def main():
     print(f"PASS: {len(nodes)} node types; {len(edges)} edge types; {len(tools['tools'])} MCP tools; "
           f"{len(machines['machines'])} state machines; {len(scenarios['scenarios'])} scenario contracts; "
           f"{len(seed_nodes)} valid seed nodes/{len(seed['relationships'])} edges; 18 objectives traced")
-    print("NOTE: Supplied v1/v2 fixtures checked as legacy structure; canonical v3 conversion pending B04.")
+    print("NOTE: Supplied v1/v2 fixtures checked as legacy structure; B04 canonical artifact is checked separately below.")
     print("NOTE: Static contract validation only; actual DB/MCP/AI/frontend runtime tests remain to be implemented.")
     return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    result=main()
+    if result:sys.exit(result)
+    sys.stdout.flush()
+    import subprocess
+    sys.exit(subprocess.call([sys.executable,str(ROOT/'scripts/validate_dataset.py')]))

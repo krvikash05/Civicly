@@ -54,3 +54,15 @@ All normative machine contracts reference this same municipality_scope policy.
 This is one synthetic municipality, not enterprise tenant isolation. Legacy v1/v2
 fixtures require explicit conversion before canonical import; no implicit scope,
 unknown-field dropping, or invented temporal evidence is permitted.
+
+## B04 executable fixture boundary (2026-10-17)
+
+See `backend/INGESTION.md` and `contracts/dataset_ingestion.json`. Original sources
+remain frozen. Generator2.1 authors a distinct corrected synthetic revision; actual
+field deltas and converted manifests are in `data/ingestion`. Strict B04 importer
+uses accepted repository policies on isolated B04 graphs only, with exact hash-based
+no-ops and changed-source conflicts. Original55 measurements are losslessly mapped.
+Missing physical proof remains CANDIDATE; missing dates/histories/geometries are not
+invented. Offline reports and evaluator release references are not runtime inputs.
+Complaint/recurrence services, durable domain events, source ownership/version RAG,
+scenario release and evaluator process isolation remain designated later milestones.
