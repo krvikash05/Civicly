@@ -1,7 +1,7 @@
 PYTHON ?= python3.12
 VENV := backend/.venv/bin
 
-.PHONY: configure setup up health test-unit test-graph test-persistence test-spec down
+.PHONY: configure setup up health migrate schema-status test-unit test-graph test-persistence test-spec down
 configure:
 	$(PYTHON) scripts/configure_local.py
 setup:
@@ -12,6 +12,10 @@ up: configure
 	docker compose up -d --wait --wait-timeout 120
 health:
 	$(VENV)/civicly health
+migrate:
+	$(VENV)/civicly migrate
+schema-status:
+	$(VENV)/civicly schema-status
 test-unit:
 	$(VENV)/python -m pytest backend/tests/unit -v
 test-graph:

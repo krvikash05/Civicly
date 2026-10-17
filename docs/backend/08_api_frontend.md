@@ -39,3 +39,12 @@ SSE `id` is durable event cursor; `event: case_tool_called|decision_recorded|ins
 
 ## Frontend compatibility gates
 Even backend-first, tests must verify an operator can reconstruct the full story without reading server logs: complaint -> merged incident/recurrence -> agent choices -> exact graph traversal -> evidence and counterfactual -> plan DAG -> approval -> work progress -> monitoring -> memory. Every key UI action has at least one API endpoint and relevant event; any gap requires API contract revision before frontend.
+
+## B02 canonical scope contract (v3)
+Canonical domain records use `municipality_id='demo-city'`, fixed by the server.
+`tenant_id` is not a domain alias or caller-controlled input. Framework integration
+may translate the same fixed value explicitly if its verified API requires it.
+All normative machine contracts reference this same municipality_scope policy.
+This is one synthetic municipality, not enterprise tenant isolation. Legacy v1/v2
+fixtures require explicit conversion before canonical import; no implicit scope,
+unknown-field dropping, or invented temporal evidence is permitted.

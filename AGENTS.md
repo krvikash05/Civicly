@@ -31,6 +31,6 @@ You are implementing **Civicly**, a complete **advanced hackathon AI-agent demon
 ## Engineering controls
 - Use official docs and GitHub references in `docs/backend/12_falkordb_sources.md`. Verify package APIs, indexes, Cypher grammar, MCP transport and GraphRAG integration via small runtime spikes; record actual versions and commands in `decision.md`.
 - Library version pin after smoke tests, lockfiles and image digest; document any unsupported feature and an equivalent **FalkorDB-powered** strategy, with acceptance tests.
-- Prefer modular monolith FastAPI + one local worker over microservices, Kafka, distributed infrastructure, public accounts and enterprise tenancy. Keep simple demo RBAC with 4 seeded fake operators and use `tenant_id='demo-city'` for namespacing; no claim of full multi-tenant isolation.
+- Prefer modular monolith FastAPI + one local worker over microservices, Kafka, distributed infrastructure, public accounts and enterprise tenancy. Keep simple demo RBAC with 4 seeded fake operators and use `municipality_id='demo-city'` for domain namespacing (translate to framework `tenant_id` only through an explicit adapter if required); no claim of full multi-tenant isolation.
 - Test every phase with unit + integration appropriate to the phase. Re-run spec validation and previous passing tests after relevant changes.
 - Do NOT start frontend tasks unless backend acceptance gate B-END is green and human explicitly authorizes frontend.

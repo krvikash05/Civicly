@@ -135,7 +135,7 @@ def main():
         if sid in seed_nodes:
             errors.append(f"seed: duplicate ID {sid}")
         seed_nodes[sid] = label
-        required = set(nodes[label]["required"])
+        required = {k for k in nodes[label]["required"] if nodes[label]["properties"][k].get("introduced_in", 1) <= props.get("schema_version", 1)}
         if not required.issubset(props):
             errors.append(f"seed {sid}: missing mandatory fields {required-set(props)}")
         all_props = nodes[label]["properties"]
@@ -208,6 +208,7 @@ def main():
     print(f"PASS: {len(nodes)} node types; {len(edges)} edge types; {len(tools['tools'])} MCP tools; "
           f"{len(machines['machines'])} state machines; {len(scenarios['scenarios'])} scenario contracts; "
           f"{len(seed_nodes)} valid seed nodes/{len(seed['relationships'])} edges; 18 objectives traced")
+    print("NOTE: Supplied v1/v2 fixtures checked as legacy structure; canonical v3 conversion pending B04.")
     print("NOTE: Static contract validation only; actual DB/MCP/AI/frontend runtime tests remain to be implemented.")
     return 0
 

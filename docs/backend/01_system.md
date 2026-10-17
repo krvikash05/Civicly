@@ -56,3 +56,12 @@ SSE must stream only actual committed events, `id`, `event_type`, `entity_id`, `
 
 ## Engineering path
 Repo layout defined in `flow.md`. Native backend `pyproject.toml` with dependency groups, lockfile after compatibility spikes; Docker Compose FalkorDB + MCP Node service + FastAPI + worker (later UI); unit fake-LLM tests, real integration tests; CLI source of demo commands. No Kafka, Snowflake, microservice mesh, public signup, or complex GIS engine necessary.
+
+## B02 canonical scope contract (v3)
+Canonical domain records use `municipality_id='demo-city'`, fixed by the server.
+`tenant_id` is not a domain alias or caller-controlled input. Framework integration
+may translate the same fixed value explicitly if its verified API requires it.
+All normative machine contracts reference this same municipality_scope policy.
+This is one synthetic municipality, not enterprise tenant isolation. Legacy v1/v2
+fixtures require explicit conversion before canonical import; no implicit scope,
+unknown-field dropping, or invented temporal evidence is permitted.

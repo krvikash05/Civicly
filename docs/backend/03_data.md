@@ -45,3 +45,12 @@ Waterlogging: rainfall mm + interval/observed station, depth cm, drain obstructi
 
 ## Evaluation leakage guard
 Evaluation harness stores hidden truth outside the backend's runtime data mount. CLI `civicly evaluate` can query it in a separate process after the agent produces result; no MCP tool or agent prompt sees that file. Unit test verifies agent containers lack that path and cannot access evaluation labels.
+
+## B02 canonical scope contract (v3)
+Canonical domain records use `municipality_id='demo-city'`, fixed by the server.
+`tenant_id` is not a domain alias or caller-controlled input. Framework integration
+may translate the same fixed value explicitly if its verified API requires it.
+All normative machine contracts reference this same municipality_scope policy.
+This is one synthetic municipality, not enterprise tenant isolation. Legacy v1/v2
+fixtures require explicit conversion before canonical import; no implicit scope,
+unknown-field dropping, or invented temporal evidence is permitted.

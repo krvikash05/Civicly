@@ -1,5 +1,11 @@
 # implementation_status.md — Current implementation truth
 
+## Current status — 2026-10-17 (takes precedence over historical entries)
+
+B00/B01 accepted; B02 complete, human review pending. Canonical registry v3 / migration 0001 READY: 91 index groups / 182 constraints OPERATIONAL; 53 tests PASS. Zero domain nodes seeded. B03 and later capabilities unimplemented.
+
+---
+
 As supplied: **specification only**. No backend/runtime functionality has been implemented or exercised as part of this package.
 
 - Last completed task: None.
@@ -32,3 +38,11 @@ Per task, update: implemented paths, exact tests, pass/fail/skip, screenshots/lo
 - Canonical civicly_knowledge remains uninitialized; CLI reports this, not graph-read success. Only isolated B01 probe graph retained. No supplied domain data/schema/contracts modified.
 - All R01–R18 retained, not completed. Migrations B02, repositories B03, fixture corrections/import B04, MCP B06/B07, checkpoint/agents B10, GraphRAG B11, approvals B13, durable events B15, API B16+ and full CLI B18 remain unimplemented/unverified. No frontend.
 - BLOCK-B00-02 stays OPEN including all 55 value_number discrepancies and every DEC-004 finding. Provider credentials unset; live tests remain unverified. No active B01 blocker.
+
+## B02 acceptance record | 2026-10-17
+- B00/B01 human accepted. Last completed B02; human review pending. Next B03 TODO; STOP before starting.
+- Implemented: canonical registry v3 scope/edge metadata, strict validation + multi-label/point schema adapter, frozen migration0001, additive checksummed lease-protected runner, durable status/audit, schema CLI/Make targets, real integration/failure/recovery tests and recovery guide.
+- Canonical civicly_knowledge: migration version1 READY, registry3, 91 OPERATIONAL index groups/304 property entries, 182 OPERATIONAL constraints. Canonical domain nodes=0. B01 probe unchanged. Schema survives actual restart/recreation.
+- Final tests 53 PASS/0 FAIL/0 SKIP; both specification validators PASS with explicit legacy/import-blocker warnings. Earlier spike/test failures recorded, not hidden. No dependency changes; real database/client versions remain B01 pins.
+- Scope inconsistency resolved; all 42 node/47 relationship names/endpoints and enum values preserved. Registry additions are documented v3 requirements, not silent data coercion. All supplied fixtures/data and R01–R18 document unchanged.
+- BLOCK-B00-02 remains OPEN for 55 Observation fields and other deferred findings. B03 graph-aware repositories/policies, B04 conversion/ingestion, runtime MCP, agents/memory/GraphRAG, approvals, durable events/API/SSE, E2E and frontend remain unimplemented/unverified. No product capability declared complete by schema alone.

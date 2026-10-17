@@ -43,14 +43,19 @@ require(any('/investigations/{id}/graph' in r['path'] for r in apis['routes']),'
 require('RECURRENCE_DETECTED' in events['types'] and 'AGENT_TOOL_EXECUTED' in events['types'],'critical event names missing')
 require(events['delivery']['consumer_idempotent'] and events['delivery']['at_least_once'],'unsafe event delivery policy')
 # Graph required properties / reference types
-ids={};types={}
+ids={};types={};known_observation_defects=[]
 for n in seed['nodes']:
  label=n['label'];p=n['properties'];id=p.get('id')
  require(label in N,f'unknown node {label} {id}')
  if label not in N:continue
  require(id not in ids,f'duplicate ID {id}')
  ids[id]=n;types[id]={label,*N[label].get('labels',[])}
- for k in N[label]['required']:require(k in p,f'{id} missing {k}')
+ for k in N[label]['required']:
+  if N[label]['properties'][k].get('introduced_in',1)<=p.get('schema_version',1):require(k in p,f'{id} missing {k}')
+ for field in set(p)-set(N[label]['properties']):
+  if label=='Observation' and field=='value_number' and id in {f'OBS-{i:04}' for i in range(100,155)}:
+   known_observation_defects.append(id)
+  else:errors.append(f'{id} unknown property {field}')
  for field in ('created_at','updated_at'):
   try:datetime.fromisoformat(p[field].replace('Z','+00:00'))
   except Exception:errors.append(f'{id} invalid {field}')
@@ -99,6 +104,10 @@ for p in ['AGENTS.md','CODEX_START_HERE.md','decision.md','flow.md','implementat
  require((ROOT/p).exists(),f'missing handoff file {p}')
 mt=(ROOT/'docs/backend/11_microtasks.md').read_text()
 for i in range(26):require(f'B{i:02d}' in mt,f'B{i:02d} missing from microtask plan')
+for contract in (states,mcp,apis,api_models,events):
+ require(contract.get('municipality_scope')==reg['municipality_scope'],'municipality scope contract mismatch')
+require(reg['municipality_scope']['field']=='municipality_id' and reg['municipality_scope']['value']=='demo-city','invalid canonical scope')
+require(len(known_observation_defects)==55,'known B04 Observation defect set changed; review fixture correction explicitly')
 if errors:
  print('STATIC HANDOFF VALIDATION FAILED:')
  for s in errors[:80]:print(' -',s)
@@ -106,4 +115,7 @@ if errors:
 print(f'PASS: {len(N)} entity types, {len(R)} relationships, {len(mcp["tools"])} custom MCP tools, {len(apis["routes"])} planned API routes, {len(api_models["$defs"])} typed request/response schemas, {len(events["types"])} event types')
 print(f'PASS: {len(seed["nodes"])} seeded nodes, {len(seed["relationships"])} seeded relationships, {len(scs)} scenario bindings+hidden truths, {len(manifest)} sourced synthetic documents')
 print('PASS: codex log files + B00-B25 microtasks + work-order approval invariant')
+print(f'WARN: {len(known_observation_defects)} explicitly tracked legacy Observation.value_number defects; canonical import rejected until B04.')
+for warning in warn:print('WARN:',warning)
+print('NOTE: Supplied v1/v2 seed structure only; canonical v3 scope/edge conversion and 55 known Observation.value_number defects remain B04 blockers.')
 print('NOTE: This is STATIC blueprint verification, not a running FalkorDB/MCP/GraphRAG/AI acceptance test.')

@@ -1,5 +1,11 @@
 # task_board.md — Human-reviewed task queue
 
+## Current status — 2026-10-17 (takes precedence over historical entries)
+
+B00/B01 accepted. B02 PASS — human review pending. Canonical migration 0001 READY; 53 tests PASS. Exact next task B03 TODO; STOP until user review.
+
+---
+
 **Rule:** one task per Codex turn. `TODO` → `IN_PROGRESS` → `PASS` (evidence in test_log) or `BLOCKED`.
 
 Current: **B00 TODO**. See `docs/backend/11_microtasks.md` for ordered task list and exact gates. Codex must populate per-task ledger here and never pre-mark tasks as passed.
@@ -28,3 +34,14 @@ Current: **B01 PASS — human review pending**. B00 explicitly accepted by user.
 | B02 | TODO | — | No | Formal migrations, unique/mandatory constraints and indexes, multi-label adapter, registry mapping, rollback/upgrade policy; real idempotence/readiness/invalid-ID tests |
 
 No B02 work or frontend started. B01 foundation evidence does not fulfill B-END or resolve BLOCK-B00-02.
+
+## B02 review ledger | 2026-10-17
+
+| Task | State | Test log | Human accepted? | Note |
+|---|---|---|---|---|
+| B00 | PASS | TEST-20261017-B00-* | Yes | Remaining findings preserved |
+| B01 | PASS | TEST-20261017-B01-* | Yes | Local baseline commit426f6e1; full regression retained |
+| B02 | PASS | TEST-20261017-B02-01–06 | No | Canonical0001 READY;91 index groups/182 constraints OPERATIONAL;53 tests PASS |
+| B03 | TODO | — | No | Typed repositories, endpoint/temporal/cardinality/verified-path policies and bounded preapproved query templates; actual traversal and invalid-edge rejection |
+
+No B03 implementation, seed import or frontend started. B02 is schema foundation only, not B-END.

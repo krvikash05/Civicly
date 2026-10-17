@@ -1,5 +1,11 @@
 # blockers.md — Current blockers and verification spikes
 
+## Current status — 2026-10-17 (takes precedence over historical entries)
+
+No active B02 environment blocker. Scope naming finding is resolved by canonical municipality_id=demo-city and consistent contracts. BLOCK-B00-02 remains OPEN for 55 Observation defects and other deferred DEC-004 findings. Native CHECK/endpoint enforcement requires application validation.
+
+---
+
 No active implementation blocker is claimed. Verification spikes (NOT defects) are tracked in `docs/backend/12_falkordb_sources.md`.
 
 ## Template
@@ -35,3 +41,15 @@ No active implementation blocker is claimed. Verification spikes (NOT defects) a
 - All 55 Observation.value_number defects remain; contracts and fixtures untouched. Same scope naming, MCP traces, approval binding, document ownership/version/PDF, historical records, event metadata/revision mapping and evaluator isolation findings in DEC-004 remain scheduled before consumption.
 - Dependency compatibility with MCP/LangGraph/FalkorDBSaver/GraphRAG and live provider is still UNVERIFIED; not required for B01. Local graceful persistence does not resolve event durability or checkpoint recovery.
 - Human action now: review B01; say continue for B02 when accepted. No active B01 environment blocker. If tests fail, share test output + test_log/blockers and redacted compose logs; never .env/full config containing secrets.
+
+## B02 blocker disposition | 2026-10-17
+### BLOCK-B02-01 — Vendor API/Cypher mismatches | RESOLVED
+- Installed falkordb1.8.0 lacks docs create_constraint helper; QueryResult lacks statistics; FalkorDB6.0.2 rejects YIELD *. Minimal spikes in test_log failed with AttributeError/ResponseError, then passed using execute_command, known result API and explicit columns. No package swap or graph substitute.
+### BLOCK-B02-02 — Premature asset_type restriction | RESOLVED
+- First unit test run 31 PASS/1 FAIL: new subtype constants rejected five legacy values. Removed invented constant rule per DEC-008; canonical labels remain typed, original string vocabulary retained. Fixtures not modified. Final suite53 PASS.
+### BLOCK-B00-02 — Partially resolved; remains OPEN
+- RESOLVED only scope naming: municipality_id=demo-city is canonical v3, required on nodes/edges and synchronized contract metadata/specs. tenant_id not accepted as alias; future framework adapter only if verified necessary. No enterprise isolation claim.
+- OPEN: all 55 Observation.value_number defects; explicit v1/v2 scope/version/edge-ID/date conversion required before B04 import. Strict adapter rejects incompatible records; supplied sources unchanged. Also still OPEN: MCP trace/envelopes, approval plan/assignee/scope binding, document ownership/version/PDF, historical fixture completeness, event durability/revision mapping and hidden evaluator isolation at their original stages.
+- Native constraints lack CHECK-style type/unknown/endpoint/conditional/global-edge-ID enforcement. Proven limitation, addressed structurally by B02 validator; future B03 repositories/services must enforce graph-aware rules and use controlled write paths. Raw developer DB access remains privileged.
+- No active B02 runtime blocker. Recovery never requires deleting B01 evidence/volumes; see backend/SCHEMA.md. Missing live provider/agent integrations remain outside B02.
+- Human action: review B02; continue only when ready for B03. Share schema-status, test output/test_log/blockers on failure; never .env or secrets.

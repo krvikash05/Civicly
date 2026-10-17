@@ -56,3 +56,23 @@ The examples show intended operations and are **not claimed to have been execute
 
 ## Compatibility checks
 `B02` migration syntax; `B03` verified/candidate path semantics; `B04` temporal queries; `B05` graph perturbation; test `GRAPH.RO_QUERY`, accepted OpenCypher subset, supported point indexes. Preserve both return path and sources for future FalkorDB Canvas explainability.
+
+## B02 canonical scope contract (v3)
+Canonical domain records use `municipality_id='demo-city'`, fixed by the server.
+`tenant_id` is not a domain alias or caller-controlled input. Framework integration
+may translate the same fixed value explicitly if its verified API requires it.
+All normative machine contracts reference this same municipality_scope policy.
+This is one synthetic municipality, not enterprise tenant isolation. Legacy v1/v2
+fixtures require explicit conversion before canonical import; no implicit scope,
+unknown-field dropping, or invented temporal evidence is permitted.
+
+B02 implements the current strict rules in `backend/SCHEMA.md`: migration 0001
+establishes all declared node IDs/required-property constraints and common edge
+metadata constraints, with index/constraint readiness verified on server 6.0.2.
+Canonical v3 supersedes the earlier optional-extension import convention above:
+new records must supply all required fields and schema_version 3. Source v1/v2
+fixtures retain their original shape until explicit B04 conversion. Storage-only
+`CivicEntity` provides cross-label node-ID uniqueness; `CivicSchemaMigration`
+bookkeeping is excluded from domain/MCP/Canvas data. UTC Z validity bounds are
+optional (unknown/open), with typed evidence pointers and no inferred dates.
+Graph-wide cardinality/cycle/reference checks and query repositories remain B03.

@@ -1,0 +1,4148 @@
+{
+  "status": {
+    "graph": "civicly_knowledge",
+    "migration_version": 1,
+    "registry_version": 3,
+    "municipality_id": "demo-city",
+    "ready": true,
+    "index_groups": 91,
+    "constraints": 182,
+    "issues": [],
+    "history": [
+      {
+        "id": "0001",
+        "attempts": 2,
+        "checksum": "94ab9fae6079fe7e87b41afd80701409db6bb51d529c2565dbd340896a5c923b",
+        "registry_sha256": "12541990b58d65e8602bff77b93b735009616e7ee658b9e7582a7ae9f449aac6",
+        "started_at": "2026-10-17T03:16:58.932Z",
+        "state": "READY",
+        "updated_at": "2026-10-17T03:17:28.152Z",
+        "version": 1,
+        "error_code": "",
+        "state_history": "[{\"state\": \"APPLYING\", \"at\": \"2026-10-17T03:16:58.932Z\", \"error_code\": \"\"}, {\"state\": \"READY\", \"at\": \"2026-10-17T03:17:00.862Z\", \"error_code\": \"\"}, {\"state\": \"APPLYING\", \"at\": \"2026-10-17T03:17:25.496Z\", \"error_code\": \"\"}, {\"state\": \"READY\", \"at\": \"2026-10-17T03:17:28.152Z\", \"error_code\": \"\"}]"
+      }
+    ]
+  },
+  "versions": {
+    "falkordb": "1.8.0",
+    "redis": "8.1.0",
+    "pydantic": "2.14.1",
+    "fastapi": "0.143.3",
+    "pytest": "9.1.1"
+  },
+  "server_modules": [
+    {
+      "name": "vectorset",
+      "ver": 1,
+      "path": "",
+      "args": []
+    },
+    {
+      "name": "graph",
+      "ver": 60002,
+      "path": "/var/lib/falkordb/bin/falkordb.so",
+      "args": [
+        "MAX_QUEUED_QUERIES",
+        "25",
+        "TIMEOUT",
+        "1000",
+        "RESULTSET_SIZE",
+        "10000"
+      ]
+    }
+  ],
+  "redis_version": "8.10.2",
+  "indexes": [
+    {
+      "label": "ActionTask",
+      "properties": [
+        "id",
+        "municipality_id",
+        "status"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "status": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "AgentDecision",
+      "properties": [
+        "id",
+        "municipality_id"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "AgentRun",
+      "properties": [
+        "id",
+        "municipality_id",
+        "started_at",
+        "status"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "started_at": [
+          "RANGE"
+        ],
+        "status": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "Approval",
+      "properties": [
+        "id",
+        "municipality_id",
+        "status"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "status": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "AssetConditionSnapshot",
+      "properties": [
+        "id",
+        "municipality_id",
+        "observed_at"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "observed_at": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "CaseMemory",
+      "properties": [
+        "id",
+        "municipality_id"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "CivicEntity",
+      "properties": [
+        "id",
+        "municipality_id"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "CivicSchemaMigration",
+      "properties": [
+        "id"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "CollectionRoute",
+      "properties": [
+        "id",
+        "municipality_id"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "Complaint",
+      "properties": [
+        "id",
+        "municipality_id",
+        "reported_at",
+        "status"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "reported_at": [
+          "RANGE"
+        ],
+        "status": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "DataSource",
+      "properties": [
+        "id",
+        "municipality_id"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "Department",
+      "properties": [
+        "id",
+        "municipality_id"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "Document",
+      "properties": [
+        "id",
+        "municipality_id"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "DomainEvent",
+      "properties": [
+        "id",
+        "municipality_id"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "DrainInlet",
+      "properties": [
+        "id",
+        "municipality_id"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "DrainSegment",
+      "properties": [
+        "id",
+        "municipality_id"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "DrainageCatchment",
+      "properties": [
+        "id",
+        "municipality_id"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "EventDelivery",
+      "properties": [
+        "id",
+        "municipality_id",
+        "status"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "status": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "Evidence",
+      "properties": [
+        "id",
+        "municipality_id",
+        "observed_at",
+        "recorded_at"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "observed_at": [
+          "RANGE"
+        ],
+        "recorded_at": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "Finding",
+      "properties": [
+        "id",
+        "municipality_id"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "Hypothesis",
+      "properties": [
+        "id",
+        "municipality_id",
+        "status"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "status": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "HypothesisAssessment",
+      "properties": [
+        "id",
+        "municipality_id"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "Incident",
+      "properties": [
+        "id",
+        "issue_type",
+        "municipality_id",
+        "started_at",
+        "status"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "issue_type": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "started_at": [
+          "RANGE"
+        ],
+        "status": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "InfrastructureAsset",
+      "properties": [
+        "id",
+        "municipality_id"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "Inspection",
+      "properties": [
+        "id",
+        "municipality_id",
+        "status"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "status": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "InterventionOutcome",
+      "properties": [
+        "id",
+        "municipality_id"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "Investigation",
+      "properties": [
+        "graph_revision",
+        "id",
+        "municipality_id",
+        "status"
+      ],
+      "types": {
+        "graph_revision": [
+          "RANGE"
+        ],
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "status": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "KnowledgeProcedure",
+      "properties": [
+        "id",
+        "municipality_id",
+        "status"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "status": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "Location",
+      "properties": [
+        "geo_point",
+        "id",
+        "municipality_id"
+      ],
+      "types": {
+        "geo_point": [
+          "RANGE"
+        ],
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "Observation",
+      "properties": [
+        "id",
+        "municipality_id",
+        "observed_at"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "observed_at": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "OperatorAccount",
+      "properties": [
+        "id",
+        "municipality_id"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "PickupExecution",
+      "properties": [
+        "id",
+        "municipality_id",
+        "status"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "status": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "ProblemCluster",
+      "properties": [
+        "id",
+        "municipality_id",
+        "next_check_at",
+        "status"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "next_check_at": [
+          "RANGE"
+        ],
+        "status": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "PumpStation",
+      "properties": [
+        "id",
+        "municipality_id"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "RainfallEvent",
+      "properties": [
+        "id",
+        "municipality_id",
+        "started_at"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "started_at": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "ResolutionPlan",
+      "properties": [
+        "graph_revision",
+        "id",
+        "municipality_id",
+        "status"
+      ],
+      "types": {
+        "graph_revision": [
+          "RANGE"
+        ],
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "status": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "RoadSegment",
+      "properties": [
+        "id",
+        "municipality_id"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "ServiceSchedule",
+      "properties": [
+        "id",
+        "municipality_id"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "StatusEvent",
+      "properties": [
+        "id",
+        "municipality_id"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "ToolExecution",
+      "properties": [
+        "id",
+        "municipality_id",
+        "started_at",
+        "status"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "started_at": [
+          "RANGE"
+        ],
+        "status": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "WasteCollectionPoint",
+      "properties": [
+        "id",
+        "municipality_id"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "WaterPipe",
+      "properties": [
+        "id",
+        "municipality_id"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "WorkOrder",
+      "properties": [
+        "id",
+        "municipality_id",
+        "status"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "status": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "Zone",
+      "properties": [
+        "id",
+        "municipality_id"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "AFFECTS",
+      "properties": [
+        "id",
+        "municipality_id",
+        "valid_from",
+        "valid_to"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "valid_from": [
+          "RANGE"
+        ],
+        "valid_to": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "APPLIES_TO",
+      "properties": [
+        "id",
+        "municipality_id",
+        "valid_from",
+        "valid_to"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "valid_from": [
+          "RANGE"
+        ],
+        "valid_to": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "ASSIGNED_TO",
+      "properties": [
+        "id",
+        "municipality_id",
+        "valid_from",
+        "valid_to"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "valid_from": [
+          "RANGE"
+        ],
+        "valid_to": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "AUTHORIZED_BY",
+      "properties": [
+        "id",
+        "municipality_id",
+        "valid_from",
+        "valid_to"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "valid_from": [
+          "RANGE"
+        ],
+        "valid_to": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "COLLECTED_BY",
+      "properties": [
+        "id",
+        "municipality_id",
+        "valid_from",
+        "valid_to"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "valid_from": [
+          "RANGE"
+        ],
+        "valid_to": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "CONCERNS",
+      "properties": [
+        "id",
+        "municipality_id",
+        "valid_from",
+        "valid_to"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "valid_from": [
+          "RANGE"
+        ],
+        "valid_to": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "CONDITION_OF",
+      "properties": [
+        "id",
+        "municipality_id",
+        "valid_from",
+        "valid_to"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "valid_from": [
+          "RANGE"
+        ],
+        "valid_to": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "CONTRADICTED_BY",
+      "properties": [
+        "id",
+        "municipality_id",
+        "valid_from",
+        "valid_to"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "valid_from": [
+          "RANGE"
+        ],
+        "valid_to": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "DELIVERS",
+      "properties": [
+        "id",
+        "municipality_id",
+        "valid_from",
+        "valid_to"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "valid_from": [
+          "RANGE"
+        ],
+        "valid_to": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "DEPENDS_ON",
+      "properties": [
+        "id",
+        "municipality_id",
+        "valid_from",
+        "valid_to"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "valid_from": [
+          "RANGE"
+        ],
+        "valid_to": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "DERIVED_FROM",
+      "properties": [
+        "id",
+        "municipality_id",
+        "valid_from",
+        "valid_to"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "valid_from": [
+          "RANGE"
+        ],
+        "valid_to": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "DOCUMENTED_IN",
+      "properties": [
+        "id",
+        "municipality_id",
+        "valid_from",
+        "valid_to"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "valid_from": [
+          "RANGE"
+        ],
+        "valid_to": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "DRAINS_CATCHMENT",
+      "properties": [
+        "id",
+        "municipality_id",
+        "valid_from",
+        "valid_to"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "valid_from": [
+          "RANGE"
+        ],
+        "valid_to": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "DRAINS_TO",
+      "properties": [
+        "id",
+        "municipality_id",
+        "valid_from",
+        "valid_to"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "valid_from": [
+          "RANGE"
+        ],
+        "valid_to": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "EMITTED_EVENT",
+      "properties": [
+        "id",
+        "municipality_id",
+        "valid_from",
+        "valid_to"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "valid_from": [
+          "RANGE"
+        ],
+        "valid_to": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "ESTABLISHES",
+      "properties": [
+        "id",
+        "municipality_id",
+        "valid_from",
+        "valid_to"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "valid_from": [
+          "RANGE"
+        ],
+        "valid_to": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "EXECUTED_BY",
+      "properties": [
+        "id",
+        "municipality_id",
+        "valid_from",
+        "valid_to"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "valid_from": [
+          "RANGE"
+        ],
+        "valid_to": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "EXPLAINS",
+      "properties": [
+        "id",
+        "municipality_id",
+        "valid_from",
+        "valid_to"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "valid_from": [
+          "RANGE"
+        ],
+        "valid_to": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "GOVERNED_BY",
+      "properties": [
+        "id",
+        "municipality_id",
+        "valid_from",
+        "valid_to"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "valid_from": [
+          "RANGE"
+        ],
+        "valid_to": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "HAS_ASSESSMENT",
+      "properties": [
+        "id",
+        "municipality_id",
+        "valid_from",
+        "valid_to"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "valid_from": [
+          "RANGE"
+        ],
+        "valid_to": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "HAS_EVENT",
+      "properties": [
+        "id",
+        "municipality_id",
+        "valid_from",
+        "valid_to"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "valid_from": [
+          "RANGE"
+        ],
+        "valid_to": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "HAS_OPERATOR",
+      "properties": [
+        "id",
+        "municipality_id",
+        "valid_from",
+        "valid_to"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "valid_from": [
+          "RANGE"
+        ],
+        "valid_to": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "HAS_SCHEDULE",
+      "properties": [
+        "id",
+        "municipality_id",
+        "valid_from",
+        "valid_to"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "valid_from": [
+          "RANGE"
+        ],
+        "valid_to": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "HAS_TASK",
+      "properties": [
+        "id",
+        "municipality_id",
+        "valid_from",
+        "valid_to"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "valid_from": [
+          "RANGE"
+        ],
+        "valid_to": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "IMPLEMENTS",
+      "properties": [
+        "id",
+        "municipality_id",
+        "valid_from",
+        "valid_to"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "valid_from": [
+          "RANGE"
+        ],
+        "valid_to": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "INSPECTS",
+      "properties": [
+        "id",
+        "municipality_id",
+        "valid_from",
+        "valid_to"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "valid_from": [
+          "RANGE"
+        ],
+        "valid_to": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "INVESTIGATES",
+      "properties": [
+        "id",
+        "municipality_id",
+        "valid_from",
+        "valid_to"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "valid_from": [
+          "RANGE"
+        ],
+        "valid_to": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "IN_ZONE",
+      "properties": [
+        "id",
+        "municipality_id",
+        "valid_from",
+        "valid_to"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "valid_from": [
+          "RANGE"
+        ],
+        "valid_to": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "JUSTIFIED_BY",
+      "properties": [
+        "id",
+        "municipality_id",
+        "valid_from",
+        "valid_to"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "valid_from": [
+          "RANGE"
+        ],
+        "valid_to": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "LEARNED_FROM",
+      "properties": [
+        "id",
+        "municipality_id",
+        "valid_from",
+        "valid_to"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "valid_from": [
+          "RANGE"
+        ],
+        "valid_to": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "LOCATED_AT",
+      "properties": [
+        "id",
+        "municipality_id",
+        "valid_from",
+        "valid_to"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "valid_from": [
+          "RANGE"
+        ],
+        "valid_to": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "MAINTAINED_BY",
+      "properties": [
+        "id",
+        "municipality_id",
+        "valid_from",
+        "valid_to"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "valid_from": [
+          "RANGE"
+        ],
+        "valid_to": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "OCCURRED_AT",
+      "properties": [
+        "id",
+        "municipality_id",
+        "valid_from",
+        "valid_to"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "valid_from": [
+          "RANGE"
+        ],
+        "valid_to": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "PART_OF",
+      "properties": [
+        "id",
+        "municipality_id",
+        "valid_from",
+        "valid_to"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "valid_from": [
+          "RANGE"
+        ],
+        "valid_to": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "PICKUP_FOR",
+      "properties": [
+        "id",
+        "municipality_id",
+        "valid_from",
+        "valid_to"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "valid_from": [
+          "RANGE"
+        ],
+        "valid_to": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "PRODUCED",
+      "properties": [
+        "id",
+        "municipality_id",
+        "valid_from",
+        "valid_to"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "valid_from": [
+          "RANGE"
+        ],
+        "valid_to": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "PRODUCED_PLAN",
+      "properties": [
+        "id",
+        "municipality_id",
+        "valid_from",
+        "valid_to"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "valid_from": [
+          "RANGE"
+        ],
+        "valid_to": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "PROPOSES",
+      "properties": [
+        "id",
+        "municipality_id",
+        "valid_from",
+        "valid_to"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "valid_from": [
+          "RANGE"
+        ],
+        "valid_to": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "RAINFALL_AFFECTS",
+      "properties": [
+        "id",
+        "municipality_id",
+        "valid_from",
+        "valid_to"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "valid_from": [
+          "RANGE"
+        ],
+        "valid_to": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "REPORTS",
+      "properties": [
+        "id",
+        "municipality_id",
+        "valid_from",
+        "valid_to"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "valid_from": [
+          "RANGE"
+        ],
+        "valid_to": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "RESULTED_IN",
+      "properties": [
+        "id",
+        "municipality_id",
+        "valid_from",
+        "valid_to"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "valid_from": [
+          "RANGE"
+        ],
+        "valid_to": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "ROUTE_EXECUTION",
+      "properties": [
+        "id",
+        "municipality_id",
+        "valid_from",
+        "valid_to"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "valid_from": [
+          "RANGE"
+        ],
+        "valid_to": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "SERVES",
+      "properties": [
+        "id",
+        "municipality_id",
+        "valid_from",
+        "valid_to"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "valid_from": [
+          "RANGE"
+        ],
+        "valid_to": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "SUPPORTED_BY",
+      "properties": [
+        "id",
+        "municipality_id",
+        "valid_from",
+        "valid_to"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "valid_from": [
+          "RANGE"
+        ],
+        "valid_to": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "TARGETS",
+      "properties": [
+        "id",
+        "municipality_id",
+        "valid_from",
+        "valid_to"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "valid_from": [
+          "RANGE"
+        ],
+        "valid_to": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "UNDERLIES",
+      "properties": [
+        "id",
+        "municipality_id",
+        "valid_from",
+        "valid_to"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "valid_from": [
+          "RANGE"
+        ],
+        "valid_to": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "label": "USED_TOOL",
+      "properties": [
+        "id",
+        "municipality_id",
+        "valid_from",
+        "valid_to"
+      ],
+      "types": {
+        "id": [
+          "RANGE"
+        ],
+        "municipality_id": [
+          "RANGE"
+        ],
+        "valid_from": [
+          "RANGE"
+        ],
+        "valid_to": [
+          "RANGE"
+        ]
+      },
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    }
+  ],
+  "constraints": [
+    {
+      "type": "UNIQUE",
+      "label": "CivicSchemaMigration",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "CivicSchemaMigration",
+      "properties": [
+        "attempts",
+        "checksum",
+        "id",
+        "registry_sha256",
+        "started_at",
+        "state",
+        "updated_at",
+        "version"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "CivicEntity",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "CivicEntity",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id",
+        "schema_version"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "ActionTask",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "ActionTask",
+      "properties": [
+        "action_type",
+        "created_at",
+        "id",
+        "municipality_id",
+        "priority",
+        "schema_version",
+        "status",
+        "updated_at"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "AgentDecision",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "AgentDecision",
+      "properties": [
+        "created_at",
+        "decided_at",
+        "decision_type",
+        "id",
+        "municipality_id",
+        "rationale",
+        "schema_version"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "AgentRun",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "AgentRun",
+      "properties": [
+        "agent_role",
+        "created_at",
+        "id",
+        "municipality_id",
+        "schema_version",
+        "started_at",
+        "status",
+        "updated_at"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "Approval",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "Approval",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id",
+        "plan_hash",
+        "plan_version",
+        "requested_at",
+        "requested_by",
+        "schema_version",
+        "status",
+        "updated_at"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "AssetConditionSnapshot",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "AssetConditionSnapshot",
+      "properties": [
+        "asset_id",
+        "condition",
+        "created_at",
+        "id",
+        "municipality_id",
+        "observed_at",
+        "schema_version",
+        "updated_at"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "CaseMemory",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "CaseMemory",
+      "properties": [
+        "created_at",
+        "id",
+        "memory_type",
+        "municipality_id",
+        "schema_version",
+        "summary",
+        "updated_at"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "CollectionRoute",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "CollectionRoute",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id",
+        "operational_status",
+        "route_code",
+        "schema_version",
+        "updated_at"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "Complaint",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "Complaint",
+      "properties": [
+        "created_at",
+        "description",
+        "id",
+        "municipality_id",
+        "reported_at",
+        "schema_version",
+        "source_channel",
+        "source_kind",
+        "status",
+        "updated_at"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "DataSource",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "DataSource",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id",
+        "name",
+        "origin",
+        "schema_version",
+        "source_type",
+        "updated_at"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "Department",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "Department",
+      "properties": [
+        "created_at",
+        "department_type",
+        "id",
+        "municipality_id",
+        "name",
+        "schema_version",
+        "updated_at"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "Document",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "Document",
+      "properties": [
+        "content_ref",
+        "created_at",
+        "document_type",
+        "id",
+        "municipality_id",
+        "schema_version",
+        "title",
+        "updated_at"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "DomainEvent",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "DomainEvent",
+      "properties": [
+        "created_at",
+        "delivery_status",
+        "event_type",
+        "id",
+        "idempotency_key",
+        "municipality_id",
+        "occurred_at",
+        "schema_version",
+        "subject_id",
+        "updated_at"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "DrainInlet",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "DrainInlet",
+      "properties": [
+        "asset_type",
+        "created_at",
+        "id",
+        "municipality_id",
+        "name",
+        "operational_status",
+        "schema_version",
+        "updated_at"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "DrainSegment",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "DrainSegment",
+      "properties": [
+        "asset_type",
+        "created_at",
+        "id",
+        "municipality_id",
+        "name",
+        "operational_status",
+        "schema_version",
+        "updated_at"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "DrainageCatchment",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "DrainageCatchment",
+      "properties": [
+        "catchment_type",
+        "created_at",
+        "id",
+        "municipality_id",
+        "name",
+        "schema_version",
+        "updated_at"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "EventDelivery",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "EventDelivery",
+      "properties": [
+        "attempts",
+        "created_at",
+        "domain_event_id",
+        "id",
+        "municipality_id",
+        "schema_version",
+        "status",
+        "updated_at"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "Evidence",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "Evidence",
+      "properties": [
+        "created_at",
+        "evidence_type",
+        "id",
+        "municipality_id",
+        "recorded_at",
+        "reliability",
+        "schema_version",
+        "source_kind",
+        "summary",
+        "updated_at"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "Finding",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "Finding",
+      "properties": [
+        "created_at",
+        "finding_type",
+        "id",
+        "municipality_id",
+        "schema_version",
+        "statement",
+        "updated_at",
+        "verification_status"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "Hypothesis",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "Hypothesis",
+      "properties": [
+        "cause_code",
+        "created_at",
+        "id",
+        "municipality_id",
+        "schema_version",
+        "statement",
+        "status",
+        "updated_at"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "HypothesisAssessment",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "HypothesisAssessment",
+      "properties": [
+        "assessed_at",
+        "assessment",
+        "created_at",
+        "id",
+        "municipality_id",
+        "rationale",
+        "schema_version"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "Incident",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "Incident",
+      "properties": [
+        "created_at",
+        "id",
+        "issue_type",
+        "municipality_id",
+        "schema_version",
+        "severity",
+        "started_at",
+        "status",
+        "subtype",
+        "updated_at"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "InfrastructureAsset",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "InfrastructureAsset",
+      "properties": [
+        "asset_type",
+        "created_at",
+        "id",
+        "municipality_id",
+        "name",
+        "operational_status",
+        "schema_version",
+        "updated_at"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "Inspection",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "Inspection",
+      "properties": [
+        "created_at",
+        "id",
+        "inspection_type",
+        "municipality_id",
+        "requested_at",
+        "schema_version",
+        "status",
+        "updated_at"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "InterventionOutcome",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "InterventionOutcome",
+      "properties": [
+        "assessment_status",
+        "created_at",
+        "evaluated_at",
+        "id",
+        "municipality_id",
+        "result",
+        "schema_version"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "Investigation",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "Investigation",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id",
+        "opened_at",
+        "priority",
+        "schema_version",
+        "status",
+        "updated_at"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "KnowledgeProcedure",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "KnowledgeProcedure",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id",
+        "schema_version",
+        "status",
+        "title",
+        "updated_at",
+        "version"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "Location",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "Location",
+      "properties": [
+        "created_at",
+        "id",
+        "latitude",
+        "longitude",
+        "municipality_id",
+        "name",
+        "schema_version",
+        "updated_at"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "Observation",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "Observation",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id",
+        "observation_type",
+        "observed_at",
+        "schema_version",
+        "source_kind",
+        "updated_at"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "OperatorAccount",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "OperatorAccount",
+      "properties": [
+        "created_at",
+        "department_id",
+        "display_name",
+        "id",
+        "municipality_id",
+        "role",
+        "schema_version",
+        "updated_at"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "PickupExecution",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "PickupExecution",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id",
+        "route_id",
+        "scheduled_at",
+        "schema_version",
+        "status",
+        "updated_at"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "ProblemCluster",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "ProblemCluster",
+      "properties": [
+        "created_at",
+        "first_seen_at",
+        "id",
+        "municipality_id",
+        "pattern_type",
+        "schema_version",
+        "status",
+        "title",
+        "updated_at"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "PumpStation",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "PumpStation",
+      "properties": [
+        "asset_type",
+        "created_at",
+        "id",
+        "municipality_id",
+        "name",
+        "operational_status",
+        "schema_version",
+        "updated_at"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "RainfallEvent",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "RainfallEvent",
+      "properties": [
+        "created_at",
+        "duration_minutes",
+        "id",
+        "municipality_id",
+        "schema_version",
+        "started_at",
+        "total_mm",
+        "updated_at"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "ResolutionPlan",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "ResolutionPlan",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id",
+        "plan_hash",
+        "schema_version",
+        "status",
+        "updated_at",
+        "version"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "RoadSegment",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "RoadSegment",
+      "properties": [
+        "asset_type",
+        "created_at",
+        "id",
+        "municipality_id",
+        "name",
+        "operational_status",
+        "schema_version",
+        "updated_at"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "ServiceSchedule",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "ServiceSchedule",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id",
+        "schedule_spec",
+        "schema_version",
+        "service_type",
+        "timezone",
+        "updated_at",
+        "valid_from"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "StatusEvent",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "StatusEvent",
+      "properties": [
+        "actor_type",
+        "created_at",
+        "entity_id",
+        "from_status",
+        "id",
+        "municipality_id",
+        "occurred_at",
+        "schema_version",
+        "to_status"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "ToolExecution",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "ToolExecution",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id",
+        "schema_version",
+        "started_at",
+        "status",
+        "tool_name",
+        "updated_at"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "WasteCollectionPoint",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "WasteCollectionPoint",
+      "properties": [
+        "asset_type",
+        "created_at",
+        "id",
+        "municipality_id",
+        "name",
+        "operational_status",
+        "schema_version",
+        "updated_at"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "WaterPipe",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "WaterPipe",
+      "properties": [
+        "asset_type",
+        "created_at",
+        "id",
+        "municipality_id",
+        "name",
+        "operational_status",
+        "schema_version",
+        "updated_at"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "WorkOrder",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "WorkOrder",
+      "properties": [
+        "created_at",
+        "execution_mode",
+        "id",
+        "idempotency_key",
+        "municipality_id",
+        "plan_version",
+        "schema_version",
+        "status",
+        "updated_at"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "Zone",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "Zone",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id",
+        "name",
+        "schema_version",
+        "updated_at",
+        "zone_type"
+      ],
+      "entitytype": "NODE",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "AFFECTS",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "AFFECTS",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "APPLIES_TO",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "APPLIES_TO",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "ASSIGNED_TO",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "ASSIGNED_TO",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "AUTHORIZED_BY",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "AUTHORIZED_BY",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "COLLECTED_BY",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "COLLECTED_BY",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "CONCERNS",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "CONCERNS",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "CONDITION_OF",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "CONDITION_OF",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "CONTRADICTED_BY",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "CONTRADICTED_BY",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "DELIVERS",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "DELIVERS",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "DEPENDS_ON",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "DEPENDS_ON",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "DERIVED_FROM",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "DERIVED_FROM",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "DOCUMENTED_IN",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "DOCUMENTED_IN",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "DRAINS_CATCHMENT",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "DRAINS_CATCHMENT",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "DRAINS_TO",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "DRAINS_TO",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "EMITTED_EVENT",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "EMITTED_EVENT",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "ESTABLISHES",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "ESTABLISHES",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "EXECUTED_BY",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "EXECUTED_BY",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "EXPLAINS",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "EXPLAINS",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "GOVERNED_BY",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "GOVERNED_BY",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "HAS_ASSESSMENT",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "HAS_ASSESSMENT",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "HAS_EVENT",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "HAS_EVENT",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "HAS_OPERATOR",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "HAS_OPERATOR",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "HAS_SCHEDULE",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "HAS_SCHEDULE",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "HAS_TASK",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "HAS_TASK",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "IMPLEMENTS",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "IMPLEMENTS",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "INSPECTS",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "INSPECTS",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "INVESTIGATES",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "INVESTIGATES",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "IN_ZONE",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "IN_ZONE",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "JUSTIFIED_BY",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "JUSTIFIED_BY",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "LEARNED_FROM",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "LEARNED_FROM",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "LOCATED_AT",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "LOCATED_AT",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "MAINTAINED_BY",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "MAINTAINED_BY",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "OCCURRED_AT",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "OCCURRED_AT",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "PART_OF",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "PART_OF",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "PICKUP_FOR",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "PICKUP_FOR",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "PRODUCED",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "PRODUCED",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "PRODUCED_PLAN",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "PRODUCED_PLAN",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "PROPOSES",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "PROPOSES",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "RAINFALL_AFFECTS",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "RAINFALL_AFFECTS",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "REPORTS",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "REPORTS",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "RESULTED_IN",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "RESULTED_IN",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "ROUTE_EXECUTION",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "ROUTE_EXECUTION",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "SERVES",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "SERVES",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "SUPPORTED_BY",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "SUPPORTED_BY",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "TARGETS",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "TARGETS",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "UNDERLIES",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "UNDERLIES",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "UNIQUE",
+      "label": "USED_TOOL",
+      "properties": [
+        "id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    },
+    {
+      "type": "MANDATORY",
+      "label": "USED_TOOL",
+      "properties": [
+        "created_at",
+        "id",
+        "municipality_id"
+      ],
+      "entitytype": "RELATIONSHIP",
+      "status": "OPERATIONAL"
+    }
+  ],
+  "canonical_domain_nodes": 0,
+  "b01_probe": [
+    [
+      "B01-PERSISTENCE",
+      "SYNTHETIC",
+      "B01"
+    ]
+  ],
+  "graphs": [
+    "civicly_b01_runtime",
+    "civicly_knowledge"
+  ]
+}

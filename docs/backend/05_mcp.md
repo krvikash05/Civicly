@@ -38,3 +38,12 @@ Persist timestamp, agent role, tool name, input schema version, redacted normali
 
 ## Relevant official references
 https://docs.falkordb.com/genai-tools/mcpserver ; https://docs.falkordb.com/genai-tools/mcpserver/configuration ; https://github.com/FalkorDB/FalkorDB-MCPServer ; https://modelcontextprotocol.io/ . Confirm exact version and transport with smoke test B06.
+
+## B02 canonical scope contract (v3)
+Canonical domain records use `municipality_id='demo-city'`, fixed by the server.
+`tenant_id` is not a domain alias or caller-controlled input. Framework integration
+may translate the same fixed value explicitly if its verified API requires it.
+All normative machine contracts reference this same municipality_scope policy.
+This is one synthetic municipality, not enterprise tenant isolation. Legacy v1/v2
+fixtures require explicit conversion before canonical import; no implicit scope,
+unknown-field dropping, or invented temporal evidence is permitted.

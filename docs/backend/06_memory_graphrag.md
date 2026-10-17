@@ -25,3 +25,12 @@ Hackathon-appropriate single demo municipality; all graph queries scope `municip
 
 ## Correction protocol
 When new inspection contradicts H1: append assessment H1-A2, link contradiction evidence, update current pointer/status with revision; persist prior H1-A1 and its decision justification; update CaseMemory to mark outdated finding, not erase it. New case retrieval sees history plus correction and reliability. On process restart checkpoint resumes without inventing missed history.
+
+## B02 canonical scope contract (v3)
+Canonical domain records use `municipality_id='demo-city'`, fixed by the server.
+`tenant_id` is not a domain alias or caller-controlled input. Framework integration
+may translate the same fixed value explicitly if its verified API requires it.
+All normative machine contracts reference this same municipality_scope policy.
+This is one synthetic municipality, not enterprise tenant isolation. Legacy v1/v2
+fixtures require explicit conversion before canonical import; no implicit scope,
+unknown-field dropping, or invented temporal evidence is permitted.

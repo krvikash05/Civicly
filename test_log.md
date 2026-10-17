@@ -1,5 +1,11 @@
 # test_log.md — Append-only verification record
 
+## Current status — 2026-10-17 (takes precedence over historical entries)
+
+B02 final acceptance: 53 PASS / 0 FAIL / 0 SKIP, including real DB and restart/recreation. Both SPEC validators PASS with explicit legacy warnings. Canonical 0001 READY: 91 index groups / 182 constraints OPERATIONAL. Prior failures/recovery preserved below; fixture import remains blocked.
+
+---
+
 No runtime tests have been run. Specification structure will be validated when the handoff is produced.
 
 ## Template
@@ -115,3 +121,47 @@ PY
 
 - Post-documentation check: repeated `make test-spec` PASS. Compared all original manifest entry hashes: only README and six tracking files changed; all original contracts/data and backend requirement docs unchanged. Expanded membership scan still has exactly 55 defects. `git check-ignore .env backend/.venv/bin/python .uv-cache` confirms local artifacts ignored.
 - `/private/tmp/civicly-b01-locked-env/bin/civicly health`: PASS against actual local database using the clean environment's console entrypoint (status ok, canonical graph explicitly uninitialized).
+
+### TEST-20261017-B02-01 — Baseline and official-version spikes
+- Environment unchanged: Python3.12.1 macOS26.5 arm64; official falkordb1.8.0/redis8.1.0; Docker Engine29.8.2/Compose5.6.0; graph60002 (6.0.2), Redis8.10.2, Browser2.6.1, immutable B01 image digest retained.
+- Baseline scan command: Python Path/git ls-files --others --exclude-standard -z + ignored dotenv secret values/private-key marker scan. PASS102 candidate files, no secret values/.env/venv/caches. `git check-ignore .env backend/.venv/bin/python .uv-cache`: all ignored.
+- `git add .`; `git diff --cached --check`: original docs/demo/SCENARIOS.md trailing blank-line warning, preserved source content. `git -c user.name='Civicly Local Build' -c user.email='civicly-local@example.invalid' commit -m 'Baseline accepted B01 backend foundation and specification'`: PASS root commit426f6e1322dca9e83e470ee471b25b8df7f9e028,102 files. `git status --short`: clean. No remote/push.
+- Official pages read: graph.constraint-create, cypher/indexing/range-index, cypher/known-limitations. Incorrect graph.constraint-list URL inaccessible; readiness documented as db.constraints().
+- Real disposable spike failures: `inspect.signature(FalkorDB.create_constraint)` -> AttributeError (helper absent); attempted QueryResult.statistics -> AttributeError. Corrected to execute_command and result_set/header, preserving installed versions.
+- Exact accepted DDL patterns: `CREATE INDEX FOR (n:Spike) ON (n.id)`; `CREATE INDEX FOR ()-[r:SPIKE_EDGE]-() ON (r.id)`; `client.execute_command('GRAPH.CONSTRAINT','CREATE',graph_name,'UNIQUE','NODE','Spike','PROPERTIES',1,'id')`; analogous MANDATORY node/relationship and UNIQUE relationship calls. Returned PENDING; actual db.indexes/db.constraints rows OPERATIONAL. Multi-label CREATE, parameter map SET and native point writes PASS. Only random spike graph removed.
+- First runner spike `CALL db.indexes() YIELD * RETURN * LIMIT 513` -> ResponseError invalid '*'; corrected to explicit verified columns. Disposable full apply/rerun then PASS91 indexes/182 constraints. No canonical data touched during spikes.
+
+### TEST-20261017-B02-02 — Strict validation and preserved fixture blocker
+- `backend/.venv/bin/python -m pytest backend/tests/unit -v`: first31 PASS/1 FAIL because added asset_type constants rejected five legacy values beyond55 known defects. DEC-008 removed premature taxonomy change; no fixtures changed. Next32 PASS. Added oversized numeric guard, yielding final33 unit tests.
+- Canonical validator rejects unknown fields, absent required values, wrong primitive types (including bool masquerading as integer/number), bad enums, nonfinite/oversized numeric values, invalid scope/alias/version/ID, malformed/non-UTC times and temporal intervals.
+- Explicit test-only conversion of legacy node scope/version preserves every source property; all55 OBS-0100–OBS-0154 value_number records remain rejected, remaining783 fixture nodes validate. Original unconverted source is rejected. This is not an importer or permission to ingest data.
+- Normative scope metadata equality tested across registry/state/MCP/API/event contracts; public names/endpoints/enums checked against baseline unchanged. Existing mandatory requirements retained and v3 scope/edge metadata additions documented.
+
+### TEST-20261017-B02-03 — Real DB migrations/constraints and recovery / PASS
+- `backend/.venv/bin/python -m pytest backend/tests/integration/test_schema_migrations.py -v -s`: initial8 PASS in20.90s. Added limitation/preexisting-index/missing-support tests; combined unit/integration command below44 PASS.
+- `backend/.venv/bin/python -m pytest backend/tests/unit backend/tests/integration/test_schema_migrations.py -v -s` (tee docs/evidence/B02-schema-tests.txt):44 PASS in22.58s, exit0. All DB assertions use actual FalkorDB.
+- Verified 91 index groups/182 constraints OPERATIONAL, safe rerun, zero domain seed nodes, six typed infrastructure subtypes with both parent labels, cross-subtype duplicate ID rejected, grouped mandatory missing-field rejected, native-point index/readback and ID Index Scan EXPLAIN.
+- Real relationship writes preserve id/scope/time/evidence metadata. DB refuses duplicate edge ID and missing mandatory metadata. Adapter refuses invalid endpoints, UNDERLIES reversal, self-drain, unknown fields/enums and invalid time/evidence-free VERIFIED. No physical causal verification claimed; reference-existence checks remain B03+.
+- Failure tests: interruption injected only after real successful index operations (no fake DB responses); partial schema retained, FAILED audit preserved, fresh runner finishes. Actual duplicate rows cause asynchronous constraint FAILED; both records retained; normal rerun refuses until explicit retry after non-destructive identifier repair. Constraint recreation reaches OPERATIONAL.
+- Schema lease contention, registry hash drift, applied checksum tampering/future version rejected. Supporting-index absence produces actual server error. Native raw unknown-property acceptance proven to document application validation requirement.
+
+### TEST-20261017-B02-04 — Canonical apply and rerun / PASS
+- `make migrate` -> official-client additive canonical migration0001: PASS exit0; registry3, municipality_id demo-city, ready=true,91 index groups/182 constraints, attempts1. Output docs/evidence/B02-canonical-apply.txt.
+- `make migrate` repeated: PASS exit0, attempts2, same checksums/counts, no domain nodes created. Output B02-canonical-rerun.txt.
+- `make schema-status`: PASS exit0, ready=true and every expected object verified, output B02-canonical-status.txt. `make health`: graph_state available, PING/module/read true.
+- Migration checksum94ab9fae6079fe7e87b41afd80701409db6bb51d529c2565dbd340896a5c923b; registry checksum12541990b58d65e8602bff77b93b735009616e7ee658b9e7582a7ae9f449aac6.
+- Direct post-restart catalog read (MigrationRunner.status/_catalog via official client) saved docs/evidence/B02-schema-catalog.json:91 OPERATIONAL RANGE groups/304 property entries;182 OPERATIONAL constraints; canonical domain nodes0; B01 probe [['B01-PERSISTENCE','SYNTHETIC','B01']]. Only civicly_b01_runtime and civicly_knowledge graphs remain. No volumes deleted.
+
+### TEST-20261017-B02-05 — Final complete regression / PASS
+- Exact command: `backend/.venv/bin/python -m pytest backend/tests -v -s --run-persistence` (pipefail + tee docs/evidence/B02-all-tests.txt).
+- **53 PASS /0 FAIL /0 SKIP in41.79s**, exit0:33 unit/framework tests +19 ordinary real DB/Browser/CLI integration tests +1 real restart/recreation lifecycle test.
+- Existing B01 PING/health/parameterized CREATE/MATCH/RO denial/CLI redaction/Browser/volume behavior PASS. Same-container restart and replacement-container recreation retained data; canonical schema readiness confirmed after lifecycle. Added READY-marker-with-missing-constraint test shows real catalog drift detected and additive rerun restores missing constraint.
+- No fake LLM used. Fault injection is an interruption after actual DDL, not mocked integration success. MCP/LLM/GraphRAG/checkpoint/domain operations/API/E2E remain NOT RUN, outside B02.
+
+### TEST-20261017-B02-06 — Specification, dependency and diff checks
+- `make test-spec` -> `backend/.venv/bin/python scripts/validate_blueprint.py` and `backend/.venv/bin/python scripts/validate_handoff.py`: PASS exit0;42 types/47 relationships/18 tools/9 machines;43 routes/57 schemas/20 events;838 nodes/1245 edges/12 scenarios/18 documents. Explicit legacy structure and55 known import defects warning, not canonical fixture acceptance. Results docs/evidence/B02-spec-validation.txt.
+- Handoff validator now rejects new unknown expanded properties while explicitly tracking the exact55 B04 defect records; new v3 required fields are not invented for old source fixtures. JSON Schema meta-validation available and executed.
+- `backend/.venv/bin/python -m pip check`: PASS no broken requirements. `UV_CACHE_DIR=.uv-cache backend/.venv/bin/uv lock --project backend --check`: PASS34 resolved entries unchanged.
+- `backend/.venv/bin/python -m compileall -q backend/app backend/cli backend/tests scripts`: PASS. `git diff --check`: PASS for B02 diff. A documentation patch initially had an unmatched context and applied no changes; corrected patch succeeded.
+- Baseline comparisons assert all supplied fixtures/data and R01–R18 requirement file unchanged, all public node/relationship names/endpoints and enum values retained. Exact B02 file list and diff recorded in docs/evidence/B02-files.txt and B02-git-diff.txt. Root manifest remains original handoff snapshot, not silently regenerated.
+- Human verification: `make schema-status` -> ready true/version1/registry3; `make migrate` -> same schema and a new audit attempt only; `make health` -> existing canonical graph read true; run full command in -05 and `make test-spec`. Browser queries/recovery instructions in backend/SCHEMA.md. If failure, share test_log/blockers + command output, excluding .env.

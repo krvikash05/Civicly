@@ -70,5 +70,6 @@ for route in end['routes']:
 for route in end['routes']:
  if route['response_dto'] not in D:raise ValueError(f'missing {route["response_dto"]}')
 res={'$schema':'https://json-schema.org/draft/2020-12/schema','title':'Civicly REST contracts','description':'Machine-readable expected field contracts. Codex implements Pydantic models and generated OpenAPI, validates endpoints and extends optional fields via ADR and tests.','schema_version':2,'$defs':D,'error_envelope':S(error=S(code=string(),message=string(),retryable=bool_(),details=obj()),request_id=string()),'success_envelope':{'type':'object','required':['data','request_id','schema_version'],'properties':{'data':{},'request_id':string(),'schema_version':integer()}}}
+res['municipality_scope']=end['municipality_scope']
 (root/'contracts/api_models.json').write_text(json.dumps(res,indent=2)+'\n')
 print('Created',len(D),'typed DTO/request shapes covering',len(end['routes']),'routes')

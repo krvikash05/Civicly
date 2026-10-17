@@ -1,4 +1,8 @@
-# B01 backend foundation
+# Backend foundation through B02
+
+B01 is accepted. B02 adds canonical schema v3, strict validation and additive
+migration 0001. See [SCHEMA.md](SCHEMA.md) for established constraints/indexes,
+native enforcement limits, recovery, and the explicit legacy-fixture blocker.
 
 Implemented: validated configuration, official FalkorDB connection lifecycle,
 foundation CLI health, and real database/Browser/persistence integration tests.
@@ -10,6 +14,7 @@ From the repository root, with Python 3.12 and Docker Desktop running:
 ```sh
 make setup
 make up
+make migrate
 make health
 make test-unit
 make test-graph
@@ -30,7 +35,7 @@ to select another settings file; process environment takes precedence.
 
 A fresh database reports `status: ok`, `scope: backend_foundation`,
 `graph_state: uninitialized`, `graph_read: null`: server/module are available,
-but B02 has not initialized `civicly_knowledge`. Health does not create graphs.
+but migrations have not initialized `civicly_knowledge`. Health does not create graphs.
 For an existing graph, it executes a static parameterized `GRAPH.RO_QUERY` and
 reports `graph_read: true`. This is not full agent-system readiness.
 
