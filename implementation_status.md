@@ -2,7 +2,7 @@
 
 ## Current status — 2026-10-17 (takes precedence over historical entries)
 
-B00/B01 accepted; B02 complete, human review pending. Canonical registry v3 / migration 0001 READY: 91 index groups / 182 constraints OPERATIONAL; 53 tests PASS. Zero domain nodes seeded. B03 and later capabilities unimplemented.
+B03-R implemented and tested; human review pending. Cardinality, total-path budgets/default6, search metadata and shared milestone02–25 UUIDv4 target guard corrected.135 tests PASS (77 unit/58 real integration); canonical0001 READY,91 index groups/182 constraints OPERATIONAL,0 domain nodes. B04 is only a documented benchmark plan, not started.
 
 ---
 
@@ -46,3 +46,53 @@ Per task, update: implemented paths, exact tests, pass/fail/skip, screenshots/lo
 - Final tests 53 PASS/0 FAIL/0 SKIP; both specification validators PASS with explicit legacy/import-blocker warnings. Earlier spike/test failures recorded, not hidden. No dependency changes; real database/client versions remain B01 pins.
 - Scope inconsistency resolved; all 42 node/47 relationship names/endpoints and enum values preserved. Registry additions are documented v3 requirements, not silent data coercion. All supplied fixtures/data and R01–R18 document unchanged.
 - BLOCK-B00-02 remains OPEN for 55 Observation fields and other deferred findings. B03 graph-aware repositories/policies, B04 conversion/ingestion, runtime MCP, agents/memory/GraphRAG, approvals, durable events/API/SSE, E2E and frontend remain unimplemented/unverified. No product capability declared complete by schema alone.
+
+## B03 result | 2026-10-17
+- B02 accepted by user; local clean baseline3db6d873fb494a5ce456cb5d04a84f2be50919d4,
+  no push. B03 implemented; human review pending. Next task B04 only after acceptance.
+- Actual source: typed node/edge/path/query/result models; strict graph repository
+  create/get/update/relationship methods; graph-aware references/evidence/scope/
+  identity/temporal/cardinality/cycle policies; fenced per-graph writers, CAS and
+  pending/audit/revision recovery; eight finite GRAPH.RO_QUERY templates. See
+  backend/GRAPH_ACCESS.md and contracts/graph_access.json for limits/imports.
+- All89 acceptance tests PASS (45 unit +44 real integration, including lifecycle);
+  old53 B01/B02 regressions retained. B03 adds12 unit +24 real integration tests.
+  Both SPEC validators, dependency consistency and lock check PASS. Failures and
+  corrected fixture/test/runtime assumptions remain recorded in test_log.md.
+- Installed upstream metadata projection issue avoided through pre/post monotonic
+  revision checks; future source-evidence dates on candidate paths filtered. Real
+  examples/EXPLAIN plans in B03-runtime.json. Equal coordinates without explicit
+  network links yield no cross-category path; path context never asserts causation.
+- Canonical registry3 / migration0001 still READY,91 index groups/182 constraints
+  OPERATIONAL,0 domain nodes. Original B01 probe and graph/Browser volumes retained.
+  No full city seed or hidden evaluation data consumed.
+- Still unimplemented: full fixture conversion/import, behavioral agent decisions,
+  MCP runtime, LangGraph/checkpoint memory, GraphRAG, operations/approval/outbox,
+  API/SSE/frontend and B-END. Repository foundation completes no product objective
+  by itself; all R01–R18 remain mandatory. BLOCK-B00-02 and deferred DEC-004 remain.
+
+## B03-R corrective review implementation | 2026-10-17
+- B03 provisionally accepted; B03-R is the only active work. Registry v3 and immutable
+  migration0001 unchanged. Existing B01/B02/B03 tests are preserved.
+- Implemented outgoing primary IN_ZONE/PART_OF, per-route/service effective schedule
+  interval conflicts and guarded endpoint edits. Defaults/grammar now budget total
+  path hops with explicit template minima and typed bounded-search result metadata.
+  Shared milestone02–25 UUIDv4 target guard replaces divergent hardcoded B02/B03
+  allowlists. B04 benchmark documentation only; no importer/bulk shortcuts.
+- Verification pending final full regression; prior89 tests remain historical PASS.
+  Original review package remains an immutable snapshot of pre-correction B03.
+  All18 product requirements and deferred DEC-004 findings remain binding/open.
+
+## B03-R acceptance result (supersedes in-progress entry) | 2026-10-17
+- 135 PASS /0 FAIL /0 SKIP:77 unit and58 real integration, including real retained-
+ volume restart/recreation. All previous89 tests unchanged;32 unit and14 integration
+ added. Strengthened template suite22 PASS; both SPEC validators and package/lock
+ checks PASS. No recorded B03-R test failure or skipped required runtime check.
+- Post-lifecycle canonical0001 READY, registry3,91 index groups/182 constraints
+ OPERATIONAL,0 domain nodes, original B01 probe retained; Browser HTTP200. Updated
+ eight live query examples and EXPLAIN plans include actual budget metadata.
+- No converter/importer/seed/bulk shortcut, MCP/agent/GraphRAG, business workflow,
+ API/frontend implemented. B04 benchmark execution and all remaining product gates
+ unverified. Original55 defects and remaining DEC-004 findings remain OPEN.
+- B03-R complete for human review, not human-accepted. B04 remains TODO and blocked
+ on explicit continuation. Source changes remain local/uncommitted; no push.

@@ -1,0 +1,3583 @@
+diff --git a/Makefile b/Makefile
+index c595b6f..10adb6b 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1,7 +1,7 @@
+ PYTHON ?= python3.12
+ VENV := backend/.venv/bin
+ 
+-.PHONY: configure setup up health migrate schema-status test-unit test-graph test-persistence test-spec down
++.PHONY: configure setup up health migrate schema-status test-unit test-graph test-repositories test-persistence test-spec down
+ configure:
+ 	$(PYTHON) scripts/configure_local.py
+ setup:
+@@ -27,3 +27,6 @@ test-spec:
+ 	$(VENV)/python scripts/validate_handoff.py
+ down:
+ 	docker compose down
++
++test-repositories:
++	$(VENV)/python -m pytest backend/tests/unit/test_graph_access_models.py backend/tests/integration/test_graph_access.py -v
+diff --git a/backend/app/graph/migration.py b/backend/app/graph/migration.py
+index f1b2ad5..90111b7 100644
+--- a/backend/app/graph/migration.py
++++ b/backend/app/graph/migration.py
+@@ -20,7 +20,7 @@ class MigrationError(RuntimeError):
+ 
+ class MigrationRunner:
+     def __init__(self, client, graph_name: str, registry: Registry | None = None):
+-        if graph_name != "civicly_knowledge" and not re.fullmatch(r"civicly_b02_test_[0-9a-f]{32}", graph_name):
++        if graph_name != "civicly_knowledge" and not re.fullmatch(r"civicly_b0[23]_test_[0-9a-f]{32}", graph_name):
+             raise MigrationError("Migration target must be canonical or an isolated B02 test graph")
+         self.client = client
+         self.graph = client.select_graph(graph_name)
+diff --git a/blockers.md b/blockers.md
+index 44467fb..7ccaab0 100644
+--- a/blockers.md
++++ b/blockers.md
+@@ -2,7 +2,7 @@
+ 
+ ## Current status — 2026-10-17 (takes precedence over historical entries)
+ 
+-No active B02 environment blocker. Scope naming finding is resolved by canonical municipality_id=demo-city and consistent contracts. BLOCK-B00-02 remains OPEN for 55 Observation defects and other deferred DEC-004 findings. Native CHECK/endpoint enforcement requires application validation.
++No active B03 environment blocker; installed metadata projection issue has a tested workaround. BLOCK-B00-02 remains OPEN for55 legacy Observation defects and deferred DEC-004 findings. Raw privileged writes bypass repository policy; auth/approvals/MCP trace/outbox/evaluator isolation remain later gates. STOP for B03 review.
+ 
+ ---
+ 
+@@ -53,3 +53,29 @@ No active implementation blocker is claimed. Verification spikes (NOT defects) a
+ - Native constraints lack CHECK-style type/unknown/endpoint/conditional/global-edge-ID enforcement. Proven limitation, addressed structurally by B02 validator; future B03 repositories/services must enforce graph-aware rules and use controlled write paths. Raw developer DB access remains privileged.
+ - No active B02 runtime blocker. Recovery never requires deleting B01 evidence/volumes; see backend/SCHEMA.md. Missing live provider/agent integrations remain outside B02.
+ - Human action: review B02; continue only when ready for B03. Share schema-status, test output/test_log/blockers on failure; never .env or secrets.
++
++## B03 review | 2026-10-17
++
++### BLOCK-B00-02 — Continued OPEN; no fixture repair/import
++- All55 legacy Observation.value_number discrepancies remain, with original registry/
++  fixture source hashes preserved. B03 cannot silently accept/discard unknown fields.
++  Explicit reviewed B04 conversion must resolve them before canonical ingestion.
++- Scope naming was resolved in B02 (municipality_id=demo-city); B03 enforces it.
++  MCP trace/envelopes (B07), documents/provenance/PDF (B11), approval binding
++  (B12/B13), historical completeness (B04/B19), event durability (B15), API mapping
++  (B17) and hidden evaluation-data isolation (B19) remain open per DEC-004.
++
++### B03 runtime projection issue — WORKAROUND VERIFIED; no active B03 blocker
++- Minimal repro: MATCH a disconnected CivicSchemaMigration node, WITH m, then an
++  upstream DRAINS_TO variable path and RETURN coalesce(m.repo_revision,0),nodes(p).
++  Installed6.0.2 returned0 twice while separate revision read returned52 in initial
++  spike; current reproducible report uses its fixture revision53. This observation
++  does not establish root cause or an upstream fix.
++- Avoided metadata projection entirely; bounded reads check actual revision before
++  and after path retrieval/validation and retry once. Actual upstream templates now
++  pass. Pending state blocks reasoning, and changed pending pre-state fails closed.
++- Limits requiring future review: raw privileged writes bypass repository policies/
++  revision; no enterprise isolation; no reconstructed historical node snapshots;
++  policy scan/audit budgets fail closed; audit archival needs reviewed migration.
++  Writer metadata/audit is not a domain outbox or MCP trace. Auth/state/approval/
++  durable events remain later gates. No user environment action is needed for B03.
+diff --git a/decision.md b/decision.md
+index 10a9ebe..7c189a2 100644
+--- a/decision.md
++++ b/decision.md
+@@ -117,3 +117,64 @@ Decisions are recorded chronologically. Codex must append an entry whenever a si
+ - Scope finding in DEC-004 resolved by explicit user preference and synchronized contracts/docs. Remaining DEC-004 issues and all 55 value_number defects remain OPEN. Old fixtures retain hashes; static validators label their checks as legacy structure and report known defects rather than claiming canonical eligibility.
+ - Sources consulted: https://docs.falkordb.com/commands/graph.constraint-create (async constraints/readiness), https://docs.falkordb.com/cypher/indexing/range-index, https://docs.falkordb.com/cypher/known-limitations. Installed-version spikes take precedence: documented create_constraint helper absent, QueryResult.statistics absent, YIELD * unsupported. Use execute_command, result_set/header and explicit YIELD columns.
+ - Evidence: TEST-20261017-B02-01–06, docs/evidence/B02-all-tests.txt, B02-schema-catalog.json, B02-canonical-apply/rerun/status.txt and B02-spec-validation.txt. All 18 objectives preserved; B02 foundation is not product completion.
++
++### DEC-010 — B03 repository/query design before implementation | 2026-10-17 | ACCEPTED TASK SCOPE
++- User attachment accepts B02 and authorizes B03 only, including repositories, graph-aware integrity, eight query families, real concurrency/failure tests and local baseline. R04/R05/R08/R09/R13/R15/R16 foundations; all R01–R18 retained. No B04 import/fixture correction, agents/MCP/GraphRAG, operations/API/UI.
++- Verified migration0001 READY with91 index groups/182 constraints OPERATIONAL, registry3 and B01-PERSISTENCE retained. Secret audit passed46 B02 files; local baseline3db6d873fb494a5ce456cb5d04a84f2be50919d4. Diff whitespace warnings are context markers in retained B02-git-diff evidence, not source edits; preserved. No remote/push.
++- Preserve registry v3 and immutable migration0001 hashes. Declare B03 behavioral policy in separate graph-access contract/docs; no new public labels/relationships/enums/properties. Permit isolated civicly_b03_test_UUID targets in migration runner for tests only.
++- Typed Pydantic node/edge/path/result records use stable public IDs, original edge orientation, path order, evidence IDs, municipality scope, as_of and application repository revision. Strict Registry validates every write/read, no property dropping. Mutable updates require expected content digest; ID/scope/version/created_at and immutable registry records cannot change. Future domain services remain responsible for auth/state-machine approval rules; repository is not an exposed dispatch API.
++- Concurrency: one bounded Redis write lease per graph plus owner/epoch fence stored on existing internal CivicSchemaMigration record. Every domain mutation checks fence and repository revision in the same graph statement. New lease owner advances fence before validation; expired writers cannot commit after successor. Separate pending intent stores only IDs/hashes; domain mutation, audit append, revision and pending clear occur in one tested query. Lost replies raise explicit outcome-unknown; recovery only clears intent if unchanged pre-state is proven, otherwise fail closed. No automatic uncertain write retry, no cross-graph transaction claim.
++- Real spike proves full-property CAS works and a two-node CREATE that hits UNIQUE rolls back the first new node too on6.0.2; not assumed from Neo4j. Single-query atomic mutation+metadata still needs dedicated failure tests. Ordered nodes(p)/relationships(p) return official client Node/Edge objects for explicit serialization.
++- Graph-aware policies: actual endpoint existence/types/scope, verified evidence existence/reliability/date/attribution, unique edge IDs across types and domain IDs, duplicate temporal relationships, singleton active ownership/route/location/assignment cardinality, permanent task DAG acyclicity. Drainage cycles rejected unless explicitly inspected via verified inspection evidence; no universal ban on other network cycles. Bounded policy export fails closed when too large; no incomplete scan treated as proof.
++- Read families: drainage_paths, shared_infrastructure, incident_history, maintenance_history, cross_category_paths, hypothesis_evidence, ownership_dependencies, temporal filtering throughout. All execute GRAPH.RO_QUERY via named templates; no raw query input. Validated hop/row/time/node/edge caps, parameterized IDs/times, actual source/target direction, explicit truncation. Cross-category path is a candidate association through recorded SERVES/LOCATED_AT/DRAINS_TO edges, never spatial proximity or causal proof. Historical node snapshots not reconstructed; future-updated records are excluded conservatively.
++- Tests: isolated purpose-built canonical-v3 graphs; all requested rejection/traversal/shared/evidence/temporal/nearby/concurrency cases, stale fence/CAS/uncertain-reply recovery, atomic rollback, readonly cannot mutate, all53 B01/B02 regressions and SPEC validators. Human verifies named traversal example and full tests. BLOCK-B00-02 and all deferred DEC-004 findings remain OPEN.
++- Planned files: graph models/repository/queries, graph-access contract, test fixtures/unit/integration, graph guide and Make target, small migration target whitelist update, six logs and B03 evidence. No dependency upgrade expected.
++
++### DEC-011 — B03 installed-runtime results and limits | 2026-10-17
++- Implemented DEC-010 with no dependency upgrades: Python3.12.1, FalkorDB client1.8.0,
++  redis8.1.0, Pydantic2.14.1, pytest9.1.1; server6.0.2/module60002, Redis8.10.2,
++  Browser2.6.1 and accepted image digest retained. No new public ontology values.
++- Single-statement domain+metadata rollback, owner/epoch fencing, CAS, concurrent
++  edge IDs/cardinality/cycle rejection, dropped response before/after actual commit
++  and unchanged-prestate recovery are exercised against real DB. Inconsistent
++  pending state remains intact and blocks reasoning; no fake success or automatic
++  uncertain retry. Raw privileged DB writes remain outside the guarantee.
++- Added eight named queries (including task_dependencies as operational dependency
++  family) with real EXPLAIN plans. Fixed bounded grammar supports all()/nodes()/
++  relationships(), zero-hop shared traversal, collect/UNWIND, relationship alternation,
++  UNION ALL, parameter LIMIT and finite query timeout on installed server. Direction
++  is derived from actual edge source/destination, not guessed from path order.
++- Runtime deviation: projecting disconnected migration metadata with upstream
++  variable-length path returned revision0 while separate read returned52; minimal
++  spike reproduced in B03-runtime.json. Rather than trusting that projection,
++  capture scalar repository revision before/after all retrieval validation and retry
++  once on change. This is scoped to observed6.0.2 behavior, not an inferred universal
++  bug or a new native transaction claim. No unsupported Neo4j procedures used.
++- UTC registry parser allows fractions; query comparisons pad/truncate to Python
++  datetime microseconds instead of unsafe raw lexical Z ordering. Historical node
++  versions are not reconstructed. Future knowledge timestamps, including external
++  source-evidence pointers on candidate relationships, exclude paths at as_of.
++- Explicit singleton policy implements the ontology's primary location/owner/route/
++  assignment semantics without adding a primary flag. DEPENDS_ON is permanently
++  acyclic; drainage proof intersects validity intervals and allows explicitly
++  inspected cycles only with verified attributed inspection evidence. Other network
++  types remain unrestricted by a universal cycle ban. Missing bounds remain unknown.
++- Limits:6 total path edges,100 paths,120 nodes,200 edges,1000ms; branch limit+1
++  and result truncation, no claim that a bounded traversal proves no longer paths.
++  Policy inspection2000 edges/10000 states and audit10000 entries fail closed.
++  Audit archival, authorization, approval/state workflows and durable event delivery
++  are later milestones. No API/MCP/agent/GraphRAG/seed/frontend scaffold added.
++- Evidence samples: drainage3 nodes/2 edges/2 paths; shared5/4/4; incident3/2/2;
++  maintenance6/5/4; cross-category7/6/1; hypothesis5/4/2 (support+contradiction);
++  ownership3/2/2; task3/2/2. A nearby asset at a distinct location with identical coordinates and no
++  physical-network link is excluded from the cross-category result.
++- No mutation of canonical domain graph (0 nodes) or B01 probe. Same registry hash
++  12541990b58d65e8602bff77b93b735009616e7ee658b9e7582a7ae9f449aac6 and migration
++  checksum94ab9fae6079fe7e87b41afd80701409db6bb51d529c2565dbd340896a5c923b retained.
++  No fixture/import repair; all55 defects and deferred DEC-004 findings remain open.
++
++- B03 review packaging:9 tracked files modified /18 files created, exact inventory
++  B03-files.txt and complete B03-git-diff.txt (self excluded). Final secret/ignored-file
++  audit PASS; registry/migration/data/pins/Compose unchanged. Source acceptance89
++  PASS (45 unit/44 real integration), plus8 strengthened-template rechecks PASS.
++  All6 tracking files updated, B03 changes left uncommitted for review. No push.
+diff --git a/docs/backend/02_graph.md b/docs/backend/02_graph.md
+index 422766f..85794c2 100644
+--- a/docs/backend/02_graph.md
++++ b/docs/backend/02_graph.md
+@@ -76,3 +76,15 @@ fixtures retain their original shape until explicit B04 conversion. Storage-only
+ bookkeeping is excluded from domain/MCP/Canvas data. UTC Z validity bounds are
+ optional (unknown/open), with typed evidence pointers and no inferred dates.
+ Graph-wide cardinality/cycle/reference checks and query repositories remain B03.
++
++## B03 implemented access foundation (supersedes B03 TODO above)
++
++`backend/GRAPH_ACCESS.md` documents the implemented repositories, declared integrity
++policy (`contracts/graph_access.json`), eight typed read templates, fixed scope,
++CAS/fenced writers, query budgets and recovery. Registry v3 and migration 0001
++remain unchanged; no public ontology fields or names were added or dropped.
++Canonical migration readiness is checked before repository construction. Future
++MCP/domain/API services must use typed methods and preapproved read requests; this
++adapter does not authorize operations or deliver durable events. B04 fixture
++conversion/import remains blocked by the 55 value_number defects. Product R01–R18
++capabilities remain mandatory and are not declared complete by this foundation.
+diff --git a/flow.md b/flow.md
+index f03283b..53b2073 100644
+--- a/flow.md
++++ b/flow.md
+@@ -96,3 +96,46 @@ Generated local-only state: .git/, ignored .env, backend/.venv/, .uv-cache/, tem
+ - Scope flows identically through registry, state/MCP/API/event metadata and current architecture docs. Client cannot choose municipality. No current framework needs tenant_id; any future mapping is explicit at boundary.
+ - Tests: unit/test_schema.py covers strict types/unknowns/enums/scope/time and retained defects; integration/test_schema_migrations.py performs real DDL/constraints, subtype/point writes, failure/recovery/version/lease/drift tests and B01-probe protection. Existing B01 tests all retained. Synthetic examples in tests/schema_examples.py are isolated test records, not city seeding.
+ - Debug: make schema-status -> backend/SCHEMA.md recovery guide -> actual db.indexes/db.constraints -> test_log/blockers. Domain graph-wide cardinality/cycles/evidence existence, retrieval templates and typed repositories are B03, not implemented here.
++
++### B03 — Actual repository/query file graph and control flow | 2026-10-17
++
++```text
++connection.connect(Settings) -> official FalkorDB client
++  GraphRepository -> MigrationRunner.status (real catalog READY)
++                  -> Registry v3 + contracts/graph_access.json
++                  -> NodeRecord / EdgeRecord / digest
++  GraphQueries -> QueryRequest + ReadLimits -> eight static templates
++               -> GraphRepository read/validation -> GraphResult / PathRecord
++  tests.graph_fixtures -> repositories -> disposable civicly_b03_test_UUID
++  tests.b03_evidence -> real queries + EXPLAIN -> B03-runtime.json
++```
++
++- Actual added source: backend/app/graph/models.py, repository.py, queries.py;
++  contract graph_access.json; test fixtures/unit/integration/evidence reporter;
++  backend/GRAPH_ACCESS.md. Migration runner whitelist now admits B03 test graphs;
++  immutable registry/migration0001 unchanged. Makefile adds test-repositories.
++- Write flow: strict shape/identity/origin validation -> per-graph Redis lease ->
++  metadata owner/epoch fence -> recover prior intent only if pre-state unchanged ->
++  actual endpoints/scope/FKs/evidence -> bounded cardinality/cycle proof -> pending
++  ID/hash journal -> one fenced graph statement updates domain record, audit,
++  repo_revision and pending clear -> strict typed retrieval. Mutable updates need
++  expected content hash. Failures preserve state/evidence and return explicit errors.
++- Read flow: typed named request -> root type validation -> pre-read revision/no
++  pending -> parameterized GRAPH.RO_QUERY (finite hop/result/time limits) -> validated
++  driver nodes/edges mapped from internal IDs to public stable IDs -> original edge
++  direction/path order/evidence metadata, node/edge caps -> post-read revision/no
++  pending -> retry once on revision change -> serialized GraphResult. Disconnected
++  metadata projection is avoided after its installed-runtime upstream-path failure.
++- All eight query families and temporal checks are described in GRAPH_ACCESS.md;
++  candidate source-evidence pointers are also filtered by as_of. Explicit edges
++  connect waste, drainage and roads; matching coordinates alone adds no connection.
++  Graph paths support investigation but do not declare causation or recurrence.
++- Persisted state: existing graph AOF/volumes; internal migration record receives
++  repo_owner/epoch/revision/pending/audit scalars only in graphs actually mutated by
++  repositories. Canonical graph has zero domain data and no B03 repository mutations.
++  Test graphs are deleted individually. B01 runtime graph/probe and both named
++  volumes remain. Restart/recreation is real; durable domain events are still B15.
++- Future MCP/API/domain services consume typed methods, never raw Cypher inputs;
++  auth, approvals, status transitions and trace envelopes remain their own gates.
++  No agent/MCP/GraphRAG/API/frontend/importer was implemented. Tests use purpose-built
++  synthetic fixtures, not hidden ground truth or full-city ingestion.
+diff --git a/implementation_status.md b/implementation_status.md
+index c9402d2..57c7e1e 100644
+--- a/implementation_status.md
++++ b/implementation_status.md
+@@ -2,7 +2,7 @@
+ 
+ ## Current status — 2026-10-17 (takes precedence over historical entries)
+ 
+-B00/B01 accepted; B02 complete, human review pending. Canonical registry v3 / migration 0001 READY: 91 index groups / 182 constraints OPERATIONAL; 53 tests PASS. Zero domain nodes seeded. B03 and later capabilities unimplemented.
++B00–B02 accepted; B03 implemented and tested, human review pending. Typed repositories/integrity policies/8 bounded RO templates;89 acceptance PASS +8 supplemental template rechecks. Canonical registry3/migration0001 READY,91 index groups/182 constraints OPERATIONAL,0 domain nodes. B04 and later capabilities unimplemented.
+ 
+ ---
+ 
+@@ -46,3 +46,27 @@ Per task, update: implemented paths, exact tests, pass/fail/skip, screenshots/lo
+ - Final tests 53 PASS/0 FAIL/0 SKIP; both specification validators PASS with explicit legacy/import-blocker warnings. Earlier spike/test failures recorded, not hidden. No dependency changes; real database/client versions remain B01 pins.
+ - Scope inconsistency resolved; all 42 node/47 relationship names/endpoints and enum values preserved. Registry additions are documented v3 requirements, not silent data coercion. All supplied fixtures/data and R01–R18 document unchanged.
+ - BLOCK-B00-02 remains OPEN for 55 Observation fields and other deferred findings. B03 graph-aware repositories/policies, B04 conversion/ingestion, runtime MCP, agents/memory/GraphRAG, approvals, durable events/API/SSE, E2E and frontend remain unimplemented/unverified. No product capability declared complete by schema alone.
++
++## B03 result | 2026-10-17
++- B02 accepted by user; local clean baseline3db6d873fb494a5ce456cb5d04a84f2be50919d4,
++  no push. B03 implemented; human review pending. Next task B04 only after acceptance.
++- Actual source: typed node/edge/path/query/result models; strict graph repository
++  create/get/update/relationship methods; graph-aware references/evidence/scope/
++  identity/temporal/cardinality/cycle policies; fenced per-graph writers, CAS and
++  pending/audit/revision recovery; eight finite GRAPH.RO_QUERY templates. See
++  backend/GRAPH_ACCESS.md and contracts/graph_access.json for limits/imports.
++- All89 acceptance tests PASS (45 unit +44 real integration, including lifecycle);
++  old53 B01/B02 regressions retained. B03 adds12 unit +24 real integration tests.
++  Both SPEC validators, dependency consistency and lock check PASS. Failures and
++  corrected fixture/test/runtime assumptions remain recorded in test_log.md.
++- Installed upstream metadata projection issue avoided through pre/post monotonic
++  revision checks; future source-evidence dates on candidate paths filtered. Real
++  examples/EXPLAIN plans in B03-runtime.json. Equal coordinates without explicit
++  network links yield no cross-category path; path context never asserts causation.
++- Canonical registry3 / migration0001 still READY,91 index groups/182 constraints
++  OPERATIONAL,0 domain nodes. Original B01 probe and graph/Browser volumes retained.
++  No full city seed or hidden evaluation data consumed.
++- Still unimplemented: full fixture conversion/import, behavioral agent decisions,
++  MCP runtime, LangGraph/checkpoint memory, GraphRAG, operations/approval/outbox,
++  API/SSE/frontend and B-END. Repository foundation completes no product objective
++  by itself; all R01–R18 remain mandatory. BLOCK-B00-02 and deferred DEC-004 remain.
+diff --git a/task_board.md b/task_board.md
+index d69cf17..d736f9e 100644
+--- a/task_board.md
++++ b/task_board.md
+@@ -2,7 +2,7 @@
+ 
+ ## Current status — 2026-10-17 (takes precedence over historical entries)
+ 
+-B00/B01 accepted. B02 PASS — human review pending. Canonical migration 0001 READY; 53 tests PASS. Exact next task B03 TODO; STOP until user review.
++B00–B02 accepted. B03 PASS — human review pending:89 acceptance tests PASS (45 unit/44 real integration), plus8 strengthened-template rechecks. Exact next task B04 TODO; STOP until user review.
+ 
+ ---
+ 
+@@ -45,3 +45,14 @@ No B02 work or frontend started. B01 foundation evidence does not fulfill B-END
+ | B03 | TODO | — | No | Typed repositories, endpoint/temporal/cardinality/verified-path policies and bounded preapproved query templates; actual traversal and invalid-edge rejection |
+ 
+ No B03 implementation, seed import or frontend started. B02 is schema foundation only, not B-END.
++
++## B03 review ledger | 2026-10-17
++
++| Task | State | Test log | Human accepted? | Note |
++|---|---|---|---|---|
++| B00–B02 | PASS | Historical logs | Yes | Baseline3db6d87; original findings preserved |
++| B03 | PASS | TEST-20261017-B03-01–06 | No | Typed repositories, declared integrity policies,8 bounded RO families;89 acceptance PASS; review pending |
++| B04 | TODO | — | No | Explicit v1/v2→v3 conversion,55 value_number corrections with evidence, provenance-safe duplicate-resistant ingest; only after review |
++
++STOP at B03. No ingestion, agents, MCP/GraphRAG, operations, domain API or frontend
++started. No completion of a product capability is inferred from graph access tests.
+diff --git a/test_log.md b/test_log.md
+index 6f459b0..409628c 100644
+--- a/test_log.md
++++ b/test_log.md
+@@ -2,7 +2,7 @@
+ 
+ ## Current status — 2026-10-17 (takes precedence over historical entries)
+ 
+-B02 final acceptance: 53 PASS / 0 FAIL / 0 SKIP, including real DB and restart/recreation. Both SPEC validators PASS with explicit legacy warnings. Canonical 0001 READY: 91 index groups / 182 constraints OPERATIONAL. Prior failures/recovery preserved below; fixture import remains blocked.
++B03 acceptance:89 PASS /0 FAIL /0 SKIP (45 unit/44 real integration, including actual restart/recreation); old53 regressions retained. Supplemental strengthened-template recheck:8 PASS. Both SPEC validators PASS;55 legacy defects remain OPEN. See TEST-20261017-B03-*; historical entries below are retained.
+ 
+ ---
+ 
+@@ -165,3 +165,110 @@ PY
+ - `backend/.venv/bin/python -m compileall -q backend/app backend/cli backend/tests scripts`: PASS. `git diff --check`: PASS for B02 diff. A documentation patch initially had an unmatched context and applied no changes; corrected patch succeeded.
+ - Baseline comparisons assert all supplied fixtures/data and R01–R18 requirement file unchanged, all public node/relationship names/endpoints and enum values retained. Exact B02 file list and diff recorded in docs/evidence/B02-files.txt and B02-git-diff.txt. Root manifest remains original handoff snapshot, not silently regenerated.
+ - Human verification: `make schema-status` -> ready true/version1/registry3; `make migrate` -> same schema and a new audit attempt only; `make health` -> existing canonical graph read true; run full command in -05 and `make test-spec`. Browser queries/recovery instructions in backend/SCHEMA.md. If failure, share test_log/blockers + command output, excluding .env.
++
++## TEST-20261017-B03-01 — Accepted B02 baseline / local Git
++- User attachment accepts B02 and authorizes B03 only. Mandatory docs/registry/B02
++  code reviewed. `backend/.venv/bin/civicly schema-status`: migration0001 READY,
++  registry3,91 index groups/182 constraints OPERATIONAL. Fresh B01-PERSISTENCE MATCH
++  retained. Canonical has0 domain nodes. Baseline safety scan46 B02 files excludes
++  dotenv/venv/cache/runtime secrets and actual generated secret values.
++- `git check-ignore .env backend/.venv/bin/python .uv-cache`: all ignored.
++  `git diff --cached --check` flags whitespace context in retained B02-git-diff.txt;
++  preserved historical evidence. `git add .` and `git commit -m "Baseline accepted B02 canonical schema and migrations"`:
++  local baseline3db6d873fb494a5ce456cb5d04a84f2be50919d4; no remote push.
++  B03 remains a reviewable working-tree diff against that baseline.
++
++## TEST-20261017-B03-02 — Real runtime spikes / failed attempts
++- Official docs + installed client inspected. Disposable graph spikes verified
++  full-property equality CAS and actual multi-CREATE UNIQUE rollback; driver path
++  nodes/edges retain ordered identities and physical source/destination; finite
++  traversal, all(), zero-hop, parameter LIMIT execute on6.0.2. No canonical writes.
++- `PYTHONPATH=backend backend/.venv/bin/python - <<'PY' ... PY` repository smoke:
++  migrated B03 UUID graph; actual CREATE A/B and candidate DRAINS_TO AB; real read
++  returned2 nodes/1 edge/1 path and revision3; graph removed in finally. Equivalent
++  complete reproducible fixture/query spike is now `python -m tests.b03_evidence`.
++- `backend/.venv/bin/python -m pytest backend/tests/integration/test_graph_access.py -x -q`:
++  first1 PASS/1 FAIL: test supplied valid_to without required valid_from. Corrected
++  test, existing B02 contract unchanged. Next17 PASS/1 FAIL: upstream metadata
++  projection returned0 instead of actual52. Minimal real spike reproduced both
++  values; changed query consistency mechanism as DEC-011. Next18 PASS in38.01s.
++- Expanded integration attempt21 PASS/1 FAIL in46.65s: snapshot fixture used unknown
++  condition_code rather than registry condition. Corrected fixture. No schema relaxed.
++- `PYTHONPATH=backend backend/.venv/bin/python -m tests.b03_evidence > docs/evidence/B03-runtime.json`:
++  initial FAIL TypeError (MigrationRunner requires explicit graph_name); corrected
++  reporter call. Subsequent real report PASS with8 path examples and8 EXPLAIN plans.
++- First combined `backend/.venv/bin/python -m pytest backend/tests -v -s --run-persistence`:
++  collection ERROR duplicate test_graph_access.py module basename (75 collected,
++  no acceptance run). Renamed unit module to test_graph_access_models.py; retained
++  output docs/evidence/B03-collection-failure.txt. Next combined run87 PASS in101.20s,
++  including real lifecycle. Final review added candidate-pointer as_of exclusion
++  and real native-point/temporal tests; targeted24 integration PASS in51.77s.
++- Initial unit command `backend/.venv/bin/python -m pytest backend/tests/unit/test_graph_access.py -q`:
++  12 PASS (before filename correction); current reproducible target uses _models.py.
++  Fault injection only drops responses around actual DB statements, never returns
++  mocked success. No fake model or live agent test was counted.
++
++## TEST-20261017-B03-03 — Typed writes / integrity / concurrency
++- Real tests cover strict unknown/type/enum/scope rejection; global node and cross-
++  type edge IDs; actual endpoint existence/direction; property foreign references;
++  evidence existence/reliability/attribution/date; immutable records; stale node/
++  edge digests; point preservation; overlapping cardinality and disjoint history.
++- Concurrent node CAS yields exactly1 success/1 stale rejection. Concurrent same edge
++  ID across types yields1 success/1 Conflict. Concurrent active assignment yields
++  1 success/1 Conflict; opposing drainage writes yield1 success/1 cycle rejection.
++  Expired writer after successor fence cannot create its node. Task cycle rejected;
++  explicit inspected drainage cycle accepted; disjoint historical reversal accepted.
++- Actual failing second CREATE rolls back first domain node and revision/audit;
++  pending intent recovered only after unchanged pre-state is proven. Lost response
++  before statement leaves no node; lost response after actual commit leaves exactly
++  one node with COMMITTED audit. Changed external pre-state keeps pending and blocks
++  queries; no automatic erase or uncertain retry.
++
++## TEST-20261017-B03-04 — Real bounded reads / serialized examples
++- All8 query families return real paths, including upstream original edge orientation,
++  common downstream D2/D3 for I1/I2, inspection/work-order/outcome history, support+
++  contradiction evidence and tasks. All results serialize with stable IDs, subtype
++  labels, properties, evidence IDs, edge direction, validity, as_of and revision.
++- Waste cross-category path: W → LW ← D1 → D2 → D3 → LR ← R (7 nodes/6 edges);
++  NEARBY uses a distinct LN location with identical coordinates but no SERVES link
++  to the physical network; it is excluded.
++  This is candidate connection context, not verified causation.
++- Whole-second/fractional as_of/after, future updates/evidence and half-open valid_to
++  tested. Hop/request caps, whole-path node caps, limit truncation, rejected raw
++  Cypher/injection strings and configured750ms on real RO call verified. A write
++  method trap confirms queries only use real GRAPH.RO_QUERY; B01 server tests also
++  deny actual CREATE/SET/DELETE through RO without state change.
++- Runtime report command above captures actual EXPLAIN Index Scan + bounded traverse
++  plans. Reporter migration rerun on its disposable populated graph preserves
++  repository revision53 and domain contents. canonical0 domain nodes and B01 probe
++  retained; report records packages/server module and Browser HTTP200.
++
++## TEST-20261017-B03-05 — Final acceptance and previous regressions
++- Final command (pipefail, stdout retained):
++  `backend/.venv/bin/python -m pytest backend/tests -v -s --run-persistence | tee docs/evidence/B03-all-tests.txt`.
++- **89 PASS /0 FAIL /0 SKIP in94.16s**, exit0:45 unit +44 real integration
++  (including1 lifecycle). New B03 tests:12 unit +24 integration; all prior53 regressions
++  retained. After strengthening the nearby fixture to a distinct equal-coordinate
++  location with no physical-network links, all8 template cases were rerun separately
++  (B03-template-tests.txt); this is supplemental, not double-counted acceptance.
++- Regression suite includes actual container restart (same ID) and force recreation
++  (different ID), fresh parameterized reads, Browser HTTP200 and Browser volume marker.
++  No volume deletion or B01/canonical graph removal. Old53 tests remain in the run.
++- Not run / outside B03: full city import/conversion, behavioral simulation, live
++  LLM/MCP/GraphRAG/checkpoints, domain auth/approvals/work orders/outbox, API/frontend.
++  These are unimplemented later gates, not skipped tests relabeled as passing.
++
++## TEST-20261017-B03-06 — Specifications / dependencies / review evidence
++- `make test-spec | tee docs/evidence/B03-spec-validation.txt`: both validators PASS.
++  Counts unchanged42 entities/47 relations/18 tools/18 objectives; expanded legacy
++  838 nodes/1245 edges/12 scenarios/18 documents. Explicit55-defect warning remains;
++  static structural validity does not mean canonical import eligibility.
++- `backend/.venv/bin/python -m pip check`: PASS, no broken requirements.
++  `UV_CACHE_DIR=.uv-cache backend/.venv/bin/uv lock --project backend --check`: PASS,
++  34 resolved packages unchanged. No dependency upgrade or remote publishing.
++- Review inventory/diff and audit: docs/evidence/B03-files.txt, B03-git-diff.txt,
++  B03-review-audit.txt. Existing registry/plan/data/geometry/document source files
++  unchanged from accepted baseline. B03 source and all6 tracking files updated.
++
++- Supplemental exact command: `backend/.venv/bin/python -m pytest backend/tests/integration/test_graph_access.py::test_all_preapproved_templates_real_results_and_readonly -v | tee docs/evidence/B03-template-tests.txt`:8 PASS in18.91s, exit0. Production source unchanged after the89-test acceptance; only equal-coordinate disconnected fixture/negative assertions strengthened.
++- Final `make test-spec` rerun after documentation edits: both PASS; same55 warning. Post-lifecycle evidence reporter and `backend/.venv/bin/civicly schema-status > docs/evidence/B03-canonical-status.txt` confirm retained canonical readiness/probe without domain writes.
+diff --git a/backend/GRAPH_ACCESS.md b/backend/GRAPH_ACCESS.md
+new file mode 100644
+index 0000000..ce0cb67
+--- /dev/null
++++ b/backend/GRAPH_ACCESS.md
+@@ -0,0 +1,173 @@
++# B03 typed graph access
++
++This is a trusted internal graph adapter, not a public query endpoint or a complete
++Civicly investigation engine. All 18 requirements remain in force. Registry v3
++and migration 0001 are unchanged. B04 conversion/import is not implemented.
++
++## Entry points and imports
++
++`app.graph.repository.GraphRepository(client, graph_name='civicly_knowledge')`
++uses the official FalkorDB client from `app.graph.connection.connect(Settings())`,
++which disables automatic transport retries for uncertain mutations.
++Construction checks actual migration/catalog readiness. Tests may target only
++`civicly_b03_test_<UUID>` graphs. No B01 graph is a repository target.
++
++- `create_node(kind, properties)`, `get_node(id, expected_kind=None)` and
++  `update_node(id, changes, expected_hash=record.content_hash)` return `NodeRecord`.
++- `create_relationship(kind, source_id, target_id, properties,
++  inspected_cycle_evidence_id=None)`, `get_relationship(id)` and
++  `update_relationship(id, changes, expected_hash=record.content_hash, ...)`
++  return `EdgeRecord`. Endpoints/type/identity cannot change during updates.
++- `recover_pending()` reconciles an unchanged pre-state under the writer fence;
++  inconsistent state raises `OutcomeUnknown` and preserves the intent.
++- `GraphQueries(repository, ReadLimits(...)).run(QueryRequest(...))` returns
++  `GraphResult`. There is no raw Cypher argument or caller-controlled scope.
++
++Imports: `queries -> models + repository -> migration + schema`; `models -> schema`.
++The immutable registry supplies fields, inherited labels, types, enums, timestamps,
++mandatory properties and endpoint rules. `contracts/graph_access.json` declares
++behavioral policy without changing public ontology. No dependencies were added.
++
++## Validation and write flow
++
++Node CREATE validates the exact registry shape before acquiring the graph writer
++lease; all graph-dependent checks occur after acquisition and fence advancement.
++Relationship CREATE retrieves actual endpoints, then validates its registry shape.
++Both check global application identity against nodes and all relationship types,
++fixed municipality scope and applicable property references. Updates compare an
++expected digest with actual stored content, preserve origin/identity, validate
++merged properties, then run graph policies. Unknown fields, coercion, null/missing
++required values and invalid enums fail explicitly. Registry immutable records are
++append-only; no deletion method is supplied. Read adapters validate stored labels,
++properties, endpoints and scope before producing public records.
++
++Conditional VERIFIED associations require an existing verified `Evidence`, dated
++observed/recorded/created no later than relationship creation, attributed through
++`source_kind` and `source_record_id`; AGENT-only evidence cannot establish a fact.
++Existing evidence used by VERIFIED links cannot have provenance/reliability rewritten
++through this adapter. Domain correction/versioning remains a later service concern.
++Optional evidence pointers must exist even on candidate links.
++
++Primary relationships are explicitly declared in `singleton_outgoing`:
++REPORTS, OCCURRED_AT, LOCATED_AT, MAINTAINED_BY, COLLECTED_BY, ASSIGNED_TO.
++The ontology has no primary flag; these edges are primary. Overlapping outgoing
++assignments and duplicate same-kind/source/target edges are rejected. Nonoverlapping
++history remains valid. Validity is half-open `[valid_from, valid_to)`; unknown/open
++bounds are conservatively overlapping. Existing registry requires valid_from if
++valid_to is supplied. DEPENDS_ON must be a DAG, including historical dependencies.
++DRAINS_TO checks only cycles with a simultaneous validity intersection; an explicit
++cycle request must cite a verified INSPECTION_REPORT via both the evidence pointer
++and `inspected_cycle_evidence_id`. Other network types are not universally acyclic.
++Policy scans cap at 2,000 same-type edges / 10,000 traversal states and fail closed.
++
++Error types distinguish `SchemaError`, `NotFound`, `Conflict`, `ScopeError`,
++`PreconditionFailed` and `OutcomeUnknown`. Native client/runtime failures can also
++propagate; future APIs must redact them into their error envelope.
++
++## Concurrency, atomicity and recovery
++
++One Redis lease serializes repository writers per graph. A new owner first increments
++`repo_epoch` and sets `repo_owner` on the existing internal CivicSchemaMigration
++record. Every preparation/mutation checks owner, epoch, READY and expected revision
++inside its graph statement. Lease expiry alone cannot authorize an old writer after
++a successor advances the fence. CAS hashes reject stale mutable-record updates.
++The metadata has no public entity label and is excluded from results.
++
++A separate fenced preparation persists `repo_pending` with a request UUID, target
++ID/kind, pre-state digest, request digest and time. A single graph query applies the
++domain mutation, appends a COMMITTED audit entry, increments `repo_revision` and
++clears the pending intent. On the installed 6.0.2, a deliberately failing second
++CREATE rolls back the first CREATE and metadata, verified with real UNIQUE errors.
++This is a tested single-graph/single-query guarantee, not multi-query transactions.
++
++A lost response never causes an automatic mutation retry. After an acknowledged
++or uncertain failure, `recover_pending()` (also called by the next writer) reads
++actual state. An unchanged pre-state allows ABORTED_UNCHANGED and intent clearance;
++a different state fails closed for human reconciliation. A commit with a lost reply
++already has its COMMITTED audit and cleared intent. Verify target/hash/audit before
++retrying; repeated creates return Conflict rather than duplicating data. Pending
++writes block reasoning reads. Audit retains IDs/hashes and no raw source text; it
++caps at 10,000 entries and requires a future reviewed archival migration to grow.
++
++All these guarantees require writes through this adapter. Privileged raw DB access
++can bypass scope, relationship identity, temporal and policy rules, or revision
++tracking. This is a local demonstration, not enterprise isolation or database RBAC.
++No authentication, approval binding, work-order state machines, domain outbox/event
++replay, durable worker or runtime MCP authorization is implemented by B03.
++AOF remains `appendfsync always`; restart/recreation retains graph/Browser volumes.
++Power-loss guarantees and replicated failover are not claimed.
++
++## Named read templates
++
++| Template | Root / result |
++|---|---|
++| drainage_paths | Asset; actual upstream or downstream DRAINS_TO paths |
++| shared_infrastructure | At least two incident IDs; shared downstream assets and incident IDs |
++| incident_history | Location or asset; related incidents with after/as_of filtering, not a recurrence verdict |
++| maintenance_history | Asset; inspections/evidence and task/work-order/outcome history |
++| cross_category_paths | Waste point → location ← drain → downstream drain → location ← road; candidate connection, not causation |
++| hypothesis_evidence | Investigation or hypothesis; assessments with SUPPORTED_BY and CONTRADICTED_BY evidence |
++| ownership_dependencies | Asset/point/task; department, collection route/schedule, assignment |
++| task_dependencies | ActionTask; explicit directed dependency paths |
++
++Every template applies scope, knowledge-time and half-open relationship validity
++filters. UTC fractional seconds are compared at Python datetime microsecond
++precision, matching the existing schema parser; raw lexical `Z` comparison is unsafe.
++Evidence pointers outside a path also exclude that path when their knowledge dates
++exceed as_of, including candidate associations. Future-updated node records are
++excluded rather than pretending to reconstruct an
++old snapshot. Missing relationship start dates remain explicitly unknown. Incident
++retrieval does not classify distinct reports into incidents or declare recurrence.
++
++Only static templates run, with all values parameterized and the validated integer
++hop bound inserted into fixed grammar. GRAPH.RO_QUERY is used throughout. Configure
++ReadLimits downward: maximum 6 total path edges, 100 paths, 120 nodes, 200 edges,
++1,000 ms per query. Requests beyond configured caps fail. Default hop limit is 4;
++request 6 for the six-edge cross-category example. Individual template branches
++fetch at most limit+1 rows; merged outputs stop at the overall path/node/edge caps.
++Returned paths are whole; `truncated` flags result-cap omissions. A hop bound limits
++reachability even when truncated is false. Selection of paths within a limit has no
++sorting guarantee. Aggregation can explore more intermediate rows; the DB timeout
++bounds this work rather than claiming a fixed total expansion count.
++
++Reads capture repository revision before and after retrieval/validation and retry
++once if it changed. The installed runtime misprojects a disconnected metadata
++property alongside upstream variable-length paths (0 versus a nonzero actual revision).
++The implementation avoids that projection, annotates with the captured scalar
++revision and checks monotonic pre/post state. The reproducible runtime report
++records this observation; no general undocumented DB bug diagnosis is claimed.
++Out-of-band raw writes are outside this snapshot guarantee.
++
++Results carry stable IDs, subtype labels, all validated properties, actual directed
++edge source/target, ordered path node/edge IDs, traversal-relative direction, temporal
++metadata, evidence IDs, as_of, repository revision and interpretive reservations.
++Internal numeric IDs only map driver objects locally. These DTOs can feed later
++Canvas/MCP/API adapters; they are not the final REST/MCP envelope. Supporting
++Evidence referenced outside a path can be retrieved by its stable pointer. Causal
++conclusions, historical snapshot reconstruction and product completion are not claimed.
++
++## Reproduce
++
++From repository root, with the accepted local runtime running:
++
++```sh
++make test-repositories
++backend/.venv/bin/python -m pytest backend/tests -v -s --run-persistence
++make test-spec
++PYTHONPATH=backend backend/.venv/bin/python -m tests.b03_evidence
++backend/.venv/bin/civicly schema-status
++```
++
++Tests construct small disposable migrated graphs, clean only their UUID graph, and
++never import the city/evaluation fixture. Fault injection wraps real DB operations:
++responses are dropped before/after actual statements; it never returns fake success.
++The original persistence probe and zero-domain-node canonical graph remain intact.
++`docs/evidence/B03-runtime.json` includes eight real result examples, EXPLAIN plans,
++versions, canonical readiness, metadata spike and B01 probe. See test_log.md for
++counts, failed attempts and later-stage exclusions.
++
++Primary references verified alongside installed APIs:
++[FalkorDB functions](https://docs.falkordb.com/cypher/functions),
++[GRAPH.RO_QUERY](https://docs.falkordb.com/commands/graph.ro-query),
++[official Python Graph implementation](https://github.com/FalkorDB/falkordb-py/blob/main/falkordb/graph.py).
++Runtime evidence on pinned 6.0.2 takes precedence over current upstream examples.
+diff --git a/backend/app/graph/models.py b/backend/app/graph/models.py
+new file mode 100644
+index 0000000..79ff813
+--- /dev/null
++++ b/backend/app/graph/models.py
+@@ -0,0 +1,88 @@
++"""Serializable public graph records; internal numeric IDs never leave the adapter."""
++
++import hashlib
++import json
++from typing import Literal
++
++from pydantic import BaseModel, ConfigDict, Field, JsonValue, field_validator
++
++from app.graph.schema import timestamp
++
++
++def digest(value) -> str:
++    return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()).hexdigest()
++
++
++class GraphModel(BaseModel):
++    model_config = ConfigDict(extra="forbid", frozen=True, strict=True)
++
++
++class NodeRecord(GraphModel):
++    id: str
++    kind: str
++    labels: tuple[str, ...]
++    properties: dict[str, JsonValue]
++
++    @property
++    def content_hash(self) -> str:
++        return digest({"kind": self.kind, "properties": self.properties})
++
++
++class EdgeRecord(GraphModel):
++    id: str
++    kind: str
++    source: str
++    target: str
++    properties: dict[str, JsonValue]
++
++    @property
++    def content_hash(self) -> str:
++        return digest(self.model_dump(mode="json"))
++
++
++class PathRecord(GraphModel):
++    node_ids: tuple[str, ...]
++    edge_ids: tuple[str, ...]
++    directions: tuple[Literal["OUTGOING", "INCOMING"], ...]
++    evidence_ids: tuple[str, ...]
++    context: dict[str, JsonValue] = Field(default_factory=dict)
++
++
++class QueryRequest(GraphModel):
++    template: Literal["drainage_paths", "shared_infrastructure", "incident_history", "maintenance_history",
++                      "cross_category_paths", "hypothesis_evidence", "ownership_dependencies", "task_dependencies"]
++    id: str = Field(default="", max_length=512)
++    incident_ids: tuple[str, ...] = ()
++    as_of: str
++    after: str | None = None
++    direction: Literal["upstream", "downstream"] = "downstream"
++    max_hops: int = Field(default=4, ge=1, le=6)
++    limit: int = Field(default=40, ge=1, le=100)
++    timeout_ms: int = Field(default=1000, ge=1, le=1000)
++    include_candidates: bool = False
++
++    @field_validator("as_of", "after")
++    @classmethod
++    def check_time(cls, value):
++        if value is not None:
++            timestamp(value)
++        return value
++
++    @field_validator("incident_ids")
++    @classmethod
++    def check_incidents(cls, value):
++        if len(value) > 50 or any(not item.strip() or len(item) > 512 for item in value):
++            raise ValueError("Incident list exceeds query budget")
++        return value
++
++
++class GraphResult(GraphModel):
++    template: str
++    municipality_id: Literal["demo-city"] = "demo-city"
++    as_of: str
++    graph_revision: int
++    nodes: tuple[NodeRecord, ...]
++    edges: tuple[EdgeRecord, ...]
++    paths: tuple[PathRecord, ...]
++    truncated: bool
++    reservations: tuple[str, ...]
+diff --git a/backend/app/graph/queries.py b/backend/app/graph/queries.py
+new file mode 100644
+index 0000000..51abb03
+--- /dev/null
++++ b/backend/app/graph/queries.py
+@@ -0,0 +1,202 @@
++"""Eight named GRAPH.RO_QUERY templates; caller-supplied Cypher is never accepted."""
++
++from pydantic import Field
++
++from app.graph.models import EdgeRecord, GraphModel, GraphResult, PathRecord, QueryRequest
++from app.graph.repository import GraphRepository, PreconditionFailed, OutcomeUnknown
++from app.graph.schema import timestamp
++
++
++class ReadLimits(GraphModel):
++    max_hops: int = Field(default=6, ge=1, le=6)
++    max_results: int = Field(default=100, ge=1, le=100)
++    max_nodes: int = Field(default=120, ge=1, le=120)
++    max_edges: int = Field(default=200, ge=1, le=200)
++    timeout_ms: int = Field(default=1000, ge=1, le=1000)
++
++
++class GraphQueries:
++    def __init__(self, repository: GraphRepository, limits: ReadLimits | None = None):
++        self.repository = repository
++        self.limits = limits or ReadLimits()
++
++    def _state(self):
++        rows = self.repository._read(
++            "MATCH (m:CivicSchemaMigration {id:$migration}) WHERE m.state='READY' RETURN coalesce(m.repo_revision,0),coalesce(m.repo_pending,'') LIMIT 1",
++            {"migration": "0001"})
++        if not rows or rows[0][1]:
++            raise OutcomeUnknown("Graph has an unresolved write; recover before evidence retrieval")
++        return rows[0][0]
++
++    @staticmethod
++    def _time_key(expression):
++        # Registry accepts UTC seconds with optional fractions. Pad/truncate to the
++        # Python datetime microsecond precision; lexical comparison is then valid.
++        return (f"substring(replace({expression},'Z','') + CASE WHEN {expression} CONTAINS '.' "
++                "THEN '000000' ELSE '.000000' END,0,26)")
++
++    @classmethod
++    def _time_filter(cls):
++        key = cls._time_key
++        node_times = ["created_at", "updated_at", "observed_at", "recorded_at", "started_at",
++                      "opened_at", "assessed_at", "evaluated_at", "completed_at", "requested_at"]
++        checks = [f"(n.{field} IS NULL OR {key('n.' + field)}<=$as_of)" for field in node_times]
++        checks += [f"(n.valid_from IS NULL OR {key('n.valid_from')}<=$as_of)",
++                   f"(n.valid_to IS NULL OR $as_of<{key('n.valid_to')})"]
++        return ("size(relationships(p)) <= $hops AND "
++                "all(n IN nodes(p) WHERE n.municipality_id=$scope AND " + " AND ".join(checks) + ") AND "
++                "all(e IN relationships(p) WHERE e.municipality_id=$scope AND " + key('e.created_at') + "<=$as_of "
++                "AND (e.valid_from IS NULL OR " + key('e.valid_from') + "<=$as_of) "
++                "AND (e.valid_to IS NULL OR $as_of<" + key('e.valid_to') + "))")
++
++    @staticmethod
++    def _verified_filter():
++        # Only physical/incident associations need this filter; structural links aren't causal claims.
++        return ("all(e IN relationships(p) WHERE NOT type(e) IN $physical OR "
++                "($candidates OR e.association_status='VERIFIED'))")
++
++    def _branches(self, request: QueryRequest):
++        h = request.max_hops  # Validated finite integer, never caller query text.
++        kind = request.template
++        condition = self._time_filter()
++        verified = condition + " AND " + self._verified_filter()
++        if kind == "drainage_paths":
++            self.repository.get_node(request.id, "InfrastructureAsset")
++            pattern = f"(a:InfrastructureAsset {{id:$id}})-[:DRAINS_TO*1..{h}]->(b:InfrastructureAsset)"
++            if request.direction == "upstream":
++                pattern = f"(a:InfrastructureAsset {{id:$id}})<-[:DRAINS_TO*1..{h}]-(b:InfrastructureAsset)"
++            return [("MATCH p=" + pattern + " WHERE " + verified, "{}")]
++        if kind == "shared_infrastructure":
++            if len(set(request.incident_ids)) < 2:
++                raise PreconditionFailed("Shared retrieval needs at least two distinct incidents")
++            for id in request.incident_ids:
++                self.repository.get_node(id, "Incident")
++            prefix = (f"MATCH p=(i:Incident)-[:AFFECTS]->(a:InfrastructureAsset)-[:DRAINS_TO*0..{h}]->(shared:InfrastructureAsset) "
++                      "WHERE i.id IN $incidents AND " + verified +
++                      " WITH shared,collect(p) AS matched_paths,collect(DISTINCT i.id) AS matched_ids "
++                      "WHERE size(matched_ids)>=2 UNWIND matched_paths AS p")
++            return [(prefix, "{shared_incident_ids:matched_ids,shared_asset_id:shared.id}")]
++        if kind == "incident_history":
++            root = self.repository.get_node(request.id)
++            if "InfrastructureAsset" in root.labels:
++                pattern = "(i:Incident)-[:AFFECTS]->(a:InfrastructureAsset {id:$id})"
++            elif root.kind == "Location":
++                pattern = "(i:Incident)-[:OCCURRED_AT]->(a:Location {id:$id})"
++            else:
++                raise PreconditionFailed("Incident history needs a location or asset")
++            return [("MATCH p=" + pattern + " WHERE " + verified +
++                     " AND ($after IS NULL OR $after<=" + self._time_key("i.started_at") + ")", "{classification:'related_incidents_not_recurrence_verdict'}")]
++        if kind == "maintenance_history":
++            self.repository.get_node(request.id, "InfrastructureAsset")
++            patterns = [
++                "(a:InfrastructureAsset {id:$id})<-[:INSPECTS]-(i:Inspection)",
++                "(a:InfrastructureAsset {id:$id})<-[:INSPECTS]-(i:Inspection)-[:PRODUCED]->(e:Evidence)",
++                "(a:InfrastructureAsset {id:$id})<-[:TARGETS]-(t:ActionTask)<-[:IMPLEMENTS]-(o:WorkOrder)",
++                "(a:InfrastructureAsset {id:$id})<-[:TARGETS]-(t:ActionTask)<-[:IMPLEMENTS]-(o:WorkOrder)-[:RESULTED_IN]->(out:InterventionOutcome)",
++            ]
++            return [("MATCH p=" + pattern + " WHERE " + condition, "{}") for pattern in patterns]
++        if kind == "cross_category_paths":
++            self.repository.get_node(request.id, "WasteCollectionPoint")
++            pattern = (f"(w:WasteCollectionPoint {{id:$id}})-[:LOCATED_AT]->(l:Location)<-[:SERVES]-(d:InfrastructureAsset)"
++                       f"-[:DRAINS_TO*1..{h}]->(down:InfrastructureAsset)-[:SERVES]->(rl:Location)<-[:LOCATED_AT]-(road:RoadSegment)")
++            return [("MATCH p=" + pattern + " WHERE " + verified, "{classification:'CANDIDATE_CONNECTION_NOT_CAUSATION'}")]
++        if kind == "hypothesis_evidence":
++            root = self.repository.get_node(request.id)
++            if root.kind == "Investigation":
++                pattern = "(i:Investigation {id:$id})-[:PROPOSES]->(h:Hypothesis)"
++            elif root.kind == "Hypothesis":
++                pattern = "(h:Hypothesis {id:$id})"
++            else:
++                raise PreconditionFailed("Evidence paths need investigation or hypothesis")
++            return [("MATCH p=" + pattern + "-[:HAS_ASSESSMENT]->(a:HypothesisAssessment)-[:SUPPORTED_BY|CONTRADICTED_BY]->(e:Evidence) WHERE " + condition, "{}")]
++        if kind == "ownership_dependencies":
++            self.repository.get_node(request.id)
++            patterns = ["(a:InfrastructureAsset {id:$id})-[:MAINTAINED_BY]->(d:Department)",
++                        "(a:WasteCollectionPoint {id:$id})-[:COLLECTED_BY]->(route:CollectionRoute)",
++                        "(a:WasteCollectionPoint {id:$id})-[:COLLECTED_BY]->(route:CollectionRoute)-[:HAS_SCHEDULE]->(schedule:ServiceSchedule)",
++                        "(a:ActionTask {id:$id})-[:ASSIGNED_TO]->(d:Department)"]
++            return [("MATCH p=" + pattern + " WHERE " + condition, "{classification:'assignment_not_causal_finding'}") for pattern in patterns]
++        if kind == "task_dependencies":
++            self.repository.get_node(request.id, "ActionTask")
++            return [(f"MATCH p=(t:ActionTask {{id:$id}})-[:DEPENDS_ON*1..{h}]->(dependency:ActionTask) WHERE " + condition, "{}")]
++        raise PreconditionFailed("Unknown preapproved query template")
++
++    def _decode(self, rows, request):
++        repo = self.repository
++        nodes, edges, paths = {}, {}, []
++        truncated = len(rows) > request.limit
++        for raw_nodes, raw_edges, revision, context in rows[:request.limit]:
++            path_nodes = [repo.decode_node(node.labels, node.properties) for node in raw_nodes]
++            by_internal_id = {node.id: record for node, record in zip(raw_nodes, path_nodes, strict=True)}
++            path_edges = []
++            future_evidence = False
++            for edge in raw_edges:
++                source, target = by_internal_id[edge.src_node], by_internal_id[edge.dest_node]
++                repo.registry.validate_edge(edge.relation, source.kind, source.properties, target.kind, target.properties, dict(edge.properties))
++                evidence = repo._check_evidence(dict(edge.properties))
++                if evidence is not None:
++                    future_evidence |= any(timestamp(evidence.properties[field]) > timestamp(request.as_of)
++                                           for field in ("created_at", "updated_at", "observed_at", "recorded_at")
++                                           if field in evidence.properties)
++                path_edges.append(EdgeRecord(id=edge.properties["id"], kind=edge.relation, source=source.id,
++                                              target=target.id, properties=dict(edge.properties)))
++            if future_evidence:
++                continue
++            if len(set(nodes) | {n.id for n in path_nodes}) > self.limits.max_nodes or len(set(edges) | {e.id for e in path_edges}) > self.limits.max_edges:
++                truncated = True
++                break  # Never return half a path.
++            for n in path_nodes:
++                if n.id in nodes and nodes[n.id].content_hash != n.content_hash:
++                    raise PreconditionFailed("Inconsistent node snapshots in result")
++                nodes[n.id] = n
++            for e in path_edges:
++                if e.id in edges and edges[e.id].content_hash != e.content_hash:
++                    raise PreconditionFailed("Ambiguous relationship identity in result")
++                edges[e.id] = e
++            context = dict(context)
++            if request.template == "hypothesis_evidence" and path_edges:
++                context["evidence_relation"] = path_edges[-1].kind
++            paths.append(PathRecord(node_ids=tuple(n.id for n in path_nodes), edge_ids=tuple(e.id for e in path_edges),
++                                    directions=tuple("OUTGOING" if e.source == path_nodes[i].id else "INCOMING" for i, e in enumerate(path_edges)),
++                                    evidence_ids=tuple(sorted({str(e.properties["source_evidence_id"]) for e in path_edges if e.properties.get("source_evidence_id")} | {n.id for n in path_nodes if n.kind == "Evidence"})),
++                                    context=context))
++        return nodes, edges, paths, truncated
++
++    def run(self, request: QueryRequest) -> GraphResult:
++        if not isinstance(request, QueryRequest):
++            raise TypeError("Use typed QueryRequest; raw Cypher is not an input")
++        if request.max_hops > self.limits.max_hops or request.limit > self.limits.max_results or request.timeout_ms > self.limits.timeout_ms:
++            raise PreconditionFailed("Requested query exceeds configured budget")
++        if request.after is not None and timestamp(request.after) > timestamp(request.as_of):
++            raise PreconditionFailed("History window is reversed")
++        if request.template != "shared_infrastructure" and not request.id.strip():
++            raise PreconditionFailed("Template requires an application ID")
++        params = {"migration": "0001", "scope": self.repository.registry.scope, "id": request.id,
++                  "incidents": list(request.incident_ids), "as_of": timestamp(request.as_of).strftime("%Y-%m-%dT%H:%M:%S.%f"),
++                  "after": timestamp(request.after).strftime("%Y-%m-%dT%H:%M:%S.%f") if request.after else None,
++                  "hops": request.max_hops, "limit": request.limit + 1, "candidates": request.include_candidates,
++                  "physical": self.repository.policy["verified_associations"]}
++        branches = self._branches(request)
++        query = " UNION ALL ".join(
++            body +
++            f" RETURN nodes(p) AS ns,relationships(p) AS es,$snapshot AS revision,{context} AS context LIMIT $limit"
++            for body, context in branches)
++        for _ in range(2):
++            # Before/after monotonic revision checks avoid projecting a disconnected
++            # metadata node through a path plan (incorrect on installed 6.0.2).
++            before = self._state()
++            rows = self.repository.graph.ro_query(query, params={**params, "snapshot": before}, timeout=request.timeout_ms).result_set
++            nodes, edges, paths, truncated = self._decode(rows, request)
++            after = self._state()
++            if before != after or any(row[2] != before for row in rows):
++                continue
++            reservations = ["Graph connections are evidence context, not verified physical causation.",
++                            "Historical node versions are not reconstructed; future-updated records are excluded."]
++            if any("valid_from" not in e.properties for e in edges.values()):
++                reservations.append("Some relationship validity start dates are unknown.")
++            if truncated:
++                reservations.append("Result budget reached; omitted paths must not be treated as absent.")
++            return GraphResult(template=request.template, as_of=request.as_of, graph_revision=before,
++                               nodes=tuple(nodes.values()), edges=tuple(edges.values()), paths=tuple(paths),
++                               truncated=truncated, reservations=tuple(reservations))
++        raise PreconditionFailed("Graph changed during bounded retrieval; retry later")
+diff --git a/backend/app/graph/repository.py b/backend/app/graph/repository.py
+new file mode 100644
+index 0000000..e031bb0
+--- /dev/null
++++ b/backend/app/graph/repository.py
+@@ -0,0 +1,328 @@
++"""Canonical integrity repositories. Only trusted future domain services may write."""
++
++from collections import deque
++from contextlib import contextmanager
++from dataclasses import dataclass
++import json
++from pathlib import Path
++import re
++from uuid import uuid4
++
++from redis.exceptions import LockNotOwnedError, RedisError
++
++from app.graph.migration import MigrationRunner
++from app.graph.models import EdgeRecord, NodeRecord, digest
++from app.graph.schema import Registry, SchemaError, timestamp, utc_now
++
++POLICY_PATH = Path(__file__).resolve().parents[3] / "contracts/graph_access.json"
++
++
++class RepositoryError(RuntimeError):
++    code = "GRAPH_INTEGRITY_ERROR"
++
++
++class NotFound(RepositoryError):
++    code = "NOT_FOUND"
++
++
++class Conflict(RepositoryError):
++    code = "CONFLICT"
++
++
++class PreconditionFailed(RepositoryError):
++    code = "PRECONDITION_FAILED"
++
++
++class ScopeError(RepositoryError):
++    code = "INVALID_SCOPE"
++
++
++class OutcomeUnknown(RepositoryError):
++    code = "WRITE_OUTCOME_UNKNOWN"
++
++
++@dataclass
++class WriteSession:
++    owner: str
++    epoch: int
++    revision: int
++    audit: list
++
++
++def interval(props: dict):
++    return (timestamp(props["valid_from"]) if "valid_from" in props else None,
++            timestamp(props["valid_to"]) if "valid_to" in props else None)
++
++
++def intersection(a, b):
++    lower = max(x for x in (a[0], b[0]) if x is not None) if any(x is not None for x in (a[0], b[0])) else None
++    upper = min(x for x in (a[1], b[1]) if x is not None) if any(x is not None for x in (a[1], b[1])) else None
++    return None if lower is not None and upper is not None and lower >= upper else (lower, upper)
++
++
++class GraphRepository:
++    def __init__(self, client, graph_name="civicly_knowledge", *, lease_seconds=10):
++        if graph_name != "civicly_knowledge" and not re.fullmatch(r"civicly_b03_test_[0-9a-f]{32}", graph_name):
++            raise PreconditionFailed("Repository target must be canonical or isolated B03 test graph")
++        if not 0.1 <= lease_seconds <= 60:
++            raise ValueError("Invalid writer lease duration")
++        self.client, self.graph = client, client.select_graph(graph_name)
++        self.registry = Registry()
++        self.policy = json.loads(POLICY_PATH.read_text())
++        if not MigrationRunner(client, graph_name).status()["ready"]:
++            raise PreconditionFailed("Canonical migration is not operational")
++        self.lease_seconds = lease_seconds
++
++    def _read(self, query, params=None):
++        return self.graph.ro_query(query, params=params, timeout=1000).result_set
++
++    def decode_node(self, labels, properties) -> NodeRecord:
++        props = dict(properties)
++        if props.get("municipality_id") != self.registry.scope:
++            raise ScopeError("Node municipality is invalid")
++        public = set(labels) - {self.registry.base_label}
++        primary = [label for label in public if label in self.registry.nodes and
++                   not any(label in self.registry.nodes.get(other, {}).get("labels", []) for other in public)]
++        if len(primary) != 1 or set(labels) != set(self.registry.labels(primary[0])):
++            raise RepositoryError("Node has incompatible canonical labels")
++        self.registry.validate_node(primary[0], props)
++        return NodeRecord(id=props["id"], kind=primary[0], labels=tuple(sorted(public)), properties=props)
++
++    def _node_optional(self, id) -> NodeRecord | None:
++        if not isinstance(id, str) or not id.strip():
++            raise SchemaError("Invalid application ID")
++        rows = self._read("MATCH (n:CivicEntity {id:$id}) RETURN labels(n),properties(n) LIMIT 2", {"id": id})
++        if len(rows) > 1:
++            raise Conflict("Duplicate global node ID detected")
++        return self.decode_node(*rows[0]) if rows else None
++
++    def get_node(self, id: str, expected_kind: str | None = None) -> NodeRecord:
++        node = self._node_optional(id)
++        if node is None:
++            raise NotFound("Canonical node does not exist")
++        if expected_kind is not None:
++            self.registry.shape(expected_kind)
++            if expected_kind not in node.labels:
++                raise PreconditionFailed("Node has incompatible type")
++        return node
++
++    def _decode_edge_row(self, row) -> EdgeRecord:
++        kind, props, sl, sp, tl, tp = row
++        source, target = self.decode_node(sl, sp), self.decode_node(tl, tp)
++        self.registry.validate_edge(kind, source.kind, source.properties, target.kind, target.properties, dict(props))
++        return EdgeRecord(id=props["id"], kind=kind, source=source.id, target=target.id, properties=dict(props))
++
++    def _edge_optional(self, id) -> EdgeRecord | None:
++        if not isinstance(id, str) or not id.strip():
++            raise SchemaError("Invalid relationship ID")
++        rows = self._read(
++            "MATCH (s)-[r]->(t) WHERE r.id=$id "
++            "RETURN type(r),properties(r),labels(s),properties(s),labels(t),properties(t) LIMIT 2", {"id": id})
++        if len(rows) > 1:
++            raise Conflict("Relationship ID reused across types")
++        return self._decode_edge_row(rows[0]) if rows else None
++
++    def get_relationship(self, id: str) -> EdgeRecord:
++        edge = self._edge_optional(id)
++        if edge is None:
++            raise NotFound("Relationship does not exist")
++        return edge
++
++    def _edges(self, kind, *, exclude=None) -> list[EdgeRecord]:
++        if kind not in self.registry.edges:
++            raise SchemaError("Unknown relationship type")
++        rows = self._read(
++            f"MATCH (s)-[r:{kind}]->(t) RETURN type(r),properties(r),labels(s),properties(s),"
++            "labels(t),properties(t) LIMIT $limit", {"limit": self.policy["budgets"]["policy_edges"] + 1})
++        if len(rows) > self.policy["budgets"]["policy_edges"]:
++            raise PreconditionFailed("Policy graph exceeds safe inspection budget")
++        return [edge for row in rows if (edge := self._decode_edge_row(row)).id != exclude]
++
++    def _guard_params(self, session):
++        return {"migration": "0001", "owner": session.owner, "epoch": session.epoch, "revision": session.revision}
++
++    @staticmethod
++    def _guard():
++        return ("MATCH (g:CivicSchemaMigration {id:$migration}) "
++                "WHERE g.state='READY' AND g.repo_owner=$owner AND g.repo_epoch=$epoch "
++                "AND coalesce(g.repo_revision,0)=$revision WITH g ")
++
++    def _recover(self, session, pending):
++        if not pending:
++            return
++        intent = json.loads(pending)
++        current = self._node_optional(intent["id"]) if intent["kind"] == "node" else self._edge_optional(intent["id"])
++        before = current.content_hash if current else ""
++        if before != intent["before_hash"]:
++            raise OutcomeUnknown("Pending write differs from pre-state; operator reconciliation required")
++        session.audit.append({**intent, "state": "ABORTED_UNCHANGED", "at": utc_now()})
++        result = self.graph.query(self._guard() + "SET g.repo_pending='',g.repo_audit=$audit RETURN g.id",
++                                  params={**self._guard_params(session), "audit": json.dumps(session.audit)}, timeout=1000)
++        if not result.result_set:
++            raise PreconditionFailed("Writer fence changed during recovery")
++
++    @contextmanager
++    def _session(self):
++        lock = self.client.connection.lock(f"civicly:repository-lock:{self.graph.name}",
++                                           timeout=self.lease_seconds, blocking_timeout=3)
++        if not lock.acquire(blocking=True):
++            raise PreconditionFailed("Graph writer is busy")
++        try:
++            owner = uuid4().hex
++            rows = self.graph.query(
++                "MATCH (g:CivicSchemaMigration {id:$migration}) WHERE g.state='READY' "
++                "SET g.repo_epoch=coalesce(g.repo_epoch,0)+1,g.repo_owner=$owner "
++                "RETURN g.repo_epoch,coalesce(g.repo_revision,0),coalesce(g.repo_pending,''),coalesce(g.repo_audit,'[]')",
++                params={"migration": "0001", "owner": owner}, timeout=1000).result_set
++            if len(rows) != 1:
++                raise PreconditionFailed("Migration metadata missing or unavailable")
++            epoch, revision, pending, audit = rows[0]
++            session = WriteSession(owner, epoch, revision, json.loads(audit))
++            if len(session.audit) >= self.policy["budgets"]["audit_entries"]:
++                raise PreconditionFailed("Mutation audit budget reached; archive via reviewed migration")
++            self._recover(session, pending)
++            yield session
++        finally:
++            try:
++                lock.release()
++            except (LockNotOwnedError, RedisError):
++                pass  # A successor's fence, never this finally block, authorizes writes.
++
++    def recover_pending(self):
++        with self._session() as session:
++            return {"revision": session.revision, "pending": False}
++
++    def _commit(self, session, kind, id, before_hash, body, params, return_alias):
++        intent = {"request_id": uuid4().hex, "kind": kind, "id": id, "before_hash": before_hash,
++                  "request_hash": digest(params), "at": utc_now()}
++        prepared = self.graph.query(self._guard() + "SET g.repo_pending=$intent RETURN g.id",
++                                    params={**self._guard_params(session), "intent": json.dumps(intent)}, timeout=1000)
++        if not prepared.result_set:
++            raise PreconditionFailed("Writer fence expired before preparation")
++        audit = [*session.audit, {**intent, "state": "COMMITTED"}]
++        query = (self._guard() + body +
++                 f" SET g.repo_revision=$next_revision,g.repo_pending='',g.repo_audit=$audit RETURN {return_alias}.id LIMIT 1")
++        try:
++            result = self.graph.query(query, params={**params, **self._guard_params(session),
++                                      "next_revision": session.revision + 1, "audit": json.dumps(audit)}, timeout=1000)
++        except RedisError as error:
++            # Never retry a possibly committed write. Pending marker/pre-state recovery is explicit.
++            raise OutcomeUnknown("Mutation response failed; inspect/recover pending before retry") from error
++        if result.result_set != [[id]]:
++            raise PreconditionFailed("Mutation did not match current writer fence or endpoints")
++
++    def _node_references(self, kind, props):
++        for field, target_kind in self.policy["node_references"].get(kind, {}).items():
++            if field in props:
++                self.get_node(props[field], target_kind)
++
++    def create_node(self, kind: str, properties: dict) -> NodeRecord:
++        statement = self.registry.node_statement(kind, properties)
++        with self._session() as session:
++            if self._node_optional(properties["id"]) or self._edge_optional(properties["id"]):
++                raise Conflict("Application ID already exists")
++            self._node_references(kind, properties)
++            self._commit(session, "node", properties["id"], "", statement.query.split(" RETURN n.id")[0], statement.params, "n")
++        return self.get_node(properties["id"])
++
++    def update_node(self, id: str, changes: dict, *, expected_hash: str) -> NodeRecord:
++        if not isinstance(changes, dict):
++            raise SchemaError("Changes must be an object")
++        with self._session() as session:
++            old = self.get_node(id)
++            if old.content_hash != expected_hash:
++                raise PreconditionFailed("Stale node content hash")
++            if self.registry.nodes[old.kind]["immutable"]:
++                raise PreconditionFailed("Append-only record cannot be updated")
++            if set(changes).intersection({"id", "municipality_id", "schema_version", "created_at"}):
++                raise PreconditionFailed("Stable identity/origin cannot be changed")
++            props = {**old.properties, **changes}
++            self.registry.validate_node(old.kind, props)
++            if "updated_at" in props and timestamp(props["updated_at"]) < timestamp(old.properties["updated_at"]):
++                raise PreconditionFailed("Update time cannot move backwards")
++            self._node_references(old.kind, props)
++            if old.kind == "Evidence" and changes.keys() & {"reliability", "observed_at", "recorded_at", "source_kind", "source_record_id"}:
++                if self._read("MATCH ()-[r]->() WHERE r.source_evidence_id=$id AND r.association_status='VERIFIED' RETURN r.id LIMIT 1", {"id": id}):
++                    raise PreconditionFailed("Referenced verified evidence requires a versioned domain correction")
++            statement = self.registry.node_statement(old.kind, props)
++            tail = statement.query.split(" SET n=", 1)[1].split(" RETURN n.id")[0]
++            body = "MATCH (n:CivicEntity {id:$id,municipality_id:$scope}) SET n=" + tail
++            self._commit(session, "node", id, old.content_hash, body,
++                         {**statement.params, "id": id, "scope": self.registry.scope}, "n")
++        return self.get_node(id)
++
++    def _check_evidence(self, props, *, inspection=False):
++        if "source_evidence_id" not in props:
++            return
++        evidence = self.get_node(props["source_evidence_id"], "Evidence")
++        if props.get("association_status") == "VERIFIED" or inspection:
++            ep = evidence.properties
++            if ep["reliability"] != "VERIFIED" or ep["source_kind"] == "AGENT" or not ep.get("observed_at") or not ep.get("source_record_id"):
++                raise PreconditionFailed("Verified relationship needs dated attributed verified evidence")
++            if timestamp(ep["observed_at"]) > timestamp(props["created_at"]) or timestamp(ep["recorded_at"]) > timestamp(props["created_at"]) or timestamp(ep["created_at"]) > timestamp(props["created_at"]):
++                raise PreconditionFailed("Relationship cannot cite future evidence")
++            if inspection and ep["evidence_type"] != "INSPECTION_REPORT":
++                raise PreconditionFailed("Drainage cycle exception requires inspection evidence")
++        return evidence
++
++    def _relationship_policies(self, kind, source, target, props, *, exclude=None, inspected_cycle_evidence_id=None):
++        self.registry.validate_edge(kind, source.kind, source.properties, target.kind, target.properties, props)
++        self._check_evidence(props)
++        edges = self._edges(kind, exclude=exclude)
++        span = interval(props)
++        for edge in edges:
++            if edge.source == source.id and intersection(span, interval(edge.properties)) is not None:
++                if edge.target == target.id or kind in self.policy["singleton_outgoing"]:
++                    raise Conflict("Duplicate or cardinality-conflicting active relationship")
++        if kind not in {*self.policy["permanent_dag"], "DRAINS_TO"}:
++            return
++        queue = deque([(target.id, span)])
++        visited = set()
++        steps = 0
++        while queue:
++            node, active = queue.popleft()
++            key = (node, active)
++            if key in visited:
++                continue
++            visited.add(key)
++            steps += 1
++            if steps > self.policy["budgets"]["policy_steps"]:
++                raise PreconditionFailed("Cycle proof exceeded inspection budget")
++            if node == source.id:
++                if kind == "DRAINS_TO" and inspected_cycle_evidence_id == props.get("source_evidence_id") and inspected_cycle_evidence_id:
++                    self._check_evidence(props, inspection=True)
++                    return
++                raise PreconditionFailed("Forbidden relationship cycle")
++            for edge in edges:
++                if edge.source == node:
++                    overlap = active if kind in self.policy["permanent_dag"] else intersection(active, interval(edge.properties))
++                    if overlap is not None:
++                        queue.append((edge.target, overlap))
++
++    def create_relationship(self, kind: str, source_id: str, target_id: str, properties: dict, *, inspected_cycle_evidence_id: str | None = None) -> EdgeRecord:
++        with self._session() as session:
++            source, target = self.get_node(source_id), self.get_node(target_id)
++            statement = self.registry.edge_statement(kind, source.kind, source.properties, target.kind, target.properties, properties)
++            if self._edge_optional(properties["id"]) or self._node_optional(properties["id"]):
++                raise Conflict("Application relationship ID already exists")
++            self._relationship_policies(kind, source, target, properties, inspected_cycle_evidence_id=inspected_cycle_evidence_id)
++            self._commit(session, "edge", properties["id"], "", statement.query.split(" RETURN r.id")[0], statement.params, "r")
++        return self.get_relationship(properties["id"])
++
++    def update_relationship(self, id: str, changes: dict, *, expected_hash: str, inspected_cycle_evidence_id: str | None = None) -> EdgeRecord:
++        if not isinstance(changes, dict):
++            raise SchemaError("Changes must be an object")
++        with self._session() as session:
++            old = self.get_relationship(id)
++            if old.content_hash != expected_hash:
++                raise PreconditionFailed("Stale relationship content hash")
++            if set(changes).intersection({"id", "municipality_id", "created_at"}):
++                raise PreconditionFailed("Relationship identity/origin cannot change")
++            props = {**old.properties, **changes}
++            source, target = self.get_node(old.source), self.get_node(old.target)
++            self._relationship_policies(old.kind, source, target, props, exclude=id,
++                                        inspected_cycle_evidence_id=inspected_cycle_evidence_id)
++            body = f"MATCH (s:CivicEntity {{id:$source}})-[r:{old.kind} {{id:$id}}]->(t:CivicEntity {{id:$target}}) SET r=$props"
++            self._commit(session, "edge", id, old.content_hash, body,
++                         {"source": old.source, "target": old.target, "id": id, "props": props}, "r")
++        return self.get_relationship(id)
+diff --git a/backend/tests/b03_evidence.py b/backend/tests/b03_evidence.py
+new file mode 100644
+index 0000000..feeb11b
+--- /dev/null
++++ b/backend/tests/b03_evidence.py
+@@ -0,0 +1,60 @@
++"""Reproducible B03 runtime report; only writes/deletes its disposable graph."""
++import importlib.metadata
++import json
++from uuid import uuid4
++
++import httpx
++
++from app.config import Settings
++from app.graph.connection import connect
++from app.graph.migration import MigrationRunner
++from app.graph.models import QueryRequest
++from app.graph.queries import GraphQueries
++from app.graph.repository import GraphRepository
++from tests.graph_fixtures import fixture_graph
++from tests.schema_examples import NOW
++
++
++def main():
++    with connect(Settings(_env_file='.env')) as client:
++        canonical=MigrationRunner(client,"civicly_knowledge").status()
++        assert canonical['ready']
++        probe=client.select_graph('civicly_b01_runtime').ro_query(
++            'MATCH (n:B01Probe {id:$id}) RETURN properties(n)',params={'id':'B01-PERSISTENCE'},timeout=1000).result_set
++        assert len(probe)==1
++        assert client.select_graph('civicly_knowledge').ro_query('MATCH (n:CivicEntity) RETURN count(n)',timeout=1000).result_set==[[0]]
++        report={'packages':{name:importlib.metadata.version(name) for name in ['falkordb','redis','pydantic','pytest']},
++                'redis_version':client.connection.info('server')['redis_version'],
++                'modules':client.connection.execute_command('MODULE','LIST'),
++                'canonical_status':canonical,'canonical_domain_nodes':0,'b01_probe':probe,
++                'browser_http_status':httpx.get('http://127.0.0.1:3000',follow_redirects=True,timeout=10).status_code}
++        g=client.select_graph('civicly_b03_test_'+uuid4().hex)
++        try:
++            MigrationRunner(client,g.name).apply()
++            repo=fixture_graph(GraphRepository(client,g.name)); q=GraphQueries(repo)
++            plans={}; examples={}
++            # Repository owns a separate Graph object; wrap that object's real reads.
++            original=repo.graph.ro_query
++            def capture(query,*args,**kwargs):
++                if 'nodes(p) AS' in query:
++                    plans[current]=str(repo.graph.explain(query,params=kwargs['params']))
++                return original(query,*args,**kwargs)
++            repo.graph.ro_query=capture
++            for current,id in [('drainage_paths','D1'),('shared_infrastructure',''),('incident_history','LW'),
++                ('maintenance_history','D1'),('cross_category_paths','W'),('hypothesis_evidence','INV'),
++                ('ownership_dependencies','W'),('task_dependencies','T1')]:
++                examples[current]=q.run(QueryRequest(template=current,id=id,as_of=NOW,max_hops=6,incident_ids=('I1','I2'))).model_dump(mode='json')
++            report['examples']=examples; report['explain_plans']=plans
++            # Minimal runtime observation: metadata projection on upstream variable path.
++            raw=repo.graph.ro_query('MATCH (m:CivicSchemaMigration {id:$migration}) WITH m '
++                'MATCH p=(a:InfrastructureAsset {id:$id})<-[:DRAINS_TO*1..4]-(b:InfrastructureAsset) '
++                'RETURN coalesce(m.repo_revision,0),nodes(p)',params={'migration':'0001','id':'D3'},timeout=1000).result_set
++            report['metadata_projection_spike']={'separate_revision':q._state(),'upstream_projected_revisions':[r[0] for r in raw]}
++            assert MigrationRunner(client,g.name).apply()['ready']
++            report['repository_revision_survives_migration_rerun']=q._state()
++        finally:
++            g.delete()
++        print(json.dumps(report,indent=2,default=lambda x: x.decode() if isinstance(x,bytes) else str(x)))
++
++
++if __name__=='__main__': main()
+diff --git a/backend/tests/graph_fixtures.py b/backend/tests/graph_fixtures.py
+new file mode 100644
+index 0000000..140de5b
+--- /dev/null
++++ b/backend/tests/graph_fixtures.py
+@@ -0,0 +1,54 @@
++"""Small explicit B03 graphs, never the city fixture or evaluation dataset."""
++from tests.schema_examples import NOW, common, asset, edge
++
++
++def evidence(repo, id='EV', **overrides):
++    return repo.create_node('Evidence', {**common(id), 'evidence_type': 'INSPECTION_REPORT',
++        'summary': 'Synthetic inspection', 'reliability': 'VERIFIED', 'recorded_at': NOW,
++        'observed_at': NOW, 'source_kind': 'SYNTHETIC', 'source_record_id': 'test-record', **overrides})
++
++
++def task(repo, id):
++    return repo.create_node('ActionTask', {**common(id), 'action_type': 'TEST', 'status': 'PENDING', 'priority': 'HIGH'})
++
++
++def fixture_graph(repo):
++    evidence(repo)
++    evidence(repo, 'COUNTER')
++    for label, id in [('DrainSegment','D1'),('DrainSegment','D2'),('DrainInlet','D3'),
++                      ('WasteCollectionPoint','W'),('RoadSegment','R'),('RoadSegment','NEARBY')]:
++        repo.create_node(label, asset(label,id))
++    for id in ('LW','LR','LN'):
++        repo.create_node('Location', {**common(id), 'name': 'Same coordinates, explicit connections only',
++                                     'latitude': 12.0, 'longitude': 77.0})
++    for id, issue in [('I1','WATERLOGGING'),('I2','ROAD_DAMAGE'),('I3','WASTE_ACCUMULATION')]:
++        repo.create_node('Incident', {**common(id), 'issue_type': issue, 'subtype': 'TEST', 'status': 'OPEN',
++                                      'severity': 'HIGH', 'started_at': NOW})
++    repo.create_node('Department', {**common('DEP'), 'name':'Synthetic department','department_type':'DRAINAGE'})
++    repo.create_node('CollectionRoute', {**common('ROUTE'), 'route_code':'TEST','operational_status':'ACTIVE'})
++    repo.create_node('ServiceSchedule', {**common('SCHEDULE'),'service_type':'WASTE','timezone':'UTC',
++                                         'schedule_spec':'TEST','valid_from':NOW})
++    repo.create_node('Inspection', {**common('INS'), 'inspection_type':'DRAIN','status':'COMPLETE','requested_at':NOW})
++    repo.create_node('Investigation', {**common('INV'),'status':'OPEN','priority':'HIGH','opened_at':NOW})
++    repo.create_node('Hypothesis', {**common('H'),'cause_code':'TEST','statement':'Test hypothesis','status':'OPEN'})
++    assessment = common('HA'); assessment.pop('updated_at')
++    repo.create_node('HypothesisAssessment', {**assessment, 'assessment':'INCONCLUSIVE','rationale':'Test','assessed_at':NOW})
++    task(repo,'T1'); task(repo,'T2'); task(repo,'T3')
++    repo.create_node('WorkOrder', {**common('WO'),'execution_mode':'SIMULATED','status':'COMPLETE',
++                                  'plan_version':1,'idempotency_key':'TEST-WO'})
++    outcome=common('OUT'); outcome.pop('updated_at')
++    repo.create_node('InterventionOutcome',{**outcome,'assessment_status':'TEST','evaluated_at':NOW,'result':'INCONCLUSIVE'})
++    relations = [('DRAINS_TO','D1','D2'),('DRAINS_TO','D2','D3'),('AFFECTS','I1','D1'),('AFFECTS','I2','D2'),
++        ('AFFECTS','I3','W'),('LOCATED_AT','W','LW'),('LOCATED_AT','R','LR'),('LOCATED_AT','NEARBY','LN'),
++        ('SERVES','D1','LW'),('SERVES','D3','LR'),('OCCURRED_AT','I1','LW'),('OCCURRED_AT','I2','LW'),
++        ('MAINTAINED_BY','D1','DEP'),('COLLECTED_BY','W','ROUTE'),('HAS_SCHEDULE','ROUTE','SCHEDULE'),
++        ('INSPECTS','INS','D1'),('PRODUCED','INS','EV'),('TARGETS','T1','D1'),('IMPLEMENTS','WO','T1'),
++        ('RESULTED_IN','WO','OUT'),('PROPOSES','INV','H'),('HAS_ASSESSMENT','H','HA'),
++        ('SUPPORTED_BY','HA','EV'),('CONTRADICTED_BY','HA','COUNTER'),('DEPENDS_ON','T1','T2'),
++        ('DEPENDS_ON','T2','T3'),('ASSIGNED_TO','T1','DEP')]
++    for index,(kind,source,target) in enumerate(relations):
++        props = {**edge('E'+str(index)), 'valid_from':NOW}
++        if kind in repo.policy['verified_associations']:
++            props.update(association_status='VERIFIED',source_evidence_id='EV')
++        repo.create_relationship(kind,source,target,props)
++    return repo
+diff --git a/backend/tests/integration/test_graph_access.py b/backend/tests/integration/test_graph_access.py
+new file mode 100644
+index 0000000..5634dd9
+--- /dev/null
++++ b/backend/tests/integration/test_graph_access.py
+@@ -0,0 +1,299 @@
++import json
++import time
++from concurrent.futures import ThreadPoolExecutor
++from threading import Barrier
++from uuid import uuid4
++
++import pytest
++from redis.exceptions import ConnectionError, ResponseError
++
++from app.graph.migration import MigrationRunner
++from app.graph.models import QueryRequest
++from app.graph.queries import GraphQueries, ReadLimits
++from app.graph.repository import GraphRepository, Conflict, NotFound, PreconditionFailed, OutcomeUnknown, ScopeError
++from app.graph.schema import SchemaError
++from tests.schema_examples import asset, common, edge, NOW
++from tests.graph_fixtures import evidence, task, fixture_graph
++
++pytestmark = pytest.mark.integration
++
++
++@pytest.fixture
++def repo(db):
++    name='civicly_b03_test_'+uuid4().hex
++    g=db.select_graph(name)
++    try:
++        assert MigrationRunner(db,name).apply()['ready']
++        yield GraphRepository(db,name)
++    finally:
++        if name in db.list_graphs():
++            g.delete()
++
++
++@pytest.fixture
++def populated(repo):
++    return fixture_graph(repo)
++
++
++def test_repository_strict_types_identity_update_and_append_only(repo):
++    n=repo.create_node('DrainSegment',asset('DrainSegment','A'))
++    assert n.labels==('DrainSegment','InfrastructureAsset')
++    with pytest.raises(Conflict): repo.create_node('RoadSegment',asset('RoadSegment','A'))
++    for bad in ({'unknown':1},{'schema_version':2},{'operational_status':False}):
++        with pytest.raises(SchemaError): repo.create_node('RoadSegment',{**asset('RoadSegment','BAD'),**bad})
++    with pytest.raises(SchemaError): repo.create_node('RoadSegment',{**asset('RoadSegment','BAD'),'municipality_id':'elsewhere'})
++    with pytest.raises(NotFound): repo.get_node('MISSING')
++    n2=repo.update_node('A',{'name':'updated'},expected_hash=n.content_hash)
++    assert n2.properties['name']=='updated'
++    with pytest.raises(PreconditionFailed): repo.update_node('A',{'name':'stale'},expected_hash=n.content_hash)
++    with pytest.raises(PreconditionFailed): repo.update_node('A',{'id':'B'},expected_hash=n2.content_hash)
++    props=common('HA'); props.pop('updated_at')
++    a=repo.create_node('HypothesisAssessment',{**props,'assessment':'POSSIBLE','rationale':'test','assessed_at':NOW})
++    with pytest.raises(PreconditionFailed): repo.update_node('HA',{'rationale':'rewrite'},expected_hash=a.content_hash)
++
++
++def test_endpoint_direction_scope_evidence_and_cross_type_edge_ids(repo):
++    repo.create_node('DrainSegment',asset('DrainSegment','D'))
++    repo.create_node('RoadSegment',asset('RoadSegment','R'))
++    repo.create_node('Location',{**common('L'),'name':'Test','latitude':0.0,'longitude':0.0})
++    with pytest.raises(SchemaError): repo.create_relationship('SERVES','L','D',edge('BAD-DIR'))
++    with pytest.raises(NotFound): repo.create_relationship('SERVES','D','MISSING',edge('BAD-MISSING'))
++    with pytest.raises(NotFound): repo.create_relationship('SERVES','D','L',{**edge('BAD-EV'),'association_status':'VERIFIED','source_evidence_id':'NONE'})
++    evidence(repo,reliability='UNVERIFIED')
++    with pytest.raises(PreconditionFailed): repo.create_relationship('SERVES','D','L',{**edge('BAD-EV'),'association_status':'VERIFIED','source_evidence_id':'EV'})
++    ev=repo.get_node('EV'); repo.update_node('EV',{'reliability':'VERIFIED'},expected_hash=ev.content_hash)
++    e=repo.create_relationship('SERVES','D','L',{**edge('REL'),'association_status':'VERIFIED','source_evidence_id':'EV'})
++    with pytest.raises(Conflict): repo.create_relationship('LOCATED_AT','R','L',edge('REL'))
++    with pytest.raises(Conflict): repo.create_node('DrainInlet',asset('DrainInlet','REL'))
++    with pytest.raises(Conflict): repo.create_relationship('SERVES','D','L',edge('DUP'))
++    with pytest.raises(SchemaError): repo.update_relationship('REL',{'unknown':1},expected_hash=e.content_hash)
++    e2=repo.update_relationship('REL',{'valid_from':NOW,'valid_to':'2026-10-18T00:00:00Z'},expected_hash=e.content_hash)
++    assert e2.properties['valid_to']=='2026-10-18T00:00:00Z'
++    with pytest.raises(PreconditionFailed): repo.update_relationship('REL',{'valid_to':'2026-10-19T00:00:00Z'},expected_hash=e.content_hash)
++    ev=repo.get_node('EV')
++    with pytest.raises(PreconditionFailed): repo.update_node('EV',{'reliability':'UNVERIFIED'},expected_hash=ev.content_hash)
++    # Privileged raw corruption is deliberately outside repository authorization; reads fail closed.
++    repo.graph.query('MATCH (n:CivicEntity {id:$id}) SET n.municipality_id=$scope',params={'id':'L','scope':'other'})
++    with pytest.raises(ScopeError): repo.create_relationship('LOCATED_AT','R','L',edge('BAD-SCOPE'))
++    assert repo.graph.ro_query('MATCH ()-[r]->() RETURN count(r)').result_set==[[1]]
++
++
++def test_temporal_cardinality_and_domain_cycles(repo):
++    for id in ('A','B','C'): repo.create_node('DrainSegment',asset('DrainSegment',id))
++    for id in ('DEP1','DEP2'): repo.create_node('Department',{**common(id),'name':'test','department_type':'TEST'})
++    repo.create_relationship('MAINTAINED_BY','A','DEP1',{**edge('OWN1'),'valid_from':NOW,'valid_to':'2026-10-18T00:00:00Z'})
++    with pytest.raises(Conflict): repo.create_relationship('MAINTAINED_BY','A','DEP2',{**edge('OWN2'),'valid_from':NOW})
++    repo.create_relationship('MAINTAINED_BY','A','DEP2',{**edge('OWN2'),'valid_from':'2026-10-18T00:00:00Z'})
++    with pytest.raises(SchemaError): repo.create_relationship('DRAINS_TO','A','B',{**edge('REVERSED'),'valid_from':'2026-10-18T00:00:00Z','valid_to':NOW})
++    with pytest.raises(SchemaError): repo.create_relationship('DRAINS_TO','A','A',edge('SELF'))
++    repo.create_relationship('DRAINS_TO','A','B',edge('AB'))
++    with pytest.raises(PreconditionFailed): repo.create_relationship('DRAINS_TO','B','A',edge('BA'))
++    evidence(repo)
++    repo.create_relationship('DRAINS_TO','B','A',{**edge('BA'),'association_status':'VERIFIED','source_evidence_id':'EV'},inspected_cycle_evidence_id='EV')
++    for id in ('T1','T2','T3'): task(repo,id)
++    repo.create_relationship('DEPENDS_ON','T1','T2',edge('T12'))
++    repo.create_relationship('DEPENDS_ON','T2','T3',edge('T23'))
++    with pytest.raises(PreconditionFailed): repo.create_relationship('DEPENDS_ON','T3','T1',edge('T31'))
++
++
++def test_disjoint_drain_history_not_universally_acyclic(repo):
++    for id in ('A','B'): repo.create_node('DrainSegment',asset('DrainSegment',id))
++    repo.create_relationship('DRAINS_TO','A','B',{**edge('AB'),'valid_from':NOW,'valid_to':'2026-10-18T00:00:00Z'})
++    repo.create_relationship('DRAINS_TO','B','A',{**edge('BA'),'valid_from':'2026-10-18T00:00:00Z'})
++
++
++def test_concurrent_node_cas_and_relationship_identity(repo):
++    n=repo.create_node('DrainSegment',asset('DrainSegment','A'))
++    barrier=Barrier(2)
++    def change(value):
++        barrier.wait()
++        try: repo.update_node('A',{'name':value},expected_hash=n.content_hash); return 'ok'
++        except PreconditionFailed: return 'stale'
++    with ThreadPoolExecutor(2) as pool: assert sorted(pool.map(change,['one','two']))==['ok','stale']
++    repo.create_node('Location',{**common('L'),'name':'test','latitude':0.0,'longitude':0.0})
++    barrier=Barrier(2)
++    def add(kind):
++        barrier.wait()
++        try: repo.create_relationship(kind,'A','L',edge('GLOBAL')); return 'ok'
++        except Conflict: return 'conflict'
++    with ThreadPoolExecutor(2) as pool: assert sorted(pool.map(add,['SERVES','LOCATED_AT']))==['conflict','ok']
++    assert repo.graph.ro_query('MATCH ()-[r]->() WHERE r.id=$id RETURN count(r)',params={'id':'GLOBAL'}).result_set==[[1]]
++
++
++def test_expired_writer_fenced_by_successor(repo):
++    repo.lease_seconds=0.1
++    statement=repo.registry.node_statement('DrainSegment',asset('DrainSegment','STALE'))
++    with repo._session() as stale:
++        time.sleep(0.15)
++        repo.create_node('DrainSegment',asset('DrainSegment','CURRENT'))
++        with pytest.raises(PreconditionFailed):
++            repo._commit(stale,'node','STALE','',statement.query.split(' RETURN n.id')[0],statement.params,'n')
++    with pytest.raises(NotFound): repo.get_node('STALE')
++    assert repo.get_node('CURRENT').id=='CURRENT'
++
++
++@pytest.mark.parametrize('after_commit',[False,True])
++def test_lost_response_actual_database_reconciliation(repo,monkeypatch,after_commit):
++    original=repo.graph.query
++    def fault(query,*args,**kwargs):
++        if 'SET g.repo_revision=$next_revision' in query:
++            if after_commit: original(query,*args,**kwargs)
++            raise ConnectionError('injected lost response')
++        return original(query,*args,**kwargs)
++    monkeypatch.setattr(repo.graph,'query',fault)
++    with pytest.raises(OutcomeUnknown): repo.create_node('DrainSegment',asset('DrainSegment','UNCERTAIN'))
++    monkeypatch.setattr(repo.graph,'query',original)
++    if not after_commit:
++        with pytest.raises(OutcomeUnknown): GraphQueries(repo)._state()
++    status=repo.recover_pending()
++    assert status['revision']==int(after_commit)
++    if after_commit:
++        assert repo.get_node('UNCERTAIN').id=='UNCERTAIN'
++        with pytest.raises(Conflict): repo.create_node('DrainSegment',asset('DrainSegment','UNCERTAIN'))
++    else:
++        with pytest.raises(NotFound): repo.get_node('UNCERTAIN')
++        repo.create_node('DrainSegment',asset('DrainSegment','UNCERTAIN'))
++    audit=json.loads(repo.graph.ro_query("MATCH (m:CivicSchemaMigration) RETURN m.repo_audit").result_set[0][0])
++    assert audit[0]['state']==('COMMITTED' if after_commit else 'ABORTED_UNCHANGED')
++
++
++def test_failed_statement_atomic_domain_and_metadata_rollback(repo):
++    repo.create_node('DrainSegment',asset('DrainSegment','EXIST'))
++    with repo._session() as session:
++        before=session.revision
++        with pytest.raises(OutcomeUnknown):
++            repo._commit(session,'node','PARTIAL','',
++                'CREATE (n:DrainSegment:InfrastructureAsset:CivicEntity) SET n=$first '
++                'CREATE (dup:DrainSegment:InfrastructureAsset:CivicEntity) SET dup=$duplicate',
++                {'first':asset('DrainSegment','PARTIAL'),'duplicate':asset('DrainSegment','EXIST')},'n')
++    assert repo.recover_pending()['revision']==before
++    with pytest.raises(NotFound): repo.get_node('PARTIAL')
++    assert repo.graph.ro_query('MATCH (n:CivicEntity) RETURN count(n)').result_set==[[1]]
++
++
++@pytest.mark.parametrize('template,id',[
++ ('drainage_paths','D1'),('shared_infrastructure',''),('incident_history','LW'),
++ ('maintenance_history','D1'),('cross_category_paths','W'),('hypothesis_evidence','INV'),
++ ('ownership_dependencies','W'),('task_dependencies','T1')])
++def test_all_preapproved_templates_real_results_and_readonly(populated,template,id):
++    q=GraphQueries(populated)
++    before=populated.graph.ro_query('MATCH (n) RETURN count(n)').result_set
++    revision=q._state()
++    request=QueryRequest(template=template,id=id,incident_ids=('I1','I2'),as_of=NOW,max_hops=6)
++    result=q.run(request)
++    assert result.paths and result.nodes and result.edges
++    assert result.graph_revision==revision and not result.truncated
++    assert json.loads(result.model_dump_json())['municipality_id']=='demo-city'
++    assert populated.graph.ro_query('MATCH (n) RETURN count(n)').result_set==before and q._state()==revision
++    if template=='cross_category_paths':
++        assert set(n.id for n in result.nodes)=={'W','LW','D1','D2','D3','LR','R'}
++        assert 'NEARBY' not in {n.id for n in result.nodes}
++        # A different location has identical coordinates but no physical-network link.
++        assert populated.get_node('LN').properties['latitude']==populated.get_node('LW').properties['latitude']
++        assert not populated.graph.ro_query('MATCH (n:Location {id:$id})<-[:SERVES]-() RETURN n.id',
++                                            params={'id':'LN'},timeout=1000).result_set
++        assert result.paths[0].directions==('OUTGOING','INCOMING','OUTGOING','OUTGOING','OUTGOING','INCOMING')
++    if template=='shared_infrastructure':
++        assert {'D2','D3'}=={p.context['shared_asset_id'] for p in result.paths}
++        assert all(set(p.context['shared_incident_ids'])=={'I1','I2'} for p in result.paths)
++    if template=='hypothesis_evidence':
++        assert {p.context['evidence_relation'] for p in result.paths}=={'SUPPORTED_BY','CONTRADICTED_BY'}
++    if template=='maintenance_history': assert {'INS','WO','OUT'} <= {n.id for n in result.nodes}
++
++
++def test_directions_time_candidates_and_budgets(populated):
++    q=GraphQueries(populated)
++    upstream=q.run(QueryRequest(template='drainage_paths',id='D3',direction='upstream',as_of=NOW))
++    assert {e.id for e in upstream.edges}=={'E0','E1'}
++    assert all(all(d=='INCOMING' for d in p.directions) for p in upstream.paths)
++    assert not q.run(QueryRequest(template='drainage_paths',id='D1',as_of='2026-10-16T23:59:59Z')).paths
++    e=populated.get_relationship('E0')
++    populated.update_relationship('E0',{'valid_from':NOW,'valid_to':'2026-10-18T00:00:00Z'},expected_hash=e.content_hash)
++    assert not q.run(QueryRequest(template='drainage_paths',id='D1',as_of='2026-10-18T00:00:00Z')).paths
++    limited=q.run(QueryRequest(template='drainage_paths',id='D1',as_of=NOW,limit=1))
++    assert limited.truncated and len(limited.paths)==1
++    capped=GraphQueries(populated,ReadLimits(max_nodes=1)).run(QueryRequest(template='drainage_paths',id='D1',as_of=NOW))
++    assert capped.truncated and not capped.paths and not capped.nodes
++    with pytest.raises(PreconditionFailed): GraphQueries(populated,ReadLimits(max_hops=1)).run(QueryRequest(template='drainage_paths',id='D1',as_of=NOW))
++    with pytest.raises(TypeError): q.run('CREATE (:Bad)')
++    with pytest.raises(NotFound): q.run(QueryRequest(template='drainage_paths',id="D1'}) CREATE (:Bad) //",as_of=NOW))
++    e=populated.get_relationship('E1')
++    populated.update_relationship('E1',{'association_status':'CANDIDATE'},expected_hash=e.content_hash)
++    assert not q.run(QueryRequest(template='drainage_paths',id='D2',as_of=NOW)).paths
++    assert q.run(QueryRequest(template='drainage_paths',id='D2',as_of=NOW,include_candidates=True)).paths
++
++
++def test_temporal_fraction_precision_history_and_future_updates(populated):
++    q=GraphQueries(populated)
++    # Fractional as_of after whole-second data includes it (raw lexical Z ordering would fail).
++    assert q.run(QueryRequest(template='drainage_paths',id='D1',as_of='2026-10-17T00:00:00.1Z')).paths
++    incident=populated.get_node('I2')
++    populated.update_node('I2',{'started_at':'2026-10-17T00:00:00.5Z','updated_at':'2026-10-17T00:00:00.5Z'},expected_hash=incident.content_hash)
++    result=q.run(QueryRequest(template='incident_history',id='LW',as_of='2026-10-17T00:00:00.9Z',after='2026-10-17T00:00:00.2Z'))
++    assert {n.id for n in result.nodes if n.kind=='Incident'}=={'I2'}
++    earlier=q.run(QueryRequest(template='incident_history',id='LW',as_of='2026-10-17T00:00:00.4Z'))
++    assert {n.id for n in earlier.nodes if n.kind=='Incident'}=={'I1'}
++    with pytest.raises(PreconditionFailed): q.run(QueryRequest(template='incident_history',id='LW',as_of=NOW,after='2026-10-18T00:00:00Z'))
++
++
++def test_query_only_uses_real_ro_command_and_bounded_timeout(populated,monkeypatch):
++    seen=[]; original=populated.graph.ro_query
++    def readonly(query,*args,**kwargs):
++        seen.append(kwargs.get('timeout'))
++        return original(query,*args,**kwargs)
++    def deny_write(*args,**kwargs): raise AssertionError('Read template attempted GRAPH.QUERY')
++    monkeypatch.setattr(populated.graph,'ro_query',readonly)
++    monkeypatch.setattr(populated.graph,'query',deny_write)
++    assert GraphQueries(populated).run(QueryRequest(template='drainage_paths',id='D1',as_of=NOW,timeout_ms=750)).paths
++    assert 750 in seen and all(0<t<=1000 for t in seen)
++
++
++def test_concurrent_cardinality_and_cycle_serialized(repo):
++    for id in ('A','B'): repo.create_node('DrainSegment',asset('DrainSegment',id))
++    for id in ('X','Y'): repo.create_node('Department',{**common(id),'name':'test','department_type':'TEST'})
++    barrier=Barrier(2)
++    def assign(id):
++        barrier.wait()
++        try: repo.create_relationship('MAINTAINED_BY','A',id,edge('OWNER-'+id)); return 'ok'
++        except Conflict: return 'conflict'
++    with ThreadPoolExecutor(2) as pool: assert sorted(pool.map(assign,['X','Y']))==['conflict','ok']
++    barrier=Barrier(2)
++    def connect(pair):
++        barrier.wait()
++        try: repo.create_relationship('DRAINS_TO',*pair,edge(''.join(pair))); return 'ok'
++        except PreconditionFailed: return 'cycle'
++    with ThreadPoolExecutor(2) as pool: assert sorted(pool.map(connect,[('A','B'),('B','A')]))==['cycle','ok']
++
++
++def test_missing_property_reference_future_evidence_and_recovery_mismatch(repo):
++    with pytest.raises(NotFound):
++        repo.create_node('AssetConditionSnapshot',{**common('SNAP'),'asset_id':'MISSING','evidence_id':'MISSING',
++                         'observed_at':NOW,'condition':'TEST'})
++    # Recovery never erases an intent if privileged external state differs from its pre-state.
++    pending={'kind':'node','id':'CHANGED','before_hash':'','request_id':'test','request_hash':'test','at':NOW}
++    statement=repo.registry.node_statement('DrainSegment',asset('DrainSegment','CHANGED'))
++    repo.graph.query(statement.query,params=statement.params)
++    repo.graph.query('MATCH (m:CivicSchemaMigration) SET m.repo_pending=$pending',params={'pending':json.dumps(pending)})
++    with pytest.raises(OutcomeUnknown): repo.recover_pending()
++    with pytest.raises(OutcomeUnknown): GraphQueries(repo)._state()
++    assert repo.get_node('CHANGED').id=='CHANGED'
++
++
++def test_candidate_pointer_cannot_leak_future_evidence(repo):
++    for id in ('A','B'): repo.create_node('DrainSegment',asset('DrainSegment',id))
++    future='2026-10-18T00:00:00Z'
++    evidence(repo,created_at=future,updated_at=future,observed_at=future,recorded_at=future)
++    with pytest.raises(PreconditionFailed):
++        repo.create_relationship('DRAINS_TO','A','B',{**edge('VERIFIED-FUTURE'),'association_status':'VERIFIED','source_evidence_id':'EV'})
++    repo.create_relationship('DRAINS_TO','A','B',{**edge('CANDIDATE'),'association_status':'CANDIDATE','source_evidence_id':'EV'})
++    q=GraphQueries(repo)
++    assert not q.run(QueryRequest(template='drainage_paths',id='A',as_of=NOW,include_candidates=True)).paths
++    assert q.run(QueryRequest(template='drainage_paths',id='A',as_of=future,include_candidates=True)).paths
++
++
++def test_native_point_repository_roundtrip_update(repo):
++    n=repo.create_node('Location',{**common('POINT'),'name':'Test','latitude':12.5,'longitude':77.5,
++                                    'geo_point':{'latitude':12.5,'longitude':77.5}})
++    assert n.properties['geo_point']=={'latitude':12.5,'longitude':77.5}
++    changed=repo.update_node('POINT',{'name':'Changed'},expected_hash=n.content_hash)
++    assert changed.properties['geo_point']==n.properties['geo_point']
+diff --git a/backend/tests/unit/test_graph_access_models.py b/backend/tests/unit/test_graph_access_models.py
+new file mode 100644
+index 0000000..dd132e6
+--- /dev/null
++++ b/backend/tests/unit/test_graph_access_models.py
+@@ -0,0 +1,31 @@
++import pytest
++from pydantic import ValidationError
++
++from app.graph.models import QueryRequest, NodeRecord
++from app.graph.queries import ReadLimits
++from app.graph.repository import intersection, interval
++from tests.schema_examples import NOW
++
++
++@pytest.mark.parametrize('change',[{'template':'MATCH (n) RETURN n'},{'limit':101},{'limit':True},
++    {'max_hops':0},{'max_hops':7},{'timeout_ms':1001},{'as_of':'2026-10-17'},
++    {'as_of':'2026-10-17T00:00:00+00:00'},{'cypher':'CREATE (:Bad)'},{'incident_ids':tuple(str(i) for i in range(51))}])
++def test_typed_requests_reject_unknown_unbounded_or_coerced_input(change):
++    with pytest.raises((ValidationError,ValueError)):
++        QueryRequest(**{'template':'drainage_paths','id':'A','as_of':NOW,**change})
++
++
++def test_interval_boundaries_and_unbounded_history():
++    one=interval({'valid_from':NOW,'valid_to':'2026-10-18T00:00:00Z'})
++    two=interval({'valid_from':'2026-10-18T00:00:00Z'})
++    assert intersection(one,two) is None
++    assert intersection(one,(None,None))==one
++    assert intersection((None,None),(None,None))==(None,None)
++
++
++def test_serializable_hashes_and_configured_hard_caps():
++    a=NodeRecord(id='A',kind='Location',labels=('Location',),properties={'id':'A','x':1})
++    b=NodeRecord(id='A',kind='Location',labels=('Location',),properties={'x':1,'id':'A'})
++    assert a.content_hash==b.content_hash and len(a.content_hash)==64
++    assert '"id":"A"' in a.model_dump_json()
++    with pytest.raises(ValidationError): ReadLimits(max_edges=201)
+diff --git a/contracts/graph_access.json b/contracts/graph_access.json
+new file mode 100644
+index 0000000..c88c4e5
+--- /dev/null
++++ b/contracts/graph_access.json
+@@ -0,0 +1,22 @@
++{
++  "version": 1,
++  "registry_version": 3,
++  "municipality_id": "demo-city",
++  "singleton_outgoing": ["REPORTS", "OCCURRED_AT", "LOCATED_AT", "MAINTAINED_BY", "COLLECTED_BY", "ASSIGNED_TO"],
++  "permanent_dag": ["DEPENDS_ON"],
++  "inspected_cycle_exception": "DRAINS_TO",
++  "verified_associations": ["DRAINS_TO", "UNDERLIES", "SERVES", "AFFECTS", "MAINTAINED_BY", "COLLECTED_BY", "HAS_SCHEDULE", "GOVERNED_BY"],
++  "node_references": {
++    "PickupExecution": {"route_id": "CollectionRoute"},
++    "AssetConditionSnapshot": {"asset_id": "InfrastructureAsset", "evidence_id": "Evidence"},
++    "OperatorAccount": {"department_id": "Department"},
++    "CaseMemory": {"source_investigation_id": "Investigation"},
++    "RainfallEvent": {"zone_id": "Zone"},
++    "EventDelivery": {"domain_event_id": "DomainEvent"}
++  },
++  "budgets": {"max_hops": 6, "max_results": 100, "max_nodes": 120, "max_edges": 200, "query_timeout_ms": 1000, "policy_edges": 2000, "policy_steps": 10000, "audit_entries": 10000},
++  "read_templates": ["drainage_paths", "shared_infrastructure", "incident_history", "maintenance_history", "cross_category_paths", "hypothesis_evidence", "ownership_dependencies", "task_dependencies"],
++  "temporal": "half-open validity intersection; absent start/end is unknown/open; created/observed/recorded/updated time cannot exceed query as_of",
++  "cardinality": "All declared singleton edges are primary. Concurrent overlapping assignments are refused; nonoverlapping history retained. Other relationship types are not universally singleton or acyclic.",
++  "write_boundary": "Trusted domain services only; auth, approval binding, state transitions and durable event delivery are later gates, not supplied by these low-level repositories."
++}
+diff --git a/docs/evidence/B03-all-tests.txt b/docs/evidence/B03-all-tests.txt
+new file mode 100644
+index 0000000..bcd6e06
+--- /dev/null
++++ b/docs/evidence/B03-all-tests.txt
+@@ -0,0 +1,105 @@
++============================= test session starts ==============================
++platform darwin -- Python 3.12.1, pytest-9.1.1, pluggy-1.7.0 -- /Users/vikashkumar/Desktop/Civicly/backend/.venv/bin/python
++cachedir: .pytest_cache
++rootdir: /Users/vikashkumar/Desktop/Civicly/backend
++configfile: pyproject.toml
++plugins: anyio-4.15.1
++collecting ... collected 89 items
++
++backend/tests/integration/test_browser.py::test_browser_http_available PASSED
++backend/tests/integration/test_graph_access.py::test_repository_strict_types_identity_update_and_append_only PASSED
++backend/tests/integration/test_graph_access.py::test_endpoint_direction_scope_evidence_and_cross_type_edge_ids PASSED
++backend/tests/integration/test_graph_access.py::test_temporal_cardinality_and_domain_cycles PASSED
++backend/tests/integration/test_graph_access.py::test_disjoint_drain_history_not_universally_acyclic PASSED
++backend/tests/integration/test_graph_access.py::test_concurrent_node_cas_and_relationship_identity PASSED
++backend/tests/integration/test_graph_access.py::test_expired_writer_fenced_by_successor PASSED
++backend/tests/integration/test_graph_access.py::test_lost_response_actual_database_reconciliation[False] PASSED
++backend/tests/integration/test_graph_access.py::test_lost_response_actual_database_reconciliation[True] PASSED
++backend/tests/integration/test_graph_access.py::test_failed_statement_atomic_domain_and_metadata_rollback PASSED
++backend/tests/integration/test_graph_access.py::test_all_preapproved_templates_real_results_and_readonly[drainage_paths-D1] PASSED
++backend/tests/integration/test_graph_access.py::test_all_preapproved_templates_real_results_and_readonly[shared_infrastructure-] PASSED
++backend/tests/integration/test_graph_access.py::test_all_preapproved_templates_real_results_and_readonly[incident_history-LW] PASSED
++backend/tests/integration/test_graph_access.py::test_all_preapproved_templates_real_results_and_readonly[maintenance_history-D1] PASSED
++backend/tests/integration/test_graph_access.py::test_all_preapproved_templates_real_results_and_readonly[cross_category_paths-W] PASSED
++backend/tests/integration/test_graph_access.py::test_all_preapproved_templates_real_results_and_readonly[hypothesis_evidence-INV] PASSED
++backend/tests/integration/test_graph_access.py::test_all_preapproved_templates_real_results_and_readonly[ownership_dependencies-W] PASSED
++backend/tests/integration/test_graph_access.py::test_all_preapproved_templates_real_results_and_readonly[task_dependencies-T1] PASSED
++backend/tests/integration/test_graph_access.py::test_directions_time_candidates_and_budgets PASSED
++backend/tests/integration/test_graph_access.py::test_temporal_fraction_precision_history_and_future_updates PASSED
++backend/tests/integration/test_graph_access.py::test_query_only_uses_real_ro_command_and_bounded_timeout PASSED
++backend/tests/integration/test_graph_access.py::test_concurrent_cardinality_and_cycle_serialized PASSED
++backend/tests/integration/test_graph_access.py::test_missing_property_reference_future_evidence_and_recovery_mismatch PASSED
++backend/tests/integration/test_graph_access.py::test_candidate_pointer_cannot_leak_future_evidence PASSED
++backend/tests/integration/test_graph_access.py::test_native_point_repository_roundtrip_update PASSED
++backend/tests/integration/test_graph_smoke.py::test_parameterized_create_match PASSED
++backend/tests/integration/test_graph_smoke.py::test_readonly_rejects_create_set_delete_without_mutation Expected server denial: graph.RO_QUERY is to be executed only on read-only queries
++Expected server denial: graph.RO_QUERY is to be executed only on read-only queries
++Expected server denial: graph.RO_QUERY is to be executed only on read-only queries
++PASSED
++backend/tests/integration/test_graph_smoke.py::test_foundation_health_uses_graph_read_without_mutation PASSED
++backend/tests/integration/test_graph_smoke.py::test_foundation_health_reports_uninitialized_without_writing PASSED
++backend/tests/integration/test_graph_smoke.py::test_cli_health_success PASSED
++backend/tests/integration/test_graph_smoke.py::test_cli_graph_unavailable_fails_and_redacts PASSED
++backend/tests/integration/test_persistence.py::test_graph_survives_restart_and_recreation before restart: graph=civicly_b01_test_0ade96a29b8a4076932049c07f7429a4; node=PERSISTENCE; fresh MATCH PASS; Browser HTTP 200; Browser volume PASS
++after restart (same container): graph=civicly_b01_test_0ade96a29b8a4076932049c07f7429a4; node=PERSISTENCE; fresh MATCH PASS; Browser HTTP 200; Browser volume PASS
++after recreation (different container, retained volume): graph=civicly_b01_test_0ade96a29b8a4076932049c07f7429a4; node=PERSISTENCE; fresh MATCH PASS; Browser HTTP 200; Browser volume PASS
++PASSED
++backend/tests/integration/test_schema_migrations.py::test_schema_operational_rerun_and_no_domain_seed PASSED
++backend/tests/integration/test_schema_migrations.py::test_multilabel_global_ids_and_mandatory_properties PASSED
++backend/tests/integration/test_schema_migrations.py::test_actual_point_index_and_parameterized_native_point PASSED
++backend/tests/integration/test_schema_migrations.py::test_relationship_metadata_direction_temporal_and_constraints PASSED
++backend/tests/integration/test_schema_migrations.py::test_native_constraints_are_not_type_or_endpoint_authorization PASSED
++backend/tests/integration/test_schema_migrations.py::test_registry_drift_and_preexisting_partial_indexes PASSED
++backend/tests/integration/test_schema_migrations.py::test_unique_constraint_requires_supporting_index PASSED
++backend/tests/integration/test_schema_migrations.py::test_partial_migration_failure_and_non_destructive_rerun PASSED
++backend/tests/integration/test_schema_migrations.py::test_failed_constraint_preserves_records_and_requires_explicit_recovery PASSED
++backend/tests/integration/test_schema_migrations.py::test_checksum_future_version_and_lease_fail_closed PASSED
++backend/tests/integration/test_schema_migrations.py::test_ready_marker_cannot_hide_missing_constraint PASSED
++backend/tests/integration/test_schema_migrations.py::test_migration_never_targets_b01_probe PASSED
++backend/tests/unit/test_foundation.py::test_invalid_connection_configuration[values0] PASSED
++backend/tests/unit/test_foundation.py::test_invalid_connection_configuration[values1] PASSED
++backend/tests/unit/test_foundation.py::test_invalid_connection_configuration[values2] PASSED
++backend/tests/unit/test_foundation.py::test_invalid_connection_configuration[values3] PASSED
++backend/tests/unit/test_foundation.py::test_invalid_connection_configuration[values4] PASSED
++backend/tests/unit/test_foundation.py::test_invalid_cli_configuration_is_redacted PASSED
++backend/tests/unit/test_foundation.py::test_fastapi_pydantic_httpx_compatibility PASSED
++backend/tests/unit/test_graph_access_models.py::test_typed_requests_reject_unknown_unbounded_or_coerced_input[change0] PASSED
++backend/tests/unit/test_graph_access_models.py::test_typed_requests_reject_unknown_unbounded_or_coerced_input[change1] PASSED
++backend/tests/unit/test_graph_access_models.py::test_typed_requests_reject_unknown_unbounded_or_coerced_input[change2] PASSED
++backend/tests/unit/test_graph_access_models.py::test_typed_requests_reject_unknown_unbounded_or_coerced_input[change3] PASSED
++backend/tests/unit/test_graph_access_models.py::test_typed_requests_reject_unknown_unbounded_or_coerced_input[change4] PASSED
++backend/tests/unit/test_graph_access_models.py::test_typed_requests_reject_unknown_unbounded_or_coerced_input[change5] PASSED
++backend/tests/unit/test_graph_access_models.py::test_typed_requests_reject_unknown_unbounded_or_coerced_input[change6] PASSED
++backend/tests/unit/test_graph_access_models.py::test_typed_requests_reject_unknown_unbounded_or_coerced_input[change7] PASSED
++backend/tests/unit/test_graph_access_models.py::test_typed_requests_reject_unknown_unbounded_or_coerced_input[change8] PASSED
++backend/tests/unit/test_graph_access_models.py::test_typed_requests_reject_unknown_unbounded_or_coerced_input[change9] PASSED
++backend/tests/unit/test_graph_access_models.py::test_interval_boundaries_and_unbounded_history PASSED
++backend/tests/unit/test_graph_access_models.py::test_serializable_hashes_and_configured_hard_caps PASSED
++backend/tests/unit/test_schema.py::test_strict_node_rejection[change0] PASSED
++backend/tests/unit/test_schema.py::test_strict_node_rejection[change1] PASSED
++backend/tests/unit/test_schema.py::test_strict_node_rejection[change2] PASSED
++backend/tests/unit/test_schema.py::test_strict_node_rejection[change3] PASSED
++backend/tests/unit/test_schema.py::test_strict_node_rejection[change4] PASSED
++backend/tests/unit/test_schema.py::test_strict_node_rejection[change5] PASSED
++backend/tests/unit/test_schema.py::test_strict_node_rejection[change6] PASSED
++backend/tests/unit/test_schema.py::test_strict_node_rejection[change7] PASSED
++backend/tests/unit/test_schema.py::test_strict_node_rejection[change8] PASSED
++backend/tests/unit/test_schema.py::test_strict_node_rejection[change9] PASSED
++backend/tests/unit/test_schema.py::test_strict_node_rejection[change10] PASSED
++backend/tests/unit/test_schema.py::test_strict_node_rejection[change11] PASSED
++backend/tests/unit/test_schema.py::test_strict_node_rejection[change12] PASSED
++backend/tests/unit/test_schema.py::test_strict_node_rejection[change13] PASSED
++backend/tests/unit/test_schema.py::test_strict_node_rejection[change14] PASSED
++backend/tests/unit/test_schema.py::test_missing_property_and_unknown_label_rejection PASSED
++backend/tests/unit/test_schema.py::test_declared_node_enum_rejected PASSED
++backend/tests/unit/test_schema.py::test_edge_temporal_enum_and_provenance_validation[props0] PASSED
++backend/tests/unit/test_schema.py::test_edge_temporal_enum_and_provenance_validation[props1] PASSED
++backend/tests/unit/test_schema.py::test_edge_temporal_enum_and_provenance_validation[props2] PASSED
++backend/tests/unit/test_schema.py::test_edge_temporal_enum_and_provenance_validation[props3] PASSED
++backend/tests/unit/test_schema.py::test_edge_temporal_enum_and_provenance_validation[props4] PASSED
++backend/tests/unit/test_schema.py::test_edge_temporal_enum_and_provenance_validation[props5] PASSED
++backend/tests/unit/test_schema.py::test_edge_temporal_enum_and_provenance_validation[props6] PASSED
++backend/tests/unit/test_schema.py::test_scope_metadata_consistent_across_normative_contracts PASSED
++backend/tests/unit/test_schema.py::test_legacy_fixtures_cannot_silently_enter_canonical_graph PASSED
++
++======================== 89 passed in 94.16s (0:01:34) =========================
+diff --git a/docs/evidence/B03-canonical-status.txt b/docs/evidence/B03-canonical-status.txt
+new file mode 100644
+index 0000000..b0a5c07
+--- /dev/null
++++ b/docs/evidence/B03-canonical-status.txt
+@@ -0,0 +1 @@
++{"graph": "civicly_knowledge", "migration_version": 1, "registry_version": 3, "municipality_id": "demo-city", "ready": true, "index_groups": 91, "constraints": 182, "issues": [], "history": [{"id": "0001", "attempts": 3, "checksum": "94ab9fae6079fe7e87b41afd80701409db6bb51d529c2565dbd340896a5c923b", "registry_sha256": "12541990b58d65e8602bff77b93b735009616e7ee658b9e7582a7ae9f449aac6", "started_at": "2026-10-17T03:16:58.932Z", "state": "READY", "updated_at": "2026-10-17T03:32:03.946Z", "version": 1, "error_code": "", "state_history": "[{\"state\": \"APPLYING\", \"at\": \"2026-10-17T03:16:58.932Z\", \"error_code\": \"\"}, {\"state\": \"READY\", \"at\": \"2026-10-17T03:17:00.862Z\", \"error_code\": \"\"}, {\"state\": \"APPLYING\", \"at\": \"2026-10-17T03:17:25.496Z\", \"error_code\": \"\"}, {\"state\": \"READY\", \"at\": \"2026-10-17T03:17:28.152Z\", \"error_code\": \"\"}, {\"state\": \"APPLYING\", \"at\": \"2026-10-17T03:32:01.357Z\", \"error_code\": \"\"}, {\"state\": \"READY\", \"at\": \"2026-10-17T03:32:03.946Z\", \"error_code\": \"\"}]"}]}
+diff --git a/docs/evidence/B03-collection-failure.txt b/docs/evidence/B03-collection-failure.txt
+new file mode 100644
+index 0000000..14c9c2f
+--- /dev/null
++++ b/docs/evidence/B03-collection-failure.txt
+@@ -0,0 +1,20 @@
++============================= test session starts ==============================
++platform darwin -- Python 3.12.1, pytest-9.1.1, pluggy-1.7.0 -- /Users/vikashkumar/Desktop/Civicly/backend/.venv/bin/python
++cachedir: .pytest_cache
++rootdir: /Users/vikashkumar/Desktop/Civicly/backend
++configfile: pyproject.toml
++plugins: anyio-4.15.1
++collecting ... collected 75 items / 1 error
++
++==================================== ERRORS ====================================
++_______________ ERROR collecting tests/unit/test_graph_access.py _______________
++import file mismatch:
++imported module 'test_graph_access' has this __file__ attribute:
++  /Users/vikashkumar/Desktop/Civicly/backend/tests/integration/test_graph_access.py
++which is not the same as the test file we want to collect:
++  /Users/vikashkumar/Desktop/Civicly/backend/tests/unit/test_graph_access.py
++HINT: remove __pycache__ / .pyc files and/or use a unique basename for your test file modules
++=========================== short test summary info ============================
++ERROR backend/tests/unit/test_graph_access.py
++!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
++=============================== 1 error in 0.43s ===============================
+diff --git a/docs/evidence/B03-files.txt b/docs/evidence/B03-files.txt
+new file mode 100644
+index 0000000..f766961
+--- /dev/null
++++ b/docs/evidence/B03-files.txt
+@@ -0,0 +1,32 @@
++B03 review inventory against local accepted B02 baseline 3db6d873fb494a5ce456cb5d04a84f2be50919d4
++Modified tracked files: 9
++M Makefile
++M backend/app/graph/migration.py
++M blockers.md
++M decision.md
++M docs/backend/02_graph.md
++M flow.md
++M implementation_status.md
++M task_board.md
++M test_log.md
++Created files: 18
++A backend/GRAPH_ACCESS.md
++A backend/app/graph/models.py
++A backend/app/graph/queries.py
++A backend/app/graph/repository.py
++A backend/tests/b03_evidence.py
++A backend/tests/graph_fixtures.py
++A backend/tests/integration/test_graph_access.py
++A backend/tests/unit/test_graph_access_models.py
++A contracts/graph_access.json
++A docs/evidence/B03-all-tests.txt
++A docs/evidence/B03-canonical-status.txt
++A docs/evidence/B03-collection-failure.txt
++A docs/evidence/B03-files.txt
++A docs/evidence/B03-git-diff.txt
++A docs/evidence/B03-review-audit.txt
++A docs/evidence/B03-runtime.json
++A docs/evidence/B03-spec-validation.txt
++A docs/evidence/B03-template-tests.txt
++Full diff includes all listed files except B03-git-diff.txt itself (avoids recursive inclusion).
++No staged B03 changes, new commit or push. Existing data/registry/0001/dependency pins/Compose remain unchanged.
+diff --git a/docs/evidence/B03-review-audit.txt b/docs/evidence/B03-review-audit.txt
+new file mode 100644
+index 0000000..28486c7
+--- /dev/null
++++ b/docs/evidence/B03-review-audit.txt
+@@ -0,0 +1,36 @@
++{
++  "baseline": "3db6d873fb494a5ce456cb5d04a84f2be50919d4",
++  "secret_value_scan": "PASS (actual values not logged)",
++  "review_files_scanned": 27,
++  "ignored": [
++    ".env",
++    "backend/.venv/bin/python",
++    ".uv-cache"
++  ],
++  "immutable_registry_plan_fixtures_compose_dependencies": "UNCHANGED",
++  "no_later_milestone_source": "PASS",
++  "git_diff_check": "PASS",
++  "staging_area": "EMPTY",
++  "canonical_ready": true,
++  "canonical_domain_nodes": 0,
++  "b01_probe": [
++    [
++      {
++        "id": "B01-PERSISTENCE",
++        "source_kind": "SYNTHETIC",
++        "task": "B01"
++      }
++    ]
++  ],
++  "browser_http": 200,
++  "metadata_projection_spike": {
++    "separate_revision": 53,
++    "upstream_projected_revisions": [
++      0,
++      0
++    ]
++  },
++  "all_template_plans": "8 real EXPLAIN plans captured",
++  "remote_push": "NOT PERFORMED",
++  "generated_diff_review": "Includes all changes except its own recursive content"
++}
+diff --git a/docs/evidence/B03-runtime.json b/docs/evidence/B03-runtime.json
+new file mode 100644
+index 0000000..2522646
+--- /dev/null
++++ b/docs/evidence/B03-runtime.json
+@@ -0,0 +1,1592 @@
++{
++  "packages": {
++    "falkordb": "1.8.0",
++    "redis": "8.1.0",
++    "pydantic": "2.14.1",
++    "pytest": "9.1.1"
++  },
++  "redis_version": "8.10.2",
++  "modules": [
++    [
++      "name",
++      "graph",
++      "ver",
++      60002,
++      "path",
++      "/var/lib/falkordb/bin/falkordb.so",
++      "args",
++      [
++        "MAX_QUEUED_QUERIES",
++        "25",
++        "TIMEOUT",
++        "1000",
++        "RESULTSET_SIZE",
++        "10000"
++      ]
++    ],
++    [
++      "name",
++      "vectorset",
++      "ver",
++      1,
++      "path",
++      "",
++      "args",
++      []
++    ]
++  ],
++  "canonical_status": {
++    "graph": "civicly_knowledge",
++    "migration_version": 1,
++    "registry_version": 3,
++    "municipality_id": "demo-city",
++    "ready": true,
++    "index_groups": 91,
++    "constraints": 182,
++    "issues": [],
++    "history": [
++      {
++        "id": "0001",
++        "attempts": 3,
++        "checksum": "94ab9fae6079fe7e87b41afd80701409db6bb51d529c2565dbd340896a5c923b",
++        "registry_sha256": "12541990b58d65e8602bff77b93b735009616e7ee658b9e7582a7ae9f449aac6",
++        "started_at": "2026-10-17T03:16:58.932Z",
++        "state": "READY",
++        "updated_at": "2026-10-17T03:32:03.946Z",
++        "version": 1,
++        "error_code": "",
++        "state_history": "[{\"state\": \"APPLYING\", \"at\": \"2026-10-17T03:16:58.932Z\", \"error_code\": \"\"}, {\"state\": \"READY\", \"at\": \"2026-10-17T03:17:00.862Z\", \"error_code\": \"\"}, {\"state\": \"APPLYING\", \"at\": \"2026-10-17T03:17:25.496Z\", \"error_code\": \"\"}, {\"state\": \"READY\", \"at\": \"2026-10-17T03:17:28.152Z\", \"error_code\": \"\"}, {\"state\": \"APPLYING\", \"at\": \"2026-10-17T03:32:01.357Z\", \"error_code\": \"\"}, {\"state\": \"READY\", \"at\": \"2026-10-17T03:32:03.946Z\", \"error_code\": \"\"}]"
++      }
++    ]
++  },
++  "canonical_domain_nodes": 0,
++  "b01_probe": [
++    [
++      {
++        "id": "B01-PERSISTENCE",
++        "source_kind": "SYNTHETIC",
++        "task": "B01"
++      }
++    ]
++  ],
++  "browser_http_status": 200,
++  "examples": {
++    "drainage_paths": {
++      "template": "drainage_paths",
++      "municipality_id": "demo-city",
++      "as_of": "2026-10-17T00:00:00Z",
++      "graph_revision": 53,
++      "nodes": [
++        {
++          "id": "D1",
++          "kind": "DrainSegment",
++          "labels": [
++            "DrainSegment",
++            "InfrastructureAsset"
++          ],
++          "properties": {
++            "id": "D1",
++            "updated_at": "2026-10-17T00:00:00Z",
++            "municipality_id": "demo-city",
++            "created_at": "2026-10-17T00:00:00Z",
++            "schema_version": 3,
++            "operational_status": "ACTIVE",
++            "name": "Synthetic asset",
++            "asset_type": "DRAIN_SEGMENT"
++          }
++        },
++        {
++          "id": "D2",
++          "kind": "DrainSegment",
++          "labels": [
++            "DrainSegment",
++            "InfrastructureAsset"
++          ],
++          "properties": {
++            "id": "D2",
++            "updated_at": "2026-10-17T00:00:00Z",
++            "municipality_id": "demo-city",
++            "created_at": "2026-10-17T00:00:00Z",
++            "schema_version": 3,
++            "operational_status": "ACTIVE",
++            "name": "Synthetic asset",
++            "asset_type": "DRAIN_SEGMENT"
++          }
++        },
++        {
++          "id": "D3",
++          "kind": "DrainInlet",
++          "labels": [
++            "DrainInlet",
++            "InfrastructureAsset"
++          ],
++          "properties": {
++            "id": "D3",
++            "updated_at": "2026-10-17T00:00:00Z",
++            "municipality_id": "demo-city",
++            "created_at": "2026-10-17T00:00:00Z",
++            "schema_version": 3,
++            "operational_status": "ACTIVE",
++            "name": "Synthetic asset",
++            "asset_type": "DRAIN_INLET"
++          }
++        }
++      ],
++      "edges": [
++        {
++          "id": "E0",
++          "kind": "DRAINS_TO",
++          "source": "D1",
++          "target": "D2",
++          "properties": {
++            "id": "E0",
++            "municipality_id": "demo-city",
++            "valid_from": "2026-10-17T00:00:00Z",
++            "created_at": "2026-10-17T00:00:00Z",
++            "association_status": "VERIFIED",
++            "source_evidence_id": "EV"
++          }
++        },
++        {
++          "id": "E1",
++          "kind": "DRAINS_TO",
++          "source": "D2",
++          "target": "D3",
++          "properties": {
++            "id": "E1",
++            "municipality_id": "demo-city",
++            "valid_from": "2026-10-17T00:00:00Z",
++            "created_at": "2026-10-17T00:00:00Z",
++            "association_status": "VERIFIED",
++            "source_evidence_id": "EV"
++          }
++        }
++      ],
++      "paths": [
++        {
++          "node_ids": [
++            "D1",
++            "D2"
++          ],
++          "edge_ids": [
++            "E0"
++          ],
++          "directions": [
++            "OUTGOING"
++          ],
++          "evidence_ids": [
++            "EV"
++          ],
++          "context": {}
++        },
++        {
++          "node_ids": [
++            "D1",
++            "D2",
++            "D3"
++          ],
++          "edge_ids": [
++            "E0",
++            "E1"
++          ],
++          "directions": [
++            "OUTGOING",
++            "OUTGOING"
++          ],
++          "evidence_ids": [
++            "EV"
++          ],
++          "context": {}
++        }
++      ],
++      "truncated": false,
++      "reservations": [
++        "Graph connections are evidence context, not verified physical causation.",
++        "Historical node versions are not reconstructed; future-updated records are excluded."
++      ]
++    },
++    "shared_infrastructure": {
++      "template": "shared_infrastructure",
++      "municipality_id": "demo-city",
++      "as_of": "2026-10-17T00:00:00Z",
++      "graph_revision": 53,
++      "nodes": [
++        {
++          "id": "I1",
++          "kind": "Incident",
++          "labels": [
++            "Incident"
++          ],
++          "properties": {
++            "id": "I1",
++            "started_at": "2026-10-17T00:00:00Z",
++            "updated_at": "2026-10-17T00:00:00Z",
++            "municipality_id": "demo-city",
++            "status": "OPEN",
++            "issue_type": "WATERLOGGING",
++            "created_at": "2026-10-17T00:00:00Z",
++            "schema_version": 3,
++            "severity": "HIGH",
++            "subtype": "TEST"
++          }
++        },
++        {
++          "id": "D1",
++          "kind": "DrainSegment",
++          "labels": [
++            "DrainSegment",
++            "InfrastructureAsset"
++          ],
++          "properties": {
++            "id": "D1",
++            "updated_at": "2026-10-17T00:00:00Z",
++            "municipality_id": "demo-city",
++            "created_at": "2026-10-17T00:00:00Z",
++            "schema_version": 3,
++            "operational_status": "ACTIVE",
++            "name": "Synthetic asset",
++            "asset_type": "DRAIN_SEGMENT"
++          }
++        },
++        {
++          "id": "D2",
++          "kind": "DrainSegment",
++          "labels": [
++            "DrainSegment",
++            "InfrastructureAsset"
++          ],
++          "properties": {
++            "id": "D2",
++            "updated_at": "2026-10-17T00:00:00Z",
++            "municipality_id": "demo-city",
++            "created_at": "2026-10-17T00:00:00Z",
++            "schema_version": 3,
++            "operational_status": "ACTIVE",
++            "name": "Synthetic asset",
++            "asset_type": "DRAIN_SEGMENT"
++          }
++        },
++        {
++          "id": "I2",
++          "kind": "Incident",
++          "labels": [
++            "Incident"
++          ],
++          "properties": {
++            "id": "I2",
++            "started_at": "2026-10-17T00:00:00Z",
++            "updated_at": "2026-10-17T00:00:00Z",
++            "municipality_id": "demo-city",
++            "status": "OPEN",
++            "issue_type": "ROAD_DAMAGE",
++            "created_at": "2026-10-17T00:00:00Z",
++            "schema_version": 3,
++            "severity": "HIGH",
++            "subtype": "TEST"
++          }
++        },
++        {
++          "id": "D3",
++          "kind": "DrainInlet",
++          "labels": [
++            "DrainInlet",
++            "InfrastructureAsset"
++          ],
++          "properties": {
++            "id": "D3",
++            "updated_at": "2026-10-17T00:00:00Z",
++            "municipality_id": "demo-city",
++            "created_at": "2026-10-17T00:00:00Z",
++            "schema_version": 3,
++            "operational_status": "ACTIVE",
++            "name": "Synthetic asset",
++            "asset_type": "DRAIN_INLET"
++          }
++        }
++      ],
++      "edges": [
++        {
++          "id": "E2",
++          "kind": "AFFECTS",
++          "source": "I1",
++          "target": "D1",
++          "properties": {
++            "id": "E2",
++            "municipality_id": "demo-city",
++            "valid_from": "2026-10-17T00:00:00Z",
++            "created_at": "2026-10-17T00:00:00Z",
++            "association_status": "VERIFIED",
++            "source_evidence_id": "EV"
++          }
++        },
++        {
++          "id": "E0",
++          "kind": "DRAINS_TO",
++          "source": "D1",
++          "target": "D2",
++          "properties": {
++            "id": "E0",
++            "municipality_id": "demo-city",
++            "valid_from": "2026-10-17T00:00:00Z",
++            "created_at": "2026-10-17T00:00:00Z",
++            "association_status": "VERIFIED",
++            "source_evidence_id": "EV"
++          }
++        },
++        {
++          "id": "E3",
++          "kind": "AFFECTS",
++          "source": "I2",
++          "target": "D2",
++          "properties": {
++            "id": "E3",
++            "municipality_id": "demo-city",
++            "valid_from": "2026-10-17T00:00:00Z",
++            "created_at": "2026-10-17T00:00:00Z",
++            "association_status": "VERIFIED",
++            "source_evidence_id": "EV"
++          }
++        },
++        {
++          "id": "E1",
++          "kind": "DRAINS_TO",
++          "source": "D2",
++          "target": "D3",
++          "properties": {
++            "id": "E1",
++            "municipality_id": "demo-city",
++            "valid_from": "2026-10-17T00:00:00Z",
++            "created_at": "2026-10-17T00:00:00Z",
++            "association_status": "VERIFIED",
++            "source_evidence_id": "EV"
++          }
++        }
++      ],
++      "paths": [
++        {
++          "node_ids": [
++            "I1",
++            "D1",
++            "D2"
++          ],
++          "edge_ids": [
++            "E2",
++            "E0"
++          ],
++          "directions": [
++            "OUTGOING",
++            "OUTGOING"
++          ],
++          "evidence_ids": [
++            "EV"
++          ],
++          "context": {
++            "shared_incident_ids": [
++              "I1",
++              "I2"
++            ],
++            "shared_asset_id": "D2"
++          }
++        },
++        {
++          "node_ids": [
++            "I2",
++            "D2"
++          ],
++          "edge_ids": [
++            "E3"
++          ],
++          "directions": [
++            "OUTGOING"
++          ],
++          "evidence_ids": [
++            "EV"
++          ],
++          "context": {
++            "shared_incident_ids": [
++              "I1",
++              "I2"
++            ],
++            "shared_asset_id": "D2"
++          }
++        },
++        {
++          "node_ids": [
++            "I1",
++            "D1",
++            "D2",
++            "D3"
++          ],
++          "edge_ids": [
++            "E2",
++            "E0",
++            "E1"
++          ],
++          "directions": [
++            "OUTGOING",
++            "OUTGOING",
++            "OUTGOING"
++          ],
++          "evidence_ids": [
++            "EV"
++          ],
++          "context": {
++            "shared_incident_ids": [
++              "I1",
++              "I2"
++            ],
++            "shared_asset_id": "D3"
++          }
++        },
++        {
++          "node_ids": [
++            "I2",
++            "D2",
++            "D3"
++          ],
++          "edge_ids": [
++            "E3",
++            "E1"
++          ],
++          "directions": [
++            "OUTGOING",
++            "OUTGOING"
++          ],
++          "evidence_ids": [
++            "EV"
++          ],
++          "context": {
++            "shared_incident_ids": [
++              "I1",
++              "I2"
++            ],
++            "shared_asset_id": "D3"
++          }
++        }
++      ],
++      "truncated": false,
++      "reservations": [
++        "Graph connections are evidence context, not verified physical causation.",
++        "Historical node versions are not reconstructed; future-updated records are excluded."
++      ]
++    },
++    "incident_history": {
++      "template": "incident_history",
++      "municipality_id": "demo-city",
++      "as_of": "2026-10-17T00:00:00Z",
++      "graph_revision": 53,
++      "nodes": [
++        {
++          "id": "I1",
++          "kind": "Incident",
++          "labels": [
++            "Incident"
++          ],
++          "properties": {
++            "id": "I1",
++            "started_at": "2026-10-17T00:00:00Z",
++            "updated_at": "2026-10-17T00:00:00Z",
++            "municipality_id": "demo-city",
++            "status": "OPEN",
++            "issue_type": "WATERLOGGING",
++            "created_at": "2026-10-17T00:00:00Z",
++            "schema_version": 3,
++            "severity": "HIGH",
++            "subtype": "TEST"
++          }
++        },
++        {
++          "id": "LW",
++          "kind": "Location",
++          "labels": [
++            "Location"
++          ],
++          "properties": {
++            "id": "LW",
++            "updated_at": "2026-10-17T00:00:00Z",
++            "municipality_id": "demo-city",
++            "created_at": "2026-10-17T00:00:00Z",
++            "schema_version": 3,
++            "name": "Same coordinates, explicit connections only",
++            "latitude": 12.0,
++            "longitude": 77.0
++          }
++        },
++        {
++          "id": "I2",
++          "kind": "Incident",
++          "labels": [
++            "Incident"
++          ],
++          "properties": {
++            "id": "I2",
++            "started_at": "2026-10-17T00:00:00Z",
++            "updated_at": "2026-10-17T00:00:00Z",
++            "municipality_id": "demo-city",
++            "status": "OPEN",
++            "issue_type": "ROAD_DAMAGE",
++            "created_at": "2026-10-17T00:00:00Z",
++            "schema_version": 3,
++            "severity": "HIGH",
++            "subtype": "TEST"
++          }
++        }
++      ],
++      "edges": [
++        {
++          "id": "E10",
++          "kind": "OCCURRED_AT",
++          "source": "I1",
++          "target": "LW",
++          "properties": {
++            "id": "E10",
++            "municipality_id": "demo-city",
++            "valid_from": "2026-10-17T00:00:00Z",
++            "created_at": "2026-10-17T00:00:00Z"
++          }
++        },
++        {
++          "id": "E11",
++          "kind": "OCCURRED_AT",
++          "source": "I2",
++          "target": "LW",
++          "properties": {
++            "id": "E11",
++            "municipality_id": "demo-city",
++            "valid_from": "2026-10-17T00:00:00Z",
++            "created_at": "2026-10-17T00:00:00Z"
++          }
++        }
++      ],
++      "paths": [
++        {
++          "node_ids": [
++            "I1",
++            "LW"
++          ],
++          "edge_ids": [
++            "E10"
++          ],
++          "directions": [
++            "OUTGOING"
++          ],
++          "evidence_ids": [],
++          "context": {
++            "classification": "related_incidents_not_recurrence_verdict"
++          }
++        },
++        {
++          "node_ids": [
++            "I2",
++            "LW"
++          ],
++          "edge_ids": [
++            "E11"
++          ],
++          "directions": [
++            "OUTGOING"
++          ],
++          "evidence_ids": [],
++          "context": {
++            "classification": "related_incidents_not_recurrence_verdict"
++          }
++        }
++      ],
++      "truncated": false,
++      "reservations": [
++        "Graph connections are evidence context, not verified physical causation.",
++        "Historical node versions are not reconstructed; future-updated records are excluded."
++      ]
++    },
++    "maintenance_history": {
++      "template": "maintenance_history",
++      "municipality_id": "demo-city",
++      "as_of": "2026-10-17T00:00:00Z",
++      "graph_revision": 53,
++      "nodes": [
++        {
++          "id": "D1",
++          "kind": "DrainSegment",
++          "labels": [
++            "DrainSegment",
++            "InfrastructureAsset"
++          ],
++          "properties": {
++            "id": "D1",
++            "updated_at": "2026-10-17T00:00:00Z",
++            "municipality_id": "demo-city",
++            "created_at": "2026-10-17T00:00:00Z",
++            "schema_version": 3,
++            "operational_status": "ACTIVE",
++            "name": "Synthetic asset",
++            "asset_type": "DRAIN_SEGMENT"
++          }
++        },
++        {
++          "id": "INS",
++          "kind": "Inspection",
++          "labels": [
++            "Inspection"
++          ],
++          "properties": {
++            "id": "INS",
++            "updated_at": "2026-10-17T00:00:00Z",
++            "municipality_id": "demo-city",
++            "status": "COMPLETE",
++            "created_at": "2026-10-17T00:00:00Z",
++            "schema_version": 3,
++            "requested_at": "2026-10-17T00:00:00Z",
++            "inspection_type": "DRAIN"
++          }
++        },
++        {
++          "id": "EV",
++          "kind": "Evidence",
++          "labels": [
++            "Evidence"
++          ],
++          "properties": {
++            "id": "EV",
++            "updated_at": "2026-10-17T00:00:00Z",
++            "municipality_id": "demo-city",
++            "observed_at": "2026-10-17T00:00:00Z",
++            "recorded_at": "2026-10-17T00:00:00Z",
++            "created_at": "2026-10-17T00:00:00Z",
++            "schema_version": 3,
++            "summary": "Synthetic inspection",
++            "source_kind": "SYNTHETIC",
++            "evidence_type": "INSPECTION_REPORT",
++            "reliability": "VERIFIED",
++            "source_record_id": "test-record"
++          }
++        },
++        {
++          "id": "T1",
++          "kind": "ActionTask",
++          "labels": [
++            "ActionTask"
++          ],
++          "properties": {
++            "id": "T1",
++            "updated_at": "2026-10-17T00:00:00Z",
++            "municipality_id": "demo-city",
++            "status": "PENDING",
++            "created_at": "2026-10-17T00:00:00Z",
++            "schema_version": 3,
++            "action_type": "TEST",
++            "priority": "HIGH"
++          }
++        },
++        {
++          "id": "WO",
++          "kind": "WorkOrder",
++          "labels": [
++            "WorkOrder"
++          ],
++          "properties": {
++            "id": "WO",
++            "updated_at": "2026-10-17T00:00:00Z",
++            "municipality_id": "demo-city",
++            "status": "COMPLETE",
++            "created_at": "2026-10-17T00:00:00Z",
++            "schema_version": 3,
++            "plan_version": 1,
++            "idempotency_key": "TEST-WO",
++            "execution_mode": "SIMULATED"
++          }
++        },
++        {
++          "id": "OUT",
++          "kind": "InterventionOutcome",
++          "labels": [
++            "InterventionOutcome"
++          ],
++          "properties": {
++            "id": "OUT",
++            "municipality_id": "demo-city",
++            "created_at": "2026-10-17T00:00:00Z",
++            "schema_version": 3,
++            "assessment_status": "TEST",
++            "evaluated_at": "2026-10-17T00:00:00Z",
++            "result": "INCONCLUSIVE"
++          }
++        }
++      ],
++      "edges": [
++        {
++          "id": "E15",
++          "kind": "INSPECTS",
++          "source": "INS",
++          "target": "D1",
++          "properties": {
++            "id": "E15",
++            "municipality_id": "demo-city",
++            "valid_from": "2026-10-17T00:00:00Z",
++            "created_at": "2026-10-17T00:00:00Z"
++          }
++        },
++        {
++          "id": "E16",
++          "kind": "PRODUCED",
++          "source": "INS",
++          "target": "EV",
++          "properties": {
++            "id": "E16",
++            "municipality_id": "demo-city",
++            "valid_from": "2026-10-17T00:00:00Z",
++            "created_at": "2026-10-17T00:00:00Z"
++          }
++        },
++        {
++          "id": "E17",
++          "kind": "TARGETS",
++          "source": "T1",
++          "target": "D1",
++          "properties": {
++            "id": "E17",
++            "municipality_id": "demo-city",
++            "valid_from": "2026-10-17T00:00:00Z",
++            "created_at": "2026-10-17T00:00:00Z"
++          }
++        },
++        {
++          "id": "E18",
++          "kind": "IMPLEMENTS",
++          "source": "WO",
++          "target": "T1",
++          "properties": {
++            "id": "E18",
++            "municipality_id": "demo-city",
++            "valid_from": "2026-10-17T00:00:00Z",
++            "created_at": "2026-10-17T00:00:00Z"
++          }
++        },
++        {
++          "id": "E19",
++          "kind": "RESULTED_IN",
++          "source": "WO",
++          "target": "OUT",
++          "properties": {
++            "id": "E19",
++            "municipality_id": "demo-city",
++            "valid_from": "2026-10-17T00:00:00Z",
++            "created_at": "2026-10-17T00:00:00Z"
++          }
++        }
++      ],
++      "paths": [
++        {
++          "node_ids": [
++            "D1",
++            "INS"
++          ],
++          "edge_ids": [
++            "E15"
++          ],
++          "directions": [
++            "INCOMING"
++          ],
++          "evidence_ids": [],
++          "context": {}
++        },
++        {
++          "node_ids": [
++            "D1",
++            "INS",
++            "EV"
++          ],
++          "edge_ids": [
++            "E15",
++            "E16"
++          ],
++          "directions": [
++            "INCOMING",
++            "OUTGOING"
++          ],
++          "evidence_ids": [
++            "EV"
++          ],
++          "context": {}
++        },
++        {
++          "node_ids": [
++            "D1",
++            "T1",
++            "WO"
++          ],
++          "edge_ids": [
++            "E17",
++            "E18"
++          ],
++          "directions": [
++            "INCOMING",
++            "INCOMING"
++          ],
++          "evidence_ids": [],
++          "context": {}
++        },
++        {
++          "node_ids": [
++            "D1",
++            "T1",
++            "WO",
++            "OUT"
++          ],
++          "edge_ids": [
++            "E17",
++            "E18",
++            "E19"
++          ],
++          "directions": [
++            "INCOMING",
++            "INCOMING",
++            "OUTGOING"
++          ],
++          "evidence_ids": [],
++          "context": {}
++        }
++      ],
++      "truncated": false,
++      "reservations": [
++        "Graph connections are evidence context, not verified physical causation.",
++        "Historical node versions are not reconstructed; future-updated records are excluded."
++      ]
++    },
++    "cross_category_paths": {
++      "template": "cross_category_paths",
++      "municipality_id": "demo-city",
++      "as_of": "2026-10-17T00:00:00Z",
++      "graph_revision": 53,
++      "nodes": [
++        {
++          "id": "W",
++          "kind": "WasteCollectionPoint",
++          "labels": [
++            "InfrastructureAsset",
++            "WasteCollectionPoint"
++          ],
++          "properties": {
++            "id": "W",
++            "updated_at": "2026-10-17T00:00:00Z",
++            "municipality_id": "demo-city",
++            "created_at": "2026-10-17T00:00:00Z",
++            "schema_version": 3,
++            "operational_status": "ACTIVE",
++            "name": "Synthetic asset",
++            "asset_type": "WASTE_COLLECTION_POINT"
++          }
++        },
++        {
++          "id": "LW",
++          "kind": "Location",
++          "labels": [
++            "Location"
++          ],
++          "properties": {
++            "id": "LW",
++            "updated_at": "2026-10-17T00:00:00Z",
++            "municipality_id": "demo-city",
++            "created_at": "2026-10-17T00:00:00Z",
++            "schema_version": 3,
++            "name": "Same coordinates, explicit connections only",
++            "latitude": 12.0,
++            "longitude": 77.0
++          }
++        },
++        {
++          "id": "D1",
++          "kind": "DrainSegment",
++          "labels": [
++            "DrainSegment",
++            "InfrastructureAsset"
++          ],
++          "properties": {
++            "id": "D1",
++            "updated_at": "2026-10-17T00:00:00Z",
++            "municipality_id": "demo-city",
++            "created_at": "2026-10-17T00:00:00Z",
++            "schema_version": 3,
++            "operational_status": "ACTIVE",
++            "name": "Synthetic asset",
++            "asset_type": "DRAIN_SEGMENT"
++          }
++        },
++        {
++          "id": "D2",
++          "kind": "DrainSegment",
++          "labels": [
++            "DrainSegment",
++            "InfrastructureAsset"
++          ],
++          "properties": {
++            "id": "D2",
++            "updated_at": "2026-10-17T00:00:00Z",
++            "municipality_id": "demo-city",
++            "created_at": "2026-10-17T00:00:00Z",
++            "schema_version": 3,
++            "operational_status": "ACTIVE",
++            "name": "Synthetic asset",
++            "asset_type": "DRAIN_SEGMENT"
++          }
++        },
++        {
++          "id": "D3",
++          "kind": "DrainInlet",
++          "labels": [
++            "DrainInlet",
++            "InfrastructureAsset"
++          ],
++          "properties": {
++            "id": "D3",
++            "updated_at": "2026-10-17T00:00:00Z",
++            "municipality_id": "demo-city",
++            "created_at": "2026-10-17T00:00:00Z",
++            "schema_version": 3,
++            "operational_status": "ACTIVE",
++            "name": "Synthetic asset",
++            "asset_type": "DRAIN_INLET"
++          }
++        },
++        {
++          "id": "LR",
++          "kind": "Location",
++          "labels": [
++            "Location"
++          ],
++          "properties": {
++            "id": "LR",
++            "updated_at": "2026-10-17T00:00:00Z",
++            "municipality_id": "demo-city",
++            "created_at": "2026-10-17T00:00:00Z",
++            "schema_version": 3,
++            "name": "Same coordinates, explicit connections only",
++            "latitude": 12.0,
++            "longitude": 77.0
++          }
++        },
++        {
++          "id": "R",
++          "kind": "RoadSegment",
++          "labels": [
++            "InfrastructureAsset",
++            "RoadSegment"
++          ],
++          "properties": {
++            "id": "R",
++            "updated_at": "2026-10-17T00:00:00Z",
++            "municipality_id": "demo-city",
++            "created_at": "2026-10-17T00:00:00Z",
++            "schema_version": 3,
++            "operational_status": "ACTIVE",
++            "name": "Synthetic asset",
++            "asset_type": "ROAD_SEGMENT"
++          }
++        }
++      ],
++      "edges": [
++        {
++          "id": "E5",
++          "kind": "LOCATED_AT",
++          "source": "W",
++          "target": "LW",
++          "properties": {
++            "id": "E5",
++            "municipality_id": "demo-city",
++            "valid_from": "2026-10-17T00:00:00Z",
++            "created_at": "2026-10-17T00:00:00Z"
++          }
++        },
++        {
++          "id": "E8",
++          "kind": "SERVES",
++          "source": "D1",
++          "target": "LW",
++          "properties": {
++            "id": "E8",
++            "municipality_id": "demo-city",
++            "valid_from": "2026-10-17T00:00:00Z",
++            "created_at": "2026-10-17T00:00:00Z",
++            "association_status": "VERIFIED",
++            "source_evidence_id": "EV"
++          }
++        },
++        {
++          "id": "E0",
++          "kind": "DRAINS_TO",
++          "source": "D1",
++          "target": "D2",
++          "properties": {
++            "id": "E0",
++            "municipality_id": "demo-city",
++            "valid_from": "2026-10-17T00:00:00Z",
++            "created_at": "2026-10-17T00:00:00Z",
++            "association_status": "VERIFIED",
++            "source_evidence_id": "EV"
++          }
++        },
++        {
++          "id": "E1",
++          "kind": "DRAINS_TO",
++          "source": "D2",
++          "target": "D3",
++          "properties": {
++            "id": "E1",
++            "municipality_id": "demo-city",
++            "valid_from": "2026-10-17T00:00:00Z",
++            "created_at": "2026-10-17T00:00:00Z",
++            "association_status": "VERIFIED",
++            "source_evidence_id": "EV"
++          }
++        },
++        {
++          "id": "E9",
++          "kind": "SERVES",
++          "source": "D3",
++          "target": "LR",
++          "properties": {
++            "id": "E9",
++            "municipality_id": "demo-city",
++            "valid_from": "2026-10-17T00:00:00Z",
++            "created_at": "2026-10-17T00:00:00Z",
++            "association_status": "VERIFIED",
++            "source_evidence_id": "EV"
++          }
++        },
++        {
++          "id": "E6",
++          "kind": "LOCATED_AT",
++          "source": "R",
++          "target": "LR",
++          "properties": {
++            "id": "E6",
++            "municipality_id": "demo-city",
++            "valid_from": "2026-10-17T00:00:00Z",
++            "created_at": "2026-10-17T00:00:00Z"
++          }
++        }
++      ],
++      "paths": [
++        {
++          "node_ids": [
++            "W",
++            "LW",
++            "D1",
++            "D2",
++            "D3",
++            "LR",
++            "R"
++          ],
++          "edge_ids": [
++            "E5",
++            "E8",
++            "E0",
++            "E1",
++            "E9",
++            "E6"
++          ],
++          "directions": [
++            "OUTGOING",
++            "INCOMING",
++            "OUTGOING",
++            "OUTGOING",
++            "OUTGOING",
++            "INCOMING"
++          ],
++          "evidence_ids": [
++            "EV"
++          ],
++          "context": {
++            "classification": "CANDIDATE_CONNECTION_NOT_CAUSATION"
++          }
++        }
++      ],
++      "truncated": false,
++      "reservations": [
++        "Graph connections are evidence context, not verified physical causation.",
++        "Historical node versions are not reconstructed; future-updated records are excluded."
++      ]
++    },
++    "hypothesis_evidence": {
++      "template": "hypothesis_evidence",
++      "municipality_id": "demo-city",
++      "as_of": "2026-10-17T00:00:00Z",
++      "graph_revision": 53,
++      "nodes": [
++        {
++          "id": "INV",
++          "kind": "Investigation",
++          "labels": [
++            "Investigation"
++          ],
++          "properties": {
++            "id": "INV",
++            "updated_at": "2026-10-17T00:00:00Z",
++            "municipality_id": "demo-city",
++            "status": "OPEN",
++            "created_at": "2026-10-17T00:00:00Z",
++            "schema_version": 3,
++            "priority": "HIGH",
++            "opened_at": "2026-10-17T00:00:00Z"
++          }
++        },
++        {
++          "id": "H",
++          "kind": "Hypothesis",
++          "labels": [
++            "Hypothesis"
++          ],
++          "properties": {
++            "id": "H",
++            "updated_at": "2026-10-17T00:00:00Z",
++            "municipality_id": "demo-city",
++            "status": "OPEN",
++            "created_at": "2026-10-17T00:00:00Z",
++            "schema_version": 3,
++            "statement": "Test hypothesis",
++            "cause_code": "TEST"
++          }
++        },
++        {
++          "id": "HA",
++          "kind": "HypothesisAssessment",
++          "labels": [
++            "HypothesisAssessment"
++          ],
++          "properties": {
++            "id": "HA",
++            "municipality_id": "demo-city",
++            "created_at": "2026-10-17T00:00:00Z",
++            "schema_version": 3,
++            "rationale": "Test",
++            "assessed_at": "2026-10-17T00:00:00Z",
++            "assessment": "INCONCLUSIVE"
++          }
++        },
++        {
++          "id": "EV",
++          "kind": "Evidence",
++          "labels": [
++            "Evidence"
++          ],
++          "properties": {
++            "id": "EV",
++            "updated_at": "2026-10-17T00:00:00Z",
++            "municipality_id": "demo-city",
++            "observed_at": "2026-10-17T00:00:00Z",
++            "recorded_at": "2026-10-17T00:00:00Z",
++            "created_at": "2026-10-17T00:00:00Z",
++            "schema_version": 3,
++            "summary": "Synthetic inspection",
++            "source_kind": "SYNTHETIC",
++            "evidence_type": "INSPECTION_REPORT",
++            "reliability": "VERIFIED",
++            "source_record_id": "test-record"
++          }
++        },
++        {
++          "id": "COUNTER",
++          "kind": "Evidence",
++          "labels": [
++            "Evidence"
++          ],
++          "properties": {
++            "id": "COUNTER",
++            "updated_at": "2026-10-17T00:00:00Z",
++            "municipality_id": "demo-city",
++            "observed_at": "2026-10-17T00:00:00Z",
++            "recorded_at": "2026-10-17T00:00:00Z",
++            "created_at": "2026-10-17T00:00:00Z",
++            "schema_version": 3,
++            "summary": "Synthetic inspection",
++            "source_kind": "SYNTHETIC",
++            "evidence_type": "INSPECTION_REPORT",
++            "reliability": "VERIFIED",
++            "source_record_id": "test-record"
++          }
++        }
++      ],
++      "edges": [
++        {
++          "id": "E20",
++          "kind": "PROPOSES",
++          "source": "INV",
++          "target": "H",
++          "properties": {
++            "id": "E20",
++            "municipality_id": "demo-city",
++            "valid_from": "2026-10-17T00:00:00Z",
++            "created_at": "2026-10-17T00:00:00Z"
++          }
++        },
++        {
++          "id": "E21",
++          "kind": "HAS_ASSESSMENT",
++          "source": "H",
++          "target": "HA",
++          "properties": {
++            "id": "E21",
++            "municipality_id": "demo-city",
++            "valid_from": "2026-10-17T00:00:00Z",
++            "created_at": "2026-10-17T00:00:00Z"
++          }
++        },
++        {
++          "id": "E22",
++          "kind": "SUPPORTED_BY",
++          "source": "HA",
++          "target": "EV",
++          "properties": {
++            "id": "E22",
++            "municipality_id": "demo-city",
++            "valid_from": "2026-10-17T00:00:00Z",
++            "created_at": "2026-10-17T00:00:00Z"
++          }
++        },
++        {
++          "id": "E23",
++          "kind": "CONTRADICTED_BY",
++          "source": "HA",
++          "target": "COUNTER",
++          "properties": {
++            "id": "E23",
++            "municipality_id": "demo-city",
++            "valid_from": "2026-10-17T00:00:00Z",
++            "created_at": "2026-10-17T00:00:00Z"
++          }
++        }
++      ],
++      "paths": [
++        {
++          "node_ids": [
++            "INV",
++            "H",
++            "HA",
++            "EV"
++          ],
++          "edge_ids": [
++            "E20",
++            "E21",
++            "E22"
++          ],
++          "directions": [
++            "OUTGOING",
++            "OUTGOING",
++            "OUTGOING"
++          ],
++          "evidence_ids": [
++            "EV"
++          ],
++          "context": {
++            "evidence_relation": "SUPPORTED_BY"
++          }
++        },
++        {
++          "node_ids": [
++            "INV",
++            "H",
++            "HA",
++            "COUNTER"
++          ],
++          "edge_ids": [
++            "E20",
++            "E21",
++            "E23"
++          ],
++          "directions": [
++            "OUTGOING",
++            "OUTGOING",
++            "OUTGOING"
++          ],
++          "evidence_ids": [
++            "COUNTER"
++          ],
++          "context": {
++            "evidence_relation": "CONTRADICTED_BY"
++          }
++        }
++      ],
++      "truncated": false,
++      "reservations": [
++        "Graph connections are evidence context, not verified physical causation.",
++        "Historical node versions are not reconstructed; future-updated records are excluded."
++      ]
++    },
++    "ownership_dependencies": {
++      "template": "ownership_dependencies",
++      "municipality_id": "demo-city",
++      "as_of": "2026-10-17T00:00:00Z",
++      "graph_revision": 53,
++      "nodes": [
++        {
++          "id": "W",
++          "kind": "WasteCollectionPoint",
++          "labels": [
++            "InfrastructureAsset",
++            "WasteCollectionPoint"
++          ],
++          "properties": {
++            "id": "W",
++            "updated_at": "2026-10-17T00:00:00Z",
++            "municipality_id": "demo-city",
++            "created_at": "2026-10-17T00:00:00Z",
++            "schema_version": 3,
++            "operational_status": "ACTIVE",
++            "name": "Synthetic asset",
++            "asset_type": "WASTE_COLLECTION_POINT"
++          }
++        },
++        {
++          "id": "ROUTE",
++          "kind": "CollectionRoute",
++          "labels": [
++            "CollectionRoute"
++          ],
++          "properties": {
++            "id": "ROUTE",
++            "updated_at": "2026-10-17T00:00:00Z",
++            "municipality_id": "demo-city",
++            "created_at": "2026-10-17T00:00:00Z",
++            "schema_version": 3,
++            "operational_status": "ACTIVE",
++            "route_code": "TEST"
++          }
++        },
++        {
++          "id": "SCHEDULE",
++          "kind": "ServiceSchedule",
++          "labels": [
++            "ServiceSchedule"
++          ],
++          "properties": {
++            "id": "SCHEDULE",
++            "updated_at": "2026-10-17T00:00:00Z",
++            "municipality_id": "demo-city",
++            "valid_from": "2026-10-17T00:00:00Z",
++            "created_at": "2026-10-17T00:00:00Z",
++            "schema_version": 3,
++            "schedule_spec": "TEST",
++            "service_type": "WASTE",
++            "timezone": "UTC"
++          }
++        }
++      ],
++      "edges": [
++        {
++          "id": "E13",
++          "kind": "COLLECTED_BY",
++          "source": "W",
++          "target": "ROUTE",
++          "properties": {
++            "id": "E13",
++            "municipality_id": "demo-city",
++            "valid_from": "2026-10-17T00:00:00Z",
++            "created_at": "2026-10-17T00:00:00Z",
++            "association_status": "VERIFIED",
++            "source_evidence_id": "EV"
++          }
++        },
++        {
++          "id": "E14",
++          "kind": "HAS_SCHEDULE",
++          "source": "ROUTE",
++          "target": "SCHEDULE",
++          "properties": {
++            "id": "E14",
++            "municipality_id": "demo-city",
++            "valid_from": "2026-10-17T00:00:00Z",
++            "created_at": "2026-10-17T00:00:00Z",
++            "association_status": "VERIFIED",
++            "source_evidence_id": "EV"
++          }
++        }
++      ],
++      "paths": [
++        {
++          "node_ids": [
++            "W",
++            "ROUTE"
++          ],
++          "edge_ids": [
++            "E13"
++          ],
++          "directions": [
++            "OUTGOING"
++          ],
++          "evidence_ids": [
++            "EV"
++          ],
++          "context": {
++            "classification": "assignment_not_causal_finding"
++          }
++        },
++        {
++          "node_ids": [
++            "W",
++            "ROUTE",
++            "SCHEDULE"
++          ],
++          "edge_ids": [
++            "E13",
++            "E14"
++          ],
++          "directions": [
++            "OUTGOING",
++            "OUTGOING"
++          ],
++          "evidence_ids": [
++            "EV"
++          ],
++          "context": {
++            "classification": "assignment_not_causal_finding"
++          }
++        }
++      ],
++      "truncated": false,
++      "reservations": [
++        "Graph connections are evidence context, not verified physical causation.",
++        "Historical node versions are not reconstructed; future-updated records are excluded."
++      ]
++    },
++    "task_dependencies": {
++      "template": "task_dependencies",
++      "municipality_id": "demo-city",
++      "as_of": "2026-10-17T00:00:00Z",
++      "graph_revision": 53,
++      "nodes": [
++        {
++          "id": "T1",
++          "kind": "ActionTask",
++          "labels": [
++            "ActionTask"
++          ],
++          "properties": {
++            "id": "T1",
++            "updated_at": "2026-10-17T00:00:00Z",
++            "municipality_id": "demo-city",
++            "status": "PENDING",
++            "created_at": "2026-10-17T00:00:00Z",
++            "schema_version": 3,
++            "action_type": "TEST",
++            "priority": "HIGH"
++          }
++        },
++        {
++          "id": "T2",
++          "kind": "ActionTask",
++          "labels": [
++            "ActionTask"
++          ],
++          "properties": {
++            "id": "T2",
++            "updated_at": "2026-10-17T00:00:00Z",
++            "municipality_id": "demo-city",
++            "status": "PENDING",
++            "created_at": "2026-10-17T00:00:00Z",
++            "schema_version": 3,
++            "action_type": "TEST",
++            "priority": "HIGH"
++          }
++        },
++        {
++          "id": "T3",
++          "kind": "ActionTask",
++          "labels": [
++            "ActionTask"
++          ],
++          "properties": {
++            "id": "T3",
++            "updated_at": "2026-10-17T00:00:00Z",
++            "municipality_id": "demo-city",
++            "status": "PENDING",
++            "created_at": "2026-10-17T00:00:00Z",
++            "schema_version": 3,
++            "action_type": "TEST",
++            "priority": "HIGH"
++          }
++        }
++      ],
++      "edges": [
++        {
++          "id": "E24",
++          "kind": "DEPENDS_ON",
++          "source": "T1",
++          "target": "T2",
++          "properties": {
++            "id": "E24",
++            "municipality_id": "demo-city",
++            "valid_from": "2026-10-17T00:00:00Z",
++            "created_at": "2026-10-17T00:00:00Z"
++          }
++        },
++        {
++          "id": "E25",
++          "kind": "DEPENDS_ON",
++          "source": "T2",
++          "target": "T3",
++          "properties": {
++            "id": "E25",
++            "municipality_id": "demo-city",
++            "valid_from": "2026-10-17T00:00:00Z",
++            "created_at": "2026-10-17T00:00:00Z"
++          }
++        }
++      ],
++      "paths": [
++        {
++          "node_ids": [
++            "T1",
++            "T2"
++          ],
++          "edge_ids": [
++            "E24"
++          ],
++          "directions": [
++            "OUTGOING"
++          ],
++          "evidence_ids": [],
++          "context": {}
++        },
++        {
++          "node_ids": [
++            "T1",
++            "T2",
++            "T3"
++          ],
++          "edge_ids": [
++            "E24",
++            "E25"
++          ],
++          "directions": [
++            "OUTGOING",
++            "OUTGOING"
++          ],
++          "evidence_ids": [],
++          "context": {}
++        }
++      ],
++      "truncated": false,
++      "reservations": [
++        "Graph connections are evidence context, not verified physical causation.",
++        "Historical node versions are not reconstructed; future-updated records are excluded."
++      ]
++    }
++  },
++  "explain_plans": {
++    "drainage_paths": "Limit\n    Project\n        Filter\n            Conditional Variable Length Traverse | (a)-[_anon_0:DRAINS_TO*1..6]->(b)\n                Filter\n                    Node By Index Scan | (a:InfrastructureAsset)",
++    "shared_infrastructure": "Limit\n    Project\n        Unwind\n            Filter\n                Aggregate\n                    Filter\n                        PathBuilder\n                            Conditional Variable Length Traverse | (a)-[_anon_1:DRAINS_TO*0..6]->(shared)\n                                Conditional Traverse | (i)->(a:InfrastructureAsset)\n                                    Filter\n                                        Node By Index Scan | (i:Incident)",
++    "incident_history": "Limit\n    Project\n        Filter\n            PathBuilder\n                Filter\n                    Conditional Traverse | (i)->(a:Location)\n                        Filter\n                            Node By Label Scan | (i:Incident)",
++    "maintenance_history": "Union\n    Limit\n        Project\n            Filter\n                PathBuilder\n                    Conditional Traverse | (a)<-(i:Inspection)\n                        Filter\n                            Node By Index Scan | (a:InfrastructureAsset)\n    Limit\n        Project\n            Filter\n                PathBuilder\n                    Conditional Traverse | (i)->(e:Evidence)\n                        Conditional Traverse | (a)<-(i:Inspection)\n                            Filter\n                                Node By Index Scan | (a:InfrastructureAsset)\n    Limit\n        Project\n            Filter\n                PathBuilder\n                    Conditional Traverse | (o)->(t:ActionTask)\n                        Conditional Traverse | (a)<-(t:ActionTask)\n                            Filter\n                                Node By Index Scan | (a:InfrastructureAsset)\n    Limit\n        Project\n            Filter\n                PathBuilder\n                    Conditional Traverse | (o)->(out:InterventionOutcome)\n                        Conditional Traverse | (o)->(t:ActionTask)\n                            Conditional Traverse | (a)<-(t:ActionTask)\n                                Filter\n                                    Node By Index Scan | (a:InfrastructureAsset)",
++    "cross_category_paths": "Limit\n    Project\n        Filter\n            PathBuilder\n                Conditional Variable Length Traverse (Expand Into) | (d)-[_anon_2:DRAINS_TO*1..6]->(down)\n                    Conditional Traverse | (road)->(rl:Location)\n                        Conditional Traverse | (down)->(rl:Location)\n                            Conditional Traverse | (d)->(l:Location)\n                                Conditional Traverse | (w)->(l:Location)\n                                    Filter\n                                        Node By Index Scan | (w:WasteCollectionPoint)",
++    "hypothesis_evidence": "Limit\n    Project\n        Filter\n            PathBuilder\n                Conditional Traverse | (a)->(e:Evidence)\n                    Conditional Traverse | (h)->(a:HypothesisAssessment)\n                        Conditional Traverse | (i)->(h:Hypothesis)\n                            Filter\n                                Node By Index Scan | (i:Investigation)",
++    "ownership_dependencies": "Union\n    Limit\n        Project\n            Filter\n                PathBuilder\n                    Conditional Traverse | (a)->(d:Department)\n                        Filter\n                            Node By Index Scan | (a:InfrastructureAsset)\n    Limit\n        Project\n            Filter\n                PathBuilder\n                    Conditional Traverse | (a)->(route:CollectionRoute)\n                        Filter\n                            Node By Index Scan | (a:WasteCollectionPoint)\n    Limit\n        Project\n            Filter\n                PathBuilder\n                    Conditional Traverse | (route)->(schedule:ServiceSchedule)\n                        Conditional Traverse | (a)->(route:CollectionRoute)\n                            Filter\n                                Node By Index Scan | (a:WasteCollectionPoint)\n    Limit\n        Project\n            Filter\n                PathBuilder\n                    Conditional Traverse | (a)->(d:Department)\n                        Filter\n                            Node By Index Scan | (a:ActionTask)",
++    "task_dependencies": "Limit\n    Project\n        Filter\n            Conditional Variable Length Traverse | (t)-[_anon_0:DEPENDS_ON*1..6]->(dependency)\n                Filter\n                    Node By Index Scan | (t:ActionTask)"
++  },
++  "metadata_projection_spike": {
++    "separate_revision": 53,
++    "upstream_projected_revisions": [
++      0,
++      0
++    ]
++  },
++  "repository_revision_survives_migration_rerun": 53
++}
+diff --git a/docs/evidence/B03-spec-validation.txt b/docs/evidence/B03-spec-validation.txt
+new file mode 100644
+index 0000000..51f69fe
+--- /dev/null
++++ b/docs/evidence/B03-spec-validation.txt
+@@ -0,0 +1,11 @@
++backend/.venv/bin/python scripts/validate_blueprint.py
++PASS: 42 node types; 47 edge types; 18 MCP tools; 9 state machines; 4 scenario contracts; 40 valid seed nodes/50 edges; 18 objectives traced
++NOTE: Supplied v1/v2 fixtures checked as legacy structure; canonical v3 conversion pending B04.
++NOTE: Static contract validation only; actual DB/MCP/AI/frontend runtime tests remain to be implemented.
++backend/.venv/bin/python scripts/validate_handoff.py
++PASS: 42 entity types, 47 relationships, 18 custom MCP tools, 43 planned API routes, 57 typed request/response schemas, 20 event types
++PASS: 838 seeded nodes, 1245 seeded relationships, 12 scenario bindings+hidden truths, 18 sourced synthetic documents
++PASS: codex log files + B00-B25 microtasks + work-order approval invariant
++WARN: 55 explicitly tracked legacy Observation.value_number defects; canonical import rejected until B04.
++NOTE: Supplied v1/v2 seed structure only; canonical v3 scope/edge conversion and 55 known Observation.value_number defects remain B04 blockers.
++NOTE: This is STATIC blueprint verification, not a running FalkorDB/MCP/GraphRAG/AI acceptance test.
+diff --git a/docs/evidence/B03-template-tests.txt b/docs/evidence/B03-template-tests.txt
+new file mode 100644
+index 0000000..3ff250f
+--- /dev/null
++++ b/docs/evidence/B03-template-tests.txt
+@@ -0,0 +1,18 @@
++============================= test session starts ==============================
++platform darwin -- Python 3.12.1, pytest-9.1.1, pluggy-1.7.0 -- /Users/vikashkumar/Desktop/Civicly/backend/.venv/bin/python
++cachedir: .pytest_cache
++rootdir: /Users/vikashkumar/Desktop/Civicly/backend
++configfile: pyproject.toml
++plugins: anyio-4.15.1
++collecting ... collected 8 items
++
++backend/tests/integration/test_graph_access.py::test_all_preapproved_templates_real_results_and_readonly[drainage_paths-D1] PASSED [ 12%]
++backend/tests/integration/test_graph_access.py::test_all_preapproved_templates_real_results_and_readonly[shared_infrastructure-] PASSED [ 25%]
++backend/tests/integration/test_graph_access.py::test_all_preapproved_templates_real_results_and_readonly[incident_history-LW] PASSED [ 37%]
++backend/tests/integration/test_graph_access.py::test_all_preapproved_templates_real_results_and_readonly[maintenance_history-D1] PASSED [ 50%]
++backend/tests/integration/test_graph_access.py::test_all_preapproved_templates_real_results_and_readonly[cross_category_paths-W] PASSED [ 62%]
++backend/tests/integration/test_graph_access.py::test_all_preapproved_templates_real_results_and_readonly[hypothesis_evidence-INV] PASSED [ 75%]
++backend/tests/integration/test_graph_access.py::test_all_preapproved_templates_real_results_and_readonly[ownership_dependencies-W] PASSED [ 87%]
++backend/tests/integration/test_graph_access.py::test_all_preapproved_templates_real_results_and_readonly[task_dependencies-T1] PASSED [100%]
++
++============================== 8 passed in 18.91s ==============================

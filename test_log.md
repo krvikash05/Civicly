@@ -2,7 +2,7 @@
 
 ## Current status — 2026-10-17 (takes precedence over historical entries)
 
-B02 final acceptance: 53 PASS / 0 FAIL / 0 SKIP, including real DB and restart/recreation. Both SPEC validators PASS with explicit legacy warnings. Canonical 0001 READY: 91 index groups / 182 constraints OPERATIONAL. Prior failures/recovery preserved below; fixture import remains blocked.
+B03-R acceptance:135 PASS /0 FAIL /0 SKIP (77 unit/58 real integration including actual restart/recreation), all prior89 tests unchanged. Strengthened template run22 PASS; both SPEC validators PASS. Exact commands/results in TEST-20261017-B03R-*;55 legacy defects remain OPEN. Historical results below retained.
 
 ---
 
@@ -165,3 +165,193 @@ PY
 - `backend/.venv/bin/python -m compileall -q backend/app backend/cli backend/tests scripts`: PASS. `git diff --check`: PASS for B02 diff. A documentation patch initially had an unmatched context and applied no changes; corrected patch succeeded.
 - Baseline comparisons assert all supplied fixtures/data and R01–R18 requirement file unchanged, all public node/relationship names/endpoints and enum values retained. Exact B02 file list and diff recorded in docs/evidence/B02-files.txt and B02-git-diff.txt. Root manifest remains original handoff snapshot, not silently regenerated.
 - Human verification: `make schema-status` -> ready true/version1/registry3; `make migrate` -> same schema and a new audit attempt only; `make health` -> existing canonical graph read true; run full command in -05 and `make test-spec`. Browser queries/recovery instructions in backend/SCHEMA.md. If failure, share test_log/blockers + command output, excluding .env.
+
+## TEST-20261017-B03-01 — Accepted B02 baseline / local Git
+- User attachment accepts B02 and authorizes B03 only. Mandatory docs/registry/B02
+  code reviewed. `backend/.venv/bin/civicly schema-status`: migration0001 READY,
+  registry3,91 index groups/182 constraints OPERATIONAL. Fresh B01-PERSISTENCE MATCH
+  retained. Canonical has0 domain nodes. Baseline safety scan46 B02 files excludes
+  dotenv/venv/cache/runtime secrets and actual generated secret values.
+- `git check-ignore .env backend/.venv/bin/python .uv-cache`: all ignored.
+  `git diff --cached --check` flags whitespace context in retained B02-git-diff.txt;
+  preserved historical evidence. `git add .` and `git commit -m "Baseline accepted B02 canonical schema and migrations"`:
+  local baseline3db6d873fb494a5ce456cb5d04a84f2be50919d4; no remote push.
+  B03 remains a reviewable working-tree diff against that baseline.
+
+## TEST-20261017-B03-02 — Real runtime spikes / failed attempts
+- Official docs + installed client inspected. Disposable graph spikes verified
+  full-property equality CAS and actual multi-CREATE UNIQUE rollback; driver path
+  nodes/edges retain ordered identities and physical source/destination; finite
+  traversal, all(), zero-hop, parameter LIMIT execute on6.0.2. No canonical writes.
+- `PYTHONPATH=backend backend/.venv/bin/python - <<'PY' ... PY` repository smoke:
+  migrated B03 UUID graph; actual CREATE A/B and candidate DRAINS_TO AB; real read
+  returned2 nodes/1 edge/1 path and revision3; graph removed in finally. Equivalent
+  complete reproducible fixture/query spike is now `python -m tests.b03_evidence`.
+- `backend/.venv/bin/python -m pytest backend/tests/integration/test_graph_access.py -x -q`:
+  first1 PASS/1 FAIL: test supplied valid_to without required valid_from. Corrected
+  test, existing B02 contract unchanged. Next17 PASS/1 FAIL: upstream metadata
+  projection returned0 instead of actual52. Minimal real spike reproduced both
+  values; changed query consistency mechanism as DEC-011. Next18 PASS in38.01s.
+- Expanded integration attempt21 PASS/1 FAIL in46.65s: snapshot fixture used unknown
+  condition_code rather than registry condition. Corrected fixture. No schema relaxed.
+- `PYTHONPATH=backend backend/.venv/bin/python -m tests.b03_evidence > docs/evidence/B03-runtime.json`:
+  initial FAIL TypeError (MigrationRunner requires explicit graph_name); corrected
+  reporter call. Subsequent real report PASS with8 path examples and8 EXPLAIN plans.
+- First combined `backend/.venv/bin/python -m pytest backend/tests -v -s --run-persistence`:
+  collection ERROR duplicate test_graph_access.py module basename (75 collected,
+  no acceptance run). Renamed unit module to test_graph_access_models.py; retained
+  output docs/evidence/B03-collection-failure.txt. Next combined run87 PASS in101.20s,
+  including real lifecycle. Final review added candidate-pointer as_of exclusion
+  and real native-point/temporal tests; targeted24 integration PASS in51.77s.
+- Initial unit command `backend/.venv/bin/python -m pytest backend/tests/unit/test_graph_access.py -q`:
+  12 PASS (before filename correction); current reproducible target uses _models.py.
+  Fault injection only drops responses around actual DB statements, never returns
+  mocked success. No fake model or live agent test was counted.
+
+## TEST-20261017-B03-03 — Typed writes / integrity / concurrency
+- Real tests cover strict unknown/type/enum/scope rejection; global node and cross-
+  type edge IDs; actual endpoint existence/direction; property foreign references;
+  evidence existence/reliability/attribution/date; immutable records; stale node/
+  edge digests; point preservation; overlapping cardinality and disjoint history.
+- Concurrent node CAS yields exactly1 success/1 stale rejection. Concurrent same edge
+  ID across types yields1 success/1 Conflict. Concurrent active assignment yields
+  1 success/1 Conflict; opposing drainage writes yield1 success/1 cycle rejection.
+  Expired writer after successor fence cannot create its node. Task cycle rejected;
+  explicit inspected drainage cycle accepted; disjoint historical reversal accepted.
+- Actual failing second CREATE rolls back first domain node and revision/audit;
+  pending intent recovered only after unchanged pre-state is proven. Lost response
+  before statement leaves no node; lost response after actual commit leaves exactly
+  one node with COMMITTED audit. Changed external pre-state keeps pending and blocks
+  queries; no automatic erase or uncertain retry.
+
+## TEST-20261017-B03-04 — Real bounded reads / serialized examples
+- All8 query families return real paths, including upstream original edge orientation,
+  common downstream D2/D3 for I1/I2, inspection/work-order/outcome history, support+
+  contradiction evidence and tasks. All results serialize with stable IDs, subtype
+  labels, properties, evidence IDs, edge direction, validity, as_of and revision.
+- Waste cross-category path: W → LW ← D1 → D2 → D3 → LR ← R (7 nodes/6 edges);
+  NEARBY uses a distinct LN location with identical coordinates but no SERVES link
+  to the physical network; it is excluded.
+  This is candidate connection context, not verified causation.
+- Whole-second/fractional as_of/after, future updates/evidence and half-open valid_to
+  tested. Hop/request caps, whole-path node caps, limit truncation, rejected raw
+  Cypher/injection strings and configured750ms on real RO call verified. A write
+  method trap confirms queries only use real GRAPH.RO_QUERY; B01 server tests also
+  deny actual CREATE/SET/DELETE through RO without state change.
+- Runtime report command above captures actual EXPLAIN Index Scan + bounded traverse
+  plans. Reporter migration rerun on its disposable populated graph preserves
+  repository revision53 and domain contents. canonical0 domain nodes and B01 probe
+  retained; report records packages/server module and Browser HTTP200.
+
+## TEST-20261017-B03-05 — Final acceptance and previous regressions
+- Final command (pipefail, stdout retained):
+  `backend/.venv/bin/python -m pytest backend/tests -v -s --run-persistence | tee docs/evidence/B03-all-tests.txt`.
+- **89 PASS /0 FAIL /0 SKIP in94.16s**, exit0:45 unit +44 real integration
+  (including1 lifecycle). New B03 tests:12 unit +24 integration; all prior53 regressions
+  retained. After strengthening the nearby fixture to a distinct equal-coordinate
+  location with no physical-network links, all8 template cases were rerun separately
+  (B03-template-tests.txt); this is supplemental, not double-counted acceptance.
+- Regression suite includes actual container restart (same ID) and force recreation
+  (different ID), fresh parameterized reads, Browser HTTP200 and Browser volume marker.
+  No volume deletion or B01/canonical graph removal. Old53 tests remain in the run.
+- Not run / outside B03: full city import/conversion, behavioral simulation, live
+  LLM/MCP/GraphRAG/checkpoints, domain auth/approvals/work orders/outbox, API/frontend.
+  These are unimplemented later gates, not skipped tests relabeled as passing.
+
+## TEST-20261017-B03-06 — Specifications / dependencies / review evidence
+- `make test-spec | tee docs/evidence/B03-spec-validation.txt`: both validators PASS.
+  Counts unchanged42 entities/47 relations/18 tools/18 objectives; expanded legacy
+  838 nodes/1245 edges/12 scenarios/18 documents. Explicit55-defect warning remains;
+  static structural validity does not mean canonical import eligibility.
+- `backend/.venv/bin/python -m pip check`: PASS, no broken requirements.
+  `UV_CACHE_DIR=.uv-cache backend/.venv/bin/uv lock --project backend --check`: PASS,
+  34 resolved packages unchanged. No dependency upgrade or remote publishing.
+- Review inventory/diff and audit: docs/evidence/B03-files.txt, B03-git-diff.txt,
+  B03-review-audit.txt. Existing registry/plan/data/geometry/document source files
+  unchanged from accepted baseline. B03 source and all6 tracking files updated.
+
+- Supplemental exact command: `backend/.venv/bin/python -m pytest backend/tests/integration/test_graph_access.py::test_all_preapproved_templates_real_results_and_readonly -v | tee docs/evidence/B03-template-tests.txt`:8 PASS in18.91s, exit0. Production source unchanged after the89-test acceptance; only equal-coordinate disconnected fixture/negative assertions strengthened.
+- Final `make test-spec` rerun after documentation edits: both PASS; same55 warning. Post-lifecycle evidence reporter and `backend/.venv/bin/civicly schema-status > docs/evidence/B03-canonical-status.txt` confirm retained canonical readiness/probe without domain writes.
+
+## TEST-20261017-B03R-01 — Corrective review baseline and boundaries
+- B03 provisionally accepted by external review; user authorizes B03-R only. Read
+  mandatory docs, registry3/plan0001, graph-access contract and actual implementations.
+  DEC-012 records choices before source changes. Snapshot of138 pre-correction source/
+  evidence files retained temporarily for a precise corrective diff, without a new
+  Git commit. Original review ZIP/evidence preserved; no push or B04 import/repair.
+- Confirmed omissions: IN_ZONE/PART_OF absent from outgoing singleton list;
+  HAS_SCHEDULE only checked duplicate edges, not route/service applicability;
+  hop grammar used h drainage links plus connectors while total filter used same h,
+  making default4 impossible for cross-category minimum5. Divergent test target
+  regexes hardcoded B02/B03. No public registry or migration content modified.
+
+## TEST-20261017-B03R-02 — Unit and real corrective verification
+- `backend/.venv/bin/python -m pytest backend/tests/unit -q`: initial45 PASS in0.41s
+  (old units after source changes), then77 PASS in0.40s including32 new target/default
+  budget cases. Invalid targets refused before client access; no mock success used.
+- Exact real targeted command (pipefail):
+  `backend/.venv/bin/python -m pytest backend/tests/integration/test_graph_review.py backend/tests/integration/test_graph_access.py -v -s | tee docs/evidence/B03-R-integration.txt`:
+  **37 PASS in91.13s**, exit0 (13 initial corrective cases + all24 B03 integrations).
+- Added fixed-template boundary test after counting exact branch lengths: maintenance
+  branches1/2/2/3 edges (maximum3), hypothesis2 or3 according to root, ownership1/2.
+  No recorded failing test attempt in B03-R; assertions/fixtures reviewed before runs.
+- Real assertions cover primary zone/cluster overlapping rejection, nonoverlapping
+  history, many incoming members; schedules with different services or nonoverlapping
+  effective node+edge windows, conflicting/empty intervals, node/edge update safety,
+  concurrent schedule conflict; five/six-edge default cross paths, seven-edge bounded
+  negative, explicit too-small-budget errors and genuinely disconnected equal-
+  coordinate assets; shared total1/zero-drain and total2/one-drain boundaries.
+- Real migration and repository writes succeed in UUIDv4 milestone04 and25 disposable
+  namespaces. These are authorization tests, not B04/B25 feature implementation or
+  municipal ingestion. Cleanup deletes only each generated test graph.
+
+## TEST-20261017-B03R-03 — Strengthened template acceptance
+- Exact command (pipefail):
+  `backend/.venv/bin/python -m pytest backend/tests/integration/test_graph_review.py backend/tests/integration/test_graph_access.py::test_all_preapproved_templates_real_results_and_readonly -v -s | tee docs/evidence/B03-R-template-tests.txt`.
+- **22 PASS in55.64s**, exit0: all14 corrective integration cases plus eight original
+  live template families. Typed requested/effective/min/max/connector/infrastructure
+  budgets and search_limited match actual paths. Output truncation stays independent;
+  bounded negatives do not claim global absence. Existing RO/parameterization/scope/
+  temporal/evidence/revision checks remain. No fake DB or live agent claim.
+
+## TEST-20261017-B03R-04 — Full regression / real lifecycle
+- Exact command (pipefail):
+  `backend/.venv/bin/python -m pytest backend/tests -v -s --run-persistence | tee docs/evidence/B03-R-all-tests.txt`.
+- **135 PASS /0 FAIL /0 SKIP in128.67s**, exit0:77 unit +58 actual integration
+  (including1 opt-in lifecycle). All previous89 tests retained unchanged; additions
+  are32 unit +14 real integration. Supplemental runs are not double-counted here.
+- Real restart keeps container identity; force recreation changes it. Fresh MATCH,
+  Browser HTTP200 and persisted Browser marker pass before/after both operations.
+  No volume deletion or B01/canonical graph reset. Atomicity, lost replies, fence/CAS,
+  duplicate IDs, failed migration/constraint recovery, strict schema, temporal/RO and
+  original traversal regressions all pass. Graceful lifecycle is not crash/failover
+  proof, domain event durability or agent memory verification.
+
+## TEST-20261017-B03R-05 — SPEC, versions and final evidence
+- `make test-spec | tee docs/evidence/B03-R-spec-validation.txt`: both validators PASS,
+  exit0;42 types/47 relationships/18 tools/18 objectives; legacy838 nodes/1245 edges/
+  12 scenarios/18 documents. Explicit55-defect warning remains; not canonical import.
+- `backend/.venv/bin/python -m pip check`: PASS no broken requirements.
+  `UV_CACHE_DIR=.uv-cache backend/.venv/bin/uv lock --project backend --check`: PASS,
+  34 resolved packages unchanged. Python3.12.1, official falkordb1.8.0, redis8.1.0,
+  Pydantic2.14.1, pytest9.1.1 retained; server6.0.2/module60002, Redis8.10.2 and
+  Browser2.6.1/image digest unchanged. No dependency upgrades.
+- Post-lifecycle commands:
+  `PYTHONPATH=backend backend/.venv/bin/python -m tests.b03_evidence > docs/evidence/B03-R-runtime.json`;
+  `backend/.venv/bin/civicly schema-status > docs/evidence/B03-R-canonical-status.txt`.
+  Actual new budget DTOs, eight results/EXPLAIN plans and retained canonical/B01
+  evidence captured. Canonical0001 READY, registry3,91 index groups/182 constraints
+  OPERATIONAL,0 canonical domain nodes; B01-PERSISTENCE preserved.
+- Snapshot audit/diff: B03-R-files.txt, B03-R-changes.patch, B03-R-review-audit.json.
+  Registry/plan/fixtures/old tests/old evidence/review ZIP unchanged; secrets excluded.
+  No B04 benchmark executed: backend/B04_BENCHMARK_PLAN.md is a future plan with
+  explicit estimated costs and proposed targets, not measured ingestion performance.
+- Not run (outside B03-R): full conversion/import, bulk optimization, live MCP/LLM/
+  LangGraph/GraphRAG, operational workflows, API/frontend. BLOCK-B00-02 and deferred
+  DEC-004 findings remain OPEN. Stop for human review before B04.
+
+- Final snapshot audit first stopped on an additional untracked Civicly_B03_Review/
+  directory appearing after the initial snapshot. Read-only comparison confirmed
+  all87 entries match the original ZIP. Preserved this separate extracted review
+  copy and explicitly excluded it from the corrective source diff; no application
+  change or test failure resulted. Final source/secret/protected-file audit passed.

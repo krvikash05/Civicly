@@ -3,12 +3,12 @@
 import hashlib
 import json
 from pathlib import Path
-import re
 import time
 
 from redis.exceptions import LockNotOwnedError
 
 from app.graph.schema import Registry, identifier, utc_now
+from app.graph.targets import is_allowed_graph_target
 
 PLAN_PATH = Path(__file__).with_name("migrations") / "0001.json"
 META = "CivicSchemaMigration"
@@ -20,8 +20,8 @@ class MigrationError(RuntimeError):
 
 class MigrationRunner:
     def __init__(self, client, graph_name: str, registry: Registry | None = None):
-        if graph_name != "civicly_knowledge" and not re.fullmatch(r"civicly_b02_test_[0-9a-f]{32}", graph_name):
-            raise MigrationError("Migration target must be canonical or an isolated B02 test graph")
+        if not is_allowed_graph_target(graph_name):
+            raise MigrationError("Migration target must be canonical or an authorized disposable test graph")
         self.client = client
         self.graph = client.select_graph(graph_name)
         self.registry = registry or Registry()

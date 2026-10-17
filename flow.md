@@ -96,3 +96,70 @@ Generated local-only state: .git/, ignored .env, backend/.venv/, .uv-cache/, tem
 - Scope flows identically through registry, state/MCP/API/event metadata and current architecture docs. Client cannot choose municipality. No current framework needs tenant_id; any future mapping is explicit at boundary.
 - Tests: unit/test_schema.py covers strict types/unknowns/enums/scope/time and retained defects; integration/test_schema_migrations.py performs real DDL/constraints, subtype/point writes, failure/recovery/version/lease/drift tests and B01-probe protection. Existing B01 tests all retained. Synthetic examples in tests/schema_examples.py are isolated test records, not city seeding.
 - Debug: make schema-status -> backend/SCHEMA.md recovery guide -> actual db.indexes/db.constraints -> test_log/blockers. Domain graph-wide cardinality/cycles/evidence existence, retrieval templates and typed repositories are B03, not implemented here.
+
+### B03 — Actual repository/query file graph and control flow | 2026-10-17
+
+```text
+connection.connect(Settings) -> official FalkorDB client
+  GraphRepository -> MigrationRunner.status (real catalog READY)
+                  -> Registry v3 + contracts/graph_access.json
+                  -> NodeRecord / EdgeRecord / digest
+  GraphQueries -> QueryRequest + ReadLimits -> eight static templates
+               -> GraphRepository read/validation -> GraphResult / PathRecord
+  tests.graph_fixtures -> repositories -> disposable civicly_b03_test_UUID
+  tests.b03_evidence -> real queries + EXPLAIN -> B03-runtime.json
+```
+
+- Actual added source: backend/app/graph/models.py, repository.py, queries.py;
+  contract graph_access.json; test fixtures/unit/integration/evidence reporter;
+  backend/GRAPH_ACCESS.md. Migration runner whitelist now admits B03 test graphs;
+  immutable registry/migration0001 unchanged. Makefile adds test-repositories.
+- Write flow: strict shape/identity/origin validation -> per-graph Redis lease ->
+  metadata owner/epoch fence -> recover prior intent only if pre-state unchanged ->
+  actual endpoints/scope/FKs/evidence -> bounded cardinality/cycle proof -> pending
+  ID/hash journal -> one fenced graph statement updates domain record, audit,
+  repo_revision and pending clear -> strict typed retrieval. Mutable updates need
+  expected content hash. Failures preserve state/evidence and return explicit errors.
+- Read flow: typed named request -> root type validation -> pre-read revision/no
+  pending -> parameterized GRAPH.RO_QUERY (finite hop/result/time limits) -> validated
+  driver nodes/edges mapped from internal IDs to public stable IDs -> original edge
+  direction/path order/evidence metadata, node/edge caps -> post-read revision/no
+  pending -> retry once on revision change -> serialized GraphResult. Disconnected
+  metadata projection is avoided after its installed-runtime upstream-path failure.
+- All eight query families and temporal checks are described in GRAPH_ACCESS.md;
+  candidate source-evidence pointers are also filtered by as_of. Explicit edges
+  connect waste, drainage and roads; matching coordinates alone adds no connection.
+  Graph paths support investigation but do not declare causation or recurrence.
+- Persisted state: existing graph AOF/volumes; internal migration record receives
+  repo_owner/epoch/revision/pending/audit scalars only in graphs actually mutated by
+  repositories. Canonical graph has zero domain data and no B03 repository mutations.
+  Test graphs are deleted individually. B01 runtime graph/probe and both named
+  volumes remain. Restart/recreation is real; durable domain events are still B15.
+- Future MCP/API/domain services consume typed methods, never raw Cypher inputs;
+  auth, approvals, status transitions and trace envelopes remain their own gates.
+  No agent/MCP/GraphRAG/API/frontend/importer was implemented. Tests use purpose-built
+  synthetic fixtures, not hidden ground truth or full-city ingestion.
+
+### B03-R — Actual corrective file/import/control flow | 2026-10-17
+- targets.py provides exact canonical / milestone02–25 UUIDv4 name validation;
+  MigrationRunner and GraphRepository import the same guard before selecting any
+  graph. No registry/migration0001 change; no B01/document/checkpoint target admitted.
+- graph_access.json v2 adds IN_ZONE/PART_OF outgoing singleton policies and route/
+  service schedule applicability. Existing locked relationship policy invokes
+  _schedule_policies on HAS_SCHEDULE writes; schedule service/date node updates
+  inspect incoming edges and revalidate the affected routes before fenced commit.
+  Effective interval = edge interval intersect schedule-node interval. Different
+  services/date windows remain valid; opaque recurring text proves no compatibility.
+- QueryRequest(default total6) -> policy per-template/root minimum/maximum -> typed
+  QueryBudget -> fixed connectors subtracted from native bounded DRAINS_TO grammar
+  -> total-path filter + existing scope/time/evidence/revision checks -> GraphResult
+  search_budget/search_limited + independent output truncated. Fixed branches are
+  selected by exact lengths (maintenance1/2/2/3, ownership1/1/2/1). Invalid budget
+  yields explicit error; empty bounded search never asserts global absence.
+- Actual changed runtime modules: targets.py (new), migration.py/repository.py,
+  models.py/queries.py; normative graph-access policy + graph/runbook docs. New
+  unit/integration correction modules exercise real isolated graph writes/queries.
+  Existing B01/B02/B03 tests/evidence and review ZIP are retained unchanged.
+- backend/B04_BENCHMARK_PLAN.md documents the future pilot/full/repeat benchmark,
+  O(E_k²) repeated scans and O(N²) audit serialization costs. It performs no import
+  and supplies no bulk path; current writer fence/intent/audit/strict policy remains.

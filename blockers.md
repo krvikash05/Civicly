@@ -2,7 +2,7 @@
 
 ## Current status — 2026-10-17 (takes precedence over historical entries)
 
-No active B02 environment blocker. Scope naming finding is resolved by canonical municipality_id=demo-city and consistent contracts. BLOCK-B00-02 remains OPEN for 55 Observation defects and other deferred DEC-004 findings. Native CHECK/endpoint enforcement requires application validation.
+No active B03-R environment blocker; corrective contract tests/regressions PASS. BLOCK-B00-02 stays OPEN for55 Observation defects and deferred DEC-004 findings. B04 performance remains unverified: benchmark plan only. Schedule text/aliases, bounded-search/global-absence distinction and privileged raw-write limitations remain explicit. STOP for human B03-R review.
 
 ---
 
@@ -53,3 +53,53 @@ No active implementation blocker is claimed. Verification spikes (NOT defects) a
 - Native constraints lack CHECK-style type/unknown/endpoint/conditional/global-edge-ID enforcement. Proven limitation, addressed structurally by B02 validator; future B03 repositories/services must enforce graph-aware rules and use controlled write paths. Raw developer DB access remains privileged.
 - No active B02 runtime blocker. Recovery never requires deleting B01 evidence/volumes; see backend/SCHEMA.md. Missing live provider/agent integrations remain outside B02.
 - Human action: review B02; continue only when ready for B03. Share schema-status, test output/test_log/blockers on failure; never .env or secrets.
+
+## B03 review | 2026-10-17
+
+### BLOCK-B00-02 — Continued OPEN; no fixture repair/import
+- All55 legacy Observation.value_number discrepancies remain, with original registry/
+  fixture source hashes preserved. B03 cannot silently accept/discard unknown fields.
+  Explicit reviewed B04 conversion must resolve them before canonical ingestion.
+- Scope naming was resolved in B02 (municipality_id=demo-city); B03 enforces it.
+  MCP trace/envelopes (B07), documents/provenance/PDF (B11), approval binding
+  (B12/B13), historical completeness (B04/B19), event durability (B15), API mapping
+  (B17) and hidden evaluation-data isolation (B19) remain open per DEC-004.
+
+### B03 runtime projection issue — WORKAROUND VERIFIED; no active B03 blocker
+- Minimal repro: MATCH a disconnected CivicSchemaMigration node, WITH m, then an
+  upstream DRAINS_TO variable path and RETURN coalesce(m.repo_revision,0),nodes(p).
+  Installed6.0.2 returned0 twice while separate revision read returned52 in initial
+  spike; current reproducible report uses its fixture revision53. This observation
+  does not establish root cause or an upstream fix.
+- Avoided metadata projection entirely; bounded reads check actual revision before
+  and after path retrieval/validation and retry once. Actual upstream templates now
+  pass. Pending state blocks reasoning, and changed pending pre-state fails closed.
+- Limits requiring future review: raw privileged writes bypass repository policies/
+  revision; no enterprise isolation; no reconstructed historical node snapshots;
+  policy scan/audit budgets fail closed; audit archival needs reviewed migration.
+  Writer metadata/audit is not a domain outbox or MCP trace. Auth/state/approval/
+  durable events remain later gates. No user environment action is needed for B03.
+
+## B03-R corrective review | 2026-10-17
+- No active B03-R environment blocker. IN_ZONE/PART_OF primary assignment omission,
+  route/service schedule conflict gap, connector/total-hop mismatch and divergent
+  test-target guards corrected with real tests. No schema migration or source-data
+  correction was required; original review evidence is retained.
+- BLOCK-B00-02 remains OPEN:55 Observation.value_number defects, explicit v1/v2→v3
+  conversion before B04, and all remaining DEC-004 findings (MCP trace contracts,
+  approval binding, document provenance/PDF, historical completeness, event durability,
+  API mapping and hidden evaluation-data isolation). No silent waiver or field drop.
+- Remaining schedule limitation: service_type is an exact existing string, not an
+  ontology of aliases; B04 must review nomenclature. schedule_spec is opaque. Two
+  overlapping same-service definitions cannot be proven compatible from free text;
+  use one definition for recurring windows or nonoverlapping validity. No weekly
+  recurrence parser or new properties introduced.
+- B04 performance remains UNVERIFIED, not a failed B03-R gate. Repeated type scans,
+  global edge-ID scans and growing scalar audit may limit import speed. Benchmark
+  plan defines pilot/full/repeat measurements and correctness gates; no bulk shortcut
+  implemented. Existing policy/audit budgets fail closed and cannot be bypassed to
+  meet timing. Proposed optimization/archival needs review and real guarantees.
+- Variable traversals remain bounded to6 total edges; search_limited explicitly
+  prevents treating empty results as global absence. Historical node snapshots are
+  not reconstructed. Privileged raw DB access still bypasses application policy;
+  the namespace guard is not authorization/RBAC. These limits remain documented.

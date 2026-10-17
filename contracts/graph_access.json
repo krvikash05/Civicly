@@ -1,0 +1,160 @@
+{
+  "version": 2,
+  "registry_version": 3,
+  "municipality_id": "demo-city",
+  "singleton_outgoing": [
+    "REPORTS",
+    "OCCURRED_AT",
+    "LOCATED_AT",
+    "MAINTAINED_BY",
+    "COLLECTED_BY",
+    "ASSIGNED_TO",
+    "IN_ZONE",
+    "PART_OF"
+  ],
+  "permanent_dag": [
+    "DEPENDS_ON"
+  ],
+  "inspected_cycle_exception": "DRAINS_TO",
+  "verified_associations": [
+    "DRAINS_TO",
+    "UNDERLIES",
+    "SERVES",
+    "AFFECTS",
+    "MAINTAINED_BY",
+    "COLLECTED_BY",
+    "HAS_SCHEDULE",
+    "GOVERNED_BY"
+  ],
+  "node_references": {
+    "PickupExecution": {
+      "route_id": "CollectionRoute"
+    },
+    "AssetConditionSnapshot": {
+      "asset_id": "InfrastructureAsset",
+      "evidence_id": "Evidence"
+    },
+    "OperatorAccount": {
+      "department_id": "Department"
+    },
+    "CaseMemory": {
+      "source_investigation_id": "Investigation"
+    },
+    "RainfallEvent": {
+      "zone_id": "Zone"
+    },
+    "EventDelivery": {
+      "domain_event_id": "DomainEvent"
+    }
+  },
+  "budgets": {
+    "max_hops": 6,
+    "max_results": 100,
+    "max_nodes": 120,
+    "max_edges": 200,
+    "query_timeout_ms": 1000,
+    "policy_edges": 2000,
+    "policy_steps": 10000,
+    "audit_entries": 10000
+  },
+  "read_templates": [
+    "drainage_paths",
+    "shared_infrastructure",
+    "incident_history",
+    "maintenance_history",
+    "cross_category_paths",
+    "hypothesis_evidence",
+    "ownership_dependencies",
+    "task_dependencies"
+  ],
+  "temporal": "half-open validity intersection; absent start/end is unknown/open; created/observed/recorded/updated time cannot exceed query as_of",
+  "cardinality": "All declared singleton edges are primary. Concurrent overlapping assignments are refused; nonoverlapping history retained. Other relationship types are not universally singleton or acyclic.",
+  "write_boundary": "Trusted domain services only; auth, approval binding, state transitions and durable event delivery are later gates, not supplied by these low-level repositories.",
+  "schedule_cardinality": {
+    "relationship": "HAS_SCHEDULE",
+    "group_by": [
+      "source_id",
+      "ServiceSchedule.service_type"
+    ],
+    "effective_interval": "intersection of relationship and target ServiceSchedule half-open validity",
+    "empty_interval": "reject",
+    "overlap": "reject within route/service; different service types and nonoverlapping applicability allowed",
+    "schedule_spec": "opaque; no inferred recurrence compatibility or alias normalization; same-service recurring windows belong in one definition",
+    "node_updates": "revalidate affected incoming assignments on service_type/valid_from/valid_to updates"
+  },
+  "test_graph_targets": {
+    "canonical": "civicly_knowledge",
+    "pattern": "civicly_bNN_test_<32 lowercase RFC4122 UUIDv4 hex>",
+    "milestones": [
+      2,
+      25
+    ],
+    "excluded": [
+      "B00",
+      "B01",
+      "documents/checkpoints/other production graphs"
+    ],
+    "authorization": "internal target guard, not database RBAC"
+  },
+  "query_hop_budgets": {
+    "drainage_paths": {
+      "min": 1,
+      "max": 6,
+      "fixed_edges": 0,
+      "variable": "DRAINS_TO",
+      "variable_min": 1
+    },
+    "shared_infrastructure": {
+      "min": 1,
+      "max": 6,
+      "fixed_edges": 1,
+      "variable": "DRAINS_TO",
+      "variable_min": 0
+    },
+    "incident_history": {
+      "min": 1,
+      "max": 1,
+      "fixed_edges": 1,
+      "variable": null
+    },
+    "maintenance_history": {
+      "min": 1,
+      "max": 3,
+      "fixed_edges": null,
+      "variable": null
+    },
+    "cross_category_paths": {
+      "min": 5,
+      "max": 6,
+      "fixed_edges": 4,
+      "variable": "DRAINS_TO",
+      "variable_min": 1
+    },
+    "hypothesis_evidence": {
+      "min": 2,
+      "max": 3,
+      "fixed_edges": null,
+      "variable": null,
+      "investigation_min": 3
+    },
+    "ownership_dependencies": {
+      "min": 1,
+      "max": 2,
+      "fixed_edges": null,
+      "variable": null
+    },
+    "task_dependencies": {
+      "min": 1,
+      "max": 6,
+      "fixed_edges": 0,
+      "variable": "DEPENDS_ON",
+      "variable_min": 1
+    }
+  },
+  "hop_semantics": {
+    "max_hops": "total path edges, including connectors; default6, hard cap6",
+    "infrastructure_hops": "DRAINS_TO edges only; derived as effective total minus fixed connectors",
+    "search_limited": "true for variable-length families or omitted fixed branches; empty result is only a bounded negative",
+    "truncated": "result row/node/edge cap reached; independent of hop/search bounds"
+  }
+}

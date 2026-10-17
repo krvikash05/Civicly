@@ -117,3 +117,136 @@ Decisions are recorded chronologically. Codex must append an entry whenever a si
 - Scope finding in DEC-004 resolved by explicit user preference and synchronized contracts/docs. Remaining DEC-004 issues and all 55 value_number defects remain OPEN. Old fixtures retain hashes; static validators label their checks as legacy structure and report known defects rather than claiming canonical eligibility.
 - Sources consulted: https://docs.falkordb.com/commands/graph.constraint-create (async constraints/readiness), https://docs.falkordb.com/cypher/indexing/range-index, https://docs.falkordb.com/cypher/known-limitations. Installed-version spikes take precedence: documented create_constraint helper absent, QueryResult.statistics absent, YIELD * unsupported. Use execute_command, result_set/header and explicit YIELD columns.
 - Evidence: TEST-20261017-B02-01–06, docs/evidence/B02-all-tests.txt, B02-schema-catalog.json, B02-canonical-apply/rerun/status.txt and B02-spec-validation.txt. All 18 objectives preserved; B02 foundation is not product completion.
+
+### DEC-010 — B03 repository/query design before implementation | 2026-10-17 | ACCEPTED TASK SCOPE
+- User attachment accepts B02 and authorizes B03 only, including repositories, graph-aware integrity, eight query families, real concurrency/failure tests and local baseline. R04/R05/R08/R09/R13/R15/R16 foundations; all R01–R18 retained. No B04 import/fixture correction, agents/MCP/GraphRAG, operations/API/UI.
+- Verified migration0001 READY with91 index groups/182 constraints OPERATIONAL, registry3 and B01-PERSISTENCE retained. Secret audit passed46 B02 files; local baseline3db6d873fb494a5ce456cb5d04a84f2be50919d4. Diff whitespace warnings are context markers in retained B02-git-diff evidence, not source edits; preserved. No remote/push.
+- Preserve registry v3 and immutable migration0001 hashes. Declare B03 behavioral policy in separate graph-access contract/docs; no new public labels/relationships/enums/properties. Permit isolated civicly_b03_test_UUID targets in migration runner for tests only.
+- Typed Pydantic node/edge/path/result records use stable public IDs, original edge orientation, path order, evidence IDs, municipality scope, as_of and application repository revision. Strict Registry validates every write/read, no property dropping. Mutable updates require expected content digest; ID/scope/version/created_at and immutable registry records cannot change. Future domain services remain responsible for auth/state-machine approval rules; repository is not an exposed dispatch API.
+- Concurrency: one bounded Redis write lease per graph plus owner/epoch fence stored on existing internal CivicSchemaMigration record. Every domain mutation checks fence and repository revision in the same graph statement. New lease owner advances fence before validation; expired writers cannot commit after successor. Separate pending intent stores only IDs/hashes; domain mutation, audit append, revision and pending clear occur in one tested query. Lost replies raise explicit outcome-unknown; recovery only clears intent if unchanged pre-state is proven, otherwise fail closed. No automatic uncertain write retry, no cross-graph transaction claim.
+- Real spike proves full-property CAS works and a two-node CREATE that hits UNIQUE rolls back the first new node too on6.0.2; not assumed from Neo4j. Single-query atomic mutation+metadata still needs dedicated failure tests. Ordered nodes(p)/relationships(p) return official client Node/Edge objects for explicit serialization.
+- Graph-aware policies: actual endpoint existence/types/scope, verified evidence existence/reliability/date/attribution, unique edge IDs across types and domain IDs, duplicate temporal relationships, singleton active ownership/route/location/assignment cardinality, permanent task DAG acyclicity. Drainage cycles rejected unless explicitly inspected via verified inspection evidence; no universal ban on other network cycles. Bounded policy export fails closed when too large; no incomplete scan treated as proof.
+- Read families: drainage_paths, shared_infrastructure, incident_history, maintenance_history, cross_category_paths, hypothesis_evidence, ownership_dependencies, temporal filtering throughout. All execute GRAPH.RO_QUERY via named templates; no raw query input. Validated hop/row/time/node/edge caps, parameterized IDs/times, actual source/target direction, explicit truncation. Cross-category path is a candidate association through recorded SERVES/LOCATED_AT/DRAINS_TO edges, never spatial proximity or causal proof. Historical node snapshots not reconstructed; future-updated records are excluded conservatively.
+- Tests: isolated purpose-built canonical-v3 graphs; all requested rejection/traversal/shared/evidence/temporal/nearby/concurrency cases, stale fence/CAS/uncertain-reply recovery, atomic rollback, readonly cannot mutate, all53 B01/B02 regressions and SPEC validators. Human verifies named traversal example and full tests. BLOCK-B00-02 and all deferred DEC-004 findings remain OPEN.
+- Planned files: graph models/repository/queries, graph-access contract, test fixtures/unit/integration, graph guide and Make target, small migration target whitelist update, six logs and B03 evidence. No dependency upgrade expected.
+
+### DEC-011 — B03 installed-runtime results and limits | 2026-10-17
+- Implemented DEC-010 with no dependency upgrades: Python3.12.1, FalkorDB client1.8.0,
+  redis8.1.0, Pydantic2.14.1, pytest9.1.1; server6.0.2/module60002, Redis8.10.2,
+  Browser2.6.1 and accepted image digest retained. No new public ontology values.
+- Single-statement domain+metadata rollback, owner/epoch fencing, CAS, concurrent
+  edge IDs/cardinality/cycle rejection, dropped response before/after actual commit
+  and unchanged-prestate recovery are exercised against real DB. Inconsistent
+  pending state remains intact and blocks reasoning; no fake success or automatic
+  uncertain retry. Raw privileged DB writes remain outside the guarantee.
+- Added eight named queries (including task_dependencies as operational dependency
+  family) with real EXPLAIN plans. Fixed bounded grammar supports all()/nodes()/
+  relationships(), zero-hop shared traversal, collect/UNWIND, relationship alternation,
+  UNION ALL, parameter LIMIT and finite query timeout on installed server. Direction
+  is derived from actual edge source/destination, not guessed from path order.
+- Runtime deviation: projecting disconnected migration metadata with upstream
+  variable-length path returned revision0 while separate read returned52; minimal
+  spike reproduced in B03-runtime.json. Rather than trusting that projection,
+  capture scalar repository revision before/after all retrieval validation and retry
+  once on change. This is scoped to observed6.0.2 behavior, not an inferred universal
+  bug or a new native transaction claim. No unsupported Neo4j procedures used.
+- UTC registry parser allows fractions; query comparisons pad/truncate to Python
+  datetime microseconds instead of unsafe raw lexical Z ordering. Historical node
+  versions are not reconstructed. Future knowledge timestamps, including external
+  source-evidence pointers on candidate relationships, exclude paths at as_of.
+- Explicit singleton policy implements the ontology's primary location/owner/route/
+  assignment semantics without adding a primary flag. DEPENDS_ON is permanently
+  acyclic; drainage proof intersects validity intervals and allows explicitly
+  inspected cycles only with verified attributed inspection evidence. Other network
+  types remain unrestricted by a universal cycle ban. Missing bounds remain unknown.
+- Limits:6 total path edges,100 paths,120 nodes,200 edges,1000ms; branch limit+1
+  and result truncation, no claim that a bounded traversal proves no longer paths.
+  Policy inspection2000 edges/10000 states and audit10000 entries fail closed.
+  Audit archival, authorization, approval/state workflows and durable event delivery
+  are later milestones. No API/MCP/agent/GraphRAG/seed/frontend scaffold added.
+- Evidence samples: drainage3 nodes/2 edges/2 paths; shared5/4/4; incident3/2/2;
+  maintenance6/5/4; cross-category7/6/1; hypothesis5/4/2 (support+contradiction);
+  ownership3/2/2; task3/2/2. A nearby asset at a distinct location with identical coordinates and no
+  physical-network link is excluded from the cross-category result.
+- No mutation of canonical domain graph (0 nodes) or B01 probe. Same registry hash
+  12541990b58d65e8602bff77b93b735009616e7ee658b9e7582a7ae9f449aac6 and migration
+  checksum94ab9fae6079fe7e87b41afd80701409db6bb51d529c2565dbd340896a5c923b retained.
+  No fixture/import repair; all55 defects and deferred DEC-004 findings remain open.
+
+- B03 review packaging:9 tracked files modified /18 files created, exact inventory
+  B03-files.txt and complete B03-git-diff.txt (self excluded). Final secret/ignored-file
+  audit PASS; registry/migration/data/pins/Compose unchanged. Source acceptance89
+  PASS (45 unit/44 real integration), plus8 strengthened-template rechecks PASS.
+  All6 tracking files updated, B03 changes left uncommitted for review. No push.
+
+### DEC-012 — B03-R corrective contract before coding | 2026-10-17
+- User provisionally accepts B03 and requests B03-R only, before B04. Covers R03/R04/
+  R05/R09/R15/R16 foundations; all R01–R18 remain mandatory. Immutable registry v3,
+  migration0001,55 legacy defects and original review ZIP/evidence remain untouched.
+- Cardinality gap confirmed: singleton_outgoing omitted IN_ZONE (primary location
+  administrative zone) and PART_OF (primary incident cluster). Add both, preserving
+  disjoint history and many incoming members. No primary flag/new ontology fields.
+- HAS_SCHEDULE is not globally singleton: compare route + exact existing service_type
+  over intersection of edge validity and schedule-node validity. Reject empty
+  applicability and overlapping same-service definitions; permit disjoint date
+  windows or simultaneous different services. schedule_spec is opaque, not a parsed
+  recurrence language; multiple same-service recurring windows must be represented
+  by one schedule definition, rather than claiming two free-text definitions are
+  nonconflicting. Unknown bounds conservatively overlap; timezone differences alone
+  cannot justify conflicting definitions. No service alias normalization in B03-R.
+  Revalidate incoming schedule assignments on service_type/validity node changes,
+  under the same writer fence, so mutable endpoint properties cannot bypass policy.
+- max_hops means total path edges for every template, hard max6, default6 (formerly4).
+  DRAINS_TO allowance is h for drainage, h-1 for shared (AFFECTS consumes1), h-4 for
+  cross-category (four fixed connectors). Shared permits zero drainage hops; cross
+  needs >=5 total. Reject requests below template/root-specific minimum. Fixed
+  branches exceeding budget are omitted explicitly. No implicit cap increase or
+  unbounded Cypher. Add typed result budget metadata and search_limited; truncated
+  remains result-cap truncation. Bounded empty results never prove global absence.
+- Unify GraphRepository/MigrationRunner target authorization: exact civicly_knowledge
+  or civicly_bNN_test_<lowercase RFC4122 UUIDv4 hex>, NN02–25. Protect B01 runtime,
+  document/checkpoint/other production graphs, arbitrary suffixes and malformed IDs.
+  Naming is an internal target guard, not DB RBAC. This enables later isolated tests
+  without implementing those milestones. Keep existing B02/B03 test names valid.
+- Planned source: models.py/queries.py/repository.py/migration.py plus shared targets.py;
+  graph_access contract v2, new corrective unit/integration tests, architecture/graph
+  guide/benchmark plan and six tracking files. No dependency or database-plan upgrade.
+- Tests: overlap/nonoverlap/multiple cardinality and schedule node/edge edits; default
+  5/6-edge cross-category paths, insufficient budgets, longer bounded-negative paths,
+  shared zero-hop/last-hop boundaries, disconnected assets, RO/revision/temporal
+  regressions; accepted/rejected graph targets including real later-milestone UUID
+  graphs. Run all previous89 tests including actual restart/recreation, strengthened
+  templates and both SPEC validators. Human reviews these policies/results and the
+  B04 benchmark plan; no bulk shortcut or city import is authorized here.
+
+### DEC-013 — B03-R verified corrections and review boundary | 2026-10-17
+- Implemented DEC-012 with graph-access contract v2; registry v3 and migration0001
+  bytes unchanged. No node/edge property, entity name or enum invented/removed.
+  Source/target existence, scope, strict fields, conditional evidence requirements,
+  writer fence/CAS/pending audit, temporal checks and revision checks remain intact.
+- IN_ZONE/PART_OF now temporal outgoing singletons. HAS_SCHEDULE compares exact
+  route/service groups over edge∩node validity; conflicting/empty applicability
+  rejected, different services/disjoint windows allowed. Node service/date edits
+  also revalidate incoming assignments before commit. Concurrent schedule creation
+  yields one success/one Conflict on real DB; no universal schedule singleton.
+- QueryRequest default6 means total graph-path length; fixed connectors consume
+  shared1/cross4 and grammar uses h-1/h-4 accordingly. Cross minimum5, shared minimum1
+  (zero drain links valid); explicit errors replace too-small empty searches. Fixed
+  branch lengths verified: maintenance1/2/2/3, ownership1/1/2/1, hypothesis2 or3.
+  QueryBudget + search_limited are additive typed result metadata, not graph fields;
+  truncated retains row/node/edge output-cap semantics. Negative results remain
+  scoped to filters/bounds, never global disconnection or causal proof.
+- Shared targets.py restricts both constructors to exact canonical or lower-case
+  RFC4122 UUIDv4 milestone02–25 disposable names. Real04/25 graph tests prove reusable
+  guarded operations; B01/docs/checkpoints/other production targets remain refused.
+  This namespace is reserved for disposable tests, not production or DB RBAC.
+- Verification:135 PASS (77 unit/58 real integration) including all previous89 and
+  actual restart/recreation; strengthened templates22 PASS separately. Both SPEC
+  validators and lock/dependency checks PASS. No B03-R test failure recorded.
+- Performance work is only backend/B04_BENCHMARK_PLAN.md: expected scan/audit growth,
+  pilot/full/repeat metrics, proposed timing/memory targets and preservation of every
+  write guarantee. No full-data import, converter, bulk path, audit pruning or cap
+  increase. B04 remains unauthorized pending review;55 fixture defects unchanged.
+- Original B03 review ZIP/evidence remains unchanged. Corrective diff is against the
+  pre-B03-R source snapshot, not a claim of a new Git commit. No push. R01–R18 remain
+  mandatory; no product capability is declared complete by these corrections.

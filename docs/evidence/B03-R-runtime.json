@@ -1,0 +1,1668 @@
+{
+  "packages": {
+    "falkordb": "1.8.0",
+    "redis": "8.1.0",
+    "pydantic": "2.14.1",
+    "pytest": "9.1.1"
+  },
+  "redis_version": "8.10.2",
+  "modules": [
+    [
+      "name",
+      "vectorset",
+      "ver",
+      1,
+      "path",
+      "",
+      "args",
+      []
+    ],
+    [
+      "name",
+      "graph",
+      "ver",
+      60002,
+      "path",
+      "/var/lib/falkordb/bin/falkordb.so",
+      "args",
+      [
+        "MAX_QUEUED_QUERIES",
+        "25",
+        "TIMEOUT",
+        "1000",
+        "RESULTSET_SIZE",
+        "10000"
+      ]
+    ]
+  ],
+  "canonical_status": {
+    "graph": "civicly_knowledge",
+    "migration_version": 1,
+    "registry_version": 3,
+    "municipality_id": "demo-city",
+    "ready": true,
+    "index_groups": 91,
+    "constraints": 182,
+    "issues": [],
+    "history": [
+      {
+        "id": "0001",
+        "attempts": 3,
+        "checksum": "94ab9fae6079fe7e87b41afd80701409db6bb51d529c2565dbd340896a5c923b",
+        "registry_sha256": "12541990b58d65e8602bff77b93b735009616e7ee658b9e7582a7ae9f449aac6",
+        "started_at": "2026-10-17T03:16:58.932Z",
+        "state": "READY",
+        "updated_at": "2026-10-17T03:32:03.946Z",
+        "version": 1,
+        "error_code": "",
+        "state_history": "[{\"state\": \"APPLYING\", \"at\": \"2026-10-17T03:16:58.932Z\", \"error_code\": \"\"}, {\"state\": \"READY\", \"at\": \"2026-10-17T03:17:00.862Z\", \"error_code\": \"\"}, {\"state\": \"APPLYING\", \"at\": \"2026-10-17T03:17:25.496Z\", \"error_code\": \"\"}, {\"state\": \"READY\", \"at\": \"2026-10-17T03:17:28.152Z\", \"error_code\": \"\"}, {\"state\": \"APPLYING\", \"at\": \"2026-10-17T03:32:01.357Z\", \"error_code\": \"\"}, {\"state\": \"READY\", \"at\": \"2026-10-17T03:32:03.946Z\", \"error_code\": \"\"}]"
+      }
+    ]
+  },
+  "canonical_domain_nodes": 0,
+  "b01_probe": [
+    [
+      {
+        "id": "B01-PERSISTENCE",
+        "source_kind": "SYNTHETIC",
+        "task": "B01"
+      }
+    ]
+  ],
+  "browser_http_status": 200,
+  "examples": {
+    "drainage_paths": {
+      "template": "drainage_paths",
+      "municipality_id": "demo-city",
+      "as_of": "2026-10-17T00:00:00Z",
+      "graph_revision": 53,
+      "nodes": [
+        {
+          "id": "D1",
+          "kind": "DrainSegment",
+          "labels": [
+            "DrainSegment",
+            "InfrastructureAsset"
+          ],
+          "properties": {
+            "id": "D1",
+            "updated_at": "2026-10-17T00:00:00Z",
+            "municipality_id": "demo-city",
+            "created_at": "2026-10-17T00:00:00Z",
+            "schema_version": 3,
+            "operational_status": "ACTIVE",
+            "name": "Synthetic asset",
+            "asset_type": "DRAIN_SEGMENT"
+          }
+        },
+        {
+          "id": "D2",
+          "kind": "DrainSegment",
+          "labels": [
+            "DrainSegment",
+            "InfrastructureAsset"
+          ],
+          "properties": {
+            "id": "D2",
+            "updated_at": "2026-10-17T00:00:00Z",
+            "municipality_id": "demo-city",
+            "created_at": "2026-10-17T00:00:00Z",
+            "schema_version": 3,
+            "operational_status": "ACTIVE",
+            "name": "Synthetic asset",
+            "asset_type": "DRAIN_SEGMENT"
+          }
+        },
+        {
+          "id": "D3",
+          "kind": "DrainInlet",
+          "labels": [
+            "DrainInlet",
+            "InfrastructureAsset"
+          ],
+          "properties": {
+            "id": "D3",
+            "updated_at": "2026-10-17T00:00:00Z",
+            "municipality_id": "demo-city",
+            "created_at": "2026-10-17T00:00:00Z",
+            "schema_version": 3,
+            "operational_status": "ACTIVE",
+            "name": "Synthetic asset",
+            "asset_type": "DRAIN_INLET"
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "E0",
+          "kind": "DRAINS_TO",
+          "source": "D1",
+          "target": "D2",
+          "properties": {
+            "id": "E0",
+            "municipality_id": "demo-city",
+            "valid_from": "2026-10-17T00:00:00Z",
+            "created_at": "2026-10-17T00:00:00Z",
+            "association_status": "VERIFIED",
+            "source_evidence_id": "EV"
+          }
+        },
+        {
+          "id": "E1",
+          "kind": "DRAINS_TO",
+          "source": "D2",
+          "target": "D3",
+          "properties": {
+            "id": "E1",
+            "municipality_id": "demo-city",
+            "valid_from": "2026-10-17T00:00:00Z",
+            "created_at": "2026-10-17T00:00:00Z",
+            "association_status": "VERIFIED",
+            "source_evidence_id": "EV"
+          }
+        }
+      ],
+      "paths": [
+        {
+          "node_ids": [
+            "D1",
+            "D2"
+          ],
+          "edge_ids": [
+            "E0"
+          ],
+          "directions": [
+            "OUTGOING"
+          ],
+          "evidence_ids": [
+            "EV"
+          ],
+          "context": {}
+        },
+        {
+          "node_ids": [
+            "D1",
+            "D2",
+            "D3"
+          ],
+          "edge_ids": [
+            "E0",
+            "E1"
+          ],
+          "directions": [
+            "OUTGOING",
+            "OUTGOING"
+          ],
+          "evidence_ids": [
+            "EV"
+          ],
+          "context": {}
+        }
+      ],
+      "truncated": false,
+      "search_limited": true,
+      "search_budget": {
+        "requested_total_hops": 6,
+        "effective_total_hops": 6,
+        "template_min_hops": 1,
+        "template_max_hops": 6,
+        "fixed_connector_hops": 0,
+        "infrastructure_hops": 6
+      },
+      "reservations": [
+        "Graph connections are evidence context, not verified physical causation.",
+        "Historical node versions are not reconstructed; future-updated records are excluded.",
+        "Search limited to 6 total path edges; no result does not prove global absence."
+      ]
+    },
+    "shared_infrastructure": {
+      "template": "shared_infrastructure",
+      "municipality_id": "demo-city",
+      "as_of": "2026-10-17T00:00:00Z",
+      "graph_revision": 53,
+      "nodes": [
+        {
+          "id": "I1",
+          "kind": "Incident",
+          "labels": [
+            "Incident"
+          ],
+          "properties": {
+            "id": "I1",
+            "started_at": "2026-10-17T00:00:00Z",
+            "updated_at": "2026-10-17T00:00:00Z",
+            "municipality_id": "demo-city",
+            "status": "OPEN",
+            "issue_type": "WATERLOGGING",
+            "created_at": "2026-10-17T00:00:00Z",
+            "schema_version": 3,
+            "severity": "HIGH",
+            "subtype": "TEST"
+          }
+        },
+        {
+          "id": "D1",
+          "kind": "DrainSegment",
+          "labels": [
+            "DrainSegment",
+            "InfrastructureAsset"
+          ],
+          "properties": {
+            "id": "D1",
+            "updated_at": "2026-10-17T00:00:00Z",
+            "municipality_id": "demo-city",
+            "created_at": "2026-10-17T00:00:00Z",
+            "schema_version": 3,
+            "operational_status": "ACTIVE",
+            "name": "Synthetic asset",
+            "asset_type": "DRAIN_SEGMENT"
+          }
+        },
+        {
+          "id": "D2",
+          "kind": "DrainSegment",
+          "labels": [
+            "DrainSegment",
+            "InfrastructureAsset"
+          ],
+          "properties": {
+            "id": "D2",
+            "updated_at": "2026-10-17T00:00:00Z",
+            "municipality_id": "demo-city",
+            "created_at": "2026-10-17T00:00:00Z",
+            "schema_version": 3,
+            "operational_status": "ACTIVE",
+            "name": "Synthetic asset",
+            "asset_type": "DRAIN_SEGMENT"
+          }
+        },
+        {
+          "id": "I2",
+          "kind": "Incident",
+          "labels": [
+            "Incident"
+          ],
+          "properties": {
+            "id": "I2",
+            "started_at": "2026-10-17T00:00:00Z",
+            "updated_at": "2026-10-17T00:00:00Z",
+            "municipality_id": "demo-city",
+            "status": "OPEN",
+            "issue_type": "ROAD_DAMAGE",
+            "created_at": "2026-10-17T00:00:00Z",
+            "schema_version": 3,
+            "severity": "HIGH",
+            "subtype": "TEST"
+          }
+        },
+        {
+          "id": "D3",
+          "kind": "DrainInlet",
+          "labels": [
+            "DrainInlet",
+            "InfrastructureAsset"
+          ],
+          "properties": {
+            "id": "D3",
+            "updated_at": "2026-10-17T00:00:00Z",
+            "municipality_id": "demo-city",
+            "created_at": "2026-10-17T00:00:00Z",
+            "schema_version": 3,
+            "operational_status": "ACTIVE",
+            "name": "Synthetic asset",
+            "asset_type": "DRAIN_INLET"
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "E2",
+          "kind": "AFFECTS",
+          "source": "I1",
+          "target": "D1",
+          "properties": {
+            "id": "E2",
+            "municipality_id": "demo-city",
+            "valid_from": "2026-10-17T00:00:00Z",
+            "created_at": "2026-10-17T00:00:00Z",
+            "association_status": "VERIFIED",
+            "source_evidence_id": "EV"
+          }
+        },
+        {
+          "id": "E0",
+          "kind": "DRAINS_TO",
+          "source": "D1",
+          "target": "D2",
+          "properties": {
+            "id": "E0",
+            "municipality_id": "demo-city",
+            "valid_from": "2026-10-17T00:00:00Z",
+            "created_at": "2026-10-17T00:00:00Z",
+            "association_status": "VERIFIED",
+            "source_evidence_id": "EV"
+          }
+        },
+        {
+          "id": "E3",
+          "kind": "AFFECTS",
+          "source": "I2",
+          "target": "D2",
+          "properties": {
+            "id": "E3",
+            "municipality_id": "demo-city",
+            "valid_from": "2026-10-17T00:00:00Z",
+            "created_at": "2026-10-17T00:00:00Z",
+            "association_status": "VERIFIED",
+            "source_evidence_id": "EV"
+          }
+        },
+        {
+          "id": "E1",
+          "kind": "DRAINS_TO",
+          "source": "D2",
+          "target": "D3",
+          "properties": {
+            "id": "E1",
+            "municipality_id": "demo-city",
+            "valid_from": "2026-10-17T00:00:00Z",
+            "created_at": "2026-10-17T00:00:00Z",
+            "association_status": "VERIFIED",
+            "source_evidence_id": "EV"
+          }
+        }
+      ],
+      "paths": [
+        {
+          "node_ids": [
+            "I1",
+            "D1",
+            "D2"
+          ],
+          "edge_ids": [
+            "E2",
+            "E0"
+          ],
+          "directions": [
+            "OUTGOING",
+            "OUTGOING"
+          ],
+          "evidence_ids": [
+            "EV"
+          ],
+          "context": {
+            "shared_incident_ids": [
+              "I1",
+              "I2"
+            ],
+            "shared_asset_id": "D2"
+          }
+        },
+        {
+          "node_ids": [
+            "I2",
+            "D2"
+          ],
+          "edge_ids": [
+            "E3"
+          ],
+          "directions": [
+            "OUTGOING"
+          ],
+          "evidence_ids": [
+            "EV"
+          ],
+          "context": {
+            "shared_incident_ids": [
+              "I1",
+              "I2"
+            ],
+            "shared_asset_id": "D2"
+          }
+        },
+        {
+          "node_ids": [
+            "I1",
+            "D1",
+            "D2",
+            "D3"
+          ],
+          "edge_ids": [
+            "E2",
+            "E0",
+            "E1"
+          ],
+          "directions": [
+            "OUTGOING",
+            "OUTGOING",
+            "OUTGOING"
+          ],
+          "evidence_ids": [
+            "EV"
+          ],
+          "context": {
+            "shared_incident_ids": [
+              "I1",
+              "I2"
+            ],
+            "shared_asset_id": "D3"
+          }
+        },
+        {
+          "node_ids": [
+            "I2",
+            "D2",
+            "D3"
+          ],
+          "edge_ids": [
+            "E3",
+            "E1"
+          ],
+          "directions": [
+            "OUTGOING",
+            "OUTGOING"
+          ],
+          "evidence_ids": [
+            "EV"
+          ],
+          "context": {
+            "shared_incident_ids": [
+              "I1",
+              "I2"
+            ],
+            "shared_asset_id": "D3"
+          }
+        }
+      ],
+      "truncated": false,
+      "search_limited": true,
+      "search_budget": {
+        "requested_total_hops": 6,
+        "effective_total_hops": 6,
+        "template_min_hops": 1,
+        "template_max_hops": 6,
+        "fixed_connector_hops": 1,
+        "infrastructure_hops": 5
+      },
+      "reservations": [
+        "Graph connections are evidence context, not verified physical causation.",
+        "Historical node versions are not reconstructed; future-updated records are excluded.",
+        "Search limited to 6 total path edges; no result does not prove global absence."
+      ]
+    },
+    "incident_history": {
+      "template": "incident_history",
+      "municipality_id": "demo-city",
+      "as_of": "2026-10-17T00:00:00Z",
+      "graph_revision": 53,
+      "nodes": [
+        {
+          "id": "I1",
+          "kind": "Incident",
+          "labels": [
+            "Incident"
+          ],
+          "properties": {
+            "id": "I1",
+            "started_at": "2026-10-17T00:00:00Z",
+            "updated_at": "2026-10-17T00:00:00Z",
+            "municipality_id": "demo-city",
+            "status": "OPEN",
+            "issue_type": "WATERLOGGING",
+            "created_at": "2026-10-17T00:00:00Z",
+            "schema_version": 3,
+            "severity": "HIGH",
+            "subtype": "TEST"
+          }
+        },
+        {
+          "id": "LW",
+          "kind": "Location",
+          "labels": [
+            "Location"
+          ],
+          "properties": {
+            "id": "LW",
+            "updated_at": "2026-10-17T00:00:00Z",
+            "municipality_id": "demo-city",
+            "created_at": "2026-10-17T00:00:00Z",
+            "schema_version": 3,
+            "name": "Same coordinates, explicit connections only",
+            "latitude": 12.0,
+            "longitude": 77.0
+          }
+        },
+        {
+          "id": "I2",
+          "kind": "Incident",
+          "labels": [
+            "Incident"
+          ],
+          "properties": {
+            "id": "I2",
+            "started_at": "2026-10-17T00:00:00Z",
+            "updated_at": "2026-10-17T00:00:00Z",
+            "municipality_id": "demo-city",
+            "status": "OPEN",
+            "issue_type": "ROAD_DAMAGE",
+            "created_at": "2026-10-17T00:00:00Z",
+            "schema_version": 3,
+            "severity": "HIGH",
+            "subtype": "TEST"
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "E10",
+          "kind": "OCCURRED_AT",
+          "source": "I1",
+          "target": "LW",
+          "properties": {
+            "id": "E10",
+            "municipality_id": "demo-city",
+            "valid_from": "2026-10-17T00:00:00Z",
+            "created_at": "2026-10-17T00:00:00Z"
+          }
+        },
+        {
+          "id": "E11",
+          "kind": "OCCURRED_AT",
+          "source": "I2",
+          "target": "LW",
+          "properties": {
+            "id": "E11",
+            "municipality_id": "demo-city",
+            "valid_from": "2026-10-17T00:00:00Z",
+            "created_at": "2026-10-17T00:00:00Z"
+          }
+        }
+      ],
+      "paths": [
+        {
+          "node_ids": [
+            "I1",
+            "LW"
+          ],
+          "edge_ids": [
+            "E10"
+          ],
+          "directions": [
+            "OUTGOING"
+          ],
+          "evidence_ids": [],
+          "context": {
+            "classification": "related_incidents_not_recurrence_verdict"
+          }
+        },
+        {
+          "node_ids": [
+            "I2",
+            "LW"
+          ],
+          "edge_ids": [
+            "E11"
+          ],
+          "directions": [
+            "OUTGOING"
+          ],
+          "evidence_ids": [],
+          "context": {
+            "classification": "related_incidents_not_recurrence_verdict"
+          }
+        }
+      ],
+      "truncated": false,
+      "search_limited": false,
+      "search_budget": {
+        "requested_total_hops": 6,
+        "effective_total_hops": 1,
+        "template_min_hops": 1,
+        "template_max_hops": 1,
+        "fixed_connector_hops": 1,
+        "infrastructure_hops": null
+      },
+      "reservations": [
+        "Graph connections are evidence context, not verified physical causation.",
+        "Historical node versions are not reconstructed; future-updated records are excluded."
+      ]
+    },
+    "maintenance_history": {
+      "template": "maintenance_history",
+      "municipality_id": "demo-city",
+      "as_of": "2026-10-17T00:00:00Z",
+      "graph_revision": 53,
+      "nodes": [
+        {
+          "id": "D1",
+          "kind": "DrainSegment",
+          "labels": [
+            "DrainSegment",
+            "InfrastructureAsset"
+          ],
+          "properties": {
+            "id": "D1",
+            "updated_at": "2026-10-17T00:00:00Z",
+            "municipality_id": "demo-city",
+            "created_at": "2026-10-17T00:00:00Z",
+            "schema_version": 3,
+            "operational_status": "ACTIVE",
+            "name": "Synthetic asset",
+            "asset_type": "DRAIN_SEGMENT"
+          }
+        },
+        {
+          "id": "INS",
+          "kind": "Inspection",
+          "labels": [
+            "Inspection"
+          ],
+          "properties": {
+            "id": "INS",
+            "updated_at": "2026-10-17T00:00:00Z",
+            "municipality_id": "demo-city",
+            "status": "COMPLETE",
+            "created_at": "2026-10-17T00:00:00Z",
+            "schema_version": 3,
+            "requested_at": "2026-10-17T00:00:00Z",
+            "inspection_type": "DRAIN"
+          }
+        },
+        {
+          "id": "EV",
+          "kind": "Evidence",
+          "labels": [
+            "Evidence"
+          ],
+          "properties": {
+            "id": "EV",
+            "updated_at": "2026-10-17T00:00:00Z",
+            "municipality_id": "demo-city",
+            "observed_at": "2026-10-17T00:00:00Z",
+            "recorded_at": "2026-10-17T00:00:00Z",
+            "created_at": "2026-10-17T00:00:00Z",
+            "schema_version": 3,
+            "summary": "Synthetic inspection",
+            "source_kind": "SYNTHETIC",
+            "evidence_type": "INSPECTION_REPORT",
+            "reliability": "VERIFIED",
+            "source_record_id": "test-record"
+          }
+        },
+        {
+          "id": "T1",
+          "kind": "ActionTask",
+          "labels": [
+            "ActionTask"
+          ],
+          "properties": {
+            "id": "T1",
+            "updated_at": "2026-10-17T00:00:00Z",
+            "municipality_id": "demo-city",
+            "status": "PENDING",
+            "created_at": "2026-10-17T00:00:00Z",
+            "schema_version": 3,
+            "action_type": "TEST",
+            "priority": "HIGH"
+          }
+        },
+        {
+          "id": "WO",
+          "kind": "WorkOrder",
+          "labels": [
+            "WorkOrder"
+          ],
+          "properties": {
+            "id": "WO",
+            "updated_at": "2026-10-17T00:00:00Z",
+            "municipality_id": "demo-city",
+            "status": "COMPLETE",
+            "created_at": "2026-10-17T00:00:00Z",
+            "schema_version": 3,
+            "plan_version": 1,
+            "idempotency_key": "TEST-WO",
+            "execution_mode": "SIMULATED"
+          }
+        },
+        {
+          "id": "OUT",
+          "kind": "InterventionOutcome",
+          "labels": [
+            "InterventionOutcome"
+          ],
+          "properties": {
+            "id": "OUT",
+            "municipality_id": "demo-city",
+            "created_at": "2026-10-17T00:00:00Z",
+            "schema_version": 3,
+            "assessment_status": "TEST",
+            "evaluated_at": "2026-10-17T00:00:00Z",
+            "result": "INCONCLUSIVE"
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "E15",
+          "kind": "INSPECTS",
+          "source": "INS",
+          "target": "D1",
+          "properties": {
+            "id": "E15",
+            "municipality_id": "demo-city",
+            "valid_from": "2026-10-17T00:00:00Z",
+            "created_at": "2026-10-17T00:00:00Z"
+          }
+        },
+        {
+          "id": "E16",
+          "kind": "PRODUCED",
+          "source": "INS",
+          "target": "EV",
+          "properties": {
+            "id": "E16",
+            "municipality_id": "demo-city",
+            "valid_from": "2026-10-17T00:00:00Z",
+            "created_at": "2026-10-17T00:00:00Z"
+          }
+        },
+        {
+          "id": "E17",
+          "kind": "TARGETS",
+          "source": "T1",
+          "target": "D1",
+          "properties": {
+            "id": "E17",
+            "municipality_id": "demo-city",
+            "valid_from": "2026-10-17T00:00:00Z",
+            "created_at": "2026-10-17T00:00:00Z"
+          }
+        },
+        {
+          "id": "E18",
+          "kind": "IMPLEMENTS",
+          "source": "WO",
+          "target": "T1",
+          "properties": {
+            "id": "E18",
+            "municipality_id": "demo-city",
+            "valid_from": "2026-10-17T00:00:00Z",
+            "created_at": "2026-10-17T00:00:00Z"
+          }
+        },
+        {
+          "id": "E19",
+          "kind": "RESULTED_IN",
+          "source": "WO",
+          "target": "OUT",
+          "properties": {
+            "id": "E19",
+            "municipality_id": "demo-city",
+            "valid_from": "2026-10-17T00:00:00Z",
+            "created_at": "2026-10-17T00:00:00Z"
+          }
+        }
+      ],
+      "paths": [
+        {
+          "node_ids": [
+            "D1",
+            "INS"
+          ],
+          "edge_ids": [
+            "E15"
+          ],
+          "directions": [
+            "INCOMING"
+          ],
+          "evidence_ids": [],
+          "context": {}
+        },
+        {
+          "node_ids": [
+            "D1",
+            "INS",
+            "EV"
+          ],
+          "edge_ids": [
+            "E15",
+            "E16"
+          ],
+          "directions": [
+            "INCOMING",
+            "OUTGOING"
+          ],
+          "evidence_ids": [
+            "EV"
+          ],
+          "context": {}
+        },
+        {
+          "node_ids": [
+            "D1",
+            "T1",
+            "WO"
+          ],
+          "edge_ids": [
+            "E17",
+            "E18"
+          ],
+          "directions": [
+            "INCOMING",
+            "INCOMING"
+          ],
+          "evidence_ids": [],
+          "context": {}
+        },
+        {
+          "node_ids": [
+            "D1",
+            "T1",
+            "WO",
+            "OUT"
+          ],
+          "edge_ids": [
+            "E17",
+            "E18",
+            "E19"
+          ],
+          "directions": [
+            "INCOMING",
+            "INCOMING",
+            "OUTGOING"
+          ],
+          "evidence_ids": [],
+          "context": {}
+        }
+      ],
+      "truncated": false,
+      "search_limited": false,
+      "search_budget": {
+        "requested_total_hops": 6,
+        "effective_total_hops": 3,
+        "template_min_hops": 1,
+        "template_max_hops": 3,
+        "fixed_connector_hops": null,
+        "infrastructure_hops": null
+      },
+      "reservations": [
+        "Graph connections are evidence context, not verified physical causation.",
+        "Historical node versions are not reconstructed; future-updated records are excluded."
+      ]
+    },
+    "cross_category_paths": {
+      "template": "cross_category_paths",
+      "municipality_id": "demo-city",
+      "as_of": "2026-10-17T00:00:00Z",
+      "graph_revision": 53,
+      "nodes": [
+        {
+          "id": "W",
+          "kind": "WasteCollectionPoint",
+          "labels": [
+            "InfrastructureAsset",
+            "WasteCollectionPoint"
+          ],
+          "properties": {
+            "id": "W",
+            "updated_at": "2026-10-17T00:00:00Z",
+            "municipality_id": "demo-city",
+            "created_at": "2026-10-17T00:00:00Z",
+            "schema_version": 3,
+            "operational_status": "ACTIVE",
+            "name": "Synthetic asset",
+            "asset_type": "WASTE_COLLECTION_POINT"
+          }
+        },
+        {
+          "id": "LW",
+          "kind": "Location",
+          "labels": [
+            "Location"
+          ],
+          "properties": {
+            "id": "LW",
+            "updated_at": "2026-10-17T00:00:00Z",
+            "municipality_id": "demo-city",
+            "created_at": "2026-10-17T00:00:00Z",
+            "schema_version": 3,
+            "name": "Same coordinates, explicit connections only",
+            "latitude": 12.0,
+            "longitude": 77.0
+          }
+        },
+        {
+          "id": "D1",
+          "kind": "DrainSegment",
+          "labels": [
+            "DrainSegment",
+            "InfrastructureAsset"
+          ],
+          "properties": {
+            "id": "D1",
+            "updated_at": "2026-10-17T00:00:00Z",
+            "municipality_id": "demo-city",
+            "created_at": "2026-10-17T00:00:00Z",
+            "schema_version": 3,
+            "operational_status": "ACTIVE",
+            "name": "Synthetic asset",
+            "asset_type": "DRAIN_SEGMENT"
+          }
+        },
+        {
+          "id": "D2",
+          "kind": "DrainSegment",
+          "labels": [
+            "DrainSegment",
+            "InfrastructureAsset"
+          ],
+          "properties": {
+            "id": "D2",
+            "updated_at": "2026-10-17T00:00:00Z",
+            "municipality_id": "demo-city",
+            "created_at": "2026-10-17T00:00:00Z",
+            "schema_version": 3,
+            "operational_status": "ACTIVE",
+            "name": "Synthetic asset",
+            "asset_type": "DRAIN_SEGMENT"
+          }
+        },
+        {
+          "id": "D3",
+          "kind": "DrainInlet",
+          "labels": [
+            "DrainInlet",
+            "InfrastructureAsset"
+          ],
+          "properties": {
+            "id": "D3",
+            "updated_at": "2026-10-17T00:00:00Z",
+            "municipality_id": "demo-city",
+            "created_at": "2026-10-17T00:00:00Z",
+            "schema_version": 3,
+            "operational_status": "ACTIVE",
+            "name": "Synthetic asset",
+            "asset_type": "DRAIN_INLET"
+          }
+        },
+        {
+          "id": "LR",
+          "kind": "Location",
+          "labels": [
+            "Location"
+          ],
+          "properties": {
+            "id": "LR",
+            "updated_at": "2026-10-17T00:00:00Z",
+            "municipality_id": "demo-city",
+            "created_at": "2026-10-17T00:00:00Z",
+            "schema_version": 3,
+            "name": "Same coordinates, explicit connections only",
+            "latitude": 12.0,
+            "longitude": 77.0
+          }
+        },
+        {
+          "id": "R",
+          "kind": "RoadSegment",
+          "labels": [
+            "InfrastructureAsset",
+            "RoadSegment"
+          ],
+          "properties": {
+            "id": "R",
+            "updated_at": "2026-10-17T00:00:00Z",
+            "municipality_id": "demo-city",
+            "created_at": "2026-10-17T00:00:00Z",
+            "schema_version": 3,
+            "operational_status": "ACTIVE",
+            "name": "Synthetic asset",
+            "asset_type": "ROAD_SEGMENT"
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "E5",
+          "kind": "LOCATED_AT",
+          "source": "W",
+          "target": "LW",
+          "properties": {
+            "id": "E5",
+            "municipality_id": "demo-city",
+            "valid_from": "2026-10-17T00:00:00Z",
+            "created_at": "2026-10-17T00:00:00Z"
+          }
+        },
+        {
+          "id": "E8",
+          "kind": "SERVES",
+          "source": "D1",
+          "target": "LW",
+          "properties": {
+            "id": "E8",
+            "municipality_id": "demo-city",
+            "valid_from": "2026-10-17T00:00:00Z",
+            "created_at": "2026-10-17T00:00:00Z",
+            "association_status": "VERIFIED",
+            "source_evidence_id": "EV"
+          }
+        },
+        {
+          "id": "E0",
+          "kind": "DRAINS_TO",
+          "source": "D1",
+          "target": "D2",
+          "properties": {
+            "id": "E0",
+            "municipality_id": "demo-city",
+            "valid_from": "2026-10-17T00:00:00Z",
+            "created_at": "2026-10-17T00:00:00Z",
+            "association_status": "VERIFIED",
+            "source_evidence_id": "EV"
+          }
+        },
+        {
+          "id": "E1",
+          "kind": "DRAINS_TO",
+          "source": "D2",
+          "target": "D3",
+          "properties": {
+            "id": "E1",
+            "municipality_id": "demo-city",
+            "valid_from": "2026-10-17T00:00:00Z",
+            "created_at": "2026-10-17T00:00:00Z",
+            "association_status": "VERIFIED",
+            "source_evidence_id": "EV"
+          }
+        },
+        {
+          "id": "E9",
+          "kind": "SERVES",
+          "source": "D3",
+          "target": "LR",
+          "properties": {
+            "id": "E9",
+            "municipality_id": "demo-city",
+            "valid_from": "2026-10-17T00:00:00Z",
+            "created_at": "2026-10-17T00:00:00Z",
+            "association_status": "VERIFIED",
+            "source_evidence_id": "EV"
+          }
+        },
+        {
+          "id": "E6",
+          "kind": "LOCATED_AT",
+          "source": "R",
+          "target": "LR",
+          "properties": {
+            "id": "E6",
+            "municipality_id": "demo-city",
+            "valid_from": "2026-10-17T00:00:00Z",
+            "created_at": "2026-10-17T00:00:00Z"
+          }
+        }
+      ],
+      "paths": [
+        {
+          "node_ids": [
+            "W",
+            "LW",
+            "D1",
+            "D2",
+            "D3",
+            "LR",
+            "R"
+          ],
+          "edge_ids": [
+            "E5",
+            "E8",
+            "E0",
+            "E1",
+            "E9",
+            "E6"
+          ],
+          "directions": [
+            "OUTGOING",
+            "INCOMING",
+            "OUTGOING",
+            "OUTGOING",
+            "OUTGOING",
+            "INCOMING"
+          ],
+          "evidence_ids": [
+            "EV"
+          ],
+          "context": {
+            "classification": "CANDIDATE_CONNECTION_NOT_CAUSATION"
+          }
+        }
+      ],
+      "truncated": false,
+      "search_limited": true,
+      "search_budget": {
+        "requested_total_hops": 6,
+        "effective_total_hops": 6,
+        "template_min_hops": 5,
+        "template_max_hops": 6,
+        "fixed_connector_hops": 4,
+        "infrastructure_hops": 2
+      },
+      "reservations": [
+        "Graph connections are evidence context, not verified physical causation.",
+        "Historical node versions are not reconstructed; future-updated records are excluded.",
+        "Search limited to 6 total path edges; no result does not prove global absence."
+      ]
+    },
+    "hypothesis_evidence": {
+      "template": "hypothesis_evidence",
+      "municipality_id": "demo-city",
+      "as_of": "2026-10-17T00:00:00Z",
+      "graph_revision": 53,
+      "nodes": [
+        {
+          "id": "INV",
+          "kind": "Investigation",
+          "labels": [
+            "Investigation"
+          ],
+          "properties": {
+            "id": "INV",
+            "updated_at": "2026-10-17T00:00:00Z",
+            "municipality_id": "demo-city",
+            "status": "OPEN",
+            "created_at": "2026-10-17T00:00:00Z",
+            "schema_version": 3,
+            "priority": "HIGH",
+            "opened_at": "2026-10-17T00:00:00Z"
+          }
+        },
+        {
+          "id": "H",
+          "kind": "Hypothesis",
+          "labels": [
+            "Hypothesis"
+          ],
+          "properties": {
+            "id": "H",
+            "updated_at": "2026-10-17T00:00:00Z",
+            "municipality_id": "demo-city",
+            "status": "OPEN",
+            "created_at": "2026-10-17T00:00:00Z",
+            "schema_version": 3,
+            "statement": "Test hypothesis",
+            "cause_code": "TEST"
+          }
+        },
+        {
+          "id": "HA",
+          "kind": "HypothesisAssessment",
+          "labels": [
+            "HypothesisAssessment"
+          ],
+          "properties": {
+            "id": "HA",
+            "municipality_id": "demo-city",
+            "created_at": "2026-10-17T00:00:00Z",
+            "schema_version": 3,
+            "rationale": "Test",
+            "assessed_at": "2026-10-17T00:00:00Z",
+            "assessment": "INCONCLUSIVE"
+          }
+        },
+        {
+          "id": "EV",
+          "kind": "Evidence",
+          "labels": [
+            "Evidence"
+          ],
+          "properties": {
+            "id": "EV",
+            "updated_at": "2026-10-17T00:00:00Z",
+            "municipality_id": "demo-city",
+            "observed_at": "2026-10-17T00:00:00Z",
+            "recorded_at": "2026-10-17T00:00:00Z",
+            "created_at": "2026-10-17T00:00:00Z",
+            "schema_version": 3,
+            "summary": "Synthetic inspection",
+            "source_kind": "SYNTHETIC",
+            "evidence_type": "INSPECTION_REPORT",
+            "reliability": "VERIFIED",
+            "source_record_id": "test-record"
+          }
+        },
+        {
+          "id": "COUNTER",
+          "kind": "Evidence",
+          "labels": [
+            "Evidence"
+          ],
+          "properties": {
+            "id": "COUNTER",
+            "updated_at": "2026-10-17T00:00:00Z",
+            "municipality_id": "demo-city",
+            "observed_at": "2026-10-17T00:00:00Z",
+            "recorded_at": "2026-10-17T00:00:00Z",
+            "created_at": "2026-10-17T00:00:00Z",
+            "schema_version": 3,
+            "summary": "Synthetic inspection",
+            "source_kind": "SYNTHETIC",
+            "evidence_type": "INSPECTION_REPORT",
+            "reliability": "VERIFIED",
+            "source_record_id": "test-record"
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "E20",
+          "kind": "PROPOSES",
+          "source": "INV",
+          "target": "H",
+          "properties": {
+            "id": "E20",
+            "municipality_id": "demo-city",
+            "valid_from": "2026-10-17T00:00:00Z",
+            "created_at": "2026-10-17T00:00:00Z"
+          }
+        },
+        {
+          "id": "E21",
+          "kind": "HAS_ASSESSMENT",
+          "source": "H",
+          "target": "HA",
+          "properties": {
+            "id": "E21",
+            "municipality_id": "demo-city",
+            "valid_from": "2026-10-17T00:00:00Z",
+            "created_at": "2026-10-17T00:00:00Z"
+          }
+        },
+        {
+          "id": "E22",
+          "kind": "SUPPORTED_BY",
+          "source": "HA",
+          "target": "EV",
+          "properties": {
+            "id": "E22",
+            "municipality_id": "demo-city",
+            "valid_from": "2026-10-17T00:00:00Z",
+            "created_at": "2026-10-17T00:00:00Z"
+          }
+        },
+        {
+          "id": "E23",
+          "kind": "CONTRADICTED_BY",
+          "source": "HA",
+          "target": "COUNTER",
+          "properties": {
+            "id": "E23",
+            "municipality_id": "demo-city",
+            "valid_from": "2026-10-17T00:00:00Z",
+            "created_at": "2026-10-17T00:00:00Z"
+          }
+        }
+      ],
+      "paths": [
+        {
+          "node_ids": [
+            "INV",
+            "H",
+            "HA",
+            "EV"
+          ],
+          "edge_ids": [
+            "E20",
+            "E21",
+            "E22"
+          ],
+          "directions": [
+            "OUTGOING",
+            "OUTGOING",
+            "OUTGOING"
+          ],
+          "evidence_ids": [
+            "EV"
+          ],
+          "context": {
+            "evidence_relation": "SUPPORTED_BY"
+          }
+        },
+        {
+          "node_ids": [
+            "INV",
+            "H",
+            "HA",
+            "COUNTER"
+          ],
+          "edge_ids": [
+            "E20",
+            "E21",
+            "E23"
+          ],
+          "directions": [
+            "OUTGOING",
+            "OUTGOING",
+            "OUTGOING"
+          ],
+          "evidence_ids": [
+            "COUNTER"
+          ],
+          "context": {
+            "evidence_relation": "CONTRADICTED_BY"
+          }
+        }
+      ],
+      "truncated": false,
+      "search_limited": false,
+      "search_budget": {
+        "requested_total_hops": 6,
+        "effective_total_hops": 3,
+        "template_min_hops": 3,
+        "template_max_hops": 3,
+        "fixed_connector_hops": null,
+        "infrastructure_hops": null
+      },
+      "reservations": [
+        "Graph connections are evidence context, not verified physical causation.",
+        "Historical node versions are not reconstructed; future-updated records are excluded."
+      ]
+    },
+    "ownership_dependencies": {
+      "template": "ownership_dependencies",
+      "municipality_id": "demo-city",
+      "as_of": "2026-10-17T00:00:00Z",
+      "graph_revision": 53,
+      "nodes": [
+        {
+          "id": "W",
+          "kind": "WasteCollectionPoint",
+          "labels": [
+            "InfrastructureAsset",
+            "WasteCollectionPoint"
+          ],
+          "properties": {
+            "id": "W",
+            "updated_at": "2026-10-17T00:00:00Z",
+            "municipality_id": "demo-city",
+            "created_at": "2026-10-17T00:00:00Z",
+            "schema_version": 3,
+            "operational_status": "ACTIVE",
+            "name": "Synthetic asset",
+            "asset_type": "WASTE_COLLECTION_POINT"
+          }
+        },
+        {
+          "id": "ROUTE",
+          "kind": "CollectionRoute",
+          "labels": [
+            "CollectionRoute"
+          ],
+          "properties": {
+            "id": "ROUTE",
+            "updated_at": "2026-10-17T00:00:00Z",
+            "municipality_id": "demo-city",
+            "created_at": "2026-10-17T00:00:00Z",
+            "schema_version": 3,
+            "operational_status": "ACTIVE",
+            "route_code": "TEST"
+          }
+        },
+        {
+          "id": "SCHEDULE",
+          "kind": "ServiceSchedule",
+          "labels": [
+            "ServiceSchedule"
+          ],
+          "properties": {
+            "id": "SCHEDULE",
+            "updated_at": "2026-10-17T00:00:00Z",
+            "municipality_id": "demo-city",
+            "valid_from": "2026-10-17T00:00:00Z",
+            "created_at": "2026-10-17T00:00:00Z",
+            "schema_version": 3,
+            "schedule_spec": "TEST",
+            "service_type": "WASTE",
+            "timezone": "UTC"
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "E13",
+          "kind": "COLLECTED_BY",
+          "source": "W",
+          "target": "ROUTE",
+          "properties": {
+            "id": "E13",
+            "municipality_id": "demo-city",
+            "valid_from": "2026-10-17T00:00:00Z",
+            "created_at": "2026-10-17T00:00:00Z",
+            "association_status": "VERIFIED",
+            "source_evidence_id": "EV"
+          }
+        },
+        {
+          "id": "E14",
+          "kind": "HAS_SCHEDULE",
+          "source": "ROUTE",
+          "target": "SCHEDULE",
+          "properties": {
+            "id": "E14",
+            "municipality_id": "demo-city",
+            "valid_from": "2026-10-17T00:00:00Z",
+            "created_at": "2026-10-17T00:00:00Z",
+            "association_status": "VERIFIED",
+            "source_evidence_id": "EV"
+          }
+        }
+      ],
+      "paths": [
+        {
+          "node_ids": [
+            "W",
+            "ROUTE"
+          ],
+          "edge_ids": [
+            "E13"
+          ],
+          "directions": [
+            "OUTGOING"
+          ],
+          "evidence_ids": [
+            "EV"
+          ],
+          "context": {
+            "classification": "assignment_not_causal_finding"
+          }
+        },
+        {
+          "node_ids": [
+            "W",
+            "ROUTE",
+            "SCHEDULE"
+          ],
+          "edge_ids": [
+            "E13",
+            "E14"
+          ],
+          "directions": [
+            "OUTGOING",
+            "OUTGOING"
+          ],
+          "evidence_ids": [
+            "EV"
+          ],
+          "context": {
+            "classification": "assignment_not_causal_finding"
+          }
+        }
+      ],
+      "truncated": false,
+      "search_limited": false,
+      "search_budget": {
+        "requested_total_hops": 6,
+        "effective_total_hops": 2,
+        "template_min_hops": 1,
+        "template_max_hops": 2,
+        "fixed_connector_hops": null,
+        "infrastructure_hops": null
+      },
+      "reservations": [
+        "Graph connections are evidence context, not verified physical causation.",
+        "Historical node versions are not reconstructed; future-updated records are excluded."
+      ]
+    },
+    "task_dependencies": {
+      "template": "task_dependencies",
+      "municipality_id": "demo-city",
+      "as_of": "2026-10-17T00:00:00Z",
+      "graph_revision": 53,
+      "nodes": [
+        {
+          "id": "T1",
+          "kind": "ActionTask",
+          "labels": [
+            "ActionTask"
+          ],
+          "properties": {
+            "id": "T1",
+            "updated_at": "2026-10-17T00:00:00Z",
+            "municipality_id": "demo-city",
+            "status": "PENDING",
+            "created_at": "2026-10-17T00:00:00Z",
+            "schema_version": 3,
+            "action_type": "TEST",
+            "priority": "HIGH"
+          }
+        },
+        {
+          "id": "T2",
+          "kind": "ActionTask",
+          "labels": [
+            "ActionTask"
+          ],
+          "properties": {
+            "id": "T2",
+            "updated_at": "2026-10-17T00:00:00Z",
+            "municipality_id": "demo-city",
+            "status": "PENDING",
+            "created_at": "2026-10-17T00:00:00Z",
+            "schema_version": 3,
+            "action_type": "TEST",
+            "priority": "HIGH"
+          }
+        },
+        {
+          "id": "T3",
+          "kind": "ActionTask",
+          "labels": [
+            "ActionTask"
+          ],
+          "properties": {
+            "id": "T3",
+            "updated_at": "2026-10-17T00:00:00Z",
+            "municipality_id": "demo-city",
+            "status": "PENDING",
+            "created_at": "2026-10-17T00:00:00Z",
+            "schema_version": 3,
+            "action_type": "TEST",
+            "priority": "HIGH"
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "E24",
+          "kind": "DEPENDS_ON",
+          "source": "T1",
+          "target": "T2",
+          "properties": {
+            "id": "E24",
+            "municipality_id": "demo-city",
+            "valid_from": "2026-10-17T00:00:00Z",
+            "created_at": "2026-10-17T00:00:00Z"
+          }
+        },
+        {
+          "id": "E25",
+          "kind": "DEPENDS_ON",
+          "source": "T2",
+          "target": "T3",
+          "properties": {
+            "id": "E25",
+            "municipality_id": "demo-city",
+            "valid_from": "2026-10-17T00:00:00Z",
+            "created_at": "2026-10-17T00:00:00Z"
+          }
+        }
+      ],
+      "paths": [
+        {
+          "node_ids": [
+            "T1",
+            "T2"
+          ],
+          "edge_ids": [
+            "E24"
+          ],
+          "directions": [
+            "OUTGOING"
+          ],
+          "evidence_ids": [],
+          "context": {}
+        },
+        {
+          "node_ids": [
+            "T1",
+            "T2",
+            "T3"
+          ],
+          "edge_ids": [
+            "E24",
+            "E25"
+          ],
+          "directions": [
+            "OUTGOING",
+            "OUTGOING"
+          ],
+          "evidence_ids": [],
+          "context": {}
+        }
+      ],
+      "truncated": false,
+      "search_limited": true,
+      "search_budget": {
+        "requested_total_hops": 6,
+        "effective_total_hops": 6,
+        "template_min_hops": 1,
+        "template_max_hops": 6,
+        "fixed_connector_hops": 0,
+        "infrastructure_hops": null
+      },
+      "reservations": [
+        "Graph connections are evidence context, not verified physical causation.",
+        "Historical node versions are not reconstructed; future-updated records are excluded.",
+        "Search limited to 6 total path edges; no result does not prove global absence."
+      ]
+    }
+  },
+  "explain_plans": {
+    "drainage_paths": "Limit\n    Project\n        Filter\n            Conditional Variable Length Traverse | (a)-[_anon_0:DRAINS_TO*1..6]->(b)\n                Filter\n                    Node By Index Scan | (a:InfrastructureAsset)",
+    "shared_infrastructure": "Limit\n    Project\n        Unwind\n            Filter\n                Aggregate\n                    Filter\n                        PathBuilder\n                            Conditional Variable Length Traverse | (a)-[_anon_1:DRAINS_TO*0..5]->(shared)\n                                Conditional Traverse | (i)->(a:InfrastructureAsset)\n                                    Filter\n                                        Node By Index Scan | (i:Incident)",
+    "incident_history": "Limit\n    Project\n        Filter\n            PathBuilder\n                Filter\n                    Conditional Traverse | (i)->(a:Location)\n                        Filter\n                            Node By Label Scan | (i:Incident)",
+    "maintenance_history": "Union\n    Limit\n        Project\n            Filter\n                PathBuilder\n                    Conditional Traverse | (a)<-(i:Inspection)\n                        Filter\n                            Node By Index Scan | (a:InfrastructureAsset)\n    Limit\n        Project\n            Filter\n                PathBuilder\n                    Conditional Traverse | (i)->(e:Evidence)\n                        Conditional Traverse | (a)<-(i:Inspection)\n                            Filter\n                                Node By Index Scan | (a:InfrastructureAsset)\n    Limit\n        Project\n            Filter\n                PathBuilder\n                    Conditional Traverse | (o)->(t:ActionTask)\n                        Conditional Traverse | (a)<-(t:ActionTask)\n                            Filter\n                                Node By Index Scan | (a:InfrastructureAsset)\n    Limit\n        Project\n            Filter\n                PathBuilder\n                    Conditional Traverse | (o)->(out:InterventionOutcome)\n                        Conditional Traverse | (o)->(t:ActionTask)\n                            Conditional Traverse | (a)<-(t:ActionTask)\n                                Filter\n                                    Node By Index Scan | (a:InfrastructureAsset)",
+    "cross_category_paths": "Limit\n    Project\n        Filter\n            PathBuilder\n                Conditional Variable Length Traverse (Expand Into) | (d)-[_anon_2:DRAINS_TO*1..2]->(down)\n                    Conditional Traverse | (road)->(rl:Location)\n                        Conditional Traverse | (down)->(rl:Location)\n                            Conditional Traverse | (d)->(l:Location)\n                                Conditional Traverse | (w)->(l:Location)\n                                    Filter\n                                        Node By Index Scan | (w:WasteCollectionPoint)",
+    "hypothesis_evidence": "Limit\n    Project\n        Filter\n            PathBuilder\n                Conditional Traverse | (a)->(e:Evidence)\n                    Conditional Traverse | (h)->(a:HypothesisAssessment)\n                        Conditional Traverse | (i)->(h:Hypothesis)\n                            Filter\n                                Node By Index Scan | (i:Investigation)",
+    "ownership_dependencies": "Union\n    Limit\n        Project\n            Filter\n                PathBuilder\n                    Conditional Traverse | (a)->(d:Department)\n                        Filter\n                            Node By Index Scan | (a:InfrastructureAsset)\n    Limit\n        Project\n            Filter\n                PathBuilder\n                    Conditional Traverse | (a)->(route:CollectionRoute)\n                        Filter\n                            Node By Index Scan | (a:WasteCollectionPoint)\n    Limit\n        Project\n            Filter\n                PathBuilder\n                    Conditional Traverse | (route)->(schedule:ServiceSchedule)\n                        Conditional Traverse | (a)->(route:CollectionRoute)\n                            Filter\n                                Node By Index Scan | (a:WasteCollectionPoint)\n    Limit\n        Project\n            Filter\n                PathBuilder\n                    Conditional Traverse | (a)->(d:Department)\n                        Filter\n                            Node By Index Scan | (a:ActionTask)",
+    "task_dependencies": "Limit\n    Project\n        Filter\n            Conditional Variable Length Traverse | (t)-[_anon_0:DEPENDS_ON*1..6]->(dependency)\n                Filter\n                    Node By Index Scan | (t:ActionTask)"
+  },
+  "metadata_projection_spike": {
+    "separate_revision": 53,
+    "upstream_projected_revisions": [
+      0,
+      0
+    ]
+  },
+  "repository_revision_survives_migration_rerun": 53
+}

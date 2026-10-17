@@ -76,3 +76,36 @@ fixtures retain their original shape until explicit B04 conversion. Storage-only
 bookkeeping is excluded from domain/MCP/Canvas data. UTC Z validity bounds are
 optional (unknown/open), with typed evidence pointers and no inferred dates.
 Graph-wide cardinality/cycle/reference checks and query repositories remain B03.
+
+## B03 implemented access foundation (supersedes B03 TODO above)
+
+`backend/GRAPH_ACCESS.md` documents the implemented repositories, declared integrity
+policy (`contracts/graph_access.json`), eight typed read templates, fixed scope,
+CAS/fenced writers, query budgets and recovery. Registry v3 and migration 0001
+remain unchanged; no public ontology fields or names were added or dropped.
+Canonical migration readiness is checked before repository construction. Future
+MCP/domain/API services must use typed methods and preapproved read requests; this
+adapter does not authorize operations or deliver durable events. B04 fixture
+conversion/import remains blocked by the 55 value_number defects. Product R01–R18
+capabilities remain mandatory and are not declared complete by this foundation.
+
+
+## B03-R clarified cardinality, budgets and isolated targets
+
+IN_ZONE and PART_OF are outgoing primary assignments with no concurrent overlapping
+zone/cluster; disjoint history and many incoming members are valid. HAS_SCHEDULE
+permits multiple services/date windows but refuses overlapping definitions for the
+same exact service on one route. Applicability intersects edge and schedule-node
+validity; schedule edits revalidate incoming assignments. Opaque schedule_spec text
+cannot establish that overlapping definitions are compatible. No registry v3 fields,
+labels, enums or immutable migration0001 content changed; behavioral contract is
+contracts/graph_access.json v2.
+
+max_hops is total path edges, default6/hard max6; drainage-only allowance subtracts
+fixed connectors (shared1, cross-category4). Cross-category needs minimum5 total;
+insufficient requests fail. Result search_budget/search_limited distinguish bounded
+negative searches from truncated output and global absence. Detailed per-template
+minima/branch lengths are in backend/GRAPH_ACCESS.md. Both repository/migration
+constructors now share a guarded milestone02–25 UUIDv4 test namespace; canonical
+and B01/document/checkpoint protections remain. backend/B04_BENCHMARK_PLAN.md defines
+future conversion/import/repeat performance verification only; no B04 work began.

@@ -1,7 +1,7 @@
 PYTHON ?= python3.12
 VENV := backend/.venv/bin
 
-.PHONY: configure setup up health migrate schema-status test-unit test-graph test-persistence test-spec down
+.PHONY: configure setup up health migrate schema-status test-unit test-graph test-repositories test-persistence test-spec down
 configure:
 	$(PYTHON) scripts/configure_local.py
 setup:
@@ -27,3 +27,6 @@ test-spec:
 	$(VENV)/python scripts/validate_handoff.py
 down:
 	docker compose down
+
+test-repositories:
+	$(VENV)/python -m pytest backend/tests/unit/test_graph_access_models.py backend/tests/integration/test_graph_access.py -v

@@ -2,7 +2,7 @@
 
 ## Current status — 2026-10-17 (takes precedence over historical entries)
 
-B00/B01 accepted. B02 PASS — human review pending. Canonical migration 0001 READY; 53 tests PASS. Exact next task B03 TODO; STOP until user review.
+B03 provisionally accepted. B03-R PASS — human review pending:135 tests PASS (77 unit/58 real integration), strengthened templates22 PASS, both SPEC validators PASS. Exact next task B04 TODO; STOP until human review. No B04 import/fixture correction started.
 
 ---
 
@@ -45,3 +45,32 @@ No B02 work or frontend started. B01 foundation evidence does not fulfill B-END 
 | B03 | TODO | — | No | Typed repositories, endpoint/temporal/cardinality/verified-path policies and bounded preapproved query templates; actual traversal and invalid-edge rejection |
 
 No B03 implementation, seed import or frontend started. B02 is schema foundation only, not B-END.
+
+## B03 review ledger | 2026-10-17
+
+| Task | State | Test log | Human accepted? | Note |
+|---|---|---|---|---|
+| B00–B02 | PASS | Historical logs | Yes | Baseline3db6d87; original findings preserved |
+| B03 | PASS | TEST-20261017-B03-01–06 | No | Typed repositories, declared integrity policies,8 bounded RO families;89 acceptance PASS; review pending |
+| B04 | TODO | — | No | Explicit v1/v2→v3 conversion,55 value_number corrections with evidence, provenance-safe duplicate-resistant ingest; only after review |
+
+STOP at B03. No ingestion, agents, MCP/GraphRAG, operations, domain API or frontend
+started. No completion of a product capability is inferred from graph access tests.
+
+## B03-R corrective review ledger | 2026-10-17
+
+| Task | State | Human accepted? | Scope |
+|---|---|---|---|
+| B03 | PASS | Provisionally | External review requests contract corrections before B04 |
+| B03-R | IN_PROGRESS | No | Cardinality, total-path budgets, reusable isolated target guard, B04 benchmark plan; real corrective + full regressions |
+| B04 | TODO | No | No conversion/import/fixture repair started; blocked on human B03-R review |
+
+## B03-R final review gate (supersedes in-progress ledger) | 2026-10-17
+
+| Task | State | Test log | Human accepted? | Note |
+|---|---|---|---|---|
+| B03-R | PASS | TEST-20261017-B03R-01–05 | No |135 tests PASS,22 template checks PASS,both SPEC validators PASS; corrected contracts/source ready for review |
+| B04 | TODO | — | No | Explicit conversion/55-defect correction/ingestion/provenance/idempotence + documented benchmark, only after review |
+
+STOP here. A test graph named for milestone04/25 verifies namespace authorization;
+it does not implement that milestone. No city graph ingestion or B04 repair started.

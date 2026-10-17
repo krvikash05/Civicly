@@ -9,6 +9,7 @@
 | **B01** | Backend project skeleton, Python dependency/version spike, Docker FalkorDB+Browser persistent volumes and Compose health; CLI health. | actual graph `CREATE/MATCH`, server restart retains node; version/digest noted |
 | **B02** | Formal graph migrations, unique/mandatory constraints, indexes, node multi-label adapter, schema registry mapping, rollback/upgrade policy. | migrations idempotent, constraints OPERATIONAL where supported, invalid ID rejected |
 | **B03** | Relationship validators and typed graph repositories, graph query templates, verified vs candidate flags, temporal validity and bounded query. | real graph traversal and invalid edge rejected; no unbounded write Cypher |
+| **B03-R** | External corrective review: primary zone/cluster and schedule cardinality; explicit total-path budgets; shared disposable graph-target guards; B04 performance plan only. | real overlap/boundary/target tests + all regressions/SPEC validators; STOP for review before B04 |
 | **B04** | Seed ingest from canonical fixture + generator/importer, stable provenance, duplicate-safe upserts; synthetically expanded city. | seed twice yields same node/edge identities; count/invariant reports |
 | **B05** | Graph algorithms / case retrieval: downstream reachability, shared bottleneck, criticality, DAG; isolated counterfactual graph clone. | removing verified `DRAINS_TO` changes returned path and ranking; provenance displayed |
 
