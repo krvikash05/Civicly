@@ -427,3 +427,43 @@ production-city initialize/list/all12 reads/15 server trace readbacks -> verify_
 all2104 city records/B01/B05/native schemas +43 accepted trace hashes -> preserve fresh
 B07-R regression proof/restore accepted artifact -> audit_b08.py358 original files and
 private-value/process check -> exact B08 source patch/file inventory. No later feature.
+
+## B09 actual file/import and data/control flow | 2026-10-17
+
+```text
+services.evidence.models -> strict command union/Actor/Review/Report/Assessment/Receipt
+services.evidence.policies -> versioned3-issue verification criteria/typed primary assets
+services.evidence.reader -> GraphRepository.GRAPH.RO_QUERY +B03 microsecond time keys
+                        -> B05 GraphAnalysis topology/historical cases (unchanged)
+services.evidence.service -> typed command/role/target -> PREPARED Evidence journal
+ -> repo._session fence/recovery -> current CAS +normative state transitions
+ -> bounded actual references +report/original-command/finding provenance checks
+ -> requested/prior/discovered evidence union -> as_of filter -> deterministic label
+ -> evidence.writer -> registry/endpoints/B03 policies/global+batch IDs -> repo._commit
+ -> one atomic nodes/edges/entity update +COMMITTED receipt +revision/audit/clear intent
+ -> actual receipt/assessment/path readback -> typed historical acknowledgment
+history -> validated proposal source -> append-only snapshots ordered time/revision/ID
+inspection -> typed pending/unavailable/conducted/findings view +pre/post revision check
+```
+
+New package: __init__.py,models.py,policies.py,reader.py,writer.py,service.py.
+New evidence_hypotheses contract mirrors runtime models/policies; EVIDENCE.md documents
+limits, trust and active-graph gate. No schema/migration/dependency changes.
+Tests.b09_fixtures creates actual B08 intake then explicitly copies stable records
+into owned B09 graphs and verifies source hashes; no source guard bypass.
+Tests.b09_server only substitutes disposable source in real SDK/broker/TraceStore,
+production unchanged. b09_evidence retains a small source/working graph and immutable
+verification→contradiction history for real restart/recreation read-only fingerprint
+comparison. verify_b09.py checks city/B01/B05/native schemas plus accepted B07/B08
+traces/intake; audit_b09.py protects accepted source/tests/data/pins and checks secrets.
+No B10 agent/checkpoint, B11 GraphRAG, dispatch/monitor/worker/API/frontend.
+
+B09 final verification flow:582 regression -> actual FalkorDB restart/recreation and
+Browser volume/HTTP200 -> same-credential ACL provisioning -> fresh official MCP
+5 reads/5 denials +independent equality; production domain list12/call12/15 readbacks
+-> read-only retained B09/source exact fingerprints/history -> original B08 fingerprint
++five historical replays -> verify_b09.py with latest B08 owner/epoch anchor -> city/
+B01/B05/native schemas +70 accepted trace observations -> restore accepted generated
+B07R/B08 proof bytes/save fresh B09 copies -> frozen source/secret/process audit ->
+file inventory/source patch and both SPEC validators. Canonical domain nodes remain0.
+No B10 or later phase; full results and failures remain reviewable in docs/evidence.

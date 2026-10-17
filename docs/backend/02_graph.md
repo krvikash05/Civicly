@@ -131,3 +131,14 @@ UNVERIFIED Evidence stores bounded validated intake/review journal JSON. Primary
 assignment corrections retain nonoverlapping old/new memberships and source evidence.
 See backend/COMPLAINTS.md/contracts/complaint_intake.json. All18 requirements remain;
 no B09 evidence verification/operations/agents/API/frontend claimed.
+
+## B09 evidence/hypothesis service consumer
+
+services.evidence implements registered Investigation/PROPOSES/EXPLAINS/CONCERNS,
+append-only HypothesisAssessment with actual supporting/contradicting Evidence, and
+Inspection/PRODUCED/ESTABLISHES/Finding. Strict versioned source commands/reports and
+assessment snapshots serialize explicitly into existing summary/rationale fields;
+registryv3/migration0001 unchanged. Domain rulev1 uses reviewed independent findings
+and actual verified-only B05 topology, never candidate/proximity/count/model claims.
+Corrections append history; no dispatch/work orders/outbox/agent/API implementation.
+Active graph stays explicit; no seed promotion. See backend/EVIDENCE.md.

@@ -1,5 +1,26 @@
 # implementation_status.md — Current implementation truth
 
+## Current status — B09, 2026-10-17 (takes precedence over all history)
+
+B08 externally accepted; local baseline00d98745. B09 PASS — human review pending.
+Final582 PASS/0 FAIL/0 SKIP in705.39s:363 pure unit/219 integration; adds37 unit+38
+real FalkorDB/MCP cases. All507 baseline tests rerun; one documented prerequisite
+trace-test cap correction, no test removed. Both SPEC validators PASS. Retained B09
+62-node/46-edge/revision82 graph, original B08 intake/source/city/B01/B05 and70 accepted
+trace observations preserved across real restart/recreation. Fresh official/domain
+MCP proofs PASS; source frozen, registry/0001/pins unchanged; no B10 work. All18
+requirements remain binding; this is a domain foundation, not a complete agent app.
+
+
+## Historical B09 in-progress summary | 2026-10-17
+
+B08 externally accepted; local baseline00d98745. B09 evidence/hypothesis/inspection
+services implemented; strengthened real verification running. No B10 or later work.
+Baseline506 PASS/1 FAIL (trace-test unrelated-row cap), corrected target1 PASS; both
+SPEC validators and retained fingerprints PASS. This is not a507-pass single run.
+Final full regression/persistence/SPEC gates pending; all18 requirements remain binding.
+
+
 ## Current status — B08, 2026-10-17 (takes precedence over history)
 
 B07-R accepted; clean local baseline6afdd09. B08 PASS — human review pending. Final507 PASS/0 FAIL/0 SKIP in438.89s (326 unit/181 real integration), adding33 unit+34 real cases; all440 accepted tests unchanged. Both SPEC validators PASS. Typed source-preserving intake, three validators, qualified incident/cluster rules, concurrent idempotence, atomic rollback/unknown-write recovery and reviewed temporal correction verified. Actual B08 journals/chains survive restart/recreation; city/B01/B05/migrations/accepted MCP traces unchanged. No B09+ work; all18 requirements remain mandatory.
@@ -266,3 +287,15 @@ MCP12 tools/no ERROR/15 traces and43 accepted observations/source fingerprints P
 358 old files/locks/registry/migrations/algorithms/MCP preserved; private-value/process
 audit PASS. No B09+, canonical seed promotion, public API/auth, agents or event outbox.
 Human review pending; limitations in COMPLAINTS.md and B08-RESULTS.md remain binding.
+
+## B09 verified implementation | 2026-10-17
+Typed evidence/hypothesis/inspection service, explicit rulev1 and append-only histories
+implemented through unchanged B03 persistence/B05 reads. Actual independent synthetic
+reports verify all3 categories; contradictions/unknowns/future evidence/candidate and
+substituted topology fail safely; native rollback/concurrency/uncertain-write and real
+SDK/broker provenance pass.582 PASS/0 FAIL/0 SKIP705.39s; both SPEC validators PASS.
+Retained source/B09/old B08/B01/city/B05/native migrations/accepted traces survive real
+restart/recreation. Fresh official/domain MCP proofs PASS. No schema/pin/data/MCP
+implementation changes; accepted tests retained, one baseline test-cap correction.
+Active-graph integration/public auth/dispatch/events/agent/memory/GraphRAG/API remain
+future gates. B09 human review pending; B10 not begun.

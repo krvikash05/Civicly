@@ -1,5 +1,26 @@
 # blockers.md — Current blockers and verification spikes
 
+## Current status — B09, 2026-10-17 (takes precedence over all history)
+
+B08 externally accepted; local baseline00d98745. B09 PASS — human review pending.
+Final582 PASS/0 FAIL/0 SKIP in705.39s:363 pure unit/219 integration; adds37 unit+38
+real FalkorDB/MCP cases. All507 baseline tests rerun; one documented prerequisite
+trace-test cap correction, no test removed. Both SPEC validators PASS. Retained B09
+62-node/46-edge/revision82 graph, original B08 intake/source/city/B01/B05 and70 accepted
+trace observations preserved across real restart/recreation. Fresh official/domain
+MCP proofs PASS; source frozen, registry/0001/pins unchanged; no B10 work. All18
+requirements remain binding; this is a domain foundation, not a complete agent app.
+
+
+## Historical B09 in-progress summary | 2026-10-17
+
+B08 externally accepted; local baseline00d98745. B09 evidence/hypothesis/inspection
+services implemented; strengthened real verification running. No B10 or later work.
+Baseline506 PASS/1 FAIL (trace-test unrelated-row cap), corrected target1 PASS; both
+SPEC validators and retained fingerprints PASS. This is not a507-pass single run.
+Final full regression/persistence/SPEC gates pending; all18 requirements remain binding.
+
+
 ## Current status — B08, 2026-10-17 (takes precedence over history)
 
 B07-R accepted; clean local baseline6afdd09. B08 PASS — human review pending. Final507 PASS/0 FAIL/0 SKIP in438.89s (326 unit/181 real integration), adding33 unit+34 real cases; all440 accepted tests unchanged. Both SPEC validators PASS. Typed source-preserving intake, three validators, qualified incident/cluster rules, concurrent idempotence, atomic rollback/unknown-write recovery and reviewed temporal correction verified. Actual B08 journals/chains survive restart/recreation; city/B01/B05/migrations/accepted MCP traces unchanged. No B09+ work; all18 requirements remain mandatory.
@@ -275,3 +296,29 @@ review is not B13 public authentication. Event delivery/outbox remains B15; cano
 seed promotion not done. All remaining DEC-004/source/history/evaluator/clock/agent/
 GraphRAG/API findings retain their phases. All18 requirements remain binding.
 B08 human review is next gate; B09 must not begin automatically.
+
+## B09 limitations and deferred gates | 2026-10-17
+No source-data correction or schema/migration change. Known policies are explicit
+synthetic demonstration criteria, not general engineering proof. Attributed independent
+inspectors/sources and review are trusted internal records, not B13 authentication or
+collusion resistance. Contradictory sources remain INCONCLUSIVE; reviewed retraction/
+arbitration not implemented. Current mutable versions cannot reconstruct past source
+state; future-updated evidence/inspections become unavailable.20-source/100-row/300-read/
+8s/1s-query and inherited B05/audit limits fail closed; no load/SLA guarantee.
+Canonical empty; production MCP fixed city. Later active-graph gate must explicitly
+unify reviewed B08/B09/MCP/agent/API target and prove same-chain operation; isolated
+fixture compatibility is not that gate. Original retained B08 and B04 city untouched.
+All42 city drainage links CANDIDATE; source/history/55 unlinked measurements/local-clock/
+service/evaluator/document/approval/event/API DEC-004 findings remain at designated
+B10–B19 gates.55 original fixture defects frozen; B04 conversion still valid.
+No dispatch/work-order/monitor simulation (B14), event outbox/worker (B15), LangGraph
+(B10), GraphRAG (B11), HTTP/public auth/frontend. Human B09 review required before B10.
+
+### B09 final disposition
+No active B09 environment/acceptance blocker after582-test, SPEC, real lifecycle/MCP,
+source-preservation and security gates. Human review is required before B10.
+Existing source/history/clock/service/document/evaluator/approval/event/API findings
+remain open at their designated milestones. All42 city drainage links CANDIDATE;
+no canonical promotion or implicit reconstruction of unknown data. Trusted internal
+review, source independence/finite budgets and active-graph integration limitations
+remain explicit, not waived by domain tests. All18 requirements binding.

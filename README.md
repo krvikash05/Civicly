@@ -1,11 +1,11 @@
 # Civicly — Backend-First Codex Build System (v2.0)
 
-**Status:** B07-R accepted; B08 complaint intelligence verified (507 PASS), awaiting human review. The full civic AI application remains unimplemented. Current truth is in the engineering tracking files.
+**Status:** B08 accepted; B09 evidence/hypothesis/inspection foundation verified (582 PASS), awaiting human review. The full civic AI application remains unimplemented. Current truth is in the engineering tracking files.
 See [complaint intelligence guide](backend/COMPLAINTS.md), [algorithm guide](backend/ALGORITHMS.md) and [official MCP guide](backend/MCP.md) and [Civicly domain MCP guide](backend/CIVICLY_MCP.md) for scope and real evidence.
 
 For the current Python 3.12/Docker setup, CLI health and verified persistence tests,
 see [backend/README.md](backend/README.md) and [schema/recovery guide](backend/SCHEMA.md).
-B00–B07-R are accepted; B08 awaits human review; B09 has not started. The 18 objectives, remaining B00
+B00–B08 are accepted; B09 awaits human review; B10 has not started. The 18 objectives, remaining B00
 contract findings and backend-first gates remain binding.
 
 **Purpose:** Implement a genuinely agentic, FalkorDB-native, MCP-connected civic investigation system covering recurring WATERLOGGING, ROAD_DAMAGE and WASTE_ACCUMULATION, including interlinked failures, persistent memory, municipal knowledge, approved actions, progress tracking, and verifiable outcomes. Backend first; frontend last, but its data requirements are fixed now.
@@ -58,3 +58,5 @@ A task is not complete merely because files exist. Mark complete only after its 
 - Case memory survives restart; corrections preserved; graph-backed organizational procedures are sourced.
 - AI can inspect/plan; execution requires exact-version human approval; completion is separate from resolution.
 - Synthetic/public/rightfully used data only; no actual government dispatch. Clear `SIMULATED` badges in future UI.
+
+B09 domain guide: [EVIDENCE.md](backend/EVIDENCE.md). Explicit evidence criteria, immutable assessment revisions, actual inspection lifecycle, active-graph boundaries and reproduction commands; no agent/dispatch/event delivery claim.

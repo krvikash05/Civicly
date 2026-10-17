@@ -1,0 +1,52 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.1, pytest-9.1.1, pluggy-1.7.0 -- /Users/vikashkumar/Desktop/Civicly/backend/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/vikashkumar/Desktop/Civicly/backend
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 1 item
+
+backend/tests/integration/test_evidence_domain.py::test_two_competing_hypotheses_supported_and_contradicted FAILED
+
+=================================== FAILURES ===================================
+___________ test_two_competing_hypotheses_supported_and_contradicted ___________
+
+f = Fixture(repo=<app.graph.repository.GraphRepository object at 0x106bc0ce0>, clock=<tests.b09_fixtures.Clock object at 0...22, 'writer_state_hash': '46ca5d3a1126165864a78d2c9a1b8a70ab2e391745e08c3a3afe682b36496e10', 'nodes': 23, 'edges': 17})
+
+    def test_two_competing_hypotheses_supported_and_contradicted(f):
+        inv = open_case(f)
+        blockage = propose(f, inv)
+        capacity = propose(f, inv, cause='CAPACITY_DEFICIT', ref='capacity')
+        first = report(f, inv, codes=['DRAIN_CLEAR', 'CAPACITY_TEST_EXCEEDED'])
+        a = assess(f, blockage, [first.entity_id], ref='blockage')
+>       b = assess(f, capacity, [first.entity_id], ref='capacity')
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+backend/tests/integration/test_evidence_domain.py:50: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+backend/tests/b09_fixtures.py:119: in assess
+    return f.service.execute({'operation': 'assess', 'request_id': ref, 'hypothesis_id': hypothesis_id,
+backend/app/services/evidence/service.py:72: in execute
+    old, journal = self.load(jid, sha)
+                   ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <app.services.evidence.service.EvidenceService object at 0x106c3d820>
+id = 'EV-JOURNAL-B09-3c25db43afbe460be9cb8771642775b1'
+sha = 'e3f34b508827852d767740354091edac6a31aa0794566d96a8aecf5d34491862'
+
+    def load(self, id, sha):
+        n = self.repo._node_optional(id)
+        if n is None:
+            return None, None
+        if n.kind != 'Evidence' or n.properties['evidence_type'] != 'B09_OPERATION' or n.properties['reliability'] != 'UNVERIFIED':
+            raise Conflict('B09 journal identity/type collision')
+        j = Journal.model_validate_json(n.properties['summary'])
+        if j.request_hash != sha or digest({'actor': j.actor.model_dump(mode='json'), 'command': j.command}) != sha:
+>           raise Conflict('Request ID reused with different command/actor')
+E           app.graph.repository.Conflict: Request ID reused with different command/actor
+
+backend/app/services/evidence/service.py:35: Conflict
+=========================== short test summary info ============================
+FAILED backend/tests/integration/test_evidence_domain.py::test_two_competing_hypotheses_supported_and_contradicted
+============================== 1 failed in 5.44s ===============================

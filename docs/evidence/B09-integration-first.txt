@@ -1,0 +1,75 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.1, pytest-9.1.1, pluggy-1.7.0 -- /Users/vikashkumar/Desktop/Civicly/backend/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/vikashkumar/Desktop/Civicly/backend
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 23 items
+
+backend/tests/integration/test_evidence_domain.py::test_two_competing_hypotheses_supported_and_contradicted PASSED
+backend/tests/integration/test_evidence_domain.py::test_missing_inspection_is_inconclusive_and_request_never_fabricates_completion PASSED
+backend/tests/integration/test_evidence_domain.py::test_real_independent_reviewed_findings_verify_each_issue[WATERLOGGING-BLOCKAGE-D1] PASSED
+backend/tests/integration/test_evidence_domain.py::test_real_independent_reviewed_findings_verify_each_issue[ROAD_DAMAGE-SUBGRADE_FAILURE-R1] PASSED
+backend/tests/integration/test_evidence_domain.py::test_real_independent_reviewed_findings_verify_each_issue[WASTE_ACCUMULATION-MISSED_PICKUP-W1] PASSED
+backend/tests/integration/test_evidence_domain.py::test_second_inspection_corrects_assessment_and_preserves_immutable_history PASSED
+backend/tests/integration/test_evidence_domain.py::test_corroboration_cannot_be_copied_or_unreviewed_or_unknown[same-None-True-OBSERVED] PASSED
+backend/tests/integration/test_evidence_domain.py::test_corroboration_cannot_be_copied_or_unreviewed_or_unknown[None-same-source-True-OBSERVED] PASSED
+backend/tests/integration/test_evidence_domain.py::test_corroboration_cannot_be_copied_or_unreviewed_or_unknown[None-None-False-OBSERVED] PASSED
+backend/tests/integration/test_evidence_domain.py::test_corroboration_cannot_be_copied_or_unreviewed_or_unknown[None-None-True-UNKNOWN] PASSED
+backend/tests/integration/test_evidence_domain.py::test_future_evidence_does_not_influence_prior_cutoff PASSED
+backend/tests/integration/test_evidence_domain.py::test_topology_candidate_boundary_and_actual_path_provenance[CANDIDATE] PASSED
+backend/tests/integration/test_evidence_domain.py::test_topology_candidate_boundary_and_actual_path_provenance[VERIFIED] PASSED
+backend/tests/integration/test_evidence_domain.py::test_verified_link_uses_actual_dated_inspection_report_and_topology_change_revises PASSED
+backend/tests/integration/test_evidence_domain.py::test_nearby_unrelated_infrastructure_is_not_a_cause PASSED
+backend/tests/integration/test_evidence_domain.py::test_inspection_machine_chronology_and_department_checks FAILED
+backend/tests/integration/test_evidence_domain.py::test_idempotence_concurrent_equal_commands_and_payload_conflict PASSED
+backend/tests/integration/test_evidence_domain.py::test_concurrent_stale_assessments_rejected_not_overwritten PASSED
+backend/tests/integration/test_evidence_domain.py::test_real_lost_response_recovery_preserves_one_assessment[False] PASSED
+backend/tests/integration/test_evidence_domain.py::test_real_lost_response_recovery_preserves_one_assessment[True] PASSED
+backend/tests/integration/test_evidence_domain.py::test_actual_constraint_failure_rolls_back_domain_and_recovers PASSED
+backend/tests/integration/test_evidence_domain.py::test_retained_city_readonly_context_and_mutation_denied PASSED
+backend/tests/integration/test_evidence_domain.py::test_role_and_direct_state_assessment_fields_denied PASSED
+
+=================================== FAILURES ===================================
+___________ test_inspection_machine_chronology_and_department_checks ___________
+
+f = Fixture(repo=<app.graph.repository.GraphRepository object at 0x105d32300>, clock=<tests.b09_fixtures.Clock object at 0...22, 'writer_state_hash': '392c5f384bd89b89de9f951445ca7435756cc4e39e4706c09ea0287f531009c8', 'nodes': 23, 'edges': 17})
+
+    def test_inspection_machine_chronology_and_department_checks(f):
+        inv = open_case(f)
+        ins = request(f, inv)
+        with pytest.raises(PreconditionFailed):
+            advance_inspection(f, ins, 'IN_PROGRESS')
+        advance_inspection(f, ins, 'REQUESTED')
+        advance_inspection(f, ins, 'SCHEDULED', scheduled_at='2026-10-20T00:00:00Z')
+        with pytest.raises(PreconditionFailed):
+>           advance_inspection(f, ins, 'IN_PROGRESS')
+
+backend/tests/integration/test_evidence_domain.py:196: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+backend/tests/b09_fixtures.py:94: in advance_inspection
+    return f.service.execute({'operation': 'transition_inspection', 'request_id': ref or id + '-' + state,
+backend/app/services/evidence/service.py:72: in execute
+    old, journal = self.load(jid, sha)
+                   ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <app.services.evidence.service.EvidenceService object at 0x105f00a40>
+id = 'EV-JOURNAL-B09-7f73b359cd58aa9f1d85caf222eb6ab7'
+sha = 'd8707a06e79804a293debf5f253092da1d7bc1b8147440e49f38858b588d26cb'
+
+    def load(self, id, sha):
+        n = self.repo._node_optional(id)
+        if n is None:
+            return None, None
+        if n.kind != 'Evidence' or n.properties['evidence_type'] != 'B09_OPERATION' or n.properties['reliability'] != 'UNVERIFIED':
+            raise Conflict('B09 journal identity/type collision')
+        j = Journal.model_validate_json(n.properties['summary'])
+        if j.request_hash != sha or digest({'actor': j.actor.model_dump(mode='json'), 'command': j.command}) != sha:
+>           raise Conflict('Request ID reused with different command/actor')
+E           app.graph.repository.Conflict: Request ID reused with different command/actor
+
+backend/app/services/evidence/service.py:35: Conflict
+=========================== short test summary info ============================
+FAILED backend/tests/integration/test_evidence_domain.py::test_inspection_machine_chronology_and_department_checks
+=================== 1 failed, 22 passed in 127.90s (0:02:07) ===================

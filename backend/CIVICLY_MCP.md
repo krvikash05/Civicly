@@ -212,3 +212,21 @@ MCP regressions separately verify the unchanged production path.
 Reproduce: python pytest commands in docs/evidence/B07R-COMMANDS.md; corrected outputs,
 real failures before correction, complete regression/SPEC evidence, exact file inventory
 and B07-R-only patch are in docs/evidence/B07R-*. No B08 work; stop for human review.
+
+## B09 compatibility and future read adapter boundary
+
+B09 services.evidence owns typed investigations/hypotheses/append-only assessments
+with source snapshots and inspection requests/reports. No B07 handler, inventory,
+namespace, scope, envelope, broker or trace storage changes. Existing maintenance
+reads return actual B09 inspections/reports with distinct per-event provenance in
+explicitly labeled B09 test-only source substitution; production remains accepted
+city. get_decision_evidence_path still needs an actual AgentDecision; B09 does not
+fabricate one. No new writes exposed.
+
+Future reviewed read adapters should use EvidenceService.history/inspection/context
+and B03 hypothesis_evidence, preserving immutable histories, source hashes/IDs,
+as_of/revision, verified/candidate and budget metadata. B10 must review any read-tool
+inventory or source-target extension through approved broker interfaces, never expose
+repository writes. A separate active-graph integration gate must align B08/B09/MCP/
+checkpoint/API to one explicit reviewed working graph. No silent city/canonical/test
+switch or canonical promotion. See EVIDENCE.md and contracts/evidence_hypotheses.json.

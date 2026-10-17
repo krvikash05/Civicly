@@ -1,7 +1,8 @@
-# Backend foundation through B07
+# Backend foundation through B09
 
-B01–B06 are accepted. B07 adds custom read MCP/shared trace persistence
-(current verification status in tracking files). B02 supplies canonical schema v3,
+B01–B08 are accepted. B07 supplies custom read MCP/shared trace persistence; B08
+supplies complaint intelligence. B09 evidence/hypothesis/inspection foundation is
+verified (582 PASS), awaiting review (current results in tracking files). B02 supplies canonical schema v3,
 strict validation and immutable additive migration0001. See [SCHEMA.md](SCHEMA.md) for established constraints/indexes,
 native enforcement limits and recovery; [INGESTION.md](INGESTION.md) records B04
 explicit conversion and remaining source-quality gaps.
@@ -10,7 +11,8 @@ Implemented: validated configuration, official FalkorDB connection lifecycle,
 foundation CLI health, and real database/Browser/persistence integration tests.
 Schema/repositories/ingestion/algorithms are implemented. [MCP.md](MCP.md) describes
 B06 private stdio, locked official server, read-only DB ACL, broker and actual proof.
-Custom Civicly MCP/domain services, agents, memory, GraphRAG, API and frontend remain
+Custom Civicly read MCP and typed domain foundations are implemented. Agents,
+checkpoint memory, GraphRAG, operational dispatch/monitoring, API and frontend remain
 future microtasks. All 18 requirements remain binding.
 
 From the repository root, with Python 3.12 and Docker Desktop running:
@@ -102,3 +104,5 @@ See [COMPLAINTS.md](COMPLAINTS.md) and contracts/complaint_intake.json for stric
 normalization, occurrence/cluster rules, reviewed correction and atomic recovery.
 Source city remains read-only; controlled B08 graph evidence is under docs/evidence.
 No B09 workflows, public API, MCP writes, agents or frontend.
+
+B09 domain guide: [EVIDENCE.md](EVIDENCE.md). Explicit evidence criteria, immutable assessment revisions, actual inspection lifecycle, active-graph boundaries and reproduction commands; no agent/dispatch/event delivery claim.

@@ -1,0 +1,2463 @@
+{
+  "version": 1,
+  "municipality_scope": {
+    "field": "municipality_id",
+    "value": "demo-city",
+    "caller_selectable": false
+  },
+  "registry_version": 3,
+  "migration": "0001 unchanged",
+  "write_targets": [
+    "civicly_knowledge",
+    "validated civicly_b09_test_UUIDv4"
+  ],
+  "schemas": {
+    "command": {
+      "$defs": {
+        "Assess": {
+          "additionalProperties": false,
+          "properties": {
+            "request_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Request Id",
+              "type": "string"
+            },
+            "operation": {
+              "const": "assess",
+              "default": "assess",
+              "title": "Operation",
+              "type": "string"
+            },
+            "hypothesis_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Hypothesis Id",
+              "type": "string"
+            },
+            "expected_hash": {
+              "pattern": "^[0-9a-f]{64}$",
+              "title": "Expected Hash",
+              "type": "string"
+            },
+            "evidence_ids": {
+              "items": {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              "maxItems": 20,
+              "title": "Evidence Ids",
+              "type": "array"
+            },
+            "as_of": {
+              "title": "As Of",
+              "type": "string"
+            }
+          },
+          "required": [
+            "request_id",
+            "hypothesis_id",
+            "expected_hash",
+            "as_of"
+          ],
+          "title": "Assess",
+          "type": "object"
+        },
+        "Observation": {
+          "additionalProperties": false,
+          "properties": {
+            "asset_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Asset Id",
+              "type": "string"
+            },
+            "code": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Code",
+              "type": "string"
+            },
+            "statement": {
+              "maxLength": 2000,
+              "minLength": 1,
+              "title": "Statement",
+              "type": "string"
+            },
+            "method": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Method",
+              "type": "string"
+            },
+            "observed_at": {
+              "title": "Observed At",
+              "type": "string"
+            },
+            "result": {
+              "default": "OBSERVED",
+              "enum": [
+                "OBSERVED",
+                "UNKNOWN"
+              ],
+              "title": "Result",
+              "type": "string"
+            },
+            "value": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Value"
+            },
+            "unit": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Unit"
+            }
+          },
+          "required": [
+            "asset_id",
+            "code",
+            "statement",
+            "method",
+            "observed_at"
+          ],
+          "title": "Observation",
+          "type": "object"
+        },
+        "OpenInvestigation": {
+          "additionalProperties": false,
+          "properties": {
+            "request_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Request Id",
+              "type": "string"
+            },
+            "operation": {
+              "const": "open",
+              "default": "open",
+              "title": "Operation",
+              "type": "string"
+            },
+            "incident_ids": {
+              "items": {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              "maxItems": 3,
+              "minItems": 1,
+              "title": "Incident Ids",
+              "type": "array"
+            },
+            "cluster_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Cluster Id",
+              "type": "string"
+            },
+            "priority": {
+              "default": "MODERATE",
+              "enum": [
+                "LOW",
+                "MODERATE",
+                "HIGH",
+                "CRITICAL"
+              ],
+              "title": "Priority",
+              "type": "string"
+            }
+          },
+          "required": [
+            "request_id",
+            "incident_ids",
+            "cluster_id"
+          ],
+          "title": "OpenInvestigation",
+          "type": "object"
+        },
+        "Propose": {
+          "additionalProperties": false,
+          "properties": {
+            "request_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Request Id",
+              "type": "string"
+            },
+            "operation": {
+              "const": "propose",
+              "default": "propose",
+              "title": "Operation",
+              "type": "string"
+            },
+            "investigation_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Investigation Id",
+              "type": "string"
+            },
+            "incident_ids": {
+              "items": {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              "maxItems": 3,
+              "minItems": 1,
+              "title": "Incident Ids",
+              "type": "array"
+            },
+            "asset_ids": {
+              "items": {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              "maxItems": 3,
+              "minItems": 1,
+              "title": "Asset Ids",
+              "type": "array"
+            },
+            "cause_code": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Cause Code",
+              "type": "string"
+            },
+            "statement": {
+              "maxLength": 2000,
+              "minLength": 1,
+              "title": "Statement",
+              "type": "string"
+            },
+            "mechanism": {
+              "maxLength": 2000,
+              "minLength": 1,
+              "title": "Mechanism",
+              "type": "string"
+            },
+            "confirming_codes": {
+              "items": {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              "maxItems": 10,
+              "minItems": 1,
+              "title": "Confirming Codes",
+              "type": "array"
+            },
+            "falsifying_codes": {
+              "items": {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              "maxItems": 10,
+              "minItems": 1,
+              "title": "Falsifying Codes",
+              "type": "array"
+            },
+            "topology": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/Topology"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            }
+          },
+          "required": [
+            "request_id",
+            "investigation_id",
+            "incident_ids",
+            "asset_ids",
+            "cause_code",
+            "statement",
+            "mechanism",
+            "confirming_codes",
+            "falsifying_codes"
+          ],
+          "title": "Propose",
+          "type": "object"
+        },
+        "ReportInspection": {
+          "additionalProperties": false,
+          "properties": {
+            "request_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Request Id",
+              "type": "string"
+            },
+            "operation": {
+              "const": "report_inspection",
+              "default": "report_inspection",
+              "title": "Operation",
+              "type": "string"
+            },
+            "inspection_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Inspection Id",
+              "type": "string"
+            },
+            "expected_hash": {
+              "pattern": "^[0-9a-f]{64}$",
+              "title": "Expected Hash",
+              "type": "string"
+            },
+            "source_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Source Id",
+              "type": "string"
+            },
+            "record_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Record Id",
+              "type": "string"
+            },
+            "source_kind": {
+              "default": "SYNTHETIC",
+              "enum": [
+                "SYNTHETIC",
+                "MUNICIPAL",
+                "PUBLIC"
+              ],
+              "title": "Source Kind",
+              "type": "string"
+            },
+            "observations": {
+              "items": {
+                "$ref": "#/$defs/Observation"
+              },
+              "maxItems": 10,
+              "minItems": 1,
+              "title": "Observations",
+              "type": "array"
+            },
+            "review": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/Review"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            }
+          },
+          "required": [
+            "request_id",
+            "inspection_id",
+            "expected_hash",
+            "source_id",
+            "record_id",
+            "observations"
+          ],
+          "title": "ReportInspection",
+          "type": "object"
+        },
+        "RequestInspection": {
+          "additionalProperties": false,
+          "properties": {
+            "request_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Request Id",
+              "type": "string"
+            },
+            "operation": {
+              "const": "request_inspection",
+              "default": "request_inspection",
+              "title": "Operation",
+              "type": "string"
+            },
+            "investigation_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Investigation Id",
+              "type": "string"
+            },
+            "asset_ids": {
+              "items": {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              "maxItems": 3,
+              "minItems": 1,
+              "title": "Asset Ids",
+              "type": "array"
+            },
+            "department_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Department Id",
+              "type": "string"
+            },
+            "inspection_type": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Inspection Type",
+              "type": "string"
+            }
+          },
+          "required": [
+            "request_id",
+            "investigation_id",
+            "asset_ids",
+            "department_id",
+            "inspection_type"
+          ],
+          "title": "RequestInspection",
+          "type": "object"
+        },
+        "Review": {
+          "additionalProperties": false,
+          "properties": {
+            "reviewer_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Reviewer Id",
+              "type": "string"
+            },
+            "role": {
+              "enum": [
+                "ANALYST",
+                "ADMIN"
+              ],
+              "title": "Role",
+              "type": "string"
+            },
+            "reviewed": {
+              "const": true,
+              "title": "Reviewed",
+              "type": "boolean"
+            },
+            "reason": {
+              "maxLength": 2000,
+              "minLength": 1,
+              "title": "Reason",
+              "type": "string"
+            }
+          },
+          "required": [
+            "reviewer_id",
+            "role",
+            "reviewed",
+            "reason"
+          ],
+          "title": "Review",
+          "type": "object"
+        },
+        "Topology": {
+          "additionalProperties": false,
+          "properties": {
+            "source_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Source Id",
+              "type": "string"
+            },
+            "target_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Target Id",
+              "type": "string"
+            },
+            "operation": {
+              "default": "reachability",
+              "enum": [
+                "reachability",
+                "dependencies"
+              ],
+              "title": "Operation",
+              "type": "string"
+            },
+            "max_hops": {
+              "default": 4,
+              "maximum": 6,
+              "minimum": 1,
+              "title": "Max Hops",
+              "type": "integer"
+            }
+          },
+          "required": [
+            "source_id",
+            "target_id"
+          ],
+          "title": "Topology",
+          "type": "object"
+        },
+        "TransitionInspection": {
+          "additionalProperties": false,
+          "properties": {
+            "request_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Request Id",
+              "type": "string"
+            },
+            "operation": {
+              "const": "transition_inspection",
+              "default": "transition_inspection",
+              "title": "Operation",
+              "type": "string"
+            },
+            "inspection_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Inspection Id",
+              "type": "string"
+            },
+            "expected_hash": {
+              "pattern": "^[0-9a-f]{64}$",
+              "title": "Expected Hash",
+              "type": "string"
+            },
+            "status": {
+              "enum": [
+                "REQUESTED",
+                "SCHEDULED",
+                "IN_PROGRESS",
+                "FAILED",
+                "CANCELLED"
+              ],
+              "title": "Status",
+              "type": "string"
+            },
+            "scheduled_at": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Scheduled At"
+            }
+          },
+          "required": [
+            "request_id",
+            "inspection_id",
+            "expected_hash",
+            "status"
+          ],
+          "title": "TransitionInspection",
+          "type": "object"
+        }
+      },
+      "discriminator": {
+        "mapping": {
+          "assess": "#/$defs/Assess",
+          "open": "#/$defs/OpenInvestigation",
+          "propose": "#/$defs/Propose",
+          "report_inspection": "#/$defs/ReportInspection",
+          "request_inspection": "#/$defs/RequestInspection",
+          "transition_inspection": "#/$defs/TransitionInspection"
+        },
+        "propertyName": "operation"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/$defs/OpenInvestigation"
+        },
+        {
+          "$ref": "#/$defs/Propose"
+        },
+        {
+          "$ref": "#/$defs/RequestInspection"
+        },
+        {
+          "$ref": "#/$defs/TransitionInspection"
+        },
+        {
+          "$ref": "#/$defs/ReportInspection"
+        },
+        {
+          "$ref": "#/$defs/Assess"
+        }
+      ]
+    },
+    "Actor": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Id",
+          "type": "string"
+        },
+        "role": {
+          "enum": [
+            "ANALYST",
+            "DEPARTMENT_LEAD",
+            "ADMIN",
+            "APPROVER"
+          ],
+          "title": "Role",
+          "type": "string"
+        },
+        "department_id": {
+          "anyOf": [
+            {
+              "maxLength": 200,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Department Id"
+        }
+      },
+      "required": [
+        "id",
+        "role"
+      ],
+      "title": "Actor",
+      "type": "object"
+    },
+    "Review": {
+      "additionalProperties": false,
+      "properties": {
+        "reviewer_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Reviewer Id",
+          "type": "string"
+        },
+        "role": {
+          "enum": [
+            "ANALYST",
+            "ADMIN"
+          ],
+          "title": "Role",
+          "type": "string"
+        },
+        "reviewed": {
+          "const": true,
+          "title": "Reviewed",
+          "type": "boolean"
+        },
+        "reason": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "reviewer_id",
+        "role",
+        "reviewed",
+        "reason"
+      ],
+      "title": "Review",
+      "type": "object"
+    },
+    "Receipt": {
+      "$defs": {
+        "Assessment": {
+          "additionalProperties": false,
+          "properties": {
+            "format_version": {
+              "const": 1,
+              "default": 1,
+              "title": "Format Version",
+              "type": "integer"
+            },
+            "id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Id",
+              "type": "string"
+            },
+            "hypothesis_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Hypothesis Id",
+              "type": "string"
+            },
+            "previous_assessment_id": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Previous Assessment Id"
+            },
+            "assessment": {
+              "enum": [
+                "POSSIBLE",
+                "SUPPORTED",
+                "CONTRADICTED",
+                "VERIFIED",
+                "INCONCLUSIVE"
+              ],
+              "title": "Assessment",
+              "type": "string"
+            },
+            "rule_version": {
+              "const": 1,
+              "default": 1,
+              "title": "Rule Version",
+              "type": "integer"
+            },
+            "cause_code": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Cause Code",
+              "type": "string"
+            },
+            "mechanism": {
+              "maxLength": 2000,
+              "minLength": 1,
+              "title": "Mechanism",
+              "type": "string"
+            },
+            "confirming_codes": {
+              "items": {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              "title": "Confirming Codes",
+              "type": "array"
+            },
+            "falsifying_codes": {
+              "items": {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              "title": "Falsifying Codes",
+              "type": "array"
+            },
+            "supporting_evidence_ids": {
+              "items": {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              "title": "Supporting Evidence Ids",
+              "type": "array"
+            },
+            "contradicting_evidence_ids": {
+              "items": {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              "title": "Contradicting Evidence Ids",
+              "type": "array"
+            },
+            "evidence_references": {
+              "items": {
+                "$ref": "#/$defs/EvidenceReference"
+              },
+              "title": "Evidence References",
+              "type": "array"
+            },
+            "excluded_evidence_ids": {
+              "items": {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              "title": "Excluded Evidence Ids",
+              "type": "array"
+            },
+            "missing_evidence": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Missing Evidence",
+              "type": "array"
+            },
+            "graph": {
+              "title": "Graph",
+              "type": "string"
+            },
+            "source_graph_revision": {
+              "title": "Source Graph Revision",
+              "type": "integer"
+            },
+            "graph_revision": {
+              "title": "Graph Revision",
+              "type": "integer"
+            },
+            "as_of": {
+              "title": "As Of",
+              "type": "string"
+            },
+            "assessed_at": {
+              "title": "Assessed At",
+              "type": "string"
+            },
+            "paths": {
+              "items": {
+                "$ref": "#/$defs/PathRecord"
+              },
+              "title": "Paths",
+              "type": "array"
+            },
+            "path_ids": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Path Ids",
+              "type": "array"
+            },
+            "search_limited": {
+              "const": true,
+              "default": true,
+              "title": "Search Limited",
+              "type": "boolean"
+            },
+            "truncated": {
+              "title": "Truncated",
+              "type": "boolean"
+            },
+            "state_transitions": {
+              "items": {
+                "type": "string"
+              },
+              "title": "State Transitions",
+              "type": "array"
+            },
+            "reservations": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Reservations",
+              "type": "array"
+            }
+          },
+          "required": [
+            "id",
+            "hypothesis_id",
+            "previous_assessment_id",
+            "assessment",
+            "cause_code",
+            "mechanism",
+            "confirming_codes",
+            "falsifying_codes",
+            "supporting_evidence_ids",
+            "contradicting_evidence_ids",
+            "evidence_references",
+            "excluded_evidence_ids",
+            "missing_evidence",
+            "graph",
+            "source_graph_revision",
+            "graph_revision",
+            "as_of",
+            "assessed_at",
+            "paths",
+            "path_ids",
+            "truncated",
+            "state_transitions",
+            "reservations"
+          ],
+          "title": "Assessment",
+          "type": "object"
+        },
+        "EvidenceReference": {
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Id",
+              "type": "string"
+            },
+            "content_hash": {
+              "pattern": "^[0-9a-f]{64}$",
+              "title": "Content Hash",
+              "type": "string"
+            },
+            "source_kind": {
+              "enum": [
+                "SYNTHETIC",
+                "PUBLIC",
+                "MUNICIPAL",
+                "USER",
+                "AGENT"
+              ],
+              "title": "Source Kind",
+              "type": "string"
+            },
+            "source_record_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Source Record Id"
+            },
+            "reliability": {
+              "enum": [
+                "UNVERIFIED",
+                "CORROBORATED",
+                "VERIFIED"
+              ],
+              "title": "Reliability",
+              "type": "string"
+            },
+            "observed_at": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Observed At"
+            },
+            "recorded_at": {
+              "title": "Recorded At",
+              "type": "string"
+            },
+            "basis": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "OBSERVED",
+                    "REPORTED",
+                    "DERIVED"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Basis"
+            },
+            "report": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/Report"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "finding_hashes": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "title": "Finding Hashes",
+              "type": "object"
+            }
+          },
+          "required": [
+            "id",
+            "content_hash",
+            "source_kind",
+            "source_record_id",
+            "reliability",
+            "observed_at",
+            "recorded_at",
+            "basis"
+          ],
+          "title": "EvidenceReference",
+          "type": "object"
+        },
+        "JsonValue": {},
+        "Observation": {
+          "additionalProperties": false,
+          "properties": {
+            "asset_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Asset Id",
+              "type": "string"
+            },
+            "code": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Code",
+              "type": "string"
+            },
+            "statement": {
+              "maxLength": 2000,
+              "minLength": 1,
+              "title": "Statement",
+              "type": "string"
+            },
+            "method": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Method",
+              "type": "string"
+            },
+            "observed_at": {
+              "title": "Observed At",
+              "type": "string"
+            },
+            "result": {
+              "default": "OBSERVED",
+              "enum": [
+                "OBSERVED",
+                "UNKNOWN"
+              ],
+              "title": "Result",
+              "type": "string"
+            },
+            "value": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Value"
+            },
+            "unit": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Unit"
+            }
+          },
+          "required": [
+            "asset_id",
+            "code",
+            "statement",
+            "method",
+            "observed_at"
+          ],
+          "title": "Observation",
+          "type": "object"
+        },
+        "PathRecord": {
+          "additionalProperties": false,
+          "properties": {
+            "node_ids": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Node Ids",
+              "type": "array"
+            },
+            "edge_ids": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Edge Ids",
+              "type": "array"
+            },
+            "directions": {
+              "items": {
+                "enum": [
+                  "OUTGOING",
+                  "INCOMING"
+                ],
+                "type": "string"
+              },
+              "title": "Directions",
+              "type": "array"
+            },
+            "evidence_ids": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Evidence Ids",
+              "type": "array"
+            },
+            "context": {
+              "additionalProperties": {
+                "$ref": "#/$defs/JsonValue"
+              },
+              "title": "Context",
+              "type": "object"
+            }
+          },
+          "required": [
+            "node_ids",
+            "edge_ids",
+            "directions",
+            "evidence_ids"
+          ],
+          "title": "PathRecord",
+          "type": "object"
+        },
+        "Report": {
+          "additionalProperties": false,
+          "properties": {
+            "format_version": {
+              "const": 1,
+              "default": 1,
+              "title": "Format Version",
+              "type": "integer"
+            },
+            "inspection_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Inspection Id",
+              "type": "string"
+            },
+            "inspector_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Inspector Id",
+              "type": "string"
+            },
+            "department_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Department Id",
+              "type": "string"
+            },
+            "source_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Source Id",
+              "type": "string"
+            },
+            "record_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Record Id",
+              "type": "string"
+            },
+            "source_kind": {
+              "enum": [
+                "SYNTHETIC",
+                "MUNICIPAL",
+                "PUBLIC"
+              ],
+              "title": "Source Kind",
+              "type": "string"
+            },
+            "observed_at": {
+              "title": "Observed At",
+              "type": "string"
+            },
+            "recorded_at": {
+              "title": "Recorded At",
+              "type": "string"
+            },
+            "observations": {
+              "items": {
+                "$ref": "#/$defs/Observation"
+              },
+              "maxItems": 10,
+              "minItems": 1,
+              "title": "Observations",
+              "type": "array"
+            },
+            "finding_ids": {
+              "items": {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              "maxItems": 10,
+              "minItems": 1,
+              "title": "Finding Ids",
+              "type": "array"
+            },
+            "review": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/Review"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            }
+          },
+          "required": [
+            "inspection_id",
+            "inspector_id",
+            "department_id",
+            "source_id",
+            "record_id",
+            "source_kind",
+            "observed_at",
+            "recorded_at",
+            "observations",
+            "finding_ids"
+          ],
+          "title": "Report",
+          "type": "object"
+        },
+        "Review": {
+          "additionalProperties": false,
+          "properties": {
+            "reviewer_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Reviewer Id",
+              "type": "string"
+            },
+            "role": {
+              "enum": [
+                "ANALYST",
+                "ADMIN"
+              ],
+              "title": "Role",
+              "type": "string"
+            },
+            "reviewed": {
+              "const": true,
+              "title": "Reviewed",
+              "type": "boolean"
+            },
+            "reason": {
+              "maxLength": 2000,
+              "minLength": 1,
+              "title": "Reason",
+              "type": "string"
+            }
+          },
+          "required": [
+            "reviewer_id",
+            "role",
+            "reviewed",
+            "reason"
+          ],
+          "title": "Review",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "operation": {
+          "title": "Operation",
+          "type": "string"
+        },
+        "journal_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Journal Id",
+          "type": "string"
+        },
+        "entity_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Entity Id",
+          "type": "string"
+        },
+        "graph": {
+          "title": "Graph",
+          "type": "string"
+        },
+        "graph_revision": {
+          "title": "Graph Revision",
+          "type": "integer"
+        },
+        "recorded_at": {
+          "title": "Recorded At",
+          "type": "string"
+        },
+        "created_ids": {
+          "items": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Created Ids",
+          "type": "array"
+        },
+        "relationship_ids": {
+          "items": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Relationship Ids",
+          "type": "array"
+        },
+        "updated_ids": {
+          "items": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Updated Ids",
+          "type": "array"
+        },
+        "assessment": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Assessment"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "replayed": {
+          "default": false,
+          "title": "Replayed",
+          "type": "boolean"
+        },
+        "historical_receipt": {
+          "default": true,
+          "title": "Historical Receipt",
+          "type": "boolean"
+        },
+        "simulation_mode": {
+          "const": true,
+          "default": true,
+          "title": "Simulation Mode",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "operation",
+        "journal_id",
+        "entity_id",
+        "graph",
+        "graph_revision",
+        "recorded_at",
+        "created_ids",
+        "relationship_ids",
+        "updated_ids"
+      ],
+      "title": "Receipt",
+      "type": "object"
+    },
+    "Assessment": {
+      "$defs": {
+        "EvidenceReference": {
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Id",
+              "type": "string"
+            },
+            "content_hash": {
+              "pattern": "^[0-9a-f]{64}$",
+              "title": "Content Hash",
+              "type": "string"
+            },
+            "source_kind": {
+              "enum": [
+                "SYNTHETIC",
+                "PUBLIC",
+                "MUNICIPAL",
+                "USER",
+                "AGENT"
+              ],
+              "title": "Source Kind",
+              "type": "string"
+            },
+            "source_record_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Source Record Id"
+            },
+            "reliability": {
+              "enum": [
+                "UNVERIFIED",
+                "CORROBORATED",
+                "VERIFIED"
+              ],
+              "title": "Reliability",
+              "type": "string"
+            },
+            "observed_at": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Observed At"
+            },
+            "recorded_at": {
+              "title": "Recorded At",
+              "type": "string"
+            },
+            "basis": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "OBSERVED",
+                    "REPORTED",
+                    "DERIVED"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Basis"
+            },
+            "report": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/Report"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "finding_hashes": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "title": "Finding Hashes",
+              "type": "object"
+            }
+          },
+          "required": [
+            "id",
+            "content_hash",
+            "source_kind",
+            "source_record_id",
+            "reliability",
+            "observed_at",
+            "recorded_at",
+            "basis"
+          ],
+          "title": "EvidenceReference",
+          "type": "object"
+        },
+        "JsonValue": {},
+        "Observation": {
+          "additionalProperties": false,
+          "properties": {
+            "asset_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Asset Id",
+              "type": "string"
+            },
+            "code": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Code",
+              "type": "string"
+            },
+            "statement": {
+              "maxLength": 2000,
+              "minLength": 1,
+              "title": "Statement",
+              "type": "string"
+            },
+            "method": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Method",
+              "type": "string"
+            },
+            "observed_at": {
+              "title": "Observed At",
+              "type": "string"
+            },
+            "result": {
+              "default": "OBSERVED",
+              "enum": [
+                "OBSERVED",
+                "UNKNOWN"
+              ],
+              "title": "Result",
+              "type": "string"
+            },
+            "value": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Value"
+            },
+            "unit": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Unit"
+            }
+          },
+          "required": [
+            "asset_id",
+            "code",
+            "statement",
+            "method",
+            "observed_at"
+          ],
+          "title": "Observation",
+          "type": "object"
+        },
+        "PathRecord": {
+          "additionalProperties": false,
+          "properties": {
+            "node_ids": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Node Ids",
+              "type": "array"
+            },
+            "edge_ids": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Edge Ids",
+              "type": "array"
+            },
+            "directions": {
+              "items": {
+                "enum": [
+                  "OUTGOING",
+                  "INCOMING"
+                ],
+                "type": "string"
+              },
+              "title": "Directions",
+              "type": "array"
+            },
+            "evidence_ids": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Evidence Ids",
+              "type": "array"
+            },
+            "context": {
+              "additionalProperties": {
+                "$ref": "#/$defs/JsonValue"
+              },
+              "title": "Context",
+              "type": "object"
+            }
+          },
+          "required": [
+            "node_ids",
+            "edge_ids",
+            "directions",
+            "evidence_ids"
+          ],
+          "title": "PathRecord",
+          "type": "object"
+        },
+        "Report": {
+          "additionalProperties": false,
+          "properties": {
+            "format_version": {
+              "const": 1,
+              "default": 1,
+              "title": "Format Version",
+              "type": "integer"
+            },
+            "inspection_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Inspection Id",
+              "type": "string"
+            },
+            "inspector_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Inspector Id",
+              "type": "string"
+            },
+            "department_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Department Id",
+              "type": "string"
+            },
+            "source_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Source Id",
+              "type": "string"
+            },
+            "record_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Record Id",
+              "type": "string"
+            },
+            "source_kind": {
+              "enum": [
+                "SYNTHETIC",
+                "MUNICIPAL",
+                "PUBLIC"
+              ],
+              "title": "Source Kind",
+              "type": "string"
+            },
+            "observed_at": {
+              "title": "Observed At",
+              "type": "string"
+            },
+            "recorded_at": {
+              "title": "Recorded At",
+              "type": "string"
+            },
+            "observations": {
+              "items": {
+                "$ref": "#/$defs/Observation"
+              },
+              "maxItems": 10,
+              "minItems": 1,
+              "title": "Observations",
+              "type": "array"
+            },
+            "finding_ids": {
+              "items": {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              "maxItems": 10,
+              "minItems": 1,
+              "title": "Finding Ids",
+              "type": "array"
+            },
+            "review": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/Review"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            }
+          },
+          "required": [
+            "inspection_id",
+            "inspector_id",
+            "department_id",
+            "source_id",
+            "record_id",
+            "source_kind",
+            "observed_at",
+            "recorded_at",
+            "observations",
+            "finding_ids"
+          ],
+          "title": "Report",
+          "type": "object"
+        },
+        "Review": {
+          "additionalProperties": false,
+          "properties": {
+            "reviewer_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Reviewer Id",
+              "type": "string"
+            },
+            "role": {
+              "enum": [
+                "ANALYST",
+                "ADMIN"
+              ],
+              "title": "Role",
+              "type": "string"
+            },
+            "reviewed": {
+              "const": true,
+              "title": "Reviewed",
+              "type": "boolean"
+            },
+            "reason": {
+              "maxLength": 2000,
+              "minLength": 1,
+              "title": "Reason",
+              "type": "string"
+            }
+          },
+          "required": [
+            "reviewer_id",
+            "role",
+            "reviewed",
+            "reason"
+          ],
+          "title": "Review",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "format_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Format Version",
+          "type": "integer"
+        },
+        "id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Id",
+          "type": "string"
+        },
+        "hypothesis_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Hypothesis Id",
+          "type": "string"
+        },
+        "previous_assessment_id": {
+          "anyOf": [
+            {
+              "maxLength": 200,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Previous Assessment Id"
+        },
+        "assessment": {
+          "enum": [
+            "POSSIBLE",
+            "SUPPORTED",
+            "CONTRADICTED",
+            "VERIFIED",
+            "INCONCLUSIVE"
+          ],
+          "title": "Assessment",
+          "type": "string"
+        },
+        "rule_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Rule Version",
+          "type": "integer"
+        },
+        "cause_code": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Cause Code",
+          "type": "string"
+        },
+        "mechanism": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Mechanism",
+          "type": "string"
+        },
+        "confirming_codes": {
+          "items": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Confirming Codes",
+          "type": "array"
+        },
+        "falsifying_codes": {
+          "items": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Falsifying Codes",
+          "type": "array"
+        },
+        "supporting_evidence_ids": {
+          "items": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Supporting Evidence Ids",
+          "type": "array"
+        },
+        "contradicting_evidence_ids": {
+          "items": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Contradicting Evidence Ids",
+          "type": "array"
+        },
+        "evidence_references": {
+          "items": {
+            "$ref": "#/$defs/EvidenceReference"
+          },
+          "title": "Evidence References",
+          "type": "array"
+        },
+        "excluded_evidence_ids": {
+          "items": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Excluded Evidence Ids",
+          "type": "array"
+        },
+        "missing_evidence": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Missing Evidence",
+          "type": "array"
+        },
+        "graph": {
+          "title": "Graph",
+          "type": "string"
+        },
+        "source_graph_revision": {
+          "title": "Source Graph Revision",
+          "type": "integer"
+        },
+        "graph_revision": {
+          "title": "Graph Revision",
+          "type": "integer"
+        },
+        "as_of": {
+          "title": "As Of",
+          "type": "string"
+        },
+        "assessed_at": {
+          "title": "Assessed At",
+          "type": "string"
+        },
+        "paths": {
+          "items": {
+            "$ref": "#/$defs/PathRecord"
+          },
+          "title": "Paths",
+          "type": "array"
+        },
+        "path_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Path Ids",
+          "type": "array"
+        },
+        "search_limited": {
+          "const": true,
+          "default": true,
+          "title": "Search Limited",
+          "type": "boolean"
+        },
+        "truncated": {
+          "title": "Truncated",
+          "type": "boolean"
+        },
+        "state_transitions": {
+          "items": {
+            "type": "string"
+          },
+          "title": "State Transitions",
+          "type": "array"
+        },
+        "reservations": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Reservations",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "hypothesis_id",
+        "previous_assessment_id",
+        "assessment",
+        "cause_code",
+        "mechanism",
+        "confirming_codes",
+        "falsifying_codes",
+        "supporting_evidence_ids",
+        "contradicting_evidence_ids",
+        "evidence_references",
+        "excluded_evidence_ids",
+        "missing_evidence",
+        "graph",
+        "source_graph_revision",
+        "graph_revision",
+        "as_of",
+        "assessed_at",
+        "paths",
+        "path_ids",
+        "truncated",
+        "state_transitions",
+        "reservations"
+      ],
+      "title": "Assessment",
+      "type": "object"
+    },
+    "Report": {
+      "$defs": {
+        "Observation": {
+          "additionalProperties": false,
+          "properties": {
+            "asset_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Asset Id",
+              "type": "string"
+            },
+            "code": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Code",
+              "type": "string"
+            },
+            "statement": {
+              "maxLength": 2000,
+              "minLength": 1,
+              "title": "Statement",
+              "type": "string"
+            },
+            "method": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Method",
+              "type": "string"
+            },
+            "observed_at": {
+              "title": "Observed At",
+              "type": "string"
+            },
+            "result": {
+              "default": "OBSERVED",
+              "enum": [
+                "OBSERVED",
+                "UNKNOWN"
+              ],
+              "title": "Result",
+              "type": "string"
+            },
+            "value": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Value"
+            },
+            "unit": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Unit"
+            }
+          },
+          "required": [
+            "asset_id",
+            "code",
+            "statement",
+            "method",
+            "observed_at"
+          ],
+          "title": "Observation",
+          "type": "object"
+        },
+        "Review": {
+          "additionalProperties": false,
+          "properties": {
+            "reviewer_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Reviewer Id",
+              "type": "string"
+            },
+            "role": {
+              "enum": [
+                "ANALYST",
+                "ADMIN"
+              ],
+              "title": "Role",
+              "type": "string"
+            },
+            "reviewed": {
+              "const": true,
+              "title": "Reviewed",
+              "type": "boolean"
+            },
+            "reason": {
+              "maxLength": 2000,
+              "minLength": 1,
+              "title": "Reason",
+              "type": "string"
+            }
+          },
+          "required": [
+            "reviewer_id",
+            "role",
+            "reviewed",
+            "reason"
+          ],
+          "title": "Review",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "format_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Format Version",
+          "type": "integer"
+        },
+        "inspection_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Inspection Id",
+          "type": "string"
+        },
+        "inspector_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Inspector Id",
+          "type": "string"
+        },
+        "department_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Department Id",
+          "type": "string"
+        },
+        "source_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Source Id",
+          "type": "string"
+        },
+        "record_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Record Id",
+          "type": "string"
+        },
+        "source_kind": {
+          "enum": [
+            "SYNTHETIC",
+            "MUNICIPAL",
+            "PUBLIC"
+          ],
+          "title": "Source Kind",
+          "type": "string"
+        },
+        "observed_at": {
+          "title": "Observed At",
+          "type": "string"
+        },
+        "recorded_at": {
+          "title": "Recorded At",
+          "type": "string"
+        },
+        "observations": {
+          "items": {
+            "$ref": "#/$defs/Observation"
+          },
+          "maxItems": 10,
+          "minItems": 1,
+          "title": "Observations",
+          "type": "array"
+        },
+        "finding_ids": {
+          "items": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 10,
+          "minItems": 1,
+          "title": "Finding Ids",
+          "type": "array"
+        },
+        "review": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Review"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "inspection_id",
+        "inspector_id",
+        "department_id",
+        "source_id",
+        "record_id",
+        "source_kind",
+        "observed_at",
+        "recorded_at",
+        "observations",
+        "finding_ids"
+      ],
+      "title": "Report",
+      "type": "object"
+    },
+    "InspectionView": {
+      "additionalProperties": false,
+      "properties": {
+        "inspection_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Inspection Id",
+          "type": "string"
+        },
+        "availability": {
+          "enum": [
+            "AVAILABLE",
+            "UNAVAILABLE"
+          ],
+          "title": "Availability",
+          "type": "string"
+        },
+        "state": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "State"
+        },
+        "graph": {
+          "title": "Graph",
+          "type": "string"
+        },
+        "graph_revision": {
+          "title": "Graph Revision",
+          "type": "integer"
+        },
+        "as_of": {
+          "title": "As Of",
+          "type": "string"
+        },
+        "requested_at": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Requested At"
+        },
+        "scheduled_at": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Scheduled At"
+        },
+        "completed_at": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Completed At"
+        },
+        "report_evidence_ids": {
+          "items": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Report Evidence Ids",
+          "type": "array"
+        },
+        "finding_ids": {
+          "items": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Finding Ids",
+          "type": "array"
+        },
+        "gaps": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Gaps",
+          "type": "array"
+        }
+      },
+      "required": [
+        "inspection_id",
+        "availability",
+        "state",
+        "graph",
+        "graph_revision",
+        "as_of"
+      ],
+      "title": "InspectionView",
+      "type": "object"
+    }
+  },
+  "domain_criteria": {
+    "WATERLOGGING": {
+      "BLOCKAGE": {
+        "confirming": [
+          "OBSTRUCTION_OBSERVED",
+          "FLOW_RESTRICTED"
+        ],
+        "falsifying": [
+          "DRAIN_CLEAR"
+        ],
+        "asset_labels": [
+          "DrainInlet",
+          "DrainSegment"
+        ],
+        "requires_topology": false
+      },
+      "CAPACITY_DEFICIT": {
+        "confirming": [
+          "CAPACITY_TEST_EXCEEDED",
+          "DRAIN_CLEAR"
+        ],
+        "falsifying": [
+          "CAPACITY_ADEQUATE"
+        ],
+        "asset_labels": [
+          "DrainInlet",
+          "DrainSegment"
+        ],
+        "requires_topology": false
+      },
+      "PUMP_FAILURE": {
+        "confirming": [
+          "PUMP_FAILURE_OBSERVED",
+          "POWER_TEST_FAILED"
+        ],
+        "falsifying": [
+          "PUMP_TEST_NORMAL"
+        ],
+        "asset_labels": [
+          "PumpStation"
+        ],
+        "requires_topology": false
+      }
+    },
+    "ROAD_DAMAGE": {
+      "UTILITY_LEAK": {
+        "confirming": [
+          "LEAK_DETECTED",
+          "INFILTRATION_AT_DAMAGE"
+        ],
+        "falsifying": [
+          "PRESSURE_TEST_NORMAL"
+        ],
+        "asset_labels": [
+          "WaterPipe"
+        ],
+        "requires_topology": true
+      },
+      "SUBGRADE_FAILURE": {
+        "confirming": [
+          "SUBGRADE_FAILURE_OBSERVED",
+          "STRUCTURAL_TEST_FAILED"
+        ],
+        "falsifying": [
+          "SUBGRADE_TEST_NORMAL"
+        ],
+        "asset_labels": [
+          "RoadSegment"
+        ],
+        "requires_topology": false
+      }
+    },
+    "WASTE_ACCUMULATION": {
+      "MISSED_PICKUP": {
+        "confirming": [
+          "PICKUP_MISSED_CONFIRMED",
+          "WASTE_PERSISTED_AFTER_SCHEDULE"
+        ],
+        "falsifying": [
+          "PICKUP_COMPLETED_CONFIRMED"
+        ],
+        "asset_labels": [
+          "WasteCollectionPoint"
+        ],
+        "requires_topology": false
+      },
+      "CAPACITY_SHORTFALL": {
+        "confirming": [
+          "BIN_CAPACITY_EXCEEDED",
+          "EXPECTED_PICKUPS_COMPLETED"
+        ],
+        "falsifying": [
+          "CAPACITY_ADEQUATE"
+        ],
+        "asset_labels": [
+          "WasteCollectionPoint"
+        ],
+        "requires_topology": false
+      },
+      "ILLEGAL_DUMPING": {
+        "confirming": [
+          "DUMPING_OBSERVED",
+          "UNSCHEDULED_DEPOSIT_OBSERVED"
+        ],
+        "falsifying": [
+          "SCHEDULED_ACCUMULATION_ONLY"
+        ],
+        "asset_labels": [
+          "WasteCollectionPoint"
+        ],
+        "requires_topology": false
+      }
+    }
+  },
+  "verification": {
+    "version": 1,
+    "required": [
+      "complete reviewed confirming code set",
+      "two distinct inspections",
+      "two distinct inspectors",
+      "two distinct source IDs and records",
+      "no qualifying contradiction",
+      "required verified-only topology path present and untruncated"
+    ],
+    "unknown_criterion": "May propose; never auto-verify",
+    "discovery": "Union requested IDs, all previous assessment support/contradiction IDs and actual concerned-asset inspection reports, then temporal filter; cap20 fails closed",
+    "exclusions": [
+      "proximity",
+      "candidate connectivity",
+      "LLM statements/confidence",
+      "complaint count",
+      "work-order completion",
+      "historical similarity"
+    ],
+    "independence": "Attribution-based demonstration rule; cannot prove independence against colluding authors"
+  },
+  "storage": {
+    "proposal": "Readable Hypothesis.statement; strict original command/expectations/mechanism in PROPOSES source Evidence journal",
+    "assessment": "Append-only HypothesisAssessment.rationale JSON snapshots and previous ID; actual HAS_ASSESSMENT/SUPPORTED_BY/CONTRADICTED_BY",
+    "inspection": "INSPECTS source request journal binds investigation/department; no invented direct edge",
+    "report": "Inspection PRODUCED Evidence ESTABLISHES Finding, strict report JSON/content hash/attributed operation",
+    "recovery": "PREPARED Evidence operation journal plus one fenced domain batch/COMMITTED receipt/revision/audit; unknown outcome inspected before explicit same-request retry"
+  },
+  "budgets": {
+    "input_bytes": 32768,
+    "journal_bytes": 131072,
+    "evidence_union": 20,
+    "related_edges_per_read": 100,
+    "history": 100,
+    "read_queries": 300,
+    "reader_wall_seconds": 8,
+    "single_read_timeout_ms": 1000,
+    "new_nodes": 12,
+    "new_edges": 35,
+    "updated_nodes": 1,
+    "infrastructure_hops_max": 6
+  },
+  "timestamps": "Canonical UTC Z, microsecond datetime comparisons; evidence knowledge/validity as_of, assessed_at actual recording clock; no historical mutable-node reconstruction",
+  "permissions": "Trusted internal typed actor/reviewer context only; no public authentication, MCP writes, dispatch, worker or B15 events",
+  "active_graph_gate": "No canonical seed promotion; explicit source-preserving B08 copies in B09 tests; later reviewed same-graph B08/B09/MCP/agent/API integration required",
+  "remaining": "All18 requirements binding; agents B10, source knowledge B11, planning/auth B12/B13, dispatch/monitor B14, durable events B15"
+}

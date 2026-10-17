@@ -1,5 +1,26 @@
 # task_board.md — Human-reviewed task queue
 
+## Current status — B09, 2026-10-17 (takes precedence over all history)
+
+B08 externally accepted; local baseline00d98745. B09 PASS — human review pending.
+Final582 PASS/0 FAIL/0 SKIP in705.39s:363 pure unit/219 integration; adds37 unit+38
+real FalkorDB/MCP cases. All507 baseline tests rerun; one documented prerequisite
+trace-test cap correction, no test removed. Both SPEC validators PASS. Retained B09
+62-node/46-edge/revision82 graph, original B08 intake/source/city/B01/B05 and70 accepted
+trace observations preserved across real restart/recreation. Fresh official/domain
+MCP proofs PASS; source frozen, registry/0001/pins unchanged; no B10 work. All18
+requirements remain binding; this is a domain foundation, not a complete agent app.
+
+
+## Historical B09 in-progress summary | 2026-10-17
+
+B08 externally accepted; local baseline00d98745. B09 evidence/hypothesis/inspection
+services implemented; strengthened real verification running. No B10 or later work.
+Baseline506 PASS/1 FAIL (trace-test unrelated-row cap), corrected target1 PASS; both
+SPEC validators and retained fingerprints PASS. This is not a507-pass single run.
+Final full regression/persistence/SPEC gates pending; all18 requirements remain binding.
+
+
 ## Current status — B08, 2026-10-17 (takes precedence over history)
 
 B07-R accepted; clean local baseline6afdd09. B08 PASS — human review pending. Final507 PASS/0 FAIL/0 SKIP in438.89s (326 unit/181 real integration), adding33 unit+34 real cases; all440 accepted tests unchanged. Both SPEC validators PASS. Typed source-preserving intake, three validators, qualified incident/cluster rules, concurrent idempotence, atomic rollback/unknown-write recovery and reviewed temporal correction verified. Actual B08 journals/chains survive restart/recreation; city/B01/B05/migrations/accepted MCP traces unchanged. No B09+ work; all18 requirements remain mandatory.
@@ -194,3 +215,13 @@ All18 requirements preserved; no B09 implementation or public app completion cla
 | B09 | TODO | No |Evidence/hypotheses/immutable assessments/root-cause guards/inspection lifecycle after review |
 
 No B09 implementation. All18 product requirements remain mandatory, not complete.
+
+## B09 final review ledger | 2026-10-17
+
+| Task | State | Human accepted? | Evidence |
+|---|---|---|---|
+| B08 | ACCEPTED | Yes |User B09 authorization; local baseline00d98745, prerequisite test-cap adjustment documented |
+| B09 | PASS — review pending | No |582 PASS/0 FAIL/0 SKIP; real domain/MCP/lifecycle/SPEC/preservation/source gates |
+| B10 | TODO — not started | No |Bounded LangGraph/MCP/checkpoint and approved analytical integration only after review |
+
+All18 requirements mandatory; no full product/agent completion claim. STOP.
