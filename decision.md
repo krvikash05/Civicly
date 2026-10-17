@@ -343,3 +343,87 @@ Decisions are recorded chronologically. Codex must append an entry whenever a si
   proof-driven unchanged rerun matches them without new domain mutations. Added real
   failure-after-writes test and malformed/unknown-envelope unit cases. No accepted
   repository, migration, query or graph-access-policy contract weakened.
+
+### DEC-019 — B05 algorithms and counterfactual boundary before code | 2026-10-17
+- B04 externally accepted; B05 ONLY. Baseline258 PASS/0 FAIL/0 SKIP in162.42s,
+  both SPEC validators PASS,215-file secret/exclusion/source-hash scan PASS. Retained
+  city858/1246 exact hashes and revision/audit2104 verified read-only. Local accepted
+  B04 commit8aaf17c; no push. A verification read during baseline restart correctly
+  refused connection; repeated only after lifecycle finished, no automatic retry.
+- R04/R05/R09/R13/R15 graph primitives; all18 objectives preserved. No full memory,
+  MCP/agents/GraphRAG, plans/approval/workflows/API/frontend or B06 implementation.
+- New app/graph/analysis modules: typed models, fixed query reader, deterministic
+  engine/case retrieval, isolated counterfactual runner and offline city evaluator;
+  algorithm contract/guide, purpose-built fixtures/unit/real tests, evidence/review ZIP.
+- FalkorDB6.0.2 actual dbms.procedures lists BFS/PageRank/WCC/etc; installed client
+  ro_query calls _query(read_only=True). Native presence is not evidence/time safety.
+  Use bounded Cypher paths with scope, time/status/provenance filtering; Python
+  aggregations/components/Kahn ordering/ranking only over validated bounded exports.
+  No PageRank score used as causal confidence. Official references checked:
+  https://docs.falkordb.com/algorithms/ ; /cypher/procedures ; /cypher/functions ;
+  /commands/graph.ro-query. Native compatibility spike/test evidence will be retained.
+- Keep existing read maxima6 total hops/100 paths/120 nodes/200 edges/1000ms per
+  query; add64 total queries/10000 compute steps/5s analysis wall and20 input roots.
+  Connector AFFECTS consumes1 hop. Physical traversal defaults VERIFIED; exploratory
+  accepts explicit VERIFIED/CANDIDATE/REPORTED and labels qualifications. Geography
+  links never imply physical connectivity. Empty bounded searches are not global
+  disconnection proofs; truncation and missing proof remain explicit.
+- Count-based criticality and shared coverage have transparent lexicographic ranks,
+  not arbitrary scores. Components are induced bounded weak components, not proven
+  global partitions. DEPENDS_ON points from dependent to prerequisite; Kahn returns
+  prerequisites first. Case matching uses actual asset/dependency/zone/issue/cluster/
+  time plus existing asset-linked inspection/work-order/outcome context; a shared
+  asset does not prove a work order resolved that incident. Missing history is a gap.
+- Counterfactual source is read-only. Factory mints a fresh B05 UUID graph and copies
+  a complete bounded snapshot through existing repository/migration safeguards.
+  Source metadata/hash fingerprint checked before/after. Only that owned clone may
+  delete a selected DRAINS_TO using repository fence/CAS/intent/commit/audit, or add
+  explicit candidate DRAINS_TO through normal repository validation. No general
+  source deletion API, schema/0001 edit, bulk bypass or graph rename/promotion.
+  Partial failures retain clone for inspection; no unproven mutation retry. Full
+  city exceeds clone export cap; controlled evidenced fixtures prove ablations.
+- Data remains frozen. Broader bindings require explicit actual-network rationale;
+  incompatible/missing primary bindings need B19 author review, not B05 rewrites.
+  Runtime algorithm modules never read catalog/oracle/reveal files. Machine dependency
+  report uses only B04 sanitized readiness and actual city paths; deferred findings
+  remain open. Human reviews before/after ranking/paths, read-only source fingerprints,
+  evidence/negative/budget cases, actual city limitations and review ZIP source.
+
+### DEC-020 — B05 verified behavior and source-quality interpretation | 2026-10-17
+- Native bounded algo.BFS invocation on controlled fixture includes an expired edge;
+  filtered Cypher excludes it. Use native presence/catalog as capability evidence,
+  not proof of Civicly evidence/time semantics. No unsupported native algorithm claim.
+- Counterfactual DELETE verified on6.0.2 through existing fenced intent/atomic commit:
+  preserve removed stable ID in a map alias; node identities unchanged, audit/revision
+  advance only in owned clone. Factory-issued process-local capability checks every
+  inherited writer session; target redirection refused. Compare rejects unrecorded
+  clone changes and uncertain interventions; pending writes prevent cleanup until
+  recovery. Failures retain named clones, never retry an uncertain mutation.
+- Public fingerprints hash audit and writer metadata; owner/epoch lease values are
+  not returned as frontend/MCP data. Add real clone creation timing, stable proof
+  path IDs and explicit recorded change ledger. No new stored ontology properties.
+- Case filters explicitly supplied by caller (issue/zone/date) are enforced; seed-
+  derived issue/zone are ranking context, permitting real cross-category neighbors.
+  Asset-linked repair/outcome is contextual evidence, never inferred incident resolution.
+- City data remains unchanged. Actual42 DRAINS_TO are CANDIDATE; verified-only physical
+  drainage has no qualifying paths. Exploratory D12->D18 is a reported candidate,
+  not verified hydraulics. Four asset sets (S01/S02/S05/S07) legitimately broaden
+  recorded AFFECTS via explicit bounded candidate paths. Eight omit recorded starting
+  assets and are source-binding conflicts requiring B19 author confirmation. Six
+  cluster bindings conflict with recorded primary PART_OF; three leave context
+  unspecified. A missing path beyond a budget is UNPROVEN, not a source defect.
+- S07 remains missing its full cross-category topology;55 observations unlinked;
+  no historical WorkOrder/AgentDecision/InterventionOutcome chain. One real supplied
+  historical inspection is retrievable for ROAD-R08 in exploratory asset context.
+  Historical context/time/caps may prevent it being relevant to a specific bound case.
+  Machine report assigns B08/B09/B11/B19 remediation, not B05 data rewrites.
+
+### DEC-021 — Preserve positive case proof under caps | 2026-10-17
+- Review found asset/zone factors only used later context-branch output; when that
+  branch hit a cap, already-fetched positive matches could be understated or an
+  explicit zone filter could wrongly exclude them. Index all existing validated
+  AFFECTS/PART_OF/OCCURRED_AT/IN_ZONE edges from the bounded reader, including earlier
+  match paths. Do not expand caps or invent missing relationships. Add real capped-
+  zone regression; retain partial/lower-bound flags and exact proof path references.
+- Matching indexes O(E+C) before sorting/context association; extra work metered.
+  Re-run final-code evidence/performance and complete regressions after this fix.

@@ -1,8 +1,8 @@
 # test_log.md — Append-only verification record
 
-## Current status — B04, 2026-10-17 (takes precedence over history)
+## Current status — B05, 2026-10-17 (takes precedence over history)
 
-Final B04 acceptance run258 PASS /0 FAIL /0 SKIP in151.63s (189 unit/69 real integration, including actual restart/recreation). Both SPEC validators PASS. Three full benchmark trials and6 no-op repeats PASS; exact timings/limitations and intermediate failed attempts retained below. All prior135 tests preserved.
+Final B01–B05 regression309 PASS /0 FAIL /0 SKIP in246.23s:218 unit/91 real integration including real restart/recreation. B05 adds29 unit +22 real cases; all prior258 retained. Both SPEC validators PASS.260 measured read-only analyses and actual controlled/city outputs recorded; failed intermediate attempts retained below.
 
 ---
 
@@ -431,3 +431,89 @@ PY
   content hash preserved. `civicly health`/`schema-status` PASS; fresh canonical count0
   and original B01-PERSISTENCE/SYNTHETIC/B01 row intact. Browser HTTP200/volume PASS in
   lifecycle tests. No preexisting graph/volume removed; final isolated city remains.
+
+### TEST-20261017-B05-01 — Accepted B04 baseline and vendor inspection
+- Baseline command:`backend/.venv/bin/python -m pytest backend/tests -v -s --run-persistence`:
+ 258 PASS/0 FAIL/0 SKIP in162.42s; both SPEC validators PASS. Source/exclusion/secret
+ scan215 files PASS. Full city2104 records individually hashed read-only against B04
+ manifest, revision/audit2104 and content unchanged. Baseline local8aaf17c, no push.
+- A separate verification read attempted during the baseline lifecycle restart got
+ ConnectionRefused; repeated after lifecycle finished and succeeded. This was an
+ orchestration timing failure, not mocked DB success or weakened transport retries.
+- Actual installed Graph.ro_query source uses _query(read_only=True). Real catalog
+ lists native BFS/PageRank/WCC/etc as READ. Parameterized native BFS in controlled
+ fixture includes EXPIRED; filtered Cypher excludes it. No native absence assumption.
+ Python3.12.1/falkordb1.8.0/redis8.1.0/Pydantic2.14.1/pytest9.1.1; server6.0.2/module60002,
+ Redis8.10.2, same pinned Compose/Browser2.6.1/volumes. Official refs in ALGORITHMS.md.
+
+### TEST-20261017-B05-02 — Targeted tests and recorded failed attempts
+- First real B05 integration command (same module, -v -s -x):1 setup ERROR in2.25s,
+ missing required Zone.zone_type in new fixture. Corrected fixture only; schema kept.
+ Fixture outcome authored as existing INCONCLUSIVE enum, not invented FAILED value.
+ Re-run12 PASS in34.33s (B05-integration-second.txt).
+- Strengthened real suite18 PASS in54.94s. Later expanded run19 PASS/1 FAIL in71.66s:
+ redirection negative test supplied Location without required coordinates, so schema
+ rejected before ownership assertion. Added valid fixture coordinates; targeted
+ redirection/malicious-ID tests2 PASS in7.25s. Failure log retained; no source mutation.
+- First combined run stopped collecting279 items/1 ERROR because new unit/integration
+ basenames collided. Renamed unit file to test_graph_algorithm_models.py; same29
+ cases retained, no global pytest import-mode change. Interim308 PASS in224.58s before
+ final positive-proof correction; log retained as B05-regression-before-positive-proof-fix.txt.
+- DEC-021 review identified previously fetched asset/zone proof could be overlooked
+ when later context truncated. Indexed existing validated edges without expanding
+ budgets; new real capped-zone + historical ranking regressions2 PASS in5.32s.
+ Final-code controlled/city evidence and all260 measurements regenerated afterwards.
+
+### TEST-20261017-B05-03 — Actual controlled/city/counterfactual proof
+- Commands in B05-COMMANDS.md; controlled/city CLI real PASS. Native bounded BFS proof,
+ all7 graph operations + cases, public proof IDs/source attrs and controlled ablation
+ JSON recorded. Source29/28 and revision/audit57 unchanged; clone57→58→59. Criticality
+ D1,D4→D4,D1 after CUT; candidate replacement changes exploratory only. Expired/future
+ evidence/geographic negatives, complete ledgers, copied identities, source metadata
+ hashes, stale/wrong/candidate mutation refusal and actual uncertainty recovery tested.
+- City source exact858/1246/content hash/revision/audit2104 unchanged.42 CANDIDATE
+ DRAINS_TO; verified-only no qualifying paths; exploratory D12→D18 and actual ROAD-R08
+ inspection. S01–S12 classified from recorded paths and sanitized B04 readiness;
+4 broader,8 source-conflicting asset sets;3 exact/6 conflicting/3 unspecified clusters.
+ Missing histories/55 observation links/S07 topology stay OPEN, never fabricated.
+- `PYTHONPATH=backend backend/.venv/bin/python -m tests.b05_benchmark`:26 workloads ×10
+ =260 actual read-only analyses. Raw queries/steps/internal wall/caps and unchanged
+ source hashes/audits in B05-performance.json; descriptive medians2.743–27.628ms,
+ clone2.318s. Initial interpreter/repository setup/administrative manifest verification
+ and final JSON serialization excluded from analysis timer; no native/process peak
+ memory or robust latency-SLA claim. Partial case ranks explicitly lower bounds.
+
+### TEST-20261017-B05-04 — Final complete regression / SPEC / review gate
+- Final command:`backend/.venv/bin/python -m pytest backend/tests -v -s --run-persistence`
+ with pipefail/tee:309 PASS/0 FAIL/0 SKIP in246.23s;218 unit +91 real integration.
+ B05 adds29 unit/22 real cases; all prior258 unchanged. Real restart/recreation + fresh
+ Browser HTTP200/volume and graph MATCH PASS; no retained graph/volume deletion.
+- `backend/.venv/bin/python -m pytest backend/tests/unit -q`:218 PASS in3.98s.
+ `make test-spec`:both validators PASS including B04 strict bundle/55 exact numbers;
+ not an MCP/LLM/GraphRAG/agent/frontend test. Compile/diff whitespace checks PASS.
+- Exact files/diff/review ZIP plus manifest/security audit in docs/evidence and
+ review_packages. ZIP contains actual source/tests/contracts/data/evidence/tracking;
+ excluded.env/credentials/private keys/Git/cache/venv/volumes and evaluator payloads.
+ Runtime MCP/live LLM/LangGraph/GraphRAG/planning/operations/API/frontend NOT RUN/
+ NOT IMPLEMENTED in B05; not counted as skipped required tests. STOP for human review.
+- Final post-lifecycle verification PASS:actual city full record hashes/audit/fence
+  hash equal accepted B04/B05 baseline, revision/audit2104; controlled source unchanged
+  revision/audit57, clone59 retained; original B01 row intact; canonical0 domain nodes,
+  migration0001 READY,91 index groups/182 OPERATIONAL constraints. Fresh client reads,
+  not cached success. B05-post-lifecycle.json captures actual checks after recreation.
+
+### TEST-20261017-B05-05 — Focused external review ZIP reproduction
+- Package byte/CRC/actual-local-secret/private-key/path exclusions PASS. Includes
+ actual source,51 focused B05 tests/helpers, normative contracts, actual city bundle+
+ 23node/21edge read-only extract, real outputs/measurements and all6 tracking files.
+- Extracted ZIP to an isolated temporary directory; explicitly asserted imports use
+ extracted app.graph.analysis source. Focused command from extraction:
+ `backend/.venv/bin/python -m pytest backend/tests/unit/test_graph_algorithm_models.py backend/tests/integration/test_graph_algorithms.py -v -s`
+ using the original isolated interpreter as an external dependency:51 PASS/0 FAIL/
+ 0 SKIP in88.60s against real FalkorDB, no original checkout source dependency.
+- Initial verification harness resolved the venv Python symlink to global Python,
+ which lacked redis; corrected to preserve the venv invocation path and canonicalize
+ temporary directory aliases. No archive/application dependency or source change.
+- Full repository remains309 PASS; focused51 are a reproducibility recheck, not
+ additional unique tests. Final manifest lists every included file's purpose/SHA256
+ and omitted dependencies. All prior B01–B04 tests/source/data/pins remain unchanged.

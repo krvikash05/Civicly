@@ -1,10 +1,11 @@
 # Civicly — Backend-First Codex Build System (v2.0)
 
-**Status:** B02 canonical schema/migrations implemented and runtime-tested; full civic application remains unimplemented. The original blueprint is preserved below. Last reviewed: 2026-10-17.
+**Status:** B04 externally accepted; B05 graph algorithms/case retrieval/counterfactuals implemented and tested, awaiting human review. The full civic AI application remains unimplemented. Current truth is in the engineering tracking files.
+See [algorithm guide](backend/ALGORITHMS.md) for scope and real evidence.
 
 For the current Python 3.12/Docker setup, CLI health and verified persistence tests,
 see [backend/README.md](backend/README.md) and [schema/recovery guide](backend/SCHEMA.md).
-B00/B01 are accepted; B02 awaits human review. The 18 objectives, remaining B00
+B00–B04 are accepted; B05 awaits human review; B06 has not started. The 18 objectives, remaining B00
 contract findings and backend-first gates remain binding.
 
 **Purpose:** Implement a genuinely agentic, FalkorDB-native, MCP-connected civic investigation system covering recurring WATERLOGGING, ROAD_DAMAGE and WASTE_ACCUMULATION, including interlinked failures, persistent memory, municipal knowledge, approved actions, progress tracking, and verifiable outcomes. Backend first; frontend last, but its data requirements are fixed now.

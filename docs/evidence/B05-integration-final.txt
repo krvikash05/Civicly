@@ -1,0 +1,70 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.1, pytest-9.1.1, pluggy-1.7.0 -- /Users/vikashkumar/Desktop/Civicly/backend/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/vikashkumar/Desktop/Civicly/backend
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 20 items
+
+backend/tests/integration/test_graph_algorithms.py::test_directed_reachability_temporal_and_geographic_negative PASSED
+backend/tests/integration/test_graph_algorithms.py::test_shared_bottlenecks_and_connector_budget PASSED
+backend/tests/integration/test_graph_algorithms.py::test_impacted_coverage_and_transparent_criticality PASSED
+backend/tests/integration/test_graph_algorithms.py::test_induced_components_and_typed_dependencies PASSED
+backend/tests/integration/test_graph_algorithms.py::test_task_dag_prerequisite_first_and_external_members PASSED
+backend/tests/integration/test_graph_algorithms.py::test_case_ranking_dates_real_history_and_coverage_gaps PASSED
+backend/tests/integration/test_graph_algorithms.py::test_case_zone_issue_filter_and_missing_history PASSED
+backend/tests/integration/test_graph_algorithms.py::test_counterfactual_ablation_changes_ranking_and_preserves_source PASSED
+backend/tests/integration/test_graph_algorithms.py::test_clone_cannot_remove_wrong_kind_candidate_or_stale_content PASSED
+backend/tests/integration/test_graph_algorithms.py::test_small_budget_and_long_connected_path_are_not_global_negatives PASSED
+backend/tests/integration/test_graph_algorithms.py::test_read_only_calls_and_pending_state PASSED
+backend/tests/integration/test_graph_algorithms.py::test_native_bfs_probe_does_not_apply_temporal_proof_filters PASSED
+backend/tests/integration/test_graph_algorithms.py::test_candidate_reported_and_future_evidence_are_qualified PASSED
+backend/tests/integration/test_graph_algorithms.py::test_revision_retry_and_pending_source_fail_closed PASSED
+backend/tests/integration/test_graph_algorithms.py::test_counterfactual_uncertain_removal_retains_clone_and_recovers[False] PASSED
+backend/tests/integration/test_graph_algorithms.py::test_counterfactual_uncertain_removal_retains_clone_and_recovers[True] PASSED
+backend/tests/integration/test_graph_algorithms.py::test_export_caps_and_deadline_never_return_half_paths PASSED
+backend/tests/integration/test_graph_algorithms.py::test_partial_clone_failure_is_identified_retained_and_source_unchanged PASSED
+backend/tests/integration/test_graph_algorithms.py::test_actual_b04_city_separates_verified_exploration_and_no_history PASSED
+backend/tests/integration/test_graph_algorithms.py::test_clone_writer_redirect_and_unrecorded_changes_are_refused FAILED
+
+=================================== FAILURES ===================================
+________ test_clone_writer_redirect_and_unrecorded_changes_are_refused _________
+
+repo = <app.graph.repository.GraphRepository object at 0x103107dd0>
+
+    def test_clone_writer_redirect_and_unrecorded_changes_are_refused(repo):
+        experiment=Counterfactual(repo);writer=experiment.repository;clone=writer.graph;before=capture(repo).fingerprint
+        try:
+            writer.graph=repo.graph
+>           with pytest.raises(PreconditionFailed):writer.create_node('Location',{**common('UNAUTHORIZED'),'name':'Should never be created'})
+                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+backend/tests/integration/test_graph_algorithms.py:297: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+backend/app/graph/repository.py:220: in create_node
+    statement = self.registry.node_statement(kind, properties)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/app/graph/schema.py:143: in node_statement
+    self.validate_node(label, props)
+backend/app/graph/schema.py:121: in validate_node
+    self._properties(self.shape(label), props)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <app.graph.schema.Registry object at 0x102f4bb90>
+shape = {'properties': {'name': {'type': 'string'}, 'latitude': {'type': 'number', 'minimum': -90, 'maximum': 90}, 'longitude'...ementation adapter)'}, ...}, 'required': ['created_at', 'id', 'latitude', 'longitude', 'municipality_id', 'name', ...]}
+props = {'id': 'UNAUTHORIZED', 'schema_version': 3, 'municipality_id': 'demo-city', 'created_at': '2026-10-17T00:00:00Z', ...}
+
+    def _properties(self, shape: dict, props: dict) -> None:
+        if not isinstance(props, dict) or not all(isinstance(k, str) for k in props):
+            raise SchemaError("Properties must be a string-keyed object")
+        if set(props) - shape["properties"].keys():
+            raise SchemaError("Unknown properties")
+        if set(shape["required"]) - props.keys():
+>           raise SchemaError("Missing mandatory properties")
+E           app.graph.schema.SchemaError: Missing mandatory properties
+
+backend/app/graph/schema.py:78: SchemaError
+=========================== short test summary info ============================
+FAILED backend/tests/integration/test_graph_algorithms.py::test_clone_writer_redirect_and_unrecorded_changes_are_refused
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+=================== 1 failed, 19 passed in 71.66s (0:01:11) ====================

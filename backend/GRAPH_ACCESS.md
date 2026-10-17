@@ -237,3 +237,13 @@ Only validated milestone04 disposable graphs are currently authorized for its da
 imports. See INGESTION.md and contracts/dataset_ingestion.json for provenance,
 precision, quarantine, interruption and staged-data boundaries. No raw bulk write,
 policy cap relaxation, new migration or canonical promotion is implemented.
+
+## B05 graph-analysis consumer
+
+See ALGORITHMS.md and contracts/graph_algorithms.json. Typed GraphAnalysis uses
+bounded GRAPH.RO_QUERY paths with actual revision/time/proof checks; count-based
+ranking is not causal confidence. Case history remains explicitly coverage-limited.
+Factory-owned B05 counterfactual clones use existing migration/repository fencing,
+CAS/intent/audit for edge ablation; original graphs remain read-only. No general
+source deletion method or schema/0001 change. Current city candidate links are not
+promoted to VERIFIED; unresolved scenario-source gaps remain B08/B09/B11/B19.

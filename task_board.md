@@ -1,8 +1,8 @@
 # task_board.md — Human-reviewed task queue
 
-## Current status — B04, 2026-10-17 (takes precedence over history)
+## Current status — B05, 2026-10-17 (takes precedence over history)
 
-B03-R accepted. B04 PASS — human review pending.258 tests PASS (189 unit/69 real integration), both SPEC validators PASS;3 full imports/6 no-op repeats verified. Exact next task B05 TODO, only after explicit human review. No B05 work started.
+B04 externally accepted. B05 PASS — human review pending.309 tests PASS (218 unit/91 real integration),0 FAIL/0 SKIP; both SPEC validators PASS. Controlled ablation, actual-city diagnostics and260 read-only performance runs recorded. Next B06 TODO; no MCP implementation started.
 
 ---
 
@@ -85,3 +85,15 @@ it does not implement that milestone. No city graph ingestion or B04 repair star
 Review source audit, field deltas/quarantines, scenario-readiness matrix, retained
 isolated graph and real test/benchmark output. Do not interpret data ingestion as
 working scenario, agent, MCP or operations capability. STOP for human B04 review.
+
+## B05 final review ledger | 2026-10-17
+
+| Task | State | Human accepted? | Evidence / exact next boundary |
+|---|---|---|---|
+| B04 | PASS | Yes | User external review accepted; baseline8aaf17c,258 regression PASS |
+| B05 | PASS — review pending | No |309 PASS; bounded algorithms/cases, owned ablation, actual city/source gaps,260 measurements, focused source ZIP |
+| B06 | TODO | No | Official FalkorDB MCP runtime dependency + real client tools/list/tools/call, auth and explicit read-only tool filtering; only after human review |
+
+Human checks before/after criticality/paths/source fingerprints, city verified vs
+exploratory distinction, data dependency matrix, exact test counts and ZIP manifest.
+No full product requirement is completed just by graph primitives. STOP after B05.

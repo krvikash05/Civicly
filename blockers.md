@@ -1,8 +1,8 @@
 # blockers.md — Current blockers and verification spikes
 
-## Current status — B04, 2026-10-17 (takes precedence over history)
+## Current status — B05, 2026-10-17 (takes precedence over history)
 
-B04 implementation/tests PASS; human review pending. BLOCK-B00-02 numeric conversion portion RESOLVED with exact55 value/unit/date preservation; remaining DEC-004 findings OPEN at assigned milestones. Source/history/S07 proof/schedule/binding gaps and benchmark instrumentation/scale limits remain explicit BLOCK-B04-DATA/PERF findings. No B05 started.
+No active B05 environment blocker. B05 tests PASS; human review pending. City42 drainage links remain CANDIDATE;4 broader asset sets supported,8 starting-asset/6 cluster source conflicts and3 unspecified cluster contexts need author review. S07/history/55 unlinked measurements and DEC-004 dependencies remain OPEN at B08/B09/B11/B19/etc. Bounded-search/clone limits explicit; no B06 started.
 
 ---
 
@@ -130,3 +130,26 @@ No active implementation blocker is claimed. Verification spikes (NOT defects) a
   civicly_b04_test_407a845eafb843b7955dcc4bd00335e0. No source conflicts are “repaired”
   by deleting it. Canonical promotion of B04 fixture is intentionally unperformed;
   review retained isolated final graph before any later authorization.
+
+## B05 current source and algorithm limitations | 2026-10-17
+- No active B05 environment blocker. Actual native BFS invocation includes expired
+  link; selected filtered Cypher strategy tested. No native feature absence claimed.
+- BLOCK-B05-DATA — OPEN:city0 verified drainage paths (all42 candidate); four broader
+  investigative bindings legitimate (S01/S02/S05/S07), eight starting-asset source
+  conflicts need author confirmation, six primary-cluster conflicts/three unspecified
+  contexts. Do not automatically rewrite or promote data. S07 full cross-category
+  topology,55 unlinked Observations and missing repairs/decisions/outcomes remain
+  B08/B09/B11/B19. One existing ROAD-R08 inspection is contextual, not resolution proof.
+- BLOCK-B05-BOUNDS — DOCUMENTED LIMITATION:bounded paths/induced components do not
+  prove global absence/completeness. City case searches can truncate; partial ranks
+  are lower bounds.5s deadline cooperative around bounded I/O, not real-time process
+  cancellation. Full city exceeds complete clone120node/200edge cap and is refused;
+  properly evidenced small fixtures demonstrate required ablations. Explicitly
+  inspected drainage cycles are not automatically reauthorized during clone copy.
+- BLOCK-B00-02 numeric portion remains RESOLVED by B04; originals/55-defect regression
+  preserved. Remaining DEC-004 MCP trace/envelopes (B06/B07), memory/GraphRAG document
+  owner/version/PDF (B10/B11), approval (B12/B13), event durability (B15), API mapping
+  (B16/B17), fixture histories/evaluator process isolation (B19) stay OPEN.
+- Existing policy/audit scaling limits remain:counterfactual copying uses ordinary
+  writes, not a new bulk shortcut; source/canonical/retained volumes never reset.
+  No full scenario, agent or frontend capability declared complete by B05.

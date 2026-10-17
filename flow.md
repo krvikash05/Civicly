@@ -204,3 +204,46 @@ connection.connect(Settings) -> official FalkorDB client
 - Current product reach: data support for R01–R05/R09/R14/R15; no end-to-end requirement
   is completed by ingestion. MCP, agents, GraphRAG, operations, API and frontend remain
   later tasks. B05 is proposed only after human B04 review.
+
+## B05 implemented file/control flow | 2026-10-17
+
+```text
+analysis.models -> existing graph GraphModel/NodeRecord/EdgeRecord/PathRecord
+analysis.engine -> reader -> official Graph.ro_query + strict repository decoder
+                -> cases (actual factor/history paths + lexicographic ranking)
+analysis.counterfactual -> bounded complete Snapshot + ingestion.check_graph
+                        -> migration0001 -> capability-owned CloneWriter
+                        -> existing lock/fence/intent/commit/audit
+                        -> GraphAnalysis before/after + source/change fingerprints
+analysis.evaluation -> accepted B04 bundle/readiness (no oracle/reveal/catalog)
+                    -> actual retained city read-only analysis + dependency report
+analysis.__main__ -> controlled test-only source/evidence or actual city evaluation
+ tests.b05_benchmark ->10 real read-only runs/workload + unchanged fingerprints
+```
+
+- Eight analysis modules provide strict request/result models, fixed bounded path
+  queries, deterministic coverage/weak components/Kahn/case ranking, owned clone
+  ablation and offline review CLI/evaluation. New contract graph_algorithms.json
+  adds response/budget semantics; no existing stored schema or0001 change.
+- Reader checks READY/pending/revision before/after, validates graph labels/fields/
+  endpoint directions/evidence, applies UTC knowledge/half-open validity/status,
+  caches evidence within each request, meters shared64-query/10000-step/5s deadline
+  and existing6-hop/100-path/120-node/200-edge/1000ms caps. Proof IDs derive from ordered
+  real application node/edge IDs; evidence/source properties and direction survive.
+- Source write flow: NONE for algorithms/evaluation/benchmark. No recover_pending
+  fence changes on source. Administrative B04 full-manifest verification is separate
+  from bounded algorithm exports; it uses accepted <=5000-record source contract.
+- Counterfactual factory mints only new B05 UUID target; validates/copies complete
+  <=120node/200edge snapshot via normal repository. Every inherited writer session
+  checks capability/target. DELETE only verified DRAINS_TO with CAS and existing
+  intent+atomic revision/audit commit. Candidate additions use normal proof policies.
+  Ledger/fingerprint checks reject unrecorded changes; unknown outcomes retain named
+  clone and require explicit recovery/review. Only owned scratch cleanup; no source/
+  B01/canonical/volume reset. Public fingerprints hash writer metadata.
+- Real city data remains858nodes/1246edges and revision/audit2104.42 drainage claims
+  stay CANDIDATE. B05 runtime output/evidence contains sanitized source facts, separate
+  verified/exploratory results and B08/B09/B11/B19 data dependencies; no hidden truth,
+  expected actions or delayed payload imports. Staged release remains B19.
+- Frontend/MCP consumers can later map typed nodes/edges/ProofPath IDs, statuses,
+  sources, dates, graph revision, gaps and measured budgets. No API/server/agent
+  runtime integration is implemented here; DEC-004 envelopes/traces remain pending.

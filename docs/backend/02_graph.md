@@ -109,3 +109,15 @@ minima/branch lengths are in backend/GRAPH_ACCESS.md. Both repository/migration
 constructors now share a guarded milestone02–25 UUIDv4 test namespace; canonical
 and B01/document/checkpoint protections remain. backend/B04_BENCHMARK_PLAN.md defines
 future conversion/import/repeat performance verification only; no B04 work began.
+
+## B05 implemented primitives (supersedes B05 TODO above)
+
+backend/ALGORITHMS.md and contracts/graph_algorithms.json define the implemented
+bounded directed drainage paths, shared/impacted coverage, count-based criticality,
+induced weak components, typed infrastructure dependencies, prerequisite-first task
+DAG and transparent historical case retrieval. Real fixture ablation changes paths
+and ranking while preserving original identities/revision/audit/data. Counterfactuals
+are owned B05 disposable clones, not canonical mutations or source corrections.
+Actual city verified-only and exploratory results are separate;42 DRAINS_TO remain
+candidate-level, source-binding/history/S07 gaps explicitly tracked. No agent/MCP,
+memory/GraphRAG, planning/approval/operations/API/frontend implementation by B05.

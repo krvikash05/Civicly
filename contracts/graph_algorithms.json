@@ -1,0 +1,1038 @@
+{
+  "version": 1,
+  "registry_version": 3,
+  "migration": "0001",
+  "municipality_id": "demo-city",
+  "schemas": {
+    "AnalysisRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "operation": {
+          "enum": [
+            "reachability",
+            "shared_downstream",
+            "impacted_assets",
+            "criticality",
+            "components",
+            "dependencies",
+            "task_dag"
+          ],
+          "title": "Operation",
+          "type": "string"
+        },
+        "ids": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Ids",
+          "type": "array"
+        },
+        "incident_ids": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Incident Ids",
+          "type": "array"
+        },
+        "plan_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Plan Id"
+        },
+        "as_of": {
+          "title": "As Of",
+          "type": "string"
+        },
+        "direction": {
+          "default": "downstream",
+          "enum": [
+            "upstream",
+            "downstream"
+          ],
+          "title": "Direction",
+          "type": "string"
+        },
+        "include_candidates": {
+          "default": false,
+          "title": "Include Candidates",
+          "type": "boolean"
+        },
+        "max_hops": {
+          "default": 6,
+          "maximum": 6,
+          "minimum": 1,
+          "title": "Max Hops",
+          "type": "integer"
+        },
+        "limit": {
+          "default": 40,
+          "maximum": 100,
+          "minimum": 1,
+          "title": "Limit",
+          "type": "integer"
+        },
+        "threshold": {
+          "default": 2,
+          "maximum": 20,
+          "minimum": 2,
+          "title": "Threshold",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "operation",
+        "as_of"
+      ],
+      "title": "AnalysisRequest",
+      "type": "object"
+    },
+    "CaseRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "as_of": {
+          "title": "As Of",
+          "type": "string"
+        },
+        "seed_incident_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Seed Incident Id"
+        },
+        "asset_ids": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Asset Ids",
+          "type": "array"
+        },
+        "zone_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Zone Id"
+        },
+        "issue_type": {
+          "anyOf": [
+            {
+              "enum": [
+                "WATERLOGGING",
+                "ROAD_DAMAGE",
+                "WASTE_ACCUMULATION"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Issue Type"
+        },
+        "after": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "After"
+        },
+        "before": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Before"
+        },
+        "include_candidates": {
+          "default": false,
+          "title": "Include Candidates",
+          "type": "boolean"
+        },
+        "max_hops": {
+          "default": 6,
+          "maximum": 6,
+          "minimum": 1,
+          "title": "Max Hops",
+          "type": "integer"
+        },
+        "limit": {
+          "default": 40,
+          "maximum": 100,
+          "minimum": 1,
+          "title": "Limit",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "as_of"
+      ],
+      "title": "CaseRequest",
+      "type": "object"
+    },
+    "AnalysisResult": {
+      "$defs": {
+        "AnalysisRow": {
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "title": "Id",
+              "type": "string"
+            },
+            "related_ids": {
+              "default": [],
+              "items": {
+                "type": "string"
+              },
+              "title": "Related Ids",
+              "type": "array"
+            },
+            "factors": {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "boolean"
+                  }
+                ]
+              },
+              "title": "Factors",
+              "type": "object"
+            },
+            "path_ids": {
+              "default": [],
+              "items": {
+                "type": "string"
+              },
+              "title": "Path Ids",
+              "type": "array"
+            },
+            "gaps": {
+              "default": [],
+              "items": {
+                "type": "string"
+              },
+              "title": "Gaps",
+              "type": "array"
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "title": "AnalysisRow",
+          "type": "object"
+        },
+        "EdgeRecord": {
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "title": "Id",
+              "type": "string"
+            },
+            "kind": {
+              "title": "Kind",
+              "type": "string"
+            },
+            "source": {
+              "title": "Source",
+              "type": "string"
+            },
+            "target": {
+              "title": "Target",
+              "type": "string"
+            },
+            "properties": {
+              "type": "object",
+              "additionalProperties": {
+                "$ref": "#/$defs/JsonValue"
+              },
+              "title": "Properties"
+            }
+          },
+          "required": [
+            "id",
+            "kind",
+            "source",
+            "target",
+            "properties"
+          ],
+          "title": "EdgeRecord",
+          "type": "object"
+        },
+        "JsonValue": {},
+        "NodeRecord": {
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "title": "Id",
+              "type": "string"
+            },
+            "kind": {
+              "title": "Kind",
+              "type": "string"
+            },
+            "labels": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Labels",
+              "type": "array"
+            },
+            "properties": {
+              "type": "object",
+              "additionalProperties": {
+                "$ref": "#/$defs/JsonValue"
+              },
+              "title": "Properties"
+            }
+          },
+          "required": [
+            "id",
+            "kind",
+            "labels",
+            "properties"
+          ],
+          "title": "NodeRecord",
+          "type": "object"
+        },
+        "ProofPath": {
+          "additionalProperties": false,
+          "properties": {
+            "node_ids": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Node Ids",
+              "type": "array"
+            },
+            "edge_ids": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Edge Ids",
+              "type": "array"
+            },
+            "directions": {
+              "items": {
+                "enum": [
+                  "OUTGOING",
+                  "INCOMING"
+                ],
+                "type": "string"
+              },
+              "title": "Directions",
+              "type": "array"
+            },
+            "evidence_ids": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Evidence Ids",
+              "type": "array"
+            },
+            "context": {
+              "additionalProperties": {
+                "$ref": "#/$defs/JsonValue"
+              },
+              "title": "Context",
+              "type": "object"
+            },
+            "id": {
+              "title": "Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "node_ids",
+            "edge_ids",
+            "directions",
+            "evidence_ids",
+            "id"
+          ],
+          "title": "ProofPath",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "operation": {
+          "title": "Operation",
+          "type": "string"
+        },
+        "graph": {
+          "title": "Graph",
+          "type": "string"
+        },
+        "municipality_id": {
+          "const": "demo-city",
+          "default": "demo-city",
+          "title": "Municipality Id",
+          "type": "string"
+        },
+        "graph_revision": {
+          "title": "Graph Revision",
+          "type": "integer"
+        },
+        "as_of": {
+          "title": "As Of",
+          "type": "string"
+        },
+        "include_candidates": {
+          "title": "Include Candidates",
+          "type": "boolean"
+        },
+        "rows": {
+          "items": {
+            "$ref": "#/$defs/AnalysisRow"
+          },
+          "title": "Rows",
+          "type": "array"
+        },
+        "nodes": {
+          "items": {
+            "$ref": "#/$defs/NodeRecord"
+          },
+          "title": "Nodes",
+          "type": "array"
+        },
+        "edges": {
+          "items": {
+            "$ref": "#/$defs/EdgeRecord"
+          },
+          "title": "Edges",
+          "type": "array"
+        },
+        "paths": {
+          "items": {
+            "$ref": "#/$defs/ProofPath"
+          },
+          "title": "Paths",
+          "type": "array"
+        },
+        "truncated": {
+          "title": "Truncated",
+          "type": "boolean"
+        },
+        "search_limited": {
+          "title": "Search Limited",
+          "type": "boolean"
+        },
+        "gaps": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Gaps",
+          "type": "array"
+        },
+        "reservations": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Reservations",
+          "type": "array"
+        },
+        "budgets": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              }
+            ]
+          },
+          "title": "Budgets",
+          "type": "object"
+        },
+        "measurements": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              }
+            ]
+          },
+          "title": "Measurements",
+          "type": "object"
+        }
+      },
+      "required": [
+        "operation",
+        "graph",
+        "graph_revision",
+        "as_of",
+        "include_candidates",
+        "rows",
+        "nodes",
+        "edges",
+        "paths",
+        "truncated",
+        "search_limited",
+        "gaps",
+        "reservations",
+        "budgets",
+        "measurements"
+      ],
+      "title": "AnalysisResult",
+      "type": "object"
+    },
+    "AnalysisLimits": {
+      "additionalProperties": false,
+      "properties": {
+        "max_hops": {
+          "default": 6,
+          "maximum": 6,
+          "minimum": 1,
+          "title": "Max Hops",
+          "type": "integer"
+        },
+        "max_paths": {
+          "default": 100,
+          "maximum": 100,
+          "minimum": 1,
+          "title": "Max Paths",
+          "type": "integer"
+        },
+        "max_nodes": {
+          "default": 120,
+          "maximum": 120,
+          "minimum": 1,
+          "title": "Max Nodes",
+          "type": "integer"
+        },
+        "max_edges": {
+          "default": 200,
+          "maximum": 200,
+          "minimum": 1,
+          "title": "Max Edges",
+          "type": "integer"
+        },
+        "max_queries": {
+          "default": 64,
+          "maximum": 64,
+          "minimum": 1,
+          "title": "Max Queries",
+          "type": "integer"
+        },
+        "max_steps": {
+          "default": 10000,
+          "maximum": 10000,
+          "minimum": 1,
+          "title": "Max Steps",
+          "type": "integer"
+        },
+        "wall_seconds": {
+          "default": 5.0,
+          "exclusiveMinimum": 0,
+          "maximum": 5.0,
+          "title": "Wall Seconds",
+          "type": "number"
+        },
+        "timeout_ms": {
+          "default": 1000,
+          "maximum": 1000,
+          "minimum": 1,
+          "title": "Timeout Ms",
+          "type": "integer"
+        }
+      },
+      "title": "AnalysisLimits",
+      "type": "object"
+    },
+    "CounterfactualResult": {
+      "$defs": {
+        "AnalysisResult": {
+          "additionalProperties": false,
+          "properties": {
+            "operation": {
+              "title": "Operation",
+              "type": "string"
+            },
+            "graph": {
+              "title": "Graph",
+              "type": "string"
+            },
+            "municipality_id": {
+              "const": "demo-city",
+              "default": "demo-city",
+              "title": "Municipality Id",
+              "type": "string"
+            },
+            "graph_revision": {
+              "title": "Graph Revision",
+              "type": "integer"
+            },
+            "as_of": {
+              "title": "As Of",
+              "type": "string"
+            },
+            "include_candidates": {
+              "title": "Include Candidates",
+              "type": "boolean"
+            },
+            "rows": {
+              "items": {
+                "$ref": "#/$defs/AnalysisRow"
+              },
+              "title": "Rows",
+              "type": "array"
+            },
+            "nodes": {
+              "items": {
+                "$ref": "#/$defs/NodeRecord"
+              },
+              "title": "Nodes",
+              "type": "array"
+            },
+            "edges": {
+              "items": {
+                "$ref": "#/$defs/EdgeRecord"
+              },
+              "title": "Edges",
+              "type": "array"
+            },
+            "paths": {
+              "items": {
+                "$ref": "#/$defs/ProofPath"
+              },
+              "title": "Paths",
+              "type": "array"
+            },
+            "truncated": {
+              "title": "Truncated",
+              "type": "boolean"
+            },
+            "search_limited": {
+              "title": "Search Limited",
+              "type": "boolean"
+            },
+            "gaps": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Gaps",
+              "type": "array"
+            },
+            "reservations": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Reservations",
+              "type": "array"
+            },
+            "budgets": {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "title": "Budgets",
+              "type": "object"
+            },
+            "measurements": {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "title": "Measurements",
+              "type": "object"
+            }
+          },
+          "required": [
+            "operation",
+            "graph",
+            "graph_revision",
+            "as_of",
+            "include_candidates",
+            "rows",
+            "nodes",
+            "edges",
+            "paths",
+            "truncated",
+            "search_limited",
+            "gaps",
+            "reservations",
+            "budgets",
+            "measurements"
+          ],
+          "title": "AnalysisResult",
+          "type": "object"
+        },
+        "AnalysisRow": {
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "title": "Id",
+              "type": "string"
+            },
+            "related_ids": {
+              "default": [],
+              "items": {
+                "type": "string"
+              },
+              "title": "Related Ids",
+              "type": "array"
+            },
+            "factors": {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "boolean"
+                  }
+                ]
+              },
+              "title": "Factors",
+              "type": "object"
+            },
+            "path_ids": {
+              "default": [],
+              "items": {
+                "type": "string"
+              },
+              "title": "Path Ids",
+              "type": "array"
+            },
+            "gaps": {
+              "default": [],
+              "items": {
+                "type": "string"
+              },
+              "title": "Gaps",
+              "type": "array"
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "title": "AnalysisRow",
+          "type": "object"
+        },
+        "EdgeRecord": {
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "title": "Id",
+              "type": "string"
+            },
+            "kind": {
+              "title": "Kind",
+              "type": "string"
+            },
+            "source": {
+              "title": "Source",
+              "type": "string"
+            },
+            "target": {
+              "title": "Target",
+              "type": "string"
+            },
+            "properties": {
+              "type": "object",
+              "additionalProperties": {
+                "$ref": "#/$defs/JsonValue"
+              },
+              "title": "Properties"
+            }
+          },
+          "required": [
+            "id",
+            "kind",
+            "source",
+            "target",
+            "properties"
+          ],
+          "title": "EdgeRecord",
+          "type": "object"
+        },
+        "JsonValue": {},
+        "NodeRecord": {
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "title": "Id",
+              "type": "string"
+            },
+            "kind": {
+              "title": "Kind",
+              "type": "string"
+            },
+            "labels": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Labels",
+              "type": "array"
+            },
+            "properties": {
+              "type": "object",
+              "additionalProperties": {
+                "$ref": "#/$defs/JsonValue"
+              },
+              "title": "Properties"
+            }
+          },
+          "required": [
+            "id",
+            "kind",
+            "labels",
+            "properties"
+          ],
+          "title": "NodeRecord",
+          "type": "object"
+        },
+        "ProofPath": {
+          "additionalProperties": false,
+          "properties": {
+            "node_ids": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Node Ids",
+              "type": "array"
+            },
+            "edge_ids": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Edge Ids",
+              "type": "array"
+            },
+            "directions": {
+              "items": {
+                "enum": [
+                  "OUTGOING",
+                  "INCOMING"
+                ],
+                "type": "string"
+              },
+              "title": "Directions",
+              "type": "array"
+            },
+            "evidence_ids": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Evidence Ids",
+              "type": "array"
+            },
+            "context": {
+              "additionalProperties": {
+                "$ref": "#/$defs/JsonValue"
+              },
+              "title": "Context",
+              "type": "object"
+            },
+            "id": {
+              "title": "Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "node_ids",
+            "edge_ids",
+            "directions",
+            "evidence_ids",
+            "id"
+          ],
+          "title": "ProofPath",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "source_graph": {
+          "title": "Source Graph",
+          "type": "string"
+        },
+        "clone_graph": {
+          "title": "Clone Graph",
+          "type": "string"
+        },
+        "source_fingerprint": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              }
+            ]
+          },
+          "title": "Source Fingerprint",
+          "type": "object"
+        },
+        "source_unchanged": {
+          "title": "Source Unchanged",
+          "type": "boolean"
+        },
+        "clone_initial_revision": {
+          "title": "Clone Initial Revision",
+          "type": "integer"
+        },
+        "clone_created_at": {
+          "title": "Clone Created At",
+          "type": "string"
+        },
+        "clone_creation_wall_seconds": {
+          "title": "Clone Creation Wall Seconds",
+          "type": "number"
+        },
+        "changes": {
+          "items": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "title": "Changes",
+          "type": "array"
+        },
+        "before": {
+          "$ref": "#/$defs/AnalysisResult"
+        },
+        "after": {
+          "$ref": "#/$defs/AnalysisResult"
+        },
+        "lost_path_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Lost Path Ids",
+          "type": "array"
+        },
+        "gained_path_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Gained Path Ids",
+          "type": "array"
+        },
+        "before_ranking": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Before Ranking",
+          "type": "array"
+        },
+        "after_ranking": {
+          "items": {
+            "type": "string"
+          },
+          "title": "After Ranking",
+          "type": "array"
+        },
+        "reservation": {
+          "default": "Hypothetical topology intervention only; not an inspection, hydraulic simulation or proof of cause.",
+          "title": "Reservation",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_graph",
+        "clone_graph",
+        "source_fingerprint",
+        "source_unchanged",
+        "clone_initial_revision",
+        "clone_created_at",
+        "clone_creation_wall_seconds",
+        "changes",
+        "before",
+        "after",
+        "lost_path_ids",
+        "gained_path_ids",
+        "before_ranking",
+        "after_ranking"
+      ],
+      "title": "CounterfactualResult",
+      "type": "object"
+    }
+  },
+  "semantics": {
+    "max_hops": "total edges of each returned graph path; shared downstream AFFECTS consumes1, no implicit expansion",
+    "physical_default": "VERIFIED plus dated attributed evidence; explicit candidate mode allows VERIFIED/CANDIDATE/REPORTED",
+    "topology": "DRAINS_TO for reachability/impact/criticality/shared; DRAINS_TO|UNDERLIES|COLLECTED_BY for dependency and bounded weak component context; no LOCATED_AT-derived physical connection",
+    "criticality": "distinct reachable downstream infrastructure assets within budget, excluding origin; rank descending count then stable ID; not causal confidence",
+    "shared": "distinct selected incidents reaching asset within total-hop budget; rank coverage descending then maximum path hops ascending then stable ID",
+    "components": "weak components of induced bounded export; direction ignored only for component membership, not physical flow",
+    "dag": "DEPENDS_ON dependent->prerequisite; Kahn prerequisites first; only exported DAG validated, external/unexported context qualified",
+    "case_ranking": [
+      "shared_asset_count DESC",
+      "drainage_dependency_asset_count DESC",
+      "shared_cluster_count DESC",
+      "same_zone DESC",
+      "same_issue DESC",
+      "started_at DESC",
+      "id ASC"
+    ],
+    "case_filters": "explicit issue/zone/after/before filters; seed-derived issue/zone are ranking context; historical upper bound min(before,seed.started_at); no inferred resolution from asset context",
+    "case_paths": "each factor path separately bounded; drainage neighborhood subtracts candidate AFFECTS1 and optional seed AFFECTS1; independently returned zone/cluster paths are not concatenated into invented connections",
+    "truncated": "path/node/edge/row caps; counts/ranks lower bounds; separate from hop/time/proof limitations",
+    "search_limited": "always true for these bounded primitives; empty does not prove global absence",
+    "read_consistency": "pre/post revision and pending-state checks; at most2 attempts within shared query/wall/compute budgets; privileged raw writers outside general revision guarantee",
+    "counterfactual": "fresh factory-owned B05 UUID clone, complete120node/200edge snapshot; repo-fenced CAS/intent/audit removal of verified DRAINS_TO only and explicit candidate addition; source fingerprint unchanged; no city evidence promotion",
+    "product_boundary": "internal primitives, not MCP envelopes, causal verdicts, memory, plans or operational workflows"
+  },
+  "dependencies_not_completed": [
+    "B06/B07 MCP and trace contracts",
+    "B08 recurrence/source associations",
+    "B09 physical evidence/hypotheses",
+    "B11 source ownership/version/PDF",
+    "B19 binding/history/release/runtime isolation"
+  ]
+}

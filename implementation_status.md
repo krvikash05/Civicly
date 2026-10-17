@@ -1,8 +1,8 @@
 # implementation_status.md — Current implementation truth
 
-## Current status — B04, 2026-10-17 (takes precedence over history)
+## Current status — B05, 2026-10-17 (takes precedence over history)
 
-B04 implemented and tested:strict conversion/provenance, repository-only resumable import, isolated full-city858nodes/1246edges;258 PASS (189 unit/69 real integration),0 FAIL/0 SKIP; both SPEC validators PASS. Canonical0001 and original B01 evidence preserved. No MCP/agent/GraphRAG/operations/API/frontend capability claimed complete. STOP for human B04 review.
+B05 implemented/tested:bounded graph algorithms, transparent historical case retrieval, factory-owned counterfactuals and actual-city/source-dependency reports.309 PASS/0 FAIL/0 SKIP; both SPEC validators PASS. B04 data/registry/0001 and original B01/canonical evidence preserved. No causal scenario, agent/MCP/GraphRAG/operations/API/frontend capability claimed complete. STOP for human B05 review.
 
 ---
 
@@ -122,3 +122,40 @@ Per task, update: implemented paths, exact tests, pass/fail/skip, screenshots/lo
   B01-PERSISTENCE row preserved. Canonical0001 READY,91 index groups/182 constraints,
  0 domain nodes; Browser lifecycle HTTP200/storage checks PASS. Runtime evidence
   in B04-retained-post-recreation.json, B04-runtime.json and B04-canonical-status.json.
+
+## B05 implemented and verified | 2026-10-17
+- Eight new app/graph/analysis modules:typed models/fixed reader, deterministic
+  reachability/shared/impact/criticality/components/dependencies/task DAG, historical
+  retrieval, owned counterfactuals, city evaluator/review CLI. New algorithm contract,
+  purpose-built fixture,29 unit +22 real integration cases, benchmark/review packager.
+  Baseline8aaf17c local only; source changes uncommitted for review, no push.
+- Existing physical registry v3, migration0001, graph access/ingestion contracts,
+  B04 city/legacy fixtures/generator/pins and all prior258 tests unchanged. No source
+  writes by algorithms/evaluation/benchmark; cloned mutations retain fence/CAS/intent/
+  audit/proof safeguards. Exact clone ledger/source hashes checked before/after.
+- Actual controlled source29nodes/28edges revision/audit57 preserved. Remove CUT:
+  reachability D1:D2/D3/D5→D2; criticality D1(3),D4(2)→D4(2),D1(1); impact D2:D3/D5→none;
+  shared bottlenecks D2/D3/D5→D2. Candidate replacement restores exploratory only;
+  verified-only stays changed. Nearby/expired/future-proof negatives validated.
+- City858nodes/1246edges revision/audit2104 unchanged. Verified physical drainage
+  empty; all42 DRAINS_TO candidate. Exploratory D12→D18 and1 ROAD-R08 inspection
+  context available. No historical WorkOrder/AgentDecision/InterventionOutcome chain.
+  All12 provide some weak/exploratory context,0 verified causal scenario readiness.
+- Actual-city dependency report:4 broader investigative asset sets;8 starting-asset
+  conflicts requiring author confirmation;6 primary-cluster conflicts;3 unspecified
+  contexts.55 Observations unlinked/S07 topology missing/schedule+document gaps remain
+  for B08/B09/B11/B19. No automatic source correction or verification promotion.
+- Final309 PASS (218 unit/91 real integration),0 FAIL/0 SKIP; both SPEC validators PASS.
+ 260 read-only benchmark analyses across26 workloads:internal wall medians2.743–27.628ms;
+  complete small clone2.318s including migration/copy/verification. Not global-city
+  centrality, statistical SLA, hydraulic proof, live agent latency or memory peak.
+- B06 is proposed official MCP read-only client/server/tool allowlist/auth verification
+  only after human acceptance. No MCP, LangGraph/GraphRAG, full memory, planning,
+  approvals, operations, domain API/frontend implemented. All18 requirements retained.
+- Post-final-recreation verification PASS:accepted city full content/audit/writer-state
+  hashes identical to B05 baseline;2104 records/revision/audit. Retained controlled
+  source57 unchanged and owned clone59 retained. Original B01-PERSISTENCE row intact;
+  canonical0 domain nodes/0001 READY/91 index groups/182 OPERATIONAL constraints.
+  See B05-post-lifecycle.json and B05-canonical-status.json. Review ZIP integrity/
+  actual-source bytes/secret audit PASS; isolated extraction imports its own source
+  and reproduces51 focused B05 tests PASS in88.60s. No source/volume reset.
