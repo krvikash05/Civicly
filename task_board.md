@@ -1,5 +1,9 @@
 # task_board.md — Human-reviewed task queue
 
+## Current status — B06, 2026-10-17 (takes precedence over history)
+
+B05 externally accepted; local baseline6550d31. B06 PASS — human review pending.361 tests PASS/0 FAIL/0 SKIP (255 unit/106 real integration), both SPEC validators PASS. Real official MCP initialize/list/call, security/recovery and retained evidence verified after recreation. B07 TODO; no B07+ work.
+
 ## Current status — B05, 2026-10-17 (takes precedence over history)
 
 B04 externally accepted. B05 PASS — human review pending.309 tests PASS (218 unit/91 real integration),0 FAIL/0 SKIP; both SPEC validators PASS. Controlled ablation, actual-city diagnostics and260 read-only performance runs recorded. Next B06 TODO; no MCP implementation started.
@@ -97,3 +101,23 @@ working scenario, agent, MCP or operations capability. STOP for human B04 review
 Human checks before/after criticality/paths/source fingerprints, city verified vs
 exploratory distinction, data dependency matrix, exact test counts and ZIP manifest.
 No full product requirement is completed just by graph primitives. STOP after B05.
+
+## B06 review ledger | 2026-10-17
+
+| Task | State | Human accepted? | Boundary |
+|---|---|---|---|
+| B05 | PASS | Yes | Accepted by B06 authorization; local baseline6550d31 |
+| B06 | IN_PROGRESS | No | Actual official MCP/private stdio/broker/ACL/traces; final regression pending |
+| B07 | TODO | No | Custom Civicly Python MCP typed read tools/service-call boundary and common traces only after review |
+
+B06 does not implement18 custom handlers, model selection, LangGraph/GraphRAG,
+operations/API/frontend. Stop at human B06 gate; all18 objectives remain mandatory.
+
+## B06 final gate (supersedes in-progress ledger) | 2026-10-17
+
+| Task | State | Human accepted? | Evidence |
+|---|---|---|---|
+| B06 | PASS — review pending | No |361 PASS; actual official MCP, explicit broker/ACL negatives, restart/recovery, unchanged retained evidence; both SPEC validators |
+| B07 | TODO | No | Custom Python MCP typed read tools/shared services/common envelope/traces; only after acceptance |
+
+All18 requirements retained, not fulfilled by this runtime foundation. No B07+ work.

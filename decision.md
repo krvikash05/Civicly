@@ -427,3 +427,84 @@ Decisions are recorded chronologically. Codex must append an entry whenever a si
   zone regression; retain partial/lower-bound flags and exact proof path references.
 - Matching indexes O(E+C) before sorting/context association; extra work metered.
   Re-run final-code evidence/performance and complete regressions after this fix.
+
+### DEC-022 — B06 runtime boundary before implementation | 2026-10-17
+- B05 externally accepted; local baseline6550d31108c34db6bb0bd5c111c7a41d09953125,
+ 57 files committed after263-file secret/exclusion/source audit; no push. Historical
+ patch/failed-test logs have whitespace warnings, preserved as exact evidence.
+ Baseline regression running against unchanged B05; final observed result recorded
+ separately before acceptance. B06 supports R04/R07/R09/R15, completes none of R01–R18.
+- Official published @falkordb/mcpserver1.3.0 (Node>=18/npm>=8) inspected from npm
+ tarball; Node24.21.0/npm12.2.0 tested. Python MCP2.3.0 isolated spike successfully
+ negotiates2025-11-25, lists7 tools and reads parameterized DRAIN-D12 from real city.
+ Upstream main documentation may differ from release; tested package source controls.
+- Select official supported stdio child-process transport for the local monolith,
+ instead of default planned Docker HTTP. No TCP MCP listener/API key; private OS
+ pipes and process ownership are transport access boundary. HTTP bearer tests are
+ NOT APPLICABLE to this transport, not claimed passing. HTTP remains a future choice
+ requiring new authenticated/private-network evidence. No custom B07 server added.
+- Add separate least-privilege DB account: one exact accepted B04 graph key, PING,
+ GRAPH.RO_QUERY, CLIENT SETINFO only. Real spike proves key/GRAPH.QUERY denial and
+ GRAPH.RO_QUERY rejects mutation. Provision via trusted setup, persist only generated
+ mode0600 credential file in ignored.runtime; ACL must be reprovisioned after DB
+ recreation (no change to existing volumes/default developer account).
+- Enable BOTH official DEFAULT_READONLY and STRICT_READONLY. Broker denies general
+ query/delete/list_graphs; list_graphs would leak unrelated key names. Only four
+ read tools considered, parameterized query restricted to named fixed templates,
+ sampled schema capped and registry-validated labels/types. No arbitrary Cypher,
+ resource/prompt/session/credential capability exposed to future agent interface.
+- Trace actual server/tool/schema/inventory identity, sanitized argument hash,
+ start/end/latency/status/result counts/revision when observed. No fabricated model
+ rationale; graph-backed common envelope/persistence remains B07/B17 per DEC-004.
+- Risks: privileged local administrator still can bypass code; field-level metadata
+ access and query complexity are broker-enforced; database account prevents writes
+ and other graph keys even via raw official session. Local OS process is trusted,
+ no sandbox claim. No dataset/core repository/registry/0001 modification. Tests:
+ original309, new unit+real MCP discovery/calls/negatives/lifecycle/recovery/malformed
+ handling, independent Python read/full city fingerprint, both SPEC validators.
+ Human checks exact returned identities/candidate evidence, denied tool/graph/write,
+ sanitized traces, process cleanup and unchanged retained B01/B04/B05 evidence.
+
+### DEC-023 — B06 observed compatibility and temporal strictness | 2026-10-17
+- Baseline309 PASS/0 FAIL/0 SKIP in261.78s; both SPEC validators PASS. Fresh full-city
+  record/audit/writer hash, retained B05 source/clone and B01 probe equal B05 evidence;
+  canonical0001 READY. Initial harness missing graph_name failed TypeError, corrected.
+- First authenticated official startup timed out: both official Python and Node
+  clients use INFO for Sentinel detection. Add only INFO to the planned ACL command
+  set; no broader category grant. Reconfigured real proof PASS. Python2.3.0 SDK
+  adds pinned MCP/types2.3.0 dependencies without changing original direct pins;
+  Node lock resolves falkordb6.8.0 and @modelcontextprotocol/sdk1.32.1, actually tested
+  against database6.0.2. INFO server metadata is not exposed through broker tools.
+- Verify exact7 discovered names and all observed JSON-schema hashes against new
+  official_mcp.json. Four tools exposed through strict broker shapes; never pass
+  arbitrary Cypher. Raw received count differs from final validated-call count in
+  traces. Unknown schema/property/scope/endpoint values fail closed. Only storage
+  labels deliberately filtered; source records are not silently transformed.
+- Review caught direct UTC string precision comparison in new B06 template before
+  acceptance. Reuse existing B03 GraphQueries._time_key and normalize supplied as_of
+  to microsecond precision. Actual retained edge tests equivalent .962Z/.962000Z and
+  one microsecond earlier without changing data. No B03/B05 temporal contract weakened.
+- Malformed output handling has mocked unit cases plus an explicitly labeled local
+  fault injection AFTER actual official MCP read; this does not assert an upstream
+  server defect or fabricate an integration success. Missing/wrong DB auth proven
+  by no successful initialization; stdio has no HTTP bearer auth. No B07 work.
+
+### DEC-024 — B06 final evidence and review gate | 2026-10-17
+- Final complete B01–B06 command361 PASS/0 FAIL/0 SKIP in329.97s,255 unit/106 real
+  integration (B06 adds37 unit/15 real cases, including explicit local output-fault
+  injection after real read). Original309 source tests unchanged. Both SPEC validators
+  PASS; npm ci frozen install/pip check/compile/whitespace and actual-secret audit PASS.
+- Actual DB same-container restart AND different-container recreation retain named
+  volumes; Browser HTTP200/storage checks PASS. Reprovisioned volatile B06 ACL, reran
+  real MCP proof afterwards PASS. Fresh full2104 city record hashes/revision/audit/
+  writer fingerprint, original B01 probe and retained B05 source57/clone59 match
+  accepted evidence. Canonical0001 remains READY,91 index groups/182 constraints
+  OPERATIONAL; no seed/promote/delete/volume reset or immutable migration/registry edit.
+- Exact source/files/diff/evidence in B06-FILES.md/B06-changes.patch/B06-RESULTS.md and
+  command guide. No B06 ZIP generated; B05 ZIP unchanged. No B06 commit/push requested;
+  B06 diff remains reviewable against accepted B05 local6550d31.
+- B06 complete at official runtime/broker foundation only. Remaining DEC-004 findings
+  retain designated tasks. Proposed B07: custom Civicly Python MCP for implemented
+  typed read capabilities, shared service boundary/common envelope and trace-contract
+  synchronization, real discovery/call/provenance/error/permission tests. No B08+
+  complaint/agent/GraphRAG/operational/API/frontend features started. STOP for review.

@@ -41,3 +41,12 @@ GraphRAG SDK documents its own schema and graph storage. We deliberately isolate
 7. Canvas data mapping later with sanitized stable graph subgraph DTO.
 
 Write confirmed versions and compatibility decisions into `decision.md` with a `test_log.md` command. If incompatible, explore updated official adapter rather than silently switching to unrelated DB or omitting functionality.
+
+### B06 release verification (2026-10-17)
+Published @falkordb/mcpserver1.3.0 source verified via npm tarball/locked install.
+Both stdio and HTTP exist; B06 selects private stdio (no listener/API key), graph ACL
+and explicit four-tool broker. Release strictReadOnly also rejects readOnly=false
+and delete_graph; default alone remains insufficient. list_graphs is deliberately
+denied for inventory privacy. Python MCP2.3.0 negotiated2025-11-25 with actual server.
+See backend/MCP.md and docs/evidence/B06-runtime-proof.json for operational evidence;
+main documentation examples are not assumed to match the pinned release.

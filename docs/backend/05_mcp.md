@@ -1,7 +1,7 @@
 # Runtime MCP integration contract (not Codex's tools)
 
 ## Servers, clients and network boundary
-- **Official FalkorDB MCP server**: documented `@falkordb/mcpserver`, Node-based stdio or HTTP. For local Docker use Streamable HTTP behind internal Docker network, API key plus read-only backend credentials when available; environment `FALKORDB_DEFAULT_READONLY=true`. Nevertheless `query_graph` may permit per-call readOnly override; **present only allowlisted** `list_graphs`, `get_graph_schema`, `get_node_schema`, `get_relationship_schema`, `query_graph_readonly` to the model and reject other tool calls at broker. The dedicated `query_graph_readonly` executes read-only query. Restrict graph name and query length/complexity; parameterize values.
+- **Official FalkorDB MCP server**: documented `@falkordb/mcpserver`, Node-based stdio or HTTP. For a future Docker HTTP deployment use Streamable HTTP behind an internal network with API key and read-only backend credentials. B06 uses private parent-owned stdio with no HTTP listener (see backend/MCP.md and DEC-022); environment `FALKORDB_DEFAULT_READONLY=true`. Nevertheless `query_graph` may permit per-call readOnly override; **present only allowlisted** `get_graph_schema`, `get_node_schema`, `get_relationship_schema`, `query_graph_readonly` (B06 denies `list_graphs` because it reveals unrelated internal graph names) to the model and reject other tool calls at broker. The dedicated `query_graph_readonly` executes read-only query. B06 also enables the verified release1.3.0 `FALKORDB_STRICT_READONLY=true` and graph-scoped DB ACL; neither flag replaces broker authorization. Restrict graph name and query length/complexity; parameterize values.
 - **Custom Civicly Python MCP server**: built using official Python MCP SDK/verified version, same protected private network. Typed civic read tools and proposal/write tools. Domain state-changing tools call service layer with caller actor context, never trust LLM-supplied identity or approval.
 - **Runtime broker**: authenticated MCP sessions; calls `tools/list` and `tools/call` (check actual SDK APIs), accepts JSON Schema tool description, maps validation/authorization, applies <= N tool calls/budget and concurrent requests constraints, emits graph-backed ToolExecution trace. For demo, no public MCP URL without auth.
 
@@ -47,3 +47,16 @@ All normative machine contracts reference this same municipality_scope policy.
 This is one synthetic municipality, not enterprise tenant isolation. Legacy v1/v2
 fixtures require explicit conversion before canonical import; no implicit scope,
 unknown-field dropping, or invented temporal evidence is permitted.
+
+## B06 implemented official-client contract
+Current implemented scope is `contracts/official_mcp.json` and `backend/MCP.md`.
+Actual official server1.3.0/Python SDK2.3.0 stdio initialize/tools/list/tools/call,
+four allowlisted read tools, fixed bounded value-parameterized templates, exact B04
+graph authorization and graph-scoped DB ACL. INFO is necessary for Node client
+Sentinel detection; no general command/admin rights. Local parent-owned pipes are
+the transport authentication boundary; HTTP bearer tests are not applicable here.
+No custom Civicly tool handlers or agent exist yet. B06 process-local sanitized traces
+and operator JSON evidence do not fulfill B07/B17 graph-backed common envelope/trace
+persistence. Existing custom18-tool contracts and all remaining DEC-004 findings stay
+binding for their designated milestones. Agent interfaces receive broker schemas,
+never upstream arbitrary Cypher/session/credential capabilities.

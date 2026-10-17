@@ -1,5 +1,9 @@
 # test_log.md — Append-only verification record
 
+## Current status — B06, 2026-10-17 (takes precedence over history)
+
+Final B01–B06 regression361 PASS/0 FAIL/0 SKIP in329.97s:255 unit/106 real database/MCP integration. B06 adds37 unit+15 real cases; all original309 tests retained unchanged. Both SPEC validators PASS. Post-recreation MCP proof/independent read, full retained fingerprints and canonical readiness PASS. HTTP bearer auth not applicable to private stdio; no live model test.
+
 ## Current status — B05, 2026-10-17 (takes precedence over history)
 
 Final B01–B05 regression309 PASS /0 FAIL /0 SKIP in246.23s:218 unit/91 real integration including real restart/recreation. B05 adds29 unit +22 real cases; all prior258 retained. Both SPEC validators PASS.260 measured read-only analyses and actual controlled/city outputs recorded; failed intermediate attempts retained below.
@@ -517,3 +521,65 @@ PY
 - Full repository remains309 PASS; focused51 are a reproducibility recheck, not
  additional unique tests. Final manifest lists every included file's purpose/SHA256
  and omitted dependencies. All prior B01–B04 tests/source/data/pins remain unchanged.
+
+### TEST-20261017-B06-01 — Accepted B05 baseline / source / dependency spike
+- Baseline `backend/.venv/bin/python -m pytest backend/tests -v -s --run-persistence`:
+ 309 PASS/0 FAIL/0 SKIP in261.78s. Both SPEC validators PASS.263-file existing-source
+ secret/exclusion/hash audit PASS; B05 ZIP SHA unchanged. Local commit6550d31108c34db6bb0bd5c111c7a41d09953125,
+ no push. Historical patch/failed-log whitespace warnings retained unchanged.
+- Fresh full-city record/hash/audit/writer checks, retained B05 source/clone, original
+ B01 probe and canonical0001 READY PASS (B06-baseline.json). First harness omitted
+ required graph_name and failed TypeError; corrected harness, no application change.
+- Official published1.3.0 package source inspected; Node24.21.0/npm12.2.0, Python
+ MCP/types2.3.0. Isolated actual handshake2025-11-25/list7/readD12 PASS. First raw ACL
+ Python-client probe required INFO; retried raw Redis command probe; no graph writes.
+ Node dependency lock6.8.0/TS SDK1.32.1 verified against6.0.2. Frozen npm ci and pip
+ check PASS; full version/lock/integrity evidence B06-versions.json.
+
+### TEST-20261017-B06-02 — Real MCP and strengthened negative tests
+- First authenticated project proof failed TIMEOUT because minimum ACL omitted INFO,
+ required by Node Sentinel detection. Added only INFO, reran configure/proof PASS.
+ Real node/schema/relationship reads match independent official Python client, actual
+ revision2104.7 discovered/4 allowed;42 city drainage links remain CANDIDATE.
+- Initial30 unit PASS in2.06s; strengthened37 unit PASS in0.62s. Mocked malformed
+ outputs/schema/scope/property/endpoint/revision/pending faults explicitly labeled.
+- First real integration13 PASS in45.18s; strengthened signatures/auth test13 PASS
+ in48.90s. Missing/wrong auth test ensures initialization never succeeds; no own-assert
+ false-positive accepted. Actual kill/fresh reconnect, SIGSTOP timeout/cleanup,
+ CREATE/SET/DELETE RO denial, strict-mode/general/delete rejection, ACL/write/key/list/
+ admin denials, invalid args, spoofed tools, parameter injection and call budgets PASS.
+- Temporal review reused B03 UTC normalization. Actual retained edge equivalent
+ fractional dates and prior-microsecond boundary PASS; focused37unit+14real=51 PASS
+ in49.92s. Additional AFTER-REAL-READ local unknown-property corruption/reconnect1
+ PASS in5.38s; explicit fault injection, not claim of malformed upstream response.
+- HTTP bearer authentication NOT APPLICABLE to selected private stdio; not reported
+ passing/skipped. No live model/agent/custom MCP server test exists in B06.
+- First final-audit invocation under the filesystem sandbox could not execute ps
+  (PermissionError); rerun with authorized local process inspection PASS. This was a
+  tool-permission failure, not a passed cleanup check or application regression.
+ 86 protected original app/test/contract/ingestion files unchanged; no local secret
+ values included; original dependency pins and B05 ZIP hash retained.
+
+### TEST-20261017-B06-03 — Complete final regression, persistence and source safety
+- Final `backend/.venv/bin/python -m pytest backend/tests -v -s --run-persistence`:
+ **361 PASS/0 FAIL/0 SKIP in329.97s**.255 unit/106 real integration. B06 adds37 unit/
+ 15 real DB/MCP cases; all prior309 tests/source unchanged. Two lifecycle PASS lines
+ are standalone because tests emit actual restart/recreation output;106 integration
+ count includes them. Full log B06-regression-tests.txt; no mock counted as real proof.
+- Both SPEC validators PASS after final docs, explicitly STATIC checks. npm ci lock
+ reinstall110 packages PASS, pip check PASS, compile/whitespace PASS. Python/Node
+ lock/package/version/integrity evidence B06-versions.json; no original direct-pin change.
+- Actual persistence: same-container restart + different-container recreation,
+ Browser HTTP200/store and fresh graph MATCH PASS, no volume removal. Reprovision
+ B06 ACL after recreation; real configure/proof PASS again, independent official
+ Python read equal, DRAIN-D12 and D12→D18 CANDIDATE at actual revision2104.
+- `PYTHONPATH=backend backend/.venv/bin/python -m tests.b06_verify --output docs/evidence/B06-post-lifecycle.json`:
+ PASS all2104 city record hashes/content/revision/audit/writer state, B05 source57/
+ clone59 and original B01 probe exactly retained. Fresh CLI health/schema-status PASS;
+ canonical0001 READY,91 index groups/182 OPERATIONAL constraints. No raw data edit.
+- Actual-local.env/.runtime secret/excluded-path/old-file/old-pin/B05-ZIP/process audit
+ PASS;86 original protected files unchanged, no leaked official child processes. No
+ B06 ZIP created or remote push. Reviewable source patch/file inventory produced.
+- HTTP bearer tests NOT APPLICABLE to stdio; live LLM, custom domain MCP, agents,
+ GraphRAG, operations/API/frontend NOT IMPLEMENTED/NOT RUN in B06; not skipped runtime
+ acceptance tests. Remaining source/DEC-004 findings stay OPEN. STOP for human review.

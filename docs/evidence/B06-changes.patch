@@ -1,0 +1,3564 @@
+diff --git a/.gitignore b/.gitignore
+index e71e92e..52ddd4e 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -14,3 +14,6 @@ backend/test-results/
+ # External review distributions and extracted review copies are not source baselines.
+ review_packages/
+ Civicly_B03_Review/
++# B06 private runtime dependencies and generated credentials.
++node_modules/
++.runtime/
+diff --git a/Makefile b/Makefile
+index 10adb6b..a8f18e6 100644
+--- a/Makefile
++++ b/Makefile
+@@ -30,3 +30,13 @@ down:
+ 
+ test-repositories:
+ 	$(VENV)/python -m pytest backend/tests/unit/test_graph_access_models.py backend/tests/integration/test_graph_access.py -v
++
++.PHONY: mcp-setup mcp-configure mcp-proof test-mcp
++mcp-setup:
++	npm ci --prefix backend/mcp_runtime --ignore-scripts --no-audit --no-fund
++mcp-configure:
++	PYTHONPATH=backend $(VENV)/python -m app.mcp configure
++mcp-proof: mcp-configure
++	PYTHONPATH=backend $(VENV)/python -m app.mcp proof --output docs/evidence/B06-runtime-proof.json
++test-mcp:
++	$(VENV)/python -m pytest backend/tests/unit/test_mcp_broker_policy.py backend/tests/integration/test_official_mcp.py -v -s
+diff --git a/README.md b/README.md
+index 8f8a458..9eb8a9b 100644
+--- a/README.md
++++ b/README.md
+@@ -1,11 +1,11 @@
+ # Civicly — Backend-First Codex Build System (v2.0)
+ 
+-**Status:** B04 externally accepted; B05 graph algorithms/case retrieval/counterfactuals implemented and tested, awaiting human review. The full civic AI application remains unimplemented. Current truth is in the engineering tracking files.
+-See [algorithm guide](backend/ALGORITHMS.md) for scope and real evidence.
++**Status:** B05 externally accepted; B06 official MCP runtime/broker implemented and tested, awaiting human review (361 tests PASS). The full civic AI application remains unimplemented. Current truth is in the engineering tracking files.
++See [algorithm guide](backend/ALGORITHMS.md) and [runtime MCP guide](backend/MCP.md) for scope and real evidence.
+ 
+ For the current Python 3.12/Docker setup, CLI health and verified persistence tests,
+ see [backend/README.md](backend/README.md) and [schema/recovery guide](backend/SCHEMA.md).
+-B00–B04 are accepted; B05 awaits human review; B06 has not started. The 18 objectives, remaining B00
++B00–B05 are accepted; B06 awaits human review; B07 has not started. The 18 objectives, remaining B00
+ contract findings and backend-first gates remain binding.
+ 
+ **Purpose:** Implement a genuinely agentic, FalkorDB-native, MCP-connected civic investigation system covering recurring WATERLOGGING, ROAD_DAMAGE and WASTE_ACCUMULATION, including interlinked failures, persistent memory, municipal knowledge, approved actions, progress tracking, and verifiable outcomes. Backend first; frontend last, but its data requirements are fixed now.
+diff --git a/backend/GRAPH_ACCESS.md b/backend/GRAPH_ACCESS.md
+index 5075239..3e2b45e 100644
+--- a/backend/GRAPH_ACCESS.md
++++ b/backend/GRAPH_ACCESS.md
+@@ -1,5 +1,9 @@
+ # B03 typed graph access
+ 
++Current: B03–B05 accepted; B04 explicit conversion/import and B05 algorithms exist.
++B06 official runtime broker uses this unchanged foundation; see [MCP.md](MCP.md).
++Historical phase-specific statements below describe their original task boundary.
++
+ This is a trusted internal graph adapter, not a public query endpoint or a complete
+ Civicly investigation engine. All 18 requirements remain in force. Registry v3
+ and migration 0001 are unchanged. B04 conversion/import is not implemented.
+diff --git a/backend/README.md b/backend/README.md
+index 6fc9dba..0dcd10c 100644
+--- a/backend/README.md
++++ b/backend/README.md
+@@ -1,13 +1,17 @@
+-# Backend foundation through B02
++# Backend foundation through B06
+ 
+-B01 is accepted. B02 adds canonical schema v3, strict validation and additive
+-migration 0001. See [SCHEMA.md](SCHEMA.md) for established constraints/indexes,
+-native enforcement limits, recovery, and the explicit legacy-fixture blocker.
++B01–B05 are accepted. B06 adds actual official MCP runtime/client integration
++(current verification status in tracking files). B02 supplies canonical schema v3,
++strict validation and immutable additive migration0001. See [SCHEMA.md](SCHEMA.md) for established constraints/indexes,
++native enforcement limits and recovery; [INGESTION.md](INGESTION.md) records B04
++explicit conversion and remaining source-quality gaps.
+ 
+ Implemented: validated configuration, official FalkorDB connection lifecycle,
+ foundation CLI health, and real database/Browser/persistence integration tests.
+-Domain services, migrations, MCP, agents, memory, GraphRAG, API routes and frontend
+-remain future microtasks. All 18 requirements remain binding.
++Schema/repositories/ingestion/algorithms are implemented. [MCP.md](MCP.md) describes
++B06 private stdio, locked official server, read-only DB ACL, broker and actual proof.
++Custom Civicly MCP/domain services, agents, memory, GraphRAG, API and frontend remain
++future microtasks. All 18 requirements remain binding.
+ 
+ From the repository root, with Python 3.12 and Docker Desktop running:
+ 
+diff --git a/backend/pyproject.toml b/backend/pyproject.toml
+index 8425928..bc53b33 100644
+--- a/backend/pyproject.toml
++++ b/backend/pyproject.toml
+@@ -13,6 +13,8 @@ dependencies = [
+     "fastapi==0.143.3",
+     "pydantic==2.14.1",
+     "pydantic-settings==2.16.0",
++    "mcp==2.3.0",
++    "jsonschema==4.26.0",
+ ]
+ 
+ [project.scripts]
+@@ -22,7 +24,6 @@ civicly = "cli.main:main"
+ dev = [
+     "pytest==9.1.1",
+     "httpx==0.28.1",
+-    "jsonschema==4.26.0",
+     "uv==0.13.1",
+ ]
+ 
+diff --git a/backend/uv.lock b/backend/uv.lock
+index be0fb8d..6657414 100644
+--- a/backend/uv.lock
++++ b/backend/uv.lock
+@@ -51,6 +51,29 @@ wheels = [
+     { url = "https://files.pythonhosted.org/packages/0b/a7/71ac2cff56fec219ed242bb11b8efb69fcc4bec75db06fb7bfe35de520e6/certifi-2026.7.22-py3-none-any.whl", hash = "sha256:62f22742b58a1a33014a2b6b706588a8d7e2a88ae7bd1a6ebe8c992928483775", size = 136983, upload-time = "2026-07-22T03:35:11.276Z" },
+ ]
+ 
++[[package]]
++name = "cffi"
++version = "2.1.1"
++source = { registry = "https://pypi.org/simple" }
++dependencies = [
++    { name = "pycparser", marker = "implementation_name != 'PyPy'" },
++]
++sdist = { url = "https://files.pythonhosted.org/packages/9e/ef/008a1939e372c06329a3fce4279c02f328488f3526744906eeec3da7ad5f/cffi-2.1.1.tar.gz", hash = "sha256:dd31f52ea1086513bb9df30f8fcee9b8918323ae067a3d5b78bc826a000712be", size = 530807, upload-time = "2026-08-03T21:21:18.939Z" }
++wheels = [
++    { url = "https://files.pythonhosted.org/packages/10/69/43965eccfdead3b9220015fd1320e117be8c6ed01a62ffab76eeb752f5d5/cffi-2.1.1-cp312-cp312-macosx_10_15_x86_64.whl", hash = "sha256:c8c69575568085ba0b1b10c0249d779a214aea6f6522e949a0fc9fb0fcb449d0", size = 184821, upload-time = "2026-08-03T21:19:44.887Z" },
++    { url = "https://files.pythonhosted.org/packages/54/7d/16e5a096677b5e313ca80cd5e5170efa3ea44624a82bb111925522da64b1/cffi-2.1.1-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:f81b3b8f3d4e343550fa4baa0e479bba9f2d29ce9c2e9b51d1ce1718d7442fcf", size = 184719, upload-time = "2026-08-03T21:19:46.129Z" },
++    { url = "https://files.pythonhosted.org/packages/56/e6/8941622732edec876dd17d0453dce07317ae96db34f2ec1436c9d3785986/cffi-2.1.1-cp312-cp312-manylinux1_i686.manylinux2014_i686.manylinux_2_17_i686.manylinux_2_5_i686.whl", hash = "sha256:811bd1e21d32de12efca32393a0ab3f5133b54fce9bd44b8bd77ab07da14bf6a", size = 214799, upload-time = "2026-08-03T21:19:47.218Z" },
++    { url = "https://files.pythonhosted.org/packages/44/de/f98430906df1545ffde0d543dd124a7a439bc2cd32b36b9c53f805df7333/cffi-2.1.1-cp312-cp312-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:68e62fe11f30d5ca8289242866f0a5291402d8529ca2178ab8afc5c9694ae890", size = 222389, upload-time = "2026-08-03T21:19:48.331Z" },
++    { url = "https://files.pythonhosted.org/packages/6a/5b/717f1526b9957b34456313c31645c5b82b8fb5c3fe9e4752999be7128bfc/cffi-2.1.1-cp312-cp312-manylinux2014_ppc64le.manylinux_2_17_ppc64le.whl", hash = "sha256:4a7c934f7360e8cd64fe9efadcbd10c7c6364f531e432b9a4bf5ccbc9e0e8b50", size = 210249, upload-time = "2026-08-03T21:19:49.543Z" },
++    { url = "https://files.pythonhosted.org/packages/64/b3/f8aa4f3e34986c7e4ec45072d1b1b9dd295b6b18007b45518d79726dd725/cffi-2.1.1-cp312-cp312-manylinux2014_s390x.manylinux_2_17_s390x.whl", hash = "sha256:3143d81e29e1e20a9ce10901ec369012947876596f75a222235965f2b7ae832e", size = 208775, upload-time = "2026-08-03T21:19:50.918Z" },
++    { url = "https://files.pythonhosted.org/packages/b1/db/dceb9dd5b231e1da801793f8acc9f3c52a7e1afe40bb1aae37e02b0faad5/cffi-2.1.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:c1453022f490d2459a11819d83ad1d586e9ff65a12ac3e705ffebd46d3685dcf", size = 221822, upload-time = "2026-08-03T21:19:52.054Z" },
++    { url = "https://files.pythonhosted.org/packages/a0/d2/6cd24ae3be000a634109c247d1475d62e5616d0dc78c82770942ec384248/cffi-2.1.1-cp312-cp312-musllinux_1_2_aarch64.whl", hash = "sha256:208f941bb9d18e768138677f0a6d2ce01f590df56043dda1df1535ac57c88517", size = 225232, upload-time = "2026-08-03T21:19:53.109Z" },
++    { url = "https://files.pythonhosted.org/packages/cb/52/3fa190537004dd7f0ab860a6dc7c0175b8667f68d1e618a46f5498d30250/cffi-2.1.1-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:210019b6c7cf07f081b4c54635c8cf744377001350e29cc0f81c4377b4797735", size = 223597, upload-time = "2026-08-03T21:19:54.515Z" },
++    { url = "https://files.pythonhosted.org/packages/80/fb/0bb75b7039588c074b37ae99f40d9bfddf990ecb2fbc346ebccd2e56b9be/cffi-2.1.1-cp312-cp312-win32.whl", hash = "sha256:046bfc24911b37851ee1b51aab8bffe713d89c68c6a057b09484ce9fd5f69b4e", size = 175292, upload-time = "2026-08-03T21:19:55.566Z" },
++    { url = "https://files.pythonhosted.org/packages/d9/79/615cc094e2fb508cade7de88d3b4f6c4ec2bab695c97bce9153dc65aadf5/cffi-2.1.1-cp312-cp312-win_amd64.whl", hash = "sha256:f53e442b08449d42821fa4a4fba000095af9f62742a500f978a9f557ec44339a", size = 185919, upload-time = "2026-08-03T21:19:56.89Z" },
++    { url = "https://files.pythonhosted.org/packages/70/c6/d0ea84713fe46b243a436a18fcd47d639732747e21635c8a27191b06dc30/cffi-2.1.1-cp312-cp312-win_arm64.whl", hash = "sha256:7bde5e4cc5c10140859842b9d383af292b22639a4dffb725314baf45968cef80", size = 180093, upload-time = "2026-08-03T21:19:58.155Z" },
++]
++
+ [[package]]
+ name = "civicly-backend"
+ version = "0.1.0"
+@@ -58,6 +81,8 @@ source = { editable = "." }
+ dependencies = [
+     { name = "falkordb" },
+     { name = "fastapi" },
++    { name = "jsonschema" },
++    { name = "mcp" },
+     { name = "pydantic" },
+     { name = "pydantic-settings" },
+     { name = "redis" },
+@@ -66,7 +91,6 @@ dependencies = [
+ [package.dev-dependencies]
+ dev = [
+     { name = "httpx" },
+-    { name = "jsonschema" },
+     { name = "pytest" },
+     { name = "uv" },
+ ]
+@@ -75,6 +99,8 @@ dev = [
+ requires-dist = [
+     { name = "falkordb", specifier = "==1.8.0" },
+     { name = "fastapi", specifier = "==0.143.3" },
++    { name = "jsonschema", specifier = "==4.26.0" },
++    { name = "mcp", specifier = "==2.3.0" },
+     { name = "pydantic", specifier = "==2.14.1" },
+     { name = "pydantic-settings", specifier = "==2.16.0" },
+     { name = "redis", specifier = "==8.1.0" },
+@@ -83,11 +109,19 @@ requires-dist = [
+ [package.metadata.requires-dev]
+ dev = [
+     { name = "httpx", specifier = "==0.28.1" },
+-    { name = "jsonschema", specifier = "==4.26.0" },
+     { name = "pytest", specifier = "==9.1.1" },
+     { name = "uv", specifier = "==0.13.1" },
+ ]
+ 
++[[package]]
++name = "click"
++version = "8.5.0"
++source = { registry = "https://pypi.org/simple" }
++sdist = { url = "https://files.pythonhosted.org/packages/c7/0e/7fa0ef50764b67090eca4114772a2abf8b6148198475e54c660b97caeee6/click-8.5.0.tar.gz", hash = "sha256:ba0d2089de75ea0310e2dde03160e6ca10009947fb95a182f9b54021bb272e34", size = 382235, upload-time = "2026-08-26T13:33:14.56Z" }
++wheels = [
++    { url = "https://files.pythonhosted.org/packages/58/50/6c0d534c5f134586a8e1ba4e330569e32f057e33372ae556463212fb4cd3/click-8.5.0-py3-none-any.whl", hash = "sha256:255bc9599cf7748b4b1a446ccc735421bd08a2ae529a8b88597d3de5664ee360", size = 125251, upload-time = "2026-08-26T13:33:12.928Z" },
++]
++
+ [[package]]
+ name = "colorama"
+ version = "0.4.6"
+@@ -97,6 +131,56 @@ wheels = [
+     { url = "https://files.pythonhosted.org/packages/d1/d6/3965ed04c63042e047cb6a3e6ed1a63a35087b6a609aa3a15ed8ac56c221/colorama-0.4.6-py2.py3-none-any.whl", hash = "sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6", size = 25335, upload-time = "2022-10-25T02:36:20.889Z" },
+ ]
+ 
++[[package]]
++name = "cryptography"
++version = "50.0.2"
++source = { registry = "https://pypi.org/simple" }
++dependencies = [
++    { name = "cffi", marker = "platform_python_implementation != 'PyPy'" },
++]
++sdist = { url = "https://files.pythonhosted.org/packages/9d/af/182eb91b0df3fe75c4d9f26fe70684569566745f6ba7e5c9c73a862c5252/cryptography-50.0.2.tar.gz", hash = "sha256:7b46165bb56eb4704e2eaaf86f3c940d19154535d9b0ca7d6d590b04060e00d5", size = 880623, upload-time = "2026-09-30T15:30:04.884Z" }
++wheels = [
++    { url = "https://files.pythonhosted.org/packages/e5/56/d194340cc4a57535e82e1bee9e89667ac4b7c13b5d3f59686deae3094dd5/cryptography-50.0.2-cp311-abi3-macosx_11_0_arm64.whl", hash = "sha256:fa8f5efb344d6908a1ce62f4a24e2e5780f825d6f53f5f50ec5ffacac72936cb", size = 3914904, upload-time = "2026-09-30T14:43:44.339Z" },
++    { url = "https://files.pythonhosted.org/packages/d9/69/c9bd862c3bf43d6399c433caf002df16e2dffd4be49bdf515cda38038711/cryptography-50.0.2-cp311-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:79def8d059362e7831389ed3be0ecdf58a89386e1271e35dd9f5af84e81bffd0", size = 4731146, upload-time = "2026-09-30T14:43:47.113Z" },
++    { url = "https://files.pythonhosted.org/packages/21/69/64cef1f702bf6657e0cc186ed1a2891d50d29fb41586b254e1c07adea261/cryptography-50.0.2-cp311-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:630ebfea3bf689d075f82316324ff7433dc447fe6bc1bfc76524b74b4a9567d2", size = 4719841, upload-time = "2026-09-30T14:43:49.01Z" },
++    { url = "https://files.pythonhosted.org/packages/38/6b/61a3f8d8c5e1e49a6cddccafc4015cc1c0021360ab0acb4080e7a423644a/cryptography-50.0.2-cp311-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:f9f6143a8c75945eb960d9eb98905a441394abfa24afaae239d514ffb2586480", size = 4738340, upload-time = "2026-09-30T14:43:50.932Z" },
++    { url = "https://files.pythonhosted.org/packages/7b/2e/7212ca32fd43dc91f2f41db20160b268098874b4c9a0e7be94d6835f5b2e/cryptography-50.0.2-cp311-abi3-manylinux_2_28_ppc64le.whl", hash = "sha256:a582ab2ae1d34f67112cadc86702774c9ea4374df6bca6afe672817203c99134", size = 5367029, upload-time = "2026-09-30T14:43:52.911Z" },
++    { url = "https://files.pythonhosted.org/packages/1a/f1/b474e930c4d910328780e3940da76f5aa5cbc48ce1fc14e44d239d9ea9db/cryptography-50.0.2-cp311-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:4061c0079120205fb760c58acab6443e217307dcf05e3702cf970e0689972856", size = 4753050, upload-time = "2026-09-30T14:43:55.272Z" },
++    { url = "https://files.pythonhosted.org/packages/7c/52/9af10e80ac16b0fcc2123f9cbd5e7afbd0fd5075bb7a607c592258a39cda/cryptography-50.0.2-cp311-abi3-manylinux_2_31_armv7l.whl", hash = "sha256:ac9ed99d81760c62fe89d5f0815cdfa1ba9a35141cf30f1c2d044f04b4803d2e", size = 4376724, upload-time = "2026-09-30T14:43:57.24Z" },
++    { url = "https://files.pythonhosted.org/packages/71/37/6202e488cc1eb625ea110c292c6bda92823176e023f427d8d5660ce8d632/cryptography-50.0.2-cp311-abi3-manylinux_2_34_aarch64.whl", hash = "sha256:87e9ce85beb6b328ba370cc6e6aea483c92617b4c95b1d33a49297eb662bfb04", size = 4737859, upload-time = "2026-09-30T14:43:59.541Z" },
++    { url = "https://files.pythonhosted.org/packages/8f/30/e86d7d518489b0ae2497091a35287abcb1a2ce4037837a34afbe9b1d6964/cryptography-50.0.2-cp311-abi3-manylinux_2_34_ppc64le.whl", hash = "sha256:f265528741e048bce55c3463ed721fb0aa45a5888d8add8cfeccb3035451bbdc", size = 5324103, upload-time = "2026-09-30T14:44:01.901Z" },
++    { url = "https://files.pythonhosted.org/packages/d3/69/2c833a049475e0a3444e94c7d0aca0aa51d166374a449b09e92ac98138de/cryptography-50.0.2-cp311-abi3-manylinux_2_34_x86_64.whl", hash = "sha256:9dab55f57c74c3cad24c323bacbbd04be4705ba6eb0d92e920b1fc4837ed5079", size = 4752576, upload-time = "2026-09-30T14:44:04.545Z" },
++    { url = "https://files.pythonhosted.org/packages/6c/5d/906970b83bbfc1f5bbfb677a143c181f2801f23b6a7204a3b47c42c97e65/cryptography-50.0.2-cp311-abi3-musllinux_1_2_aarch64.whl", hash = "sha256:25784ce8b9621c90c643efb9e1e2162ab3b0224cae446ad5e70e7fcb1ce18b51", size = 4870819, upload-time = "2026-09-30T14:44:06.884Z" },
++    { url = "https://files.pythonhosted.org/packages/68/e3/f2298d3bb55e0c4a91841ec4d01b3f020ba8c5fbf15ccdcc6dcf03f97025/cryptography-50.0.2-cp311-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:85d0d9a31b9098e98534226d5686b47264b95e62ce459dc2e62fdfc809f9fe93", size = 5030152, upload-time = "2026-09-30T14:44:09.443Z" },
++    { url = "https://files.pythonhosted.org/packages/9a/4f/adfc442765721292fff86d314ce385d3249d22db42295c0dd057727b60f3/cryptography-50.0.2-cp311-abi3-win_amd64.whl", hash = "sha256:7afa5a6602a9f29af1f3a2965f831bae7c9d5d597b7cbb716d41ab3b7d89879c", size = 3824692, upload-time = "2026-09-30T14:44:11.671Z" },
++    { url = "https://files.pythonhosted.org/packages/2d/49/93f6a6e7a87c9aa68d44d3e1cdb5fe8f60c90d5d2f46acae9a56892816b8/cryptography-50.0.2-cp315-abi3.abi3t-macosx_11_0_arm64.whl", hash = "sha256:edc3342adf8f697fc5f59c887a304356f147b397809440ed64e2fa6af2f50f37", size = 4133708, upload-time = "2026-09-30T14:44:41.807Z" },
++    { url = "https://files.pythonhosted.org/packages/8c/75/32ac2a56243d778805c16ca6a32b8f74fb757df7e28d7ecb560afafb59cf/cryptography-50.0.2-cp315-abi3.abi3t-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:d370b8d1dfcdf7130178137f6fbee6140774a1acc6cacefc4b42643ec11d0a3a", size = 4956267, upload-time = "2026-09-30T14:44:43.693Z" },
++    { url = "https://files.pythonhosted.org/packages/aa/a4/2c8d734e43d97f0842ee9f1b7b4bfb3d0cf5e19edebf43c2afe6675c2320/cryptography-50.0.2-cp315-abi3.abi3t-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:f2f9bd7f90c64fe89253f0a2c05e3c4856072660429ce8831b4235bf29403a67", size = 4966465, upload-time = "2026-09-30T14:44:45.769Z" },
++    { url = "https://files.pythonhosted.org/packages/c2/58/ee288c829a6f41f6235ae9dd33d82fd19b45442b65b4c8a3da36963d9f7a/cryptography-50.0.2-cp315-abi3.abi3t-manylinux_2_28_aarch64.whl", hash = "sha256:e275096ea1e60cc595cda2836fd4a6c725d1125108b868be17f53684d164e2cc", size = 4959356, upload-time = "2026-09-30T14:44:48.211Z" },
++    { url = "https://files.pythonhosted.org/packages/92/20/9ded6d51ddd9897f6b6e81fb9ebea7951d7cc5d6c890b0ed8abf77a51a80/cryptography-50.0.2-cp315-abi3.abi3t-manylinux_2_28_ppc64le.whl", hash = "sha256:b13478603dcd0a2479ff8e87e2c19a7d525734686fe3c49542472293a204212d", size = 5548822, upload-time = "2026-09-30T14:44:50.86Z" },
++    { url = "https://files.pythonhosted.org/packages/02/a8/8df951850d6b31d2a00218f19e2b3f999523437ed7a819df7fa427942fca/cryptography-50.0.2-cp315-abi3.abi3t-manylinux_2_28_x86_64.whl", hash = "sha256:58a0c478eeca76fe5e07993c5a0703def34a6dc6a0cda4f5564639b33112ffe7", size = 5001199, upload-time = "2026-09-30T14:44:53.379Z" },
++    { url = "https://files.pythonhosted.org/packages/8b/f9/36b3022218ce75b7cdf068fb95f809f9bd0d820e4955ef43b90c255cc7ac/cryptography-50.0.2-cp315-abi3.abi3t-manylinux_2_31_armv7l.whl", hash = "sha256:d38cdff612d06fa6a32840d5e1b1f7a27cee4a349aa9085d94a67789d6bfd408", size = 4629333, upload-time = "2026-09-30T14:44:55.635Z" },
++    { url = "https://files.pythonhosted.org/packages/8c/72/20f99a219f6af47cdd1cbd978c243b92d71496e168a746138af44ded4f29/cryptography-50.0.2-cp315-abi3.abi3t-manylinux_2_34_aarch64.whl", hash = "sha256:fdd28f912fccfec1846a94e2e1e8f9b0012f557f0c46fe4f3eb0d7a87afcf90b", size = 4958822, upload-time = "2026-09-30T14:44:59.639Z" },
++    { url = "https://files.pythonhosted.org/packages/f2/20/196f112617fb08eb4d608a2a6c422373d46f9cc2857f38fc0667033c0899/cryptography-50.0.2-cp315-abi3.abi3t-manylinux_2_34_ppc64le.whl", hash = "sha256:cbc8738fd8526d80f35cb3a40d41f41a2e7030bb3b18b09a6778ef63d291c2fd", size = 5506351, upload-time = "2026-09-30T14:45:02.267Z" },
++    { url = "https://files.pythonhosted.org/packages/24/95/83378121ef3eaaaf71d4b781577ff794acb39b9e1b87a3f156898c8497ed/cryptography-50.0.2-cp315-abi3.abi3t-manylinux_2_34_x86_64.whl", hash = "sha256:e105ab60406787da31fccc883fc0f733af1efd78f0136a4599692c4083a73d0c", size = 5000859, upload-time = "2026-09-30T14:45:05.009Z" },
++    { url = "https://files.pythonhosted.org/packages/22/f7/70fd7ae4d1dbfa7ba29b02e1b9068771519a86027756510b700ce81086a8/cryptography-50.0.2-cp315-abi3.abi3t-musllinux_1_2_aarch64.whl", hash = "sha256:6f8700550aa1474a91e5dc07049c46f98b423b5b1ddd0483e0b51362eeeaf5be", size = 5092151, upload-time = "2026-09-30T15:29:15.932Z" },
++    { url = "https://files.pythonhosted.org/packages/d4/be/688367b74de86984bd58d8efacfc7c9e68b89a6a22ced0fb4f38db50254a/cryptography-50.0.2-cp315-abi3.abi3t-musllinux_1_2_x86_64.whl", hash = "sha256:c71be1cbfa5cd9a41ee452acf1eccd82b2c05950358b106ec8ceb83411d1a020", size = 5286120, upload-time = "2026-09-30T15:29:18.309Z" },
++    { url = "https://files.pythonhosted.org/packages/39/d1/55f8a3f2ef5d1529e16835ef10cf0fe3d559ce237b46dddc440c0bba3649/cryptography-50.0.2-cp315-abi3.abi3t-win_amd64.whl", hash = "sha256:c423ab384a46c4dff7217b2ea5ba2e11cffdeab6441acd04cf65a369caf0366c", size = 4111557, upload-time = "2026-09-30T15:29:20.155Z" },
++    { url = "https://files.pythonhosted.org/packages/23/ad/ac987755d00e1e64273760228d2635ae38dae2be83e3c6e0d3289d91dec3/cryptography-50.0.2-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:0ec5f09541743261e66e291b4a0cbf0fb2997aeaab6d9e9c740b9dba1b58d1c2", size = 3943588, upload-time = "2026-09-30T15:29:22.265Z" },
++    { url = "https://files.pythonhosted.org/packages/d5/8d/6d585339bedf85d45044c85d8412dac53f2bb6f918e8b7777efba1787844/cryptography-50.0.2-cp39-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:c5e67125c7dca78d199ec4e116aa93dbb83494808ecbb8211a2cb09b1bf41dbd", size = 4756166, upload-time = "2026-09-30T15:29:24.58Z" },
++    { url = "https://files.pythonhosted.org/packages/bf/f1/1c1f6874e8550cfddd4b688ceb38cefb6ed15ceed224d56f133f3d88c214/cryptography-50.0.2-cp39-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:ee247f5c245c9a2fe7c8e2214e295918838e44e00a45a6718451e4004219e767", size = 4749145, upload-time = "2026-09-30T15:29:26.807Z" },
++    { url = "https://files.pythonhosted.org/packages/c1/63/61b15dc1a8de03fe0adbe3fd7608b3ad5c73bf50993bbcb1faaa930afe33/cryptography-50.0.2-cp39-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:dfe9763530994147d9af1def057a5b9658b00e8f8fe8743d144d1e0911c2e454", size = 4763638, upload-time = "2026-09-30T15:29:28.588Z" },
++    { url = "https://files.pythonhosted.org/packages/fc/35/b345bdfa40c9126df1a9d33236aa98418367931b8725f84fc3ae2b98dc59/cryptography-50.0.2-cp39-abi3-manylinux_2_28_ppc64le.whl", hash = "sha256:58ddb5a8e3179d12f19e4ea34d2d32e9d63a4baa142c875c1eb59f41b7243acd", size = 5382217, upload-time = "2026-09-30T15:29:30.589Z" },
++    { url = "https://files.pythonhosted.org/packages/4f/87/ef344a9e616871f2519c22d6afcda79ddd5d35e9592d95eb6e677608d055/cryptography-50.0.2-cp39-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:f21e8a22c8605750c7af886bab299a363721264061b4ac0a30efb73cfd58efc5", size = 4781387, upload-time = "2026-09-30T15:29:32.605Z" },
++    { url = "https://files.pythonhosted.org/packages/90/5b/f2fdb13cd0b96f6f932c8627bb292a45f11c64d21620a8e120aee9a3b848/cryptography-50.0.2-cp39-abi3-manylinux_2_31_armv7l.whl", hash = "sha256:9c8402a82ea0dc4ceeab793db05f0fafa8ca139ca34fcde5df0f596103c74107", size = 4403790, upload-time = "2026-09-30T15:29:34.374Z" },
++    { url = "https://files.pythonhosted.org/packages/bc/ce/7e4f662b1e3c393513569e402cfc85ac7da0bd3d5435e122a3140219eb2d/cryptography-50.0.2-cp39-abi3-manylinux_2_34_aarch64.whl", hash = "sha256:0ddc924c04591c2811ca024d62ecad4f7f6f08af8939c211438f48a16bd23602", size = 4764319, upload-time = "2026-09-30T15:29:36.149Z" },
++    { url = "https://files.pythonhosted.org/packages/3c/3f/86ff33ce34cc0de6847fb96e035a1a760d81652e38643f617c02ad32ef7a/cryptography-50.0.2-cp39-abi3-manylinux_2_34_ppc64le.whl", hash = "sha256:a6557e5f38e065ca9fbdaf7cfc7435ecb1d113aa81a022d1b51921ee7432e227", size = 5338560, upload-time = "2026-09-30T15:29:39.053Z" },
++    { url = "https://files.pythonhosted.org/packages/40/cf/6b5c8e2fd9202d98988ab7cb5cc5c991704c4ad55f492ff408e4969f83f1/cryptography-50.0.2-cp39-abi3-manylinux_2_34_x86_64.whl", hash = "sha256:1981f1db4630889b9ef7803fadef12b056f428cb6b85c27ba57b774793b6093c", size = 4780973, upload-time = "2026-09-30T15:29:41.251Z" },
++    { url = "https://files.pythonhosted.org/packages/10/bf/8d6ebc7dded797bd0f0160d52188021211f011a2b164ef0ae1dac4587465/cryptography-50.0.2-cp39-abi3-musllinux_1_2_aarch64.whl", hash = "sha256:7a8701d6b584d76e909e3d305b7d126b41439876a5aaf76cddc67fc230eafa2e", size = 4897738, upload-time = "2026-09-30T15:29:43.106Z" },
++    { url = "https://files.pythonhosted.org/packages/d4/aa/f3f6e0de7e6253b8baa8b2d8fb9d50924fa75cee3d4624bd4bc1208ee923/cryptography-50.0.2-cp39-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:ce47f66801c20ec6c6632453bb5960fe38939e9306970b48b3a5a26de7745d94", size = 5058280, upload-time = "2026-09-30T15:29:44.827Z" },
++    { url = "https://files.pythonhosted.org/packages/f6/b6/a1faf3a27ae9405fb34b1713cc73b2d8a26b04d5c561578fa2e6ef3e5bb9/cryptography-50.0.2-cp39-abi3-win_amd64.whl", hash = "sha256:4e81d95e5bafc2d6e34e4bed780e53e4d5b9a2f928573428aa4d35fbec1eb0de", size = 3854095, upload-time = "2026-09-30T15:29:46.782Z" },
++]
++
+ [[package]]
+ name = "falkordb"
+ version = "1.8.0"
+@@ -149,6 +233,19 @@ wheels = [
+     { url = "https://files.pythonhosted.org/packages/7e/f5/f66802a942d491edb555dd61e3a9961140fd64c90bce1eafd741609d334d/httpcore-1.0.9-py3-none-any.whl", hash = "sha256:2d400746a40668fc9dec9810239072b40b4484b640a8c38fd654a024c7a1bf55", size = 78784, upload-time = "2025-04-24T22:06:20.566Z" },
+ ]
+ 
++[[package]]
++name = "httpcore2"
++version = "2.13.1"
++source = { registry = "https://pypi.org/simple" }
++dependencies = [
++    { name = "h11" },
++    { name = "truststore" },
++]
++sdist = { url = "https://files.pythonhosted.org/packages/cb/f3/1db7aa2bc2524062192bb0e0323969492d1883152a232fe36eea65f4e35c/httpcore2-2.13.1.tar.gz", hash = "sha256:e0aa977abe17e69a3b820a24542a6fa88702676d83880b8d194dcd18408e5103", size = 68071, upload-time = "2026-09-23T07:47:22.372Z" }
++wheels = [
++    { url = "https://files.pythonhosted.org/packages/09/ba/a4568248771ce81957bfb7cc600264a40fbcda092391ee1c415c50be4bea/httpcore2-2.13.1-py3-none-any.whl", hash = "sha256:e1e05d4f25f7d7d496bfb96748f6f4b67657b03da069b3a68c36069f3db73d0a", size = 83423, upload-time = "2026-09-23T07:47:19.365Z" },
++]
++
+ [[package]]
+ name = "httpx"
+ version = "0.28.1"
+@@ -164,6 +261,32 @@ wheels = [
+     { url = "https://files.pythonhosted.org/packages/2a/39/e50c7c3a983047577ee07d2a9e53faf5a69493943ec3f6a384bdc792deb2/httpx-0.28.1-py3-none-any.whl", hash = "sha256:d909fcccc110f8c7faf814ca82a9a4d816bc5a6dbfea25d6591d6985b8ba59ad", size = 73517, upload-time = "2024-12-06T15:37:21.509Z" },
+ ]
+ 
++[[package]]
++name = "httpx2"
++version = "2.13.1"
++source = { registry = "https://pypi.org/simple" }
++dependencies = [
++    { name = "anyio", marker = "sys_platform != 'emscripten'" },
++    { name = "httpcore2", marker = "sys_platform != 'emscripten'" },
++    { name = "httpx2-jsfetch", marker = "sys_platform == 'emscripten'" },
++    { name = "idna" },
++    { name = "truststore", marker = "sys_platform != 'emscripten'" },
++    { name = "typing-extensions" },
++]
++sdist = { url = "https://files.pythonhosted.org/packages/d5/44/474bef2a0e9d90f1715d32cb98b0738695ca17ba324095fb2497ed7fbd59/httpx2-2.13.1.tar.gz", hash = "sha256:e48744a19e3af5ee48313d0ce5fe941d5422fae5705ea922a4aabf94d7800dfa", size = 100405, upload-time = "2026-09-23T07:47:23.052Z" }
++wheels = [
++    { url = "https://files.pythonhosted.org/packages/d8/9c/6fe8931fd9f381042a9e4c7d5a7b4cbf7016b252bec0c99a49fce42c3326/httpx2-2.13.1-py3-none-any.whl", hash = "sha256:6dff50fabc270ee5fd25d845d0b078ed20564579744d6d962850975996d2f9a4", size = 95597, upload-time = "2026-09-23T07:47:20.995Z" },
++]
++
++[[package]]
++name = "httpx2-jsfetch"
++version = "1.0"
++source = { registry = "https://pypi.org/simple" }
++sdist = { url = "https://files.pythonhosted.org/packages/cd/c4/0e5636363151a2a1795e0a77617168b9ca438e1748ec05fc9b5687f93d64/httpx2_jsfetch-1.0.tar.gz", hash = "sha256:70a0e3eabfef7cce5ad9c629f7d01ca05e418f586646f4ddf14782e4c1454c60", size = 6872, upload-time = "2026-08-07T00:13:07.492Z" }
++wheels = [
++    { url = "https://files.pythonhosted.org/packages/9b/43/832f631d32e4f1211caa2ba368317739fe71f0b8530e4c9d15dc454bac2a/httpx2_jsfetch-1.0-py3-none-any.whl", hash = "sha256:cb916b707601e69a07721aabc8f3f6659be3a6893bc1ff5c6f9e02241df2da32", size = 6382, upload-time = "2026-08-07T00:13:06.567Z" },
++]
++
+ [[package]]
+ name = "idna"
+ version = "3.20"
+@@ -209,6 +332,44 @@ wheels = [
+     { url = "https://files.pythonhosted.org/packages/41/45/1a4ed80516f02155c51f51e8cedb3c1902296743db0bbc66608a0db2814f/jsonschema_specifications-2025.9.1-py3-none-any.whl", hash = "sha256:98802fee3a11ee76ecaca44429fda8a41bff98b00a0f2838151b113f210cc6fe", size = 18437, upload-time = "2025-09-08T01:34:57.871Z" },
+ ]
+ 
++[[package]]
++name = "mcp"
++version = "2.3.0"
++source = { registry = "https://pypi.org/simple" }
++dependencies = [
++    { name = "anyio" },
++    { name = "httpx2" },
++    { name = "jsonschema" },
++    { name = "mcp-types" },
++    { name = "opentelemetry-api" },
++    { name = "pydantic" },
++    { name = "pyjwt", extra = ["crypto"] },
++    { name = "python-multipart" },
++    { name = "pywin32", marker = "sys_platform == 'win32'" },
++    { name = "sse-starlette" },
++    { name = "starlette" },
++    { name = "typing-extensions" },
++    { name = "typing-inspection" },
++    { name = "uvicorn", marker = "sys_platform != 'emscripten'" },
++]
++sdist = { url = "https://files.pythonhosted.org/packages/9d/8d/e0d339616f4810e9051d4aba6887afab289ab1f81875fe908b606cdfd0e3/mcp-2.3.0.tar.gz", hash = "sha256:8b147a50441cf059dc88c684e0aeed3687f0aa0f39c6cde7b90330effd2b34d8", size = 4171955, upload-time = "2026-10-02T22:06:56.091Z" }
++wheels = [
++    { url = "https://files.pythonhosted.org/packages/20/d7/4a2878f128df729db3ca04e71bfce26405cc2e0c9ebe19c592feeb4c61b9/mcp-2.3.0-py3-none-any.whl", hash = "sha256:dd0c44c089d16453e8ae31a3877a0054d7a2314caaa81f5e0541b9b1734b2377", size = 368664, upload-time = "2026-10-02T22:06:52.119Z" },
++]
++
++[[package]]
++name = "mcp-types"
++version = "2.3.0"
++source = { registry = "https://pypi.org/simple" }
++dependencies = [
++    { name = "pydantic" },
++    { name = "typing-extensions" },
++]
++sdist = { url = "https://files.pythonhosted.org/packages/9e/2d/7c251e34207f6c51000312fc8839111ac45cfe02023f90b44e7f1051dd8e/mcp_types-2.3.0.tar.gz", hash = "sha256:d1e46549edb35ee19a94940fcee6d1addd7e589ab7ea92dda83f5d84781fc362", size = 65898, upload-time = "2026-10-02T22:06:57.863Z" }
++wheels = [
++    { url = "https://files.pythonhosted.org/packages/ce/48/32583066b155bb5d4507e7887dc88ee23118cc4de8e2a12870c49719e2a8/mcp_types-2.3.0-py3-none-any.whl", hash = "sha256:968efdbdaedfab06adae40d378a34395f1090c5921d4be3c9cde283aaf76d91d", size = 69108, upload-time = "2026-10-02T22:06:54.099Z" },
++]
++
+ [[package]]
+ name = "opentelemetry-api"
+ version = "1.45.1"
+@@ -239,6 +400,15 @@ wheels = [
+     { url = "https://files.pythonhosted.org/packages/40/9e/2b38731e0fc536806f16490e1a12d7f0dc2a1235aa8cc07bcc75416a7daa/pluggy-1.7.0-py3-none-any.whl", hash = "sha256:7dd7b0d8832ba3cb632c306926ded123429211b83641b35dc5c41ad2d34f9bec", size = 27082, upload-time = "2026-10-15T09:50:56.808Z" },
+ ]
+ 
++[[package]]
++name = "pycparser"
++version = "3.11"
++source = { registry = "https://pypi.org/simple" }
++sdist = { url = "https://files.pythonhosted.org/packages/da/a8/c5fdbeee588bb8ada9458774f43adf1bdd30bd59157055142183e769a024/pycparser-3.11.tar.gz", hash = "sha256:d875f09c3507d00e1aba0eecc6dcadc1352f30fff09dc6bff2f1c2935e97c2bc", size = 113796, upload-time = "2026-10-09T12:56:59.539Z" }
++wheels = [
++    { url = "https://files.pythonhosted.org/packages/90/11/0e6f11117525ff0eec40ebac3d313376f102df93ca44ad9e893ee85e4f89/pycparser-3.11-py3-none-any.whl", hash = "sha256:51d5a8ba2be0bbe440b99d2112604c95bbbc3c2748a64260186c541e1729cd80", size = 51178, upload-time = "2026-10-09T12:56:58.131Z" },
++]
++
+ [[package]]
+ name = "pydantic"
+ version = "2.14.1"
+@@ -308,6 +478,20 @@ wheels = [
+     { url = "https://files.pythonhosted.org/packages/71/46/17f022dd3e953bf20a04a028a21ec746d942f8d2af30fa0f124fa0e6a684/pygments-2.21.0-py3-none-any.whl", hash = "sha256:2363c69b61c4a97c838da3b130dcd6468f4848992b21a82f2a63ec34377137d9", size = 1250147, upload-time = "2026-08-17T08:02:44.912Z" },
+ ]
+ 
++[[package]]
++name = "pyjwt"
++version = "2.15.1"
++source = { registry = "https://pypi.org/simple" }
++sdist = { url = "https://files.pythonhosted.org/packages/43/ea/5194e52748b0da83d71e082d75496eaec6e58f419f5e184786ded517e6a9/pyjwt-2.15.1.tar.gz", hash = "sha256:4f259e80cdfb6b3fc18a7de51fd1ef9ec79652f25019bae68975ca2468a34df8", size = 121252, upload-time = "2026-09-28T18:40:42.598Z" }
++wheels = [
++    { url = "https://files.pythonhosted.org/packages/50/ca/44de4e75f8aadc457f0634be3b542815078ded46dca30efb960edeecad6e/pyjwt-2.15.1-py3-none-any.whl", hash = "sha256:42d59d631f7768a1028a64c7ff581a9bf7519804daf91fc5b6c56e30eec5e193", size = 33860, upload-time = "2026-09-28T18:40:41.429Z" },
++]
++
++[package.optional-dependencies]
++crypto = [
++    { name = "cryptography" },
++]
++
+ [[package]]
+ name = "pytest"
+ version = "9.1.1"
+@@ -345,6 +529,25 @@ wheels = [
+     { url = "https://files.pythonhosted.org/packages/60/d1/38f3a3405989a89ac18390803e70c6ad7c7760da4f9b83cbeca0c44a0c72/python_dotenv-1.2.4-py3-none-any.whl", hash = "sha256:42269a8a5b3fd54ffa6f3d84b18abed50064717576b4ecf03dc4a55d8aa04fdc", size = 23266, upload-time = "2026-10-01T05:36:08.633Z" },
+ ]
+ 
++[[package]]
++name = "python-multipart"
++version = "0.0.32"
++source = { registry = "https://pypi.org/simple" }
++sdist = { url = "https://files.pythonhosted.org/packages/5b/42/55c32bb9b12693c092ad250a0e82edb5b31ddeda6eb772de5f308b3804ad/python_multipart-0.0.32.tar.gz", hash = "sha256:be54b7f3fa167bb83e4fcd936b887b708f4e57fe75911c02aebf53efaf8d938e", size = 46881, upload-time = "2026-06-04T16:18:58.647Z" }
++wheels = [
++    { url = "https://files.pythonhosted.org/packages/e1/04/e8135ebd1ad02c56ec633277529b2602ff99ff634be76cdba5744cf554fd/python_multipart-0.0.32-py3-none-any.whl", hash = "sha256:ff6d3f776f16878c894e52e107296ffc890e913c611b1a4ec6c44e2821fe2e23", size = 30042, upload-time = "2026-06-04T16:18:57.319Z" },
++]
++
++[[package]]
++name = "pywin32"
++version = "312"
++source = { registry = "https://pypi.org/simple" }
++wheels = [
++    { url = "https://files.pythonhosted.org/packages/83/ff/32aa7d2ed0ab12b323aaa64f9b75e6ad4f8fd09f9ccfc28c79414d46838d/pywin32-312-cp312-cp312-win32.whl", hash = "sha256:dab4f65ac9c4e48400a2a0530c46c3c579cd5905ecd11b80692373915269208b", size = 6371877, upload-time = "2026-06-04T07:49:28.836Z" },
++    { url = "https://files.pythonhosted.org/packages/03/d9/77040d3b43df3f3be32ea289433d660d2727f5ba327bc73be835127d9d60/pywin32-312-cp312-cp312-win_amd64.whl", hash = "sha256:b457f6d628a47e8a7346ce22acb7e1a46a4a78b52e1d17e1af56871bd19a93bc", size = 6914841, upload-time = "2026-06-04T07:49:31.85Z" },
++    { url = "https://files.pythonhosted.org/packages/e3/cc/7b1ec671775756020a0ee7f4feeaf3c568f0ab86bd3900088cf986937a92/pywin32-312-cp312-cp312-win_arm64.whl", hash = "sha256:6017c58e12f6809fbb0555b75df144c2922a9ffd18e4b9b5afa863b6c1a9d950", size = 6727901, upload-time = "2026-06-04T07:49:34.244Z" },
++]
++
+ [[package]]
+ name = "redis"
+ version = "8.1.0"
+@@ -412,6 +615,19 @@ wheels = [
+     { url = "https://files.pythonhosted.org/packages/b7/ce/149a00dd41f10bc29e5921b496af8b574d8413afcd5e30dfa0ed46c2cc5e/six-1.17.0-py2.py3-none-any.whl", hash = "sha256:4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274", size = 11050, upload-time = "2024-12-04T17:35:26.475Z" },
+ ]
+ 
++[[package]]
++name = "sse-starlette"
++version = "3.5.0"
++source = { registry = "https://pypi.org/simple" }
++dependencies = [
++    { name = "anyio" },
++    { name = "starlette" },
++]
++sdist = { url = "https://files.pythonhosted.org/packages/e4/be/0123026f719d1a7936f214a88b553bb5701e04ff2511147c1dab0c5035eb/sse_starlette-3.5.0.tar.gz", hash = "sha256:75de713aa8a9441513cc283220826da079d982770965b951e9437720e8bafdb2", size = 36794, upload-time = "2026-09-28T17:48:14.7Z" }
++wheels = [
++    { url = "https://files.pythonhosted.org/packages/be/e4/cdda14023c316d71493bc54fdffc3dd006631b88866145c9d3cc33e0f1df/sse_starlette-3.5.0-py3-none-any.whl", hash = "sha256:3e6e1070df3f0f5d9cea81496de92dbb72f6721871d99748ece67441dd8b7997", size = 17407, upload-time = "2026-09-28T17:48:13.228Z" },
++]
++
+ [[package]]
+ name = "starlette"
+ version = "1.8.0"
+@@ -425,6 +641,15 @@ wheels = [
+     { url = "https://files.pythonhosted.org/packages/c1/b0/5742e4ac7af5eb58ec3470a537a49d7aa507e5539413e504b3a65ef50ba8/starlette-1.8.0-py3-none-any.whl", hash = "sha256:dfdd6b29c26483288088d990eee59631dedadd66ce20d203402a7ca8e3c4656f", size = 79612, upload-time = "2026-10-13T07:54:38.019Z" },
+ ]
+ 
++[[package]]
++name = "truststore"
++version = "0.10.5"
++source = { registry = "https://pypi.org/simple" }
++sdist = { url = "https://files.pythonhosted.org/packages/ee/9f/c5201d42a484c061e528825fc8e2d565f5abd50a4ced6fb7d29c4ec99b2b/truststore-0.10.5.tar.gz", hash = "sha256:30d36967ccaded5cbb38d602c433f53600036c79d502f4533a49b60a03bbefcd", size = 28091, upload-time = "2026-10-12T22:27:31.808Z" }
++wheels = [
++    { url = "https://files.pythonhosted.org/packages/51/e9/3a7820be2bb0fe53b6bc9c3be26d3d1158004e4c3ab953aa6840b955b1e9/truststore-0.10.5-py3-none-any.whl", hash = "sha256:9aaaedaefaf06d8b206278cf8b5012bc897f485a874503501e12d776df78951c", size = 19017, upload-time = "2026-10-12T22:27:30.377Z" },
++]
++
+ [[package]]
+ name = "typing-extensions"
+ version = "4.16.0"
+@@ -471,3 +696,16 @@ wheels = [
+     { url = "https://files.pythonhosted.org/packages/2a/8e/d23278bb327d2a75dc1d033c81b7fe23bbb28e363e02e7f306abd047924a/uv-0.13.1-py3-none-win_amd64.whl", hash = "sha256:4f693cd4feb52f08f30474c4612f24be2050472609be65b9960b635f286da284", size = 15404994, upload-time = "2026-10-14T05:13:30.623Z" },
+     { url = "https://files.pythonhosted.org/packages/0a/e0/f27f161ee2ad242cb714fe7185f63cc2a88b83c4d8b375ca8c580f9f23b7/uv-0.13.1-py3-none-win_arm64.whl", hash = "sha256:b173413a5dc18437b2d28266a02be636f35ac7e97741773aed163ed2143abfaf", size = 15899284, upload-time = "2026-10-14T05:13:32.891Z" },
+ ]
++
++[[package]]
++name = "uvicorn"
++version = "0.54.0"
++source = { registry = "https://pypi.org/simple" }
++dependencies = [
++    { name = "click" },
++    { name = "h11" },
++]
++sdist = { url = "https://files.pythonhosted.org/packages/da/34/30e9280707135d2cfc589dfff3cb796bd07a3aeb1a3e415ba09dd89d7bb4/uvicorn-0.54.0.tar.gz", hash = "sha256:a2e33cbfaa0306f8e6b0c13e0cb89d7d7a2da3e62b90c66e18c33d9807b28620", size = 112283, upload-time = "2026-09-25T06:52:37.601Z" }
++wheels = [
++    { url = "https://files.pythonhosted.org/packages/38/0c/b54a4fdd7f90a3af8b02ebc9ce6712c2c208b7926a2f7bad95c33ebbe943/uvicorn-0.54.0-py3-none-any.whl", hash = "sha256:505bdb0f318731d45f1f712071fc781a8981f6847a31c902c9f5e652d4f67faf", size = 87427, upload-time = "2026-09-25T06:52:35.829Z" },
++]
+diff --git a/blockers.md b/blockers.md
+index 641b8e8..5d0757c 100644
+--- a/blockers.md
++++ b/blockers.md
+@@ -1,5 +1,9 @@
+ # blockers.md — Current blockers and verification spikes
+ 
++## Current status — B06, 2026-10-17 (takes precedence over history)
++
++No active B06 environment blocker. B06 PASS with361 tests and both SPEC validators; human review pending. Local stdio/privileged-user/client-timeout/volatile-ACL boundaries documented. B07/B17 common envelope/graph-backed traces and all remaining DEC-004/source/history/evaluator dependencies stay OPEN; no data or later-task repair.
++
+ ## Current status — B05, 2026-10-17 (takes precedence over history)
+ 
+ No active B05 environment blocker. B05 tests PASS; human review pending. City42 drainage links remain CANDIDATE;4 broader asset sets supported,8 starting-asset/6 cluster source conflicts and3 unspecified cluster contexts need author review. S07/history/55 unlinked measurements and DEC-004 dependencies remain OPEN at B08/B09/B11/B19/etc. Bounded-search/clone limits explicit; no B06 started.
+@@ -153,3 +157,32 @@ No active implementation blocker is claimed. Verification spikes (NOT defects) a
+ - Existing policy/audit scaling limits remain:counterfactual copying uses ordinary
+   writes, not a new bulk shortcut; source/canonical/retained volumes never reset.
+   No full scenario, agent or frontend capability declared complete by B05.
++
++## B06 limits and deferred dependencies | 2026-10-17
++- First authenticated startup failed TIMEOUT because Node Sentinel detection needed
++  INFO. Minimal read-only permission added and live proof passed; no open environment
++  blocker. ACL user is volatile and must be reprovisioned after database lifecycle;
++  ignored0600 credential file reused. Existing DB/Browser volumes/data unchanged.
++- Stdio private parent pipes are transport boundary; no HTTP listener/API key or HTTP
++  bearer verification. Same-user administrator/default local DB credentials remain
++  privileged; no OS sandbox or enterprise auth claim. Template/property/complexity
++  bounds are broker-enforced, while graph-key/write command denial is DB-enforced.
++- Upstream official query tool has no query-timeout parameter; client deadline does
++  not prove server cancellation. Fixed bounded templates/schema samples and finite
++  calls only; transport result-size check is after receipt, not streaming memory cap.
++- B06 process-local traces/operator JSON are evidence, not graph-backed ToolExecution
++  durability/common custom envelope. B07/B17 DEC-004 findings remain OPEN; no invented
++  agent rationale. Auth roles/service writes/custom18-tool handlers are future tasks.
++- BLOCK-B05-DATA/BOUNDS and BLOCK-B04-DATA/PERF remain OPEN as documented.42 drainage
++  links CANDIDATE,55 unlinked observations/history/S07/clock/source gaps not repaired.
++  Original55 numeric defects remain frozen; explicit B04 conversion remains valid.
++  Document version/owner/PDF (B11), plan binding (B12/B13), durable events (B15), API
++  mapping (B16/B17), evaluator/historical isolation (B19) retain designated gates.
++- Existing revision guarantees assume repository-mediated writes. Privileged raw
++  developer mutations can bypass application revisions; B06 does not broaden that
++  guarantee. Final source fingerprints verify actual retained data stayed unchanged.
++
++B06 final review:361 PASS/0 FAIL/0 SKIP; both SPEC validators PASS. Reprovisioned
++read-only account and live proof after recreation PASS; canonical readiness and all
++retained fingerprints preserved. No unresolved B06 acceptance failure. Human review
++is the next gate; B07 and all later implementation remain unstarted.
+diff --git a/decision.md b/decision.md
+index e1f138d..159199d 100644
+--- a/decision.md
++++ b/decision.md
+@@ -427,3 +427,84 @@ Decisions are recorded chronologically. Codex must append an entry whenever a si
+   zone regression; retain partial/lower-bound flags and exact proof path references.
+ - Matching indexes O(E+C) before sorting/context association; extra work metered.
+   Re-run final-code evidence/performance and complete regressions after this fix.
++
++### DEC-022 — B06 runtime boundary before implementation | 2026-10-17
++- B05 externally accepted; local baseline6550d31108c34db6bb0bd5c111c7a41d09953125,
++ 57 files committed after263-file secret/exclusion/source audit; no push. Historical
++ patch/failed-test logs have whitespace warnings, preserved as exact evidence.
++ Baseline regression running against unchanged B05; final observed result recorded
++ separately before acceptance. B06 supports R04/R07/R09/R15, completes none of R01–R18.
++- Official published @falkordb/mcpserver1.3.0 (Node>=18/npm>=8) inspected from npm
++ tarball; Node24.21.0/npm12.2.0 tested. Python MCP2.3.0 isolated spike successfully
++ negotiates2025-11-25, lists7 tools and reads parameterized DRAIN-D12 from real city.
++ Upstream main documentation may differ from release; tested package source controls.
++- Select official supported stdio child-process transport for the local monolith,
++ instead of default planned Docker HTTP. No TCP MCP listener/API key; private OS
++ pipes and process ownership are transport access boundary. HTTP bearer tests are
++ NOT APPLICABLE to this transport, not claimed passing. HTTP remains a future choice
++ requiring new authenticated/private-network evidence. No custom B07 server added.
++- Add separate least-privilege DB account: one exact accepted B04 graph key, PING,
++ GRAPH.RO_QUERY, CLIENT SETINFO only. Real spike proves key/GRAPH.QUERY denial and
++ GRAPH.RO_QUERY rejects mutation. Provision via trusted setup, persist only generated
++ mode0600 credential file in ignored.runtime; ACL must be reprovisioned after DB
++ recreation (no change to existing volumes/default developer account).
++- Enable BOTH official DEFAULT_READONLY and STRICT_READONLY. Broker denies general
++ query/delete/list_graphs; list_graphs would leak unrelated key names. Only four
++ read tools considered, parameterized query restricted to named fixed templates,
++ sampled schema capped and registry-validated labels/types. No arbitrary Cypher,
++ resource/prompt/session/credential capability exposed to future agent interface.
++- Trace actual server/tool/schema/inventory identity, sanitized argument hash,
++ start/end/latency/status/result counts/revision when observed. No fabricated model
++ rationale; graph-backed common envelope/persistence remains B07/B17 per DEC-004.
++- Risks: privileged local administrator still can bypass code; field-level metadata
++ access and query complexity are broker-enforced; database account prevents writes
++ and other graph keys even via raw official session. Local OS process is trusted,
++ no sandbox claim. No dataset/core repository/registry/0001 modification. Tests:
++ original309, new unit+real MCP discovery/calls/negatives/lifecycle/recovery/malformed
++ handling, independent Python read/full city fingerprint, both SPEC validators.
++ Human checks exact returned identities/candidate evidence, denied tool/graph/write,
++ sanitized traces, process cleanup and unchanged retained B01/B04/B05 evidence.
++
++### DEC-023 — B06 observed compatibility and temporal strictness | 2026-10-17
++- Baseline309 PASS/0 FAIL/0 SKIP in261.78s; both SPEC validators PASS. Fresh full-city
++  record/audit/writer hash, retained B05 source/clone and B01 probe equal B05 evidence;
++  canonical0001 READY. Initial harness missing graph_name failed TypeError, corrected.
++- First authenticated official startup timed out: both official Python and Node
++  clients use INFO for Sentinel detection. Add only INFO to the planned ACL command
++  set; no broader category grant. Reconfigured real proof PASS. Python2.3.0 SDK
++  adds pinned MCP/types2.3.0 dependencies without changing original direct pins;
++  Node lock resolves falkordb6.8.0 and @modelcontextprotocol/sdk1.32.1, actually tested
++  against database6.0.2. INFO server metadata is not exposed through broker tools.
++- Verify exact7 discovered names and all observed JSON-schema hashes against new
++  official_mcp.json. Four tools exposed through strict broker shapes; never pass
++  arbitrary Cypher. Raw received count differs from final validated-call count in
++  traces. Unknown schema/property/scope/endpoint values fail closed. Only storage
++  labels deliberately filtered; source records are not silently transformed.
++- Review caught direct UTC string precision comparison in new B06 template before
++  acceptance. Reuse existing B03 GraphQueries._time_key and normalize supplied as_of
++  to microsecond precision. Actual retained edge tests equivalent .962Z/.962000Z and
++  one microsecond earlier without changing data. No B03/B05 temporal contract weakened.
++- Malformed output handling has mocked unit cases plus an explicitly labeled local
++  fault injection AFTER actual official MCP read; this does not assert an upstream
++  server defect or fabricate an integration success. Missing/wrong DB auth proven
++  by no successful initialization; stdio has no HTTP bearer auth. No B07 work.
++
++### DEC-024 — B06 final evidence and review gate | 2026-10-17
++- Final complete B01–B06 command361 PASS/0 FAIL/0 SKIP in329.97s,255 unit/106 real
++  integration (B06 adds37 unit/15 real cases, including explicit local output-fault
++  injection after real read). Original309 source tests unchanged. Both SPEC validators
++  PASS; npm ci frozen install/pip check/compile/whitespace and actual-secret audit PASS.
++- Actual DB same-container restart AND different-container recreation retain named
++  volumes; Browser HTTP200/storage checks PASS. Reprovisioned volatile B06 ACL, reran
++  real MCP proof afterwards PASS. Fresh full2104 city record hashes/revision/audit/
++  writer fingerprint, original B01 probe and retained B05 source57/clone59 match
++  accepted evidence. Canonical0001 remains READY,91 index groups/182 constraints
++  OPERATIONAL; no seed/promote/delete/volume reset or immutable migration/registry edit.
++- Exact source/files/diff/evidence in B06-FILES.md/B06-changes.patch/B06-RESULTS.md and
++  command guide. No B06 ZIP generated; B05 ZIP unchanged. No B06 commit/push requested;
++  B06 diff remains reviewable against accepted B05 local6550d31.
++- B06 complete at official runtime/broker foundation only. Remaining DEC-004 findings
++  retain designated tasks. Proposed B07: custom Civicly Python MCP for implemented
++  typed read capabilities, shared service boundary/common envelope and trace-contract
++  synchronization, real discovery/call/provenance/error/permission tests. No B08+
++  complaint/agent/GraphRAG/operational/API/frontend features started. STOP for review.
+diff --git a/docs/backend/05_mcp.md b/docs/backend/05_mcp.md
+index 2a95a2e..395bd04 100644
+--- a/docs/backend/05_mcp.md
++++ b/docs/backend/05_mcp.md
+@@ -1,7 +1,7 @@
+ # Runtime MCP integration contract (not Codex's tools)
+ 
+ ## Servers, clients and network boundary
+-- **Official FalkorDB MCP server**: documented `@falkordb/mcpserver`, Node-based stdio or HTTP. For local Docker use Streamable HTTP behind internal Docker network, API key plus read-only backend credentials when available; environment `FALKORDB_DEFAULT_READONLY=true`. Nevertheless `query_graph` may permit per-call readOnly override; **present only allowlisted** `list_graphs`, `get_graph_schema`, `get_node_schema`, `get_relationship_schema`, `query_graph_readonly` to the model and reject other tool calls at broker. The dedicated `query_graph_readonly` executes read-only query. Restrict graph name and query length/complexity; parameterize values.
++- **Official FalkorDB MCP server**: documented `@falkordb/mcpserver`, Node-based stdio or HTTP. For a future Docker HTTP deployment use Streamable HTTP behind an internal network with API key and read-only backend credentials. B06 uses private parent-owned stdio with no HTTP listener (see backend/MCP.md and DEC-022); environment `FALKORDB_DEFAULT_READONLY=true`. Nevertheless `query_graph` may permit per-call readOnly override; **present only allowlisted** `get_graph_schema`, `get_node_schema`, `get_relationship_schema`, `query_graph_readonly` (B06 denies `list_graphs` because it reveals unrelated internal graph names) to the model and reject other tool calls at broker. The dedicated `query_graph_readonly` executes read-only query. B06 also enables the verified release1.3.0 `FALKORDB_STRICT_READONLY=true` and graph-scoped DB ACL; neither flag replaces broker authorization. Restrict graph name and query length/complexity; parameterize values.
+ - **Custom Civicly Python MCP server**: built using official Python MCP SDK/verified version, same protected private network. Typed civic read tools and proposal/write tools. Domain state-changing tools call service layer with caller actor context, never trust LLM-supplied identity or approval.
+ - **Runtime broker**: authenticated MCP sessions; calls `tools/list` and `tools/call` (check actual SDK APIs), accepts JSON Schema tool description, maps validation/authorization, applies <= N tool calls/budget and concurrent requests constraints, emits graph-backed ToolExecution trace. For demo, no public MCP URL without auth.
+ 
+@@ -47,3 +47,16 @@ All normative machine contracts reference this same municipality_scope policy.
+ This is one synthetic municipality, not enterprise tenant isolation. Legacy v1/v2
+ fixtures require explicit conversion before canonical import; no implicit scope,
+ unknown-field dropping, or invented temporal evidence is permitted.
++
++## B06 implemented official-client contract
++Current implemented scope is `contracts/official_mcp.json` and `backend/MCP.md`.
++Actual official server1.3.0/Python SDK2.3.0 stdio initialize/tools/list/tools/call,
++four allowlisted read tools, fixed bounded value-parameterized templates, exact B04
++graph authorization and graph-scoped DB ACL. INFO is necessary for Node client
++Sentinel detection; no general command/admin rights. Local parent-owned pipes are
++the transport authentication boundary; HTTP bearer tests are not applicable here.
++No custom Civicly tool handlers or agent exist yet. B06 process-local sanitized traces
++and operator JSON evidence do not fulfill B07/B17 graph-backed common envelope/trace
++persistence. Existing custom18-tool contracts and all remaining DEC-004 findings stay
++binding for their designated milestones. Agent interfaces receive broker schemas,
++never upstream arbitrary Cypher/session/credential capabilities.
+diff --git a/docs/backend/12_falkordb_sources.md b/docs/backend/12_falkordb_sources.md
+index a579b84..eaea169 100644
+--- a/docs/backend/12_falkordb_sources.md
++++ b/docs/backend/12_falkordb_sources.md
+@@ -41,3 +41,12 @@ GraphRAG SDK documents its own schema and graph storage. We deliberately isolate
+ 7. Canvas data mapping later with sanitized stable graph subgraph DTO.
+ 
+ Write confirmed versions and compatibility decisions into `decision.md` with a `test_log.md` command. If incompatible, explore updated official adapter rather than silently switching to unrelated DB or omitting functionality.
++
++### B06 release verification (2026-10-17)
++Published @falkordb/mcpserver1.3.0 source verified via npm tarball/locked install.
++Both stdio and HTTP exist; B06 selects private stdio (no listener/API key), graph ACL
++and explicit four-tool broker. Release strictReadOnly also rejects readOnly=false
++and delete_graph; default alone remains insufficient. list_graphs is deliberately
++denied for inventory privacy. Python MCP2.3.0 negotiated2025-11-25 with actual server.
++See backend/MCP.md and docs/evidence/B06-runtime-proof.json for operational evidence;
++main documentation examples are not assumed to match the pinned release.
+diff --git a/flow.md b/flow.md
+index 42223c9..2f594d5 100644
+--- a/flow.md
++++ b/flow.md
+@@ -247,3 +247,58 @@ analysis.__main__ -> controlled test-only source/evidence or actual city evaluat
+ - Frontend/MCP consumers can later map typed nodes/edges/ProofPath IDs, statuses,
+   sources, dates, graph revision, gaps and measured budgets. No API/server/agent
+   runtime integration is implemented here; DEC-004 envelopes/traces remain pending.
++
++## B06 implemented runtime/control flow | 2026-10-17
++
++```text
++backend/mcp_runtime/package.json + package-lock.json -> npm ci -> official Node1.3.0
++app.mcp.runtime -> trusted configure -> named read-only DB ACL + ignored0600 credentials
++                -> empty temporary cwd + explicit child env + pinned Node entrypoint
++app.mcp.broker.open_broker -> Python MCP2.3.0 Client/private stdio child
++ -> initialize/protocol2025-11-25 -> tools/list -> exact7 names + schema hashes
++ -> ReadBroker.tools() safe template request schemas / ReadBroker.call(dict)
++ -> policy.Request strict/deny graph/tool/unknown fields -> serialized call budget
++ -> internal fixed READY/revision/pending read via official tools/call
++ -> four approved tools + fixed parameterized node/drainage query or capped schema
++ -> GRAPH.RO_QUERY under graph-key ACL -> bounded text JSON -> typed models/registry
++ -> post revision read unchanged -> ReadResult(raw facts, limits/candidate status)
++ -> sanitized actual trace metadata -> operator proof JSON (not graph-backed traces yet)
++context exit -> close SDK streams/stdin -> bounded child process-tree termination
++```
++
++New modules:runtime.py trusted setup/lifecycle config; policy.py strict request and
++3 fixed Cypher templates (including internal revision); models.py result projections;
++broker.py discovery/schema verification/authorization/traces/budgets/result validation;
++__main__.py configure/proof CLI; __init__.py namespace. contract official_mcp.json pins
++observed inventory, hashes, scope and limits. Makefile commands and backend/MCP.md
++explain reproduction. No existing graph algorithm/repository/schema/migration edit.
++
++Credential material flows only local0600 file -> explicit subprocess environment ->
++authenticated graph-scoped DB account, never public call/result/trace. No TCP MCP
++listener, resources/prompts/raw client interface for agent selection. Node initialization
++needs INFO; GRAPH.QUERY/DELETE/LIST/admin and other graph keys denied by DB. Schema
++storage labels stripped; canonical unknown fields rejected. No hidden evaluator files
++read at runtime. Upstream arbitrary-query/delete tools remain discovered for operator
++evidence but absent/rejected at broker. DB default developer account remains privileged.
++
++ReadResult is a B06 official-fact result, not a replacement for18 B07 custom contracts,
++B05 decision-grade algorithms or later frontend DTO. Node current state; edge half-open
++validity/as_of with explicit raw candidate statuses. Actual revision read, never vendor
++Graph version. Errors/timeouts invalidate session as documented; fresh owned context
++reconnects, no automatic replay. Trace list/operator JSON is current evidence storage;
++B07/B17 graph-backed envelope/persistence remains open. No agent rationale fabricated.
++Existing graph/Browser volumes and original B01/B04/B05 evidence retained; ACL account
++must be reprovisioned after DB recreation, generated local credential reused.
++
++B06 temporal query compilation imports the accepted B03 GraphQueries._time_key;
++all supplied/recorded UTC values compare at the same microsecond precision. Actual
++boundary tests read retained edge dates without modifying them. Integration fault
++injection corrupts an actual returned record only in the test process, validating
++fail-closed unknown-property handling and subsequent fresh-session recovery.
++
++Final B06 post-lifecycle proof executes configure -> actual MCP initialize/list/call
++-> independent official Python read -> clean session shutdown. Separate administrative
++read helper verifies all retained fingerprints and migration readiness. Source audit
++compares86 original protected file hashes/direct pins, scans actual private values
++without emitting them and checks child-process absence. Source diff excludes generated
++evidence bodies (exact evidence paths inventoried separately); no B06 review ZIP.
+diff --git a/implementation_status.md b/implementation_status.md
+index acbed5c..a2e91af 100644
+--- a/implementation_status.md
++++ b/implementation_status.md
+@@ -1,5 +1,9 @@
+ # implementation_status.md — Current implementation truth
+ 
++## Current status — B06, 2026-10-17 (takes precedence over history)
++
++B06 implemented and verified: official Node1.3.0/Python MCP2.3.0 private stdio, four allowlisted read tools, graph-scoped DB ACL, strict templates and sanitized traces.361 PASS/0 FAIL/0 SKIP; both SPEC validators PASS. B01/B04/B05 retained fingerprints and canonical0001 readiness unchanged. No agent/custom MCP/GraphRAG/operations/API/frontend feature claimed complete. STOP for B06 review.
++
+ ## Current status — B05, 2026-10-17 (takes precedence over history)
+ 
+ B05 implemented/tested:bounded graph algorithms, transparent historical case retrieval, factory-owned counterfactuals and actual-city/source-dependency reports.309 PASS/0 FAIL/0 SKIP; both SPEC validators PASS. B04 data/registry/0001 and original B01/canonical evidence preserved. No causal scenario, agent/MCP/GraphRAG/operations/API/frontend capability claimed complete. STOP for human B05 review.
+@@ -159,3 +163,29 @@ Per task, update: implemented paths, exact tests, pass/fail/skip, screenshots/lo
+   See B05-post-lifecycle.json and B05-canonical-status.json. Review ZIP integrity/
+   actual-source bytes/secret audit PASS; isolated extraction imports its own source
+   and reproduces51 focused B05 tests PASS in88.60s. No source/volume reset.
++
++## B06 implemented scope | 2026-10-17
++- Actual official @falkordb/mcpserver1.3.0 dependency locked with npm; Python SDK2.3.0
++  pinned/uv-locked. Node24.21.0/npm12.2.0; Node client6.8.0/TS MCP SDK1.32.1. Existing
++  FalkorDB6.0.2, all original direct Python pins/registry0001 preserved.
++- Real private stdio initialize negotiates2025-11-25, tools/list7 signatures checked,
++ 4 approved read tools with strict safe request schema and fixed query templates.
++  No list_graphs/query_graph/delete_graph or arbitrary Cypher agent surface.
++- DB ACL exact accepted B04 city graph; PING/INFO/GRAPH.RO_QUERY/CLIENT SETINFO only.
++  Real mutation/admin/other-key denial. No HTTP listener; bearer auth not applicable.
++- Raw current node/validity-filtered one-edge records preserve IDs/source/status/date
++  context; candidate-only city not promoted. Actual revision2104 before/after, typed
++  projections and independent Python equality. B05 decision-grade algorithms unchanged.
++- Owned child/session cleanup, downtime/fresh reconnect, actual stalled-server timeout,
++  invalid arguments/auth and bounded calls tested. Unit malformed outputs/revision
++  injection clearly labeled; local corruption after a real MCP read separately tested.
++- Sanitized process-local tool metadata and operator JSON; graph-backed common traces
++  deferred B07/B17. No live model/agent choice or complete product capability claimed.
++
++B06 final verification:361 PASS/0 FAIL/0 SKIP in329.97s (255 unit/106 real integration);
++all original309 tests unchanged. Both SPEC validators PASS. Live proof after actual
++recreation and ACL reprovision PASS; full city2104 record/revision/audit/writer hashes,
++original B01 row and retained B05 source57/clone59 unchanged. Canonical0001 READY with
++91 index groups/182 OPERATIONAL constraints. Security/source/process audit PASS.
++Exact paths/diff/commands in B06-FILES.md/B06-changes.patch/B06-COMMANDS.md. No B06 ZIP
++or remote push. STOP — human review required before B07.
+diff --git a/task_board.md b/task_board.md
+index a6c72c0..b287bbb 100644
+--- a/task_board.md
++++ b/task_board.md
+@@ -1,5 +1,9 @@
+ # task_board.md — Human-reviewed task queue
+ 
++## Current status — B06, 2026-10-17 (takes precedence over history)
++
++B05 externally accepted; local baseline6550d31. B06 PASS — human review pending.361 tests PASS/0 FAIL/0 SKIP (255 unit/106 real integration), both SPEC validators PASS. Real official MCP initialize/list/call, security/recovery and retained evidence verified after recreation. B07 TODO; no B07+ work.
++
+ ## Current status — B05, 2026-10-17 (takes precedence over history)
+ 
+ B04 externally accepted. B05 PASS — human review pending.309 tests PASS (218 unit/91 real integration),0 FAIL/0 SKIP; both SPEC validators PASS. Controlled ablation, actual-city diagnostics and260 read-only performance runs recorded. Next B06 TODO; no MCP implementation started.
+@@ -97,3 +101,23 @@ working scenario, agent, MCP or operations capability. STOP for human B04 review
+ Human checks before/after criticality/paths/source fingerprints, city verified vs
+ exploratory distinction, data dependency matrix, exact test counts and ZIP manifest.
+ No full product requirement is completed just by graph primitives. STOP after B05.
++
++## B06 review ledger | 2026-10-17
++
++| Task | State | Human accepted? | Boundary |
++|---|---|---|---|
++| B05 | PASS | Yes | Accepted by B06 authorization; local baseline6550d31 |
++| B06 | IN_PROGRESS | No | Actual official MCP/private stdio/broker/ACL/traces; final regression pending |
++| B07 | TODO | No | Custom Civicly Python MCP typed read tools/service-call boundary and common traces only after review |
++
++B06 does not implement18 custom handlers, model selection, LangGraph/GraphRAG,
++operations/API/frontend. Stop at human B06 gate; all18 objectives remain mandatory.
++
++## B06 final gate (supersedes in-progress ledger) | 2026-10-17
++
++| Task | State | Human accepted? | Evidence |
++|---|---|---|---|
++| B06 | PASS — review pending | No |361 PASS; actual official MCP, explicit broker/ACL negatives, restart/recovery, unchanged retained evidence; both SPEC validators |
++| B07 | TODO | No | Custom Python MCP typed read tools/shared services/common envelope/traces; only after acceptance |
++
++All18 requirements retained, not fulfilled by this runtime foundation. No B07+ work.
+diff --git a/test_log.md b/test_log.md
+index 4c5e3ab..cd87e4b 100644
+--- a/test_log.md
++++ b/test_log.md
+@@ -1,5 +1,9 @@
+ # test_log.md — Append-only verification record
+ 
++## Current status — B06, 2026-10-17 (takes precedence over history)
++
++Final B01–B06 regression361 PASS/0 FAIL/0 SKIP in329.97s:255 unit/106 real database/MCP integration. B06 adds37 unit+15 real cases; all original309 tests retained unchanged. Both SPEC validators PASS. Post-recreation MCP proof/independent read, full retained fingerprints and canonical readiness PASS. HTTP bearer auth not applicable to private stdio; no live model test.
++
+ ## Current status — B05, 2026-10-17 (takes precedence over history)
+ 
+ Final B01–B05 regression309 PASS /0 FAIL /0 SKIP in246.23s:218 unit/91 real integration including real restart/recreation. B05 adds29 unit +22 real cases; all prior258 retained. Both SPEC validators PASS.260 measured read-only analyses and actual controlled/city outputs recorded; failed intermediate attempts retained below.
+@@ -517,3 +521,65 @@ PY
+ - Full repository remains309 PASS; focused51 are a reproducibility recheck, not
+  additional unique tests. Final manifest lists every included file's purpose/SHA256
+  and omitted dependencies. All prior B01–B04 tests/source/data/pins remain unchanged.
++
++### TEST-20261017-B06-01 — Accepted B05 baseline / source / dependency spike
++- Baseline `backend/.venv/bin/python -m pytest backend/tests -v -s --run-persistence`:
++ 309 PASS/0 FAIL/0 SKIP in261.78s. Both SPEC validators PASS.263-file existing-source
++ secret/exclusion/hash audit PASS; B05 ZIP SHA unchanged. Local commit6550d31108c34db6bb0bd5c111c7a41d09953125,
++ no push. Historical patch/failed-log whitespace warnings retained unchanged.
++- Fresh full-city record/hash/audit/writer checks, retained B05 source/clone, original
++ B01 probe and canonical0001 READY PASS (B06-baseline.json). First harness omitted
++ required graph_name and failed TypeError; corrected harness, no application change.
++- Official published1.3.0 package source inspected; Node24.21.0/npm12.2.0, Python
++ MCP/types2.3.0. Isolated actual handshake2025-11-25/list7/readD12 PASS. First raw ACL
++ Python-client probe required INFO; retried raw Redis command probe; no graph writes.
++ Node dependency lock6.8.0/TS SDK1.32.1 verified against6.0.2. Frozen npm ci and pip
++ check PASS; full version/lock/integrity evidence B06-versions.json.
++
++### TEST-20261017-B06-02 — Real MCP and strengthened negative tests
++- First authenticated project proof failed TIMEOUT because minimum ACL omitted INFO,
++ required by Node Sentinel detection. Added only INFO, reran configure/proof PASS.
++ Real node/schema/relationship reads match independent official Python client, actual
++ revision2104.7 discovered/4 allowed;42 city drainage links remain CANDIDATE.
++- Initial30 unit PASS in2.06s; strengthened37 unit PASS in0.62s. Mocked malformed
++ outputs/schema/scope/property/endpoint/revision/pending faults explicitly labeled.
++- First real integration13 PASS in45.18s; strengthened signatures/auth test13 PASS
++ in48.90s. Missing/wrong auth test ensures initialization never succeeds; no own-assert
++ false-positive accepted. Actual kill/fresh reconnect, SIGSTOP timeout/cleanup,
++ CREATE/SET/DELETE RO denial, strict-mode/general/delete rejection, ACL/write/key/list/
++ admin denials, invalid args, spoofed tools, parameter injection and call budgets PASS.
++- Temporal review reused B03 UTC normalization. Actual retained edge equivalent
++ fractional dates and prior-microsecond boundary PASS; focused37unit+14real=51 PASS
++ in49.92s. Additional AFTER-REAL-READ local unknown-property corruption/reconnect1
++ PASS in5.38s; explicit fault injection, not claim of malformed upstream response.
++- HTTP bearer authentication NOT APPLICABLE to selected private stdio; not reported
++ passing/skipped. No live model/agent/custom MCP server test exists in B06.
++- First final-audit invocation under the filesystem sandbox could not execute ps
++  (PermissionError); rerun with authorized local process inspection PASS. This was a
++  tool-permission failure, not a passed cleanup check or application regression.
++ 86 protected original app/test/contract/ingestion files unchanged; no local secret
++ values included; original dependency pins and B05 ZIP hash retained.
++
++### TEST-20261017-B06-03 — Complete final regression, persistence and source safety
++- Final `backend/.venv/bin/python -m pytest backend/tests -v -s --run-persistence`:
++ **361 PASS/0 FAIL/0 SKIP in329.97s**.255 unit/106 real integration. B06 adds37 unit/
++ 15 real DB/MCP cases; all prior309 tests/source unchanged. Two lifecycle PASS lines
++ are standalone because tests emit actual restart/recreation output;106 integration
++ count includes them. Full log B06-regression-tests.txt; no mock counted as real proof.
++- Both SPEC validators PASS after final docs, explicitly STATIC checks. npm ci lock
++ reinstall110 packages PASS, pip check PASS, compile/whitespace PASS. Python/Node
++ lock/package/version/integrity evidence B06-versions.json; no original direct-pin change.
++- Actual persistence: same-container restart + different-container recreation,
++ Browser HTTP200/store and fresh graph MATCH PASS, no volume removal. Reprovision
++ B06 ACL after recreation; real configure/proof PASS again, independent official
++ Python read equal, DRAIN-D12 and D12→D18 CANDIDATE at actual revision2104.
++- `PYTHONPATH=backend backend/.venv/bin/python -m tests.b06_verify --output docs/evidence/B06-post-lifecycle.json`:
++ PASS all2104 city record hashes/content/revision/audit/writer state, B05 source57/
++ clone59 and original B01 probe exactly retained. Fresh CLI health/schema-status PASS;
++ canonical0001 READY,91 index groups/182 OPERATIONAL constraints. No raw data edit.
++- Actual-local.env/.runtime secret/excluded-path/old-file/old-pin/B05-ZIP/process audit
++ PASS;86 original protected files unchanged, no leaked official child processes. No
++ B06 ZIP created or remote push. Reviewable source patch/file inventory produced.
++- HTTP bearer tests NOT APPLICABLE to stdio; live LLM, custom domain MCP, agents,
++ GraphRAG, operations/API/frontend NOT IMPLEMENTED/NOT RUN in B06; not skipped runtime
++ acceptance tests. Remaining source/DEC-004 findings stay OPEN. STOP for human review.
+diff --git a/backend/MCP.md b/backend/MCP.md
+new file mode 100644
+index 0000000..f23a102
+--- /dev/null
++++ b/backend/MCP.md
+@@ -0,0 +1,167 @@
++# B06 official FalkorDB MCP runtime
++
++B05 accepted; B06 only. This is a Python client of the actual official Node server,
++not a Codex connector and not the B07 custom domain server. No model/agent selection,
++GraphRAG, operations, API or frontend is implemented here. All18 requirements remain.
++
++## Reproduce locally
++
++Repository root, Python3.12.1 isolated environment and existing pinned FalkorDB6.0.2
++Compose/Browser. Preserve volumes and retained city/B01/B05 graphs. Tested
++Node24.21.0/npm12.2.0; project engines require the tested Node24/npm12 family.
++
++```sh
++UV_CACHE_DIR=.uv-cache backend/.venv/bin/uv sync --project backend --frozen
++make up
++make mcp-setup
++make mcp-configure
++make mcp-proof
++make test-mcp
++backend/.venv/bin/python -m pytest backend/tests -v -s --run-persistence
++make test-spec
++```
++
++`mcp-setup` uses npm ci against committed integrity hashes; no npx/latest resolution
++at runtime. Official package1.3.0 declares Node>=18/npm>=8; verified Python SDK2.3.0,
++mcp-types2.3.0 and negotiated legacy initialization protocol2025-11-25. Full Python
++and Node transitive versions/hashes are in backend/uv.lock and
++backend/mcp_runtime/package-lock.json. Existing direct B01 package pins retained.
++
++`configure` is a trusted local administrator command, not an agent tool. It creates
++or reuses ignored `.runtime/mcp-credentials.json` (0600, directory0700) and provisions
++only `civicly_mcp_b06` via ACL SETUSER reset. One exact graph key:
++`civicly_b04_test_a84beda80da64aacbc367a9399e07a97`. Allowed Redis commands PING,
++INFO (required by actual Node client Sentinel detection), GRAPH.RO_QUERY and CLIENT
++SETINFO. No GRAPH.QUERY/DELETE/LIST, CONFIG, ACL or other graph keys. Password hashes
++are sent to ACL SETUSER; credentials never appear in command-line arguments or
++operator output. Default local developer access is unchanged and remains privileged.
++
++ACL state is not persisted in the current database image's AOF. Run `make mcp-configure`
++after database restart/recreation; the generated credential stays local. No migration,
++volume, dataset or canonical graph modification is needed. Missing/wrong credentials
++fail initialization; the upstream connection retry can continue until client timeout,
++after which SDK closes/kills the child. Do not share `.runtime`, `.env` or keys.
++
++## Transport and authorization
++
++Selected transport: official supported **stdio**, with a broker-owned Node child and
++private parent pipes. No MCP TCP/HTTP endpoint or public port is opened; no bearer key
++is applicable to this transport. The documented Docker HTTP topology is deliberately
++deferred for this local monolith. HTTP bearer authentication has NOT been tested and
++is NOT claimed. Switching requires authenticated private-network tests and a new
++recorded decision. OS user/process ownership is the transport boundary; no isolation
++from arbitrary privileged code running as the same user is claimed.
++
++The child starts in a new empty temporary working directory so upstream dotenv cannot
++read repository.env; only explicit DB account variables and SDK's OS environment
++basics are inherited. NODE_ENV=production/ENABLE_FILE_LOGGING=false prevent upstream
++file logs; its logging notifications are discarded because they may contain raw
++queries/errors. BOTH FALKORDB_DEFAULT_READONLY and FALKORDB_STRICT_READONLY are true.
++Release1.3.0 strict mode rejects general-query readOnly=false and delete_graph;
++dedicated readonly uses GRAPH.RO_QUERY. DB ACL separately blocks write commands and
++other graph keys. Neither strict/default flags alone are the broker policy.
++
++| Official tools/list inventory | Broker availability | Restriction |
++|---|---|---|
++| query_graph_readonly | Yes | fixed named templates; no caller Cypher/params/readOnly |
++| get_graph_schema | Yes | one graph; topology sample100; public registry labels/types |
++| get_node_schema | Yes | registry node labels; sample1–100 |
++| get_relationship_schema | Yes | registry relation types; sample1–100 |
++| query_graph | No | arbitrary query/per-call override |
++| delete_graph | No | mutation/admin |
++| list_graphs | No | unrelated graph inventory leakage; DB command also denied |
++
++Exact tool names, input schemas and observed hashes are in official_mcp.json and the
++operator proof. Seven expected signatures are checked on actual tools/list, rejecting
++duplicate/new/missing/spoofed inventories. Agent-facing `tools()` returns safe broker
++Request schemas, never arbitrary-query vendor input or raw session methods. No
++resource/prompt/connection-string/credential/raw-session interface is exposed. Future
++agent adapters must call only `ReadBroker.call`; constructing runtime clients is a
++trusted application capability. The same-process Python module is not an OS sandbox.
++
++Only the explicitly accepted retained B04 city is authorized. Repository's broader
++B02–B25 disposable naming policy does not authorize any graph to this MCP broker.
++Canonical empty graph, B01 probes, B05 clone/source, docs/checkpoint/evaluator graphs
++and all arbitrary names are denied. Runtime modules do not read scenario catalogs,
++expected answers, source documents, hidden truth or delayed reveals. Template reads
++only CivicEntity/domain edges; no audit/owner/credential payload is exposed. Revision
++bookkeeping uses a fixed internal template, returning only revision/pending/READY.
++
++## Queries, result limits and semantics
++
++Public requests use the Request model (strict, extra=forbid) and never accept query
++text or caller params. Dynamic ID/scope/as_of values are separately parameterized.
++
++```python
++async with open_broker(traces) as broker:
++    print(broker.tools())  # safe broker request schemas after actual tools/list
++    result = await broker.call({
++        "tool": "query_graph_readonly", "template": "node", "id": "DRAIN-D12"
++    })
++```
++
++`node`: one current-state domain record by ID; full public properties and labels
++strictly validated against registryv3. No historical node reconstruction claim.
++`drainage_edges`: one directed DRAINS_TO edge from selected asset, scoped and
++created/as_of + half-open validity predicates. Limit101 gives100 rows plus truncation
++lookahead; unknown validity is open/unknown. Stable endpoint/relationship IDs, typed
++labels, recorded status/source/evidence/date properties retained and validated. These
++are raw facts, including CANDIDATE/REPORTED when present, **not decision-grade verified
++causal paths**. No candidate promotion. Use accepted B05 analysis through later B07
++custom tools for filtered proof/evidence reasoning; no B05 semantic replacement.
++
++Schema tools are bounded samples and may be incomplete. Storage-only labels are
++filtered deliberately; unknown domain labels/properties are rejected. `search_limited`
++is always true; absence within a bounded query is not global disconnection proof.
++
++Each public read first and last calls official query_graph_readonly for actual READY
++application repo_revision/pending state. Pending/revision change fails closed; no
++retry quietly changes snapshots. Upstream metadata `Graph version` is not Civicly
++application revision. Revision protection assumes repository-mediated writes;
++privileged raw mutations may not advance it, as in the accepted B03/B05 boundary. Calls serialized per broker;32 actual wire tool calls/session
++(default, configurable3–64) include internal revision reads. Client call timeout4s
++(configurable0.01–10); timeouts/transport/malformed output invalidate session, requiring
++exit and a fresh owned context. JSON result limit262144bytes checked after transport
++receipt; not a network streaming memory cap. Templates are bounded but upstream query
++tool has **no query timeout argument**; client timeout/cancellation is not claimed to
++interrupt database execution. No arbitrary expensive Cypher accepted.
++
++## Traces and errors
++
++Process-local sanitized trace list records actual initialize/discovery/server/version,
++protocol/tool-schema/inventory SHA256, argument hash, withheld-value summary,
++UTC start/end/latency, received versus validated row counts, outcome/denial code and
++application revision when verifiably observed. It never copies server error strings,
++raw arguments, passwords or model rationale. selection_rationale=null with operator/
++application origin because no agent exists. B07/B17 must still implement common domain
++envelope/graph-backed ToolExecution persistence; DEC-004 stays open.
++
++Representative actual calls/responses/trace rows are in
++`docs/evidence/B06-runtime-proof.json`; operator diagnostics contain vendor schemas
++for review only. Raw server TOOL_ERROR is distinguished from broker DENIED_TOOL,
++DENIED_GRAPH, INVALID_ARGUMENTS, INVALID_OUTPUT, TIMEOUT, TRANSPORT_FAILURE,
++SESSION_UNAVAILABLE, CALL_BUDGET, GRAPH_WRITE_PENDING and GRAPH_REVISION_CHANGED.
++No error becomes empty success; no automatic tool replay after a transport failure.
++SDK shutdown closes stdin, waits and terminates owned process tree with bounded waits.
++
++## Evidence boundaries
++
++The proof retrieves actual DRAIN-D12 and D12→D18 CANDIDATE with stable properties,
++compares both to independent official Python-client queries, and checks revision2104.
++Tests separately prove live CREATE/SET/DELETE refusal via official readonly tool,
++general query/delete strict-mode refusal, ACL/admin/graph-list/key denial, malformed
++arguments, missing/wrong DB auth, kill/restart, real SIGSTOP timeout/reconnect, cleanup,
++serialization and bounded calls. Malformed **outputs**, schema/property/revision
++injection use clearly labeled mocked unit tests. A separate integration fault test
++corrupts a result locally AFTER an actual official MCP read and verifies rejection/
++reconnection; this is not an upstream defect. No fabricated official response is
++reported as integration success. HTTP auth is not applicable; no live LLM test.
++Full regression preserves B01/B02/B03/B03-R/B04/B05 tests and original retained data.
++
++Official sources verified against installed release:
++- https://github.com/FalkorDB/FalkorDB-MCPServer
++- https://docs.falkordb.com/genai-tools/mcpserver/configuration
++- https://github.com/modelcontextprotocol/python-sdk
++- https://py.sdk.modelcontextprotocol.io/
++- Installed official dist/index.js, dist/mcp/tools.js, dist/config/index.js,
++  dist/services/falkordb.service.js and Node falkordb Sentinel detection source.
+diff --git a/backend/app/mcp/__init__.py b/backend/app/mcp/__init__.py
+new file mode 100644
+index 0000000..0857971
+--- /dev/null
++++ b/backend/app/mcp/__init__.py
+@@ -0,0 +1 @@
++"""B06 official MCP client boundary; custom domain server belongs to B07."""
+diff --git a/backend/app/mcp/__main__.py b/backend/app/mcp/__main__.py
+new file mode 100644
+index 0000000..58c295b
+--- /dev/null
++++ b/backend/app/mcp/__main__.py
+@@ -0,0 +1,61 @@
++"""B06 operator proof CLI; no general query/agent/server entry point."""
++import argparse
++import asyncio
++import json
++from pathlib import Path
++from app.config import Settings
++from app.graph.connection import connect
++from .broker import open_broker, BrokerError
++from .runtime import provision, CITY_GRAPH
++from .policy import NODE_QUERY, EDGE_QUERY, Request
++
++
++async def proof():
++    traces = []
++    async with open_broker(traces) as broker:
++        inventory = broker.operator_inventory
++        requests = [{'tool': 'get_graph_schema'}, {'tool': 'get_node_schema', 'label': 'DrainSegment'},
++                    {'tool': 'get_relationship_schema', 'relationship_type': 'DRAINS_TO'},
++                    {'tool': 'query_graph_readonly', 'template': 'node', 'id': 'DRAIN-D12'},
++                    {'tool': 'query_graph_readonly', 'template': 'drainage_edges', 'id': 'DRAIN-D12', 'as_of': '2026-10-17T23:00:00Z'}]
++        results = [(await broker.call(r)).model_dump(mode='json') for r in requests]
++        denials = []
++        for r in [{'tool': 'query_graph', 'readOnly': False}, {'tool': 'delete_graph'},
++                  {'tool': 'list_graphs'}, {'tool': 'query_graph_readonly', 'graph': 'civicly_docs'},
++                  {'tool': 'query_graph_readonly', 'query': 'CREATE (:Forbidden)'}]:
++            try: await broker.call(r)
++            except BrokerError as exc: denials.append({'request_fields': sorted(r), 'status': exc.code})
++            else: raise AssertionError('Unexpected allowed request')
++    with connect(Settings(_env_file='.env')) as c:
++        graph = c.select_graph(CITY_GRAPH)
++        node = graph.ro_query(NODE_QUERY, params={'id': 'DRAIN-D12', 'scope': 'demo-city'}, timeout=1000).result_set
++        edges = graph.ro_query(EDGE_QUERY, params=Request.model_validate(requests[4]).arguments()['params'], timeout=1000).result_set
++        assert results[3]['rows'][0]['properties'] == node[0][1]
++        expected = {row[5]['id']: row[5] for row in edges}
++        assert {r['properties']['id']: r['properties'] for r in results[4]['rows']} == expected
++    return {'status': 'PASS', 'graph': CITY_GRAPH, 'available_inventory': inventory,
++            'allowed_tools': sorted(['query_graph_readonly', 'get_graph_schema', 'get_node_schema', 'get_relationship_schema']),
++            'requests': requests, 'results': results, 'broker_denials': denials, 'traces': traces,
++            'independent_official_python_client_equal': True,
++            'semantics': 'Current synthetic records/candidate edges only, not a causal investigation or live-agent decision'}
++
++
++def main():
++    p = argparse.ArgumentParser()
++    p.add_argument('command', choices=['configure', 'proof'])
++    p.add_argument('--output', type=Path)
++    args = p.parse_args()
++    try:
++        if args.command == 'configure':
++            with connect(Settings(_env_file='.env')) as c: result = provision(c)
++        else: result = asyncio.run(proof())
++        if args.output:
++            args.output.parent.mkdir(parents=True, exist_ok=True)
++            args.output.write_text(json.dumps(result, indent=2)+'\n')
++        print(json.dumps({'status': result['status'], 'graph': CITY_GRAPH, 'output': str(args.output) if args.output else None}))
++    except (BrokerError, OSError, ValueError) as exc:
++        print(json.dumps({'status': 'FAILED', 'code': getattr(exc, 'code', 'RUNTIME_SETUP_FAILURE')}))
++        raise SystemExit(1) from None
++
++
++if __name__ == '__main__': main()
+diff --git a/backend/app/mcp/broker.py b/backend/app/mcp/broker.py
+new file mode 100644
+index 0000000..7835b0f
+--- /dev/null
++++ b/backend/app/mcp/broker.py
+@@ -0,0 +1,266 @@
++"""Deny-by-default real MCP client. Public calls accept templates, never Cypher."""
++import asyncio
++from contextlib import asynccontextmanager
++from datetime import datetime, timezone
++import hashlib
++import json
++import time
++from typing import Any
++
++from jsonschema import Draft7Validator
++from mcp import Client
++from pydantic import ValidationError
++
++from app.graph.schema import Registry, SchemaError, timestamp
++from .models import (ReadResult, QueryPayload, RevisionRow, NodeRow, EdgeRow, GraphSchema,
++                     NodeSchema, RelationshipSchema)
++from .policy import ALLOWED, Request, REVISION_QUERY
++from .runtime import CITY_GRAPH, VERSION, ROOT, server_parameters
++
++
++def digest(value):
++    try: raw = json.dumps(value, sort_keys=True, separators=(',', ':'), ensure_ascii=True).encode()
++    except (TypeError, ValueError): raw = b'non-JSON input withheld'
++    return hashlib.sha256(raw).hexdigest()
++
++
++def now():
++    return datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
++
++
++class BrokerError(RuntimeError):
++    def __init__(self, code):
++        self.code = code
++        super().__init__(code)  # never propagate server/SDK error text or arguments
++
++
++def error_code(exc):
++    if isinstance(exc, BaseExceptionGroup):
++        codes = [error_code(e) for e in exc.exceptions]
++        return 'TIMEOUT' if 'TIMEOUT' in codes else codes[0]
++    if isinstance(exc, BrokerError): return exc.code
++    if isinstance(exc, TimeoutError): return 'TIMEOUT'
++    if isinstance(exc, (ValidationError, SchemaError, ValueError, TypeError, KeyError)): return 'INVALID_OUTPUT'
++    # SDK timeout has a structured code; never inspect/log untrusted message text.
++    if getattr(getattr(exc, 'error', None), 'code', None) == -32001: return 'TIMEOUT'
++    return 'TRANSPORT_FAILURE'
++
++
++def parse_content(result):
++    if result.is_error: raise BrokerError('TOOL_ERROR')
++    if len(result.content) != 1 or result.content[0].type != 'text':
++        raise BrokerError('INVALID_OUTPUT')
++    raw = result.content[0].text
++    if len(raw.encode()) > 262144: raise BrokerError('RESULT_LIMIT')
++    data = json.loads(raw)
++    if not isinstance(data, dict): raise BrokerError('INVALID_OUTPUT')
++    return data
++
++
++class ReadBroker:
++    """Only this JSON-shaped interface is intended for future agent callers.
++
++    Construction/session ownership is trusted application code, not a capability
++    sandbox against arbitrary Python code running as the same OS user.
++    """
++    def __init__(self, client, traces, *, timeout=4.0, max_calls=32):
++        if not 0.01 <= timeout <= 10 or not 3 <= max_calls <= 64:
++            raise ValueError('Invalid broker budgets')
++        self.__client = client
++        self.__traces = traces
++        self.__timeout = timeout
++        self.__max_calls = max_calls
++        self.__calls = 0
++        self.__broken = False
++        self.__lock = asyncio.Lock()
++        self.__schemas = {}
++        self.__inventory = None
++        self.__registry = Registry()
++        self.__server = None
++        self.__protocol = None
++
++    def _record(self, *, operation, status, started, clock, tool=None, args=None, rows=None, revision=None):
++        self.__traces.append({'trace_version': 'B06-1', 'operation': operation,
++            'server': self.__server, 'protocol_version': self.__protocol,
++            'tool': tool if tool in ALLOWED else ('[unapproved]' if tool else None),
++            'schema_sha256': digest(self.__schemas[tool]) if tool in self.__schemas else None,
++            'inventory_sha256': self.__inventory, 'arguments_sha256': digest(args) if args is not None else None,
++            'arguments_summary': 'values withheld; fixed template or validated schema arguments' if args is not None else None,
++            'started_at': started, 'ended_at': now(), 'latency_ms': round((time.perf_counter()-clock)*1000, 3),
++            'status': status, 'denial_reason': status if status.startswith(('DENIED', 'INVALID_ARGUMENT')) else None,
++            'result_summary': {('validated_rows' if operation == 'broker/validated_call' else 'received_rows'): rows} if rows is not None else None,
++            'graph_revision': revision, 'selection_rationale': None,
++            'invocation_origin': 'application_or_operator; no agent implemented'})
++
++    async def discover(self):
++        started, clock = now(), time.perf_counter()
++        try:
++            info = self.__client.server_info
++            if info is None or info.name != 'falkordb' or info.version != VERSION:
++                raise BrokerError('SERVER_IDENTITY_MISMATCH')
++            self.__server = {'name': info.name, 'version': info.version}
++            self.__protocol = self.__client.protocol_version
++            async with asyncio.timeout(self.__timeout):
++                inventory = await self.__client.list_tools()
++            tools = inventory.tools
++            if inventory.next_cursor is not None or len(tools) != 7 or len({t.name for t in tools}) != len(tools):
++                raise BrokerError('INVENTORY_MISMATCH')
++            expected = ALLOWED | {'query_graph', 'delete_graph', 'list_graphs'}
++            if {t.name for t in tools} != expected: raise BrokerError('INVENTORY_MISMATCH')
++            self.__inventory = digest([t.model_dump(mode='json') for t in tools])
++            contract = json.loads((ROOT / 'contracts/official_mcp.json').read_text())
++            if any(digest(t.input_schema) != contract['observed_input_schema_sha256'].get(t.name) for t in tools):
++                raise BrokerError('TOOL_SCHEMA_MISMATCH')
++            self.__schemas = {t.name: t.input_schema for t in tools if t.name in ALLOWED}
++            for schema in self.__schemas.values(): Draft7Validator.check_schema(schema)
++            # Full upstream schemas are trusted operator evidence, not agent tools.
++            self.operator_inventory = [t.model_dump(mode='json') for t in tools]
++            self._record(operation='tools/list', status='SUCCESS', started=started, clock=clock)
++        except Exception as exc:
++            self.__broken = True
++            code = error_code(exc)
++            self._record(operation='tools/list', status=code, started=started, clock=clock)
++            raise BrokerError(code) from None
++
++    def tools(self):
++        # Safe broker schemas deliberately differ from arbitrary-query vendor schemas.
++        schema = Request.model_json_schema()
++        return [{'name': name, 'broker_request_schema': schema, 'official_schema_sha256': digest(self.__schemas[name])}
++                for name in sorted(self.__schemas)]
++
++    async def __wire(self, tool, args, *, revision=None):
++        started, clock = now(), time.perf_counter()
++        code, count = 'SUCCESS', None
++        try:
++            if self.__broken: raise BrokerError('SESSION_UNAVAILABLE')
++            if self.__calls >= self.__max_calls: raise BrokerError('CALL_BUDGET')
++            Draft7Validator(self.__schemas[tool]).validate(args)
++            self.__calls += 1
++            async with asyncio.timeout(self.__timeout):
++                result = await self.__client.call_tool(tool, args, read_timeout_seconds=self.__timeout)
++            data = parse_content(result)
++            count = len(data.get('data', [])) if isinstance(data.get('data', []), list) else None
++            return data
++        except Exception as exc:
++            code = error_code(exc)
++            if code in {'TIMEOUT', 'TRANSPORT_FAILURE', 'INVALID_OUTPUT', 'RESULT_LIMIT'}: self.__broken = True
++            raise BrokerError(code) from None
++        finally:
++            self._record(operation='tools/call', status=code, started=started, clock=clock, tool=tool, args=args, rows=count, revision=revision)
++
++    async def __revision(self):
++        data = QueryPayload.model_validate(await self.__wire('query_graph_readonly',
++            {'graphName': CITY_GRAPH, 'query': REVISION_QUERY, 'params': {'id': '0001'}}))
++        if len(data.data) != 1: raise BrokerError('INVALID_REVISION')
++        row = RevisionRow.model_validate(data.data[0])
++        if row.pending: raise BrokerError('GRAPH_WRITE_PENDING')
++        return row.revision
++
++    def __node_type(self, labels):
++        public = set(labels) - {self.__registry.base_label}
++        kinds = [k for k in public if k in self.__registry.nodes and not any(k in self.__registry.nodes.get(other, {}).get('labels', []) for other in public)]
++        if len(kinds) != 1 or set(labels) != set(self.__registry.labels(kinds[0])):
++            raise BrokerError('INVALID_OUTPUT')
++        return kinds[0]
++
++    def __validate(self, req, data, revision):
++        common = dict(graph=req.graph, tool=req.tool, template=req.template, graph_revision=revision)
++        if req.tool == 'query_graph_readonly':
++            payload = QueryPayload.model_validate(data)
++            if req.template == 'node':
++                if len(payload.data) > 1: raise BrokerError('RESULT_LIMIT')
++                rows = [NodeRow.model_validate(row) for row in payload.data]
++                for row in rows:
++                    kind = self.__node_type(row.labels)
++                    self.__registry.validate_node(kind, row.properties)
++                    if row.properties['id'] != req.id or row.properties['municipality_id'] != 'demo-city': raise BrokerError('INVALID_OUTPUT')
++                return ReadResult(**common, rows=rows)
++            if len(payload.data) > 101: raise BrokerError('RESULT_LIMIT')
++            rows = [EdgeRow.model_validate(row) for row in payload.data]
++            for row in rows:
++                self.__registry._properties(self.__registry.edges[row.relationship], row.properties)
++                if row.properties['municipality_id'] != 'demo-city' or row.source_id != req.id or row.source_id == row.target_id:
++                    raise BrokerError('INVALID_OUTPUT')
++                source, target = self.__node_type(row.source_labels), self.__node_type(row.target_labels)
++                shape = self.__registry.edges[row.relationship]
++                if not set(self.__registry.labels(source)) & set(shape['from']) or not set(self.__registry.labels(target)) & set(shape['to']): raise BrokerError('INVALID_OUTPUT')
++                if row.properties.get('association_status') == 'VERIFIED' and not row.properties.get('source_evidence_id'): raise BrokerError('INVALID_OUTPUT')
++                p = row.properties
++                if timestamp(p['created_at']) > timestamp(req.as_of) or ('valid_from' in p and timestamp(p['valid_from']) > timestamp(req.as_of)) or ('valid_to' in p and timestamp(req.as_of) >= timestamp(p['valid_to'])): raise BrokerError('INVALID_OUTPUT')
++            if len({r.properties['id'] for r in rows}) != len(rows): raise BrokerError('INVALID_OUTPUT')
++            return ReadResult(**common, rows=rows[:100], truncated=len(rows) > 100)
++        if req.tool == 'get_graph_schema':
++            schema = GraphSchema.model_validate(data)
++            if set(schema.nodeLabels) - (set(self.__registry.nodes) | {'CivicEntity', 'CivicSchemaMigration'}) or set(schema.relationshipTypes) - set(self.__registry.edges):
++                raise BrokerError('INVALID_OUTPUT')
++            if any(set(c.source + c.target) - (set(self.__registry.nodes) | {'CivicEntity'}) for c in schema.connections):
++                raise BrokerError('INVALID_OUTPUT')
++            # Storage labels/types do not become public ontology or expose audit values.
++            labels = [s for s in schema.nodeLabels if s in self.__registry.nodes]
++            types = [s for s in schema.relationshipTypes if s in self.__registry.edges]
++            connections = [c.model_copy(update={'source': [l for l in c.source if l in self.__registry.nodes], 'target': [l for l in c.target if l in self.__registry.nodes]}) for c in schema.connections if c.relationship in types]
++            return ReadResult(**common, schema_data=schema.model_copy(update={'nodeLabels': labels, 'relationshipTypes': types, 'connections': connections}))
++        schema = NodeSchema.model_validate(data) if req.tool == 'get_node_schema' else RelationshipSchema.model_validate(data)
++        shape = self.__registry.shape(req.label) if req.label else self.__registry.edges[req.relationship_type]
++        if (req.label and schema.label != req.label) or (req.relationship_type and schema.relationshipType != req.relationship_type) or schema.requestedSampleSize != req.sample_size or schema.sampledCount > req.sample_size:
++            raise BrokerError('INVALID_OUTPUT')
++        if any(p.property not in shape['properties'] or p.frequency > schema.sampledCount for p in schema.properties): raise BrokerError('INVALID_OUTPUT')
++        return ReadResult(**common, schema_data=schema)
++
++    async def call(self, arguments: dict[str, Any]):
++        started, clock = now(), time.perf_counter()
++        req, code, result = None, 'SUCCESS', None
++        try:
++            if not isinstance(arguments, dict) or arguments.get('tool') not in ALLOWED:
++                raise BrokerError('DENIED_TOOL')
++            if arguments.get('graph', CITY_GRAPH) != CITY_GRAPH: raise BrokerError('DENIED_GRAPH')
++            try: req = Request.model_validate(arguments)
++            except (ValidationError, SchemaError): raise BrokerError('INVALID_ARGUMENTS') from None
++            async with self.__lock:
++                before = await self.__revision()
++                data = await self.__wire(req.tool, req.arguments(), revision=before)
++                result = self.__validate(req, data, before)
++                after = await self.__revision()
++                if before != after: raise BrokerError('GRAPH_REVISION_CHANGED')
++                return result
++        except Exception as exc:
++            code = error_code(exc)
++            if code == 'INVALID_OUTPUT': self.__broken = True
++            raise BrokerError(code) from None
++        finally:
++            self._record(operation='broker/validated_call', status=code, started=started, clock=clock,
++                tool=req.tool if req else None, args=arguments,
++                rows=len(result.rows) if result and result.rows is not None else None,
++                revision=result.graph_revision if result and code == 'SUCCESS' else None)
++
++
++async def _ignore_vendor_log(*args, **kwargs):
++    # Vendor notifications can contain raw query/errors; never copy to traces/logs.
++    pass
++
++
++@asynccontextmanager
++async def open_broker(traces=None, *, timeout=4.0, max_calls=32):
++    """Own initialize/list/call/shutdown in one task; fresh context reconnects."""
++    traces = traces if traces is not None else []
++    started, clock = now(), time.perf_counter()
++    opened = False
++    try:
++        with server_parameters() as params:
++            async with Client(params, mode='legacy', read_timeout_seconds=timeout,
++                              logging_callback=_ignore_vendor_log) as client:
++                traces.append({'operation': 'initialize', 'status': 'SUCCESS', 'started_at': started,
++                    'ended_at': now(), 'latency_ms': round((time.perf_counter()-clock)*1000,3),
++                    'server': {'name': client.server_info.name, 'version': client.server_info.version},
++                    'protocol_version': client.protocol_version})
++                broker = ReadBroker(client, traces, timeout=timeout, max_calls=max_calls)
++                await broker.discover()
++                opened = True
++                yield broker
++    except Exception as exc:
++        code = error_code(exc)
++        if not opened:
++            traces.append({'operation': 'initialize', 'status': code, 'started_at': started, 'ended_at': now()})
++        raise BrokerError(code) from None
++    finally:
++        traces.append({'operation': 'session/closed', 'status': 'CLOSED', 'ended_at': now()})
+diff --git a/backend/app/mcp/models.py b/backend/app/mcp/models.py
+new file mode 100644
+index 0000000..0e97871
+--- /dev/null
++++ b/backend/app/mcp/models.py
+@@ -0,0 +1,76 @@
++"""Validated official-server projections; no B07 domain-result envelope change."""
++from typing import Any, Literal
++from pydantic import BaseModel, ConfigDict, Field
++
++
++class Model(BaseModel):
++    model_config = ConfigDict(extra='forbid', strict=True, frozen=True, hide_input_in_errors=True)
++
++
++class NodeRow(Model):
++    labels: list[str]
++    properties: dict[str, Any]
++
++
++class EdgeRow(Model):
++    source_id: str
++    source_labels: list[str]
++    target_id: str
++    target_labels: list[str]
++    relationship: Literal['DRAINS_TO']
++    properties: dict[str, Any]
++
++
++class RevisionRow(Model):
++    revision: int = Field(ge=0)
++    pending: str | None
++    state: Literal['READY']
++
++
++class QueryPayload(Model):
++    metadata: list[str]
++    data: list[dict[str, Any]]
++
++
++class Connection(Model):
++    source: list[str]
++    relationship: str
++    target: list[str]
++
++
++class GraphSchema(Model):
++    nodeLabels: list[str]
++    relationshipTypes: list[str]
++    connections: list[Connection]
++    connectionSampleSize: int = Field(ge=1, le=100)
++
++
++class PropertyFrequency(Model):
++    property: str
++    frequency: int = Field(ge=1, le=100)
++
++
++class NodeSchema(Model):
++    label: str
++    requestedSampleSize: int = Field(ge=1, le=100)
++    sampledCount: int = Field(ge=0, le=100)
++    properties: list[PropertyFrequency]
++
++
++class RelationshipSchema(Model):
++    relationshipType: str
++    requestedSampleSize: int = Field(ge=1, le=100)
++    sampledCount: int = Field(ge=0, le=100)
++    properties: list[PropertyFrequency]
++
++
++class ReadResult(Model):
++    graph: str
++    tool: str
++    template: str | None
++    graph_revision: int
++    rows: list[NodeRow] | list[EdgeRow] | None = None
++    schema_data: GraphSchema | NodeSchema | RelationshipSchema | None = None
++    truncated: bool = False
++    search_limited: bool = True
++    semantics: str = 'Raw recorded synthetic facts; no causal finding. Schema samples are incomplete; node lookup is current-state, edge validity is half-open with unknown/open dates.'
+diff --git a/backend/app/mcp/policy.py b/backend/app/mcp/policy.py
+new file mode 100644
+index 0000000..caef4c8
+--- /dev/null
++++ b/backend/app/mcp/policy.py
+@@ -0,0 +1,62 @@
++"""Preapproved bounded raw-fact templates; not B05 decision-grade analysis."""
++from typing import Literal
++from pydantic import BaseModel, ConfigDict, Field, model_validator
++from app.graph.schema import Registry, timestamp
++from app.graph.queries import GraphQueries
++from .runtime import CITY_GRAPH
++
++ALLOWED = frozenset({'query_graph_readonly', 'get_graph_schema', 'get_node_schema', 'get_relationship_schema'})
++NODE_QUERY = 'MATCH (n:CivicEntity {id:$id,municipality_id:$scope}) RETURN labels(n) AS labels,properties(n) AS properties LIMIT 1'
++_key = GraphQueries._time_key  # Reuse accepted B03 UTC precision normalization.
++EDGE_QUERY = f'''MATCH (a:InfrastructureAsset {{id:$id,municipality_id:$scope}})-[r:DRAINS_TO]->(b:InfrastructureAsset {{municipality_id:$scope}})
++WHERE r.municipality_id=$scope AND {_key('r.created_at')}<=$as_of
++AND (r.valid_from IS NULL OR {_key('r.valid_from')}<=$as_of) AND (r.valid_to IS NULL OR $as_of<{_key('r.valid_to')})
++RETURN a.id AS source_id,labels(a) AS source_labels,b.id AS target_id,labels(b) AS target_labels,type(r) AS relationship,properties(r) AS properties LIMIT 101'''
++REVISION_QUERY = 'MATCH (m:CivicSchemaMigration {id:$id}) RETURN m.repo_revision AS revision,m.repo_pending AS pending,m.state AS state LIMIT 1'
++
++
++class Request(BaseModel):
++    model_config = ConfigDict(extra='forbid', strict=True, frozen=True, hide_input_in_errors=True)
++    tool: Literal['query_graph_readonly', 'get_graph_schema', 'get_node_schema', 'get_relationship_schema']
++    graph: str = CITY_GRAPH
++    template: Literal['node', 'drainage_edges'] | None = None
++    id: str | None = Field(default=None, min_length=1, max_length=200)
++    as_of: str | None = None
++    label: str | None = None
++    relationship_type: str | None = None
++    sample_size: int = Field(default=20, ge=1, le=100)
++
++    @model_validator(mode='after')
++    def exact_arguments(self):
++        if self.graph != CITY_GRAPH:
++            raise ValueError('Graph is not authorized')
++        registry = Registry()
++        if self.tool == 'query_graph_readonly':
++            if self.template is None or self.id is None or self.label is not None or self.relationship_type is not None:
++                raise ValueError('Template arguments required')
++            if self.template == 'drainage_edges':
++                if self.as_of is None: raise ValueError('Explicit UTC as_of required')
++                timestamp(self.as_of)
++            elif self.as_of is not None: raise ValueError('Node lookup is current-state only')
++        elif self.template is not None or self.id is not None or self.as_of is not None:
++            raise ValueError('Schema tool does not accept query arguments')
++        if self.tool == 'get_node_schema':
++            if self.label not in registry.nodes or self.relationship_type is not None: raise ValueError('Invalid public node type')
++        elif self.label is not None: raise ValueError('Unexpected node label')
++        if self.tool == 'get_relationship_schema':
++            if self.relationship_type not in registry.edges: raise ValueError('Invalid public relationship type')
++        elif self.relationship_type is not None: raise ValueError('Unexpected relationship type')
++        return self
++
++    def arguments(self):
++        args = {'graphName': self.graph}
++        if self.tool == 'query_graph_readonly':
++            args.update(query=NODE_QUERY if self.template == 'node' else EDGE_QUERY,
++                        params={'id': self.id, 'scope': 'demo-city'})
++            if self.as_of is not None: args['params']['as_of'] = timestamp(self.as_of).strftime('%Y-%m-%dT%H:%M:%S.%f')
++        elif self.tool == 'get_graph_schema':
++            args.update(includeConnections=True, connectionSampleSize=100)
++        elif self.tool == 'get_node_schema':
++            args.update(label=self.label, sampleSize=self.sample_size)
++        else: args.update(relationshipType=self.relationship_type, sampleSize=self.sample_size)
++        return args
+diff --git a/backend/app/mcp/runtime.py b/backend/app/mcp/runtime.py
+new file mode 100644
+index 0000000..a4dbbef
+--- /dev/null
++++ b/backend/app/mcp/runtime.py
+@@ -0,0 +1,69 @@
++"""Trusted local runtime setup. Never expose this module to agent tool selection."""
++from contextlib import contextmanager
++import hashlib
++import json
++import os
++from pathlib import Path
++import secrets
++import shutil
++import tempfile
++
++from mcp import StdioServerParameters
++from pydantic import BaseModel, ConfigDict, SecretStr
++
++ROOT = Path(__file__).resolve().parents[3]
++RUNTIME = ROOT / 'backend/mcp_runtime'
++CREDENTIALS = ROOT / '.runtime/mcp-credentials.json'
++CITY_GRAPH = 'civicly_b04_test_a84beda80da64aacbc367a9399e07a97'
++USERNAME = 'civicly_mcp_b06'
++VERSION = '1.3.0'
++
++
++class RuntimeCredentials(BaseModel):
++    model_config = ConfigDict(extra='forbid', frozen=True, hide_input_in_errors=True)
++    username: str
++    password: SecretStr
++    graph: str
++
++
++def load_credentials():
++    if CREDENTIALS.is_symlink() or CREDENTIALS.stat().st_mode & 0o077:
++        raise ValueError('Runtime credentials must be a private regular file')
++    creds = RuntimeCredentials.model_validate_json(CREDENTIALS.read_text())
++    if creds.username != USERNAME or creds.graph != CITY_GRAPH or len(creds.password.get_secret_value()) < 32:
++        raise ValueError('Unexpected runtime credential scope')
++    return creds
++
++
++def provision(client):
++    """Explicit administrator action; no graph data writes, no broad account reset."""
++    CREDENTIALS.parent.mkdir(mode=0o700, exist_ok=True)
++    if CREDENTIALS.exists():
++        creds = load_credentials()
++    else:
++        creds = RuntimeCredentials(username=USERNAME, password=secrets.token_urlsafe(48), graph=CITY_GRAPH)
++        fd = os.open(CREDENTIALS, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
++        with os.fdopen(fd, 'w') as f:
++            json.dump({'username': creds.username, 'password': creds.password.get_secret_value(), 'graph': creds.graph}, f)
++    client.connection.execute_command('ACL', 'SETUSER', USERNAME, 'reset', 'on',
++        '#' + hashlib.sha256(creds.password.get_secret_value().encode()).hexdigest(),
++        '~' + CITY_GRAPH, '-@all', '+ping', '+info', '+graph.ro_query', '+client|setinfo')
++    return {'status': 'PROVISIONED', 'graph': CITY_GRAPH, 'commands': ['PING', 'INFO', 'GRAPH.RO_QUERY', 'CLIENT SETINFO'],
++            'credential_values_logged': False, 'reprovision_after_database_recreation': True}
++
++
++@contextmanager
++def server_parameters():
++    """Fresh dotenv-free cwd and explicit environment; SDK inherits only OS basics."""
++    creds = load_credentials()
++    node = shutil.which('node')
++    package = RUNTIME / 'node_modules/@falkordb/mcpserver/package.json'
++    if not node or json.loads(package.read_text())['version'] != VERSION:
++        raise ValueError('Install the pinned official MCP runtime with npm ci')
++    with tempfile.TemporaryDirectory(prefix='civicly-mcp-') as cwd:
++        yield StdioServerParameters(command=node,
++            args=[str(package.parent / 'dist/index.js')], cwd=cwd,
++            env={'NODE_ENV': 'production', 'ENABLE_FILE_LOGGING': 'false', 'MCP_TRANSPORT': 'stdio',
++                 'FALKORDB_HOST': '127.0.0.1', 'FALKORDB_PORT': '6379',
++                 'FALKORDB_USERNAME': creds.username, 'FALKORDB_PASSWORD': creds.password.get_secret_value(),
++                 'FALKORDB_DEFAULT_READONLY': 'true', 'FALKORDB_STRICT_READONLY': 'true'})
+diff --git a/backend/mcp_runtime/package-lock.json b/backend/mcp_runtime/package-lock.json
+new file mode 100644
+index 0000000..8d27e84
+--- /dev/null
++++ b/backend/mcp_runtime/package-lock.json
+@@ -0,0 +1,1417 @@
++{
++  "name": "civicly-official-mcp-runtime",
++  "version": "0.1.0",
++  "lockfileVersion": 3,
++  "requires": true,
++  "packages": {
++    "": {
++      "name": "civicly-official-mcp-runtime",
++      "version": "0.1.0",
++      "dependencies": {
++        "@falkordb/mcpserver": "1.3.0"
++      },
++      "engines": {
++        "node": ">=24.21.0 <25",
++        "npm": ">=12.2.0 <13"
++      }
++    },
++    "node_modules/@falkordb/mcpserver": {
++      "version": "1.3.0",
++      "resolved": "https://registry.npmjs.org/@falkordb/mcpserver/-/mcpserver-1.3.0.tgz",
++      "integrity": "sha512-Lzj78EruWIjXuxCwemMMQObK3uLHgbHduQ3KffGDnhVcfz1mUxzk+2XxmdXFemrJskhuEQMQQ6IfZcUcQElt4A==",
++      "license": "MIT",
++      "dependencies": {
++        "@modelcontextprotocol/sdk": "^1.17.0",
++        "dotenv": "^17.2.1",
++        "falkordb": "^6.3.0",
++        "platformdirs": "^4.3.8-rc3",
++        "zod": "^4.3.6"
++      },
++      "bin": {
++        "falkordb-mcp": "dist/index.js"
++      },
++      "engines": {
++        "node": ">=18.0.0",
++        "npm": ">=8.0.0"
++      },
++      "funding": {
++        "type": "github",
++        "url": "https://github.com/sponsors/SecKatie"
++      }
++    },
++    "node_modules/@hono/node-server": {
++      "version": "2.1.5",
++      "resolved": "https://registry.npmjs.org/@hono/node-server/-/node-server-2.1.5.tgz",
++      "integrity": "sha512-MgP/I06GdvsilDspMk/qmRzpk8LOUStP6jFAbSRi40W09DhoyUn+Mj7eyKICPqeYKybOjVFLVIAQzvu1bfIa7Q==",
++      "license": "MIT",
++      "engines": {
++        "node": ">=20"
++      },
++      "peerDependencies": {
++        "hono": "^4 || ^5.0.0-0"
++      }
++    },
++    "node_modules/@js-temporal/polyfill": {
++      "version": "0.5.1",
++      "resolved": "https://registry.npmjs.org/@js-temporal/polyfill/-/polyfill-0.5.1.tgz",
++      "integrity": "sha512-hloP58zRVCRSpgDxmqCWJNlizAlUgJFqG2ypq79DCvyv9tHjRYMDOcPFjzfl/A1/YxDvRCZz8wvZvmapQnKwFQ==",
++      "license": "ISC",
++      "dependencies": {
++        "jsbi": "^4.3.0"
++      },
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/@modelcontextprotocol/sdk": {
++      "version": "1.32.1",
++      "resolved": "https://registry.npmjs.org/@modelcontextprotocol/sdk/-/sdk-1.32.1.tgz",
++      "integrity": "sha512-2DdE+SJDtzLEEWzY1ZjY7Q+VcPhcV1KisD3zI4u0XZyktsjHum1mwbMI+JaulUBi2OZk+KJAi2uPXzxichPkdw==",
++      "license": "MIT",
++      "dependencies": {
++        "@hono/node-server": "^1.19.9 || ^2.0.5",
++        "ajv": "^8.17.1",
++        "ajv-formats": "^3.0.1",
++        "content-type": "^1.0.5",
++        "cors": "^2.8.5",
++        "cross-spawn": "^7.0.5",
++        "eventsource": "^3.0.2",
++        "eventsource-parser": "^3.0.0",
++        "express": "^5.2.1",
++        "express-rate-limit": "^8.2.1",
++        "hono": "^4.11.4",
++        "jose": "^6.1.3",
++        "json-schema-typed": "^8.0.2",
++        "pkce-challenge": "^5.0.0",
++        "raw-body": "^3.0.0",
++        "zod": "^3.25 || ^4.0",
++        "zod-to-json-schema": "^3.25.1"
++      },
++      "engines": {
++        "node": ">=18"
++      },
++      "peerDependencies": {
++        "@cfworker/json-schema": "^4.1.1",
++        "zod": "^3.25 || ^4.0"
++      },
++      "peerDependenciesMeta": {
++        "@cfworker/json-schema": {
++          "optional": true
++        },
++        "zod": {
++          "optional": false
++        }
++      }
++    },
++    "node_modules/@redis/bloom": {
++      "version": "5.12.1",
++      "resolved": "https://registry.npmjs.org/@redis/bloom/-/bloom-5.12.1.tgz",
++      "integrity": "sha512-PUUfv+ms7jgPSBVoo/DN4AkPHj4D5TZSd6SbJX7egzBplkYUcKmHRE8RKia7UtZ8bSQbLguLvxVO+asKtQfZWA==",
++      "license": "MIT",
++      "engines": {
++        "node": ">= 18.19.0"
++      },
++      "peerDependencies": {
++        "@redis/client": "^5.12.1"
++      }
++    },
++    "node_modules/@redis/client": {
++      "version": "5.12.1",
++      "resolved": "https://registry.npmjs.org/@redis/client/-/client-5.12.1.tgz",
++      "integrity": "sha512-7aPGWeqA3uFm43o19umzdl16CEjK/JQGtSXVPevplTaOU3VJA/rseBC1QvYUz9lLDIMBimc4SW/zrW4S89BaCA==",
++      "license": "MIT",
++      "dependencies": {
++        "cluster-key-slot": "1.1.2"
++      },
++      "engines": {
++        "node": ">= 18.19.0"
++      },
++      "peerDependencies": {
++        "@node-rs/xxhash": "^1.1.0",
++        "@opentelemetry/api": ">=1 <2"
++      },
++      "peerDependenciesMeta": {
++        "@node-rs/xxhash": {
++          "optional": true
++        },
++        "@opentelemetry/api": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/@redis/json": {
++      "version": "5.12.1",
++      "resolved": "https://registry.npmjs.org/@redis/json/-/json-5.12.1.tgz",
++      "integrity": "sha512-eOze75esLve4vfqDel7aMX08CNaiLLQS2fV8mpRN9NxPe1rVR4vQyYiW/OgtGUysF6QOr9ANhfxABKNOJfXdKg==",
++      "license": "MIT",
++      "engines": {
++        "node": ">= 18.19.0"
++      },
++      "peerDependencies": {
++        "@redis/client": "^5.12.1"
++      }
++    },
++    "node_modules/@redis/search": {
++      "version": "5.12.1",
++      "resolved": "https://registry.npmjs.org/@redis/search/-/search-5.12.1.tgz",
++      "integrity": "sha512-ItlxbxC9cKI6IU1TLWoczwJCRb6TdmkEpWv05UrPawqaAnWGRu3rcIqsc5vN483T2fSociuyV1UkWIL5I4//2w==",
++      "license": "MIT",
++      "engines": {
++        "node": ">= 18.19.0"
++      },
++      "peerDependencies": {
++        "@redis/client": "^5.12.1"
++      }
++    },
++    "node_modules/@redis/time-series": {
++      "version": "5.12.1",
++      "resolved": "https://registry.npmjs.org/@redis/time-series/-/time-series-5.12.1.tgz",
++      "integrity": "sha512-c6JL6E3EcZJuNqKFz+KM+l9l5mpcQiKvTwgA3blt5glWJ8hjDk0yeHN3beE/MpqYIQ8UEX44ItQzgkE/gCBELQ==",
++      "license": "MIT",
++      "engines": {
++        "node": ">= 18.19.0"
++      },
++      "peerDependencies": {
++        "@redis/client": "^5.12.1"
++      }
++    },
++    "node_modules/accepts": {
++      "version": "2.0.0",
++      "resolved": "https://registry.npmjs.org/accepts/-/accepts-2.0.0.tgz",
++      "integrity": "sha512-5cvg6CtKwfgdmVqY1WIiXKc3Q1bkRqGLi+2W/6ao+6Y7gu/RCwRuAhGEzh5B4KlszSuTLgZYuqFqo5bImjNKng==",
++      "license": "MIT",
++      "dependencies": {
++        "mime-types": "^3.0.0",
++        "negotiator": "^1.0.0"
++      },
++      "engines": {
++        "node": ">= 0.6"
++      }
++    },
++    "node_modules/ajv": {
++      "version": "8.20.0",
++      "resolved": "https://registry.npmjs.org/ajv/-/ajv-8.20.0.tgz",
++      "integrity": "sha512-Thbli+OlOj+iMPYFBVBfJ3OmCAnaSyNn4M1vz9T6Gka5Jt9ba/HIR56joy65tY6kx/FCF5VXNB819Y7/GUrBGA==",
++      "license": "MIT",
++      "dependencies": {
++        "fast-deep-equal": "^3.1.3",
++        "fast-uri": "^3.0.1",
++        "json-schema-traverse": "^1.0.0",
++        "require-from-string": "^2.0.2"
++      },
++      "funding": {
++        "type": "github",
++        "url": "https://github.com/sponsors/epoberezkin"
++      }
++    },
++    "node_modules/ajv-formats": {
++      "version": "3.0.1",
++      "resolved": "https://registry.npmjs.org/ajv-formats/-/ajv-formats-3.0.1.tgz",
++      "integrity": "sha512-8iUql50EUR+uUcdRQ3HDqa6EVyo3docL8g5WJ3FNcWmu62IbkGUue/pEyLBW8VGKKucTPgqeks4fIU1DA4yowQ==",
++      "license": "MIT",
++      "dependencies": {
++        "ajv": "^8.0.0"
++      },
++      "peerDependencies": {
++        "ajv": "^8.0.0"
++      },
++      "peerDependenciesMeta": {
++        "ajv": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/body-parser": {
++      "version": "2.3.0",
++      "resolved": "https://registry.npmjs.org/body-parser/-/body-parser-2.3.0.tgz",
++      "integrity": "sha512-2cGmJupaNgg+QUwVLAucDuWuoMZ6EX9iHDRswZ5lsNYEmwPaRknMPCLZz07yTzVq/83p4o/wzbDZbBrTvGGTIw==",
++      "license": "MIT",
++      "dependencies": {
++        "bytes": "^3.1.2",
++        "content-type": "^2.0.0",
++        "debug": "^4.4.3",
++        "http-errors": "^2.0.1",
++        "iconv-lite": "^0.7.2",
++        "on-finished": "^2.4.1",
++        "qs": "^6.15.2",
++        "raw-body": "^3.0.2",
++        "type-is": "^2.1.0"
++      },
++      "engines": {
++        "node": ">=18"
++      },
++      "funding": {
++        "type": "opencollective",
++        "url": "https://opencollective.com/express"
++      }
++    },
++    "node_modules/body-parser/node_modules/content-type": {
++      "version": "2.1.0",
++      "resolved": "https://registry.npmjs.org/content-type/-/content-type-2.1.0.tgz",
++      "integrity": "sha512-mj7UPXE0jaqaOsukNZRUEfEi2AcL7C/vwmwcHV0O97eO1E1pxBZuyjlZrx5seTaNBg1U6+o35wpa35Qfcc+7ag==",
++      "license": "MIT",
++      "engines": {
++        "node": ">=18"
++      },
++      "funding": {
++        "type": "opencollective",
++        "url": "https://opencollective.com/express"
++      }
++    },
++    "node_modules/bytes": {
++      "version": "3.1.2",
++      "resolved": "https://registry.npmjs.org/bytes/-/bytes-3.1.2.tgz",
++      "integrity": "sha512-/Nf7TyzTx6S3yRJObOAV7956r8cr2+Oj8AC5dt8wSP3BQAoeX58NoHyCU8P8zGkNXStjTSi6fzO6F0pBdcYbEg==",
++      "license": "MIT",
++      "engines": {
++        "node": ">= 0.8"
++      }
++    },
++    "node_modules/call-bind-apply-helpers": {
++      "version": "1.0.2",
++      "resolved": "https://registry.npmjs.org/call-bind-apply-helpers/-/call-bind-apply-helpers-1.0.2.tgz",
++      "integrity": "sha512-Sp1ablJ0ivDkSzjcaJdxEunN5/XvksFJ2sMBFfq6x0ryhQV/2b/KwFe21cMpmHtPOSij8K99/wSfoEuTObmuMQ==",
++      "license": "MIT",
++      "dependencies": {
++        "es-errors": "^1.3.0",
++        "function-bind": "^1.1.2"
++      },
++      "engines": {
++        "node": ">= 0.4"
++      }
++    },
++    "node_modules/call-bound": {
++      "version": "1.0.4",
++      "resolved": "https://registry.npmjs.org/call-bound/-/call-bound-1.0.4.tgz",
++      "integrity": "sha512-+ys997U96po4Kx/ABpBCqhA9EuxJaQWDQg7295H4hBphv3IZg0boBKuwYpt4YXp6MZ5AmZQnU/tyMTlRpaSejg==",
++      "license": "MIT",
++      "dependencies": {
++        "call-bind-apply-helpers": "^1.0.2",
++        "get-intrinsic": "^1.3.0"
++      },
++      "engines": {
++        "node": ">= 0.4"
++      },
++      "funding": {
++        "url": "https://github.com/sponsors/ljharb"
++      }
++    },
++    "node_modules/cluster-key-slot": {
++      "version": "1.1.2",
++      "resolved": "https://registry.npmjs.org/cluster-key-slot/-/cluster-key-slot-1.1.2.tgz",
++      "integrity": "sha512-RMr0FhtfXemyinomL4hrWcYJxmX6deFdCxpJzhDttxgO1+bcCnkk+9drydLVDmAMG7NE6aN/fl4F7ucU/90gAA==",
++      "license": "Apache-2.0",
++      "engines": {
++        "node": ">=0.10.0"
++      }
++    },
++    "node_modules/content-disposition": {
++      "version": "2.0.1",
++      "resolved": "https://registry.npmjs.org/content-disposition/-/content-disposition-2.0.1.tgz",
++      "integrity": "sha512-e+H0ZXHSWYrENhQzw1LPuP4oF5MzVKmDU6d3hxlvaPEYLLg62MxtQNPRx4SYSuYJSBUgnQIG4HIN2tEtNv7Dog==",
++      "license": "MIT",
++      "engines": {
++        "node": ">=18"
++      },
++      "funding": {
++        "type": "opencollective",
++        "url": "https://opencollective.com/express"
++      }
++    },
++    "node_modules/content-type": {
++      "version": "1.0.5",
++      "resolved": "https://registry.npmjs.org/content-type/-/content-type-1.0.5.tgz",
++      "integrity": "sha512-nTjqfcBFEipKdXCv4YDQWCfmcLZKm81ldF0pAopTvyrFGVbcR6P/VAAd5G7N+0tTr8QqiU0tFadD6FK4NtJwOA==",
++      "license": "MIT",
++      "engines": {
++        "node": ">= 0.6"
++      }
++    },
++    "node_modules/cookie": {
++      "version": "0.7.2",
++      "resolved": "https://registry.npmjs.org/cookie/-/cookie-0.7.2.tgz",
++      "integrity": "sha512-yki5XnKuf750l50uGTllt6kKILY4nQ1eNIQatoXEByZ5dWgnKqbnqmTrBE5B4N7lrMJKQ2ytWMiTO2o0v6Ew/w==",
++      "license": "MIT",
++      "engines": {
++        "node": ">= 0.6"
++      }
++    },
++    "node_modules/cookie-signature": {
++      "version": "1.2.2",
++      "resolved": "https://registry.npmjs.org/cookie-signature/-/cookie-signature-1.2.2.tgz",
++      "integrity": "sha512-D76uU73ulSXrD1UXF4KE2TMxVVwhsnCgfAyTg9k8P6KGZjlXKrOLe4dJQKI3Bxi5wjesZoFXJWElNWBjPZMbhg==",
++      "license": "MIT",
++      "engines": {
++        "node": ">=6.6.0"
++      }
++    },
++    "node_modules/cors": {
++      "version": "2.8.6",
++      "resolved": "https://registry.npmjs.org/cors/-/cors-2.8.6.tgz",
++      "integrity": "sha512-tJtZBBHA6vjIAaF6EnIaq6laBBP9aq/Y3ouVJjEfoHbRBcHBAHYcMh/w8LDrk2PvIMMq8gmopa5D4V8RmbrxGw==",
++      "license": "MIT",
++      "dependencies": {
++        "object-assign": "^4",
++        "vary": "^1"
++      },
++      "engines": {
++        "node": ">= 0.10"
++      },
++      "funding": {
++        "type": "opencollective",
++        "url": "https://opencollective.com/express"
++      }
++    },
++    "node_modules/cross-spawn": {
++      "version": "7.0.6",
++      "resolved": "https://registry.npmjs.org/cross-spawn/-/cross-spawn-7.0.6.tgz",
++      "integrity": "sha512-uV2QOWP2nWzsy2aMp8aRibhi9dlzF5Hgh5SHaB9OiTGEyDTiJJyx0uy51QXdyWbtAHNua4XJzUKca3OzKUd3vA==",
++      "license": "MIT",
++      "dependencies": {
++        "path-key": "^3.1.0",
++        "shebang-command": "^2.0.0",
++        "which": "^2.0.1"
++      },
++      "engines": {
++        "node": ">= 8"
++      }
++    },
++    "node_modules/debug": {
++      "version": "4.4.3",
++      "resolved": "https://registry.npmjs.org/debug/-/debug-4.4.3.tgz",
++      "integrity": "sha512-RGwwWnwQvkVfavKVt22FGLw+xYSdzARwm0ru6DhTVA3umU5hZc28V3kO4stgYryrTlLpuvgI9GiijltAjNbcqA==",
++      "license": "MIT",
++      "dependencies": {
++        "ms": "^2.1.3"
++      },
++      "engines": {
++        "node": ">=6.0"
++      },
++      "peerDependenciesMeta": {
++        "supports-color": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/depd": {
++      "version": "2.0.0",
++      "resolved": "https://registry.npmjs.org/depd/-/depd-2.0.0.tgz",
++      "integrity": "sha512-g7nH6P6dyDioJogAAGprGpCtVImJhpPk/roCzdb3fIh61/s/nPsfR6onyMwkCAR/OlC3yBC0lESvUoQEAssIrw==",
++      "license": "MIT",
++      "engines": {
++        "node": ">= 0.8"
++      }
++    },
++    "node_modules/dotenv": {
++      "version": "17.4.2",
++      "resolved": "https://registry.npmjs.org/dotenv/-/dotenv-17.4.2.tgz",
++      "integrity": "sha512-nI4U3TottKAcAD9LLud4Cb7b2QztQMUEfHbvhTH09bqXTxnSie8WnjPALV/WMCrJZ6UV/qHJ6L03OqO3LcdYZw==",
++      "license": "BSD-2-Clause",
++      "engines": {
++        "node": ">=12"
++      },
++      "funding": {
++        "url": "https://dotenvx.com"
++      }
++    },
++    "node_modules/dunder-proto": {
++      "version": "1.0.1",
++      "resolved": "https://registry.npmjs.org/dunder-proto/-/dunder-proto-1.0.1.tgz",
++      "integrity": "sha512-KIN/nDJBQRcXw0MLVhZE9iQHmG68qAVIBg9CqmUYjmQIhgij9U5MFvrqkUL5FbtyyzZuOeOt0zdeRe4UY7ct+A==",
++      "license": "MIT",
++      "dependencies": {
++        "call-bind-apply-helpers": "^1.0.1",
++        "es-errors": "^1.3.0",
++        "gopd": "^1.2.0"
++      },
++      "engines": {
++        "node": ">= 0.4"
++      }
++    },
++    "node_modules/ee-first": {
++      "version": "1.1.1",
++      "resolved": "https://registry.npmjs.org/ee-first/-/ee-first-1.1.1.tgz",
++      "integrity": "sha512-WMwm9LhRUo+WUaRN+vRuETqG89IgZphVSNkdFgeb6sS/E4OrDIN7t48CAewSHXc6C8lefD8KKfr5vY61brQlow==",
++      "license": "MIT"
++    },
++    "node_modules/encodeurl": {
++      "version": "2.0.0",
++      "resolved": "https://registry.npmjs.org/encodeurl/-/encodeurl-2.0.0.tgz",
++      "integrity": "sha512-Q0n9HRi4m6JuGIV1eFlmvJB7ZEVxu93IrMyiMsGC0lrMJMWzRgx6WGquyfQgZVb31vhGgXnfmPNNXmxnOkRBrg==",
++      "license": "MIT",
++      "engines": {
++        "node": ">= 0.8"
++      }
++    },
++    "node_modules/es-define-property": {
++      "version": "1.0.1",
++      "resolved": "https://registry.npmjs.org/es-define-property/-/es-define-property-1.0.1.tgz",
++      "integrity": "sha512-e3nRfgfUZ4rNGL232gUgX06QNyyez04KdjFrF+LTRoOXmrOgFKDg4BCdsjW8EnT69eqdYGmRpJwiPVYNrCaW3g==",
++      "license": "MIT",
++      "engines": {
++        "node": ">= 0.4"
++      }
++    },
++    "node_modules/es-errors": {
++      "version": "1.3.0",
++      "resolved": "https://registry.npmjs.org/es-errors/-/es-errors-1.3.0.tgz",
++      "integrity": "sha512-Zf5H2Kxt2xjTvbJvP2ZWLEICxA6j+hAmMzIlypy4xcBg1vKVnx89Wy0GbS+kf5cwCVFFzdCFh2XSCFNULS6csw==",
++      "license": "MIT",
++      "engines": {
++        "node": ">= 0.4"
++      }
++    },
++    "node_modules/es-object-atoms": {
++      "version": "1.1.2",
++      "resolved": "https://registry.npmjs.org/es-object-atoms/-/es-object-atoms-1.1.2.tgz",
++      "integrity": "sha512-HWcBoN6NileqtSydK2FqHbS/LoDd2pqrnQHLyJzBj4kOp/ky2MWMN694xOfkK8/SnUsW2DH7EfyVlydKCsm1Zw==",
++      "license": "MIT",
++      "dependencies": {
++        "es-errors": "^1.3.0"
++      },
++      "engines": {
++        "node": ">= 0.4"
++      }
++    },
++    "node_modules/escape-html": {
++      "version": "1.0.3",
++      "resolved": "https://registry.npmjs.org/escape-html/-/escape-html-1.0.3.tgz",
++      "integrity": "sha512-NiSupZ4OeuGwr68lGIeym/ksIZMJodUGOSCZ/FSnTxcrekbvqrgdUxlJOMpijaKZVjAJrWrGs/6Jy8OMuyj9ow==",
++      "license": "MIT"
++    },
++    "node_modules/etag": {
++      "version": "1.8.1",
++      "resolved": "https://registry.npmjs.org/etag/-/etag-1.8.1.tgz",
++      "integrity": "sha512-aIL5Fx7mawVa300al2BnEE4iNvo1qETxLrPI/o05L7z6go7fCw1J6EQmbK4FmJ2AS7kgVF/KEZWufBfdClMcPg==",
++      "license": "MIT",
++      "engines": {
++        "node": ">= 0.6"
++      }
++    },
++    "node_modules/eventsource": {
++      "version": "3.0.7",
++      "resolved": "https://registry.npmjs.org/eventsource/-/eventsource-3.0.7.tgz",
++      "integrity": "sha512-CRT1WTyuQoD771GW56XEZFQ/ZoSfWid1alKGDYMmkt2yl8UXrVR4pspqWNEcqKvVIzg6PAltWjxcSSPrboA4iA==",
++      "license": "MIT",
++      "dependencies": {
++        "eventsource-parser": "^3.0.1"
++      },
++      "engines": {
++        "node": ">=18.0.0"
++      }
++    },
++    "node_modules/eventsource-parser": {
++      "version": "3.1.1",
++      "resolved": "https://registry.npmjs.org/eventsource-parser/-/eventsource-parser-3.1.1.tgz",
++      "integrity": "sha512-EKN1vKAMcZ8MlYMpaNuxN6R9yakzH6uajHcHVTqWJzvu5pWw9DyhbP35HH8MVBQ+dZjAfDxk+A8NiR9KWaXiyQ==",
++      "license": "MIT",
++      "engines": {
++        "node": ">=18.0.0"
++      }
++    },
++    "node_modules/express": {
++      "version": "5.3.0",
++      "resolved": "https://registry.npmjs.org/express/-/express-5.3.0.tgz",
++      "integrity": "sha512-qCqy1xSoaugxOD4IVHb1ZWdkvCF2W3aE2okKouWj8VwJ+ztskSiXoBnCSJqfKT+cVPJhuJqe9YLbY425+Zh00g==",
++      "license": "MIT",
++      "dependencies": {
++        "accepts": "^2.0.0",
++        "body-parser": "^2.3.0",
++        "content-disposition": "^2.0.1",
++        "content-type": "^2.0.0",
++        "cookie": "^0.7.1",
++        "cookie-signature": "^1.2.1",
++        "debug": "^4.4.0",
++        "depd": "^2.0.0",
++        "encodeurl": "^2.0.0",
++        "escape-html": "^1.0.3",
++        "etag": "^1.8.1",
++        "finalhandler": "^2.1.0",
++        "fresh": "^2.0.0",
++        "http-errors": "^2.0.0",
++        "merge-descriptors": "^2.0.0",
++        "mime-types": "^3.0.0",
++        "on-finished": "^2.4.1",
++        "once": "^1.4.0",
++        "parseurl": "^1.3.3",
++        "proxy-addr": "^2.0.8",
++        "qs": "^6.16.0",
++        "range-parser": "^1.2.1",
++        "router": "^2.2.0",
++        "send": "^1.1.0",
++        "serve-static": "^2.2.0",
++        "statuses": "^2.0.1",
++        "type-is": "^2.1.0",
++        "vary": "^1.1.2"
++      },
++      "engines": {
++        "node": ">= 18"
++      },
++      "funding": {
++        "type": "opencollective",
++        "url": "https://opencollective.com/express"
++      }
++    },
++    "node_modules/express-rate-limit": {
++      "version": "8.7.1",
++      "resolved": "https://registry.npmjs.org/express-rate-limit/-/express-rate-limit-8.7.1.tgz",
++      "integrity": "sha512-2FXbqkygil3mZiXzEtM0IjE/UBmBNot0J1GEVrJT4JbrvwOSoEtqtO+wHbiMQELWe1eNvHoYRg2dkjOid+6JkA==",
++      "license": "MIT",
++      "dependencies": {
++        "debug": "^4.4.3",
++        "ip-address": "^10.2.0"
++      },
++      "engines": {
++        "node": ">= 16"
++      },
++      "funding": {
++        "url": "https://github.com/sponsors/express-rate-limit"
++      },
++      "peerDependencies": {
++        "express": ">= 4.11"
++      }
++    },
++    "node_modules/express/node_modules/content-type": {
++      "version": "2.1.0",
++      "resolved": "https://registry.npmjs.org/content-type/-/content-type-2.1.0.tgz",
++      "integrity": "sha512-mj7UPXE0jaqaOsukNZRUEfEi2AcL7C/vwmwcHV0O97eO1E1pxBZuyjlZrx5seTaNBg1U6+o35wpa35Qfcc+7ag==",
++      "license": "MIT",
++      "engines": {
++        "node": ">=18"
++      },
++      "funding": {
++        "type": "opencollective",
++        "url": "https://opencollective.com/express"
++      }
++    },
++    "node_modules/falkordb": {
++      "version": "6.8.0",
++      "resolved": "https://registry.npmjs.org/falkordb/-/falkordb-6.8.0.tgz",
++      "integrity": "sha512-kPYTgo7LCQsZW6OO4o0k9hhwmitbZ+7xhLqtjMPV9h/rzLL3QqojBFpc1hv3xRhT2bZpJ4z0z/lH7rijID82Cg==",
++      "license": "MIT",
++      "workspaces": [
++        "./packages/*"
++      ],
++      "dependencies": {
++        "@js-temporal/polyfill": "^0.5.1",
++        "@redis/client": "^5.10.0",
++        "cluster-key-slot": "1.1.2",
++        "generic-pool": "^3.9.0",
++        "lodash": "^4.17.21",
++        "redis": "^5.10.0"
++      },
++      "engines": {
++        "node": ">=22"
++      }
++    },
++    "node_modules/fast-deep-equal": {
++      "version": "3.1.3",
++      "resolved": "https://registry.npmjs.org/fast-deep-equal/-/fast-deep-equal-3.1.3.tgz",
++      "integrity": "sha512-f3qQ9oQy9j2AhBe/H9VC91wLmKBCCU/gDOnKNAYG5hswO7BLKj09Hc5HYNz9cGI++xlpDCIgDaitVs03ATR84Q==",
++      "license": "MIT"
++    },
++    "node_modules/fast-uri": {
++      "version": "3.1.8",
++      "resolved": "https://registry.npmjs.org/fast-uri/-/fast-uri-3.1.8.tgz",
++      "integrity": "sha512-GZMtZUTNRpOVIECoXwLNZS5xUGE+mVNbTB8h/7Rwh2TFWcBQiPzTgyZi05BF9UMZKkLJv8XBRJTlU7zg8+ZfMg==",
++      "funding": [
++        {
++          "type": "github",
++          "url": "https://github.com/sponsors/fastify"
++        },
++        {
++          "type": "opencollective",
++          "url": "https://opencollective.com/fastify"
++        }
++      ],
++      "license": "BSD-3-Clause"
++    },
++    "node_modules/finalhandler": {
++      "version": "2.1.1",
++      "resolved": "https://registry.npmjs.org/finalhandler/-/finalhandler-2.1.1.tgz",
++      "integrity": "sha512-S8KoZgRZN+a5rNwqTxlZZePjT/4cnm0ROV70LedRHZ0p8u9fRID0hJUZQpkKLzro8LfmC8sx23bY6tVNxv8pQA==",
++      "license": "MIT",
++      "dependencies": {
++        "debug": "^4.4.0",
++        "encodeurl": "^2.0.0",
++        "escape-html": "^1.0.3",
++        "on-finished": "^2.4.1",
++        "parseurl": "^1.3.3",
++        "statuses": "^2.0.1"
++      },
++      "engines": {
++        "node": ">= 18.0.0"
++      },
++      "funding": {
++        "type": "opencollective",
++        "url": "https://opencollective.com/express"
++      }
++    },
++    "node_modules/forwarded": {
++      "version": "0.2.0",
++      "resolved": "https://registry.npmjs.org/forwarded/-/forwarded-0.2.0.tgz",
++      "integrity": "sha512-buRG0fpBtRHSTCOASe6hD258tEubFoRLb4ZNA6NxMVHNw2gOcwHo9wyablzMzOA5z9xA9L1KNjk/Nt6MT9aYow==",
++      "license": "MIT",
++      "engines": {
++        "node": ">= 0.6"
++      }
++    },
++    "node_modules/fresh": {
++      "version": "2.0.0",
++      "resolved": "https://registry.npmjs.org/fresh/-/fresh-2.0.0.tgz",
++      "integrity": "sha512-Rx/WycZ60HOaqLKAi6cHRKKI7zxWbJ31MhntmtwMoaTeF7XFH9hhBp8vITaMidfljRQ6eYWCKkaTK+ykVJHP2A==",
++      "license": "MIT",
++      "engines": {
++        "node": ">= 0.8"
++      }
++    },
++    "node_modules/function-bind": {
++      "version": "1.1.2",
++      "resolved": "https://registry.npmjs.org/function-bind/-/function-bind-1.1.2.tgz",
++      "integrity": "sha512-7XHNxH7qX9xG5mIwxkhumTox/MIRNcOgDrxWsMt2pAr23WHp6MrRlN7FBSFpCpr+oVO0F744iUgR82nJMfG2SA==",
++      "license": "MIT",
++      "funding": {
++        "url": "https://github.com/sponsors/ljharb"
++      }
++    },
++    "node_modules/generic-pool": {
++      "version": "3.9.0",
++      "resolved": "https://registry.npmjs.org/generic-pool/-/generic-pool-3.9.0.tgz",
++      "integrity": "sha512-hymDOu5B53XvN4QT9dBmZxPX4CWhBPPLguTZ9MMFeFa/Kg0xWVfylOVNlJji/E7yTZWFd/q9GO5TxDLq156D7g==",
++      "license": "MIT",
++      "engines": {
++        "node": ">= 4"
++      }
++    },
++    "node_modules/get-intrinsic": {
++      "version": "1.3.0",
++      "resolved": "https://registry.npmjs.org/get-intrinsic/-/get-intrinsic-1.3.0.tgz",
++      "integrity": "sha512-9fSjSaos/fRIVIp+xSJlE6lfwhES7LNtKaCBIamHsjr2na1BiABJPo0mOjjz8GJDURarmCPGqaiVg5mfjb98CQ==",
++      "license": "MIT",
++      "dependencies": {
++        "call-bind-apply-helpers": "^1.0.2",
++        "es-define-property": "^1.0.1",
++        "es-errors": "^1.3.0",
++        "es-object-atoms": "^1.1.1",
++        "function-bind": "^1.1.2",
++        "get-proto": "^1.0.1",
++        "gopd": "^1.2.0",
++        "has-symbols": "^1.1.0",
++        "hasown": "^2.0.2",
++        "math-intrinsics": "^1.1.0"
++      },
++      "engines": {
++        "node": ">= 0.4"
++      },
++      "funding": {
++        "url": "https://github.com/sponsors/ljharb"
++      }
++    },
++    "node_modules/get-proto": {
++      "version": "1.0.1",
++      "resolved": "https://registry.npmjs.org/get-proto/-/get-proto-1.0.1.tgz",
++      "integrity": "sha512-sTSfBjoXBp89JvIKIefqw7U2CCebsc74kiY6awiGogKtoSGbgjYE/G/+l9sF3MWFPNc9IcoOC4ODfKHfxFmp0g==",
++      "license": "MIT",
++      "dependencies": {
++        "dunder-proto": "^1.0.1",
++        "es-object-atoms": "^1.0.0"
++      },
++      "engines": {
++        "node": ">= 0.4"
++      }
++    },
++    "node_modules/gopd": {
++      "version": "1.2.0",
++      "resolved": "https://registry.npmjs.org/gopd/-/gopd-1.2.0.tgz",
++      "integrity": "sha512-ZUKRh6/kUFoAiTAtTYPZJ3hw9wNxx+BIBOijnlG9PnrJsCcSjs1wyyD6vJpaYtgnzDrKYRSqf3OO6Rfa93xsRg==",
++      "license": "MIT",
++      "engines": {
++        "node": ">= 0.4"
++      },
++      "funding": {
++        "url": "https://github.com/sponsors/ljharb"
++      }
++    },
++    "node_modules/has-symbols": {
++      "version": "1.1.0",
++      "resolved": "https://registry.npmjs.org/has-symbols/-/has-symbols-1.1.0.tgz",
++      "integrity": "sha512-1cDNdwJ2Jaohmb3sg4OmKaMBwuC48sYni5HUw2DvsC8LjGTLK9h+eb1X6RyuOHe4hT0ULCW68iomhjUoKUqlPQ==",
++      "license": "MIT",
++      "engines": {
++        "node": ">= 0.4"
++      },
++      "funding": {
++        "url": "https://github.com/sponsors/ljharb"
++      }
++    },
++    "node_modules/hasown": {
++      "version": "2.0.4",
++      "resolved": "https://registry.npmjs.org/hasown/-/hasown-2.0.4.tgz",
++      "integrity": "sha512-T2UbfbBEF32wiepXIsMlTW9+dDYC6wMh/t/vYA4tuOMKqWz/n3vr1NFSxQiyP+zk2mXsoMA/i/7qV6LKut1t1A==",
++      "license": "MIT",
++      "dependencies": {
++        "function-bind": "^1.1.2"
++      },
++      "engines": {
++        "node": ">= 0.4"
++      }
++    },
++    "node_modules/hono": {
++      "version": "4.13.13",
++      "resolved": "https://registry.npmjs.org/hono/-/hono-4.13.13.tgz",
++      "integrity": "sha512-CQ46U0ZkAGmbT/4UxdzzGJpacP2IeKgY4a5/tOI9AABbpOMfK739wfDXmv1usCk+3RkKj1hQy4/fjhiwa2xlrA==",
++      "license": "MIT",
++      "engines": {
++        "node": ">=16.9.0"
++      }
++    },
++    "node_modules/http-errors": {
++      "version": "2.0.1",
++      "resolved": "https://registry.npmjs.org/http-errors/-/http-errors-2.0.1.tgz",
++      "integrity": "sha512-4FbRdAX+bSdmo4AUFuS0WNiPz8NgFt+r8ThgNWmlrjQjt1Q7ZR9+zTlce2859x4KSXrwIsaeTqDoKQmtP8pLmQ==",
++      "license": "MIT",
++      "dependencies": {
++        "depd": "~2.0.0",
++        "inherits": "~2.0.4",
++        "setprototypeof": "~1.2.0",
++        "statuses": "~2.0.2",
++        "toidentifier": "~1.0.1"
++      },
++      "engines": {
++        "node": ">= 0.8"
++      },
++      "funding": {
++        "type": "opencollective",
++        "url": "https://opencollective.com/express"
++      }
++    },
++    "node_modules/iconv-lite": {
++      "version": "0.7.3",
++      "resolved": "https://registry.npmjs.org/iconv-lite/-/iconv-lite-0.7.3.tgz",
++      "integrity": "sha512-IKXpvIzjnC9XTAUbVBcMfGS0EPaIXtW6v+zr+RRp+hqULEpo0owZax6wyRwPOJbWbzjYspQwusTsfVr0ifh4uQ==",
++      "license": "MIT",
++      "dependencies": {
++        "safer-buffer": ">= 2.1.2 < 3.0.0"
++      },
++      "engines": {
++        "node": ">=0.10.0"
++      },
++      "funding": {
++        "type": "opencollective",
++        "url": "https://opencollective.com/express"
++      }
++    },
++    "node_modules/inherits": {
++      "version": "2.0.4",
++      "resolved": "https://registry.npmjs.org/inherits/-/inherits-2.0.4.tgz",
++      "integrity": "sha512-k/vGaX4/Yla3WzyMCvTQOXYeIHvqOKtnqBduzTHpzpQZzAskKMhZ2K+EnBiSM9zGSoIFeMpXKxa4dYeZIQqewQ==",
++      "license": "ISC"
++    },
++    "node_modules/ip-address": {
++      "version": "10.7.4",
++      "resolved": "https://registry.npmjs.org/ip-address/-/ip-address-10.7.4.tgz",
++      "integrity": "sha512-DWBMKyeM25D70nrIiTkgQth59/G+naKOTep6huF9j+GmeK3DMD60Zvxg5d5qQnz+38AHgou6ean2LECX+lrKDg==",
++      "license": "MIT",
++      "engines": {
++        "node": ">= 12"
++      }
++    },
++    "node_modules/ipaddr.js": {
++      "version": "1.9.1",
++      "resolved": "https://registry.npmjs.org/ipaddr.js/-/ipaddr.js-1.9.1.tgz",
++      "integrity": "sha512-0KI/607xoxSToH7GjN1FfSbLoU0+btTicjsQSWQlh/hZykN8KpmMf7uYwPW3R+akZ6R/w18ZlXSHBYXiYUPO3g==",
++      "license": "MIT",
++      "engines": {
++        "node": ">= 0.10"
++      }
++    },
++    "node_modules/is-promise": {
++      "version": "4.0.0",
++      "resolved": "https://registry.npmjs.org/is-promise/-/is-promise-4.0.0.tgz",
++      "integrity": "sha512-hvpoI6korhJMnej285dSg6nu1+e6uxs7zG3BYAm5byqDsgJNWwxzM6z6iZiAgQR4TJ30JmBTOwqZUw3WlyH3AQ==",
++      "license": "MIT"
++    },
++    "node_modules/isexe": {
++      "version": "2.0.0",
++      "resolved": "https://registry.npmjs.org/isexe/-/isexe-2.0.0.tgz",
++      "integrity": "sha512-RHxMLp9lnKHGHRng9QFhRCMbYAcVpn69smSGcq3f36xjgVVWThj4qqLbTLlq7Ssj8B+fIQ1EuCEGI2lKsyQeIw==",
++      "license": "ISC"
++    },
++    "node_modules/jose": {
++      "version": "6.2.12",
++      "resolved": "https://registry.npmjs.org/jose/-/jose-6.2.12.tgz",
++      "integrity": "sha512-9NiFmJEex0sy2Dk58j2UGBSHgUs2ypF9eZSu4L6vjOX3Dp96Sw1F3uL+H+D1sx02jZZdzUT0HgvCy59CuvXcWw==",
++      "license": "MIT",
++      "funding": {
++        "url": "https://github.com/sponsors/panva"
++      }
++    },
++    "node_modules/jsbi": {
++      "version": "4.3.2",
++      "resolved": "https://registry.npmjs.org/jsbi/-/jsbi-4.3.2.tgz",
++      "integrity": "sha512-9fqMSQbhJykSeii05nxKl4m6Eqn2P6rOlYiS+C5Dr/HPIU/7yZxu5qzbs40tgaFORiw2Amd0mirjxatXYMkIew==",
++      "license": "Apache-2.0"
++    },
++    "node_modules/json-schema-traverse": {
++      "version": "1.0.0",
++      "resolved": "https://registry.npmjs.org/json-schema-traverse/-/json-schema-traverse-1.0.0.tgz",
++      "integrity": "sha512-NM8/P9n3XjXhIZn1lLhkFaACTOURQXjWhV4BA/RnOv8xvgqtqpAX9IO4mRQxSx1Rlo4tqzeqb0sOlruaOy3dug==",
++      "license": "MIT"
++    },
++    "node_modules/json-schema-typed": {
++      "version": "8.0.2",
++      "resolved": "https://registry.npmjs.org/json-schema-typed/-/json-schema-typed-8.0.2.tgz",
++      "integrity": "sha512-fQhoXdcvc3V28x7C7BMs4P5+kNlgUURe2jmUT1T//oBRMDrqy1QPelJimwZGo7Hg9VPV3EQV5Bnq4hbFy2vetA==",
++      "license": "BSD-2-Clause"
++    },
++    "node_modules/lodash": {
++      "version": "4.18.1",
++      "resolved": "https://registry.npmjs.org/lodash/-/lodash-4.18.1.tgz",
++      "integrity": "sha512-dMInicTPVE8d1e5otfwmmjlxkZoUpiVLwyeTdUsi/Caj/gfzzblBcCE5sRHV/AsjuCmxWrte2TNGSYuCeCq+0Q==",
++      "license": "MIT"
++    },
++    "node_modules/math-intrinsics": {
++      "version": "1.1.0",
++      "resolved": "https://registry.npmjs.org/math-intrinsics/-/math-intrinsics-1.1.0.tgz",
++      "integrity": "sha512-/IXtbwEk5HTPyEwyKX6hGkYXxM9nbj64B+ilVJnC/R6B0pH5G4V3b0pVbL7DBj4tkhBAppbQUlf6F6Xl9LHu1g==",
++      "license": "MIT",
++      "engines": {
++        "node": ">= 0.4"
++      }
++    },
++    "node_modules/media-typer": {
++      "version": "1.1.1",
++      "resolved": "https://registry.npmjs.org/media-typer/-/media-typer-1.1.1.tgz",
++      "integrity": "sha512-yz3xRaG20c6/BOzvYoDaGtPmGscs7YivItZEEqe6GbwNfHuxu9YNmvnEkMzKldAGY4/80pRcQRZSEnhquk9XuQ==",
++      "license": "MIT",
++      "engines": {
++        "node": ">= 0.8"
++      },
++      "funding": {
++        "type": "opencollective",
++        "url": "https://opencollective.com/express"
++      }
++    },
++    "node_modules/merge-descriptors": {
++      "version": "2.0.0",
++      "resolved": "https://registry.npmjs.org/merge-descriptors/-/merge-descriptors-2.0.0.tgz",
++      "integrity": "sha512-Snk314V5ayFLhp3fkUREub6WtjBfPdCPY1Ln8/8munuLuiYhsABgBVWsozAG+MWMbVEvcdcpbi9R7ww22l9Q3g==",
++      "license": "MIT",
++      "engines": {
++        "node": ">=18"
++      },
++      "funding": {
++        "url": "https://github.com/sponsors/sindresorhus"
++      }
++    },
++    "node_modules/mime-db": {
++      "version": "1.54.0",
++      "resolved": "https://registry.npmjs.org/mime-db/-/mime-db-1.54.0.tgz",
++      "integrity": "sha512-aU5EJuIN2WDemCcAp2vFBfp/m4EAhWJnUNSSw0ixs7/kXbd6Pg64EmwJkNdFhB8aWt1sH2CTXrLxo/iAGV3oPQ==",
++      "license": "MIT",
++      "engines": {
++        "node": ">= 0.6"
++      }
++    },
++    "node_modules/mime-types": {
++      "version": "3.0.2",
++      "resolved": "https://registry.npmjs.org/mime-types/-/mime-types-3.0.2.tgz",
++      "integrity": "sha512-Lbgzdk0h4juoQ9fCKXW4by0UJqj+nOOrI9MJ1sSj4nI8aI2eo1qmvQEie4VD1glsS250n15LsWsYtCugiStS5A==",
++      "license": "MIT",
++      "dependencies": {
++        "mime-db": "^1.54.0"
++      },
++      "engines": {
++        "node": ">=18"
++      },
++      "funding": {
++        "type": "opencollective",
++        "url": "https://opencollective.com/express"
++      }
++    },
++    "node_modules/ms": {
++      "version": "2.1.3",
++      "resolved": "https://registry.npmjs.org/ms/-/ms-2.1.3.tgz",
++      "integrity": "sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==",
++      "license": "MIT"
++    },
++    "node_modules/negotiator": {
++      "version": "1.1.0",
++      "resolved": "https://registry.npmjs.org/negotiator/-/negotiator-1.1.0.tgz",
++      "integrity": "sha512-NMPBRMJgiQHjbd8phG3Vebdx4kZ1H121rbl5IkMqeOsahptB9BKo/d7oJ3zTXqTgagn2bWlNSXkh0QUGM31RYg==",
++      "license": "MIT",
++      "dependencies": {
++        "content-type": "^2.1.0"
++      },
++      "engines": {
++        "node": ">=18"
++      },
++      "funding": {
++        "type": "opencollective",
++        "url": "https://opencollective.com/express"
++      }
++    },
++    "node_modules/negotiator/node_modules/content-type": {
++      "version": "2.1.0",
++      "resolved": "https://registry.npmjs.org/content-type/-/content-type-2.1.0.tgz",
++      "integrity": "sha512-mj7UPXE0jaqaOsukNZRUEfEi2AcL7C/vwmwcHV0O97eO1E1pxBZuyjlZrx5seTaNBg1U6+o35wpa35Qfcc+7ag==",
++      "license": "MIT",
++      "engines": {
++        "node": ">=18"
++      },
++      "funding": {
++        "type": "opencollective",
++        "url": "https://opencollective.com/express"
++      }
++    },
++    "node_modules/object-assign": {
++      "version": "4.1.1",
++      "resolved": "https://registry.npmjs.org/object-assign/-/object-assign-4.1.1.tgz",
++      "integrity": "sha512-rJgTQnkUnH1sFw8yT6VSU3zD3sWmu6sZhIseY8VX+GRu3P6F7Fu+JNDoXfklElbLJSnc3FUQHVe4cU5hj+BcUg==",
++      "license": "MIT",
++      "engines": {
++        "node": ">=0.10.0"
++      }
++    },
++    "node_modules/object-inspect": {
++      "version": "1.13.4",
++      "resolved": "https://registry.npmjs.org/object-inspect/-/object-inspect-1.13.4.tgz",
++      "integrity": "sha512-W67iLl4J2EXEGTbfeHCffrjDfitvLANg0UlX3wFUUSTx92KXRFegMHUVgSqE+wvhAbi4WqjGg9czysTV2Epbew==",
++      "license": "MIT",
++      "engines": {
++        "node": ">= 0.4"
++      },
++      "funding": {
++        "url": "https://github.com/sponsors/ljharb"
++      }
++    },
++    "node_modules/on-finished": {
++      "version": "2.4.1",
++      "resolved": "https://registry.npmjs.org/on-finished/-/on-finished-2.4.1.tgz",
++      "integrity": "sha512-oVlzkg3ENAhCk2zdv7IJwd/QUD4z2RxRwpkcGY8psCVcCYZNq4wYnVWALHM+brtuJjePWiYF/ClmuDr8Ch5+kg==",
++      "license": "MIT",
++      "dependencies": {
++        "ee-first": "1.1.1"
++      },
++      "engines": {
++        "node": ">= 0.8"
++      }
++    },
++    "node_modules/once": {
++      "version": "1.4.0",
++      "resolved": "https://registry.npmjs.org/once/-/once-1.4.0.tgz",
++      "integrity": "sha512-lNaJgI+2Q5URQBkccEKHTQOPaXdUxnZZElQTZY0MFUAuaEqe1E+Nyvgdz/aIyNi6Z9MzO5dv1H8n58/GELp3+w==",
++      "license": "ISC",
++      "dependencies": {
++        "wrappy": "1"
++      }
++    },
++    "node_modules/parseurl": {
++      "version": "1.3.3",
++      "resolved": "https://registry.npmjs.org/parseurl/-/parseurl-1.3.3.tgz",
++      "integrity": "sha512-CiyeOxFT/JZyN5m0z9PfXw4SCBJ6Sygz1Dpl0wqjlhDEGGBP1GnsUVEL0p63hoG1fcj3fHynXi9NYO4nWOL+qQ==",
++      "license": "MIT",
++      "engines": {
++        "node": ">= 0.8"
++      }
++    },
++    "node_modules/path-key": {
++      "version": "3.1.1",
++      "resolved": "https://registry.npmjs.org/path-key/-/path-key-3.1.1.tgz",
++      "integrity": "sha512-ojmeN0qd+y0jszEtoY48r0Peq5dwMEkIlCOu6Q5f41lfkswXuKtYrhgoTpLnyIcHm24Uhqx+5Tqm2InSwLhE6Q==",
++      "license": "MIT",
++      "engines": {
++        "node": ">=8"
++      }
++    },
++    "node_modules/path-to-regexp": {
++      "version": "8.4.2",
++      "resolved": "https://registry.npmjs.org/path-to-regexp/-/path-to-regexp-8.4.2.tgz",
++      "integrity": "sha512-qRcuIdP69NPm4qbACK+aDogI5CBDMi1jKe0ry5rSQJz8JVLsC7jV8XpiJjGRLLol3N+R5ihGYcrPLTno6pAdBA==",
++      "license": "MIT",
++      "funding": {
++        "type": "opencollective",
++        "url": "https://opencollective.com/express"
++      }
++    },
++    "node_modules/pkce-challenge": {
++      "version": "5.0.1",
++      "resolved": "https://registry.npmjs.org/pkce-challenge/-/pkce-challenge-5.0.1.tgz",
++      "integrity": "sha512-wQ0b/W4Fr01qtpHlqSqspcj3EhBvimsdh0KlHhH8HRZnMsEa0ea2fTULOXOS9ccQr3om+GcGRk4e+isrZWV8qQ==",
++      "license": "MIT",
++      "engines": {
++        "node": ">=16.20.0"
++      }
++    },
++    "node_modules/platformdirs": {
++      "version": "4.3.8-rc3",
++      "resolved": "https://registry.npmjs.org/platformdirs/-/platformdirs-4.3.8-rc3.tgz",
++      "integrity": "sha512-61EBmPqfbvVzatw3qBRZa794EFRyMz/O/VGtsiu8jS5JZgr0Aj+LYVNZLmEMjzgiKgFvcIc820wiVUNyznklaw==",
++      "license": "MIT",
++      "bin": {
++        "platformdirs": "dist/main.js"
++      },
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/proxy-addr": {
++      "version": "2.0.8",
++      "resolved": "https://registry.npmjs.org/proxy-addr/-/proxy-addr-2.0.8.tgz",
++      "integrity": "sha512-5nnx0yGyVUcY6t9RnWcARWtwT9F1D8O9rt08htPvnd49W1IgZtmLkhu9WfMzQj1cFxjHIO6connUNVW5k7AVyQ==",
++      "license": "MIT",
++      "dependencies": {
++        "forwarded": "0.2.0",
++        "ipaddr.js": "1.9.1"
++      },
++      "engines": {
++        "node": ">= 0.10"
++      },
++      "funding": {
++        "type": "opencollective",
++        "url": "https://opencollective.com/express"
++      }
++    },
++    "node_modules/qs": {
++      "version": "6.16.1",
++      "resolved": "https://registry.npmjs.org/qs/-/qs-6.16.1.tgz",
++      "integrity": "sha512-5Px6J7rfHBAGUhNQ3es4YzcOdBBw0SDcVtThJml4RdnKw4tKs2epA0kPZ+K8X+WiHktT93RHVcQ/3ym5aTCgtg==",
++      "license": "BSD-3-Clause",
++      "dependencies": {
++        "es-define-property": "^1.0.1",
++        "side-channel": "^1.1.1"
++      },
++      "engines": {
++        "node": ">=0.6"
++      },
++      "funding": {
++        "url": "https://github.com/sponsors/ljharb"
++      }
++    },
++    "node_modules/range-parser": {
++      "version": "1.3.0",
++      "resolved": "https://registry.npmjs.org/range-parser/-/range-parser-1.3.0.tgz",
++      "integrity": "sha512-hek2mFQpPuI4E1BBKrSto+BU3e3x4xuarsbiwr3+lf7p44juvFMV0XFWQAP3xUyqXA4RrXLIoaSUGbSt056ZMw==",
++      "license": "MIT",
++      "engines": {
++        "node": ">= 0.6"
++      },
++      "funding": {
++        "type": "opencollective",
++        "url": "https://opencollective.com/express"
++      }
++    },
++    "node_modules/raw-body": {
++      "version": "3.0.2",
++      "resolved": "https://registry.npmjs.org/raw-body/-/raw-body-3.0.2.tgz",
++      "integrity": "sha512-K5zQjDllxWkf7Z5xJdV0/B0WTNqx6vxG70zJE4N0kBs4LovmEYWJzQGxC9bS9RAKu3bgM40lrd5zoLJ12MQ5BA==",
++      "license": "MIT",
++      "dependencies": {
++        "bytes": "~3.1.2",
++        "http-errors": "~2.0.1",
++        "iconv-lite": "~0.7.0",
++        "unpipe": "~1.0.0"
++      },
++      "engines": {
++        "node": ">= 0.10"
++      }
++    },
++    "node_modules/redis": {
++      "version": "5.12.1",
++      "resolved": "https://registry.npmjs.org/redis/-/redis-5.12.1.tgz",
++      "integrity": "sha512-LDsoVvb/CpoV9EN3FXvgvSHNJWuCIzl9MiO3ppOevuGLpSGJhwfQjpEwfFJcQvNSddHADDdZaWx0HnmMxRXG7g==",
++      "license": "MIT",
++      "dependencies": {
++        "@redis/bloom": "5.12.1",
++        "@redis/client": "5.12.1",
++        "@redis/json": "5.12.1",
++        "@redis/search": "5.12.1",
++        "@redis/time-series": "5.12.1"
++      },
++      "engines": {
++        "node": ">= 18.19.0"
++      }
++    },
++    "node_modules/require-from-string": {
++      "version": "2.0.2",
++      "resolved": "https://registry.npmjs.org/require-from-string/-/require-from-string-2.0.2.tgz",
++      "integrity": "sha512-Xf0nWe6RseziFMu+Ap9biiUbmplq6S9/p+7w7YXP/JBHhrUDDUhwa+vANyubuqfZWTveU//DYVGsDG7RKL/vEw==",
++      "license": "MIT",
++      "engines": {
++        "node": ">=0.10.0"
++      }
++    },
++    "node_modules/router": {
++      "version": "2.2.0",
++      "resolved": "https://registry.npmjs.org/router/-/router-2.2.0.tgz",
++      "integrity": "sha512-nLTrUKm2UyiL7rlhapu/Zl45FwNgkZGaCpZbIHajDYgwlJCOzLSk+cIPAnsEqV955GjILJnKbdQC1nVPz+gAYQ==",
++      "license": "MIT",
++      "dependencies": {
++        "debug": "^4.4.0",
++        "depd": "^2.0.0",
++        "is-promise": "^4.0.0",
++        "parseurl": "^1.3.3",
++        "path-to-regexp": "^8.0.0"
++      },
++      "engines": {
++        "node": ">= 18"
++      }
++    },
++    "node_modules/safer-buffer": {
++      "version": "2.1.2",
++      "resolved": "https://registry.npmjs.org/safer-buffer/-/safer-buffer-2.1.2.tgz",
++      "integrity": "sha512-YZo3K82SD7Riyi0E1EQPojLz7kpepnSQI9IyPbHHg1XXXevb5dJI7tpyN2ADxGcQbHG7vcyRHk0cbwqcQriUtg==",
++      "license": "MIT"
++    },
++    "node_modules/send": {
++      "version": "1.2.1",
++      "resolved": "https://registry.npmjs.org/send/-/send-1.2.1.tgz",
++      "integrity": "sha512-1gnZf7DFcoIcajTjTwjwuDjzuz4PPcY2StKPlsGAQ1+YH20IRVrBaXSWmdjowTJ6u8Rc01PoYOGHXfP1mYcZNQ==",
++      "license": "MIT",
++      "dependencies": {
++        "debug": "^4.4.3",
++        "encodeurl": "^2.0.0",
++        "escape-html": "^1.0.3",
++        "etag": "^1.8.1",
++        "fresh": "^2.0.0",
++        "http-errors": "^2.0.1",
++        "mime-types": "^3.0.2",
++        "ms": "^2.1.3",
++        "on-finished": "^2.4.1",
++        "range-parser": "^1.2.1",
++        "statuses": "^2.0.2"
++      },
++      "engines": {
++        "node": ">= 18"
++      },
++      "funding": {
++        "type": "opencollective",
++        "url": "https://opencollective.com/express"
++      }
++    },
++    "node_modules/serve-static": {
++      "version": "2.2.1",
++      "resolved": "https://registry.npmjs.org/serve-static/-/serve-static-2.2.1.tgz",
++      "integrity": "sha512-xRXBn0pPqQTVQiC8wyQrKs2MOlX24zQ0POGaj0kultvoOCstBQM5yvOhAVSUwOMjQtTvsPWoNCHfPGwaaQJhTw==",
++      "license": "MIT",
++      "dependencies": {
++        "encodeurl": "^2.0.0",
++        "escape-html": "^1.0.3",
++        "parseurl": "^1.3.3",
++        "send": "^1.2.0"
++      },
++      "engines": {
++        "node": ">= 18"
++      },
++      "funding": {
++        "type": "opencollective",
++        "url": "https://opencollective.com/express"
++      }
++    },
++    "node_modules/setprototypeof": {
++      "version": "1.2.0",
++      "resolved": "https://registry.npmjs.org/setprototypeof/-/setprototypeof-1.2.0.tgz",
++      "integrity": "sha512-E5LDX7Wrp85Kil5bhZv46j8jOeboKq5JMmYM3gVGdGH8xFpPWXUMsNrlODCrkoxMEeNi/XZIwuRvY4XNwYMJpw==",
++      "license": "ISC"
++    },
++    "node_modules/shebang-command": {
++      "version": "2.0.0",
++      "resolved": "https://registry.npmjs.org/shebang-command/-/shebang-command-2.0.0.tgz",
++      "integrity": "sha512-kHxr2zZpYtdmrN1qDjrrX/Z1rR1kG8Dx+gkpK1G4eXmvXswmcE1hTWBWYUzlraYw1/yZp6YuDY77YtvbN0dmDA==",
++      "license": "MIT",
++      "dependencies": {
++        "shebang-regex": "^3.0.0"
++      },
++      "engines": {
++        "node": ">=8"
++      }
++    },
++    "node_modules/shebang-regex": {
++      "version": "3.0.0",
++      "resolved": "https://registry.npmjs.org/shebang-regex/-/shebang-regex-3.0.0.tgz",
++      "integrity": "sha512-7++dFhtcx3353uBaq8DDR4NuxBetBzC7ZQOhmTQInHEd6bSrXdiEyzCvG07Z44UYdLShWUyXt5M/yhz8ekcb1A==",
++      "license": "MIT",
++      "engines": {
++        "node": ">=8"
++      }
++    },
++    "node_modules/side-channel": {
++      "version": "1.1.1",
++      "resolved": "https://registry.npmjs.org/side-channel/-/side-channel-1.1.1.tgz",
++      "integrity": "sha512-6x6dK6zJdpTzF4sQeNYxwtvBzf6Eg4GtlesS94HOvTudUeyK2WXAaIfmDgsyslYrRBeFIlsi54AYsFGUuhmvrQ==",
++      "license": "MIT",
++      "dependencies": {
++        "es-errors": "^1.3.0",
++        "object-inspect": "^1.13.4",
++        "side-channel-list": "^1.0.1",
++        "side-channel-map": "^1.0.1",
++        "side-channel-weakmap": "^1.0.2"
++      },
++      "engines": {
++        "node": ">= 0.4"
++      },
++      "funding": {
++        "url": "https://github.com/sponsors/ljharb"
++      }
++    },
++    "node_modules/side-channel-list": {
++      "version": "1.0.1",
++      "resolved": "https://registry.npmjs.org/side-channel-list/-/side-channel-list-1.0.1.tgz",
++      "integrity": "sha512-mjn/0bi/oUURjc5Xl7IaWi/OJJJumuoJFQJfDDyO46+hBWsfaVM65TBHq2eoZBhzl9EchxOijpkbRC8SVBQU0w==",
++      "license": "MIT",
++      "dependencies": {
++        "es-errors": "^1.3.0",
++        "object-inspect": "^1.13.4"
++      },
++      "engines": {
++        "node": ">= 0.4"
++      },
++      "funding": {
++        "url": "https://github.com/sponsors/ljharb"
++      }
++    },
++    "node_modules/side-channel-map": {
++      "version": "1.0.1",
++      "resolved": "https://registry.npmjs.org/side-channel-map/-/side-channel-map-1.0.1.tgz",
++      "integrity": "sha512-VCjCNfgMsby3tTdo02nbjtM/ewra6jPHmpThenkTYh8pG9ucZ/1P8So4u4FGBek/BjpOVsDCMoLA/iuBKIFXRA==",
++      "license": "MIT",
++      "dependencies": {
++        "call-bound": "^1.0.2",
++        "es-errors": "^1.3.0",
++        "get-intrinsic": "^1.2.5",
++        "object-inspect": "^1.13.3"
++      },
++      "engines": {
++        "node": ">= 0.4"
++      },
++      "funding": {
++        "url": "https://github.com/sponsors/ljharb"
++      }
++    },
++    "node_modules/side-channel-weakmap": {
++      "version": "1.0.2",
++      "resolved": "https://registry.npmjs.org/side-channel-weakmap/-/side-channel-weakmap-1.0.2.tgz",
++      "integrity": "sha512-WPS/HvHQTYnHisLo9McqBHOJk2FkHO/tlpvldyrnem4aeQp4hai3gythswg6p01oSoTl58rcpiFAjF2br2Ak2A==",
++      "license": "MIT",
++      "dependencies": {
++        "call-bound": "^1.0.2",
++        "es-errors": "^1.3.0",
++        "get-intrinsic": "^1.2.5",
++        "object-inspect": "^1.13.3",
++        "side-channel-map": "^1.0.1"
++      },
++      "engines": {
++        "node": ">= 0.4"
++      },
++      "funding": {
++        "url": "https://github.com/sponsors/ljharb"
++      }
++    },
++    "node_modules/statuses": {
++      "version": "2.0.2",
++      "resolved": "https://registry.npmjs.org/statuses/-/statuses-2.0.2.tgz",
++      "integrity": "sha512-DvEy55V3DB7uknRo+4iOGT5fP1slR8wQohVdknigZPMpMstaKJQWhwiYBACJE3Ul2pTnATihhBYnRhZQHGBiRw==",
++      "license": "MIT",
++      "engines": {
++        "node": ">= 0.8"
++      }
++    },
++    "node_modules/toidentifier": {
++      "version": "1.0.1",
++      "resolved": "https://registry.npmjs.org/toidentifier/-/toidentifier-1.0.1.tgz",
++      "integrity": "sha512-o5sSPKEkg/DIQNmH43V0/uerLrpzVedkUh8tGNvaeXpfpuwjKenlSox/2O/BTlZUtEe+JG7s5YhEz608PlAHRA==",
++      "license": "MIT",
++      "engines": {
++        "node": ">=0.6"
++      }
++    },
++    "node_modules/type-is": {
++      "version": "2.1.0",
++      "resolved": "https://registry.npmjs.org/type-is/-/type-is-2.1.0.tgz",
++      "integrity": "sha512-faYHw0anBbc/kWF3zFTEnxSFOAGUX9GFbOBthvDdLsIlEoWOFOtS0zgCiQYwIskL9iGXZL3kAXD8OoZ4GmMATA==",
++      "license": "MIT",
++      "dependencies": {
++        "content-type": "^2.0.0",
++        "media-typer": "^1.1.0",
++        "mime-types": "^3.0.0"
++      },
++      "engines": {
++        "node": ">= 18"
++      },
++      "funding": {
++        "type": "opencollective",
++        "url": "https://opencollective.com/express"
++      }
++    },
++    "node_modules/type-is/node_modules/content-type": {
++      "version": "2.1.0",
++      "resolved": "https://registry.npmjs.org/content-type/-/content-type-2.1.0.tgz",
++      "integrity": "sha512-mj7UPXE0jaqaOsukNZRUEfEi2AcL7C/vwmwcHV0O97eO1E1pxBZuyjlZrx5seTaNBg1U6+o35wpa35Qfcc+7ag==",
++      "license": "MIT",
++      "engines": {
++        "node": ">=18"
++      },
++      "funding": {
++        "type": "opencollective",
++        "url": "https://opencollective.com/express"
++      }
++    },
++    "node_modules/unpipe": {
++      "version": "1.0.0",
++      "resolved": "https://registry.npmjs.org/unpipe/-/unpipe-1.0.0.tgz",
++      "integrity": "sha512-pjy2bYhSsufwWlKwPc+l3cN7+wuJlK6uz0YdJEOlQDbl6jo/YlPi4mb8agUkVC8BF7V8NuzeyPNqRksA3hztKQ==",
++      "license": "MIT",
++      "engines": {
++        "node": ">= 0.8"
++      }
++    },
++    "node_modules/vary": {
++      "version": "1.1.2",
++      "resolved": "https://registry.npmjs.org/vary/-/vary-1.1.2.tgz",
++      "integrity": "sha512-BNGbWLfd0eUPabhkXUVm0j8uuvREyTh5ovRa/dyow/BqAbZJyC+5fU+IzQOzmAKzYqYRAISoRhdQr3eIZ/PXqg==",
++      "license": "MIT",
++      "engines": {
++        "node": ">= 0.8"
++      }
++    },
++    "node_modules/which": {
++      "version": "2.0.2",
++      "resolved": "https://registry.npmjs.org/which/-/which-2.0.2.tgz",
++      "integrity": "sha512-BLI3Tl1TW3Pvl70l3yq3Y64i+awpwXqsGBYWkkqMtnbXgrMD+yj7rhW0kuEDxzJaYXGjEW5ogapKNMEKNMjibA==",
++      "license": "ISC",
++      "dependencies": {
++        "isexe": "^2.0.0"
++      },
++      "bin": {
++        "node-which": "bin/node-which"
++      },
++      "engines": {
++        "node": ">= 8"
++      }
++    },
++    "node_modules/wrappy": {
++      "version": "1.0.2",
++      "resolved": "https://registry.npmjs.org/wrappy/-/wrappy-1.0.2.tgz",
++      "integrity": "sha512-l4Sp/DRseor9wL6EvV2+TuQn63dMkPjZ/sp9XkghTEbV9KlPS1xUsZ3u7/IQO4wxtcFB4bgpQPRcR3QCvezPcQ==",
++      "license": "ISC"
++    },
++    "node_modules/zod": {
++      "version": "4.6.7",
++      "resolved": "https://registry.npmjs.org/zod/-/zod-4.6.7.tgz",
++      "integrity": "sha512-g8W2D2kU6a8untc053fX1uVBKzM7yqAxW/3zwk83+6RyF2+SKOuV+c0wBDhUwzV1PaGapmZH+rmcUzPf+3CGwg==",
++      "license": "MIT",
++      "funding": {
++        "url": "https://github.com/sponsors/colinhacks"
++      }
++    },
++    "node_modules/zod-to-json-schema": {
++      "version": "3.25.2",
++      "resolved": "https://registry.npmjs.org/zod-to-json-schema/-/zod-to-json-schema-3.25.2.tgz",
++      "integrity": "sha512-O/PgfnpT1xKSDeQYSCfRI5Gy3hPf91mKVDuYLUHZJMiDFptvP41MSnWofm8dnCm0256ZNfZIM7DSzuSMAFnjHA==",
++      "license": "ISC",
++      "peerDependencies": {
++        "zod": "^3.25.28 || ^4"
++      }
++    }
++  }
++}
+diff --git a/backend/mcp_runtime/package.json b/backend/mcp_runtime/package.json
+new file mode 100644
+index 0000000..3b50721
+--- /dev/null
++++ b/backend/mcp_runtime/package.json
+@@ -0,0 +1,8 @@
++{
++  "name": "civicly-official-mcp-runtime",
++  "version": "0.1.0",
++  "private": true,
++  "description": "B06 official server dependency; not a custom Civicly MCP server",
++  "engines": {"node": ">=24.21.0 <25", "npm": ">=12.2.0 <13"},
++  "dependencies": {"@falkordb/mcpserver": "1.3.0"}
++}
+diff --git a/backend/tests/b06_verify.py b/backend/tests/b06_verify.py
+new file mode 100644
+index 0000000..541299b
+--- /dev/null
++++ b/backend/tests/b06_verify.py
+@@ -0,0 +1,20 @@
++"""Administrative read-only retained-evidence check; no oracle or graph mutation."""
++import argparse
++import json
++from pathlib import Path
++from app.config import Settings
++from app.graph.connection import connect
++from app.graph.repository import GraphRepository
++from app.graph.migration import MigrationRunner
++from app.graph.analysis.evaluation import verify_city,CITY_GRAPH
++from app.graph.analysis.counterfactual import capture
++parser=argparse.ArgumentParser();parser.add_argument('--output',required=True,type=Path);args=parser.parse_args()
++root=Path.cwd();old=json.loads((root/'docs/evidence/B05-post-lifecycle.json').read_text())
++with connect(Settings(_env_file='.env')) as c:
++ city=verify_city(GraphRepository(c,CITY_GRAPH),json.loads((root/'data/ingestion/city-v3.json').read_text()));assert city==old['city']
++ controlled=capture(GraphRepository(c,old['controlled_source']['graph'])).fingerprint;assert controlled==old['controlled_source']
++ clone=capture(GraphRepository(c,old['counterfactual_clone']['graph'])).fingerprint;assert clone==old['counterfactual_clone']
++ probe=c.select_graph('civicly_b01_runtime').ro_query('MATCH (n:B01Probe {id:$id}) RETURN n.id,n.source_kind,n.task LIMIT 1',params={'id':'B01-PERSISTENCE'}).result_set;assert probe==old['original_b01_probe']
++ status=MigrationRunner(c,'civicly_knowledge').status();assert status['ready']
++ result={'status':'PASS','city':city,'controlled_source':controlled,'counterfactual_clone':clone,'original_b01_probe':probe,'canonical_migration':status}
++args.output.write_text(json.dumps(result,indent=2)+'\n');print('Retained evidence and migration PASS')
+diff --git a/backend/tests/integration/test_official_mcp.py b/backend/tests/integration/test_official_mcp.py
+new file mode 100644
+index 0000000..2955aa4
+--- /dev/null
++++ b/backend/tests/integration/test_official_mcp.py
+@@ -0,0 +1,228 @@
++"""Actual official Node MCP + Python SDK + real retained FalkorDB; no mock success."""
++import asyncio
++from contextlib import contextmanager
++import json
++import os
++from pathlib import Path
++import signal
++import subprocess
++
++import pytest
++from mcp import Client
++from redis import Redis
++from redis.exceptions import ResponseError
++
++from app.mcp.broker import open_broker, BrokerError, parse_content
++from app.mcp.__main__ import proof
++from app.mcp.policy import ALLOWED
++from app.mcp.runtime import provision, server_parameters, load_credentials, CITY_GRAPH, RUNTIME
++from app.graph.repository import GraphRepository
++from app.graph.analysis.evaluation import verify_city
++
++pytestmark = pytest.mark.integration
++
++
++@pytest.fixture(autouse=True)
++def configure_acl(db):
++ provision(db)
++
++
++def child_pids():
++ rows=subprocess.check_output(['ps','-axo','pid=,ppid=,command='],text=True).splitlines()
++ return {int(p[0]) for r in rows if len(p:=r.strip().split(None,2))==3 and int(p[1])==os.getpid()
++         and str(RUNTIME/'node_modules/@falkordb/mcpserver/dist/index.js') in p[2]}
++
++
++def test_live_discovery_all_approved_reads_independent_client_and_cleanup(db):
++ before=verify_city(GraphRepository(db,CITY_GRAPH),json.loads(Path('data/ingestion/city-v3.json').read_text()))
++ assert not child_pids()
++ result=asyncio.run(proof())
++ assert result['status']=='PASS' and result['independent_official_python_client_equal']
++ assert len(result['available_inventory'])==7 and set(result['allowed_tools'])==ALLOWED
++ assert result['results'][3]['rows'][0]['properties']['id']=='DRAIN-D12'
++ edges=result['results'][4]['rows'];assert edges and all(r['properties']['association_status']=='CANDIDATE' for r in edges)
++ assert all(r['graph_revision']==2104 for r in result['results'])
++ assert not child_pids()
++ assert before==verify_city(GraphRepository(db,CITY_GRAPH),json.loads(Path('data/ingestion/city-v3.json').read_text()))
++
++
++def test_actual_broker_deny_by_default_and_parameter_injection():
++ async def run():
++  traces=[]
++  async with open_broker(traces) as b:
++   assert {t['name'] for t in b.tools()}==ALLOWED
++   cases=[({'tool':'query_graph'},'DENIED_TOOL'),({'tool':'delete_graph'},'DENIED_TOOL'),
++    ({'tool':'list_graphs'},'DENIED_TOOL'),({'tool':'QUERY_GRAPH_READONLY'},'DENIED_TOOL'),
++    ({'tool':'query_graph_readonly\x00'},'DENIED_TOOL'),
++    ({'tool':'get_graph_schema','graph':'civicly_docs'},'DENIED_GRAPH'),
++    ({'tool':'get_graph_schema','graph':'civicly_knowledge'},'DENIED_GRAPH'),
++    ({'tool':'get_graph_schema','graph':'civicly_b01_runtime'},'DENIED_GRAPH'),
++    ({'tool':'get_graph_schema','graph':'hidden_ground_truth'},'DENIED_GRAPH'),
++    ({'tool':'query_graph_readonly','template':'node','id':'DRAIN-D12','query':'CREATE (:Evil)'},'INVALID_ARGUMENTS'),
++    ({'tool':'get_node_schema','label':'CivicSchemaMigration'},'INVALID_ARGUMENTS'),
++    ({'tool':'get_relationship_schema','relationship_type':'DRAINS_TO','sample_size':101},'INVALID_ARGUMENTS')]
++   calls=sum(t['operation']=='tools/call' for t in traces)
++   for args,code in cases:
++    with pytest.raises(BrokerError,match=code):await b.call(args)
++   assert calls==sum(t['operation']=='tools/call' for t in traces)
++   r=await b.call({'tool':'query_graph_readonly','template':'node','id':"DRAIN-D12'}) CREATE (:Injected) //"})
++   assert r.rows==[]
++ asyncio.run(run())
++
++
++@pytest.mark.parametrize('query',['CREATE (:B06Forbidden)',
++ 'MATCH (n:CivicEntity {id:$id}) SET n.name=$value RETURN n.id',
++ 'MATCH (n:CivicEntity {id:$id}) DELETE n'])
++def test_real_readonly_server_rejects_cypher_mutation(query,db):
++ before=db.select_graph(CITY_GRAPH).ro_query('MATCH (n:CivicEntity {id:$id}) RETURN properties(n) LIMIT 1',params={'id':'DRAIN-D12'}).result_set
++ async def run():
++  with server_parameters() as p:
++   async with Client(p,mode='legacy',read_timeout_seconds=4) as c:
++    result=await c.call_tool('query_graph_readonly',{'graphName':CITY_GRAPH,'query':query,'params':{'id':'DRAIN-D12','value':'forbidden'}})
++    assert result.is_error
++ asyncio.run(run())
++ assert before==db.select_graph(CITY_GRAPH).ro_query('MATCH (n:CivicEntity {id:$id}) RETURN properties(n) LIMIT 1',params={'id':'DRAIN-D12'}).result_set
++ assert db.select_graph(CITY_GRAPH).ro_query('MATCH (n:B06Forbidden) RETURN count(n)').result_set==[[0]]
++
++
++def test_official_strict_mode_acl_other_graph_and_invalid_argument_denials():
++ async def run():
++  with server_parameters() as p:
++   async with Client(p,mode='legacy',read_timeout_seconds=4) as c:
++    for tool,args in [
++     ('query_graph',{'graphName':CITY_GRAPH,'query':'CREATE (:B06Forbidden)','readOnly':False}),
++     ('delete_graph',{'graphName':CITY_GRAPH,'confirmDelete':True}),
++     ('query_graph_readonly',{'graphName':'civicly_b01_runtime','query':'RETURN 1'}),
++     ('query_graph_readonly',{'graphName':'civicly_docs','query':'RETURN 1'}),
++     ('list_graphs',{}),
++     ('query_graph_readonly',{'graphName':CITY_GRAPH}),
++     ('get_node_schema',{'graphName':CITY_GRAPH,'label':'DrainSegment','sampleSize':0}),
++     ('not_a_tool',{})]:
++     result=await c.call_tool(tool,args);assert result.is_error,tool
++ asyncio.run(run())
++
++
++def test_database_acl_independent_write_admin_and_key_denials():
++ creds=load_credentials()
++ c=Redis(host='127.0.0.1',port=6379,username=creds.username,password=creds.password.get_secret_value(),socket_timeout=2)
++ try:
++  assert c.ping()
++  for cmd in [('GRAPH.QUERY',CITY_GRAPH,'RETURN 1'),('GRAPH.DELETE',CITY_GRAPH),('GRAPH.LIST',),
++              ('GRAPH.RO_QUERY','civicly_knowledge','RETURN 1'),('CONFIG','GET','*'),('ACL','WHOAMI')]:
++   with pytest.raises(ResponseError):c.execute_command(*cmd)
++ finally:c.close()
++
++
++@pytest.mark.parametrize('password',['','incorrect-authentication-value'])
++def test_missing_or_incorrect_database_auth_prevents_mcp_startup(password):
++ async def run():
++  initialized=[False]
++  with server_parameters() as p:
++   p=p.model_copy(update={'env':{**p.env,'FALKORDB_PASSWORD':password}})
++   with pytest.raises(Exception):
++    async with Client(p,mode='legacy',read_timeout_seconds=1):
++     initialized[0]=True
++  assert not initialized[0], 'Unexpected authenticated initialization'
++ asyncio.run(run());assert not child_pids()
++
++
++def test_actual_process_downtime_then_fresh_session_reconnects():
++ async def run():
++  traces=[]
++  async with open_broker(traces) as b:
++   assert (await b.call({'tool':'query_graph_readonly','template':'node','id':'DRAIN-D12'})).rows
++   pids=child_pids();assert len(pids)==1
++   os.kill(next(iter(pids)),signal.SIGKILL)
++   with pytest.raises(BrokerError):await b.call({'tool':'get_graph_schema'})
++  assert not child_pids()
++  async with open_broker(traces) as b:
++   assert (await b.call({'tool':'get_graph_schema'})).schema_data
++  assert len([t for t in traces if t['operation']=='initialize' and t['status']=='SUCCESS'])==2
++ asyncio.run(run());assert not child_pids()
++
++
++def test_real_stalled_server_timeout_shutdown_and_recovery():
++ async def run():
++  traces=[]
++  async with open_broker(traces,timeout=2) as b:
++   pid=next(iter(child_pids()));os.kill(pid,signal.SIGSTOP)
++   try:
++    with pytest.raises(BrokerError,match='TIMEOUT'):await b.call({'tool':'get_graph_schema'})
++    with pytest.raises(BrokerError,match='SESSION_UNAVAILABLE'):await b.call({'tool':'get_graph_schema'})
++   finally:os.kill(pid,signal.SIGCONT)
++  assert any(t['status']=='TIMEOUT' for t in traces)
++  async with open_broker() as b:assert (await b.call({'tool':'get_node_schema','label':'DrainSegment'})).schema_data
++ asyncio.run(run());assert not child_pids()
++
++
++def test_unavailable_server_fail_closed_no_fabricated_identity(monkeypatch):
++ from app.mcp import broker
++ @contextmanager
++ def unavailable():
++  with server_parameters() as p:yield p.model_copy(update={'command':'/nonexistent/civicly-node'})
++ monkeypatch.setattr(broker,'server_parameters',unavailable)
++ async def run():
++  traces=[]
++  with pytest.raises(BrokerError):
++   async with open_broker(traces):raise AssertionError('Unavailable server accepted')
++  assert not any(t['operation']=='initialize' and t['status']=='SUCCESS' for t in traces)
++ asyncio.run(run());assert not child_pids()
++
++
++def test_real_call_budget_and_serial_requests():
++ async def run():
++  async with open_broker(max_calls=3) as b:
++   first=await b.call({'tool':'query_graph_readonly','template':'node','id':'DRAIN-D12'});assert first.rows
++   with pytest.raises(BrokerError,match='CALL_BUDGET'):await b.call({'tool':'get_graph_schema'})
++  async with open_broker() as b:
++   rows=await asyncio.gather(*(b.call({'tool':'query_graph_readonly','template':'node','id':id}) for id in ['DRAIN-D12','DRAIN-D18']))
++   assert all(r.graph_revision==2104 for r in rows)
++ asyncio.run(run());assert not child_pids()
++
++
++def test_real_fractional_time_boundary_uses_accepted_precision(db):
++ from datetime import timedelta
++ from app.graph.schema import timestamp
++ props=db.select_graph(CITY_GRAPH).ro_query('MATCH (:InfrastructureAsset {id:$id})-[r:DRAINS_TO]->() RETURN properties(r) LIMIT 1',params={'id':'DRAIN-D12'}).result_set[0][0]
++ instant=timestamp(props['created_at'])
++ same=instant.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
++ prior=(instant-timedelta(microseconds=1)).strftime('%Y-%m-%dT%H:%M:%S.%fZ')
++ async def run():
++  async with open_broker() as b:
++   req={'tool':'query_graph_readonly','template':'drainage_edges','id':'DRAIN-D12'}
++   first=await b.call({**req,'as_of':props['created_at']})
++   second=await b.call({**req,'as_of':same})
++   earlier=await b.call({**req,'as_of':prior})
++   assert first.rows==second.rows and any(r.properties['id']==props['id'] for r in second.rows)
++   assert all(r.properties['id']!=props['id'] for r in earlier.rows)
++ asyncio.run(run());assert not child_pids()
++
++
++def test_real_mcp_result_fault_injection_rejected_then_reconnect():
++ """Actual transport/read followed by explicit local corruption, not upstream defect."""
++ from app.mcp.broker import ReadBroker
++ class CorruptAfterRealCall:
++  def __init__(self,client):self.client=client
++  @property
++  def server_info(self):return self.client.server_info
++  @property
++  def protocol_version(self):return self.client.protocol_version
++  async def list_tools(self):return await self.client.list_tools()
++  async def call_tool(self,tool,args,**kwargs):
++   result=await self.client.call_tool(tool,args,**kwargs)
++   if args.get('params',{}).get('id')=='DRAIN-D12':
++    data=parse_content(result);assert data['data'][0]['properties']['id']=='DRAIN-D12'
++    data['data'][0]['properties']['unknown_contract_property']=True
++    result=result.model_copy(update={'content':[result.content[0].model_copy(update={'text':json.dumps(data)})]})
++   return result
++ async def run():
++  traces=[]
++  with server_parameters() as p:
++   async with Client(p,mode='legacy',read_timeout_seconds=4) as c:
++    b=ReadBroker(CorruptAfterRealCall(c),traces);await b.discover()
++    with pytest.raises(BrokerError,match='INVALID_OUTPUT'):
++     await b.call({'tool':'query_graph_readonly','template':'node','id':'DRAIN-D12'})
++    assert traces[-1]['status']=='INVALID_OUTPUT' and traces[-1]['graph_revision'] is None
++  async with open_broker() as b:
++   assert (await b.call({'tool':'query_graph_readonly','template':'node','id':'DRAIN-D12'})).rows
++ asyncio.run(run());assert not child_pids()
+diff --git a/backend/tests/unit/test_mcp_broker_policy.py b/backend/tests/unit/test_mcp_broker_policy.py
+new file mode 100644
+index 0000000..0fa4636
+--- /dev/null
++++ b/backend/tests/unit/test_mcp_broker_policy.py
+@@ -0,0 +1,123 @@
++"""Mocked/structural unit tests only; real official server tested separately."""
++import asyncio
++import json
++from types import SimpleNamespace
++import pytest
++from pydantic import ValidationError
++from app.graph.schema import SchemaError
++from app.mcp.policy import Request, ALLOWED, NODE_QUERY, EDGE_QUERY
++from app.mcp.broker import ReadBroker, BrokerError, parse_content
++from app.mcp.runtime import CITY_GRAPH
++
++
++@pytest.mark.parametrize('data', [
++ {'tool':'query_graph'}, {'tool':'delete_graph'}, {'tool':'list_graphs'},
++ {'tool':'query_graph_readonly\x00'}, {'tool':'Query_graph_readonly'},
++ {'tool':'query_graph_readonly','query':'CREATE (:X)'},
++ {'tool':'query_graph_readonly','template':'node'},
++ {'tool':'query_graph_readonly','template':'node','id':'D1','readOnly':False},
++ {'tool':'query_graph_readonly','template':'node','id':'D1','params':{}},
++ {'tool':'query_graph_readonly','template':'node','id':'D1','as_of':'2026-10-17T00:00:00Z'},
++ {'tool':'query_graph_readonly','template':'drainage_edges','id':'D1'},
++ {'tool':'query_graph_readonly','template':'drainage_edges','id':'D1','as_of':'yesterday'},
++ {'tool':'get_graph_schema','sample_size':101},
++ {'tool':'get_graph_schema','template':'node','id':'D1'},
++ {'tool':'get_node_schema','label':'CivicSchemaMigration'},
++ {'tool':'get_node_schema','label':'DrainSegment) DELETE n'},
++ {'tool':'get_relationship_schema','relationship_type':'UNKNOWN'},
++ {'tool':'get_node_schema','label':'DrainSegment','sample_size':True},
++ {'tool':'get_node_schema','label':'DrainSegment','relationship_type':'DRAINS_TO'},
++ {'tool':'get_graph_schema','graph':'civicly_docs'},
++])
++def test_strict_policy_rejects(data):
++ with pytest.raises((ValidationError,SchemaError)):Request.model_validate(data)
++
++
++def test_parameter_values_never_become_query_text():
++ value="x'}) CREATE (:Injected) //"
++ args=Request(tool='query_graph_readonly',template='node',id=value).arguments()
++ assert args['query']==NODE_QUERY and args['params']['id']==value and value not in args['query']
++ args=Request(tool='query_graph_readonly',template='drainage_edges',id=value,as_of='2026-10-17T00:00:00Z').arguments()
++ assert args['query']==EDGE_QUERY and 'LIMIT 101' in args['query']
++
++
++@pytest.mark.parametrize('result',[
++ SimpleNamespace(is_error=True,content=[]), SimpleNamespace(is_error=False,content=[]),
++ SimpleNamespace(is_error=False,content=[SimpleNamespace(type='image')]),
++ SimpleNamespace(is_error=False,content=[SimpleNamespace(type='text',text='not json')]),
++ SimpleNamespace(is_error=False,content=[SimpleNamespace(type='text',text='[]')]),
++ SimpleNamespace(is_error=False,content=[SimpleNamespace(type='text',text='x'*262145)]),
++])
++def test_malformed_vendor_outputs_are_rejected(result):
++ with pytest.raises((BrokerError,ValueError)):parse_content(result)
++
++
++def test_denial_traces_withhold_input_and_do_not_invent_identity():
++ async def run():
++  traces=[];b=ReadBroker(None,traces)
++  for payload in ({'tool':'evil-secret-value'}, {'tool':'query_graph_readonly','graph':'private-secret-graph'},
++                  {'tool':'get_graph_schema','password':'secret-value'}, {'tool':'get_graph_schema','other':set()}):
++   with pytest.raises(BrokerError):await b.call(payload)
++  rendered=json.dumps(traces)
++  assert 'secret-value' not in rendered and 'private-secret-graph' not in rendered
++  assert all(t['server'] is None and t['graph_revision'] is None and t['selection_rationale'] is None for t in traces)
++ asyncio.run(run())
++
++
++def test_mock_timeout_invalidates_session_and_records_status():
++ class MockClient:
++  async def call_tool(self,*args,**kwargs):await asyncio.sleep(1)
++ async def run():
++  traces=[];b=ReadBroker(MockClient(),traces,timeout=.01)
++  b._ReadBroker__schemas={'query_graph_readonly':{'type':'object'}}
++  with pytest.raises(BrokerError,match='TIMEOUT'):await b.call({'tool':'query_graph_readonly','template':'node','id':'D1'})
++  with pytest.raises(BrokerError,match='SESSION_UNAVAILABLE'):await b.call({'tool':'query_graph_readonly','template':'node','id':'D1'})
++  assert any(t['status']=='TIMEOUT' for t in traces)
++ asyncio.run(run())
++
++
++def test_mock_malformed_result_does_not_become_success():
++ class MockClient:
++  async def call_tool(self,*args,**kwargs):return SimpleNamespace(is_error=False,content=[SimpleNamespace(type='text',text='{"data":[{"revision":"invented"}],"metadata":[]}')])
++ async def run():
++  traces=[];b=ReadBroker(MockClient(),traces)
++  b._ReadBroker__schemas={'query_graph_readonly':{'type':'object'}}
++  with pytest.raises(BrokerError,match='INVALID_OUTPUT'):await b.call({'tool':'get_graph_schema'})
++  assert traces[-1]['status']=='INVALID_OUTPUT' and traces[-1]['graph_revision'] is None
++ asyncio.run(run())
++
++
++@pytest.mark.parametrize('failure',['pending','revision_changed','unexpected_node_property','wrong_scope','unknown_schema_label','unknown_schema_property','wrong_endpoint'])
++def test_mocked_integrity_and_revision_fail_closed(failure):
++ from tests.schema_examples import asset,edge,NOW
++ from app.graph.schema import Registry
++ registry=Registry();calls=[]
++ class MockClient:
++  async def call_tool(self,tool,args,**kwargs):
++   calls.append(args)
++   if args.get('params',{}).get('id')=='0001':
++    rev=11 if failure=='revision_changed' and len(calls)>2 else 10
++    data={'metadata':[],'data':[{'revision':rev,'pending':'intent' if failure=='pending' else '', 'state':'READY'}]}
++   elif tool=='get_graph_schema':
++    data={'nodeLabels':['UnregisteredSecretLabel'],'relationshipTypes':[],'connections':[],'connectionSampleSize':100}
++   elif tool=='get_node_schema':
++    data={'label':'DrainSegment','requestedSampleSize':20,'sampledCount':1,'properties':[{'property':'unknown','frequency':1}]}
++   elif failure=='wrong_endpoint':
++    data={'metadata':[],'data':[{'source_id':'D1','source_labels':list(registry.labels('Zone')),'target_id':'D2','target_labels':list(registry.labels('DrainSegment')),'relationship':'DRAINS_TO','properties':{**edge('E'),'association_status':'CANDIDATE'}}]}
++   else:
++    props=asset('DrainSegment','D1')
++    if failure=='unexpected_node_property':props['unregistered']='must not discard'
++    if failure=='wrong_scope':props['municipality_id']='elsewhere'
++    data={'metadata':[],'data':[{'labels':list(registry.labels('DrainSegment')),'properties':props}]}
++   return SimpleNamespace(is_error=False,content=[SimpleNamespace(type='text',text=json.dumps(data))])
++ async def run():
++  traces=[];b=ReadBroker(MockClient(),traces)
++  b._ReadBroker__schemas={tool:{'type':'object'} for tool in ALLOWED}
++  request={'tool':'query_graph_readonly','template':'node','id':'D1'}
++  if failure=='unknown_schema_label':request={'tool':'get_graph_schema'}
++  if failure=='unknown_schema_property':request={'tool':'get_node_schema','label':'DrainSegment'}
++  if failure=='wrong_endpoint':request={'tool':'query_graph_readonly','template':'drainage_edges','id':'D1','as_of':NOW}
++  expected={'pending':'GRAPH_WRITE_PENDING','revision_changed':'GRAPH_REVISION_CHANGED'}.get(failure,'INVALID_OUTPUT')
++  with pytest.raises(BrokerError,match=expected):await b.call(request)
++  assert traces[-1]['status']==expected and traces[-1]['graph_revision'] is None
++ asyncio.run(run())
+diff --git a/contracts/official_mcp.json b/contracts/official_mcp.json
+new file mode 100644
+index 0000000..5ccb837
+--- /dev/null
++++ b/contracts/official_mcp.json
+@@ -0,0 +1,61 @@
++{
++  "version": 1,
++  "server": {
++    "package": "@falkordb/mcpserver",
++    "name": "falkordb",
++    "version": "1.3.0",
++    "transport": "stdio",
++    "node_tested": "24.21.0",
++    "npm_tested": "12.2.0"
++  },
++  "python_sdk": "mcp==2.3.0",
++  "negotiated_protocol": "2025-11-25",
++  "authorized_graphs": [
++    "civicly_b04_test_a84beda80da64aacbc367a9399e07a97"
++  ],
++  "allowed_tools": [
++    "get_graph_schema",
++    "get_node_schema",
++    "get_relationship_schema",
++    "query_graph_readonly"
++  ],
++  "denied_tools": {
++    "query_graph": "general query/per-call readOnly override",
++    "delete_graph": "mutation/administration",
++    "list_graphs": "unrelated internal graph inventory disclosure"
++  },
++  "observed_input_schema_sha256": {
++    "query_graph": "438b01a141a3cb723a6e5f83c55083070efc6ee6f29d9002dc843449cc78abfc",
++    "query_graph_readonly": "2650b82578197a5959e917f3dfa2be185781d69b45b6feeabdee7b1f12d8db6c",
++    "list_graphs": "7a014b717a77aac971ea0ab5c0ff47bb13e6cae7ef9442d9dedb15ce36381b15",
++    "delete_graph": "4121f9d8b45e8a5e66eac57628d2ee5fac71e4d4d923e77362a0dd1b84cd7e0e",
++    "get_graph_schema": "4f1240bb0af714f1b0d703c795f30381a6022716e649e67d95502863c76575e9",
++    "get_node_schema": "2cc9d4db34290049736cebd561bd3e34edb5ac9e3792693104572f40e0045c79",
++    "get_relationship_schema": "9b5460cecdbadcdda07836bfc9ccec510c93d4bcdad633b5211063ec2a3c66f9"
++  },
++  "budgets": {
++    "calls_per_session": 32,
++    "max_calls_configurable": 64,
++    "client_timeout_seconds": 4,
++    "max_client_timeout_seconds": 10,
++    "result_bytes": 262144,
++    "edges": 100,
++    "edge_lookahead": 101,
++    "node_lookup_rows": 1,
++    "schema_sample": 100,
++    "traversal_edges": 1
++  },
++  "templates": {
++    "node": "Current-state CivicEntity ID lookup; scoped, parameterized, max1 row",
++    "drainage_edges": "One directed DRAINS_TO edge from supplied asset, half-open valid as_of, max100+1. Includes candidate/reported/verified as raw records, never promotes or asserts causal evidence."
++  },
++  "auth": "Private parent-owned stdio pipes; no HTTP listener or API key. Separate DB ACL account, one exact graph key; PING/INFO/GRAPH.RO_QUERY/CLIENT SETINFO only. HTTP bearer auth NOT APPLICABLE/unverified.",
++  "revision": "Actual application repo_revision/state/pending read through MCP before/after; unchanged READY required; no use of vendor Graph version as application revision.",
++  "trace": "B06 sanitized process-local trace list and explicit operator evidence JSON; graph-backed common ToolExecution envelope/persistence remains B07/B17.",
++  "security_limits": [
++    "Template/field/label/property bounds enforced by broker; DB ACL enforces graph key and read-only commands.",
++    "Same-user administrator/default local DB developer credentials remain privileged; no OS sandbox claim.",
++    "Client timeout abandons/invalidate session; official tool lacks query-timeout argument. Fixed bounded templates; no claim client cancellation interrupts DB query.",
++    "No resources/prompts/raw session/credential API exposed through broker. No agent/model selection implemented."
++  ]
++}
+diff --git a/scripts/audit_b06.py b/scripts/audit_b06.py
+new file mode 100644
+index 0000000..4149aa5
+--- /dev/null
++++ b/scripts/audit_b06.py
+@@ -0,0 +1,50 @@
++"""B06 local source/exclusion audit. Never emit discovered secret values."""
++from pathlib import Path
++import hashlib
++import json
++import re
++import subprocess
++import tomllib
++
++ROOT=Path(__file__).resolve().parents[1]
++BASE=json.loads((ROOT/'docs/evidence/B06-source-baseline.json').read_text())
++secret_values=[]
++for line in (ROOT/'.env').read_text().splitlines():
++    if '=' in line:
++        name,value=line.split('=',1);value=value.strip(' \"\'')
++        if any(word in name.upper() for word in ('PASSWORD','SECRET','KEY','TOKEN')) and len(value)>=8:
++            secret_values.append(value.encode())
++private=ROOT/'.runtime/mcp-credentials.json'
++if private.exists():
++    assert not private.is_symlink() and not private.stat().st_mode & 0o077
++    secret_values.append(json.loads(private.read_text())['password'].encode())
++for path,expected in BASE['source_files'].items():
++    assert hashlib.sha256((ROOT/path).read_bytes()).hexdigest()==expected,'Protected source changed:'+path
++old=tomllib.loads(subprocess.check_output(['git','show','HEAD:backend/pyproject.toml'],text=True))
++current=tomllib.loads((ROOT/'backend/pyproject.toml').read_text())
++assert set(old['project']['dependencies']) <= set(current['project']['dependencies'])
++tracked=subprocess.check_output(['git','ls-files','-z'],text=True).split('\0')[:-1]
++untracked=subprocess.check_output(['git','ls-files','--others','--exclude-standard','-z'],text=True).split('\0')[:-1]
++for path in sorted(set(tracked+untracked)):
++    parts=set(Path(path).parts)
++    assert not parts & {'.git','.venv','.runtime','node_modules','__pycache__','.pytest_cache','.uv-cache','review_packages'}
++    assert Path(path).name!='.env'
++    data=(ROOT/path).read_bytes()
++    assert not any(value in data for value in secret_values),'Actual local secret match:'+path
++    assert not re.search(rb'-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----|\bAKIA[0-9A-Z]{16}\b|\bsk-[A-Za-z0-9_-]{24,}',data),'Key pattern:'+path
++assert subprocess.run(['git','check-ignore','.env','.runtime/mcp-credentials.json','backend/.venv','backend/mcp_runtime/node_modules','review_packages'],capture_output=True).returncode==0
++assert hashlib.sha256((ROOT/'review_packages/Civicly_B05_Review.zip').read_bytes()).hexdigest()==BASE['b05_zip_sha256']
++rows=subprocess.check_output(['ps','-axo','pid=,command='],text=True).splitlines()
++processes=[]
++for row in rows:
++    parts=row.strip().split(None,2)
++    if len(parts)==3 and Path(parts[1]).name=='node' and 'node_modules/@falkordb/mcpserver/dist/index.js' in parts[2]:
++        processes.append(int(parts[0]))
++assert not processes,'Leaked official MCP child process'
++report={'status':'PASS','baseline_commit':subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),
++        'protected_original_files':len(BASE['source_files']),'original_code_tests_contracts_data_unchanged':True,
++        'original_direct_dependency_pins_preserved':True,'candidate_files_scanned':len(set(tracked+untracked)),
++        'actual_local_env_and_mcp_secret_scan':'PASS; no values logged','excluded_runtime_venv_git_caches_volumes':'PASS',
++        'b05_review_zip_unchanged':True,'leaked_official_mcp_processes':processes,'b06_zip_created':False}
++(ROOT/'docs/evidence/B06-source-audit.json').write_text(json.dumps(report,indent=2)+'\n')
++print(json.dumps(report))

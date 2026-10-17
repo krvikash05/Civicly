@@ -247,3 +247,58 @@ analysis.__main__ -> controlled test-only source/evidence or actual city evaluat
 - Frontend/MCP consumers can later map typed nodes/edges/ProofPath IDs, statuses,
   sources, dates, graph revision, gaps and measured budgets. No API/server/agent
   runtime integration is implemented here; DEC-004 envelopes/traces remain pending.
+
+## B06 implemented runtime/control flow | 2026-10-17
+
+```text
+backend/mcp_runtime/package.json + package-lock.json -> npm ci -> official Node1.3.0
+app.mcp.runtime -> trusted configure -> named read-only DB ACL + ignored0600 credentials
+                -> empty temporary cwd + explicit child env + pinned Node entrypoint
+app.mcp.broker.open_broker -> Python MCP2.3.0 Client/private stdio child
+ -> initialize/protocol2025-11-25 -> tools/list -> exact7 names + schema hashes
+ -> ReadBroker.tools() safe template request schemas / ReadBroker.call(dict)
+ -> policy.Request strict/deny graph/tool/unknown fields -> serialized call budget
+ -> internal fixed READY/revision/pending read via official tools/call
+ -> four approved tools + fixed parameterized node/drainage query or capped schema
+ -> GRAPH.RO_QUERY under graph-key ACL -> bounded text JSON -> typed models/registry
+ -> post revision read unchanged -> ReadResult(raw facts, limits/candidate status)
+ -> sanitized actual trace metadata -> operator proof JSON (not graph-backed traces yet)
+context exit -> close SDK streams/stdin -> bounded child process-tree termination
+```
+
+New modules:runtime.py trusted setup/lifecycle config; policy.py strict request and
+3 fixed Cypher templates (including internal revision); models.py result projections;
+broker.py discovery/schema verification/authorization/traces/budgets/result validation;
+__main__.py configure/proof CLI; __init__.py namespace. contract official_mcp.json pins
+observed inventory, hashes, scope and limits. Makefile commands and backend/MCP.md
+explain reproduction. No existing graph algorithm/repository/schema/migration edit.
+
+Credential material flows only local0600 file -> explicit subprocess environment ->
+authenticated graph-scoped DB account, never public call/result/trace. No TCP MCP
+listener, resources/prompts/raw client interface for agent selection. Node initialization
+needs INFO; GRAPH.QUERY/DELETE/LIST/admin and other graph keys denied by DB. Schema
+storage labels stripped; canonical unknown fields rejected. No hidden evaluator files
+read at runtime. Upstream arbitrary-query/delete tools remain discovered for operator
+evidence but absent/rejected at broker. DB default developer account remains privileged.
+
+ReadResult is a B06 official-fact result, not a replacement for18 B07 custom contracts,
+B05 decision-grade algorithms or later frontend DTO. Node current state; edge half-open
+validity/as_of with explicit raw candidate statuses. Actual revision read, never vendor
+Graph version. Errors/timeouts invalidate session as documented; fresh owned context
+reconnects, no automatic replay. Trace list/operator JSON is current evidence storage;
+B07/B17 graph-backed envelope/persistence remains open. No agent rationale fabricated.
+Existing graph/Browser volumes and original B01/B04/B05 evidence retained; ACL account
+must be reprovisioned after DB recreation, generated local credential reused.
+
+B06 temporal query compilation imports the accepted B03 GraphQueries._time_key;
+all supplied/recorded UTC values compare at the same microsecond precision. Actual
+boundary tests read retained edge dates without modifying them. Integration fault
+injection corrupts an actual returned record only in the test process, validating
+fail-closed unknown-property handling and subsequent fresh-session recovery.
+
+Final B06 post-lifecycle proof executes configure -> actual MCP initialize/list/call
+-> independent official Python read -> clean session shutdown. Separate administrative
+read helper verifies all retained fingerprints and migration readiness. Source audit
+compares86 original protected file hashes/direct pins, scans actual private values
+without emitting them and checks child-process absence. Source diff excludes generated
+evidence bodies (exact evidence paths inventoried separately); no B06 review ZIP.

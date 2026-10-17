@@ -30,3 +30,13 @@ down:
 
 test-repositories:
 	$(VENV)/python -m pytest backend/tests/unit/test_graph_access_models.py backend/tests/integration/test_graph_access.py -v
+
+.PHONY: mcp-setup mcp-configure mcp-proof test-mcp
+mcp-setup:
+	npm ci --prefix backend/mcp_runtime --ignore-scripts --no-audit --no-fund
+mcp-configure:
+	PYTHONPATH=backend $(VENV)/python -m app.mcp configure
+mcp-proof: mcp-configure
+	PYTHONPATH=backend $(VENV)/python -m app.mcp proof --output docs/evidence/B06-runtime-proof.json
+test-mcp:
+	$(VENV)/python -m pytest backend/tests/unit/test_mcp_broker_policy.py backend/tests/integration/test_official_mcp.py -v -s

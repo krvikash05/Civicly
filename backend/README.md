@@ -1,13 +1,17 @@
-# Backend foundation through B02
+# Backend foundation through B06
 
-B01 is accepted. B02 adds canonical schema v3, strict validation and additive
-migration 0001. See [SCHEMA.md](SCHEMA.md) for established constraints/indexes,
-native enforcement limits, recovery, and the explicit legacy-fixture blocker.
+B01–B05 are accepted. B06 adds actual official MCP runtime/client integration
+(current verification status in tracking files). B02 supplies canonical schema v3,
+strict validation and immutable additive migration0001. See [SCHEMA.md](SCHEMA.md) for established constraints/indexes,
+native enforcement limits and recovery; [INGESTION.md](INGESTION.md) records B04
+explicit conversion and remaining source-quality gaps.
 
 Implemented: validated configuration, official FalkorDB connection lifecycle,
 foundation CLI health, and real database/Browser/persistence integration tests.
-Domain services, migrations, MCP, agents, memory, GraphRAG, API routes and frontend
-remain future microtasks. All 18 requirements remain binding.
+Schema/repositories/ingestion/algorithms are implemented. [MCP.md](MCP.md) describes
+B06 private stdio, locked official server, read-only DB ACL, broker and actual proof.
+Custom Civicly MCP/domain services, agents, memory, GraphRAG, API and frontend remain
+future microtasks. All 18 requirements remain binding.
 
 From the repository root, with Python 3.12 and Docker Desktop running:
 

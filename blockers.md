@@ -1,5 +1,9 @@
 # blockers.md — Current blockers and verification spikes
 
+## Current status — B06, 2026-10-17 (takes precedence over history)
+
+No active B06 environment blocker. B06 PASS with361 tests and both SPEC validators; human review pending. Local stdio/privileged-user/client-timeout/volatile-ACL boundaries documented. B07/B17 common envelope/graph-backed traces and all remaining DEC-004/source/history/evaluator dependencies stay OPEN; no data or later-task repair.
+
 ## Current status — B05, 2026-10-17 (takes precedence over history)
 
 No active B05 environment blocker. B05 tests PASS; human review pending. City42 drainage links remain CANDIDATE;4 broader asset sets supported,8 starting-asset/6 cluster source conflicts and3 unspecified cluster contexts need author review. S07/history/55 unlinked measurements and DEC-004 dependencies remain OPEN at B08/B09/B11/B19/etc. Bounded-search/clone limits explicit; no B06 started.
@@ -153,3 +157,32 @@ No active implementation blocker is claimed. Verification spikes (NOT defects) a
 - Existing policy/audit scaling limits remain:counterfactual copying uses ordinary
   writes, not a new bulk shortcut; source/canonical/retained volumes never reset.
   No full scenario, agent or frontend capability declared complete by B05.
+
+## B06 limits and deferred dependencies | 2026-10-17
+- First authenticated startup failed TIMEOUT because Node Sentinel detection needed
+  INFO. Minimal read-only permission added and live proof passed; no open environment
+  blocker. ACL user is volatile and must be reprovisioned after database lifecycle;
+  ignored0600 credential file reused. Existing DB/Browser volumes/data unchanged.
+- Stdio private parent pipes are transport boundary; no HTTP listener/API key or HTTP
+  bearer verification. Same-user administrator/default local DB credentials remain
+  privileged; no OS sandbox or enterprise auth claim. Template/property/complexity
+  bounds are broker-enforced, while graph-key/write command denial is DB-enforced.
+- Upstream official query tool has no query-timeout parameter; client deadline does
+  not prove server cancellation. Fixed bounded templates/schema samples and finite
+  calls only; transport result-size check is after receipt, not streaming memory cap.
+- B06 process-local traces/operator JSON are evidence, not graph-backed ToolExecution
+  durability/common custom envelope. B07/B17 DEC-004 findings remain OPEN; no invented
+  agent rationale. Auth roles/service writes/custom18-tool handlers are future tasks.
+- BLOCK-B05-DATA/BOUNDS and BLOCK-B04-DATA/PERF remain OPEN as documented.42 drainage
+  links CANDIDATE,55 unlinked observations/history/S07/clock/source gaps not repaired.
+  Original55 numeric defects remain frozen; explicit B04 conversion remains valid.
+  Document version/owner/PDF (B11), plan binding (B12/B13), durable events (B15), API
+  mapping (B16/B17), evaluator/historical isolation (B19) retain designated gates.
+- Existing revision guarantees assume repository-mediated writes. Privileged raw
+  developer mutations can bypass application revisions; B06 does not broaden that
+  guarantee. Final source fingerprints verify actual retained data stayed unchanged.
+
+B06 final review:361 PASS/0 FAIL/0 SKIP; both SPEC validators PASS. Reprovisioned
+read-only account and live proof after recreation PASS; canonical readiness and all
+retained fingerprints preserved. No unresolved B06 acceptance failure. Human review
+is the next gate; B07 and all later implementation remain unstarted.

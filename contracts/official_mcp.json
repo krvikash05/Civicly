@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "server": {
+    "package": "@falkordb/mcpserver",
+    "name": "falkordb",
+    "version": "1.3.0",
+    "transport": "stdio",
+    "node_tested": "24.21.0",
+    "npm_tested": "12.2.0"
+  },
+  "python_sdk": "mcp==2.3.0",
+  "negotiated_protocol": "2025-11-25",
+  "authorized_graphs": [
+    "civicly_b04_test_a84beda80da64aacbc367a9399e07a97"
+  ],
+  "allowed_tools": [
+    "get_graph_schema",
+    "get_node_schema",
+    "get_relationship_schema",
+    "query_graph_readonly"
+  ],
+  "denied_tools": {
+    "query_graph": "general query/per-call readOnly override",
+    "delete_graph": "mutation/administration",
+    "list_graphs": "unrelated internal graph inventory disclosure"
+  },
+  "observed_input_schema_sha256": {
+    "query_graph": "438b01a141a3cb723a6e5f83c55083070efc6ee6f29d9002dc843449cc78abfc",
+    "query_graph_readonly": "2650b82578197a5959e917f3dfa2be185781d69b45b6feeabdee7b1f12d8db6c",
+    "list_graphs": "7a014b717a77aac971ea0ab5c0ff47bb13e6cae7ef9442d9dedb15ce36381b15",
+    "delete_graph": "4121f9d8b45e8a5e66eac57628d2ee5fac71e4d4d923e77362a0dd1b84cd7e0e",
+    "get_graph_schema": "4f1240bb0af714f1b0d703c795f30381a6022716e649e67d95502863c76575e9",
+    "get_node_schema": "2cc9d4db34290049736cebd561bd3e34edb5ac9e3792693104572f40e0045c79",
+    "get_relationship_schema": "9b5460cecdbadcdda07836bfc9ccec510c93d4bcdad633b5211063ec2a3c66f9"
+  },
+  "budgets": {
+    "calls_per_session": 32,
+    "max_calls_configurable": 64,
+    "client_timeout_seconds": 4,
+    "max_client_timeout_seconds": 10,
+    "result_bytes": 262144,
+    "edges": 100,
+    "edge_lookahead": 101,
+    "node_lookup_rows": 1,
+    "schema_sample": 100,
+    "traversal_edges": 1
+  },
+  "templates": {
+    "node": "Current-state CivicEntity ID lookup; scoped, parameterized, max1 row",
+    "drainage_edges": "One directed DRAINS_TO edge from supplied asset, half-open valid as_of, max100+1. Includes candidate/reported/verified as raw records, never promotes or asserts causal evidence."
+  },
+  "auth": "Private parent-owned stdio pipes; no HTTP listener or API key. Separate DB ACL account, one exact graph key; PING/INFO/GRAPH.RO_QUERY/CLIENT SETINFO only. HTTP bearer auth NOT APPLICABLE/unverified.",
+  "revision": "Actual application repo_revision/state/pending read through MCP before/after; unchanged READY required; no use of vendor Graph version as application revision.",
+  "trace": "B06 sanitized process-local trace list and explicit operator evidence JSON; graph-backed common ToolExecution envelope/persistence remains B07/B17.",
+  "security_limits": [
+    "Template/field/label/property bounds enforced by broker; DB ACL enforces graph key and read-only commands.",
+    "Same-user administrator/default local DB developer credentials remain privileged; no OS sandbox claim.",
+    "Client timeout abandons/invalidate session; official tool lacks query-timeout argument. Fixed bounded templates; no claim client cancellation interrupts DB query.",
+    "No resources/prompts/raw session/credential API exposed through broker. No agent/model selection implemented."
+  ]
+}

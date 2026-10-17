@@ -1,5 +1,9 @@
 # implementation_status.md — Current implementation truth
 
+## Current status — B06, 2026-10-17 (takes precedence over history)
+
+B06 implemented and verified: official Node1.3.0/Python MCP2.3.0 private stdio, four allowlisted read tools, graph-scoped DB ACL, strict templates and sanitized traces.361 PASS/0 FAIL/0 SKIP; both SPEC validators PASS. B01/B04/B05 retained fingerprints and canonical0001 readiness unchanged. No agent/custom MCP/GraphRAG/operations/API/frontend feature claimed complete. STOP for B06 review.
+
 ## Current status — B05, 2026-10-17 (takes precedence over history)
 
 B05 implemented/tested:bounded graph algorithms, transparent historical case retrieval, factory-owned counterfactuals and actual-city/source-dependency reports.309 PASS/0 FAIL/0 SKIP; both SPEC validators PASS. B04 data/registry/0001 and original B01/canonical evidence preserved. No causal scenario, agent/MCP/GraphRAG/operations/API/frontend capability claimed complete. STOP for human B05 review.
@@ -159,3 +163,29 @@ Per task, update: implemented paths, exact tests, pass/fail/skip, screenshots/lo
   See B05-post-lifecycle.json and B05-canonical-status.json. Review ZIP integrity/
   actual-source bytes/secret audit PASS; isolated extraction imports its own source
   and reproduces51 focused B05 tests PASS in88.60s. No source/volume reset.
+
+## B06 implemented scope | 2026-10-17
+- Actual official @falkordb/mcpserver1.3.0 dependency locked with npm; Python SDK2.3.0
+  pinned/uv-locked. Node24.21.0/npm12.2.0; Node client6.8.0/TS MCP SDK1.32.1. Existing
+  FalkorDB6.0.2, all original direct Python pins/registry0001 preserved.
+- Real private stdio initialize negotiates2025-11-25, tools/list7 signatures checked,
+ 4 approved read tools with strict safe request schema and fixed query templates.
+  No list_graphs/query_graph/delete_graph or arbitrary Cypher agent surface.
+- DB ACL exact accepted B04 city graph; PING/INFO/GRAPH.RO_QUERY/CLIENT SETINFO only.
+  Real mutation/admin/other-key denial. No HTTP listener; bearer auth not applicable.
+- Raw current node/validity-filtered one-edge records preserve IDs/source/status/date
+  context; candidate-only city not promoted. Actual revision2104 before/after, typed
+  projections and independent Python equality. B05 decision-grade algorithms unchanged.
+- Owned child/session cleanup, downtime/fresh reconnect, actual stalled-server timeout,
+  invalid arguments/auth and bounded calls tested. Unit malformed outputs/revision
+  injection clearly labeled; local corruption after a real MCP read separately tested.
+- Sanitized process-local tool metadata and operator JSON; graph-backed common traces
+  deferred B07/B17. No live model/agent choice or complete product capability claimed.
+
+B06 final verification:361 PASS/0 FAIL/0 SKIP in329.97s (255 unit/106 real integration);
+all original309 tests unchanged. Both SPEC validators PASS. Live proof after actual
+recreation and ACL reprovision PASS; full city2104 record/revision/audit/writer hashes,
+original B01 row and retained B05 source57/clone59 unchanged. Canonical0001 READY with
+91 index groups/182 OPERATIONAL constraints. Security/source/process audit PASS.
+Exact paths/diff/commands in B06-FILES.md/B06-changes.patch/B06-COMMANDS.md. No B06 ZIP
+or remote push. STOP — human review required before B07.

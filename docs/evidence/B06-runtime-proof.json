@@ -1,0 +1,1338 @@
+{
+  "status": "PASS",
+  "graph": "civicly_b04_test_a84beda80da64aacbc367a9399e07a97",
+  "available_inventory": [
+    {
+      "name": "query_graph",
+      "title": "Query Graph",
+      "description": "Run an OpenCypher query on a graph. Supports both read-write and read-only queries.",
+      "input_schema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "graphName": {
+            "type": "string",
+            "description": "The name of the graph to query"
+          },
+          "query": {
+            "type": "string",
+            "description": "The OpenCypher query to run"
+          },
+          "params": {
+            "description": "Optional query parameters, referenced in the query as $name. Parameter names (including nested map keys) must be valid identifiers. Note: FalkorDB does not allow parameters in LIMIT/SKIP clauses.",
+            "type": "object",
+            "propertyNames": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+            },
+            "additionalProperties": {
+              "$ref": "#/definitions/__schema0"
+            }
+          },
+          "readOnly": {
+            "description": "If true, executes as a read-only query (GRAPH.RO_QUERY). Useful for replica instances or to prevent accidental writes. Defaults to FALKORDB_DEFAULT_READONLY environment variable.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "graphName",
+          "query"
+        ],
+        "definitions": {
+          "__schema0": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/__schema0"
+                }
+              },
+              {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+                },
+                "additionalProperties": {
+                  "$ref": "#/definitions/__schema0"
+                }
+              }
+            ]
+          }
+        }
+      },
+      "execution": {
+        "task_support": "forbidden"
+      },
+      "output_schema": null,
+      "icons": null,
+      "annotations": null,
+      "meta": null
+    },
+    {
+      "name": "query_graph_readonly",
+      "title": "Query Graph (Read-Only)",
+      "description": "Run a read-only OpenCypher query on a graph using GRAPH.RO_QUERY. This ensures no write operations are performed and is ideal for replica instances.",
+      "input_schema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "graphName": {
+            "type": "string",
+            "description": "The name of the graph to query"
+          },
+          "query": {
+            "type": "string",
+            "description": "The read-only OpenCypher query to run (write operations will fail)"
+          },
+          "params": {
+            "description": "Optional query parameters, referenced in the query as $name. Parameter names (including nested map keys) must be valid identifiers. Note: FalkorDB does not allow parameters in LIMIT/SKIP clauses.",
+            "type": "object",
+            "propertyNames": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+            },
+            "additionalProperties": {
+              "$ref": "#/definitions/__schema0"
+            }
+          }
+        },
+        "required": [
+          "graphName",
+          "query"
+        ],
+        "definitions": {
+          "__schema0": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/__schema0"
+                }
+              },
+              {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+                },
+                "additionalProperties": {
+                  "$ref": "#/definitions/__schema0"
+                }
+              }
+            ]
+          }
+        }
+      },
+      "execution": {
+        "task_support": "forbidden"
+      },
+      "output_schema": null,
+      "icons": null,
+      "annotations": null,
+      "meta": null
+    },
+    {
+      "name": "list_graphs",
+      "title": "List Graphs",
+      "description": "List all graphs available to query",
+      "input_schema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {}
+      },
+      "execution": {
+        "task_support": "forbidden"
+      },
+      "output_schema": null,
+      "icons": null,
+      "annotations": null,
+      "meta": null
+    },
+    {
+      "name": "delete_graph",
+      "title": "Delete Graph",
+      "description": "Permanently delete a graph from the database. WARNING: This action is irreversible. You must set confirmDelete to true to proceed.",
+      "input_schema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "graphName": {
+            "type": "string",
+            "description": "The name of the graph to delete"
+          },
+          "confirmDelete": {
+            "type": "boolean",
+            "const": true,
+            "description": "Must be set to true to confirm deletion. This is a safety measure to prevent accidental data loss."
+          }
+        },
+        "required": [
+          "graphName",
+          "confirmDelete"
+        ]
+      },
+      "execution": {
+        "task_support": "forbidden"
+      },
+      "output_schema": null,
+      "icons": null,
+      "annotations": null,
+      "meta": null
+    },
+    {
+      "name": "get_graph_schema",
+      "title": "Get Graph Schema",
+      "description": "Get the schema of a graph including node labels, relationship types, and (optionally) the connection topology between them, to understand the graph structure before executing a query. Connection topology is derived from a bounded sample of relationships and can be disabled via includeConnections on very large graphs.",
+      "input_schema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "graphName": {
+            "type": "string",
+            "description": "Name of the graph. Use the list_graphs tool to discover available graphs."
+          },
+          "includeConnections": {
+            "description": "If true (default), include the relationship connection topology. Each connection is { source, relationship, target } where source and target are arrays of node labels (a node may have multiple labels) and relationship is the relationship type. Derived from a bounded sample of relationships; set to false to skip it entirely on very large graphs to reduce cost and response size.",
+            "type": "boolean"
+          },
+          "connectionSampleSize": {
+            "description": "Maximum number of relationships to scan when deriving connection topology (default: 10000). Bounds query cost on large graphs; topology derived from the sample may be incomplete if the graph has more relationships than this.",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100000
+          }
+        },
+        "required": [
+          "graphName"
+        ]
+      },
+      "execution": {
+        "task_support": "forbidden"
+      },
+      "output_schema": null,
+      "icons": null,
+      "annotations": null,
+      "meta": null
+    },
+    {
+      "name": "get_node_schema",
+      "title": "Get Node Schema",
+      "description": "Sample up to N nodes of a given label and aggregate their property keys by how many nodes carry each one (descending). Interpret each property's frequency relative to the returned sampledCount (the actual number of nodes sampled, which may be less than requestedSampleSize) to detect naming drift \u2014 e.g. a property present on only a few of many sampled nodes likely duplicates another under a slightly different name. Especially valuable in schemaless graphs where property naming can drift across subsets of nodes.",
+      "input_schema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "graphName": {
+            "type": "string",
+            "description": "Name of the graph. Use the list_graphs tool to discover available graphs."
+          },
+          "label": {
+            "type": "string",
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+            "description": "Node label to inspect"
+          },
+          "sampleSize": {
+            "description": "Number of nodes to sample (default: 100). Larger values improve property coverage at the cost of query time.",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10000
+          }
+        },
+        "required": [
+          "graphName",
+          "label"
+        ]
+      },
+      "execution": {
+        "task_support": "forbidden"
+      },
+      "output_schema": null,
+      "icons": null,
+      "annotations": null,
+      "meta": null
+    },
+    {
+      "name": "get_relationship_schema",
+      "title": "Get Relationship Schema",
+      "description": "Sample up to N relationships of a given type and aggregate their property keys by how many relationships carry each one (descending). Interpret each property's frequency relative to the returned sampledCount (the actual number of relationships sampled, which may be less than requestedSampleSize) to detect naming drift \u2014 e.g. a property present on only a few of many sampled relationships likely duplicates another under a slightly different name. Especially valuable in schemaless graphs where property naming can drift across subsets of relationships.",
+      "input_schema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "properties": {
+          "graphName": {
+            "type": "string",
+            "description": "Name of the graph. Use the list_graphs tool to discover available graphs."
+          },
+          "relationshipType": {
+            "type": "string",
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+            "description": "Relationship type to inspect"
+          },
+          "sampleSize": {
+            "description": "Number of relationships to sample (default: 100). Larger values improve property coverage at the cost of query time.",
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10000
+          }
+        },
+        "required": [
+          "graphName",
+          "relationshipType"
+        ]
+      },
+      "execution": {
+        "task_support": "forbidden"
+      },
+      "output_schema": null,
+      "icons": null,
+      "annotations": null,
+      "meta": null
+    }
+  ],
+  "allowed_tools": [
+    "get_graph_schema",
+    "get_node_schema",
+    "get_relationship_schema",
+    "query_graph_readonly"
+  ],
+  "requests": [
+    {
+      "tool": "get_graph_schema"
+    },
+    {
+      "tool": "get_node_schema",
+      "label": "DrainSegment"
+    },
+    {
+      "tool": "get_relationship_schema",
+      "relationship_type": "DRAINS_TO"
+    },
+    {
+      "tool": "query_graph_readonly",
+      "template": "node",
+      "id": "DRAIN-D12"
+    },
+    {
+      "tool": "query_graph_readonly",
+      "template": "drainage_edges",
+      "id": "DRAIN-D12",
+      "as_of": "2026-10-17T23:00:00Z"
+    }
+  ],
+  "results": [
+    {
+      "graph": "civicly_b04_test_a84beda80da64aacbc367a9399e07a97",
+      "tool": "get_graph_schema",
+      "template": null,
+      "graph_revision": 2104,
+      "rows": null,
+      "schema_data": {
+        "nodeLabels": [
+          "ActionTask",
+          "AgentDecision",
+          "AgentRun",
+          "Approval",
+          "AssetConditionSnapshot",
+          "CaseMemory",
+          "CollectionRoute",
+          "Complaint",
+          "DataSource",
+          "Department",
+          "Document",
+          "DomainEvent",
+          "DrainInlet",
+          "DrainSegment",
+          "DrainageCatchment",
+          "EventDelivery",
+          "Evidence",
+          "Finding",
+          "Hypothesis",
+          "HypothesisAssessment",
+          "Incident",
+          "InfrastructureAsset",
+          "Inspection",
+          "InterventionOutcome",
+          "Investigation",
+          "KnowledgeProcedure",
+          "Location",
+          "Observation",
+          "OperatorAccount",
+          "PickupExecution",
+          "ProblemCluster",
+          "PumpStation",
+          "RainfallEvent",
+          "ResolutionPlan",
+          "RoadSegment",
+          "ServiceSchedule",
+          "StatusEvent",
+          "ToolExecution",
+          "WasteCollectionPoint",
+          "WaterPipe",
+          "WorkOrder",
+          "Zone"
+        ],
+        "relationshipTypes": [
+          "AFFECTS",
+          "APPLIES_TO",
+          "ASSIGNED_TO",
+          "AUTHORIZED_BY",
+          "COLLECTED_BY",
+          "CONCERNS",
+          "CONDITION_OF",
+          "CONTRADICTED_BY",
+          "DELIVERS",
+          "DEPENDS_ON",
+          "DERIVED_FROM",
+          "DOCUMENTED_IN",
+          "DRAINS_CATCHMENT",
+          "DRAINS_TO",
+          "EMITTED_EVENT",
+          "ESTABLISHES",
+          "EXECUTED_BY",
+          "EXPLAINS",
+          "GOVERNED_BY",
+          "HAS_ASSESSMENT",
+          "HAS_EVENT",
+          "HAS_OPERATOR",
+          "HAS_SCHEDULE",
+          "HAS_TASK",
+          "IMPLEMENTS",
+          "INSPECTS",
+          "INVESTIGATES",
+          "IN_ZONE",
+          "JUSTIFIED_BY",
+          "LEARNED_FROM",
+          "LOCATED_AT",
+          "MAINTAINED_BY",
+          "OCCURRED_AT",
+          "PART_OF",
+          "PICKUP_FOR",
+          "PRODUCED",
+          "PRODUCED_PLAN",
+          "PROPOSES",
+          "RAINFALL_AFFECTS",
+          "REPORTS",
+          "RESULTED_IN",
+          "ROUTE_EXECUTION",
+          "SERVES",
+          "SUPPORTED_BY",
+          "TARGETS",
+          "UNDERLIES",
+          "USED_TOOL"
+        ],
+        "connections": [
+          {
+            "source": [
+              "DrainageCatchment"
+            ],
+            "relationship": "DRAINS_CATCHMENT",
+            "target": [
+              "DrainSegment",
+              "InfrastructureAsset"
+            ]
+          },
+          {
+            "source": [
+              "DrainageCatchment"
+            ],
+            "relationship": "DRAINS_CATCHMENT",
+            "target": [
+              "DrainInlet",
+              "InfrastructureAsset"
+            ]
+          },
+          {
+            "source": [
+              "Complaint"
+            ],
+            "relationship": "REPORTS",
+            "target": [
+              "Incident"
+            ]
+          }
+        ],
+        "connectionSampleSize": 100
+      },
+      "truncated": false,
+      "search_limited": true,
+      "semantics": "Raw recorded synthetic facts; no causal finding. Schema samples are incomplete; node lookup is current-state, edge validity is half-open with unknown/open dates."
+    },
+    {
+      "graph": "civicly_b04_test_a84beda80da64aacbc367a9399e07a97",
+      "tool": "get_node_schema",
+      "template": null,
+      "graph_revision": 2104,
+      "rows": null,
+      "schema_data": {
+        "label": "DrainSegment",
+        "requestedSampleSize": 20,
+        "sampledCount": 20,
+        "properties": [
+          {
+            "property": "asset_type",
+            "frequency": 20
+          },
+          {
+            "property": "capacity_unit",
+            "frequency": 20
+          },
+          {
+            "property": "condition",
+            "frequency": 20
+          },
+          {
+            "property": "created_at",
+            "frequency": 20
+          },
+          {
+            "property": "design_capacity",
+            "frequency": 20
+          },
+          {
+            "property": "id",
+            "frequency": 20
+          },
+          {
+            "property": "municipality_id",
+            "frequency": 20
+          },
+          {
+            "property": "name",
+            "frequency": 20
+          },
+          {
+            "property": "operational_status",
+            "frequency": 20
+          },
+          {
+            "property": "schema_version",
+            "frequency": 20
+          },
+          {
+            "property": "updated_at",
+            "frequency": 20
+          }
+        ]
+      },
+      "truncated": false,
+      "search_limited": true,
+      "semantics": "Raw recorded synthetic facts; no causal finding. Schema samples are incomplete; node lookup is current-state, edge validity is half-open with unknown/open dates."
+    },
+    {
+      "graph": "civicly_b04_test_a84beda80da64aacbc367a9399e07a97",
+      "tool": "get_relationship_schema",
+      "template": null,
+      "graph_revision": 2104,
+      "rows": null,
+      "schema_data": {
+        "relationshipType": "DRAINS_TO",
+        "requestedSampleSize": 20,
+        "sampledCount": 20,
+        "properties": [
+          {
+            "property": "association_status",
+            "frequency": 20
+          },
+          {
+            "property": "created_at",
+            "frequency": 20
+          },
+          {
+            "property": "id",
+            "frequency": 20
+          },
+          {
+            "property": "municipality_id",
+            "frequency": 20
+          },
+          {
+            "property": "source_evidence_id",
+            "frequency": 20
+          }
+        ]
+      },
+      "truncated": false,
+      "search_limited": true,
+      "semantics": "Raw recorded synthetic facts; no causal finding. Schema samples are incomplete; node lookup is current-state, edge validity is half-open with unknown/open dates."
+    },
+    {
+      "graph": "civicly_b04_test_a84beda80da64aacbc367a9399e07a97",
+      "tool": "query_graph_readonly",
+      "template": "node",
+      "graph_revision": 2104,
+      "rows": [
+        {
+          "labels": [
+            "CivicEntity",
+            "DrainSegment",
+            "InfrastructureAsset"
+          ],
+          "properties": {
+            "id": "DRAIN-D12",
+            "updated_at": "2026-10-17T05:59:15.962Z",
+            "municipality_id": "demo-city",
+            "created_at": "2026-10-17T05:59:15.962Z",
+            "schema_version": 3,
+            "condition": "UNKNOWN",
+            "operational_status": "OPERATIONAL",
+            "name": "Market drain D-12",
+            "asset_type": "DRAINAGE",
+            "drain_type": "STORMWATER"
+          }
+        }
+      ],
+      "schema_data": null,
+      "truncated": false,
+      "search_limited": true,
+      "semantics": "Raw recorded synthetic facts; no causal finding. Schema samples are incomplete; node lookup is current-state, edge validity is half-open with unknown/open dates."
+    },
+    {
+      "graph": "civicly_b04_test_a84beda80da64aacbc367a9399e07a97",
+      "tool": "query_graph_readonly",
+      "template": "drainage_edges",
+      "graph_revision": 2104,
+      "rows": [
+        {
+          "source_id": "DRAIN-D12",
+          "source_labels": [
+            "CivicEntity",
+            "DrainSegment",
+            "InfrastructureAsset"
+          ],
+          "target_id": "DRAIN-D18",
+          "target_labels": [
+            "CivicEntity",
+            "DrainSegment",
+            "InfrastructureAsset"
+          ],
+          "relationship": "DRAINS_TO",
+          "properties": {
+            "id": "REL-d9b6b777c00b1f60b7ea43989b5976a301df58e6",
+            "municipality_id": "demo-city",
+            "valid_from": "2026-01-01T00:00:00Z",
+            "created_at": "2026-10-17T05:59:15.962Z",
+            "source_evidence_id": "EVD-ASSET-LIST",
+            "association_status": "CANDIDATE"
+          }
+        }
+      ],
+      "schema_data": null,
+      "truncated": false,
+      "search_limited": true,
+      "semantics": "Raw recorded synthetic facts; no causal finding. Schema samples are incomplete; node lookup is current-state, edge validity is half-open with unknown/open dates."
+    }
+  ],
+  "broker_denials": [
+    {
+      "request_fields": [
+        "readOnly",
+        "tool"
+      ],
+      "status": "DENIED_TOOL"
+    },
+    {
+      "request_fields": [
+        "tool"
+      ],
+      "status": "DENIED_TOOL"
+    },
+    {
+      "request_fields": [
+        "tool"
+      ],
+      "status": "DENIED_TOOL"
+    },
+    {
+      "request_fields": [
+        "graph",
+        "tool"
+      ],
+      "status": "DENIED_GRAPH"
+    },
+    {
+      "request_fields": [
+        "query",
+        "tool"
+      ],
+      "status": "INVALID_ARGUMENTS"
+    }
+  ],
+  "traces": [
+    {
+      "operation": "initialize",
+      "status": "SUCCESS",
+      "started_at": "2026-10-17T10:49:55.082464Z",
+      "ended_at": "2026-10-17T10:49:55.709189Z",
+      "latency_ms": 626.274,
+      "server": {
+        "name": "falkordb",
+        "version": "1.3.0"
+      },
+      "protocol_version": "2025-11-25"
+    },
+    {
+      "trace_version": "B06-1",
+      "operation": "tools/list",
+      "server": {
+        "name": "falkordb",
+        "version": "1.3.0"
+      },
+      "protocol_version": "2025-11-25",
+      "tool": null,
+      "schema_sha256": null,
+      "inventory_sha256": "327cf9a3587cc23cc2d28040a4ac7cc8df2fa790d3fbb57700591689ea3cb4a0",
+      "arguments_sha256": null,
+      "arguments_summary": null,
+      "started_at": "2026-10-17T10:49:55.711152Z",
+      "ended_at": "2026-10-17T10:49:55.717401Z",
+      "latency_ms": 6.252,
+      "status": "SUCCESS",
+      "denial_reason": null,
+      "result_summary": null,
+      "graph_revision": null,
+      "selection_rationale": null,
+      "invocation_origin": "application_or_operator; no agent implemented"
+    },
+    {
+      "trace_version": "B06-1",
+      "operation": "tools/call",
+      "server": {
+        "name": "falkordb",
+        "version": "1.3.0"
+      },
+      "protocol_version": "2025-11-25",
+      "tool": "query_graph_readonly",
+      "schema_sha256": "2650b82578197a5959e917f3dfa2be185781d69b45b6feeabdee7b1f12d8db6c",
+      "inventory_sha256": "327cf9a3587cc23cc2d28040a4ac7cc8df2fa790d3fbb57700591689ea3cb4a0",
+      "arguments_sha256": "4bebfc54f535e9ed7fcf230e4d4c2dfa75c0157ff36983b683d7d3db7ab4cc33",
+      "arguments_summary": "values withheld; fixed template or validated schema arguments",
+      "started_at": "2026-10-17T10:49:55.718304Z",
+      "ended_at": "2026-10-17T10:49:55.726567Z",
+      "latency_ms": 8.269,
+      "status": "SUCCESS",
+      "denial_reason": null,
+      "result_summary": {
+        "received_rows": 1
+      },
+      "graph_revision": null,
+      "selection_rationale": null,
+      "invocation_origin": "application_or_operator; no agent implemented"
+    },
+    {
+      "trace_version": "B06-1",
+      "operation": "tools/call",
+      "server": {
+        "name": "falkordb",
+        "version": "1.3.0"
+      },
+      "protocol_version": "2025-11-25",
+      "tool": "get_graph_schema",
+      "schema_sha256": "4f1240bb0af714f1b0d703c795f30381a6022716e649e67d95502863c76575e9",
+      "inventory_sha256": "327cf9a3587cc23cc2d28040a4ac7cc8df2fa790d3fbb57700591689ea3cb4a0",
+      "arguments_sha256": "b2c7241d3a9e090d35ce3597256a0c00fe7c9e11832d8bc884e4a4f7df99be55",
+      "arguments_summary": "values withheld; fixed template or validated schema arguments",
+      "started_at": "2026-10-17T10:49:55.726599Z",
+      "ended_at": "2026-10-17T10:49:55.736539Z",
+      "latency_ms": 9.948,
+      "status": "SUCCESS",
+      "denial_reason": null,
+      "result_summary": {
+        "received_rows": 0
+      },
+      "graph_revision": 2104,
+      "selection_rationale": null,
+      "invocation_origin": "application_or_operator; no agent implemented"
+    },
+    {
+      "trace_version": "B06-1",
+      "operation": "tools/call",
+      "server": {
+        "name": "falkordb",
+        "version": "1.3.0"
+      },
+      "protocol_version": "2025-11-25",
+      "tool": "query_graph_readonly",
+      "schema_sha256": "2650b82578197a5959e917f3dfa2be185781d69b45b6feeabdee7b1f12d8db6c",
+      "inventory_sha256": "327cf9a3587cc23cc2d28040a4ac7cc8df2fa790d3fbb57700591689ea3cb4a0",
+      "arguments_sha256": "4bebfc54f535e9ed7fcf230e4d4c2dfa75c0157ff36983b683d7d3db7ab4cc33",
+      "arguments_summary": "values withheld; fixed template or validated schema arguments",
+      "started_at": "2026-10-17T10:49:55.736657Z",
+      "ended_at": "2026-10-17T10:49:55.738964Z",
+      "latency_ms": 2.31,
+      "status": "SUCCESS",
+      "denial_reason": null,
+      "result_summary": {
+        "received_rows": 1
+      },
+      "graph_revision": null,
+      "selection_rationale": null,
+      "invocation_origin": "application_or_operator; no agent implemented"
+    },
+    {
+      "trace_version": "B06-1",
+      "operation": "broker/validated_call",
+      "server": {
+        "name": "falkordb",
+        "version": "1.3.0"
+      },
+      "protocol_version": "2025-11-25",
+      "tool": "get_graph_schema",
+      "schema_sha256": "4f1240bb0af714f1b0d703c795f30381a6022716e649e67d95502863c76575e9",
+      "inventory_sha256": "327cf9a3587cc23cc2d28040a4ac7cc8df2fa790d3fbb57700591689ea3cb4a0",
+      "arguments_sha256": "ea571c486412a53e8b94a0e934f121c08f11754d2c7b307da7df6a45b61f28bc",
+      "arguments_summary": "values withheld; fixed template or validated schema arguments",
+      "started_at": "2026-10-17T10:49:55.717420Z",
+      "ended_at": "2026-10-17T10:49:55.739009Z",
+      "latency_ms": 21.592,
+      "status": "SUCCESS",
+      "denial_reason": null,
+      "result_summary": null,
+      "graph_revision": 2104,
+      "selection_rationale": null,
+      "invocation_origin": "application_or_operator; no agent implemented"
+    },
+    {
+      "trace_version": "B06-1",
+      "operation": "tools/call",
+      "server": {
+        "name": "falkordb",
+        "version": "1.3.0"
+      },
+      "protocol_version": "2025-11-25",
+      "tool": "query_graph_readonly",
+      "schema_sha256": "2650b82578197a5959e917f3dfa2be185781d69b45b6feeabdee7b1f12d8db6c",
+      "inventory_sha256": "327cf9a3587cc23cc2d28040a4ac7cc8df2fa790d3fbb57700591689ea3cb4a0",
+      "arguments_sha256": "4bebfc54f535e9ed7fcf230e4d4c2dfa75c0157ff36983b683d7d3db7ab4cc33",
+      "arguments_summary": "values withheld; fixed template or validated schema arguments",
+      "started_at": "2026-10-17T10:49:55.740104Z",
+      "ended_at": "2026-10-17T10:49:55.742285Z",
+      "latency_ms": 2.186,
+      "status": "SUCCESS",
+      "denial_reason": null,
+      "result_summary": {
+        "received_rows": 1
+      },
+      "graph_revision": null,
+      "selection_rationale": null,
+      "invocation_origin": "application_or_operator; no agent implemented"
+    },
+    {
+      "trace_version": "B06-1",
+      "operation": "tools/call",
+      "server": {
+        "name": "falkordb",
+        "version": "1.3.0"
+      },
+      "protocol_version": "2025-11-25",
+      "tool": "get_node_schema",
+      "schema_sha256": "2cc9d4db34290049736cebd561bd3e34edb5ac9e3792693104572f40e0045c79",
+      "inventory_sha256": "327cf9a3587cc23cc2d28040a4ac7cc8df2fa790d3fbb57700591689ea3cb4a0",
+      "arguments_sha256": "861d545148aa6cd9e548ff8dc52bec14be1c230b7efce67fc54e2678c94b6126",
+      "arguments_summary": "values withheld; fixed template or validated schema arguments",
+      "started_at": "2026-10-17T10:49:55.742311Z",
+      "ended_at": "2026-10-17T10:49:55.747677Z",
+      "latency_ms": 5.373,
+      "status": "SUCCESS",
+      "denial_reason": null,
+      "result_summary": {
+        "received_rows": 0
+      },
+      "graph_revision": 2104,
+      "selection_rationale": null,
+      "invocation_origin": "application_or_operator; no agent implemented"
+    },
+    {
+      "trace_version": "B06-1",
+      "operation": "tools/call",
+      "server": {
+        "name": "falkordb",
+        "version": "1.3.0"
+      },
+      "protocol_version": "2025-11-25",
+      "tool": "query_graph_readonly",
+      "schema_sha256": "2650b82578197a5959e917f3dfa2be185781d69b45b6feeabdee7b1f12d8db6c",
+      "inventory_sha256": "327cf9a3587cc23cc2d28040a4ac7cc8df2fa790d3fbb57700591689ea3cb4a0",
+      "arguments_sha256": "4bebfc54f535e9ed7fcf230e4d4c2dfa75c0157ff36983b683d7d3db7ab4cc33",
+      "arguments_summary": "values withheld; fixed template or validated schema arguments",
+      "started_at": "2026-10-17T10:49:55.747751Z",
+      "ended_at": "2026-10-17T10:49:55.749518Z",
+      "latency_ms": 1.771,
+      "status": "SUCCESS",
+      "denial_reason": null,
+      "result_summary": {
+        "received_rows": 1
+      },
+      "graph_revision": null,
+      "selection_rationale": null,
+      "invocation_origin": "application_or_operator; no agent implemented"
+    },
+    {
+      "trace_version": "B06-1",
+      "operation": "broker/validated_call",
+      "server": {
+        "name": "falkordb",
+        "version": "1.3.0"
+      },
+      "protocol_version": "2025-11-25",
+      "tool": "get_node_schema",
+      "schema_sha256": "2cc9d4db34290049736cebd561bd3e34edb5ac9e3792693104572f40e0045c79",
+      "inventory_sha256": "327cf9a3587cc23cc2d28040a4ac7cc8df2fa790d3fbb57700591689ea3cb4a0",
+      "arguments_sha256": "fad4917dc2218902fbf4f6db9ce21d8d0b0a127c9f82decf099d6762699a77ae",
+      "arguments_summary": "values withheld; fixed template or validated schema arguments",
+      "started_at": "2026-10-17T10:49:55.739038Z",
+      "ended_at": "2026-10-17T10:49:55.749560Z",
+      "latency_ms": 10.523,
+      "status": "SUCCESS",
+      "denial_reason": null,
+      "result_summary": null,
+      "graph_revision": 2104,
+      "selection_rationale": null,
+      "invocation_origin": "application_or_operator; no agent implemented"
+    },
+    {
+      "trace_version": "B06-1",
+      "operation": "tools/call",
+      "server": {
+        "name": "falkordb",
+        "version": "1.3.0"
+      },
+      "protocol_version": "2025-11-25",
+      "tool": "query_graph_readonly",
+      "schema_sha256": "2650b82578197a5959e917f3dfa2be185781d69b45b6feeabdee7b1f12d8db6c",
+      "inventory_sha256": "327cf9a3587cc23cc2d28040a4ac7cc8df2fa790d3fbb57700591689ea3cb4a0",
+      "arguments_sha256": "4bebfc54f535e9ed7fcf230e4d4c2dfa75c0157ff36983b683d7d3db7ab4cc33",
+      "arguments_summary": "values withheld; fixed template or validated schema arguments",
+      "started_at": "2026-10-17T10:49:55.750800Z",
+      "ended_at": "2026-10-17T10:49:55.752783Z",
+      "latency_ms": 1.984,
+      "status": "SUCCESS",
+      "denial_reason": null,
+      "result_summary": {
+        "received_rows": 1
+      },
+      "graph_revision": null,
+      "selection_rationale": null,
+      "invocation_origin": "application_or_operator; no agent implemented"
+    },
+    {
+      "trace_version": "B06-1",
+      "operation": "tools/call",
+      "server": {
+        "name": "falkordb",
+        "version": "1.3.0"
+      },
+      "protocol_version": "2025-11-25",
+      "tool": "get_relationship_schema",
+      "schema_sha256": "9b5460cecdbadcdda07836bfc9ccec510c93d4bcdad633b5211063ec2a3c66f9",
+      "inventory_sha256": "327cf9a3587cc23cc2d28040a4ac7cc8df2fa790d3fbb57700591689ea3cb4a0",
+      "arguments_sha256": "c826acf00280190a5e54b2a28e189ab8994bd0a085231d7406674a9db6e13666",
+      "arguments_summary": "values withheld; fixed template or validated schema arguments",
+      "started_at": "2026-10-17T10:49:55.752805Z",
+      "ended_at": "2026-10-17T10:49:55.756229Z",
+      "latency_ms": 3.43,
+      "status": "SUCCESS",
+      "denial_reason": null,
+      "result_summary": {
+        "received_rows": 0
+      },
+      "graph_revision": 2104,
+      "selection_rationale": null,
+      "invocation_origin": "application_or_operator; no agent implemented"
+    },
+    {
+      "trace_version": "B06-1",
+      "operation": "tools/call",
+      "server": {
+        "name": "falkordb",
+        "version": "1.3.0"
+      },
+      "protocol_version": "2025-11-25",
+      "tool": "query_graph_readonly",
+      "schema_sha256": "2650b82578197a5959e917f3dfa2be185781d69b45b6feeabdee7b1f12d8db6c",
+      "inventory_sha256": "327cf9a3587cc23cc2d28040a4ac7cc8df2fa790d3fbb57700591689ea3cb4a0",
+      "arguments_sha256": "4bebfc54f535e9ed7fcf230e4d4c2dfa75c0157ff36983b683d7d3db7ab4cc33",
+      "arguments_summary": "values withheld; fixed template or validated schema arguments",
+      "started_at": "2026-10-17T10:49:55.756273Z",
+      "ended_at": "2026-10-17T10:49:55.757744Z",
+      "latency_ms": 1.474,
+      "status": "SUCCESS",
+      "denial_reason": null,
+      "result_summary": {
+        "received_rows": 1
+      },
+      "graph_revision": null,
+      "selection_rationale": null,
+      "invocation_origin": "application_or_operator; no agent implemented"
+    },
+    {
+      "trace_version": "B06-1",
+      "operation": "broker/validated_call",
+      "server": {
+        "name": "falkordb",
+        "version": "1.3.0"
+      },
+      "protocol_version": "2025-11-25",
+      "tool": "get_relationship_schema",
+      "schema_sha256": "9b5460cecdbadcdda07836bfc9ccec510c93d4bcdad633b5211063ec2a3c66f9",
+      "inventory_sha256": "327cf9a3587cc23cc2d28040a4ac7cc8df2fa790d3fbb57700591689ea3cb4a0",
+      "arguments_sha256": "a07a7068795c0577f5784ba8ebef27285e8704c7d49082d1fd800ba5af683e70",
+      "arguments_summary": "values withheld; fixed template or validated schema arguments",
+      "started_at": "2026-10-17T10:49:55.749586Z",
+      "ended_at": "2026-10-17T10:49:55.757778Z",
+      "latency_ms": 8.193,
+      "status": "SUCCESS",
+      "denial_reason": null,
+      "result_summary": null,
+      "graph_revision": 2104,
+      "selection_rationale": null,
+      "invocation_origin": "application_or_operator; no agent implemented"
+    },
+    {
+      "trace_version": "B06-1",
+      "operation": "tools/call",
+      "server": {
+        "name": "falkordb",
+        "version": "1.3.0"
+      },
+      "protocol_version": "2025-11-25",
+      "tool": "query_graph_readonly",
+      "schema_sha256": "2650b82578197a5959e917f3dfa2be185781d69b45b6feeabdee7b1f12d8db6c",
+      "inventory_sha256": "327cf9a3587cc23cc2d28040a4ac7cc8df2fa790d3fbb57700591689ea3cb4a0",
+      "arguments_sha256": "4bebfc54f535e9ed7fcf230e4d4c2dfa75c0157ff36983b683d7d3db7ab4cc33",
+      "arguments_summary": "values withheld; fixed template or validated schema arguments",
+      "started_at": "2026-10-17T10:49:55.758815Z",
+      "ended_at": "2026-10-17T10:49:55.760194Z",
+      "latency_ms": 1.381,
+      "status": "SUCCESS",
+      "denial_reason": null,
+      "result_summary": {
+        "received_rows": 1
+      },
+      "graph_revision": null,
+      "selection_rationale": null,
+      "invocation_origin": "application_or_operator; no agent implemented"
+    },
+    {
+      "trace_version": "B06-1",
+      "operation": "tools/call",
+      "server": {
+        "name": "falkordb",
+        "version": "1.3.0"
+      },
+      "protocol_version": "2025-11-25",
+      "tool": "query_graph_readonly",
+      "schema_sha256": "2650b82578197a5959e917f3dfa2be185781d69b45b6feeabdee7b1f12d8db6c",
+      "inventory_sha256": "327cf9a3587cc23cc2d28040a4ac7cc8df2fa790d3fbb57700591689ea3cb4a0",
+      "arguments_sha256": "e820561bbd9da5dbfef2a20756ce924bed13e24a8d194f85071c360e9ef3d677",
+      "arguments_summary": "values withheld; fixed template or validated schema arguments",
+      "started_at": "2026-10-17T10:49:55.760214Z",
+      "ended_at": "2026-10-17T10:49:55.761845Z",
+      "latency_ms": 1.634,
+      "status": "SUCCESS",
+      "denial_reason": null,
+      "result_summary": {
+        "received_rows": 1
+      },
+      "graph_revision": 2104,
+      "selection_rationale": null,
+      "invocation_origin": "application_or_operator; no agent implemented"
+    },
+    {
+      "trace_version": "B06-1",
+      "operation": "tools/call",
+      "server": {
+        "name": "falkordb",
+        "version": "1.3.0"
+      },
+      "protocol_version": "2025-11-25",
+      "tool": "query_graph_readonly",
+      "schema_sha256": "2650b82578197a5959e917f3dfa2be185781d69b45b6feeabdee7b1f12d8db6c",
+      "inventory_sha256": "327cf9a3587cc23cc2d28040a4ac7cc8df2fa790d3fbb57700591689ea3cb4a0",
+      "arguments_sha256": "4bebfc54f535e9ed7fcf230e4d4c2dfa75c0157ff36983b683d7d3db7ab4cc33",
+      "arguments_summary": "values withheld; fixed template or validated schema arguments",
+      "started_at": "2026-10-17T10:49:55.761948Z",
+      "ended_at": "2026-10-17T10:49:55.763154Z",
+      "latency_ms": 1.207,
+      "status": "SUCCESS",
+      "denial_reason": null,
+      "result_summary": {
+        "received_rows": 1
+      },
+      "graph_revision": null,
+      "selection_rationale": null,
+      "invocation_origin": "application_or_operator; no agent implemented"
+    },
+    {
+      "trace_version": "B06-1",
+      "operation": "broker/validated_call",
+      "server": {
+        "name": "falkordb",
+        "version": "1.3.0"
+      },
+      "protocol_version": "2025-11-25",
+      "tool": "query_graph_readonly",
+      "schema_sha256": "2650b82578197a5959e917f3dfa2be185781d69b45b6feeabdee7b1f12d8db6c",
+      "inventory_sha256": "327cf9a3587cc23cc2d28040a4ac7cc8df2fa790d3fbb57700591689ea3cb4a0",
+      "arguments_sha256": "ac0d2ffc71d68bd5318b85672673f2e3c65ca45e81bc053b9566f38f9361c1a7",
+      "arguments_summary": "values withheld; fixed template or validated schema arguments",
+      "started_at": "2026-10-17T10:49:55.757802Z",
+      "ended_at": "2026-10-17T10:49:55.763190Z",
+      "latency_ms": 5.389,
+      "status": "SUCCESS",
+      "denial_reason": null,
+      "result_summary": {
+        "validated_rows": 1
+      },
+      "graph_revision": 2104,
+      "selection_rationale": null,
+      "invocation_origin": "application_or_operator; no agent implemented"
+    },
+    {
+      "trace_version": "B06-1",
+      "operation": "tools/call",
+      "server": {
+        "name": "falkordb",
+        "version": "1.3.0"
+      },
+      "protocol_version": "2025-11-25",
+      "tool": "query_graph_readonly",
+      "schema_sha256": "2650b82578197a5959e917f3dfa2be185781d69b45b6feeabdee7b1f12d8db6c",
+      "inventory_sha256": "327cf9a3587cc23cc2d28040a4ac7cc8df2fa790d3fbb57700591689ea3cb4a0",
+      "arguments_sha256": "4bebfc54f535e9ed7fcf230e4d4c2dfa75c0157ff36983b683d7d3db7ab4cc33",
+      "arguments_summary": "values withheld; fixed template or validated schema arguments",
+      "started_at": "2026-10-17T10:49:55.764761Z",
+      "ended_at": "2026-10-17T10:49:55.766427Z",
+      "latency_ms": 1.669,
+      "status": "SUCCESS",
+      "denial_reason": null,
+      "result_summary": {
+        "received_rows": 1
+      },
+      "graph_revision": null,
+      "selection_rationale": null,
+      "invocation_origin": "application_or_operator; no agent implemented"
+    },
+    {
+      "trace_version": "B06-1",
+      "operation": "tools/call",
+      "server": {
+        "name": "falkordb",
+        "version": "1.3.0"
+      },
+      "protocol_version": "2025-11-25",
+      "tool": "query_graph_readonly",
+      "schema_sha256": "2650b82578197a5959e917f3dfa2be185781d69b45b6feeabdee7b1f12d8db6c",
+      "inventory_sha256": "327cf9a3587cc23cc2d28040a4ac7cc8df2fa790d3fbb57700591689ea3cb4a0",
+      "arguments_sha256": "4d4f93e522a165032a26d04b9e55d314a53c94a5c369cb0a5490408e263bc04e",
+      "arguments_summary": "values withheld; fixed template or validated schema arguments",
+      "started_at": "2026-10-17T10:49:55.766473Z",
+      "ended_at": "2026-10-17T10:49:55.769145Z",
+      "latency_ms": 2.675,
+      "status": "SUCCESS",
+      "denial_reason": null,
+      "result_summary": {
+        "received_rows": 1
+      },
+      "graph_revision": 2104,
+      "selection_rationale": null,
+      "invocation_origin": "application_or_operator; no agent implemented"
+    },
+    {
+      "trace_version": "B06-1",
+      "operation": "tools/call",
+      "server": {
+        "name": "falkordb",
+        "version": "1.3.0"
+      },
+      "protocol_version": "2025-11-25",
+      "tool": "query_graph_readonly",
+      "schema_sha256": "2650b82578197a5959e917f3dfa2be185781d69b45b6feeabdee7b1f12d8db6c",
+      "inventory_sha256": "327cf9a3587cc23cc2d28040a4ac7cc8df2fa790d3fbb57700591689ea3cb4a0",
+      "arguments_sha256": "4bebfc54f535e9ed7fcf230e4d4c2dfa75c0157ff36983b683d7d3db7ab4cc33",
+      "arguments_summary": "values withheld; fixed template or validated schema arguments",
+      "started_at": "2026-10-17T10:49:55.769247Z",
+      "ended_at": "2026-10-17T10:49:55.770569Z",
+      "latency_ms": 1.323,
+      "status": "SUCCESS",
+      "denial_reason": null,
+      "result_summary": {
+        "received_rows": 1
+      },
+      "graph_revision": null,
+      "selection_rationale": null,
+      "invocation_origin": "application_or_operator; no agent implemented"
+    },
+    {
+      "trace_version": "B06-1",
+      "operation": "broker/validated_call",
+      "server": {
+        "name": "falkordb",
+        "version": "1.3.0"
+      },
+      "protocol_version": "2025-11-25",
+      "tool": "query_graph_readonly",
+      "schema_sha256": "2650b82578197a5959e917f3dfa2be185781d69b45b6feeabdee7b1f12d8db6c",
+      "inventory_sha256": "327cf9a3587cc23cc2d28040a4ac7cc8df2fa790d3fbb57700591689ea3cb4a0",
+      "arguments_sha256": "26a285f0b742c281ae3db1965146bcd9c383b5e062654a39164695a542fe2670",
+      "arguments_summary": "values withheld; fixed template or validated schema arguments",
+      "started_at": "2026-10-17T10:49:55.763204Z",
+      "ended_at": "2026-10-17T10:49:55.770604Z",
+      "latency_ms": 7.401,
+      "status": "SUCCESS",
+      "denial_reason": null,
+      "result_summary": {
+        "validated_rows": 1
+      },
+      "graph_revision": 2104,
+      "selection_rationale": null,
+      "invocation_origin": "application_or_operator; no agent implemented"
+    },
+    {
+      "trace_version": "B06-1",
+      "operation": "broker/validated_call",
+      "server": {
+        "name": "falkordb",
+        "version": "1.3.0"
+      },
+      "protocol_version": "2025-11-25",
+      "tool": null,
+      "schema_sha256": null,
+      "inventory_sha256": "327cf9a3587cc23cc2d28040a4ac7cc8df2fa790d3fbb57700591689ea3cb4a0",
+      "arguments_sha256": "4f8846facd79e5f7794a0f03d40fa468117ef87afa4fbc5a004fe4a48f8efb0f",
+      "arguments_summary": "values withheld; fixed template or validated schema arguments",
+      "started_at": "2026-10-17T10:49:55.770620Z",
+      "ended_at": "2026-10-17T10:49:55.770639Z",
+      "latency_ms": 0.019,
+      "status": "DENIED_TOOL",
+      "denial_reason": "DENIED_TOOL",
+      "result_summary": null,
+      "graph_revision": null,
+      "selection_rationale": null,
+      "invocation_origin": "application_or_operator; no agent implemented"
+    },
+    {
+      "trace_version": "B06-1",
+      "operation": "broker/validated_call",
+      "server": {
+        "name": "falkordb",
+        "version": "1.3.0"
+      },
+      "protocol_version": "2025-11-25",
+      "tool": null,
+      "schema_sha256": null,
+      "inventory_sha256": "327cf9a3587cc23cc2d28040a4ac7cc8df2fa790d3fbb57700591689ea3cb4a0",
+      "arguments_sha256": "d58be7af09814d03b3b456655c1532311b34f2ec61d74543e4e506ef4714401c",
+      "arguments_summary": "values withheld; fixed template or validated schema arguments",
+      "started_at": "2026-10-17T10:49:55.770646Z",
+      "ended_at": "2026-10-17T10:49:55.770656Z",
+      "latency_ms": 0.009,
+      "status": "DENIED_TOOL",
+      "denial_reason": "DENIED_TOOL",
+      "result_summary": null,
+      "graph_revision": null,
+      "selection_rationale": null,
+      "invocation_origin": "application_or_operator; no agent implemented"
+    },
+    {
+      "trace_version": "B06-1",
+      "operation": "broker/validated_call",
+      "server": {
+        "name": "falkordb",
+        "version": "1.3.0"
+      },
+      "protocol_version": "2025-11-25",
+      "tool": null,
+      "schema_sha256": null,
+      "inventory_sha256": "327cf9a3587cc23cc2d28040a4ac7cc8df2fa790d3fbb57700591689ea3cb4a0",
+      "arguments_sha256": "6b463de2385b9923b275f980ce4503056bd1d504a923304ad855397b8702e2b1",
+      "arguments_summary": "values withheld; fixed template or validated schema arguments",
+      "started_at": "2026-10-17T10:49:55.770661Z",
+      "ended_at": "2026-10-17T10:49:55.770667Z",
+      "latency_ms": 0.006,
+      "status": "DENIED_TOOL",
+      "denial_reason": "DENIED_TOOL",
+      "result_summary": null,
+      "graph_revision": null,
+      "selection_rationale": null,
+      "invocation_origin": "application_or_operator; no agent implemented"
+    },
+    {
+      "trace_version": "B06-1",
+      "operation": "broker/validated_call",
+      "server": {
+        "name": "falkordb",
+        "version": "1.3.0"
+      },
+      "protocol_version": "2025-11-25",
+      "tool": null,
+      "schema_sha256": null,
+      "inventory_sha256": "327cf9a3587cc23cc2d28040a4ac7cc8df2fa790d3fbb57700591689ea3cb4a0",
+      "arguments_sha256": "494d97097098f81bce51c4ed085fbfb8633667a9c452efcaed5b964fafee4533",
+      "arguments_summary": "values withheld; fixed template or validated schema arguments",
+      "started_at": "2026-10-17T10:49:55.770671Z",
+      "ended_at": "2026-10-17T10:49:55.770677Z",
+      "latency_ms": 0.006,
+      "status": "DENIED_GRAPH",
+      "denial_reason": "DENIED_GRAPH",
+      "result_summary": null,
+      "graph_revision": null,
+      "selection_rationale": null,
+      "invocation_origin": "application_or_operator; no agent implemented"
+    },
+    {
+      "trace_version": "B06-1",
+      "operation": "broker/validated_call",
+      "server": {
+        "name": "falkordb",
+        "version": "1.3.0"
+      },
+      "protocol_version": "2025-11-25",
+      "tool": null,
+      "schema_sha256": null,
+      "inventory_sha256": "327cf9a3587cc23cc2d28040a4ac7cc8df2fa790d3fbb57700591689ea3cb4a0",
+      "arguments_sha256": "ac954c7a4e07db0c4b3dd9f0dae33113823a2a714c5d26eafcf44539428ba801",
+      "arguments_summary": "values withheld; fixed template or validated schema arguments",
+      "started_at": "2026-10-17T10:49:55.770680Z",
+      "ended_at": "2026-10-17T10:49:55.770694Z",
+      "latency_ms": 0.014,
+      "status": "INVALID_ARGUMENTS",
+      "denial_reason": "INVALID_ARGUMENTS",
+      "result_summary": null,
+      "graph_revision": null,
+      "selection_rationale": null,
+      "invocation_origin": "application_or_operator; no agent implemented"
+    },
+    {
+      "operation": "session/closed",
+      "status": "CLOSED",
+      "ended_at": "2026-10-17T10:49:57.800213Z"
+    }
+  ],
+  "independent_official_python_client_equal": true,
+  "semantics": "Current synthetic records/candidate edges only, not a causal investigation or live-agent decision"
+}

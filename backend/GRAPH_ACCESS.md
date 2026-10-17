@@ -1,5 +1,9 @@
 # B03 typed graph access
 
+Current: B03–B05 accepted; B04 explicit conversion/import and B05 algorithms exist.
+B06 official runtime broker uses this unchanged foundation; see [MCP.md](MCP.md).
+Historical phase-specific statements below describe their original task boundary.
+
 This is a trusted internal graph adapter, not a public query endpoint or a complete
 Civicly investigation engine. All 18 requirements remain in force. Registry v3
 and migration 0001 are unchanged. B04 conversion/import is not implemented.
