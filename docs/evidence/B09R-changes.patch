@@ -1,0 +1,2975 @@
+diff --git a/backend/EVIDENCE.md b/backend/EVIDENCE.md
+index 5aab901..809a3a3 100644
+--- a/backend/EVIDENCE.md
++++ b/backend/EVIDENCE.md
+@@ -1,5 +1,9 @@
+ # B09 evidence, hypotheses and inspections
+ 
++Current semantics: B09-R assessment/rule version2. The final B09-R section below
++specifies current authority and occurrence rules; version1 records retain historical
++meaning and serialization. B10 remains unstarted pending review and active-graph gate.
++
+ This is an internal typed domain service on FalkorDB, not an autonomous investigator,
+ dispatch simulation, public API, authentication system or durable event worker.
+ All18 objectives remain mandatory. Registryv3 and migration0001 remain unchanged;
+@@ -39,7 +43,7 @@ Domain reports/findings are also never edited by this service. Privileged lower-
+ mutable writes remain outside that boundary; readers detect source/command/report
+ binding or finding disagreement and fail closed. Snapshots retain historical hashes.
+ 
+-`contracts/evidence_hypotheses.json` mirrors actual Pydantic schemas and policyv1;
++`contracts/evidence_hypotheses.json` mirrors actual Pydantic schemas and rulev2 (legacy rulev1 decoding retained);
+ unit tests compare it with implementation. All records use municipality_id=demo-city,
+ stable IDs and registered endpoints; no new ontology labels/properties/relationships.
+ 
+@@ -58,8 +62,9 @@ supported, but no approved criterion means no automatic VERIFIED result. Known
+ policies require the appropriate infrastructure subtype. Caller expectations must
+ include the policy's full confirming and falsifying observation sets.
+ 
+-VERIFIED requires all confirming codes from reviewed, attributable actual reports,
+-two distinct inspections, inspectors, source IDs and source records, no qualifying
++VERIFIED requires all confirming codes from reviewed, attributable actual reports
++for each explained occurrence, with two independent inspections, inspectors, source
++IDs and source records per occurrence and disjoint source lineage, no qualifying
+ contradiction, and any required verified-only physical dependency path. Utility-leak
+ explanations require a dependencies path rooted at the concerned WaterPipe and ending at the affected RoadSegment. An optional topology requirement
+ on any explanation is also enforced. Candidate-inclusive B05 exploration can justify
+@@ -70,8 +75,9 @@ Human review is trusted internal context, never an LLM-generated approval or B13
+ 
+ Assessment discovery unions explicit input references, previous assessment citations
+ and actual reports from concerned-asset inspections before scoring. A caller cannot
+-silently drop known counterevidence. All observations must be relevant to the asset,
+-after the explained incident start, and visible at as_of. Unreviewed/context evidence
++silently drop known counterevidence. All observations must have explicit request/incident/asset relevance, satisfy each
++individual [start,end) interval or validated retrospective source attribution, and
++be visible at as_of. Unreviewed/context evidence
+ cannot satisfy verification. Support plus contradiction yields INCONCLUSIVE, with
+ both retained; contradiction alone yields CONTRADICTED. Missing/UNKNOWN reports yield
+ INCONCLUSIVE. No numerical confidence is invented. A later report may correct the
+@@ -181,3 +187,43 @@ STOP after B09; human review is required before B10.
+ Tests/retained demo use an explicitly injected2026-10-18 synthetic clock; DB operations
+ are real, observations are authored SYNTHETIC records. Production default is utc_now,
+ not caller-controlled time. No claim of real municipal inspection or live-agent action.
++
++## B09-R rule v2: authority, meaning and occurrence attribution
++
++New assessments are format_version=rule_version=2. Historical version1 snapshots,
++reports and committed journal/receipt payloads retain their exact original shape
++and meaning, including historically incorrect conclusions. A correction is a new
++immutable assessment with previous_assessment_id; never rewrite the old rationale.
++`classification` contains per-observation uses and six matching ID summaries:
++reviewed/unreviewed support/contradiction, contextual and excluded. Multi-observation
++reports may occupy several categories; each observation has one category.
++Only reviewed discriminating IDs enter causal support/contradiction edge lists.
++Unreviewed support alone -> POSSIBLE; reviewed support -> SUPPORTED or VERIFIED
++when all existing criteria hold per occurrence. Unreviewed contradiction alone ->
++INCONCLUSIVE; reviewed domain-qualified contradiction alone -> CONTRADICTED.
++Any positive/negative unresolved conflict -> INCONCLUSIVE. Context alone is
++INCONCLUSIVE, retaining genuine references/hashes without causal edges.
++
++Occurrence interval is [started_at,ended_at), using actual EXPLAINS/CONCERNS/AFFECTS
++and INSPECTS request/open journals' incident bindings. Matching asset or earliest
++start is insufficient. An unresolved occurrence can use later bound observations;
++terminal incidents without known end remain uncertain. Overlapping bound occurrences
++require explicit named attribution. Current-version/as_of visibility is unchanged;
++there is no reconstruction of a mutable incident's historical version.
++
++Optional report `attribution` has named incident_ids, mode OCCURRENCE or RETROSPECTIVE,
++rationale and basis_evidence_ids. Retrospective mode requires independent review and
++1..5 earlier reviewed direct reports matching the asset, observation code and actual
++earlier occurrence interval/request binding. Recursive retrospective bases are
++rejected. A derivative cannot independently corroborate its source. Explicit-attribution
++reports use format_version2; absent attribution stays omitted for old command hashes.
++Metadata uses existing report/journal JSON, without registry/migration changes.
++Verified topology provenance is contextual unless independently inspected and
++occurrence-qualified; candidate/expired/proximity context cannot satisfy connectivity.
++
++Run `backend/.venv/bin/python -m pytest backend/tests/unit/test_evidence_review_models.py
++backend/tests/integration/test_evidence_review.py -v -s` (one shell line). Full commands,
++real results and legacy replay proof are under docs/evidence/B09R-*. Existing retained
++B09 proof is read-only; the separate B09R legacy compatibility fixture is owned by
++this corrective pass. Active graph integration remains a documented gate, not a
++claim of end-to-end autonomous operation. Stop after B09-R for review.
+diff --git a/backend/app/services/evidence/models.py b/backend/app/services/evidence/models.py
+index a101b1b..a943e96 100644
+--- a/backend/app/services/evidence/models.py
++++ b/backend/app/services/evidence/models.py
+@@ -121,6 +121,22 @@ class Observation(Model):
+         return self
+ 
+ 
++class IncidentAttribution(Model):
++    """Optional explicit occurrence binding; retrospective claims require prior source basis."""
++    incident_ids: list[ID] = Field(min_length=1, max_length=3)
++    mode: Literal['OCCURRENCE', 'RETROSPECTIVE'] = 'OCCURRENCE'
++    rationale: Text
++    basis_evidence_ids: list[ID] = Field(default_factory=list, max_length=5)
++
++    @model_validator(mode='after')
++    def source_basis(self):
++        if len(set(self.incident_ids)) != len(self.incident_ids) or len(set(self.basis_evidence_ids)) != len(self.basis_evidence_ids):
++            raise ValueError('Duplicate attribution references')
++        if (self.mode == 'RETROSPECTIVE') != bool(self.basis_evidence_ids):
++            raise ValueError('Retrospective attribution requires a source basis; direct attribution does not')
++        return self
++
++
+ class ReportInspection(Command):
+     operation: Literal['report_inspection'] = 'report_inspection'
+     inspection_id: ID
+@@ -130,6 +146,7 @@ class ReportInspection(Command):
+     source_kind: Literal['SYNTHETIC', 'MUNICIPAL', 'PUBLIC'] = 'SYNTHETIC'
+     observations: list[Observation] = Field(min_length=1, max_length=10)
+     review: Review | None = None
++    attribution: IncidentAttribution | None = Field(default=None, exclude_if=lambda value: value is None)
+ 
+ 
+ class Assess(Command):
+@@ -144,7 +161,7 @@ COMMAND = TypeAdapter(Annotated[OpenInvestigation | Propose | RequestInspection
+ 
+ 
+ class Report(Model):
+-    format_version: Literal[1] = 1
++    format_version: Literal[1, 2] = 1
+     inspection_id: ID
+     inspector_id: ID
+     department_id: ID
+@@ -156,6 +173,14 @@ class Report(Model):
+     observations: list[Observation] = Field(min_length=1, max_length=10)
+     finding_ids: list[ID] = Field(min_length=1, max_length=10)
+     review: Review | None = None
++    attribution: IncidentAttribution | None = Field(default=None, exclude_if=lambda value: value is None)
++
++
++    @model_validator(mode='after')
++    def version_binding(self):
++        if (self.format_version == 2) != (self.attribution is not None):
++            raise ValueError('Report version/attribution mismatch')
++        return self
+ 
+ 
+ class EvidenceReference(Model):
+@@ -171,13 +196,44 @@ class EvidenceReference(Model):
+     finding_hashes: dict[str, str] = Field(default_factory=dict)
+ 
+ 
++class EvidenceUse(Model):
++    evidence_id: ID
++    observation_index: int | None = Field(default=None, ge=0, le=9)
++    category: Literal['REVIEWED_SUPPORT', 'UNREVIEWED_SUPPORT', 'REVIEWED_CONTRADICTION',
++                      'UNREVIEWED_CONTRADICTION', 'CONTEXT', 'EXCLUDED']
++    incident_ids: list[ID] = Field(default_factory=list, max_length=3)
++    reason: Text
++    basis_evidence_ids: list[ID] = Field(default_factory=list, max_length=5)
++
++
++class EvidenceClassification(Model):
++    uses: list[EvidenceUse] = Field(max_length=220)
++    reviewed_support_ids: list[ID]
++    unreviewed_support_ids: list[ID]
++    reviewed_contradiction_ids: list[ID]
++    unreviewed_contradiction_ids: list[ID]
++    contextual_evidence_ids: list[ID]
++    excluded_evidence_ids: list[ID]
++
++    @model_validator(mode='after')
++    def lists_match(self):
++        for category, field in [('REVIEWED_SUPPORT', 'reviewed_support_ids'), ('UNREVIEWED_SUPPORT', 'unreviewed_support_ids'),
++                                ('REVIEWED_CONTRADICTION', 'reviewed_contradiction_ids'), ('UNREVIEWED_CONTRADICTION', 'unreviewed_contradiction_ids'),
++                                ('CONTEXT', 'contextual_evidence_ids'), ('EXCLUDED', 'excluded_evidence_ids')]:
++            expected = sorted({use.evidence_id for use in self.uses if use.category == category})
++            if getattr(self, field) != expected:
++                raise ValueError('Evidence classification summary disagrees with uses')
++        return self
++
++
+ class Assessment(Model):
+-    format_version: Literal[1] = 1
++    format_version: Literal[1, 2] = 1
+     id: ID
+     hypothesis_id: ID
+     previous_assessment_id: ID | None
+     assessment: Literal['POSSIBLE', 'SUPPORTED', 'CONTRADICTED', 'VERIFIED', 'INCONCLUSIVE']
+-    rule_version: Literal[1] = 1
++    rule_version: Literal[1, 2] = 1
++    classification: EvidenceClassification | None = Field(default=None, exclude_if=lambda value: value is None)
+     cause_code: ID
+     mechanism: Text
+     confirming_codes: list[ID]
+@@ -200,6 +256,17 @@ class Assessment(Model):
+     reservations: list[str]
+ 
+ 
++    @model_validator(mode='after')
++    def semantic_version(self):
++        if self.rule_version != self.format_version or (self.format_version == 2) != (self.classification is not None):
++            raise ValueError('Assessment semantic version mismatch')
++        if self.classification and (self.supporting_evidence_ids != self.classification.reviewed_support_ids
++                or self.contradicting_evidence_ids != self.classification.reviewed_contradiction_ids
++                or self.excluded_evidence_ids != self.classification.excluded_evidence_ids):
++            raise ValueError('Assessment graph-edge lists disagree with classification')
++        return self
++
++
+ class Receipt(Model):
+     operation: str
+     journal_id: ID
+diff --git a/backend/app/services/evidence/policies.py b/backend/app/services/evidence/policies.py
+index bc8898f..368250b 100644
+--- a/backend/app/services/evidence/policies.py
++++ b/backend/app/services/evidence/policies.py
+@@ -27,10 +27,23 @@ for rules in POLICIES.values():
+ 
+ 
+ def classify(*, support, contradiction, reviewed, sufficient):
+-    if support and contradiction:
++    # Compatibility adapter for existing internal callers; never give an unreviewed
++    # negative claim stronger authority than the same unreviewed positive claim.
++    return classify_reviewed(reviewed_support=support and reviewed, unreviewed_support=support and not reviewed,
++        reviewed_contradiction=contradiction and reviewed, unreviewed_contradiction=contradiction and not reviewed,
++        sufficient=sufficient and reviewed)
++
++
++def classify_reviewed(*, reviewed_support, unreviewed_support, reviewed_contradiction, unreviewed_contradiction, sufficient):
++    """Rule v2: equal authority for unreviewed positive and negative claims."""
++    support = reviewed_support or unreviewed_support
++    contrary = reviewed_contradiction or unreviewed_contradiction
++    if support and contrary:
+         return 'INCONCLUSIVE'
+-    if contradiction:
++    if reviewed_contradiction:
+         return 'CONTRADICTED'
+-    if support:
+-        return 'VERIFIED' if sufficient else 'SUPPORTED' if reviewed else 'POSSIBLE'
++    if reviewed_support:
++        return 'VERIFIED' if sufficient else 'SUPPORTED'
++    if unreviewed_support:
++        return 'POSSIBLE'
+     return 'INCONCLUSIVE'
+diff --git a/backend/app/services/evidence/reader.py b/backend/app/services/evidence/reader.py
+index 5169c9b..8a6c540 100644
+--- a/backend/app/services/evidence/reader.py
++++ b/backend/app/services/evidence/reader.py
+@@ -116,6 +116,7 @@ class Reader:
+                 or original['source_id'] != report.source_id or original['record_id'] != report.record_id
+                 or original['source_kind'] != report.source_kind
+                 or original['observations'] != [ob.model_dump(mode='json') for ob in report.observations]
++                or original.get('attribution') != (report.attribution.model_dump(mode='json') if report.attribution else None)
+                 or original['review'] != (report.review.model_dump(mode='json') if report.review else None)):
+             raise PreconditionFailed('Report disagrees with original attributed operation')
+         assets = {e.target for e in self.edges('INSPECTS', source=ins.id)}
+diff --git a/backend/app/services/evidence/service.py b/backend/app/services/evidence/service.py
+index ad30096..275044a 100644
+--- a/backend/app/services/evidence/service.py
++++ b/backend/app/services/evidence/service.py
+@@ -7,7 +7,8 @@ from app.graph.repository import Conflict, PreconditionFailed
+ from app.graph.schema import utc_now, timestamp
+ from .models import (Actor, Journal, Receipt, Report, Assessment, parse_command,
+                      OpenInvestigation, Propose, RequestInspection, TransitionInspection, ReportInspection, Assess, InspectionView)
+-from .policies import POLICIES, classify
++from .policies import POLICIES, classify_reviewed
++from .classification import classify_evidence, add_topology_context
+ from .reader import Reader
+ from .writer import target, common, node, link, stable, commit
+ 
+@@ -211,9 +212,17 @@ class EvidenceService:
+             duplicates = r.query("MATCH (e:Evidence {evidence_type:'INSPECTION_REPORT'}) WHERE e.source_record_id=$record RETURN e.id LIMIT 1", {'record': q.source_id + ':' + q.record_id})
+             if duplicates:
+                 raise Conflict('Inspection source record already represented; cannot fabricate independent copies')
++            if q.attribution:
++                for incident_id in q.attribution.incident_ids:
++                    r.node(incident_id, 'Incident')
++                bound = {e.target for e in r.edges('INVESTIGATES', source=source['investigation_id'])}
++                if not set(q.attribution.incident_ids) <= bound:
++                    raise PreconditionFailed('Explicit report attribution outside inspection investigation')
++                if q.attribution.mode == 'RETROSPECTIVE' and not q.review:
++                    raise PreconditionFailed('Retrospective report requires independent review')
+             eid = stable('EV-REPORT', q.source_kind, q.source_id, q.record_id)
+             fids = [stable('FINDING', eid, i) for i in range(len(q.observations))]
+-            report = Report(inspection_id=ins.id, inspector_id=actor.id, department_id=source['department_id'],
++            report = Report(format_version=2 if q.attribution else 1, attribution=q.attribution, inspection_id=ins.id, inspector_id=actor.id, department_id=source['department_id'],
+                 source_id=q.source_id, record_id=q.record_id, source_kind=q.source_kind, observed_at=observed,
+                 recorded_at=now, observations=q.observations, finding_ids=fids, review=q.review)
+             raw = report.model_dump_json()
+@@ -249,62 +258,11 @@ class EvidenceService:
+         incidents = [r.node(id, 'Incident') for id in definition.incident_ids]
+         issue = incidents[0].properties['issue_type']
+         rule = POLICIES[issue].get(definition.cause_code)
+-        refs, excluded, support, contradiction, reviewed_sources, codes = [], [], [], [], [], set()
+-        gaps = []
+         history = Reader(self.repo, now).histories(h.id)
+-        known = set(q.evidence_ids)
+-        for previous in history:
+-            known.update(previous.supporting_evidence_ids)
+-            known.update(previous.contradicting_evidence_ids)
+-        # Discover attributable asset inspections too: omission by a caller must not
+-        # erase known contradictory observations. Current future versions stay unknown.
+-        for asset_id in definition.asset_ids:
+-            for relation in r.edges('INSPECTS', target=asset_id):
+-                inspection = self.repo.get_node(relation.source, 'Inspection')
+-                if not r.visible(inspection.properties):
+-                    gaps.append('Inspection current version unavailable at cutoff: ' + inspection.id)
+-                    continue
+-                known.update(e.target for e in r.edges('PRODUCED', source=inspection.id))
+-        if len(known) > 20:
+-            raise PreconditionFailed('B09 evidence union exceeds20; incomplete evidence cannot verify')
+-        start = min(timestamp(i.properties['started_at']) for i in incidents)
+-        for id in sorted(known):
+-            ev = self.repo.get_node(id, 'Evidence')
+-            if not r.visible(ev.properties):
+-                excluded.append(id)
+-                gaps.append('Evidence outside cutoff/validity: ' + id)
+-                continue
+-            ref = r.evidence(id)
+-            refs.append(ref)
+-            report = ref.report
+-            if not report:
+-                support.append(id)
+-                gaps.append('Non-inspection evidence is context only: ' + id)
+-                continue
+-            usable = [ob for ob in report.observations if ob.asset_id in definition.asset_ids and ob.result == 'OBSERVED' and timestamp(ob.observed_at) >= start]
+-            confirmed = {ob.code for ob in usable} & set(definition.confirming_codes)
+-            falsified = {ob.code for ob in usable} & set(definition.falsifying_codes)
+-            if confirmed:
+-                support.append(id)
+-                if report.review:
+-                    reviewed_sources.append(report)
+-                    codes.update(confirmed)
+-            if falsified:
+-                contradiction.append(id)
+-            if not report.review:
+-                gaps.append('Unreviewed findings cannot verify: ' + id)
+-            if not confirmed and not falsified:
+-                gaps.append('No discriminating observation for this mechanism: ' + id)
+-        missing_codes = set(definition.confirming_codes) - codes
+-        if missing_codes:
+-            gaps.append('Missing reviewed confirming observations: ' + ','.join(sorted(missing_codes)))
+-        independent = any(a.inspection_id != b.inspection_id and a.inspector_id != b.inspector_id
+-                          and a.source_id != b.source_id and (a.source_id, a.record_id) != (b.source_id, b.record_id)
+-                          for i, a in enumerate(reviewed_sources) for b in reviewed_sources[:i])
+-        if not independent:
+-            gaps.append('Two independent reviewed inspections/inspectors/source records required')
+-        if rule is None:
+-            gaps.append('No approved deterministic domain criterion for this cause')
++        refs, classification, gaps, complete = classify_evidence(self.repo, r, q, definition, incidents, rule, history)
++        support = classification.reviewed_support_ids
++        contradiction = classification.reviewed_contradiction_ids
++        excluded = classification.excluded_evidence_ids
+         paths, pathids, truncated, topology_ok = [], [], False, True
+         if rule and rule['requires_topology'] and not definition.topology:
+             topology_ok = False
+@@ -321,12 +279,18 @@ class EvidenceService:
+                 gaps.append('Required verified-only topology path unavailable within bounded search; candidate/proximity insufficient')
+             for id in sorted({ev for p in paths for ev in p.evidence_ids} - {ref.id for ref in refs}):
+                 refs.append(r.evidence(id, context_only=True))
+-        sufficient = bool(rule and support and independent and not missing_codes and topology_ok and not contradiction)
+-        label = classify(support=bool(support), contradiction=bool(contradiction), reviewed=bool(reviewed_sources), sufficient=sufficient)
+-        if support and contradiction:
++                classification = add_topology_context(classification, id)
++        if len(refs) > 20:
++            raise PreconditionFailed('B09 total source evidence references exceed20 including topology')
++        sufficient = bool(rule and complete and topology_ok)
++        label = classify_reviewed(reviewed_support=bool(support),
++            unreviewed_support=bool(classification.unreviewed_support_ids),
++            reviewed_contradiction=bool(contradiction),
++            unreviewed_contradiction=bool(classification.unreviewed_contradiction_ids), sufficient=sufficient)
++        if (support or classification.unreviewed_support_ids) and (contradiction or classification.unreviewed_contradiction_ids):
+             gaps.append('Conflicting evidence retained; no automatic source arbitration')
+         if not support and not contradiction:
+-            gaps.append('Inspection evidence missing or insufficient; no completed inspection invented')
++            gaps.append('Reviewed discriminating inspection evidence missing or insufficient; no completed inspection invented')
+         final = {'POSSIBLE': 'UNDER_REVIEW', 'SUPPORTED': 'SUPPORTED', 'CONTRADICTED': 'REJECTED', 'VERIFIED': 'VERIFIED', 'INCONCLUSIVE': 'INCONCLUSIVE'}[label]
+         state = h.properties['status']
+         sequence = [state]
+@@ -335,7 +299,7 @@ class EvidenceService:
+         if final != 'UNDER_REVIEW':
+             sequence.append(transition('Hypothesis', 'UNDER_REVIEW', final))
+         id = stable('ASSESS', q.hypothesis_id, q.request_id)
+-        return Assessment(id=id, hypothesis_id=h.id, previous_assessment_id=history[-1].id if history else None,
++        return Assessment(format_version=2, rule_version=2, classification=classification, id=id, hypothesis_id=h.id, previous_assessment_id=history[-1].id if history else None,
+             assessment=label, cause_code=definition.cause_code, mechanism=definition.mechanism,
+             confirming_codes=definition.confirming_codes, falsifying_codes=definition.falsifying_codes,
+             supporting_evidence_ids=support, contradicting_evidence_ids=contradiction, evidence_references=refs,
+@@ -343,7 +307,7 @@ class EvidenceService:
+             source_graph_revision=revision, graph_revision=revision+1, as_of=q.as_of, assessed_at=now,
+             paths=paths, path_ids=pathids, truncated=truncated, state_transitions=sequence,
+             reservations=['Observed findings and connectivity are distinct from causal criteria.',
+-                'Verification uses explicit reviewed synthetic-domain rulev1; not hydraulic prediction or resolution verification.',
++                'Verification uses explicit reviewed synthetic-domain rulev2 with per-occurrence coverage; not hydraulic prediction or resolution verification.',
+                 'Attribution-based independence is a conservative demo rule, not proof against colluding sources.',
+                 'Current versions only; future-updated evidence excluded, historical source versions not reconstructed.'])
+ 
+diff --git a/blockers.md b/blockers.md
+index 1865788..d1255ac 100644
+--- a/blockers.md
++++ b/blockers.md
+@@ -1,5 +1,17 @@
+ # blockers.md — Current blockers and verification spikes
+ 
++## Current status — B09-R, 2026-10-18 (takes precedence over every historical status)
++
++B09-R PASS — human review pending. Local accepted B09 baseline `688b893`, no push.
++Final617 PASS/0 FAIL/0 SKIP in746.62s:382 unit/235 real FalkorDB/MCP integration,
++including all582 original tests unchanged plus19 unit/16 integration. Both SPEC
++validators PASS. Actual restart/recreation and Browser persistence PASS. Original
++B01/B04/B05/B08/B09 sources/history, registryv3/0001/0002 and101 accepted trace
++observation checks preserved. Corrected v1->v2 fixture exact pre/post fingerprint/history
++PASS. No B10 work or city/canonical promotion; all42 drainage links CANDIDATE.
++Active-graph gate remains OPEN before B10 live investigator acceptance; details and
++reproducible plan in docs/evidence/B09R-ACTIVE-GRAPH.md. All18 requirements binding.
++
+ ## Current status — B09, 2026-10-17 (takes precedence over all history)
+ 
+ B08 externally accepted; local baseline00d98745. B09 PASS — human review pending.
+@@ -322,3 +334,16 @@ remain open at their designated milestones. All42 city drainage links CANDIDATE;
+ no canonical promotion or implicit reconstruction of unknown data. Trusted internal
+ review, source independence/finite budgets and active-graph integration limitations
+ remain explicit, not waived by domain tests. All18 requirements binding.
++
++## B09-R final blockers and limits | 2026-10-18
++No remaining B09-R corrective/runtime blocker; criteria A–J PASS. Human review pending.
++BLOCK-B09R-01 OPEN: coordinated active municipal graph/configuration before B10 live
++investigator acceptance. B08/B09 share only canonical write target; canonical empty,
++production MCP reads retained B04. Concrete reviewed acceptance plan in
++B09R-ACTIVE-GRAPH.md; no source promotion, graph merge or policy widening performed.
++This documented upcoming gate is explicitly permitted by B09-R section8, not a claim
++of integrated autonomy. Existing trusted internal review/independence, synthetic
++domain criteria, current-version historical visibility,20-source/100-edge/300-read/8s
++and inherited audit/scan limits remain. All original DEC-004/legacy55 fixture/source/
++unlinked/history/document/clock/service/evaluator/approval/event/API findings retain
++their phases;42 city links remain CANDIDATE. No B10 or later work.
+diff --git a/contracts/evidence_hypotheses.json b/contracts/evidence_hypotheses.json
+index 31bdad7..db1e705 100644
+--- a/contracts/evidence_hypotheses.json
++++ b/contracts/evidence_hypotheses.json
+@@ -1,5 +1,5 @@
+ {
+-  "version": 1,
++  "version": 2,
+   "municipality_scope": {
+     "field": "municipality_id",
+     "value": "demo-city",
+@@ -64,6 +64,54 @@
+           "title": "Assess",
+           "type": "object"
+         },
++        "IncidentAttribution": {
++          "additionalProperties": false,
++          "description": "Optional explicit occurrence binding; retrospective claims require prior source basis.",
++          "properties": {
++            "incident_ids": {
++              "items": {
++                "maxLength": 200,
++                "minLength": 1,
++                "type": "string"
++              },
++              "maxItems": 3,
++              "minItems": 1,
++              "title": "Incident Ids",
++              "type": "array"
++            },
++            "mode": {
++              "default": "OCCURRENCE",
++              "enum": [
++                "OCCURRENCE",
++                "RETROSPECTIVE"
++              ],
++              "title": "Mode",
++              "type": "string"
++            },
++            "rationale": {
++              "maxLength": 2000,
++              "minLength": 1,
++              "title": "Rationale",
++              "type": "string"
++            },
++            "basis_evidence_ids": {
++              "items": {
++                "maxLength": 200,
++                "minLength": 1,
++                "type": "string"
++              },
++              "maxItems": 5,
++              "title": "Basis Evidence Ids",
++              "type": "array"
++            }
++          },
++          "required": [
++            "incident_ids",
++            "rationale"
++          ],
++          "title": "IncidentAttribution",
++          "type": "object"
++        },
+         "Observation": {
+           "additionalProperties": false,
+           "properties": {
+@@ -369,6 +417,17 @@
+                 }
+               ],
+               "default": null
++            },
++            "attribution": {
++              "anyOf": [
++                {
++                  "$ref": "#/$defs/IncidentAttribution"
++                },
++                {
++                  "type": "null"
++                }
++              ],
++              "default": null
+             }
+           },
+           "required": [
+@@ -691,8 +750,11 @@
+           "additionalProperties": false,
+           "properties": {
+             "format_version": {
+-              "const": 1,
+               "default": 1,
++              "enum": [
++                1,
++                2
++              ],
+               "title": "Format Version",
+               "type": "integer"
+             },
+@@ -733,11 +795,25 @@
+               "type": "string"
+             },
+             "rule_version": {
+-              "const": 1,
+               "default": 1,
++              "enum": [
++                1,
++                2
++              ],
+               "title": "Rule Version",
+               "type": "integer"
+             },
++            "classification": {
++              "anyOf": [
++                {
++                  "$ref": "#/$defs/EvidenceClassification"
++                },
++                {
++                  "type": "null"
++                }
++              ],
++              "default": null
++            },
+             "cause_code": {
+               "maxLength": 200,
+               "minLength": 1,
+@@ -896,6 +972,84 @@
+           "title": "Assessment",
+           "type": "object"
+         },
++        "EvidenceClassification": {
++          "additionalProperties": false,
++          "properties": {
++            "uses": {
++              "items": {
++                "$ref": "#/$defs/EvidenceUse"
++              },
++              "maxItems": 220,
++              "title": "Uses",
++              "type": "array"
++            },
++            "reviewed_support_ids": {
++              "items": {
++                "maxLength": 200,
++                "minLength": 1,
++                "type": "string"
++              },
++              "title": "Reviewed Support Ids",
++              "type": "array"
++            },
++            "unreviewed_support_ids": {
++              "items": {
++                "maxLength": 200,
++                "minLength": 1,
++                "type": "string"
++              },
++              "title": "Unreviewed Support Ids",
++              "type": "array"
++            },
++            "reviewed_contradiction_ids": {
++              "items": {
++                "maxLength": 200,
++                "minLength": 1,
++                "type": "string"
++              },
++              "title": "Reviewed Contradiction Ids",
++              "type": "array"
++            },
++            "unreviewed_contradiction_ids": {
++              "items": {
++                "maxLength": 200,
++                "minLength": 1,
++                "type": "string"
++              },
++              "title": "Unreviewed Contradiction Ids",
++              "type": "array"
++            },
++            "contextual_evidence_ids": {
++              "items": {
++                "maxLength": 200,
++                "minLength": 1,
++                "type": "string"
++              },
++              "title": "Contextual Evidence Ids",
++              "type": "array"
++            },
++            "excluded_evidence_ids": {
++              "items": {
++                "maxLength": 200,
++                "minLength": 1,
++                "type": "string"
++              },
++              "title": "Excluded Evidence Ids",
++              "type": "array"
++            }
++          },
++          "required": [
++            "uses",
++            "reviewed_support_ids",
++            "unreviewed_support_ids",
++            "reviewed_contradiction_ids",
++            "unreviewed_contradiction_ids",
++            "contextual_evidence_ids",
++            "excluded_evidence_ids"
++          ],
++          "title": "EvidenceClassification",
++          "type": "object"
++        },
+         "EvidenceReference": {
+           "additionalProperties": false,
+           "properties": {
+@@ -1004,6 +1158,124 @@
+           "title": "EvidenceReference",
+           "type": "object"
+         },
++        "EvidenceUse": {
++          "additionalProperties": false,
++          "properties": {
++            "evidence_id": {
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Evidence Id",
++              "type": "string"
++            },
++            "observation_index": {
++              "anyOf": [
++                {
++                  "maximum": 9,
++                  "minimum": 0,
++                  "type": "integer"
++                },
++                {
++                  "type": "null"
++                }
++              ],
++              "default": null,
++              "title": "Observation Index"
++            },
++            "category": {
++              "enum": [
++                "REVIEWED_SUPPORT",
++                "UNREVIEWED_SUPPORT",
++                "REVIEWED_CONTRADICTION",
++                "UNREVIEWED_CONTRADICTION",
++                "CONTEXT",
++                "EXCLUDED"
++              ],
++              "title": "Category",
++              "type": "string"
++            },
++            "incident_ids": {
++              "items": {
++                "maxLength": 200,
++                "minLength": 1,
++                "type": "string"
++              },
++              "maxItems": 3,
++              "title": "Incident Ids",
++              "type": "array"
++            },
++            "reason": {
++              "maxLength": 2000,
++              "minLength": 1,
++              "title": "Reason",
++              "type": "string"
++            },
++            "basis_evidence_ids": {
++              "items": {
++                "maxLength": 200,
++                "minLength": 1,
++                "type": "string"
++              },
++              "maxItems": 5,
++              "title": "Basis Evidence Ids",
++              "type": "array"
++            }
++          },
++          "required": [
++            "evidence_id",
++            "category",
++            "reason"
++          ],
++          "title": "EvidenceUse",
++          "type": "object"
++        },
++        "IncidentAttribution": {
++          "additionalProperties": false,
++          "description": "Optional explicit occurrence binding; retrospective claims require prior source basis.",
++          "properties": {
++            "incident_ids": {
++              "items": {
++                "maxLength": 200,
++                "minLength": 1,
++                "type": "string"
++              },
++              "maxItems": 3,
++              "minItems": 1,
++              "title": "Incident Ids",
++              "type": "array"
++            },
++            "mode": {
++              "default": "OCCURRENCE",
++              "enum": [
++                "OCCURRENCE",
++                "RETROSPECTIVE"
++              ],
++              "title": "Mode",
++              "type": "string"
++            },
++            "rationale": {
++              "maxLength": 2000,
++              "minLength": 1,
++              "title": "Rationale",
++              "type": "string"
++            },
++            "basis_evidence_ids": {
++              "items": {
++                "maxLength": 200,
++                "minLength": 1,
++                "type": "string"
++              },
++              "maxItems": 5,
++              "title": "Basis Evidence Ids",
++              "type": "array"
++            }
++          },
++          "required": [
++            "incident_ids",
++            "rationale"
++          ],
++          "title": "IncidentAttribution",
++          "type": "object"
++        },
+         "JsonValue": {},
+         "Observation": {
+           "additionalProperties": false,
+@@ -1138,8 +1410,11 @@
+           "additionalProperties": false,
+           "properties": {
+             "format_version": {
+-              "const": 1,
+               "default": 1,
++              "enum": [
++                1,
++                2
++              ],
+               "title": "Format Version",
+               "type": "integer"
+             },
+@@ -1220,6 +1495,17 @@
+                 }
+               ],
+               "default": null
++            },
++            "attribution": {
++              "anyOf": [
++                {
++                  "$ref": "#/$defs/IncidentAttribution"
++                },
++                {
++                  "type": "null"
++                }
++              ],
++              "default": null
+             }
+           },
+           "required": [
+@@ -1377,43 +1663,121 @@
+     },
+     "Assessment": {
+       "$defs": {
+-        "EvidenceReference": {
++        "EvidenceClassification": {
+           "additionalProperties": false,
+           "properties": {
+-            "id": {
+-              "maxLength": 200,
+-              "minLength": 1,
+-              "title": "Id",
+-              "type": "string"
++            "uses": {
++              "items": {
++                "$ref": "#/$defs/EvidenceUse"
++              },
++              "maxItems": 220,
++              "title": "Uses",
++              "type": "array"
+             },
+-            "content_hash": {
+-              "pattern": "^[0-9a-f]{64}$",
+-              "title": "Content Hash",
+-              "type": "string"
++            "reviewed_support_ids": {
++              "items": {
++                "maxLength": 200,
++                "minLength": 1,
++                "type": "string"
++              },
++              "title": "Reviewed Support Ids",
++              "type": "array"
+             },
+-            "source_kind": {
+-              "enum": [
+-                "SYNTHETIC",
+-                "PUBLIC",
+-                "MUNICIPAL",
+-                "USER",
+-                "AGENT"
+-              ],
+-              "title": "Source Kind",
+-              "type": "string"
++            "unreviewed_support_ids": {
++              "items": {
++                "maxLength": 200,
++                "minLength": 1,
++                "type": "string"
++              },
++              "title": "Unreviewed Support Ids",
++              "type": "array"
+             },
+-            "source_record_id": {
+-              "anyOf": [
+-                {
+-                  "type": "string"
+-                },
+-                {
+-                  "type": "null"
+-                }
+-              ],
+-              "title": "Source Record Id"
++            "reviewed_contradiction_ids": {
++              "items": {
++                "maxLength": 200,
++                "minLength": 1,
++                "type": "string"
++              },
++              "title": "Reviewed Contradiction Ids",
++              "type": "array"
+             },
+-            "reliability": {
++            "unreviewed_contradiction_ids": {
++              "items": {
++                "maxLength": 200,
++                "minLength": 1,
++                "type": "string"
++              },
++              "title": "Unreviewed Contradiction Ids",
++              "type": "array"
++            },
++            "contextual_evidence_ids": {
++              "items": {
++                "maxLength": 200,
++                "minLength": 1,
++                "type": "string"
++              },
++              "title": "Contextual Evidence Ids",
++              "type": "array"
++            },
++            "excluded_evidence_ids": {
++              "items": {
++                "maxLength": 200,
++                "minLength": 1,
++                "type": "string"
++              },
++              "title": "Excluded Evidence Ids",
++              "type": "array"
++            }
++          },
++          "required": [
++            "uses",
++            "reviewed_support_ids",
++            "unreviewed_support_ids",
++            "reviewed_contradiction_ids",
++            "unreviewed_contradiction_ids",
++            "contextual_evidence_ids",
++            "excluded_evidence_ids"
++          ],
++          "title": "EvidenceClassification",
++          "type": "object"
++        },
++        "EvidenceReference": {
++          "additionalProperties": false,
++          "properties": {
++            "id": {
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Id",
++              "type": "string"
++            },
++            "content_hash": {
++              "pattern": "^[0-9a-f]{64}$",
++              "title": "Content Hash",
++              "type": "string"
++            },
++            "source_kind": {
++              "enum": [
++                "SYNTHETIC",
++                "PUBLIC",
++                "MUNICIPAL",
++                "USER",
++                "AGENT"
++              ],
++              "title": "Source Kind",
++              "type": "string"
++            },
++            "source_record_id": {
++              "anyOf": [
++                {
++                  "type": "string"
++                },
++                {
++                  "type": "null"
++                }
++              ],
++              "title": "Source Record Id"
++            },
++            "reliability": {
+               "enum": [
+                 "UNVERIFIED",
+                 "CORROBORATED",
+@@ -1485,6 +1849,124 @@
+           "title": "EvidenceReference",
+           "type": "object"
+         },
++        "EvidenceUse": {
++          "additionalProperties": false,
++          "properties": {
++            "evidence_id": {
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Evidence Id",
++              "type": "string"
++            },
++            "observation_index": {
++              "anyOf": [
++                {
++                  "maximum": 9,
++                  "minimum": 0,
++                  "type": "integer"
++                },
++                {
++                  "type": "null"
++                }
++              ],
++              "default": null,
++              "title": "Observation Index"
++            },
++            "category": {
++              "enum": [
++                "REVIEWED_SUPPORT",
++                "UNREVIEWED_SUPPORT",
++                "REVIEWED_CONTRADICTION",
++                "UNREVIEWED_CONTRADICTION",
++                "CONTEXT",
++                "EXCLUDED"
++              ],
++              "title": "Category",
++              "type": "string"
++            },
++            "incident_ids": {
++              "items": {
++                "maxLength": 200,
++                "minLength": 1,
++                "type": "string"
++              },
++              "maxItems": 3,
++              "title": "Incident Ids",
++              "type": "array"
++            },
++            "reason": {
++              "maxLength": 2000,
++              "minLength": 1,
++              "title": "Reason",
++              "type": "string"
++            },
++            "basis_evidence_ids": {
++              "items": {
++                "maxLength": 200,
++                "minLength": 1,
++                "type": "string"
++              },
++              "maxItems": 5,
++              "title": "Basis Evidence Ids",
++              "type": "array"
++            }
++          },
++          "required": [
++            "evidence_id",
++            "category",
++            "reason"
++          ],
++          "title": "EvidenceUse",
++          "type": "object"
++        },
++        "IncidentAttribution": {
++          "additionalProperties": false,
++          "description": "Optional explicit occurrence binding; retrospective claims require prior source basis.",
++          "properties": {
++            "incident_ids": {
++              "items": {
++                "maxLength": 200,
++                "minLength": 1,
++                "type": "string"
++              },
++              "maxItems": 3,
++              "minItems": 1,
++              "title": "Incident Ids",
++              "type": "array"
++            },
++            "mode": {
++              "default": "OCCURRENCE",
++              "enum": [
++                "OCCURRENCE",
++                "RETROSPECTIVE"
++              ],
++              "title": "Mode",
++              "type": "string"
++            },
++            "rationale": {
++              "maxLength": 2000,
++              "minLength": 1,
++              "title": "Rationale",
++              "type": "string"
++            },
++            "basis_evidence_ids": {
++              "items": {
++                "maxLength": 200,
++                "minLength": 1,
++                "type": "string"
++              },
++              "maxItems": 5,
++              "title": "Basis Evidence Ids",
++              "type": "array"
++            }
++          },
++          "required": [
++            "incident_ids",
++            "rationale"
++          ],
++          "title": "IncidentAttribution",
++          "type": "object"
++        },
+         "JsonValue": {},
+         "Observation": {
+           "additionalProperties": false,
+@@ -1619,8 +2101,11 @@
+           "additionalProperties": false,
+           "properties": {
+             "format_version": {
+-              "const": 1,
+               "default": 1,
++              "enum": [
++                1,
++                2
++              ],
+               "title": "Format Version",
+               "type": "integer"
+             },
+@@ -1701,6 +2186,17 @@
+                 }
+               ],
+               "default": null
++            },
++            "attribution": {
++              "anyOf": [
++                {
++                  "$ref": "#/$defs/IncidentAttribution"
++                },
++                {
++                  "type": "null"
++                }
++              ],
++              "default": null
+             }
+           },
+           "required": [
+@@ -1760,8 +2256,11 @@
+       "additionalProperties": false,
+       "properties": {
+         "format_version": {
+-          "const": 1,
+           "default": 1,
++          "enum": [
++            1,
++            2
++          ],
+           "title": "Format Version",
+           "type": "integer"
+         },
+@@ -1802,11 +2301,25 @@
+           "type": "string"
+         },
+         "rule_version": {
+-          "const": 1,
+           "default": 1,
++          "enum": [
++            1,
++            2
++          ],
+           "title": "Rule Version",
+           "type": "integer"
+         },
++        "classification": {
++          "anyOf": [
++            {
++              "$ref": "#/$defs/EvidenceClassification"
++            },
++            {
++              "type": "null"
++            }
++          ],
++          "default": null
++        },
+         "cause_code": {
+           "maxLength": 200,
+           "minLength": 1,
+@@ -1967,6 +2480,54 @@
+     },
+     "Report": {
+       "$defs": {
++        "IncidentAttribution": {
++          "additionalProperties": false,
++          "description": "Optional explicit occurrence binding; retrospective claims require prior source basis.",
++          "properties": {
++            "incident_ids": {
++              "items": {
++                "maxLength": 200,
++                "minLength": 1,
++                "type": "string"
++              },
++              "maxItems": 3,
++              "minItems": 1,
++              "title": "Incident Ids",
++              "type": "array"
++            },
++            "mode": {
++              "default": "OCCURRENCE",
++              "enum": [
++                "OCCURRENCE",
++                "RETROSPECTIVE"
++              ],
++              "title": "Mode",
++              "type": "string"
++            },
++            "rationale": {
++              "maxLength": 2000,
++              "minLength": 1,
++              "title": "Rationale",
++              "type": "string"
++            },
++            "basis_evidence_ids": {
++              "items": {
++                "maxLength": 200,
++                "minLength": 1,
++                "type": "string"
++              },
++              "maxItems": 5,
++              "title": "Basis Evidence Ids",
++              "type": "array"
++            }
++          },
++          "required": [
++            "incident_ids",
++            "rationale"
++          ],
++          "title": "IncidentAttribution",
++          "type": "object"
++        },
+         "Observation": {
+           "additionalProperties": false,
+           "properties": {
+@@ -2086,8 +2647,11 @@
+       "additionalProperties": false,
+       "properties": {
+         "format_version": {
+-          "const": 1,
+           "default": 1,
++          "enum": [
++            1,
++            2
++          ],
+           "title": "Format Version",
+           "type": "integer"
+         },
+@@ -2168,6 +2732,17 @@
+             }
+           ],
+           "default": null
++        },
++        "attribution": {
++          "anyOf": [
++            {
++              "$ref": "#/$defs/IncidentAttribution"
++            },
++            {
++              "type": "null"
++            }
++          ],
++          "default": null
+         }
+       },
+       "required": [
+@@ -2297,6 +2872,274 @@
+       ],
+       "title": "InspectionView",
+       "type": "object"
++    },
++    "IncidentAttribution": {
++      "additionalProperties": false,
++      "description": "Optional explicit occurrence binding; retrospective claims require prior source basis.",
++      "properties": {
++        "incident_ids": {
++          "items": {
++            "maxLength": 200,
++            "minLength": 1,
++            "type": "string"
++          },
++          "maxItems": 3,
++          "minItems": 1,
++          "title": "Incident Ids",
++          "type": "array"
++        },
++        "mode": {
++          "default": "OCCURRENCE",
++          "enum": [
++            "OCCURRENCE",
++            "RETROSPECTIVE"
++          ],
++          "title": "Mode",
++          "type": "string"
++        },
++        "rationale": {
++          "maxLength": 2000,
++          "minLength": 1,
++          "title": "Rationale",
++          "type": "string"
++        },
++        "basis_evidence_ids": {
++          "items": {
++            "maxLength": 200,
++            "minLength": 1,
++            "type": "string"
++          },
++          "maxItems": 5,
++          "title": "Basis Evidence Ids",
++          "type": "array"
++        }
++      },
++      "required": [
++        "incident_ids",
++        "rationale"
++      ],
++      "title": "IncidentAttribution",
++      "type": "object"
++    },
++    "EvidenceUse": {
++      "additionalProperties": false,
++      "properties": {
++        "evidence_id": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Evidence Id",
++          "type": "string"
++        },
++        "observation_index": {
++          "anyOf": [
++            {
++              "maximum": 9,
++              "minimum": 0,
++              "type": "integer"
++            },
++            {
++              "type": "null"
++            }
++          ],
++          "default": null,
++          "title": "Observation Index"
++        },
++        "category": {
++          "enum": [
++            "REVIEWED_SUPPORT",
++            "UNREVIEWED_SUPPORT",
++            "REVIEWED_CONTRADICTION",
++            "UNREVIEWED_CONTRADICTION",
++            "CONTEXT",
++            "EXCLUDED"
++          ],
++          "title": "Category",
++          "type": "string"
++        },
++        "incident_ids": {
++          "items": {
++            "maxLength": 200,
++            "minLength": 1,
++            "type": "string"
++          },
++          "maxItems": 3,
++          "title": "Incident Ids",
++          "type": "array"
++        },
++        "reason": {
++          "maxLength": 2000,
++          "minLength": 1,
++          "title": "Reason",
++          "type": "string"
++        },
++        "basis_evidence_ids": {
++          "items": {
++            "maxLength": 200,
++            "minLength": 1,
++            "type": "string"
++          },
++          "maxItems": 5,
++          "title": "Basis Evidence Ids",
++          "type": "array"
++        }
++      },
++      "required": [
++        "evidence_id",
++        "category",
++        "reason"
++      ],
++      "title": "EvidenceUse",
++      "type": "object"
++    },
++    "EvidenceClassification": {
++      "$defs": {
++        "EvidenceUse": {
++          "additionalProperties": false,
++          "properties": {
++            "evidence_id": {
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Evidence Id",
++              "type": "string"
++            },
++            "observation_index": {
++              "anyOf": [
++                {
++                  "maximum": 9,
++                  "minimum": 0,
++                  "type": "integer"
++                },
++                {
++                  "type": "null"
++                }
++              ],
++              "default": null,
++              "title": "Observation Index"
++            },
++            "category": {
++              "enum": [
++                "REVIEWED_SUPPORT",
++                "UNREVIEWED_SUPPORT",
++                "REVIEWED_CONTRADICTION",
++                "UNREVIEWED_CONTRADICTION",
++                "CONTEXT",
++                "EXCLUDED"
++              ],
++              "title": "Category",
++              "type": "string"
++            },
++            "incident_ids": {
++              "items": {
++                "maxLength": 200,
++                "minLength": 1,
++                "type": "string"
++              },
++              "maxItems": 3,
++              "title": "Incident Ids",
++              "type": "array"
++            },
++            "reason": {
++              "maxLength": 2000,
++              "minLength": 1,
++              "title": "Reason",
++              "type": "string"
++            },
++            "basis_evidence_ids": {
++              "items": {
++                "maxLength": 200,
++                "minLength": 1,
++                "type": "string"
++              },
++              "maxItems": 5,
++              "title": "Basis Evidence Ids",
++              "type": "array"
++            }
++          },
++          "required": [
++            "evidence_id",
++            "category",
++            "reason"
++          ],
++          "title": "EvidenceUse",
++          "type": "object"
++        }
++      },
++      "additionalProperties": false,
++      "properties": {
++        "uses": {
++          "items": {
++            "$ref": "#/$defs/EvidenceUse"
++          },
++          "maxItems": 220,
++          "title": "Uses",
++          "type": "array"
++        },
++        "reviewed_support_ids": {
++          "items": {
++            "maxLength": 200,
++            "minLength": 1,
++            "type": "string"
++          },
++          "title": "Reviewed Support Ids",
++          "type": "array"
++        },
++        "unreviewed_support_ids": {
++          "items": {
++            "maxLength": 200,
++            "minLength": 1,
++            "type": "string"
++          },
++          "title": "Unreviewed Support Ids",
++          "type": "array"
++        },
++        "reviewed_contradiction_ids": {
++          "items": {
++            "maxLength": 200,
++            "minLength": 1,
++            "type": "string"
++          },
++          "title": "Reviewed Contradiction Ids",
++          "type": "array"
++        },
++        "unreviewed_contradiction_ids": {
++          "items": {
++            "maxLength": 200,
++            "minLength": 1,
++            "type": "string"
++          },
++          "title": "Unreviewed Contradiction Ids",
++          "type": "array"
++        },
++        "contextual_evidence_ids": {
++          "items": {
++            "maxLength": 200,
++            "minLength": 1,
++            "type": "string"
++          },
++          "title": "Contextual Evidence Ids",
++          "type": "array"
++        },
++        "excluded_evidence_ids": {
++          "items": {
++            "maxLength": 200,
++            "minLength": 1,
++            "type": "string"
++          },
++          "title": "Excluded Evidence Ids",
++          "type": "array"
++        }
++      },
++      "required": [
++        "uses",
++        "reviewed_support_ids",
++        "unreviewed_support_ids",
++        "reviewed_contradiction_ids",
++        "unreviewed_contradiction_ids",
++        "contextual_evidence_ids",
++        "excluded_evidence_ids"
++      ],
++      "title": "EvidenceClassification",
++      "type": "object"
+     }
+   },
+   "domain_criteria": {
+@@ -2414,17 +3257,15 @@
+     }
+   },
+   "verification": {
+-    "version": 1,
++    "version": 2,
+     "required": [
+-      "complete reviewed confirming code set",
+-      "two distinct inspections",
+-      "two distinct inspectors",
+-      "two distinct source IDs and records",
+-      "no qualifying contradiction",
++      "complete reviewed confirming code set for EACH explained incident",
++      "two independent reviewed inspections/inspectors/source IDs and records PER incident",
++      "no relevant unresolved supporting/contrary conflict",
+       "required verified-only topology path present and untruncated"
+     ],
+     "unknown_criterion": "May propose; never auto-verify",
+-    "discovery": "Union requested IDs, all previous assessment support/contradiction IDs and actual concerned-asset inspection reports, then temporal filter; cap20 fails closed",
++    "discovery": "Union requested IDs, previous assessment classified IDs and actual concerned-asset inspection reports; per-record as_of and occurrence attribution; cap20 including retrospective basis fails closed",
+     "exclusions": [
+       "proximity",
+       "candidate connectivity",
+@@ -2433,7 +3274,9 @@
+       "work-order completion",
+       "historical similarity"
+     ],
+-    "independence": "Attribution-based demonstration rule; cannot prove independence against colluding authors"
++    "independence": "Distinct inspection/inspector/source/record plus disjoint evidence lineage; retrospective derivative cannot corroborate its own basis",
++    "authority": "Reviewed domain-qualified discriminating observations alone create causal evidence edges. Unreviewed support may yield POSSIBLE; unreviewed contradiction alone yields INCONCLUSIVE and cannot reject. Mixed positive/negative claims yield INCONCLUSIVE.",
++    "meaning": "Each observation has one category and named incident attribution. A multi-observation report can occupy multiple categories. Contextual records retain source references/hashes, never gain causal edges by existence."
+   },
+   "storage": {
+     "proposal": "Readable Hypothesis.statement; strict original command/expectations/mechanism in PROPOSES source Evidence journal",
+@@ -2458,6 +3301,19 @@
+   },
+   "timestamps": "Canonical UTC Z, microsecond datetime comparisons; evidence knowledge/validity as_of, assessed_at actual recording clock; no historical mutable-node reconstruction",
+   "permissions": "Trusted internal typed actor/reviewer context only; no public authentication, MCP writes, dispatch, worker or B15 events",
+-  "active_graph_gate": "No canonical seed promotion; explicit source-preserving B08 copies in B09 tests; later reviewed same-graph B08/B09/MCP/agent/API integration required",
+-  "remaining": "All18 requirements binding; agents B10, source knowledge B11, planning/auth B12/B13, dispatch/monitor B14, durable events B15"
++  "active_graph_gate": "Production source is retained B04 city; B08/B09 disposable guards differ, common writable target only civicly_knowledge. Same-active-graph B08/B09/MCP acceptance gate required before B10 live investigator; no canonical promotion or graph merge during B09-R. See docs/evidence/B09R-ACTIVE-GRAPH.md.",
++  "remaining": "All18 requirements binding; agents B10, source knowledge B11, planning/auth B12/B13, dispatch/monitor B14, durable events B15",
++  "semantic_versions": {
++    "assessment_v1": "Read unchanged historical meaning; no new classification field emitted or historical rewrite",
++    "assessment_v2": "rule_version2, explicit classification/uses and matching causal-edge lists",
++    "report_v1": "No explicit attribution field; preserve original report/command/journal hash shape",
++    "report_v2": "Explicit typed occurrence or retrospective attribution; absent new optional fields excluded from old serialized models"
++  },
++  "occurrence_attribution": {
++    "bindings": "Actual EXPLAINS/CONCERNS must match original proposal; INSPECTS request journal -> Investigation INVESTIGATES Incident binds reports",
++    "direct": "Concerned asset with domain subtype and OBSERVED result; named incident interval [started_at,ended_at). Open unresolved incident permits later observations. Terminal without end is uncertain. Overlapping occurrences require explicit named attribution.",
++    "retrospective": "Independent review, rationale, explicit target IDs within request investigation and 1..5 earlier reviewed direct inspection records with matching asset/code/dated occurrence binding. No recursive retrospective basis. Derivative source cannot create independence.",
++    "cutoff": "All source/current-version visibility, report recording and observation chronology preserved. Future records excluded; no mutable historical state reconstruction.",
++    "storage": "Typed metadata in existing immutable attributed report/journal JSON; no new schema property, state, relationship or migration"
++  }
+ }
+diff --git a/decision.md b/decision.md
+index 179a853..b59d93b 100644
+--- a/decision.md
++++ b/decision.md
+@@ -938,3 +938,23 @@ run is not a final PASS. Restart complete582-test regression after focused guard
+   Proposed B10 only after review: bounded typed LangGraph/approved MCP and controlled
+   analytical-service integration, FalkorDBSaver pause/restart/resume, fake/live model
+   evidence separated; explicit active-graph/read-adapter review. STOP.
++
++### DEC-040 — B09-R authority, meaning and occurrence semantics before coding | 2026-10-18
++- Scope: B09-R only, R01/R03/R04/R05/R08/R09/R11/R15/R17; preserve all18. Local accepted B09 baseline `688b893`, no push;582/582 regression passed in724.05s, both specification validators and retained B01–B09 readback passed.
++- Reproduced on real isolated graphs: unreviewed falsifier -> CONTRADICTED/REJECTED; AGENT context -> POSSIBLE/SUPPORTED_BY; post-end inspection -> SUPPORTED. See B09R-before-results.json.
++- Decision: rule-v2 assessment snapshots explicitly classify every use as reviewed/unreviewed support/contradiction, context or excluded. Only reviewed discriminating evidence creates causal edges; mixed positive/negative claims are INCONCLUSIVE. Preserve all five labels and hypothesis state machine.
++- Occurrence relevance: actual EXPLAINS/CONCERNS plus INSPECTS request journal -> investigation/incident, asset subtype, observation/recording visibility and individual [start,end) interval. No earliest-start shortcut. Per-incident confirming-code and independent-source coverage required for VERIFIED. Ambiguous attribution remains qualified.
++- Optional typed attribution in existing report/journal JSON: named occurrences, reason, mode and prior reviewed direct evidence basis for retrospective claims. No new ontology property, relationship, state or migration. Disjoint source lineage prevents derivative corroboration.
++- Compatibility: v1 assessments/reports/journals/receipts retain original shape and historical meaning; omitted new defaults never enter old hashes. Newly authored assessment/rule version2, explicit-attribution report version2. Alternatives (rewrite v1 records, new graph edge, chronology-only matching) rejected.
++- Files to touch: evidence models/policies/reader/service; focused classification/relevance modules; evidence contract; new tests/fixtures; EVIDENCE.md; six trackers and B09R evidence. Repository/writer/B08/B05/MCP/registry/migrations/dependencies unchanged.
++- Risks: immutable-v1 decoding/hash compatibility, over-attribution across recurrence, false independence, reader budgets, shared active-graph gap. Fail closed and preserve retained source records; application rollback uses baseline source, never rewrites new/old assessments.
++- Tests: focused unit + real persisted decisions/edges/status; January repair/August recurrence; retrospective/as_of; legacy replay/append; existing full regression including actual restart/recreation and both spec validators; retained fingerprint/trace/secret/source audit.
++- Human verifies categorized source lists against persisted edges/status, v1/v2 history and provenance, conservative bounded topology, unchanged municipal data and explicit B10 active-graph gate. No B10 implementation.
++
++### DEC-041 — B09-R final compatibility and runtime evidence | 2026-10-18
++- Rule-v2 corrections PASS;617 tests (382 unit/235 integration) in746.62s,0 failures/skips; both specification validators PASS.582 original tests preserved,19 unit/16 real integration added.
++- Runtime unchanged: Python3.12.1, Pydantic2.14.1, FalkorDB client1.8.0, Redis client8.1.0, MCP2.3.0, pytest9.1.1, FastAPI0.143.3; FalkorDB60002/6.0.2 on Redis8.10.2. No pins/locks/migrations/registry changes. Canonical91 index groups/182 constraints operational, domain nodes0.
++- Real chronology initially13 PASS/1 FAIL exposed an unnecessary future mutable-cluster read while selecting identities; fixed by exact immutable opening-journal/INVESTIGATES binding. No relaxation of incident/source as_of visibility. New-test basename collection collision corrected by renaming only the new unit module.
++- Read-only verification harness fixes: preserve replay metadata during equality checks; select actual trace result lists instead of JSON-schema property dictionaries. Actual accepted trace records were never missing or rewritten;31 B09 observations and70 prior observations rechecked. All attempt details retained.
++- Old v1 assessment/journal hashes and original accepted B09 graph unchanged; new correction appends v2 and legitimate state transitions. New39-node/28-edge/revision58 legacy compatibility graph exact fingerprint and history survive lifecycle; original city858/1246/revision2104 and42 candidate drainage links unchanged.
++- Human B09-R review next. Active-graph policy/configuration remains a B10 prerequisite before live investigator acceptance; explicit source promotion or shared disposable policy needs review. B09-R does not claim a full one-graph agent chain. B10 not started. Evidence: B09R-RESULTS/COMMANDS/COMPATIBILITY/ACTIVE-GRAPH, test summary, raw logs, source audit and patch.
+diff --git a/flow.md b/flow.md
+index c857c66..47facec 100644
+--- a/flow.md
++++ b/flow.md
+@@ -467,3 +467,34 @@ B01/B05/native schemas +70 accepted trace observations -> restore accepted gener
+ B07R/B08 proof bytes/save fresh B09 copies -> frozen source/secret/process audit ->
+ file inventory/source patch and both SPEC validators. Canonical domain nodes remain0.
+ No B10 or later phase; full results and failures remain reviewable in docs/evidence.
++
++## B09-R actual file and data flow | 2026-10-18
++
++`EvidenceService.execute` still uses the same strict commands, actor authorization,
++PREPARED journal, fenced session, revision/CAS and atomic writer/COMMITTED receipt.
++`service.py` imports `classification.classify_evidence` and `policies.classify_reviewed`;
++classification imports typed evidence uses and `relevance.attribute/independent`.
++`relevance.py` follows INSPECTS -> immutable request journal -> Investigation ->
++actual INVESTIGATES bindings + immutable open journal; never infers an occurrence
++from the asset alone or reads a cluster's future mutable pattern to select identity.
++Actual EXPLAINS/CONCERNS/AFFECTS must agree with the proposal and affected asset or
++declared topology destination. Current incident visibility remains strict.
++
++For each visible report observation: validate own provenance/inspection/finding hash,
++asset subtype, request binding and per-incident interval; classify authority + meaning.
++Optional version2 report attribution names earlier incidents and reviewed direct
++evidence basis; earlier evidence references/hashes remain in the snapshot. Independent
++corroboration requires disjoint source lineage per explained occurrence.
++`Reader.topology` continues to use B05 verified-only bounded graph algorithms.
++Only reviewed discriminating lists become SUPPORTED_BY/CONTRADICTED_BY; all other
++uses remain explicit immutable assessment metadata. Hypothesis state and append-only
++HAS_ASSESSMENT chain are written through unchanged writer.py. `models.py` reads v1
++without emitting absent new fields and validates v2 category summaries/edge lists.
++
++New tests: `unit/test_evidence_review_models.py`, `integration/test_evidence_review.py`,
++`tests/b09r_fixtures.py` (explicit owned B08 source copies, actual intake, dated authored
++repair/closure/recurrence). Existing B09/MCP/B05 tests are unchanged. No migrations,
++new graph labels/relationships, dependency changes or runtime graph target changes.
++Persistence remains B01 AOF retained volumes; no graph merge, volume removal or
++historical assessment rewrite. See B09R-ACTIVE-GRAPH.md for the uncompleted shared
++application graph gate before a live B10 investigator.
+diff --git a/implementation_status.md b/implementation_status.md
+index ba7b3b5..e957e94 100644
+--- a/implementation_status.md
++++ b/implementation_status.md
+@@ -1,5 +1,17 @@
+ # implementation_status.md — Current implementation truth
+ 
++## Current status — B09-R, 2026-10-18 (takes precedence over every historical status)
++
++B09-R PASS — human review pending. Local accepted B09 baseline `688b893`, no push.
++Final617 PASS/0 FAIL/0 SKIP in746.62s:382 unit/235 real FalkorDB/MCP integration,
++including all582 original tests unchanged plus19 unit/16 integration. Both SPEC
++validators PASS. Actual restart/recreation and Browser persistence PASS. Original
++B01/B04/B05/B08/B09 sources/history, registryv3/0001/0002 and101 accepted trace
++observation checks preserved. Corrected v1->v2 fixture exact pre/post fingerprint/history
++PASS. No B10 work or city/canonical promotion; all42 drainage links CANDIDATE.
++Active-graph gate remains OPEN before B10 live investigator acceptance; details and
++reproducible plan in docs/evidence/B09R-ACTIVE-GRAPH.md. All18 requirements binding.
++
+ ## Current status — B09, 2026-10-17 (takes precedence over all history)
+ 
+ B08 externally accepted; local baseline00d98745. B09 PASS — human review pending.
+@@ -299,3 +311,12 @@ restart/recreation. Fresh official/domain MCP proofs PASS. No schema/pin/data/MC
+ implementation changes; accepted tests retained, one baseline test-cap correction.
+ Active-graph integration/public auth/dispatch/events/agent/memory/GraphRAG/API remain
+ future gates. B09 human review pending; B10 not begun.
++
++## B09-R implemented boundary | 2026-10-18
++Implemented: rule-v2 authority/meaning categories and per-occurrence coverage, strict
++version-aware models, explicit retrospective source basis and disjoint source lineage;
++immutable v1 decode/replay and appended correction. Domain write/fence/CAS/journal
++path unchanged. Actual MCP reads v2 reports without inventory/envelope change.
++No registry/migration/dependency/repository/algorithm/B08/MCP runtime modification.
++See B09R-FILES.md for exact inventory and B09R-changes.patch for source/document diff.
++No B10 orchestration/memory/GraphRAG/planning/API/frontend implementation.
+diff --git a/task_board.md b/task_board.md
+index 052e0ac..9437883 100644
+--- a/task_board.md
++++ b/task_board.md
+@@ -1,5 +1,17 @@
+ # task_board.md — Human-reviewed task queue
+ 
++## Current status — B09-R, 2026-10-18 (takes precedence over every historical status)
++
++B09-R PASS — human review pending. Local accepted B09 baseline `688b893`, no push.
++Final617 PASS/0 FAIL/0 SKIP in746.62s:382 unit/235 real FalkorDB/MCP integration,
++including all582 original tests unchanged plus19 unit/16 integration. Both SPEC
++validators PASS. Actual restart/recreation and Browser persistence PASS. Original
++B01/B04/B05/B08/B09 sources/history, registryv3/0001/0002 and101 accepted trace
++observation checks preserved. Corrected v1->v2 fixture exact pre/post fingerprint/history
++PASS. No B10 work or city/canonical promotion; all42 drainage links CANDIDATE.
++Active-graph gate remains OPEN before B10 live investigator acceptance; details and
++reproducible plan in docs/evidence/B09R-ACTIVE-GRAPH.md. All18 requirements binding.
++
+ ## Current status — B09, 2026-10-17 (takes precedence over all history)
+ 
+ B08 externally accepted; local baseline00d98745. B09 PASS — human review pending.
+@@ -225,3 +237,9 @@ No B09 implementation. All18 product requirements remain mandatory, not complete
+ | B10 | TODO — not started | No |Bounded LangGraph/MCP/checkpoint and approved analytical integration only after review |
+ 
+ All18 requirements mandatory; no full product/agent completion claim. STOP.
++
++## B09-R review gate | 2026-10-18
++- [x] Evidence authority/meaning/occurrence corrections, versioned contract, real matrix/chronology/MCP/history proof.
++- [x] Complete617-case regression, both SPEC validators, lifecycle, source/retained evidence and audit package.
++- [ ] Human review of B09-R. STOP here.
++- [ ] B10 only after explicit authorization: reviewed active-graph prerequisite, LangGraph Supervisor/Investigate/Analyze/Plan/Coordinate, structured tool choices, finite budgets, FalkorDBSaver checkpoint and pause/restart/resume; live LLM evidence recorded separately. No B11+ business features.
+diff --git a/test_log.md b/test_log.md
+index fac6e02..69bb8c1 100644
+--- a/test_log.md
++++ b/test_log.md
+@@ -1,5 +1,17 @@
+ # test_log.md — Append-only verification record
+ 
++## Current status — B09-R, 2026-10-18 (takes precedence over every historical status)
++
++B09-R PASS — human review pending. Local accepted B09 baseline `688b893`, no push.
++Final617 PASS/0 FAIL/0 SKIP in746.62s:382 unit/235 real FalkorDB/MCP integration,
++including all582 original tests unchanged plus19 unit/16 integration. Both SPEC
++validators PASS. Actual restart/recreation and Browser persistence PASS. Original
++B01/B04/B05/B08/B09 sources/history, registryv3/0001/0002 and101 accepted trace
++observation checks preserved. Corrected v1->v2 fixture exact pre/post fingerprint/history
++PASS. No B10 work or city/canonical promotion; all42 drainage links CANDIDATE.
++Active-graph gate remains OPEN before B10 live investigator acceptance; details and
++reproducible plan in docs/evidence/B09R-ACTIVE-GRAPH.md. All18 requirements binding.
++
+ ## Current status — B09, 2026-10-17 (takes precedence over all history)
+ 
+ B08 externally accepted; local baseline00d98745. B09 PASS — human review pending.
+@@ -812,3 +824,12 @@ source:507 baseline +37 pure unit +38 real DB/MCP. No schema/old runtime changes
+ - verify_b09.py PASS city/B01/B05/native schemas and70 accepted trace observations (43 B07/R+27 B08), original B08 domain unchanged.1430 ToolExecutions observed, not agent executions.
+ - Source-freeze14 files unchanged; source/actual-private-value/process audit PASS. Accepted regenerated B07R/B08 proof artifacts restored from Git HEAD, fresh outputs saved separately. Final source-only whitespace/patch reverse check, compilation and both SPEC validators recorded in final evidence.
+ - All failure/interruption logs retained. No live LLM/agent/dispatch/event/API/frontend, push or ZIP. B09 PASS awaits review; proposed B10 only after authorization.
++
++## B09-R completed verification | 2026-10-18
++- Accepted baseline582 PASS (363 unit/219 integration),724.05s; both SPEC and retained graph checks PASS before baseline688b893. Real before-fix three-case reproductions captured.
++- First focused unit56 PASS (37 existing+19 new); first real corrective13 PASS/1 FAIL (future mutable-cluster lookup), corrected15 PASS, strengthened chronology1 PASS, added v2 actual MCP1 PASS. All-unit + unchanged B09 integration420 PASS in203.78s.
++- Initial combined collection597 cases+1 import-file mismatch error; unique new unit basename fixed it. Corrected616 then617 after added MCP case. No old test removed/modified. Read-only version-path/replay/schema-probe attempt corrections documented in B09R-COMMANDS.md.
++- FINAL exact command `backend/.venv/bin/python -m pytest backend/tests -v -s --run-persistence`:617 PASS/0 FAIL/0 SKIP,382 unit/235 real integration,in746.62s. Fault injections are labeled transport/constraint failure wrappers around actual DB/MCP, not fake successes.
++- `make test-spec`: both validators PASS; strict B04 artifact preservation PASS. Actual existing Compose restart/same container and recreation/new container/retained volumes; fresh MATCH, Browser HTTP200 and Browser file persistence PASS.
++- Post-lifecycle exact commands/output: B09R-COMMANDS.md and B09R-post-*.json. Original B01–B09 fingerprints/70 prior trace observations plus31 accepted B09 trace observations PASS; original v1 history unchanged, corrected compatibility graph/history exact pre/post PASS.
++- Source hash freeze matches tested code; final source/secret audit and B09R-only patch/inventory retained. No live LLM/autonomous agent verification attempted or claimed; B10 remains unstarted.
+diff --git a/backend/app/services/evidence/classification.py b/backend/app/services/evidence/classification.py
+new file mode 100644
+index 0000000..6a47737
+--- /dev/null
++++ b/backend/app/services/evidence/classification.py
+@@ -0,0 +1,106 @@
++"""Explicit evidence meaning, authority and occurrence coverage for rule v2."""
++from app.graph.repository import PreconditionFailed
++from .models import EvidenceUse, EvidenceClassification
++from .relevance import attribute, independent
++
++SUMMARY = {'REVIEWED_SUPPORT': 'reviewed_support_ids', 'UNREVIEWED_SUPPORT': 'unreviewed_support_ids',
++           'REVIEWED_CONTRADICTION': 'reviewed_contradiction_ids', 'UNREVIEWED_CONTRADICTION': 'unreviewed_contradiction_ids',
++           'CONTEXT': 'contextual_evidence_ids', 'EXCLUDED': 'excluded_evidence_ids'}
++
++
++def summarize(uses):
++    return EvidenceClassification(uses=uses, **{field: sorted({u.evidence_id for u in uses if u.category == category})
++                                               for category, field in SUMMARY.items()})
++
++
++def add_topology_context(classification, evidence_id):
++    return summarize([*classification.uses, EvidenceUse(evidence_id=evidence_id, category='CONTEXT',
++        reason='Verified path provenance is connectivity context, not an inspected causal observation')])
++
++
++def classify_evidence(repo, reader, request, definition, incidents, rule, history):
++    # Actual graph bindings, not merely the supplied or journaled definition, are normative.
++    if {e.target for e in reader.edges('EXPLAINS', source=request.hypothesis_id)} != set(definition.incident_ids):
++        raise PreconditionFailed('Hypothesis occurrence bindings disagree with original proposal')
++    if {e.target for e in reader.edges('CONCERNS', source=request.hypothesis_id)} != set(definition.asset_ids):
++        raise PreconditionFailed('Hypothesis asset bindings disagree with original proposal')
++    affected = {i.id: {e.target for e in reader.edges('AFFECTS', source=i.id)} for i in incidents}
++    refs, uses, gaps = {}, [], []
++    known = set(request.evidence_ids)
++    inspection_report_ids = set()
++    prior_path_context = {evidence_id for previous in history for path in previous.paths for evidence_id in path.evidence_ids}
++    for previous in history:
++        known.update(previous.supporting_evidence_ids)
++        known.update(previous.contradicting_evidence_ids)
++        if previous.classification:
++            known.update(u.evidence_id for u in previous.classification.uses)
++    for asset_id in definition.asset_ids:
++        for relation in reader.edges('INSPECTS', target=asset_id):
++            inspection = repo.get_node(relation.source, 'Inspection')
++            if not reader.visible(inspection.properties):
++                gaps.append('Inspection current version unavailable at cutoff: ' + inspection.id)
++                continue
++            produced = {e.target for e in reader.edges('PRODUCED', source=inspection.id)}
++            known.update(produced)
++            inspection_report_ids.update(produced)
++    if len(known) > 20:
++        raise PreconditionFailed('B09 evidence union exceeds20; incomplete evidence cannot verify')
++    coverage = {i.id: {'codes': set(), 'sources': {}} for i in incidents}
++    for evidence_id in sorted(known):
++        ev = repo.get_node(evidence_id, 'Evidence')
++        if not reader.visible(ev.properties):
++            uses.append(EvidenceUse(evidence_id=evidence_id, category='EXCLUDED', reason='Evidence outside cutoff/validity'))
++            gaps.append('Evidence outside cutoff/validity: ' + evidence_id)
++            continue
++        ref = reader.evidence(evidence_id, context_only=evidence_id in prior_path_context
++            and evidence_id not in inspection_report_ids and evidence_id not in request.evidence_ids)
++        refs[evidence_id] = ref
++        report = ref.report
++        if not report:
++            uses.append(EvidenceUse(evidence_id=evidence_id, category='CONTEXT', reason='Non-inspection source is context only'))
++            gaps.append('Non-inspection evidence is context only: ' + evidence_id)
++            continue
++        if report.attribution:
++            for basis_id in report.attribution.basis_evidence_ids:
++                refs[basis_id] = reader.evidence(basis_id)
++        for index, ob in enumerate(report.observations):
++            incident_ids, reason, basis_ids = attribute(reader, report, ob, incidents, definition, affected)
++            if not incident_ids:
++                category = 'CONTEXT' if ob.asset_id not in definition.asset_ids or ob.result != 'OBSERVED' else 'EXCLUDED'
++                gaps.append(reason + ': ' + evidence_id)
++            elif rule and not set(reader.node(ob.asset_id).labels) & set(rule['asset_labels']):
++                category, reason = 'CONTEXT', 'Observation lacks the domain criterion asset subtype'
++            elif ob.code in definition.confirming_codes:
++                category = 'REVIEWED_SUPPORT' if report.review else 'UNREVIEWED_SUPPORT'
++                if report.review:
++                    for incident_id in incident_ids:
++                        coverage[incident_id]['codes'].add(ob.code)
++                        coverage[incident_id]['sources'][evidence_id] = (report, {evidence_id, *basis_ids})
++            elif rule and ob.code in rule['falsifying'] and ob.code in definition.falsifying_codes:
++                category = 'REVIEWED_CONTRADICTION' if report.review else 'UNREVIEWED_CONTRADICTION'
++            else:
++                category, reason = 'CONTEXT', 'No approved discriminating observation for this mechanism'
++                gaps.append(reason + ': ' + evidence_id)
++            if category.startswith('UNREVIEWED'):
++                gaps.append('Unreviewed finding is a qualified claim, not definitive support/rejection: ' + evidence_id)
++            uses.append(EvidenceUse(evidence_id=evidence_id, observation_index=index, category=category,
++                incident_ids=incident_ids, reason=reason, basis_evidence_ids=basis_ids))
++    if len(refs) > 20:
++        raise PreconditionFailed('B09 evidence and retrospective basis union exceeds20')
++    # A source included only as retrospective basis remains visible and cannot acquire a causal edge by existence.
++    classified_ids = {u.evidence_id for u in uses}
++    for evidence_id in sorted(set(refs) - classified_ids):
++        uses.append(EvidenceUse(evidence_id=evidence_id, category='CONTEXT', reason='Retrospective source basis; not independently classified as a causal observation'))
++    complete = bool(rule)
++    for incident_id, item in coverage.items():
++        missing = set(definition.confirming_codes) - item['codes']
++        sources = list(item['sources'].values())
++        corroborated = any(independent(a, b) for index, a in enumerate(sources) for b in sources[:index])
++        if missing:
++            gaps.append('Missing reviewed confirming observations for ' + incident_id + ': ' + ','.join(sorted(missing)))
++        if not corroborated:
++            gaps.append('Two independent reviewed inspections/inspectors/source records required for ' + incident_id)
++        complete = complete and not missing and corroborated
++    if rule is None:
++        gaps.append('No approved deterministic domain criterion for this cause')
++    return list(refs.values()), summarize(uses), gaps, bool(complete)
+diff --git a/backend/app/services/evidence/relevance.py b/backend/app/services/evidence/relevance.py
+new file mode 100644
+index 0000000..cb5bd5c
+--- /dev/null
++++ b/backend/app/services/evidence/relevance.py
+@@ -0,0 +1,96 @@
++"""B09-R occurrence attribution; no new ontology, queries or write privileges."""
++from app.graph.repository import PreconditionFailed
++from app.graph.schema import timestamp
++
++
++def inspection_incidents(reader, report):
++    edges = reader.edges('INSPECTS', source=report.inspection_id)
++    sources = {e.properties.get('source_evidence_id') for e in edges}
++    if len(sources) != 1 or None in sources:
++        raise PreconditionFailed('Unique inspection request source required for attribution')
++    journal = reader.journal(next(iter(sources)))
++    command = journal.command
++    if command['operation'] != 'request_inspection' or journal.receipt.entity_id != report.inspection_id:
++        raise PreconditionFailed('Inspection occurrence request binding mismatch')
++    inv = command['investigation_id']
++    reader.node(inv, 'Investigation')
++    memberships = reader.edges('INVESTIGATES', source=inv)
++    origins = {e.properties.get('source_evidence_id') for e in memberships}
++    if len(origins) != 1 or None in origins:
++        raise PreconditionFailed('Unique investigation occurrence source required')
++    opened = reader.journal(next(iter(origins)))
++    original = opened.command
++    if (original['operation'] != 'open' or opened.receipt.entity_id != inv
++            or {e.target for e in memberships} != {original['cluster_id'], *original['incident_ids']}):
++        raise PreconditionFailed('Actual investigation occurrence bindings disagree with opening journal')
++    # Use immutable identity bindings, not a cluster's later mutable pattern/status.
++    # The hypothesis incidents themselves are still read with full as_of visibility.
++    return set(original['incident_ids'])
++
++
++def inside(incident, observed_at):
++    props = incident.properties
++    at = timestamp(observed_at)
++    if props['status'] == 'INVALIDATED':
++        return False
++    if at < timestamp(props['started_at']):
++        return False
++    if 'ended_at' in props:
++        return at < timestamp(props['ended_at'])
++    # A terminal state without its end timestamp cannot establish a temporal interval.
++    return props['status'] != 'ENDED'
++
++
++def attribute(reader, report, observation, incidents, definition, affected):
++    """Return incident IDs, reason, derivative basis IDs. A matching asset is insufficient."""
++    if observation.asset_id not in definition.asset_ids or observation.result != 'OBSERVED':
++        return [], 'Unrelated asset or non-observed result; context only', []
++    bound = inspection_incidents(reader, report)
++    attribution = report.attribution
++    if attribution:
++        named = set(attribution.incident_ids)
++        if not named <= bound:
++            raise PreconditionFailed('Explicit attribution outside inspection investigation')
++    else:
++        named = bound
++    candidates = [i for i in incidents if i.id in named and (observation.asset_id in affected[i.id]
++        or definition.topology and observation.asset_id == definition.topology.source_id
++        and definition.topology.target_id in affected[i.id])]
++    if not candidates:
++        return [], 'Inspection request belongs to another incident occurrence', []
++    if attribution and attribution.mode == 'RETROSPECTIVE':
++        if not report.review:
++            return [], 'Retrospective claim requires independent review and dated source basis', []
++        accepted = set()
++        for evidence_id in attribution.basis_evidence_ids:
++            basis = reader.evidence(evidence_id).report
++            if (not basis or not basis.review or basis.attribution and basis.attribution.mode == 'RETROSPECTIVE'
++                    or timestamp(basis.recorded_at) >= timestamp(report.recorded_at)):
++                raise PreconditionFailed('Retrospective basis must be an earlier reviewed direct inspection')
++            basis_bound = inspection_incidents(reader, basis)
++            if basis.attribution:
++                basis_bound &= set(basis.attribution.incident_ids)
++            for incident in candidates:
++                if incident.id in basis_bound and any(
++                    ob.asset_id == observation.asset_id and ob.code == observation.code
++                    and ob.result == 'OBSERVED' and inside(incident, ob.observed_at)
++                    for ob in basis.observations):
++                    accepted.add(incident.id)
++        return sorted(accepted), ('Explicit reviewed retrospective attribution with prior occurrence-specific evidence'
++                                 if accepted else 'Retrospective source basis does not establish this observation for this occurrence'), list(attribution.basis_evidence_ids)
++    relevant = [i.id for i in candidates if inside(i, observation.observed_at)]
++    if not attribution and len(relevant) > 1:
++        return [], 'Ambiguous overlapping occurrences require explicit named attribution', []
++    return sorted(relevant), ('Inspection request and observation fall within named occurrence interval'
++                             if relevant else 'Observation outside incident occurrence interval or end unknown'), []
++
++
++def independent(a, b):
++    """Source independence includes derivative lineage, not just record count."""
++    report_a, lineage_a = a
++    report_b, lineage_b = b
++    return (report_a.inspection_id != report_b.inspection_id
++            and report_a.inspector_id != report_b.inspector_id
++            and report_a.source_id != report_b.source_id
++            and (report_a.source_id, report_a.record_id) != (report_b.source_id, report_b.record_id)
++            and not lineage_a & lineage_b)
+diff --git a/backend/tests/b09r_fixtures.py b/backend/tests/b09r_fixtures.py
+new file mode 100644
+index 0000000..a1369df
+--- /dev/null
++++ b/backend/tests/b09r_fixtures.py
+@@ -0,0 +1,62 @@
++"""Controlled B08 source-copy fixtures and attributed B09 reports; no city mutations."""
++from datetime import datetime
++from app.graph.migration import MigrationRunner
++from app.graph.repository import GraphRepository
++from app.graph.targets import new_test_graph_name
++from app.graph.analysis.counterfactual import capture
++from app.services.complaints import ComplaintService
++from app.services.evidence import Actor
++from tests.b08_fixtures import payload
++from tests.b09_fixtures import request, advance_inspection
++
++
++def at(f, value):
++    f.clock.value=datetime.fromisoformat(value.replace('Z','+00:00'))
++
++
++def mirror(source, destination):
++    snapshot=capture(source)
++    for n in sorted(snapshot.nodes,key=lambda n:(n.kind!='Evidence',n.id)):
++        existing=destination._node_optional(n.id)
++        if not existing:
++            destination.create_node(n.kind,n.properties)
++        elif existing.content_hash!=n.content_hash:
++            changes={k:v for k,v in n.properties.items() if k not in {'id','created_at','municipality_id','schema_version'} and existing.properties.get(k)!=v}
++            assert set(existing.properties)<=set(n.properties), 'No fixture property removal'
++            destination.update_node(n.id,changes,expected_hash=existing.content_hash)
++    for e in snapshot.edges:
++        existing=destination._edge_optional(e.id)
++        if not existing:
++            destination.create_relationship(e.kind,e.source,e.target,e.properties)
++        elif existing.content_hash!=e.content_hash:
++            raise AssertionError('Fixture does not conceal changed relationship policy')
++    assert capture(destination).records==snapshot.records
++
++
++def source_copy(f, *,issue,ref,occurred,reported):
++    """Intake into a newly owned B08 graph; explicitly copy its delta back to isolated B09."""
++    db=f.repo.client;name=new_test_graph_name(8)
++    try:
++        MigrationRunner(db,name).apply();source=GraphRepository(db,name,lease_seconds=30)
++        mirror(f.repo,source)
++        result=ComplaintService(source,clock=lambda:reported).intake(payload(issue,ref=ref,
++            occurred_at=occurred,reported_at=reported,event_reference='distinct-'+ref))
++        mirror(source,f.repo)
++        return result
++    finally:
++        if name in db.list_graphs():db.select_graph(name).delete()
++
++
++def attributed_report(f, inv, ref, *, codes, attribution, assets=None):
++    assets=assets or ['R1']
++    ins=request(f,inv,'request-'+ref,assets)
++    for state in ['REQUESTED','SCHEDULED','IN_PROGRESS']:
++        advance_inspection(f,ins,state)
++    f.clock.advance()
++    return f.service.execute({'operation':'report_inspection','request_id':'report-'+ref,'inspection_id':ins,
++        'expected_hash':f.repo.get_node(ins).content_hash,'source_id':'independent-'+ref,'record_id':'record-'+ref,
++        'observations':[{'asset_id':assets[0],'code':code,'statement':'Authored attributed observation '+code,
++            'method':'DIRECT_SYNTHETIC_FIELD_TEST','observed_at':f.clock()} for code in codes],
++        'review':{'reviewer_id':'independent-reviewer','role':'ANALYST','reviewed':True,
++                  'reason':'Reviewed source basis and named occurrence attribution'},'attribution':attribution},
++        Actor(id='inspector-'+ref,role='DEPARTMENT_LEAD',department_id='DEP'))
+diff --git a/backend/tests/integration/test_evidence_review.py b/backend/tests/integration/test_evidence_review.py
+new file mode 100644
+index 0000000..195559c
+--- /dev/null
++++ b/backend/tests/integration/test_evidence_review.py
+@@ -0,0 +1,269 @@
++"""B09-R real FalkorDB decisions, edge readback and version compatibility."""
++import json
++from pathlib import Path
++from datetime import datetime
++import pytest
++from app.graph.repository import GraphRepository, PreconditionFailed
++from app.graph.models import digest
++from app.graph.analysis.counterfactual import capture
++from app.services.evidence import EvidenceService, Actor
++from app.services.evidence.models import Assessment, Receipt
++from app.services.evidence.reader import Reader
++from tests.b09_fixtures import create, open_case, propose, request, advance_inspection, report, assess, ANALYST, Clock
++from tests.graph_fixtures import evidence
++
++pytestmark = pytest.mark.integration
++PROOF = Path('docs/evidence/B09R-runtime-proof.json')
++
++
++@pytest.fixture
++def f(db):
++    value = create(db)
++    try:
++        yield value
++    finally:
++        db.select_graph(value.repo.graph.name).delete()
++
++
++def save(name, f, receipt, **other):
++    a = receipt.assessment
++    stored = Assessment.model_validate_json(f.repo.get_node(a.id).properties['rationale'])
++    assert stored == a
++    assert f.repo.get_node(a.hypothesis_id).properties['status'] == a.state_transitions[-1]
++    supported = sorted(e.target for e in Reader(f.repo, f.clock()).edges('SUPPORTED_BY', source=a.id))
++    contradicted = sorted(e.target for e in Reader(f.repo, f.clock()).edges('CONTRADICTED_BY', source=a.id))
++    assert supported == a.supporting_evidence_ids
++    assert contradicted == a.contradicting_evidence_ids
++    assert Receipt.model_validate_json(receipt.model_dump_json()) == receipt
++    proof = json.loads(PROOF.read_text()) if PROOF.exists() else {'class':'REAL_FALKORDB_NO_MOCKED_SUCCESS','results':{}}
++    proof['results'][name] = {'receipt':receipt.model_dump(mode='json'),'supported_by':supported,
++        'contradicted_by':contradicted,'hypothesis_status':a.state_transitions[-1], 'graph_fingerprint':capture(f.repo).fingerprint, **other}
++    PROOF.write_text(json.dumps(proof,indent=2)+'\n')
++
++
++@pytest.mark.parametrize('case,sources,label', [
++    ('unreviewed-negative',[(False,False)],'INCONCLUSIVE'),
++    ('reviewed-negative',[(False,True)],'CONTRADICTED'),
++    ('unreviewed-positive',[(True,False)],'POSSIBLE'),
++    ('reviewed-positive',[(True,True)],'SUPPORTED'),
++    ('independent-reviewed',[(True,True),(True,True)],'VERIFIED'),
++    ('unreviewed-conflict',[(True,True),(True,True),(False,False)],'INCONCLUSIVE'),
++    ('reviewed-conflict',[(True,True),(False,True)],'INCONCLUSIVE'),
++])
++def test_actual_persisted_authority_matrix(f,case,sources,label):
++    inv=open_case(f);h=propose(f,inv)
++    ids=[]
++    for i,(support,reviewed) in enumerate(sources):
++        ids.append(report(f,inv,ref=str(i),codes=None if support else ['DRAIN_CLEAR'],reviewed=reviewed).entity_id)
++    r=assess(f,h,ids)
++    assert r.assessment.assessment == label
++    c=r.assessment.classification
++    if case=='unreviewed-negative':
++        assert c.unreviewed_contradiction_ids==ids and not r.assessment.contradicting_evidence_ids
++    if case=='unreviewed-positive':
++        assert c.unreviewed_support_ids==ids and not r.assessment.supporting_evidence_ids
++    save(case,f,r)
++
++
++@pytest.mark.parametrize('source,kind', [('AGENT','LLM_STATEMENT'),('USER','COMPLAINT_NARRATIVE'),('SYNTHETIC','CANDIDATE_NETWORK_ASSOCIATION')])
++def test_context_keeps_source_hash_without_causal_edge(f,source,kind):
++    inv=open_case(f);h=propose(f,inv)
++    ev=evidence(f.repo,'CONTEXT',evidence_type=kind,source_kind=source)
++    r=assess(f,h,[ev.id])
++    assert r.assessment.assessment=='INCONCLUSIVE'
++    assert r.assessment.classification.contextual_evidence_ids==[ev.id]
++    ref=next(ref for ref in r.assessment.evidence_references if ref.id==ev.id)
++    assert ref.source_kind==source and ref.content_hash==ev.content_hash and ref.source_record_id
++    assert not r.assessment.supporting_evidence_ids
++    save('context-'+source,f,r)
++
++
++def test_unrelated_investigation_same_asset_is_not_occurrence_evidence(f):
++    inv=open_case(f);h=propose(f,inv)
++    # Actual distinct B08 intake incident, same asset but a different declared occurrence.
++    from app.services.complaints import ComplaintService
++    from tests.b08_fixtures import payload
++    from tests.b09r_fixtures import source_copy
++    other=source_copy(f,issue='WATERLOGGING',ref='unrelated',occurred='2026-10-18T12:10:00Z',reported='2026-10-18T12:11:00Z')
++    f.clock.value=datetime.fromisoformat('2026-10-18T12:20:00+00:00')
++    inv2=f.service.execute({'operation':'open','request_id':'other-open','incident_ids':[other.incident_id],'cluster_id':other.cluster_id},ANALYST).entity_id
++    ev=report(f,inv2,ref='unrelated-report').entity_id
++    r=assess(f,h,[ev])
++    assert ev in r.assessment.excluded_evidence_ids and not r.assessment.supporting_evidence_ids
++    save('unrelated-same-asset',f,r)
++
++
++def test_post_end_evidence_is_excluded_and_later_ongoing_evidence_is_valid(f):
++    inv=open_case(f);h=propose(f,inv)
++    incident=f.repo.get_node(f.receipts['WATERLOGGING'].incident_id)
++    active=f.repo.update_node(incident.id,{'status':'ACTIVE'},expected_hash=incident.content_hash)
++    f.repo.update_node(active.id,{'status':'ENDED','ended_at':'2026-10-18T11:00:00Z'},expected_hash=active.content_hash)
++    ev=report(f,inv).entity_id
++    r=assess(f,h,[ev])
++    assert r.assessment.assessment=='INCONCLUSIVE' and ev in r.assessment.excluded_evidence_ids
++    save('after-end',f,r)
++    inv2=open_case(f,'ROAD_DAMAGE','ongoing-open');h2=propose(f,inv2,'ROAD_DAMAGE','SUBGRADE_FAILURE',ref='ongoing-hyp')
++    f.clock.advance(86400*30)
++    ev2=report(f,inv2,'late-continuous',['SUBGRADE_FAILURE_OBSERVED'],['R1']).entity_id
++    r2=assess(f,h2,[ev2],ref='continuous')
++    assert r2.assessment.assessment=='SUPPORTED'
++    save('continuous-ongoing',f,r2)
++
++
++def test_v1_real_history_and_receipt_replay_remain_immutable(db):
++    from types import SimpleNamespace
++    proof=json.loads(Path('docs/evidence/B09R-v1-proof.json').read_text())
++    repo=GraphRepository(db,proof['graph'],lease_seconds=30)
++    clock=Clock();clock.value=datetime.fromisoformat(proof.get('correction_as_of',proof['clock']).replace('Z','+00:00'));clock.advance(10)
++    service=EvidenceService(repo,clock=clock)
++    original=service.execute(proof['v1_command'],Actor.model_validate(proof['actor']))
++    assert original.replayed and original.assessment.format_version==1
++    assert original.assessment.assessment=='CONTRADICTED'  # Preserve historical v1 meaning, even when wrong.
++    assert repo.get_node(original.entity_id).content_hash==proof['v1_assessment_node_hash']
++    assert repo.get_node(original.journal_id).content_hash==proof['v1_journal_node_hash']
++    f=SimpleNamespace(repo=repo,clock=clock,service=service)
++    existing=service.history(proof['hypothesis_id'],clock())
++    if len(existing)==1:
++        proof['before_correction_hypothesis_hash']=repo.get_node(proof['hypothesis_id']).content_hash
++        proof['correction_as_of']=clock.advance()
++        Path('docs/evidence/B09R-v1-proof.json').write_text(json.dumps(proof,indent=2)+'\n')
++        r=service.execute({'operation':'assess','request_id':'rule-v2-correction','hypothesis_id':proof['hypothesis_id'],
++            'expected_hash':proof['before_correction_hypothesis_hash'],'as_of':proof['correction_as_of']},ANALYST)
++    else:
++        r=service.execute({'operation':'assess','request_id':'rule-v2-correction','hypothesis_id':proof['hypothesis_id'],
++            'expected_hash':proof['before_correction_hypothesis_hash'],'as_of':proof['correction_as_of']},ANALYST)
++    history=service.history(proof['hypothesis_id'],clock())
++    assert [(a.format_version,a.assessment) for a in history]==[(1,'CONTRADICTED'),(2,'INCONCLUSIVE')]
++    assert history[1].previous_assessment_id==history[0].id
++    assert repo.get_node(original.entity_id).content_hash==proof['v1_assessment_node_hash']
++    assert repo.get_node(original.journal_id).content_hash==proof['v1_journal_node_hash']
++    save('v1-to-v2-append',f,r,history=[a.model_dump(mode='json') for a in history])
++
++
++def test_january_repair_august_recurrence_and_retrospective_attribution(f):
++    from tests.b09r_fixtures import source_copy, at, attributed_report
++    from tests.schema_examples import common,edge
++    january=source_copy(f,issue='ROAD_DAMAGE',ref='january',occurred='2027-01-05T04:00:00Z',reported='2027-01-05T05:00:00Z')
++    f.receipts['ROAD_DAMAGE']=january;at(f,'2027-01-05T12:00:00Z')
++    jan_inv=open_case(f,'ROAD_DAMAGE','jan-open');jan_h=propose(f,jan_inv,'ROAD_DAMAGE','SUBGRADE_FAILURE',ref='jan-hyp')
++    codes=['SUBGRADE_FAILURE_OBSERVED','STRUCTURAL_TEST_FAILED']
++    jan_ev=report(f,jan_inv,'january-field',codes,['R1']).entity_id
++    first=assess(f,jan_h,[jan_ev],ref='jan-first');immutable_hash=f.repo.get_node(first.entity_id).content_hash
++    at(f,'2027-02-10T12:00:00Z')
++    incident=f.repo.get_node(january.incident_id)
++    incident=f.repo.update_node(incident.id,{'status':'ACTIVE','updated_at':f.clock()},expected_hash=incident.content_hash)
++    f.repo.update_node(incident.id,{'status':'ENDED','ended_at':f.clock(),'updated_at':f.clock()},expected_hash=incident.content_hash)
++    # Authored recorded repair outcome, not implementation of future dispatch/monitoring workflows.
++    props={**common('FEB-REPAIR'),'created_at':f.clock(),'updated_at':f.clock()}
++    evidence(f.repo,'FEB-REPAIR-SOURCE',evidence_type='AUTHORED_REPAIR_RECORD',source_kind='MUNICIPAL',
++        observed_at=f.clock(),recorded_at=f.clock(),created_at=f.clock(),updated_at=f.clock())
++    f.repo.create_node('WorkOrder',{**props,'status':'COMPLETED','execution_mode':'SIMULATED','plan_version':1,'idempotency_key':'AUTHORED-FEB-REPAIR'})
++    f.repo.create_node('ActionTask',{**props,'id':'FEB-TASK','action_type':'AUTHORED_SUBGRADE_REPAIR','status':'COMPLETED','priority':'HIGH'})
++    for kind,source,target,ref in [('IMPLEMENTS','FEB-REPAIR','FEB-TASK','FEB-IMPL'),('TARGETS','FEB-TASK','R1','FEB-TARGET')]:
++        f.repo.create_relationship(kind,source,target,{**edge(ref),'created_at':f.clock(),'source_evidence_id':'FEB-REPAIR-SOURCE'})
++    august=source_copy(f,issue='ROAD_DAMAGE',ref='august',occurred='2027-08-02T04:00:00Z',reported='2027-08-02T05:00:00Z')
++    assert january.incident_id!=august.incident_id and january.cluster_id==august.cluster_id and august.pattern_type=='RECURRENT'
++    f.receipts['ROAD_DAMAGE']=august;at(f,'2027-08-02T12:00:00Z')
++    aug_inv=open_case(f,'ROAD_DAMAGE','aug-open');aug_h=propose(f,aug_inv,'ROAD_DAMAGE','SUBGRADE_FAILURE',ref='aug-hyp')
++    aug_ev=report(f,aug_inv,'august-field',codes,['R1']).entity_id
++    jan=assess(f,jan_h,[aug_ev],ref='jan-after-aug')
++    assert jan.assessment.supporting_evidence_ids==[jan_ev] and aug_ev in jan.assessment.excluded_evidence_ids
++    save('january-vs-august',f,jan,january_incident=january.incident_id,august_incident=august.incident_id,
++         B08_pattern=august.pattern_type,repair_id='FEB-REPAIR')
++    aug=assess(f,aug_h,[jan_ev,aug_ev],ref='aug-assessment')
++    assert aug.assessment.supporting_evidence_ids==[aug_ev] and jan_ev in aug.assessment.excluded_evidence_ids
++    save('august-only',f,aug)
++    combined_inv=f.service.execute({'operation':'open','request_id':'combined-open',
++        'incident_ids':[january.incident_id,august.incident_id],'cluster_id':august.cluster_id},ANALYST).entity_id
++    combined_h=propose(f,combined_inv,'ROAD_DAMAGE','SUBGRADE_FAILURE',ref='combined-hyp',
++        incident_ids=[january.incident_id,august.incident_id])
++    combined=assess(f,combined_h,[jan_ev,aug_ev],ref='combined-assessment')
++    assert combined.assessment.assessment=='SUPPORTED'  # Two sources globally are not two per occurrence.
++    assert all(any('required for '+i in gap for gap in combined.assessment.missing_evidence)
++               for i in [january.incident_id,august.incident_id])
++    save('per-occurrence-corroboration',f,combined)
++    at(f,'2027-09-01T12:00:00Z')
++    retrospective=attributed_report(f,jan_inv,'retrospective',codes=codes,attribution={
++        'incident_ids':[january.incident_id],'mode':'RETROSPECTIVE','rationale':'Rechecked the archived January field tests against this named repaired occurrence',
++        'basis_evidence_ids':[jan_ev]}).entity_id
++    retro=assess(f,jan_h,[retrospective],ref='retro-assessment')
++    assert set(retro.assessment.supporting_evidence_ids)=={jan_ev,retrospective}
++    assert retro.assessment.assessment=='SUPPORTED'  # Derivative report cannot invent independent corroboration.
++    assert any(u.evidence_id==retrospective and u.basis_evidence_ids==[jan_ev] and u.incident_ids==[january.incident_id]
++               for u in retro.assessment.classification.uses)
++    save('retrospective-validated',f,retro)
++    past=assess(f,jan_h,[retrospective,aug_ev],ref='past-cutoff',as_of='2027-03-01T12:00:00Z')
++    assert set(past.assessment.excluded_evidence_ids)>={retrospective,aug_ev}
++    assert past.assessment.supporting_evidence_ids==[jan_ev]
++    assert not {retrospective,aug_ev}&{r.id for r in past.assessment.evidence_references}
++    assert f.repo.get_node(first.entity_id).content_hash==immutable_hash
++    assert f.repo.get_node(january.cluster_id).properties['pattern_type']=='RECURRENT'
++    save('past-cutoff-without-future-knowledge',f,past,immutable_first_hash=immutable_hash)
++
++
++def test_utility_path_expiry_reassessment_preserves_context_and_nearby_disconnection(f):
++    from tests.schema_examples import edge, asset
++    from app.services.evidence.policies import POLICIES
++    inv=open_case(f,'ROAD_DAMAGE')
++    f.repo.create_relationship('UNDERLIES','P1','R1',{**edge('PIPE-ROAD'),
++        'association_status':'VERIFIED','source_evidence_id':'EV','valid_from':'2026-10-17T00:00:00Z'})
++    h=propose(f,inv,'ROAD_DAMAGE','UTILITY_LEAK',asset_ids=['P1'],
++        topology={'source_id':'P1','target_id':'R1','operation':'dependencies'})
++    codes=POLICIES['ROAD_DAMAGE']['UTILITY_LEAK']['confirming']
++    a=report(f,inv,'pipe-first',codes,['P1']);b=report(f,inv,'pipe-second',codes,['P1'])
++    first=assess(f,h,[a.entity_id,b.entity_id],ref='verified-pipe')
++    assert first.assessment.assessment=='VERIFIED' and first.assessment.paths
++    assert 'EV' in first.assessment.classification.contextual_evidence_ids
++    save('utility-verified-path',f,first)
++    link=f.repo.get_relationship('PIPE-ROAD');f.clock.advance()
++    f.repo.update_relationship(link.id,{'valid_to':f.clock()},expected_hash=link.content_hash)
++    after=assess(f,h,ref='expired-pipe')
++    assert after.assessment.assessment=='SUPPORTED' and not after.assessment.paths
++    assert 'EV' not in after.assessment.supporting_evidence_ids
++    assert f.repo.get_node(first.entity_id).properties['assessment']=='VERIFIED'
++    save('utility-expired-path',f,after)
++    f.repo.create_node('WaterPipe',asset('WaterPipe','NEARBY-PIPE'))
++    f.repo.create_relationship('LOCATED_AT','NEARBY-PIPE','L1',{**edge('NEARBY-LOCATION'),'source_evidence_id':'EV'})
++    with pytest.raises(PreconditionFailed):
++        propose(f,inv,'ROAD_DAMAGE','UTILITY_LEAK',ref='nearby-no-path',asset_ids=['NEARBY-PIPE'],
++            topology={'source_id':'NEARBY-PIPE','target_id':'R1','operation':'dependencies'})
++
++
++def test_real_mcp_broker_reads_v2_report_provenance_without_contract_changes(f,db):
++    import asyncio
++    import sys
++    from mcp import Client,StdioServerParameters
++    from app.mcp.runtime import ROOT
++    from app.mcp.civicly.runtime import configure,connections
++    from app.mcp.civicly.broker import DomainBroker
++    from app.mcp.civicly.storage import TraceStore
++    from app.services.evidence.models import Report
++    from tests.b09r_fixtures import attributed_report
++    inv=open_case(f);h=propose(f,inv)
++    a=attributed_report(f,inv,'explicit-current',codes=['OBSTRUCTION_OBSERVED','FLOW_RESTRICTED'],assets=['D1'],
++        attribution={'incident_ids':[f.receipts['WATERLOGGING'].incident_id],
++            'rationale':'Direct observation for the explicitly named ongoing occurrence'})
++    b=report(f,inv,'independent-current')
++    assessment=assess(f,h,[a.entity_id,b.entity_id])
++    assert assessment.assessment.assessment=='VERIFIED'
++    configure(db)
++    async def run():
++        params=StdioServerParameters(command=sys.executable,args=['-m','tests.b09_server',f.repo.graph.name],
++            cwd=str(ROOT),env={'PYTHONPATH':str(ROOT/'backend')})
++        with connections() as (_,writer,name):
++            store=TraceStore(writer,name)
++            async with Client(params,mode='legacy',read_timeout_seconds=8) as client:
++                broker=DomainBroker(client,store);await broker.discover()
++                assert len(broker.tools())==12
++                value=await broker.call('civicly::get_maintenance_history',{'asset_id':'D1',
++                    'from_time':'2026-10-17T00:00:00Z','to_time':f.clock(),'as_of':f.clock()})
++                assert value['status'] in {'SUCCESS','PARTIAL'},value.get('error')
++                records={event['record_id']:event for event in value['records']}
++                assert a.entity_id in records[a.updated_ids[0]]['evidence_ids']
++                assert b.entity_id not in records[a.updated_ids[0]]['evidence_ids']
++                actual=next(n for n in value['data']['nodes'] if n['id']==a.entity_id)
++                typed=Report.model_validate_json(actual['properties']['summary'])
++                assert typed.format_version==2 and typed.attribution.incident_ids==[f.receipts['WATERLOGGING'].incident_id]
++                assert store.get(value['execution_id']).validated_output
++                save('real-mcp-v2-report',f,assessment,mcp_result=value)
++    asyncio.run(run())
+diff --git a/backend/tests/unit/test_evidence_review_models.py b/backend/tests/unit/test_evidence_review_models.py
+new file mode 100644
+index 0000000..6b2e1fc
+--- /dev/null
++++ b/backend/tests/unit/test_evidence_review_models.py
+@@ -0,0 +1,62 @@
++"""Pure rule-v2 tests; real persisted decisions are tested separately."""
++import json
++from pathlib import Path
++import pytest
++from pydantic import ValidationError
++from app.services.evidence.models import Assessment, Receipt, Journal, ReportInspection, IncidentAttribution
++from app.services.evidence.policies import classify_reviewed
++
++
++@pytest.mark.parametrize('rs,us,rc,uc,complete,label', [
++    (False, False, False, False, False, 'INCONCLUSIVE'),
++    (False, True, False, False, False, 'POSSIBLE'),
++    (True, False, False, False, False, 'SUPPORTED'),
++    (True, False, False, False, True, 'VERIFIED'),
++    (False, False, True, False, False, 'CONTRADICTED'),
++    (False, False, False, True, False, 'INCONCLUSIVE'),
++    (True, False, False, True, True, 'INCONCLUSIVE'),
++    (True, False, True, False, True, 'INCONCLUSIVE'),
++    (False, True, True, False, False, 'INCONCLUSIVE'),
++    (False, True, False, True, False, 'INCONCLUSIVE'),
++    (False, False, True, True, False, 'CONTRADICTED'),
++])
++def test_authority_and_conflict_matrix(rs, us, rc, uc, complete, label):
++    assert classify_reviewed(reviewed_support=rs, unreviewed_support=us, reviewed_contradiction=rc,
++                             unreviewed_contradiction=uc, sufficient=complete) == label
++
++
++def test_actual_accepted_v1_receipts_assessments_and_journal_shapes_stay_unchanged():
++    proof = json.loads(Path('docs/evidence/B09-retained-proof.json').read_text())
++    for name in ['verified', 'corrected', 'competing']:
++        raw = proof[name]
++        assert Receipt.model_validate_json(json.dumps(raw)).model_dump(mode='json') == raw
++        old = raw['assessment']
++        decoded = Assessment.model_validate_json(json.dumps(old))
++        assert decoded.format_version == decoded.rule_version == 1 and decoded.classification is None
++        assert decoded.model_dump(mode='json') == old
++    # Original no-attribution report commands must retain the original hash input.
++    command = {'operation':'report_inspection','request_id':'original','inspection_id':'I','expected_hash':'a'*64,
++               'source_id':'S','record_id':'R','source_kind':'SYNTHETIC','observations':[
++                   {'asset_id':'D','code':'C','statement':'Original','method':'DIRECT','observed_at':'2026-10-18T12:00:00Z',
++                    'result':'OBSERVED','value':None,'unit':None}], 'review':None}
++    assert ReportInspection.model_validate_json(json.dumps(command)).model_dump(mode='json') == command
++
++
++@pytest.mark.parametrize('changes', [
++    {'mode':'RETROSPECTIVE'}, {'basis_evidence_ids':['E']}, {'incident_ids':['I','I']},
++    {'mode':'RETROSPECTIVE','basis_evidence_ids':['E','E']}, {'tenant_id':'x'},
++])
++def test_explicit_attribution_strictness(changes):
++    with pytest.raises(ValidationError):
++        IncidentAttribution.model_validate({'incident_ids':['I'],'rationale':'Source-specific relevance',**changes})
++
++
++def test_v1_cannot_silently_be_relabeled_as_v2():
++    old=json.loads(Path('docs/evidence/B09-retained-proof.json').read_text())['verified']['assessment']
++    with pytest.raises(ValidationError):
++        Assessment.model_validate_json(json.dumps({**old,'format_version':2,'rule_version':2}))
++
++
++def test_legacy_classifier_entry_point_cannot_authorize_unreviewed_rejection():
++    from app.services.evidence.policies import classify
++    assert classify(support=False, contradiction=True, reviewed=False, sufficient=False)=='INCONCLUSIVE'
+diff --git a/docs/evidence/B09R-ACTIVE-GRAPH.md b/docs/evidence/B09R-ACTIVE-GRAPH.md
+new file mode 100644
+index 0000000..371e607
+--- /dev/null
++++ b/docs/evidence/B09R-ACTIVE-GRAPH.md
+@@ -0,0 +1,37 @@
++# Active graph integration gate — B09-R review
++
++Status: **OPEN before B10 live investigator acceptance**, not hidden by isolated PASS.
++No canonical promotion, graph merge, ACL widening or runtime source change occurred.
++
++## Current source of truth
++
++- Imported municipal source: retained B04 `civicly_b04_test_a84beda80da64aacbc367a9399e07a97`,858 nodes/1246 edges/revision2104,42 CANDIDATE drainage links. Frozen conversion/source provenance remains authoritative for that imported snapshot.
++- `civicly_knowledge`: migration0001 READY, no municipal seed/domain records. Common allowed B08/B09 writable domain target, not an active integrated city yet.
++- B08 intake: canonical or validated B08 disposable target; narrow batch writer also restricts phase prefix.
++- B09: canonical or validated B09 disposable target; narrow writer rejects retained sources and B08 target writes.
++- Official MCP and domain runtime: source exact retained B04 graph via `app.mcp.runtime.CITY_GRAPH`; read-only ACL grants only that exact graph. Domain ToolExecution storage is a separate explicitly scoped B07 trace graph with compatible0002.
++- B09/B09-R tests: genuine B08 intake records copied with exact IDs/hashes into a newly owned B09 graph. Test-only MCP server explicitly injects that B09 source. This is real MCP readback, but is **not** same-graph complaint intake through production runtime.
++
++## Verified incompatibilities
++
++1. A new B08 complaint in an isolated B08 graph cannot be investigated by a B09 write service there; phase guard deliberately refuses it.
++2. B08 intake cannot write to an isolated B09 graph. Copying records is a labeled fixture procedure, not application synchronization.
++3. Production MCP cannot see those new complaint/investigation IDs because its read identity and ACL point to the retained city graph.
++4. Canonical is the common write target, so the intended combined application is possible; its domain seed and MCP source binding still need review. No B10 LangGraph orchestration should mistake isolated test graphs for a coordinated active source.
++
++## Reproducible acceptance plan (future, explicitly reviewed prerequisite)
++
++Do not execute city promotion as part of B09-R. At the B10 integration prerequisite:
++
++1. Record one explicit active-domain target and data origin. Prefer the existing canonical target after a separately reviewed additive, repeatable import using B04 converter/importer; preserve retained source fingerprints, IDs and all42 candidate links. Alternative: an explicit narrow shared disposable integration-target policy with new guard tests; do not simply widen all phase prefixes.
++2. Make official/domain MCP source selection a single trusted application configuration and provision read-only credentials for that exact target. Keep trace graph/credential separate. No caller/agent-selectable graph or arbitrary Cypher. Verify old unrelated graph denial and admin/mutation denial.
++3. In an explicitly owned graph under that reviewed policy, apply0001, verify indexes/constraints READY, import canonical B04 artifact, verify counts/hashes and repeat-import no-op. Do not move or reset retained data.
++4. Call `ComplaintService(GraphRepository(db, active), clock=controlled_clock).intake(authored_payload)`; repeat identical intake and confirm same IDs. Submit ongoing and resolved-then-recurring variants; validate B08 classifications and primary cluster rules.
++5. On the same repository call `EvidenceService.execute(open, typed_actor)`, `propose`, request/transition/report inspections, then `assess` with current CAS. Validate graph identity, explicit incident IDs, per-record provenance, v2 categories and immutable history. Do not assert verified root cause from city candidate links.
++6. Initialize actual official and domain MCP clients through their brokers, tools/list then tools/call. Read the exact new IDs with existing complaint/history/evidence tools; verify source graph, revision progression, typed output, per-record evidence and durable ToolExecution trace. If a dedicated assessment-history read tool is needed, review inventory/schema change rather than pretend the existing tool returns the full v2 assessment.
++7. Prove RO tools cannot mutate, cannot access original retained/counterfactual/trace graph keys, and reject unauthorized tools. Preserve budgets, candidate separation, hashes, scope and cutoff semantics.
++8. Restart/recreate existing Compose service preserving volumes, restore exact-graph ACLs, re-read complaint/investigation/assessment/trace and verify idempotent replay/CAS. Only after this gate connect the B10 approved broker to a live agent checkpoint; API/SSE remains its later milestone.
++
++Reproduce the present limitation from source guards in `app/services/complaints/service.py:write_target`, `complaints/writer.py:Writer.commit`, `evidence/writer.py:target` and `mcp/runtime.py:CITY_GRAPH`. Existing negative integration tests exercise protected write targets and exact graph-key ACL denial. `B09R-runtime-proof.json` and the unchanged B09 real MCP inspection test demonstrate labeled source-preserving fixture integration only.
++
++Earliest gate: **B10 prerequisite, before live investigator end-to-end acceptance**. Requires human review of target/configuration policy and source promotion; no new authorization inferred here. All18 product requirements remain binding. This limitation does not negate the independently tested B09-R evidence semantics.
+diff --git a/docs/evidence/B09R-COMMANDS.md b/docs/evidence/B09R-COMMANDS.md
+new file mode 100644
+index 0000000..82cd448
+--- /dev/null
++++ b/docs/evidence/B09R-COMMANDS.md
+@@ -0,0 +1,119 @@
++# B09-R commands and attempts
++
++Run from `/Users/vikashkumar/Desktop/Civicly`, using the existing isolated Python3.12
++and accepted retained Docker/FalkorDB/MCP runtime. No global installs or dependency
++changes; no volume deletion, data promotion, remote push or ZIP.
++
++## Accepted B09 baseline (before corrections)
++
++```sh
++backend/.venv/bin/python -m pytest backend/tests -v -s --run-persistence > /tmp/civicly-b09r-baseline-tests.txt 2>&1
++make test-spec > /tmp/civicly-b09r-baseline-spec.txt 2>&1
++PYTHONPATH=backend backend/.venv/bin/python -m app.mcp.civicly configure --output /tmp/civicly-b09r-baseline-configuration.json
++PYTHONPATH=backend backend/.venv/bin/python scripts/verify_b09.py --output /tmp/civicly-b09r-baseline-retained.json --b08-anchor docs/evidence/B09-B08-after-final-lifecycle.json
++PYTHONPATH=backend backend/.venv/bin/python -m tests.b09_evidence verify --proof docs/evidence/B09-retained-proof.json --lifecycle-log /tmp/civicly-b09r-baseline-tests.txt --output /tmp/civicly-b09r-baseline-B09-retained.json
++PYTHONPATH=backend backend/.venv/bin/python /tmp/civicly-b09r-reproduce.py
++PYTHONPATH=backend backend/.venv/bin/python /tmp/civicly-b09r-legacy.py
++backend/.venv/bin/python scripts/audit_b09.py
++git diff --cached --check -- . ':!docs/evidence'
++git commit -m 'Accept B09 evidence and inspection foundation baseline'
++```
++
++Actual commit message used: `Accept B09 evidence and inspection foundation baseline`;
++local commit688b893. The original temporary repro/legacy creation scripts are retained
++as B09R-reproduce-before.py and B09R-create-legacy-before.py. They were executed
++against the accepted pre-correction source, not against rule2. Legacy creation retains
++only its new owned B08/B09 fixture; before repro deletes only its own graphs. Do not
++rerun legacy creation to replace the supplied proof on corrected source.
++
++Baseline582 PASS/0 FAIL/0 SKIP in724.05s; both SPEC validators PASS; original retained
++records and70 prior trace observations PASS. Evidence files copied from temporary
++outputs retain their actual content. The initial staged whitespace check without
++path exclusion flagged original historical patch context/pytest-log trailing whitespace;
++those original audit files were preserved verbatim and source-only check passed.
++
++## Correction verification (actual command stages)
++
++```sh
++backend/.venv/bin/python -m pytest backend/tests/unit/test_evidence_models.py backend/tests/unit/test_evidence_review.py -q > docs/evidence/B09R-unit-first.txt 2>&1
++backend/.venv/bin/python -m pytest backend/tests/integration/test_evidence_review.py -v -s > docs/evidence/B09R-integration-first.txt 2>&1
++backend/.venv/bin/python -m pytest backend/tests/integration/test_evidence_review.py -v -s > docs/evidence/B09R-integration-corrected.txt 2>&1
++backend/.venv/bin/python -m pytest backend/tests/unit backend/tests/integration/test_evidence_domain.py -v -s > docs/evidence/B09R-compatibility-focused.txt 2>&1
++backend/.venv/bin/python -m pytest backend/tests/integration/test_evidence_review.py::test_january_repair_august_recurrence_and_retrospective_attribution -v -s > docs/evidence/B09R-chronology-strengthened.txt 2>&1
++backend/.venv/bin/python -m pytest backend/tests/integration/test_evidence_review.py::test_real_mcp_broker_reads_v2_report_provenance_without_contract_changes -v -s > docs/evidence/B09R-v2-mcp-focused.txt 2>&1
++PYTHONPATH=backend backend/.venv/bin/python docs/evidence/B09R-reproduce-corrected.py > docs/evidence/B09R-reproduction-corrected.txt 2>&1
++backend/.venv/bin/python -m pytest backend/tests --collect-only -q > docs/evidence/B09R-test-collection-final.txt
++backend/.venv/bin/civicly health > docs/evidence/B09R-health.json
++backend/.venv/bin/civicly schema-status > docs/evidence/B09R-schema-status.json
++backend/.venv/bin/python -m pytest backend/tests -v -s --run-persistence > docs/evidence/B09R-regression-tests.txt 2>&1
++make test-spec > docs/evidence/B09R-spec-validation.txt 2>&1
++```
++
++The first unit filename was renamed to `test_evidence_review_models.py`: collecting
++unit and integration files with the same basename caused one import-file mismatch
++(597 other cases collected, no test executed in that failed collection). This fixes
++only the new module name, not any old test. Corrected collection initially616, then617
++after adding the explicit version2 real-MCP case. For a fresh focused rerun, use:
++
++```sh
++backend/.venv/bin/python -m pytest backend/tests/unit/test_evidence_review_models.py backend/tests/integration/test_evidence_review.py -v -s
++```
++
++First real run13 PASS/1 FAIL: past-cutoff attribution unnecessarily read future mutable
++cluster attributes while selecting incident identity. Corrected identity lookup validates
++actual INVESTIGATES against the immutable open journal; incident/source visibility is
++unchanged. Revised15 PASS; strengthened per-occurrence corroboration1 PASS; added actual
++MCP version2 provenance1 PASS. All-unit + unchanged prior B09 integration420 PASS.
++No mock replaces a real graph assertion. Negative fault-injection tests retain genuine
++DB operations and explicitly simulated transport failures.
++
++One ad hoc version-recording attempt referenced a nonexistent descriptive0001 filename
++and stopped with FileNotFoundError before database access; corrected verified paths
++are `backend/app/graph/migrations/0001.json` and `0002_mcp_traces.json`. Actual package,
++module and migration hash output is B09R-versions.json. No migration was changed.
++
++## Post-lifecycle and source checks
++
++Execute sequentially after full regression finishes (ACL state is not in the AOF):
++
++```sh
++PYTHONPATH=backend backend/.venv/bin/python -m app.mcp.civicly configure --output docs/evidence/B09R-post-configuration.json
++PYTHONPATH=backend backend/.venv/bin/python scripts/verify_b09.py --output docs/evidence/B09R-post-retained.json --b08-anchor docs/evidence/B09-B08-after-final-lifecycle.json
++PYTHONPATH=backend backend/.venv/bin/python -m tests.b09_evidence verify --proof docs/evidence/B09-retained-proof.json --lifecycle-log docs/evidence/B09R-regression-tests.txt --output docs/evidence/B09R-post-B09-retained.json
++PYTHONPATH=backend backend/.venv/bin/python scripts/verify_b09r.py --output docs/evidence/B09R-post-corrected-history.json
++backend/.venv/bin/python scripts/audit_b09r.py
++git diff --check -- . ':!docs/evidence'
++```
++
++`configure` reuses existing private credentials and restores exact graph-scoped ACLs;
++no values are printed. Original rolling B07R/B08/B09 test proofs are saved separately
++as B09R regression proofs, then restored byte-for-byte from688b893. Logs retain actual
++fresh outputs; original evidence is not overwritten. The audit verifies this and all582
++old test sources plus migrations, dependencies, city artifacts, repository, writer,
++algorithms and MCP implementation unchanged. Source hash freeze is verified again.
++
++Full regression requires the established accepted retained local runtime; this is not
++a clean-room bootstrap claim. Original retained graphs are not generated from hidden
++scenario answers. For a separate fresh environment, restore accepted B01–B09 runtime
++artifacts first; create the small v1 compatibility graph using the saved creation script
++under baseline688b893, then return to corrected source and its proof path. Do not silently
++replace a missing retained proof with fabricated rows or destructive resets.
++
++The persistence test executes the existing project's exact Compose lifecycle:
++`docker compose --project-directory /Users/vikashkumar/Desktop/Civicly -f /Users/vikashkumar/Desktop/Civicly/compose.yaml restart falkordb`, followed by the same prefix with
++`up -d --wait --wait-timeout 120 falkordb` and
++`up -d --force-recreate --wait --wait-timeout 120 falkordb`.
++It verifies graph and Browser persistence with fresh connections and a new container ID.
++
++Post-test read-only verifier first attempt stopped at receipt equality: the full regression
++replayed the already committed correction, so its captured receipt has replayed=true;
++`readback` defaults replayed=false. The verifier now passes the captured replay flag
++explicitly. Application logic/DB records unchanged; no failed graph assertion was
++masked. Corrected pre/post lifecycle verifier outputs record exact receipt readback.
++
++Extended accepted-B09 trace probe initially walked arbitrary proof dictionaries and
++matched JSON-schema `properties` as if they were result envelopes (same field names).
++Those schema objects do not have execution IDs. Exact known result lists were then
++checked:15 stored server records +15 city outputs +1 original fixture broker output,
++all present with equal hashes/evidence. No trace was missing or recreated. The verifier
++now selects these explicit artifact fields instead of recursively treating schemas as data.
+diff --git a/docs/evidence/B09R-COMPATIBILITY.md b/docs/evidence/B09R-COMPATIBILITY.md
+new file mode 100644
+index 0000000..f390265
+--- /dev/null
++++ b/docs/evidence/B09R-COMPATIBILITY.md
+@@ -0,0 +1,59 @@
++# B00–B09 compatibility review
++
++B09-R changes evidence assessment semantics only. Registryv3, municipality scope,
++0001,0002, repository/writer, B04 artifacts/importer, B05 algorithms, B06/B07 runtime,
++B08 intake and all582 original test sources are preserved against baseline688b893.
++Exact source preservation is machine checked in B09R-source-audit.json. Verification
++is not complete until the final regression/persistence report is PASS.
++
++| Foundation | Preservation and exercised evidence |
++|---|---|
++| B00 contracts |18 objectives, scope, frozen legacy numeric defects and B04 conversion validated by both specification validators; designated DEC-004 findings remain open. |
++| B01 |Full persistence test fresh connections, Browser HTTP200 and Browser file across actual restart/same container and recreate/new container/retained volumes. Original B01 probe independently read after lifecycle. |
++| B02 |Actual schema readiness,91 index groups/182 operational constraints, registry/0001 checksums;0002 trace checksum unchanged. Full schema migration failure/recovery tests preserved. |
++| B03/B03-R |Strict types/properties/endpoints/cardinality/temporal policies; bounded RO query templates and hop budgets; fence/lease/CAS/native rollback/recovery preserved. No arbitrary Cypher or mutation route added. |
++| B04 |858-node/1246-edge source fingerprint/revision2104 unchanged, all42 drainage links CANDIDATE; converter/no-op import/hash tests preserved.55 original fixture defects remain frozen; converted values not repaired again or reassigned. |
++| B05 |Full algorithms/case/counterfactual tests; candidate/verified and disconnected controls preserved. B09 utility source remains concerned WaterPipe -> affected RoadSegment. New B09-R test verifies required path expiry changes VERIFIED to SUPPORTED without erasing prior assessment; nearby same-coordinate pipe cannot substitute a path. |
++| B06 |Actual official Node MCP initialization/discovery/approved RO calls, forbidden writes/admin/other keys, timeouts, outages/recovery and process cleanup rerun. Exact retained-city ACL unchanged. |
++| B07/B07-R |Actual custom discovery12 read handlers, shared envelopes/schema/inventory, graph revisions, durable traces, per-event maintenance provenance, pre-cap chronological histories and explicit work-order unknowns rerun. New actual broker call reads a version2 attributed inspection report and retains distinct event evidence. No new tool or namespace.70 previously accepted trace observations verified read-only after lifecycle; new traces are additive. |
++| B08 |Original tests for same event/continuing/persistent/recurrence/primary-cluster correction preserved. New controlled2027 fixture uses actual intake and records distinct January/August IDs with RECURRENT cluster after explicit February closure; no production source copy/merge. |
++| B09 |All prior inspection, alternative-cause, topology, role, tamper, bounds, concurrent-CAS, journal replay, lost-response and actual constraint rollback tests unchanged. New explicit authority/meaning/occurrence categories, immutable v1 history/replay and appended v2 correction tested on real graphs. |
++
++## History and consumer semantics
++
++- Legacy assessment/rule1 remains readable with its original label, rationale, source
++  lists, edges, hashes and receipt. Historically incorrect v1 causal relationships
++  are historical claims; do not treat every old edge as a current verified assertion.
++- New v2 assessments contain explicit classifications and previous-assessment ID;
++  use the typed latest history result and its state, source/recording cutoff, revisions
++  and reservations. No existing assessment is edited to conceal a correction.
++- Optional absent attribution/classification fields do not enter v1 serialization or
++  old command hashes. Explicit attribution reports are version2; generic MCP graph
++  property/result schemas continue to carry their attributed JSON unchanged.
++- Actual MCP maintenance history exposes inspection/report provenance; there is no
++  new dedicated assessment-history MCP tool. New snapshots are JSON/Pydantic validated
++  for future adapters, not a claim that B10 agents or B17 graph/API consumers exist.
++- Read budgets fail closed; current mutable node versions cannot reconstruct past
++  state. The cutoff fixture uses a March cutoff after the February closure version,
++  excluding August/September evidence without reconstructing an overwritten January
++  incident. This limitation remains explicit.
++
++## Active graph gap
++
++See B09R-ACTIVE-GRAPH.md. The intersection of existing B08/B09 writable targets is
++canonical, currently unseeded. Production MCP points to retained B04 city. Disposable
++B08-to-B09 source copies/test server injection prove interface compatibility, not a
++coordinated production chain. Review and test one shared active graph/configuration
++before B10 live-investigator acceptance. No silent seed promotion or guard widening.
++
++## Remaining limitations
++
++Demonstration domain criteria are deterministic and synthetic, not general hydraulic,
++structural or causal science. Review/actor context is trusted internal, not B13 public
++authentication or proof against colluding sources. Retrospective attribution requires
++prior reviewed direct source evidence; unsupported recollection is insufficient.
++20 total source references,100 related edges/history,300 metered reads/8s/1s per query,
++B05 bounded traversals and inherited O(E) scans/O(N) audit/10k cap remain. Missing
++history, source-document retrieval, clock/service mapping, hidden-evaluation isolation,
++plan approval, events, memory/agents/GraphRAG/API/frontend retain their milestones.
++No new product capability is claimed complete because these corrections pass.
+diff --git a/docs/evidence/B09R-RESULTS.md b/docs/evidence/B09R-RESULTS.md
+new file mode 100644
+index 0000000..6a59947
+--- /dev/null
++++ b/docs/evidence/B09R-RESULTS.md
+@@ -0,0 +1,128 @@
++# B09-R corrective review results
++
++Current disposition: **PASS — human review pending**. All criteria A–J satisfied
++with the expressly allowed documented active-graph gate before B10 live investigator
++acceptance. All18 requirements remain mandatory. No B10 or later implementation.
++Accepted baseline688b893; no push. Final **617 PASS/0 FAIL/0 SKIP** in746.62s:
++**382 unit/235 real integration**, preserving582 prior tests plus19 unit/16 integration.
++Both SPEC validators and actual restart/recreation, retained sources, immutable
++history and101 accepted trace-observation checks PASS.
++
++## Root causes and corrected persisted behavior
++
++| Finding | Accepted B09 real reproduction | B09-R same real reproduction |
++|---|---|---|
++| A: asymmetric review authority |One unreviewed DRAIN_CLEAR -> CONTRADICTED assessment, REJECTED hypothesis and CONTRADICTED_BY edge. Falsifier collection did not check review. |INCONCLUSIVE, qualified unreviewed contradiction metadata/gap, no causal contradiction edge; reviewed domain-qualified falsifier can still contradict. |
++| B: context recorded as support |AGENT LLM_STATEMENT -> POSSIBLE, supporting_evidence_ids and SUPPORTED_BY despite a context-only gap. |INCONCLUSIVE, explicit contextual reference with source/hash, empty supporting IDs and no support edge. |
++| C: earliest start used for all occurrences |Inspection after recorded end -> SUPPORTED. Earliest start/asset/code matching ignored episode end and request association. |INCONCLUSIVE, explicit interval exclusion and no support edge. Actual per-incident request/proposal/affected-asset bindings and [start,end) replace minimum-start matching. |
++
++Exact old/new IDs, persisted assessment/status/edge readback and gaps are in
++B09R-before-results.json and B09R-after-results.json. These are actual DB operations
++on newly owned fixtures, not mocked successes. Their temporary graphs were removed
++only after recorded readback. The separate version1 compatibility fixture is retained.
++
++## Complete rule-v2 decision matrix
++
++| Evidence after provenance, subtype, occurrence and cutoff checks | Assessment | Hypothesis final state |
++|---|---|---|
++|Context only, excluded only, missing, or unreviewed contrary alone |INCONCLUSIVE |INCONCLUSIVE |
++|Unreviewed discriminating positive alone |POSSIBLE |UNDER_REVIEW |
++|Reviewed discriminating positive, incomplete criteria/independence/topology |SUPPORTED |SUPPORTED |
++|Reviewed approved falsifier, no conflicting positive claim |CONTRADICTED |REJECTED |
++|Any relevant positive/negative unresolved conflict, including unreviewed contrary |INCONCLUSIVE |INCONCLUSIVE |
++|Approved complete confirming observations + independent reviewed corroboration for each explained incident + required verified untruncated topology + no contrary conflict |VERIFIED |VERIFIED |
++
++The graph source lists/edges contain reviewed discriminating evidence only. Unreviewed
++positive/negative, context and exclusions remain separate typed metadata. One report
++with multiple observations can occupy several categories; each observation has one
++category. No probabilities or invented state. Existing state-machine transitions through
++UNDER_REVIEW remain enforced. Copied inspector/source records cannot verify, and a
++retrospective derivative cannot be its own independent corroborating source.
++
++## Controlled occurrence chronology
++
++The2027 January–September chronology is authored synthetic data in real isolated
++FalkorDB, not imported city data or a real municipal operational claim:
++
++1. Actual B08 January road incident; January reviewed direct inspection and assessment.
++2. February recorded completed authored repair WorkOrder/ActionTask and explicit
++   Incident ACTIVE -> ENDED closure with timestamp, not automatic resolution inference.
++3. Actual B08 August intake -> different incident, same primary cluster, RECURRENT.
++4. August inspection supports August; excluded for January. January inspection supports
++   January; excluded for August. Prior assessment hash unchanged.
++5. A hypothesis explaining both occurrences cannot pool one source per occurrence into
++   two-source VERIFIED; coverage and independence are checked separately for each.
++6. September reviewed retrospective observation explicitly names January and cites its
++   reviewed January direct source. It supports the named occurrence, retains basis
++   hashes/provenance, and does not create artificial source independence.
++7. March cutoff excludes August and September records, source references and future
++   report contents, while using the visible February closure version and January source.
++8. Independent tests cover unrelated same-asset investigation, late observations for an
++   unresolved occurrence, known ended interval, nearby disconnected pipe, candidate-only
++   path, actual verified utility path and its expiry. B05 counterfactual removal tests
++   remain part of the complete unchanged regression suite.
++
++See B09R-runtime-proof.json for explicit actual IDs, per-observation classifications,
++incident lists, edges, revisions, paths, source hashes and state readback. No full city
++seed, subtype/ontology invention, or change to B08 grouping policies.
++
++## Version and provenance compatibility
++
++New assessment/rule2 classification is in existing immutable rationale JSON. Optional
++explicit-attribution reports use format2. Absent new fields do not appear in v1
++serialization or old command hashes. No registry property, relationship, enum or
++migration change. Legacy v1 data keeps its historical interpretation, even when its
++conclusion was wrong. New correction is an appended assessment referencing previous ID.
++
++The retained B09R compatibility graph starts with a real pre-fix v1 unreviewed rejection;
++original receipt and journal replay, then appended v2 INCONCLUSIVE, are exercised and
++hashed. The original accepted B09 graph/history is separately verified without mutation.
++Real custom MCP discovery and maintenance call validate a v2 report, per-event evidence,
++existing schema and durable trace. No dedicated assessment-history MCP tool or agent
++selection is invented; typed assessment JSON is ready for a later reviewed adapter.
++
++## Compatibility, scope and limitations
++
++See B09R-COMPATIBILITY.md for B00–B09 checks and B09R-ACTIVE-GRAPH.md for verified target
++restrictions and the concrete earliest B10 prerequisite. Canonical is still empty;
++production MCP reads retained city. The one-active-graph application chain remains an
++explicit gate, not an end-to-end success claim. No source promotion or guard widening.
++
++All42 city drainage links remain CANDIDATE.55 original legacy numeric defects remain
++frozen, B04 canonical conversion still validated and55 unlinked observations not
++assigned invented locations. Historical source/documents, clock/service/evaluator,
++authenticated approval, durable domain events and API findings retain their phases.
++Trusted actor/review/independence is conservative demo reasoning, not B13 authentication
++or general causal proof. Current mutable versions do not reconstruct historical state;
++missing/expired provenance remains unavailable. Finite reader/query/reference budgets,
++O(E) integrity scans/O(N) audit and10k audit cap remain; no performance/SLA claim.
++
++B10 readiness is conditional on human approval and the active-graph prerequisite before
++live investigator acceptance. B10/LangGraph/checkpoints/memory, B11/GraphRAG, planning,
++dispatch/monitoring/events/API/frontend were not implemented in B09-R.
++
++## Final acceptance record
++
++| Criterion | Result | Evidence |
++|---|---|---|
++|A authority |PASS |Persisted seven-case matrix; unreviewed contrary cannot reject |
++|B meaning |PASS |AGENT/narrative/candidate context retains source/hash without causal edge |
++|C occurrence |PASS |Actual January/February/August/September fixture and per-incident corroboration |
++|D time |PASS |March cutoff excludes August/September knowledge; validated retrospective source |
++|E assessment |PASS |All five labels, immutable v1 hashes/replay, appended linked v2 |
++|F graph |PASS |Actual bindings, utility root guard, candidate/verified/expired/nearby/counterfactuals, bounded RO |
++|G compatibility |PASS |582 old tests/source unchanged; original registry/migrations/city/history/trace checks |
++|H verification |PASS |617 tests in746.62s, both validators, actual lifecycle |
++|I traceability |PASS |Exact inventory, source diff, raw failures/results, commands/fingerprints/audit |
++|J scope |PASS |No B10 or later implementation |
++
++Post-lifecycle original B01/B04/B05/B08/B09 sources preserved. The corrected legacy
++fixture has39 nodes/28 edges/revision58, exact identical content/audit/writer fingerprint
++and v1/v2 history before/after actual lifecycle. All15 accepted B09 server traces,15
++city output hashes and1 fixture broker output survive in addition to70 predecessor
++trace observations. These are101 observation checks, not a claim of101 unique executions.
++
++Review entrypoints: B09R-FILES.md, B09R-changes.patch, B09R-test-summary.json,
++B09R-regression-tests.txt, B09R-spec-validation.txt and B09R-post-*.json.
++B10 foundation is ready for review; live-investigator readiness remains conditional
++on human approval and the explicit shared-active-graph prerequisite. STOP after B09-R.
+diff --git a/docs/evidence/B09R-create-legacy-before.py b/docs/evidence/B09R-create-legacy-before.py
+new file mode 100644
+index 0000000..34a47c1
+--- /dev/null
++++ b/docs/evidence/B09R-create-legacy-before.py
+@@ -0,0 +1,20 @@
++import json
++from pathlib import Path
++from app.config import Settings
++from app.graph.connection import connect
++from app.graph.analysis.counterfactual import capture
++from tests.b09_fixtures import create,open_case,propose,report,assess
++from app.services.evidence.models import Journal
++with connect(Settings(_env_file='.env')) as db:
++ f=create(db,retain_source=True)
++ inv=open_case(f);h=propose(f,inv)
++ ev=report(f,inv,codes=['DRAIN_CLEAR'],reviewed=False).entity_id
++ result=assess(f,h,[ev])
++ journal=Journal.model_validate_json(f.repo.get_node(result.journal_id).properties['summary'])
++ value={'graph':f.repo.graph.name,'source_graph':f.source_graph,'source_fingerprint':f.source_fingerprint,
++        'investigation_id':inv,'hypothesis_id':h,'clock':f.clock(),'v1_receipt':result.model_dump(mode='json'),
++        'v1_command':journal.command,'actor':journal.actor.model_dump(mode='json'),
++        'v1_assessment_node_hash':f.repo.get_node(result.entity_id).content_hash,
++        'v1_journal_node_hash':f.repo.get_node(result.journal_id).content_hash,'before':capture(f.repo).fingerprint}
++ Path('/tmp/civicly-b09r-v1-proof.json').write_text(json.dumps(value,indent=2)+'\n')
++ print(json.dumps({'status':'PASS','legacy_graph':f.repo.graph.name,'v1_label':result.assessment.assessment}))
+diff --git a/docs/evidence/B09R-reproduce-before.py b/docs/evidence/B09R-reproduce-before.py
+new file mode 100644
+index 0000000..ac38fe2
+--- /dev/null
++++ b/docs/evidence/B09R-reproduce-before.py
+@@ -0,0 +1,31 @@
++import json
++from app.config import Settings
++from app.graph.connection import connect
++from tests.b09_fixtures import create,open_case,propose,report,assess
++from tests.graph_fixtures import evidence
++
++results={}
++with connect(Settings(_env_file='.env')) as db:
++ for case in ['unreviewed-contradiction','context-as-support','after-episode-end']:
++  f=create(db)
++  try:
++   inv=open_case(f)
++   h=propose(f,inv)
++   if case=='unreviewed-contradiction':
++    e=report(f,inv,codes=['DRAIN_CLEAR'],reviewed=False).entity_id
++   elif case=='context-as-support':
++    e=evidence(f.repo,'CONTEXT',evidence_type='LLM_STATEMENT',source_kind='AGENT').id
++   else:
++    incident=f.repo.get_node(f.receipts['WATERLOGGING'].incident_id)
++    active=f.repo.update_node(incident.id,{'status':'ACTIVE'},expected_hash=incident.content_hash)
++    f.repo.update_node(active.id,{'status':'ENDED','ended_at':'2026-10-18T11:00:00Z'},expected_hash=active.content_hash)
++    e=report(f,inv).entity_id
++   r=assess(f,h,[e]);a=r.assessment
++   results[case]={'assessment':a.assessment,'persisted_assessment':f.repo.get_node(a.id).properties['assessment'],
++    'hypothesis_status':f.repo.get_node(h).properties['status'],'supporting_evidence_ids':a.supporting_evidence_ids,
++    'contradicting_evidence_ids':a.contradicting_evidence_ids,'supported_by':[v.target for v in f.repo._edges('SUPPORTED_BY') if v.source==a.id],
++    'contradicted_by':[v.target for v in f.repo._edges('CONTRADICTED_BY') if v.source==a.id],'gaps':a.missing_evidence,
++    'evidence_class':'REAL_FALKORDB_AUTHORED_ISOLATED_FIXTURE'}
++  finally:db.select_graph(f.repo.graph.name).delete()
++open('/tmp/civicly-b09r-before-results.json','w').write(json.dumps(results,indent=2)+'\n')
++print(json.dumps({key:{'assessment':v['assessment'],'status':v['hypothesis_status']} for key,v in results.items()}))
+diff --git a/docs/evidence/B09R-reproduce-corrected.py b/docs/evidence/B09R-reproduce-corrected.py
+new file mode 100644
+index 0000000..7a72bc0
+--- /dev/null
++++ b/docs/evidence/B09R-reproduce-corrected.py
+@@ -0,0 +1,31 @@
++import json
++from app.config import Settings
++from app.graph.connection import connect
++from tests.b09_fixtures import create,open_case,propose,report,assess
++from tests.graph_fixtures import evidence
++
++results={}
++with connect(Settings(_env_file='.env')) as db:
++ for case in ['unreviewed-contradiction','context-as-support','after-episode-end']:
++  f=create(db)
++  try:
++   inv=open_case(f)
++   h=propose(f,inv)
++   if case=='unreviewed-contradiction':
++    e=report(f,inv,codes=['DRAIN_CLEAR'],reviewed=False).entity_id
++   elif case=='context-as-support':
++    e=evidence(f.repo,'CONTEXT',evidence_type='LLM_STATEMENT',source_kind='AGENT').id
++   else:
++    incident=f.repo.get_node(f.receipts['WATERLOGGING'].incident_id)
++    active=f.repo.update_node(incident.id,{'status':'ACTIVE'},expected_hash=incident.content_hash)
++    f.repo.update_node(active.id,{'status':'ENDED','ended_at':'2026-10-18T11:00:00Z'},expected_hash=active.content_hash)
++    e=report(f,inv).entity_id
++   r=assess(f,h,[e]);a=r.assessment
++   results[case]={'assessment':a.assessment,'persisted_assessment':f.repo.get_node(a.id).properties['assessment'],
++    'hypothesis_status':f.repo.get_node(h).properties['status'],'supporting_evidence_ids':a.supporting_evidence_ids,
++    'contradicting_evidence_ids':a.contradicting_evidence_ids,'supported_by':[v.target for v in f.repo._edges('SUPPORTED_BY') if v.source==a.id],
++    'contradicted_by':[v.target for v in f.repo._edges('CONTRADICTED_BY') if v.source==a.id],'gaps':a.missing_evidence,
++    'evidence_class':'REAL_FALKORDB_AUTHORED_ISOLATED_FIXTURE'}
++  finally:db.select_graph(f.repo.graph.name).delete()
++open('docs/evidence/B09R-after-results.json','w').write(json.dumps(results,indent=2)+'\n')
++print(json.dumps({key:{'assessment':v['assessment'],'status':v['hypothesis_status']} for key,v in results.items()}))
+diff --git a/scripts/audit_b09r.py b/scripts/audit_b09r.py
+new file mode 100644
+index 0000000..70ce525
+--- /dev/null
++++ b/scripts/audit_b09r.py
+@@ -0,0 +1,59 @@
++"""Audit B09-R scope and Git-candidate secrets without logging private values."""
++import json
++import hashlib
++from pathlib import Path
++import re
++import subprocess
++
++ROOT=Path(__file__).resolve().parents[1]
++BASE='688b893'
++freeze=json.loads((ROOT/'docs/evidence/B09R-source-freeze.json').read_text())
++for name,expected in freeze['files'].items():
++ assert hashlib.sha256((ROOT/name).read_bytes()).hexdigest()==expected,'Tested source changed after freeze: '+name
++NEW_SOURCE={'backend/app/services/evidence/classification.py','backend/app/services/evidence/relevance.py',
++ 'backend/tests/b09r_fixtures.py','backend/tests/integration/test_evidence_review.py',
++ 'backend/tests/unit/test_evidence_review_models.py','scripts/audit_b09r.py','scripts/verify_b09r.py'}
++ALLOWED={'backend/app/services/evidence/models.py','backend/app/services/evidence/policies.py',
++ 'backend/app/services/evidence/reader.py','backend/app/services/evidence/service.py',
++ 'contracts/evidence_hypotheses.json','backend/EVIDENCE.md','decision.md','flow.md',
++ 'task_board.md','implementation_status.md','test_log.md','blockers.md'}
++tracked=subprocess.check_output(['git','ls-files','-z'],cwd=ROOT).decode().split('\0')[:-1]
++protected=0
++for name in tracked:
++ if name in ALLOWED:continue
++ assert (ROOT/name).read_bytes()==subprocess.check_output(['git','show',BASE+':'+name],cwd=ROOT),'Accepted file changed: '+name
++ protected+=1
++secret_values=[]
++for line in (ROOT/'.env').read_text().splitlines():
++ if '=' not in line:continue
++ key,value=line.split('=',1);value=value.strip(' \"\'')
++ if any(word in key.upper() for word in ('PASSWORD','SECRET','KEY','TOKEN')) and len(value)>=8:
++  secret_values.append(value.encode())
++for name in ['mcp-credentials.json','civicly-mcp.json']:
++ path=ROOT/'.runtime'/name
++ assert not path.is_symlink() and not path.stat().st_mode&0o077
++ for key,value in json.loads(path.read_text()).items():
++  if 'password' in key and isinstance(value,str):secret_values.append(value.encode())
++untracked=subprocess.check_output(['git','ls-files','--others','--exclude-standard','-z'],cwd=ROOT).decode().split('\0')[:-1]
++assert all(name in NEW_SOURCE or name.startswith('docs/evidence/B09R-') for name in untracked),'Unapproved new source outside B09-R'
++files=sorted(set(tracked+untracked))
++for name in files:
++ assert not set(Path(name).parts)&{'.runtime','.env','.git','.venv','node_modules','__pycache__','.pytest_cache','.uv-cache','review_packages'}
++ assert not name.endswith(('.zip','.tar','.tar.gz','.tgz','.pem','.key','.p12'))
++ raw=(ROOT/name).read_bytes()
++ assert not any(secret in raw for secret in secret_values),'Private value in '+name
++ assert not re.search(rb'-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----|\bAKIA[0-9A-Z]{16}\b|\bsk-[A-Za-z0-9_-]{24,}',raw),'Private pattern in '+name
++leaked=[]
++for row in subprocess.check_output(['ps','-axo','pid=,command='],text=True).splitlines():
++ parts=row.strip().split(None,2)
++ if len(parts)!=3:continue
++ exe,command=Path(parts[1]).name,parts[2]
++ if ('python' in exe and any(s in command for s in ('-m app.mcp.civicly.server','-m tests.b07r_server','-m tests.b08_server','-m tests.b09_server'))) or (exe=='node' and 'node_modules/@falkordb/mcpserver/dist/index.js' in command):leaked.append(int(parts[0]))
++assert not leaked,'MCP child left running'
++value={'status':'PASS','baseline':subprocess.check_output(['git','rev-parse',BASE],text=True).strip(),
++ 'accepted_files_unchanged':protected,'tested_source_freeze_matches':True,'existing582_test_sources_unchanged':True,
++ 'registry_migrations_B03_B04_B05_B06_B07_B08_writer_dependencies_unchanged':True,
++ 'candidate_files_scanned':len(files),'local_secret_values_and_private_key_patterns':'PASS; values never logged',
++ 'leaked_processes':leaked,'archive':'None generated; external full-folder exports not audited'}
++(ROOT/'docs/evidence/B09R-source-audit.json').write_text(json.dumps(value,indent=2)+'\n')
++print(json.dumps(value))
+diff --git a/scripts/verify_b09r.py b/scripts/verify_b09r.py
+new file mode 100644
+index 0000000..520a777
+--- /dev/null
++++ b/scripts/verify_b09r.py
+@@ -0,0 +1,73 @@
++"""Read-only post-lifecycle verification of the isolated real v1->v2 correction."""
++import argparse
++from datetime import timedelta
++import json
++import subprocess
++from pathlib import Path
++from app.config import Settings
++from app.graph.connection import connect
++from app.graph.repository import GraphRepository
++from app.graph.analysis.counterfactual import capture
++from app.graph.schema import timestamp
++from app.services.evidence import EvidenceService
++from app.services.evidence.models import Receipt
++from app.graph.models import digest
++from app.mcp.civicly.runtime import connections
++from app.mcp.civicly.storage import TraceStore
++from app.mcp.civicly.models import TraceRecord
++
++
++def accepted_trace_observations():
++    def accepted(name):
++        return json.loads(subprocess.check_output(['git','show','688b893:docs/evidence/'+name]))
++    city=accepted('B09-city-mcp-proof.json')
++    checked=0
++    with connections() as (_,writer,name):
++        store=TraceStore(writer,name)
++        for value in city['persisted_server_traces']:
++            assert store.get(value['context']['execution_id'])==TraceRecord.model_validate_json(json.dumps(value))
++            checked+=1
++        outputs=[*city['results'],city['exploratory'],*city['typed_dependencies'].values()]
++        outputs.append(accepted('B09-runtime-proof.json')['examples']['actual-mcp']['values']['result'])
++        for output in outputs:
++            value=store.get(output['execution_id'])
++            assert value.output_sha256==digest(output) and value.source_evidence_ids==output['source_evidence_ids']
++            checked+=1
++    return checked
++
++
++def main():
++    parser=argparse.ArgumentParser()
++    parser.add_argument('--output',type=Path,required=True)
++    args=parser.parse_args()
++    old=json.loads(Path('docs/evidence/B09R-v1-proof.json').read_text())
++    runtime=json.loads(Path('docs/evidence/B09R-runtime-proof.json').read_text())['results']['v1-to-v2-append']
++    with connect(Settings(_env_file='.env')) as db:
++        repo=GraphRepository(db,old['graph'])
++        before=capture(repo).fingerprint
++        assert before==runtime['graph_fingerprint']
++        assert capture(GraphRepository(db,old['source_graph'])).fingerprint==old['source_fingerprint']
++        service=EvidenceService(repo)
++        legacy=Receipt.model_validate_json(json.dumps(old['v1_receipt']))
++        assert service.readback(legacy).model_dump(mode='json')==old['v1_receipt']
++        corrected=Receipt.model_validate_json(json.dumps(runtime['receipt']))
++        assert service.readback(corrected,replayed=corrected.replayed)==corrected
++        at=(timestamp(old['correction_as_of'])+timedelta(seconds=100)).isoformat().replace('+00:00','Z')
++        history=service.history(old['hypothesis_id'],at)
++        assert [(a.format_version,a.assessment) for a in history]==[(1,'CONTRADICTED'),(2,'INCONCLUSIVE')]
++        assert history[1].previous_assessment_id==history[0].id
++        assert repo.get_node(legacy.entity_id).content_hash==old['v1_assessment_node_hash']
++        assert repo.get_node(legacy.journal_id).content_hash==old['v1_journal_node_hash']
++        assert capture(repo).fingerprint==before
++        result={'status':'PASS','domain_mutated_by_verifier':False,'graph':repo.graph.name,
++                'fingerprint':before,'matches_pre_lifecycle_test_snapshot':True,'source_B08_unchanged':True,
++                'v1_assessment_hash_unchanged':old['v1_assessment_node_hash'],
++                'v1_journal_hash_unchanged':old['v1_journal_node_hash'],
++                'v1_receipt_readback_exact':True,'v2_receipt_readback_exact':True,
++                'history':[a.model_dump(mode='json') for a in history]}
++    result['accepted_B09_trace_observations_verified']=accepted_trace_observations()
++    args.output.write_text(json.dumps(result,indent=2)+'\n')
++    print(json.dumps({k:v for k,v in result.items() if k!='history'}))
++
++
++if __name__=='__main__':main()

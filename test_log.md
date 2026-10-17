@@ -1,5 +1,17 @@
 # test_log.md — Append-only verification record
 
+## Current status — B09-R, 2026-10-18 (takes precedence over every historical status)
+
+B09-R PASS — human review pending. Local accepted B09 baseline `688b893`, no push.
+Final617 PASS/0 FAIL/0 SKIP in746.62s:382 unit/235 real FalkorDB/MCP integration,
+including all582 original tests unchanged plus19 unit/16 integration. Both SPEC
+validators PASS. Actual restart/recreation and Browser persistence PASS. Original
+B01/B04/B05/B08/B09 sources/history, registryv3/0001/0002 and101 accepted trace
+observation checks preserved. Corrected v1->v2 fixture exact pre/post fingerprint/history
+PASS. No B10 work or city/canonical promotion; all42 drainage links CANDIDATE.
+Active-graph gate remains OPEN before B10 live investigator acceptance; details and
+reproducible plan in docs/evidence/B09R-ACTIVE-GRAPH.md. All18 requirements binding.
+
 ## Current status — B09, 2026-10-17 (takes precedence over all history)
 
 B08 externally accepted; local baseline00d98745. B09 PASS — human review pending.
@@ -812,3 +824,12 @@ source:507 baseline +37 pure unit +38 real DB/MCP. No schema/old runtime changes
 - verify_b09.py PASS city/B01/B05/native schemas and70 accepted trace observations (43 B07/R+27 B08), original B08 domain unchanged.1430 ToolExecutions observed, not agent executions.
 - Source-freeze14 files unchanged; source/actual-private-value/process audit PASS. Accepted regenerated B07R/B08 proof artifacts restored from Git HEAD, fresh outputs saved separately. Final source-only whitespace/patch reverse check, compilation and both SPEC validators recorded in final evidence.
 - All failure/interruption logs retained. No live LLM/agent/dispatch/event/API/frontend, push or ZIP. B09 PASS awaits review; proposed B10 only after authorization.
+
+## B09-R completed verification | 2026-10-18
+- Accepted baseline582 PASS (363 unit/219 integration),724.05s; both SPEC and retained graph checks PASS before baseline688b893. Real before-fix three-case reproductions captured.
+- First focused unit56 PASS (37 existing+19 new); first real corrective13 PASS/1 FAIL (future mutable-cluster lookup), corrected15 PASS, strengthened chronology1 PASS, added v2 actual MCP1 PASS. All-unit + unchanged B09 integration420 PASS in203.78s.
+- Initial combined collection597 cases+1 import-file mismatch error; unique new unit basename fixed it. Corrected616 then617 after added MCP case. No old test removed/modified. Read-only version-path/replay/schema-probe attempt corrections documented in B09R-COMMANDS.md.
+- FINAL exact command `backend/.venv/bin/python -m pytest backend/tests -v -s --run-persistence`:617 PASS/0 FAIL/0 SKIP,382 unit/235 real integration,in746.62s. Fault injections are labeled transport/constraint failure wrappers around actual DB/MCP, not fake successes.
+- `make test-spec`: both validators PASS; strict B04 artifact preservation PASS. Actual existing Compose restart/same container and recreation/new container/retained volumes; fresh MATCH, Browser HTTP200 and Browser file persistence PASS.
+- Post-lifecycle exact commands/output: B09R-COMMANDS.md and B09R-post-*.json. Original B01–B09 fingerprints/70 prior trace observations plus31 accepted B09 trace observations PASS; original v1 history unchanged, corrected compatibility graph/history exact pre/post PASS.
+- Source hash freeze matches tested code; final source/secret audit and B09R-only patch/inventory retained. No live LLM/autonomous agent verification attempted or claimed; B10 remains unstarted.

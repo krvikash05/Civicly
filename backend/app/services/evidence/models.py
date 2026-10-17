@@ -121,6 +121,22 @@ class Observation(Model):
         return self
 
 
+class IncidentAttribution(Model):
+    """Optional explicit occurrence binding; retrospective claims require prior source basis."""
+    incident_ids: list[ID] = Field(min_length=1, max_length=3)
+    mode: Literal['OCCURRENCE', 'RETROSPECTIVE'] = 'OCCURRENCE'
+    rationale: Text
+    basis_evidence_ids: list[ID] = Field(default_factory=list, max_length=5)
+
+    @model_validator(mode='after')
+    def source_basis(self):
+        if len(set(self.incident_ids)) != len(self.incident_ids) or len(set(self.basis_evidence_ids)) != len(self.basis_evidence_ids):
+            raise ValueError('Duplicate attribution references')
+        if (self.mode == 'RETROSPECTIVE') != bool(self.basis_evidence_ids):
+            raise ValueError('Retrospective attribution requires a source basis; direct attribution does not')
+        return self
+
+
 class ReportInspection(Command):
     operation: Literal['report_inspection'] = 'report_inspection'
     inspection_id: ID
@@ -130,6 +146,7 @@ class ReportInspection(Command):
     source_kind: Literal['SYNTHETIC', 'MUNICIPAL', 'PUBLIC'] = 'SYNTHETIC'
     observations: list[Observation] = Field(min_length=1, max_length=10)
     review: Review | None = None
+    attribution: IncidentAttribution | None = Field(default=None, exclude_if=lambda value: value is None)
 
 
 class Assess(Command):
@@ -144,7 +161,7 @@ COMMAND = TypeAdapter(Annotated[OpenInvestigation | Propose | RequestInspection 
 
 
 class Report(Model):
-    format_version: Literal[1] = 1
+    format_version: Literal[1, 2] = 1
     inspection_id: ID
     inspector_id: ID
     department_id: ID
@@ -156,6 +173,14 @@ class Report(Model):
     observations: list[Observation] = Field(min_length=1, max_length=10)
     finding_ids: list[ID] = Field(min_length=1, max_length=10)
     review: Review | None = None
+    attribution: IncidentAttribution | None = Field(default=None, exclude_if=lambda value: value is None)
+
+
+    @model_validator(mode='after')
+    def version_binding(self):
+        if (self.format_version == 2) != (self.attribution is not None):
+            raise ValueError('Report version/attribution mismatch')
+        return self
 
 
 class EvidenceReference(Model):
@@ -171,13 +196,44 @@ class EvidenceReference(Model):
     finding_hashes: dict[str, str] = Field(default_factory=dict)
 
 
+class EvidenceUse(Model):
+    evidence_id: ID
+    observation_index: int | None = Field(default=None, ge=0, le=9)
+    category: Literal['REVIEWED_SUPPORT', 'UNREVIEWED_SUPPORT', 'REVIEWED_CONTRADICTION',
+                      'UNREVIEWED_CONTRADICTION', 'CONTEXT', 'EXCLUDED']
+    incident_ids: list[ID] = Field(default_factory=list, max_length=3)
+    reason: Text
+    basis_evidence_ids: list[ID] = Field(default_factory=list, max_length=5)
+
+
+class EvidenceClassification(Model):
+    uses: list[EvidenceUse] = Field(max_length=220)
+    reviewed_support_ids: list[ID]
+    unreviewed_support_ids: list[ID]
+    reviewed_contradiction_ids: list[ID]
+    unreviewed_contradiction_ids: list[ID]
+    contextual_evidence_ids: list[ID]
+    excluded_evidence_ids: list[ID]
+
+    @model_validator(mode='after')
+    def lists_match(self):
+        for category, field in [('REVIEWED_SUPPORT', 'reviewed_support_ids'), ('UNREVIEWED_SUPPORT', 'unreviewed_support_ids'),
+                                ('REVIEWED_CONTRADICTION', 'reviewed_contradiction_ids'), ('UNREVIEWED_CONTRADICTION', 'unreviewed_contradiction_ids'),
+                                ('CONTEXT', 'contextual_evidence_ids'), ('EXCLUDED', 'excluded_evidence_ids')]:
+            expected = sorted({use.evidence_id for use in self.uses if use.category == category})
+            if getattr(self, field) != expected:
+                raise ValueError('Evidence classification summary disagrees with uses')
+        return self
+
+
 class Assessment(Model):
-    format_version: Literal[1] = 1
+    format_version: Literal[1, 2] = 1
     id: ID
     hypothesis_id: ID
     previous_assessment_id: ID | None
     assessment: Literal['POSSIBLE', 'SUPPORTED', 'CONTRADICTED', 'VERIFIED', 'INCONCLUSIVE']
-    rule_version: Literal[1] = 1
+    rule_version: Literal[1, 2] = 1
+    classification: EvidenceClassification | None = Field(default=None, exclude_if=lambda value: value is None)
     cause_code: ID
     mechanism: Text
     confirming_codes: list[ID]
@@ -198,6 +254,17 @@ class Assessment(Model):
     truncated: bool
     state_transitions: list[str]
     reservations: list[str]
+
+
+    @model_validator(mode='after')
+    def semantic_version(self):
+        if self.rule_version != self.format_version or (self.format_version == 2) != (self.classification is not None):
+            raise ValueError('Assessment semantic version mismatch')
+        if self.classification and (self.supporting_evidence_ids != self.classification.reviewed_support_ids
+                or self.contradicting_evidence_ids != self.classification.reviewed_contradiction_ids
+                or self.excluded_evidence_ids != self.classification.excluded_evidence_ids):
+            raise ValueError('Assessment graph-edge lists disagree with classification')
+        return self
 
 
 class Receipt(Model):

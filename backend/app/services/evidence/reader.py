@@ -116,6 +116,7 @@ class Reader:
                 or original['source_id'] != report.source_id or original['record_id'] != report.record_id
                 or original['source_kind'] != report.source_kind
                 or original['observations'] != [ob.model_dump(mode='json') for ob in report.observations]
+                or original.get('attribution') != (report.attribution.model_dump(mode='json') if report.attribution else None)
                 or original['review'] != (report.review.model_dump(mode='json') if report.review else None)):
             raise PreconditionFailed('Report disagrees with original attributed operation')
         assets = {e.target for e in self.edges('INSPECTS', source=ins.id)}

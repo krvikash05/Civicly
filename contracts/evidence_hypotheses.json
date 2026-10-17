@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "municipality_scope": {
     "field": "municipality_id",
     "value": "demo-city",
@@ -62,6 +62,54 @@
             "as_of"
           ],
           "title": "Assess",
+          "type": "object"
+        },
+        "IncidentAttribution": {
+          "additionalProperties": false,
+          "description": "Optional explicit occurrence binding; retrospective claims require prior source basis.",
+          "properties": {
+            "incident_ids": {
+              "items": {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              "maxItems": 3,
+              "minItems": 1,
+              "title": "Incident Ids",
+              "type": "array"
+            },
+            "mode": {
+              "default": "OCCURRENCE",
+              "enum": [
+                "OCCURRENCE",
+                "RETROSPECTIVE"
+              ],
+              "title": "Mode",
+              "type": "string"
+            },
+            "rationale": {
+              "maxLength": 2000,
+              "minLength": 1,
+              "title": "Rationale",
+              "type": "string"
+            },
+            "basis_evidence_ids": {
+              "items": {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              "maxItems": 5,
+              "title": "Basis Evidence Ids",
+              "type": "array"
+            }
+          },
+          "required": [
+            "incident_ids",
+            "rationale"
+          ],
+          "title": "IncidentAttribution",
           "type": "object"
         },
         "Observation": {
@@ -363,6 +411,17 @@
               "anyOf": [
                 {
                   "$ref": "#/$defs/Review"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "attribution": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/IncidentAttribution"
                 },
                 {
                   "type": "null"
@@ -691,8 +750,11 @@
           "additionalProperties": false,
           "properties": {
             "format_version": {
-              "const": 1,
               "default": 1,
+              "enum": [
+                1,
+                2
+              ],
               "title": "Format Version",
               "type": "integer"
             },
@@ -733,10 +795,24 @@
               "type": "string"
             },
             "rule_version": {
-              "const": 1,
               "default": 1,
+              "enum": [
+                1,
+                2
+              ],
               "title": "Rule Version",
               "type": "integer"
+            },
+            "classification": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/EvidenceClassification"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
             },
             "cause_code": {
               "maxLength": 200,
@@ -896,6 +972,84 @@
           "title": "Assessment",
           "type": "object"
         },
+        "EvidenceClassification": {
+          "additionalProperties": false,
+          "properties": {
+            "uses": {
+              "items": {
+                "$ref": "#/$defs/EvidenceUse"
+              },
+              "maxItems": 220,
+              "title": "Uses",
+              "type": "array"
+            },
+            "reviewed_support_ids": {
+              "items": {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              "title": "Reviewed Support Ids",
+              "type": "array"
+            },
+            "unreviewed_support_ids": {
+              "items": {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              "title": "Unreviewed Support Ids",
+              "type": "array"
+            },
+            "reviewed_contradiction_ids": {
+              "items": {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              "title": "Reviewed Contradiction Ids",
+              "type": "array"
+            },
+            "unreviewed_contradiction_ids": {
+              "items": {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              "title": "Unreviewed Contradiction Ids",
+              "type": "array"
+            },
+            "contextual_evidence_ids": {
+              "items": {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              "title": "Contextual Evidence Ids",
+              "type": "array"
+            },
+            "excluded_evidence_ids": {
+              "items": {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              "title": "Excluded Evidence Ids",
+              "type": "array"
+            }
+          },
+          "required": [
+            "uses",
+            "reviewed_support_ids",
+            "unreviewed_support_ids",
+            "reviewed_contradiction_ids",
+            "unreviewed_contradiction_ids",
+            "contextual_evidence_ids",
+            "excluded_evidence_ids"
+          ],
+          "title": "EvidenceClassification",
+          "type": "object"
+        },
         "EvidenceReference": {
           "additionalProperties": false,
           "properties": {
@@ -1002,6 +1156,124 @@
             "basis"
           ],
           "title": "EvidenceReference",
+          "type": "object"
+        },
+        "EvidenceUse": {
+          "additionalProperties": false,
+          "properties": {
+            "evidence_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Evidence Id",
+              "type": "string"
+            },
+            "observation_index": {
+              "anyOf": [
+                {
+                  "maximum": 9,
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Observation Index"
+            },
+            "category": {
+              "enum": [
+                "REVIEWED_SUPPORT",
+                "UNREVIEWED_SUPPORT",
+                "REVIEWED_CONTRADICTION",
+                "UNREVIEWED_CONTRADICTION",
+                "CONTEXT",
+                "EXCLUDED"
+              ],
+              "title": "Category",
+              "type": "string"
+            },
+            "incident_ids": {
+              "items": {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              "maxItems": 3,
+              "title": "Incident Ids",
+              "type": "array"
+            },
+            "reason": {
+              "maxLength": 2000,
+              "minLength": 1,
+              "title": "Reason",
+              "type": "string"
+            },
+            "basis_evidence_ids": {
+              "items": {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              "maxItems": 5,
+              "title": "Basis Evidence Ids",
+              "type": "array"
+            }
+          },
+          "required": [
+            "evidence_id",
+            "category",
+            "reason"
+          ],
+          "title": "EvidenceUse",
+          "type": "object"
+        },
+        "IncidentAttribution": {
+          "additionalProperties": false,
+          "description": "Optional explicit occurrence binding; retrospective claims require prior source basis.",
+          "properties": {
+            "incident_ids": {
+              "items": {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              "maxItems": 3,
+              "minItems": 1,
+              "title": "Incident Ids",
+              "type": "array"
+            },
+            "mode": {
+              "default": "OCCURRENCE",
+              "enum": [
+                "OCCURRENCE",
+                "RETROSPECTIVE"
+              ],
+              "title": "Mode",
+              "type": "string"
+            },
+            "rationale": {
+              "maxLength": 2000,
+              "minLength": 1,
+              "title": "Rationale",
+              "type": "string"
+            },
+            "basis_evidence_ids": {
+              "items": {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              "maxItems": 5,
+              "title": "Basis Evidence Ids",
+              "type": "array"
+            }
+          },
+          "required": [
+            "incident_ids",
+            "rationale"
+          ],
+          "title": "IncidentAttribution",
           "type": "object"
         },
         "JsonValue": {},
@@ -1138,8 +1410,11 @@
           "additionalProperties": false,
           "properties": {
             "format_version": {
-              "const": 1,
               "default": 1,
+              "enum": [
+                1,
+                2
+              ],
               "title": "Format Version",
               "type": "integer"
             },
@@ -1214,6 +1489,17 @@
               "anyOf": [
                 {
                   "$ref": "#/$defs/Review"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "attribution": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/IncidentAttribution"
                 },
                 {
                   "type": "null"
@@ -1377,6 +1663,84 @@
     },
     "Assessment": {
       "$defs": {
+        "EvidenceClassification": {
+          "additionalProperties": false,
+          "properties": {
+            "uses": {
+              "items": {
+                "$ref": "#/$defs/EvidenceUse"
+              },
+              "maxItems": 220,
+              "title": "Uses",
+              "type": "array"
+            },
+            "reviewed_support_ids": {
+              "items": {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              "title": "Reviewed Support Ids",
+              "type": "array"
+            },
+            "unreviewed_support_ids": {
+              "items": {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              "title": "Unreviewed Support Ids",
+              "type": "array"
+            },
+            "reviewed_contradiction_ids": {
+              "items": {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              "title": "Reviewed Contradiction Ids",
+              "type": "array"
+            },
+            "unreviewed_contradiction_ids": {
+              "items": {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              "title": "Unreviewed Contradiction Ids",
+              "type": "array"
+            },
+            "contextual_evidence_ids": {
+              "items": {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              "title": "Contextual Evidence Ids",
+              "type": "array"
+            },
+            "excluded_evidence_ids": {
+              "items": {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              "title": "Excluded Evidence Ids",
+              "type": "array"
+            }
+          },
+          "required": [
+            "uses",
+            "reviewed_support_ids",
+            "unreviewed_support_ids",
+            "reviewed_contradiction_ids",
+            "unreviewed_contradiction_ids",
+            "contextual_evidence_ids",
+            "excluded_evidence_ids"
+          ],
+          "title": "EvidenceClassification",
+          "type": "object"
+        },
         "EvidenceReference": {
           "additionalProperties": false,
           "properties": {
@@ -1483,6 +1847,124 @@
             "basis"
           ],
           "title": "EvidenceReference",
+          "type": "object"
+        },
+        "EvidenceUse": {
+          "additionalProperties": false,
+          "properties": {
+            "evidence_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Evidence Id",
+              "type": "string"
+            },
+            "observation_index": {
+              "anyOf": [
+                {
+                  "maximum": 9,
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Observation Index"
+            },
+            "category": {
+              "enum": [
+                "REVIEWED_SUPPORT",
+                "UNREVIEWED_SUPPORT",
+                "REVIEWED_CONTRADICTION",
+                "UNREVIEWED_CONTRADICTION",
+                "CONTEXT",
+                "EXCLUDED"
+              ],
+              "title": "Category",
+              "type": "string"
+            },
+            "incident_ids": {
+              "items": {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              "maxItems": 3,
+              "title": "Incident Ids",
+              "type": "array"
+            },
+            "reason": {
+              "maxLength": 2000,
+              "minLength": 1,
+              "title": "Reason",
+              "type": "string"
+            },
+            "basis_evidence_ids": {
+              "items": {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              "maxItems": 5,
+              "title": "Basis Evidence Ids",
+              "type": "array"
+            }
+          },
+          "required": [
+            "evidence_id",
+            "category",
+            "reason"
+          ],
+          "title": "EvidenceUse",
+          "type": "object"
+        },
+        "IncidentAttribution": {
+          "additionalProperties": false,
+          "description": "Optional explicit occurrence binding; retrospective claims require prior source basis.",
+          "properties": {
+            "incident_ids": {
+              "items": {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              "maxItems": 3,
+              "minItems": 1,
+              "title": "Incident Ids",
+              "type": "array"
+            },
+            "mode": {
+              "default": "OCCURRENCE",
+              "enum": [
+                "OCCURRENCE",
+                "RETROSPECTIVE"
+              ],
+              "title": "Mode",
+              "type": "string"
+            },
+            "rationale": {
+              "maxLength": 2000,
+              "minLength": 1,
+              "title": "Rationale",
+              "type": "string"
+            },
+            "basis_evidence_ids": {
+              "items": {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              "maxItems": 5,
+              "title": "Basis Evidence Ids",
+              "type": "array"
+            }
+          },
+          "required": [
+            "incident_ids",
+            "rationale"
+          ],
+          "title": "IncidentAttribution",
           "type": "object"
         },
         "JsonValue": {},
@@ -1619,8 +2101,11 @@
           "additionalProperties": false,
           "properties": {
             "format_version": {
-              "const": 1,
               "default": 1,
+              "enum": [
+                1,
+                2
+              ],
               "title": "Format Version",
               "type": "integer"
             },
@@ -1701,6 +2186,17 @@
                 }
               ],
               "default": null
+            },
+            "attribution": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/IncidentAttribution"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
             }
           },
           "required": [
@@ -1760,8 +2256,11 @@
       "additionalProperties": false,
       "properties": {
         "format_version": {
-          "const": 1,
           "default": 1,
+          "enum": [
+            1,
+            2
+          ],
           "title": "Format Version",
           "type": "integer"
         },
@@ -1802,10 +2301,24 @@
           "type": "string"
         },
         "rule_version": {
-          "const": 1,
           "default": 1,
+          "enum": [
+            1,
+            2
+          ],
           "title": "Rule Version",
           "type": "integer"
+        },
+        "classification": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/EvidenceClassification"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         },
         "cause_code": {
           "maxLength": 200,
@@ -1967,6 +2480,54 @@
     },
     "Report": {
       "$defs": {
+        "IncidentAttribution": {
+          "additionalProperties": false,
+          "description": "Optional explicit occurrence binding; retrospective claims require prior source basis.",
+          "properties": {
+            "incident_ids": {
+              "items": {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              "maxItems": 3,
+              "minItems": 1,
+              "title": "Incident Ids",
+              "type": "array"
+            },
+            "mode": {
+              "default": "OCCURRENCE",
+              "enum": [
+                "OCCURRENCE",
+                "RETROSPECTIVE"
+              ],
+              "title": "Mode",
+              "type": "string"
+            },
+            "rationale": {
+              "maxLength": 2000,
+              "minLength": 1,
+              "title": "Rationale",
+              "type": "string"
+            },
+            "basis_evidence_ids": {
+              "items": {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              "maxItems": 5,
+              "title": "Basis Evidence Ids",
+              "type": "array"
+            }
+          },
+          "required": [
+            "incident_ids",
+            "rationale"
+          ],
+          "title": "IncidentAttribution",
+          "type": "object"
+        },
         "Observation": {
           "additionalProperties": false,
           "properties": {
@@ -2086,8 +2647,11 @@
       "additionalProperties": false,
       "properties": {
         "format_version": {
-          "const": 1,
           "default": 1,
+          "enum": [
+            1,
+            2
+          ],
           "title": "Format Version",
           "type": "integer"
         },
@@ -2162,6 +2726,17 @@
           "anyOf": [
             {
               "$ref": "#/$defs/Review"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "attribution": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/IncidentAttribution"
             },
             {
               "type": "null"
@@ -2297,6 +2872,274 @@
       ],
       "title": "InspectionView",
       "type": "object"
+    },
+    "IncidentAttribution": {
+      "additionalProperties": false,
+      "description": "Optional explicit occurrence binding; retrospective claims require prior source basis.",
+      "properties": {
+        "incident_ids": {
+          "items": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 3,
+          "minItems": 1,
+          "title": "Incident Ids",
+          "type": "array"
+        },
+        "mode": {
+          "default": "OCCURRENCE",
+          "enum": [
+            "OCCURRENCE",
+            "RETROSPECTIVE"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "rationale": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Rationale",
+          "type": "string"
+        },
+        "basis_evidence_ids": {
+          "items": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 5,
+          "title": "Basis Evidence Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "incident_ids",
+        "rationale"
+      ],
+      "title": "IncidentAttribution",
+      "type": "object"
+    },
+    "EvidenceUse": {
+      "additionalProperties": false,
+      "properties": {
+        "evidence_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Evidence Id",
+          "type": "string"
+        },
+        "observation_index": {
+          "anyOf": [
+            {
+              "maximum": 9,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Observation Index"
+        },
+        "category": {
+          "enum": [
+            "REVIEWED_SUPPORT",
+            "UNREVIEWED_SUPPORT",
+            "REVIEWED_CONTRADICTION",
+            "UNREVIEWED_CONTRADICTION",
+            "CONTEXT",
+            "EXCLUDED"
+          ],
+          "title": "Category",
+          "type": "string"
+        },
+        "incident_ids": {
+          "items": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 3,
+          "title": "Incident Ids",
+          "type": "array"
+        },
+        "reason": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Reason",
+          "type": "string"
+        },
+        "basis_evidence_ids": {
+          "items": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 5,
+          "title": "Basis Evidence Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "evidence_id",
+        "category",
+        "reason"
+      ],
+      "title": "EvidenceUse",
+      "type": "object"
+    },
+    "EvidenceClassification": {
+      "$defs": {
+        "EvidenceUse": {
+          "additionalProperties": false,
+          "properties": {
+            "evidence_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Evidence Id",
+              "type": "string"
+            },
+            "observation_index": {
+              "anyOf": [
+                {
+                  "maximum": 9,
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Observation Index"
+            },
+            "category": {
+              "enum": [
+                "REVIEWED_SUPPORT",
+                "UNREVIEWED_SUPPORT",
+                "REVIEWED_CONTRADICTION",
+                "UNREVIEWED_CONTRADICTION",
+                "CONTEXT",
+                "EXCLUDED"
+              ],
+              "title": "Category",
+              "type": "string"
+            },
+            "incident_ids": {
+              "items": {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              "maxItems": 3,
+              "title": "Incident Ids",
+              "type": "array"
+            },
+            "reason": {
+              "maxLength": 2000,
+              "minLength": 1,
+              "title": "Reason",
+              "type": "string"
+            },
+            "basis_evidence_ids": {
+              "items": {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              "maxItems": 5,
+              "title": "Basis Evidence Ids",
+              "type": "array"
+            }
+          },
+          "required": [
+            "evidence_id",
+            "category",
+            "reason"
+          ],
+          "title": "EvidenceUse",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "uses": {
+          "items": {
+            "$ref": "#/$defs/EvidenceUse"
+          },
+          "maxItems": 220,
+          "title": "Uses",
+          "type": "array"
+        },
+        "reviewed_support_ids": {
+          "items": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Reviewed Support Ids",
+          "type": "array"
+        },
+        "unreviewed_support_ids": {
+          "items": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Unreviewed Support Ids",
+          "type": "array"
+        },
+        "reviewed_contradiction_ids": {
+          "items": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Reviewed Contradiction Ids",
+          "type": "array"
+        },
+        "unreviewed_contradiction_ids": {
+          "items": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Unreviewed Contradiction Ids",
+          "type": "array"
+        },
+        "contextual_evidence_ids": {
+          "items": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Contextual Evidence Ids",
+          "type": "array"
+        },
+        "excluded_evidence_ids": {
+          "items": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": "Excluded Evidence Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "uses",
+        "reviewed_support_ids",
+        "unreviewed_support_ids",
+        "reviewed_contradiction_ids",
+        "unreviewed_contradiction_ids",
+        "contextual_evidence_ids",
+        "excluded_evidence_ids"
+      ],
+      "title": "EvidenceClassification",
+      "type": "object"
     }
   },
   "domain_criteria": {
@@ -2414,17 +3257,15 @@
     }
   },
   "verification": {
-    "version": 1,
+    "version": 2,
     "required": [
-      "complete reviewed confirming code set",
-      "two distinct inspections",
-      "two distinct inspectors",
-      "two distinct source IDs and records",
-      "no qualifying contradiction",
+      "complete reviewed confirming code set for EACH explained incident",
+      "two independent reviewed inspections/inspectors/source IDs and records PER incident",
+      "no relevant unresolved supporting/contrary conflict",
       "required verified-only topology path present and untruncated"
     ],
     "unknown_criterion": "May propose; never auto-verify",
-    "discovery": "Union requested IDs, all previous assessment support/contradiction IDs and actual concerned-asset inspection reports, then temporal filter; cap20 fails closed",
+    "discovery": "Union requested IDs, previous assessment classified IDs and actual concerned-asset inspection reports; per-record as_of and occurrence attribution; cap20 including retrospective basis fails closed",
     "exclusions": [
       "proximity",
       "candidate connectivity",
@@ -2433,7 +3274,9 @@
       "work-order completion",
       "historical similarity"
     ],
-    "independence": "Attribution-based demonstration rule; cannot prove independence against colluding authors"
+    "independence": "Distinct inspection/inspector/source/record plus disjoint evidence lineage; retrospective derivative cannot corroborate its own basis",
+    "authority": "Reviewed domain-qualified discriminating observations alone create causal evidence edges. Unreviewed support may yield POSSIBLE; unreviewed contradiction alone yields INCONCLUSIVE and cannot reject. Mixed positive/negative claims yield INCONCLUSIVE.",
+    "meaning": "Each observation has one category and named incident attribution. A multi-observation report can occupy multiple categories. Contextual records retain source references/hashes, never gain causal edges by existence."
   },
   "storage": {
     "proposal": "Readable Hypothesis.statement; strict original command/expectations/mechanism in PROPOSES source Evidence journal",
@@ -2458,6 +3301,19 @@
   },
   "timestamps": "Canonical UTC Z, microsecond datetime comparisons; evidence knowledge/validity as_of, assessed_at actual recording clock; no historical mutable-node reconstruction",
   "permissions": "Trusted internal typed actor/reviewer context only; no public authentication, MCP writes, dispatch, worker or B15 events",
-  "active_graph_gate": "No canonical seed promotion; explicit source-preserving B08 copies in B09 tests; later reviewed same-graph B08/B09/MCP/agent/API integration required",
-  "remaining": "All18 requirements binding; agents B10, source knowledge B11, planning/auth B12/B13, dispatch/monitor B14, durable events B15"
+  "active_graph_gate": "Production source is retained B04 city; B08/B09 disposable guards differ, common writable target only civicly_knowledge. Same-active-graph B08/B09/MCP acceptance gate required before B10 live investigator; no canonical promotion or graph merge during B09-R. See docs/evidence/B09R-ACTIVE-GRAPH.md.",
+  "remaining": "All18 requirements binding; agents B10, source knowledge B11, planning/auth B12/B13, dispatch/monitor B14, durable events B15",
+  "semantic_versions": {
+    "assessment_v1": "Read unchanged historical meaning; no new classification field emitted or historical rewrite",
+    "assessment_v2": "rule_version2, explicit classification/uses and matching causal-edge lists",
+    "report_v1": "No explicit attribution field; preserve original report/command/journal hash shape",
+    "report_v2": "Explicit typed occurrence or retrospective attribution; absent new optional fields excluded from old serialized models"
+  },
+  "occurrence_attribution": {
+    "bindings": "Actual EXPLAINS/CONCERNS must match original proposal; INSPECTS request journal -> Investigation INVESTIGATES Incident binds reports",
+    "direct": "Concerned asset with domain subtype and OBSERVED result; named incident interval [started_at,ended_at). Open unresolved incident permits later observations. Terminal without end is uncertain. Overlapping occurrences require explicit named attribution.",
+    "retrospective": "Independent review, rationale, explicit target IDs within request investigation and 1..5 earlier reviewed direct inspection records with matching asset/code/dated occurrence binding. No recursive retrospective basis. Derivative source cannot create independence.",
+    "cutoff": "All source/current-version visibility, report recording and observation chronology preserved. Future records excluded; no mutable historical state reconstruction.",
+    "storage": "Typed metadata in existing immutable attributed report/journal JSON; no new schema property, state, relationship or migration"
+  }
 }

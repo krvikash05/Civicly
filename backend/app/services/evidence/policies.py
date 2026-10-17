@@ -27,10 +27,23 @@ for rules in POLICIES.values():
 
 
 def classify(*, support, contradiction, reviewed, sufficient):
-    if support and contradiction:
+    # Compatibility adapter for existing internal callers; never give an unreviewed
+    # negative claim stronger authority than the same unreviewed positive claim.
+    return classify_reviewed(reviewed_support=support and reviewed, unreviewed_support=support and not reviewed,
+        reviewed_contradiction=contradiction and reviewed, unreviewed_contradiction=contradiction and not reviewed,
+        sufficient=sufficient and reviewed)
+
+
+def classify_reviewed(*, reviewed_support, unreviewed_support, reviewed_contradiction, unreviewed_contradiction, sufficient):
+    """Rule v2: equal authority for unreviewed positive and negative claims."""
+    support = reviewed_support or unreviewed_support
+    contrary = reviewed_contradiction or unreviewed_contradiction
+    if support and contrary:
         return 'INCONCLUSIVE'
-    if contradiction:
+    if reviewed_contradiction:
         return 'CONTRADICTED'
-    if support:
-        return 'VERIFIED' if sufficient else 'SUPPORTED' if reviewed else 'POSSIBLE'
+    if reviewed_support:
+        return 'VERIFIED' if sufficient else 'SUPPORTED'
+    if unreviewed_support:
+        return 'POSSIBLE'
     return 'INCONCLUSIVE'

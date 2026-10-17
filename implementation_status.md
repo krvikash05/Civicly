@@ -1,5 +1,17 @@
 # implementation_status.md — Current implementation truth
 
+## Current status — B09-R, 2026-10-18 (takes precedence over every historical status)
+
+B09-R PASS — human review pending. Local accepted B09 baseline `688b893`, no push.
+Final617 PASS/0 FAIL/0 SKIP in746.62s:382 unit/235 real FalkorDB/MCP integration,
+including all582 original tests unchanged plus19 unit/16 integration. Both SPEC
+validators PASS. Actual restart/recreation and Browser persistence PASS. Original
+B01/B04/B05/B08/B09 sources/history, registryv3/0001/0002 and101 accepted trace
+observation checks preserved. Corrected v1->v2 fixture exact pre/post fingerprint/history
+PASS. No B10 work or city/canonical promotion; all42 drainage links CANDIDATE.
+Active-graph gate remains OPEN before B10 live investigator acceptance; details and
+reproducible plan in docs/evidence/B09R-ACTIVE-GRAPH.md. All18 requirements binding.
+
 ## Current status — B09, 2026-10-17 (takes precedence over all history)
 
 B08 externally accepted; local baseline00d98745. B09 PASS — human review pending.
@@ -299,3 +311,12 @@ restart/recreation. Fresh official/domain MCP proofs PASS. No schema/pin/data/MC
 implementation changes; accepted tests retained, one baseline test-cap correction.
 Active-graph integration/public auth/dispatch/events/agent/memory/GraphRAG/API remain
 future gates. B09 human review pending; B10 not begun.
+
+## B09-R implemented boundary | 2026-10-18
+Implemented: rule-v2 authority/meaning categories and per-occurrence coverage, strict
+version-aware models, explicit retrospective source basis and disjoint source lineage;
+immutable v1 decode/replay and appended correction. Domain write/fence/CAS/journal
+path unchanged. Actual MCP reads v2 reports without inventory/envelope change.
+No registry/migration/dependency/repository/algorithm/B08/MCP runtime modification.
+See B09R-FILES.md for exact inventory and B09R-changes.patch for source/document diff.
+No B10 orchestration/memory/GraphRAG/planning/API/frontend implementation.

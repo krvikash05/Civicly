@@ -467,3 +467,34 @@ B01/B05/native schemas +70 accepted trace observations -> restore accepted gener
 B07R/B08 proof bytes/save fresh B09 copies -> frozen source/secret/process audit ->
 file inventory/source patch and both SPEC validators. Canonical domain nodes remain0.
 No B10 or later phase; full results and failures remain reviewable in docs/evidence.
+
+## B09-R actual file and data flow | 2026-10-18
+
+`EvidenceService.execute` still uses the same strict commands, actor authorization,
+PREPARED journal, fenced session, revision/CAS and atomic writer/COMMITTED receipt.
+`service.py` imports `classification.classify_evidence` and `policies.classify_reviewed`;
+classification imports typed evidence uses and `relevance.attribute/independent`.
+`relevance.py` follows INSPECTS -> immutable request journal -> Investigation ->
+actual INVESTIGATES bindings + immutable open journal; never infers an occurrence
+from the asset alone or reads a cluster's future mutable pattern to select identity.
+Actual EXPLAINS/CONCERNS/AFFECTS must agree with the proposal and affected asset or
+declared topology destination. Current incident visibility remains strict.
+
+For each visible report observation: validate own provenance/inspection/finding hash,
+asset subtype, request binding and per-incident interval; classify authority + meaning.
+Optional version2 report attribution names earlier incidents and reviewed direct
+evidence basis; earlier evidence references/hashes remain in the snapshot. Independent
+corroboration requires disjoint source lineage per explained occurrence.
+`Reader.topology` continues to use B05 verified-only bounded graph algorithms.
+Only reviewed discriminating lists become SUPPORTED_BY/CONTRADICTED_BY; all other
+uses remain explicit immutable assessment metadata. Hypothesis state and append-only
+HAS_ASSESSMENT chain are written through unchanged writer.py. `models.py` reads v1
+without emitting absent new fields and validates v2 category summaries/edge lists.
+
+New tests: `unit/test_evidence_review_models.py`, `integration/test_evidence_review.py`,
+`tests/b09r_fixtures.py` (explicit owned B08 source copies, actual intake, dated authored
+repair/closure/recurrence). Existing B09/MCP/B05 tests are unchanged. No migrations,
+new graph labels/relationships, dependency changes or runtime graph target changes.
+Persistence remains B01 AOF retained volumes; no graph merge, volume removal or
+historical assessment rewrite. See B09R-ACTIVE-GRAPH.md for the uncompleted shared
+application graph gate before a live B10 investigator.

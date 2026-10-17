@@ -1,0 +1,116 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.1, pytest-9.1.1, pluggy-1.7.0 -- /Users/vikashkumar/Desktop/Civicly/backend/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/vikashkumar/Desktop/Civicly/backend
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 14 items
+
+backend/tests/integration/test_evidence_review.py::test_actual_persisted_authority_matrix[unreviewed-negative-sources0-INCONCLUSIVE] PASSED
+backend/tests/integration/test_evidence_review.py::test_actual_persisted_authority_matrix[reviewed-negative-sources1-CONTRADICTED] PASSED
+backend/tests/integration/test_evidence_review.py::test_actual_persisted_authority_matrix[unreviewed-positive-sources2-POSSIBLE] PASSED
+backend/tests/integration/test_evidence_review.py::test_actual_persisted_authority_matrix[reviewed-positive-sources3-SUPPORTED] PASSED
+backend/tests/integration/test_evidence_review.py::test_actual_persisted_authority_matrix[independent-reviewed-sources4-VERIFIED] PASSED
+backend/tests/integration/test_evidence_review.py::test_actual_persisted_authority_matrix[unreviewed-conflict-sources5-INCONCLUSIVE] PASSED
+backend/tests/integration/test_evidence_review.py::test_actual_persisted_authority_matrix[reviewed-conflict-sources6-INCONCLUSIVE] PASSED
+backend/tests/integration/test_evidence_review.py::test_context_keeps_source_hash_without_causal_edge[AGENT-LLM_STATEMENT] PASSED
+backend/tests/integration/test_evidence_review.py::test_context_keeps_source_hash_without_causal_edge[USER-COMPLAINT_NARRATIVE] PASSED
+backend/tests/integration/test_evidence_review.py::test_context_keeps_source_hash_without_causal_edge[SYNTHETIC-CANDIDATE_NETWORK_ASSOCIATION] PASSED
+backend/tests/integration/test_evidence_review.py::test_unrelated_investigation_same_asset_is_not_occurrence_evidence PASSED
+backend/tests/integration/test_evidence_review.py::test_post_end_evidence_is_excluded_and_later_ongoing_evidence_is_valid PASSED
+backend/tests/integration/test_evidence_review.py::test_v1_real_history_and_receipt_replay_remain_immutable PASSED
+backend/tests/integration/test_evidence_review.py::test_january_repair_august_recurrence_and_retrospective_attribution FAILED
+
+=================================== FAILURES ===================================
+_____ test_january_repair_august_recurrence_and_retrospective_attribution ______
+
+f = Fixture(repo=<app.graph.repository.GraphRepository object at 0x107f322d0>, clock=<tests.b09_fixtures.Clock object at 0...22, 'writer_state_hash': 'cb610fe73c022c2bdbb39eb19c99f4f45406a466094cc1b9a5f46bf85a093bc5', 'nodes': 23, 'edges': 17})
+
+    def test_january_repair_august_recurrence_and_retrospective_attribution(f):
+        from tests.b09r_fixtures import source_copy, at, attributed_report
+        from tests.schema_examples import common,edge
+        january=source_copy(f,issue='ROAD_DAMAGE',ref='january',occurred='2027-01-05T04:00:00Z',reported='2027-01-05T05:00:00Z')
+        f.receipts['ROAD_DAMAGE']=january;at(f,'2027-01-05T12:00:00Z')
+        jan_inv=open_case(f,'ROAD_DAMAGE','jan-open');jan_h=propose(f,jan_inv,'ROAD_DAMAGE','SUBGRADE_FAILURE',ref='jan-hyp')
+        codes=['SUBGRADE_FAILURE_OBSERVED','STRUCTURAL_TEST_FAILED']
+        jan_ev=report(f,jan_inv,'january-field',codes,['R1']).entity_id
+        first=assess(f,jan_h,[jan_ev],ref='jan-first');immutable_hash=f.repo.get_node(first.entity_id).content_hash
+        at(f,'2027-02-10T12:00:00Z')
+        incident=f.repo.get_node(january.incident_id)
+        incident=f.repo.update_node(incident.id,{'status':'ACTIVE','updated_at':f.clock()},expected_hash=incident.content_hash)
+        f.repo.update_node(incident.id,{'status':'ENDED','ended_at':f.clock(),'updated_at':f.clock()},expected_hash=incident.content_hash)
+        # Authored recorded repair outcome, not implementation of future dispatch/monitoring workflows.
+        props={**common('FEB-REPAIR'),'created_at':f.clock(),'updated_at':f.clock()}
+        evidence(f.repo,'FEB-REPAIR-SOURCE',evidence_type='AUTHORED_REPAIR_RECORD',source_kind='MUNICIPAL',
+            observed_at=f.clock(),recorded_at=f.clock(),created_at=f.clock(),updated_at=f.clock())
+        f.repo.create_node('WorkOrder',{**props,'status':'COMPLETED','execution_mode':'SIMULATED','plan_version':1,'idempotency_key':'AUTHORED-FEB-REPAIR'})
+        f.repo.create_node('ActionTask',{**props,'id':'FEB-TASK','action_type':'AUTHORED_SUBGRADE_REPAIR','status':'COMPLETED','priority':'HIGH'})
+        for kind,source,target,ref in [('IMPLEMENTS','FEB-REPAIR','FEB-TASK','FEB-IMPL'),('TARGETS','FEB-TASK','R1','FEB-TARGET')]:
+            f.repo.create_relationship(kind,source,target,{**edge(ref),'created_at':f.clock(),'source_evidence_id':'FEB-REPAIR-SOURCE'})
+        august=source_copy(f,issue='ROAD_DAMAGE',ref='august',occurred='2027-08-02T04:00:00Z',reported='2027-08-02T05:00:00Z')
+        assert january.incident_id!=august.incident_id and january.cluster_id==august.cluster_id and august.pattern_type=='RECURRENT'
+        f.receipts['ROAD_DAMAGE']=august;at(f,'2027-08-02T12:00:00Z')
+        aug_inv=open_case(f,'ROAD_DAMAGE','aug-open');aug_h=propose(f,aug_inv,'ROAD_DAMAGE','SUBGRADE_FAILURE',ref='aug-hyp')
+        aug_ev=report(f,aug_inv,'august-field',codes,['R1']).entity_id
+        jan=assess(f,jan_h,[aug_ev],ref='jan-after-aug')
+        assert jan.assessment.supporting_evidence_ids==[jan_ev] and aug_ev in jan.assessment.excluded_evidence_ids
+        save('january-vs-august',f,jan,january_incident=january.incident_id,august_incident=august.incident_id,
+             B08_pattern=august.pattern_type,repair_id='FEB-REPAIR')
+        aug=assess(f,aug_h,[jan_ev,aug_ev],ref='aug-assessment')
+        assert aug.assessment.supporting_evidence_ids==[aug_ev] and jan_ev in aug.assessment.excluded_evidence_ids
+        save('august-only',f,aug)
+        at(f,'2027-09-01T12:00:00Z')
+        retrospective=attributed_report(f,jan_inv,'retrospective',codes=codes,attribution={
+            'incident_ids':[january.incident_id],'mode':'RETROSPECTIVE','rationale':'Rechecked the archived January field tests against this named repaired occurrence',
+            'basis_evidence_ids':[jan_ev]}).entity_id
+        retro=assess(f,jan_h,[retrospective],ref='retro-assessment')
+        assert set(retro.assessment.supporting_evidence_ids)=={jan_ev,retrospective}
+        assert retro.assessment.assessment=='SUPPORTED'  # Derivative report cannot invent independent corroboration.
+        assert any(u.evidence_id==retrospective and u.basis_evidence_ids==[jan_ev] and u.incident_ids==[january.incident_id]
+                   for u in retro.assessment.classification.uses)
+        save('retrospective-validated',f,retro)
+>       past=assess(f,jan_h,[retrospective,aug_ev],ref='past-cutoff',as_of='2027-03-01T12:00:00Z')
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+backend/tests/integration/test_evidence_review.py:186: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+backend/tests/b09_fixtures.py:119: in assess
+    return f.service.execute({'operation': 'assess', 'request_id': ref, 'hypothesis_id': hypothesis_id,
+backend/app/services/evidence/service.py:89: in execute
+    entity, nodes, updates, edges, assessment = self.plan(q, actor, reader, jid, now, session.revision)
+                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/app/services/evidence/service.py:244: in plan
+    cutoff = Reader(self.repo, q.as_of)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/app/services/evidence/service.py:260: in evaluate
+    rule = POLICIES[issue].get(definition.cause_code)
+                                           ^^^^^^^^^^^
+backend/app/services/evidence/classification.py:61: in classify_evidence
+    gaps.append('Non-inspection evidence is context only: ' + evidence_id)
+                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/app/services/evidence/relevance.py:36: in attribute
+    if observation.asset_id not in definition.asset_ids or observation.result != 'OBSERVED':
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/app/services/evidence/relevance.py:18: in inspection_incidents
+    if reader.node(e.target).kind == 'Incident'}
+       ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <app.services.evidence.reader.Reader object at 0x107aab260>
+id = 'PC-B08-a2605a8c4b53f9a2d4d913727a90e201', kind = None, definition = False
+
+    def node(self, id, kind=None, *, definition=False):
+        if id not in self.cache:
+            rows = self.query('MATCH (n:CivicEntity {id:$id,municipality_id:$scope}) RETURN labels(n),properties(n) LIMIT 2', {'id': id})
+            if len(rows) != 1:
+                raise PreconditionFailed('Unique B09 reference unavailable')
+            self.cache[id] = self.repo.decode_node(*rows[0])
+        n = self.cache[id]
+        if (kind and kind not in n.labels) or not self.visible(n.properties, definition=definition):
+>           raise PreconditionFailed('B09 reference type/time unavailable')
+E           app.graph.repository.PreconditionFailed: B09 reference type/time unavailable
+
+backend/app/services/evidence/reader.py:46: PreconditionFailed
+=========================== short test summary info ============================
+FAILED backend/tests/integration/test_evidence_review.py::test_january_repair_august_recurrence_and_retrospective_attribution
+=================== 1 failed, 13 passed in 72.54s (0:01:12) ====================

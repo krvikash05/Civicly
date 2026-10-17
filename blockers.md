@@ -1,5 +1,17 @@
 # blockers.md — Current blockers and verification spikes
 
+## Current status — B09-R, 2026-10-18 (takes precedence over every historical status)
+
+B09-R PASS — human review pending. Local accepted B09 baseline `688b893`, no push.
+Final617 PASS/0 FAIL/0 SKIP in746.62s:382 unit/235 real FalkorDB/MCP integration,
+including all582 original tests unchanged plus19 unit/16 integration. Both SPEC
+validators PASS. Actual restart/recreation and Browser persistence PASS. Original
+B01/B04/B05/B08/B09 sources/history, registryv3/0001/0002 and101 accepted trace
+observation checks preserved. Corrected v1->v2 fixture exact pre/post fingerprint/history
+PASS. No B10 work or city/canonical promotion; all42 drainage links CANDIDATE.
+Active-graph gate remains OPEN before B10 live investigator acceptance; details and
+reproducible plan in docs/evidence/B09R-ACTIVE-GRAPH.md. All18 requirements binding.
+
 ## Current status — B09, 2026-10-17 (takes precedence over all history)
 
 B08 externally accepted; local baseline00d98745. B09 PASS — human review pending.
@@ -322,3 +334,16 @@ remain open at their designated milestones. All42 city drainage links CANDIDATE;
 no canonical promotion or implicit reconstruction of unknown data. Trusted internal
 review, source independence/finite budgets and active-graph integration limitations
 remain explicit, not waived by domain tests. All18 requirements binding.
+
+## B09-R final blockers and limits | 2026-10-18
+No remaining B09-R corrective/runtime blocker; criteria A–J PASS. Human review pending.
+BLOCK-B09R-01 OPEN: coordinated active municipal graph/configuration before B10 live
+investigator acceptance. B08/B09 share only canonical write target; canonical empty,
+production MCP reads retained B04. Concrete reviewed acceptance plan in
+B09R-ACTIVE-GRAPH.md; no source promotion, graph merge or policy widening performed.
+This documented upcoming gate is explicitly permitted by B09-R section8, not a claim
+of integrated autonomy. Existing trusted internal review/independence, synthetic
+domain criteria, current-version historical visibility,20-source/100-edge/300-read/8s
+and inherited audit/scan limits remain. All original DEC-004/legacy55 fixture/source/
+unlinked/history/document/clock/service/evaluator/approval/event/API findings retain
+their phases;42 city links remain CANDIDATE. No B10 or later work.

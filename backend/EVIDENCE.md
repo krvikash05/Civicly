@@ -1,5 +1,9 @@
 # B09 evidence, hypotheses and inspections
 
+Current semantics: B09-R assessment/rule version2. The final B09-R section below
+specifies current authority and occurrence rules; version1 records retain historical
+meaning and serialization. B10 remains unstarted pending review and active-graph gate.
+
 This is an internal typed domain service on FalkorDB, not an autonomous investigator,
 dispatch simulation, public API, authentication system or durable event worker.
 All18 objectives remain mandatory. Registryv3 and migration0001 remain unchanged;
@@ -39,7 +43,7 @@ Domain reports/findings are also never edited by this service. Privileged lower-
 mutable writes remain outside that boundary; readers detect source/command/report
 binding or finding disagreement and fail closed. Snapshots retain historical hashes.
 
-`contracts/evidence_hypotheses.json` mirrors actual Pydantic schemas and policyv1;
+`contracts/evidence_hypotheses.json` mirrors actual Pydantic schemas and rulev2 (legacy rulev1 decoding retained);
 unit tests compare it with implementation. All records use municipality_id=demo-city,
 stable IDs and registered endpoints; no new ontology labels/properties/relationships.
 
@@ -58,8 +62,9 @@ supported, but no approved criterion means no automatic VERIFIED result. Known
 policies require the appropriate infrastructure subtype. Caller expectations must
 include the policy's full confirming and falsifying observation sets.
 
-VERIFIED requires all confirming codes from reviewed, attributable actual reports,
-two distinct inspections, inspectors, source IDs and source records, no qualifying
+VERIFIED requires all confirming codes from reviewed, attributable actual reports
+for each explained occurrence, with two independent inspections, inspectors, source
+IDs and source records per occurrence and disjoint source lineage, no qualifying
 contradiction, and any required verified-only physical dependency path. Utility-leak
 explanations require a dependencies path rooted at the concerned WaterPipe and ending at the affected RoadSegment. An optional topology requirement
 on any explanation is also enforced. Candidate-inclusive B05 exploration can justify
@@ -70,8 +75,9 @@ Human review is trusted internal context, never an LLM-generated approval or B13
 
 Assessment discovery unions explicit input references, previous assessment citations
 and actual reports from concerned-asset inspections before scoring. A caller cannot
-silently drop known counterevidence. All observations must be relevant to the asset,
-after the explained incident start, and visible at as_of. Unreviewed/context evidence
+silently drop known counterevidence. All observations must have explicit request/incident/asset relevance, satisfy each
+individual [start,end) interval or validated retrospective source attribution, and
+be visible at as_of. Unreviewed/context evidence
 cannot satisfy verification. Support plus contradiction yields INCONCLUSIVE, with
 both retained; contradiction alone yields CONTRADICTED. Missing/UNKNOWN reports yield
 INCONCLUSIVE. No numerical confidence is invented. A later report may correct the
@@ -181,3 +187,43 @@ STOP after B09; human review is required before B10.
 Tests/retained demo use an explicitly injected2026-10-18 synthetic clock; DB operations
 are real, observations are authored SYNTHETIC records. Production default is utc_now,
 not caller-controlled time. No claim of real municipal inspection or live-agent action.
+
+## B09-R rule v2: authority, meaning and occurrence attribution
+
+New assessments are format_version=rule_version=2. Historical version1 snapshots,
+reports and committed journal/receipt payloads retain their exact original shape
+and meaning, including historically incorrect conclusions. A correction is a new
+immutable assessment with previous_assessment_id; never rewrite the old rationale.
+`classification` contains per-observation uses and six matching ID summaries:
+reviewed/unreviewed support/contradiction, contextual and excluded. Multi-observation
+reports may occupy several categories; each observation has one category.
+Only reviewed discriminating IDs enter causal support/contradiction edge lists.
+Unreviewed support alone -> POSSIBLE; reviewed support -> SUPPORTED or VERIFIED
+when all existing criteria hold per occurrence. Unreviewed contradiction alone ->
+INCONCLUSIVE; reviewed domain-qualified contradiction alone -> CONTRADICTED.
+Any positive/negative unresolved conflict -> INCONCLUSIVE. Context alone is
+INCONCLUSIVE, retaining genuine references/hashes without causal edges.
+
+Occurrence interval is [started_at,ended_at), using actual EXPLAINS/CONCERNS/AFFECTS
+and INSPECTS request/open journals' incident bindings. Matching asset or earliest
+start is insufficient. An unresolved occurrence can use later bound observations;
+terminal incidents without known end remain uncertain. Overlapping bound occurrences
+require explicit named attribution. Current-version/as_of visibility is unchanged;
+there is no reconstruction of a mutable incident's historical version.
+
+Optional report `attribution` has named incident_ids, mode OCCURRENCE or RETROSPECTIVE,
+rationale and basis_evidence_ids. Retrospective mode requires independent review and
+1..5 earlier reviewed direct reports matching the asset, observation code and actual
+earlier occurrence interval/request binding. Recursive retrospective bases are
+rejected. A derivative cannot independently corroborate its source. Explicit-attribution
+reports use format_version2; absent attribution stays omitted for old command hashes.
+Metadata uses existing report/journal JSON, without registry/migration changes.
+Verified topology provenance is contextual unless independently inspected and
+occurrence-qualified; candidate/expired/proximity context cannot satisfy connectivity.
+
+Run `backend/.venv/bin/python -m pytest backend/tests/unit/test_evidence_review_models.py
+backend/tests/integration/test_evidence_review.py -v -s` (one shell line). Full commands,
+real results and legacy replay proof are under docs/evidence/B09R-*. Existing retained
+B09 proof is read-only; the separate B09R legacy compatibility fixture is owned by
+this corrective pass. Active graph integration remains a documented gate, not a
+claim of end-to-end autonomous operation. Stop after B09-R for review.

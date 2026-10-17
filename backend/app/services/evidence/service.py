@@ -7,7 +7,8 @@ from app.graph.repository import Conflict, PreconditionFailed
 from app.graph.schema import utc_now, timestamp
 from .models import (Actor, Journal, Receipt, Report, Assessment, parse_command,
                      OpenInvestigation, Propose, RequestInspection, TransitionInspection, ReportInspection, Assess, InspectionView)
-from .policies import POLICIES, classify
+from .policies import POLICIES, classify_reviewed
+from .classification import classify_evidence, add_topology_context
 from .reader import Reader
 from .writer import target, common, node, link, stable, commit
 
@@ -211,9 +212,17 @@ class EvidenceService:
             duplicates = r.query("MATCH (e:Evidence {evidence_type:'INSPECTION_REPORT'}) WHERE e.source_record_id=$record RETURN e.id LIMIT 1", {'record': q.source_id + ':' + q.record_id})
             if duplicates:
                 raise Conflict('Inspection source record already represented; cannot fabricate independent copies')
+            if q.attribution:
+                for incident_id in q.attribution.incident_ids:
+                    r.node(incident_id, 'Incident')
+                bound = {e.target for e in r.edges('INVESTIGATES', source=source['investigation_id'])}
+                if not set(q.attribution.incident_ids) <= bound:
+                    raise PreconditionFailed('Explicit report attribution outside inspection investigation')
+                if q.attribution.mode == 'RETROSPECTIVE' and not q.review:
+                    raise PreconditionFailed('Retrospective report requires independent review')
             eid = stable('EV-REPORT', q.source_kind, q.source_id, q.record_id)
             fids = [stable('FINDING', eid, i) for i in range(len(q.observations))]
-            report = Report(inspection_id=ins.id, inspector_id=actor.id, department_id=source['department_id'],
+            report = Report(format_version=2 if q.attribution else 1, attribution=q.attribution, inspection_id=ins.id, inspector_id=actor.id, department_id=source['department_id'],
                 source_id=q.source_id, record_id=q.record_id, source_kind=q.source_kind, observed_at=observed,
                 recorded_at=now, observations=q.observations, finding_ids=fids, review=q.review)
             raw = report.model_dump_json()
@@ -249,62 +258,11 @@ class EvidenceService:
         incidents = [r.node(id, 'Incident') for id in definition.incident_ids]
         issue = incidents[0].properties['issue_type']
         rule = POLICIES[issue].get(definition.cause_code)
-        refs, excluded, support, contradiction, reviewed_sources, codes = [], [], [], [], [], set()
-        gaps = []
         history = Reader(self.repo, now).histories(h.id)
-        known = set(q.evidence_ids)
-        for previous in history:
-            known.update(previous.supporting_evidence_ids)
-            known.update(previous.contradicting_evidence_ids)
-        # Discover attributable asset inspections too: omission by a caller must not
-        # erase known contradictory observations. Current future versions stay unknown.
-        for asset_id in definition.asset_ids:
-            for relation in r.edges('INSPECTS', target=asset_id):
-                inspection = self.repo.get_node(relation.source, 'Inspection')
-                if not r.visible(inspection.properties):
-                    gaps.append('Inspection current version unavailable at cutoff: ' + inspection.id)
-                    continue
-                known.update(e.target for e in r.edges('PRODUCED', source=inspection.id))
-        if len(known) > 20:
-            raise PreconditionFailed('B09 evidence union exceeds20; incomplete evidence cannot verify')
-        start = min(timestamp(i.properties['started_at']) for i in incidents)
-        for id in sorted(known):
-            ev = self.repo.get_node(id, 'Evidence')
-            if not r.visible(ev.properties):
-                excluded.append(id)
-                gaps.append('Evidence outside cutoff/validity: ' + id)
-                continue
-            ref = r.evidence(id)
-            refs.append(ref)
-            report = ref.report
-            if not report:
-                support.append(id)
-                gaps.append('Non-inspection evidence is context only: ' + id)
-                continue
-            usable = [ob for ob in report.observations if ob.asset_id in definition.asset_ids and ob.result == 'OBSERVED' and timestamp(ob.observed_at) >= start]
-            confirmed = {ob.code for ob in usable} & set(definition.confirming_codes)
-            falsified = {ob.code for ob in usable} & set(definition.falsifying_codes)
-            if confirmed:
-                support.append(id)
-                if report.review:
-                    reviewed_sources.append(report)
-                    codes.update(confirmed)
-            if falsified:
-                contradiction.append(id)
-            if not report.review:
-                gaps.append('Unreviewed findings cannot verify: ' + id)
-            if not confirmed and not falsified:
-                gaps.append('No discriminating observation for this mechanism: ' + id)
-        missing_codes = set(definition.confirming_codes) - codes
-        if missing_codes:
-            gaps.append('Missing reviewed confirming observations: ' + ','.join(sorted(missing_codes)))
-        independent = any(a.inspection_id != b.inspection_id and a.inspector_id != b.inspector_id
-                          and a.source_id != b.source_id and (a.source_id, a.record_id) != (b.source_id, b.record_id)
-                          for i, a in enumerate(reviewed_sources) for b in reviewed_sources[:i])
-        if not independent:
-            gaps.append('Two independent reviewed inspections/inspectors/source records required')
-        if rule is None:
-            gaps.append('No approved deterministic domain criterion for this cause')
+        refs, classification, gaps, complete = classify_evidence(self.repo, r, q, definition, incidents, rule, history)
+        support = classification.reviewed_support_ids
+        contradiction = classification.reviewed_contradiction_ids
+        excluded = classification.excluded_evidence_ids
         paths, pathids, truncated, topology_ok = [], [], False, True
         if rule and rule['requires_topology'] and not definition.topology:
             topology_ok = False
@@ -321,12 +279,18 @@ class EvidenceService:
                 gaps.append('Required verified-only topology path unavailable within bounded search; candidate/proximity insufficient')
             for id in sorted({ev for p in paths for ev in p.evidence_ids} - {ref.id for ref in refs}):
                 refs.append(r.evidence(id, context_only=True))
-        sufficient = bool(rule and support and independent and not missing_codes and topology_ok and not contradiction)
-        label = classify(support=bool(support), contradiction=bool(contradiction), reviewed=bool(reviewed_sources), sufficient=sufficient)
-        if support and contradiction:
+                classification = add_topology_context(classification, id)
+        if len(refs) > 20:
+            raise PreconditionFailed('B09 total source evidence references exceed20 including topology')
+        sufficient = bool(rule and complete and topology_ok)
+        label = classify_reviewed(reviewed_support=bool(support),
+            unreviewed_support=bool(classification.unreviewed_support_ids),
+            reviewed_contradiction=bool(contradiction),
+            unreviewed_contradiction=bool(classification.unreviewed_contradiction_ids), sufficient=sufficient)
+        if (support or classification.unreviewed_support_ids) and (contradiction or classification.unreviewed_contradiction_ids):
             gaps.append('Conflicting evidence retained; no automatic source arbitration')
         if not support and not contradiction:
-            gaps.append('Inspection evidence missing or insufficient; no completed inspection invented')
+            gaps.append('Reviewed discriminating inspection evidence missing or insufficient; no completed inspection invented')
         final = {'POSSIBLE': 'UNDER_REVIEW', 'SUPPORTED': 'SUPPORTED', 'CONTRADICTED': 'REJECTED', 'VERIFIED': 'VERIFIED', 'INCONCLUSIVE': 'INCONCLUSIVE'}[label]
         state = h.properties['status']
         sequence = [state]
@@ -335,7 +299,7 @@ class EvidenceService:
         if final != 'UNDER_REVIEW':
             sequence.append(transition('Hypothesis', 'UNDER_REVIEW', final))
         id = stable('ASSESS', q.hypothesis_id, q.request_id)
-        return Assessment(id=id, hypothesis_id=h.id, previous_assessment_id=history[-1].id if history else None,
+        return Assessment(format_version=2, rule_version=2, classification=classification, id=id, hypothesis_id=h.id, previous_assessment_id=history[-1].id if history else None,
             assessment=label, cause_code=definition.cause_code, mechanism=definition.mechanism,
             confirming_codes=definition.confirming_codes, falsifying_codes=definition.falsifying_codes,
             supporting_evidence_ids=support, contradicting_evidence_ids=contradiction, evidence_references=refs,
@@ -343,7 +307,7 @@ class EvidenceService:
             source_graph_revision=revision, graph_revision=revision+1, as_of=q.as_of, assessed_at=now,
             paths=paths, path_ids=pathids, truncated=truncated, state_transitions=sequence,
             reservations=['Observed findings and connectivity are distinct from causal criteria.',
-                'Verification uses explicit reviewed synthetic-domain rulev1; not hydraulic prediction or resolution verification.',
+                'Verification uses explicit reviewed synthetic-domain rulev2 with per-occurrence coverage; not hydraulic prediction or resolution verification.',
                 'Attribution-based independence is a conservative demo rule, not proof against colluding sources.',
                 'Current versions only; future-updated evidence excluded, historical source versions not reconstructed.'])
 
