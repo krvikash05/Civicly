@@ -1,0 +1,2260 @@
+{
+  "schema_version": 2,
+  "server_strategy": {
+    "official_falkordb": "read-only schema discovery + parameterized bounded graph reads; never general writes",
+    "civicly": "Python MCP server implementing custom tools through authorization-validating services",
+    "runtime_discovery": true
+  },
+  "tools": [
+    {
+      "name": "find_related_incidents",
+      "description": "Find incident candidates by verified asset and chronological/spatial match; explain why each is related",
+      "permission": "READ",
+      "input_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "incident_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "max_results": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          }
+        },
+        "required": [
+          "incident_id",
+          "max_results"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "SUCCESS",
+              "PARTIAL",
+              "UNAVAILABLE",
+              "ERROR",
+              "PERMISSION_DENIED"
+            ]
+          },
+          "trace_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source_evidence_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+          "simulation_mode": {
+            "type": "boolean"
+          },
+          "error_code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "related_incidents": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "incident_id",
+                "relationship_reason",
+                "evidence_ids"
+              ],
+              "properties": {
+                "incident_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "relationship_reason": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "evidence_ids": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "uniqueItems": true
+                }
+              }
+            }
+          },
+          "graph_revision": {
+            "type": [
+              "string",
+              "integer",
+              "null"
+            ]
+          },
+          "error": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "retryable": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "retryable"
+            ],
+            "additionalProperties": false
+          },
+          "truncated": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "status",
+          "trace_id",
+          "source_evidence_ids",
+          "simulation_mode",
+          "related_incidents"
+        ]
+      },
+      "requires_mcp_runtime_call": true,
+      "side_effect": false,
+      "result_semantics": "On non-SUCCESS status, return required envelope with null ID(s)/empty lists as applicable; include error; no claimed state change."
+    },
+    {
+      "name": "trace_infrastructure_dependencies",
+      "description": "Follow verified/candidate directed infrastructure paths from a specified asset",
+      "permission": "READ",
+      "input_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "investigation_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "asset_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "direction": {
+            "type": "string",
+            "enum": [
+              "UPSTREAM",
+              "DOWNSTREAM",
+              "BOTH"
+            ]
+          },
+          "max_hops": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 6
+          }
+        },
+        "required": [
+          "investigation_id",
+          "asset_id",
+          "direction",
+          "max_hops"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "SUCCESS",
+              "PARTIAL",
+              "UNAVAILABLE",
+              "ERROR",
+              "PERMISSION_DENIED"
+            ]
+          },
+          "trace_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source_evidence_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+          "simulation_mode": {
+            "type": "boolean"
+          },
+          "error_code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "paths": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "asset_ids",
+                "relationship",
+                "verification_status"
+              ],
+              "properties": {
+                "asset_ids": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "uniqueItems": true
+                },
+                "relationship": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "verification_status": {
+                  "type": "string",
+                  "enum": [
+                    "CANDIDATE",
+                    "REPORTED",
+                    "VERIFIED"
+                  ]
+                },
+                "source_evidence_ids": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "uniqueItems": true
+                }
+              }
+            }
+          },
+          "truncated": {
+            "type": "boolean"
+          },
+          "graph_revision": {
+            "type": [
+              "string",
+              "integer",
+              "null"
+            ]
+          },
+          "error": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "retryable": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "retryable"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "status",
+          "trace_id",
+          "source_evidence_ids",
+          "simulation_mode",
+          "paths",
+          "truncated"
+        ]
+      },
+      "requires_mcp_runtime_call": true,
+      "side_effect": false,
+      "result_semantics": "On non-SUCCESS status, return required envelope with null ID(s)/empty lists as applicable; include error; no claimed state change."
+    },
+    {
+      "name": "get_maintenance_history",
+      "description": "Read inspections, interventions and past failures of one asset",
+      "permission": "READ",
+      "input_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "asset_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "from_time": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "to_time": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "asset_id",
+          "from_time",
+          "to_time"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "SUCCESS",
+              "PARTIAL",
+              "UNAVAILABLE",
+              "ERROR",
+              "PERMISSION_DENIED"
+            ]
+          },
+          "trace_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source_evidence_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+          "simulation_mode": {
+            "type": "boolean"
+          },
+          "error_code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "records": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "record_id",
+                "event_type",
+                "occurred_at"
+              ],
+              "properties": {
+                "record_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "event_type": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "occurred_at": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "evidence_ids": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "uniqueItems": true
+                }
+              }
+            }
+          },
+          "error": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "retryable": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "retryable"
+            ],
+            "additionalProperties": false
+          },
+          "graph_revision": {
+            "type": [
+              "string",
+              "integer",
+              "null"
+            ]
+          },
+          "truncated": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "status",
+          "trace_id",
+          "source_evidence_ids",
+          "simulation_mode",
+          "records"
+        ]
+      },
+      "requires_mcp_runtime_call": true,
+      "side_effect": false,
+      "result_semantics": "On non-SUCCESS status, return required envelope with null ID(s)/empty lists as applicable; include error; no claimed state change."
+    },
+    {
+      "name": "retrieve_external_evidence",
+      "description": "Acquire real or synthetic external evidence, with explicit unavailable mode",
+      "permission": "READ",
+      "input_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "location_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "evidence_type": {
+            "type": "string",
+            "minLength": 1
+          },
+          "from_time": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "to_time": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "location_id",
+          "evidence_type",
+          "from_time",
+          "to_time"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "SUCCESS",
+              "PARTIAL",
+              "UNAVAILABLE",
+              "ERROR",
+              "PERMISSION_DENIED"
+            ]
+          },
+          "trace_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source_evidence_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+          "simulation_mode": {
+            "type": "boolean"
+          },
+          "error_code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "observations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "observed_at",
+                "source_kind",
+                "summary"
+              ],
+              "properties": {
+                "observed_at": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "source_kind": {
+                  "type": "string",
+                  "enum": [
+                    "SYNTHETIC",
+                    "PUBLIC",
+                    "MUNICIPAL",
+                    "USER",
+                    "AGENT"
+                  ]
+                },
+                "summary": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "value": {
+                  "type": "number"
+                },
+                "unit": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "error": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "retryable": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "retryable"
+            ],
+            "additionalProperties": false
+          },
+          "graph_revision": {
+            "type": [
+              "string",
+              "integer",
+              "null"
+            ]
+          },
+          "truncated": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "status",
+          "trace_id",
+          "source_evidence_ids",
+          "simulation_mode",
+          "observations"
+        ]
+      },
+      "requires_mcp_runtime_call": true,
+      "side_effect": false,
+      "result_semantics": "On non-SUCCESS status, return required envelope with null ID(s)/empty lists as applicable; include error; no claimed state change."
+    },
+    {
+      "name": "retrieve_case_memory",
+      "description": "Find previous investigations and verified outcomes using graph links then semantic candidates",
+      "permission": "READ",
+      "input_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "investigation_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "max_results": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          }
+        },
+        "required": [
+          "investigation_id",
+          "max_results"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "SUCCESS",
+              "PARTIAL",
+              "UNAVAILABLE",
+              "ERROR",
+              "PERMISSION_DENIED"
+            ]
+          },
+          "trace_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source_evidence_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+          "simulation_mode": {
+            "type": "boolean"
+          },
+          "error_code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "cases": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "investigation_id",
+                "relevance_reason",
+                "outcome_summary"
+              ],
+              "properties": {
+                "investigation_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "relevance_reason": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "outcome_summary": {
+                  "type": "string"
+                },
+                "evidence_ids": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "uniqueItems": true
+                }
+              }
+            }
+          },
+          "error": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "retryable": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "retryable"
+            ],
+            "additionalProperties": false
+          },
+          "graph_revision": {
+            "type": [
+              "string",
+              "integer",
+              "null"
+            ]
+          },
+          "truncated": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "status",
+          "trace_id",
+          "source_evidence_ids",
+          "simulation_mode",
+          "cases"
+        ]
+      },
+      "requires_mcp_runtime_call": true,
+      "side_effect": false,
+      "result_semantics": "On non-SUCCESS status, return required envelope with null ID(s)/empty lists as applicable; include error; no claimed state change."
+    },
+    {
+      "name": "get_organizational_procedures",
+      "description": "Get applicable versioned municipal procedures",
+      "permission": "READ",
+      "input_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "department_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "action_type": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "department_id",
+          "action_type"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "SUCCESS",
+              "PARTIAL",
+              "UNAVAILABLE",
+              "ERROR",
+              "PERMISSION_DENIED"
+            ]
+          },
+          "trace_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source_evidence_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+          "simulation_mode": {
+            "type": "boolean"
+          },
+          "error_code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "procedures": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "procedure_id",
+                "version",
+                "rule_summary"
+              ],
+              "properties": {
+                "procedure_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "version": {
+                  "type": "integer"
+                },
+                "rule_summary": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          },
+          "error": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "retryable": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "retryable"
+            ],
+            "additionalProperties": false
+          },
+          "graph_revision": {
+            "type": [
+              "string",
+              "integer",
+              "null"
+            ]
+          },
+          "truncated": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "status",
+          "trace_id",
+          "source_evidence_ids",
+          "simulation_mode",
+          "procedures"
+        ]
+      },
+      "requires_mcp_runtime_call": true,
+      "side_effect": false,
+      "result_semantics": "On non-SUCCESS status, return required envelope with null ID(s)/empty lists as applicable; include error; no claimed state change."
+    },
+    {
+      "name": "record_hypothesis_assessment",
+      "description": "Append evidence-grounded versioned assessment of a hypothesis",
+      "permission": "ANALYTICAL_WRITE",
+      "input_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "hypothesis_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "assessment": {
+            "type": "string",
+            "enum": [
+              "POSSIBLE",
+              "SUPPORTED",
+              "CONTRADICTED",
+              "VERIFIED",
+              "INCONCLUSIVE"
+            ]
+          },
+          "rationale": {
+            "type": "string",
+            "minLength": 1
+          },
+          "supporting_evidence_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+          "contradicting_evidence_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+          "idempotency_key": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "hypothesis_id",
+          "assessment",
+          "rationale",
+          "supporting_evidence_ids",
+          "contradicting_evidence_ids",
+          "idempotency_key"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "SUCCESS",
+              "PARTIAL",
+              "UNAVAILABLE",
+              "ERROR",
+              "PERMISSION_DENIED"
+            ]
+          },
+          "trace_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source_evidence_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+          "simulation_mode": {
+            "type": "boolean"
+          },
+          "error_code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "assessment_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1
+          },
+          "error": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "retryable": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "retryable"
+            ],
+            "additionalProperties": false
+          },
+          "graph_revision": {
+            "type": [
+              "string",
+              "integer",
+              "null"
+            ]
+          },
+          "truncated": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "status",
+          "trace_id",
+          "source_evidence_ids",
+          "simulation_mode",
+          "assessment_id"
+        ]
+      },
+      "requires_mcp_runtime_call": true,
+      "side_effect": true,
+      "result_semantics": "On non-SUCCESS status, return required envelope with null ID(s)/empty lists as applicable; include error; no claimed state change."
+    },
+    {
+      "name": "propose_inspection",
+      "description": "Draft inspection request for verification, not a claim it has happened",
+      "permission": "PROPOSAL_WRITE",
+      "input_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "investigation_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "asset_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+          "inspection_type": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          },
+          "idempotency_key": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "investigation_id",
+          "asset_ids",
+          "inspection_type",
+          "reason",
+          "idempotency_key"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "SUCCESS",
+              "PARTIAL",
+              "UNAVAILABLE",
+              "ERROR",
+              "PERMISSION_DENIED"
+            ]
+          },
+          "trace_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source_evidence_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+          "simulation_mode": {
+            "type": "boolean"
+          },
+          "error_code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "inspection_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1
+          },
+          "inspection_status": {
+            "type": "string"
+          },
+          "error": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "retryable": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "retryable"
+            ],
+            "additionalProperties": false
+          },
+          "graph_revision": {
+            "type": [
+              "string",
+              "integer",
+              "null"
+            ]
+          },
+          "truncated": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "status",
+          "trace_id",
+          "source_evidence_ids",
+          "simulation_mode",
+          "inspection_id",
+          "inspection_status"
+        ]
+      },
+      "requires_mcp_runtime_call": true,
+      "side_effect": true,
+      "result_semantics": "On non-SUCCESS status, return required envelope with null ID(s)/empty lists as applicable; include error; no claimed state change."
+    },
+    {
+      "name": "propose_resolution_plan",
+      "description": "Create typed draft DAG and validation report, not an authorized order",
+      "permission": "PROPOSAL_WRITE",
+      "input_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "investigation_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "tasks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "action_type",
+                "target_asset_ids",
+                "department_id",
+                "depends_on_task_keys",
+                "verification_criteria"
+              ],
+              "properties": {
+                "client_task_key": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "action_type": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "target_asset_ids": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "uniqueItems": true
+                },
+                "department_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "depends_on_task_keys": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "uniqueItems": true
+                },
+                "verification_criteria": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "priority": {
+                  "type": "string",
+                  "enum": [
+                    "LOW",
+                    "MODERATE",
+                    "HIGH",
+                    "CRITICAL"
+                  ]
+                }
+              }
+            }
+          },
+          "rationale": {
+            "type": "string",
+            "minLength": 1
+          },
+          "evidence_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+          "idempotency_key": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "investigation_id",
+          "tasks",
+          "rationale",
+          "evidence_ids",
+          "idempotency_key"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "SUCCESS",
+              "PARTIAL",
+              "UNAVAILABLE",
+              "ERROR",
+              "PERMISSION_DENIED"
+            ]
+          },
+          "trace_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source_evidence_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+          "simulation_mode": {
+            "type": "boolean"
+          },
+          "error_code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "plan_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1
+          },
+          "plan_version": {
+            "type": "integer"
+          },
+          "plan_hash": {
+            "type": "string",
+            "minLength": 1
+          },
+          "validation_messages": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "error": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "retryable": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "retryable"
+            ],
+            "additionalProperties": false
+          },
+          "graph_revision": {
+            "type": [
+              "string",
+              "integer",
+              "null"
+            ]
+          },
+          "truncated": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "status",
+          "trace_id",
+          "source_evidence_ids",
+          "simulation_mode",
+          "plan_id",
+          "plan_version",
+          "plan_hash"
+        ]
+      },
+      "requires_mcp_runtime_call": true,
+      "side_effect": true,
+      "result_semantics": "On non-SUCCESS status, return required envelope with null ID(s)/empty lists as applicable; include error; no claimed state change."
+    },
+    {
+      "name": "request_plan_approval",
+      "description": "Submit plan version and exact hash for human authorization",
+      "permission": "PROPOSAL_WRITE",
+      "input_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "plan_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "plan_version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "plan_hash": {
+            "type": "string",
+            "minLength": 1
+          },
+          "idempotency_key": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "plan_id",
+          "plan_version",
+          "plan_hash",
+          "idempotency_key"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "SUCCESS",
+              "PARTIAL",
+              "UNAVAILABLE",
+              "ERROR",
+              "PERMISSION_DENIED"
+            ]
+          },
+          "trace_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source_evidence_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+          "simulation_mode": {
+            "type": "boolean"
+          },
+          "error_code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "approval_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1
+          },
+          "approval_status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "APPROVED",
+              "REJECTED",
+              "REVOKED",
+              "EXPIRED"
+            ]
+          },
+          "error": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "retryable": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "retryable"
+            ],
+            "additionalProperties": false
+          },
+          "graph_revision": {
+            "type": [
+              "string",
+              "integer",
+              "null"
+            ]
+          },
+          "truncated": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "status",
+          "trace_id",
+          "source_evidence_ids",
+          "simulation_mode",
+          "approval_id",
+          "approval_status"
+        ]
+      },
+      "requires_mcp_runtime_call": true,
+      "side_effect": true,
+      "result_semantics": "On non-SUCCESS status, return required envelope with null ID(s)/empty lists as applicable; include error; no claimed state change."
+    },
+    {
+      "name": "create_work_order",
+      "description": "Only execute a previously human-approved task through validated service",
+      "permission": "APPROVAL_GATED",
+      "input_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "task_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "approval_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "plan_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "plan_version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "plan_hash": {
+            "type": "string",
+            "minLength": 1
+          },
+          "idempotency_key": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "task_id",
+          "approval_id",
+          "plan_id",
+          "plan_version",
+          "plan_hash",
+          "idempotency_key"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "SUCCESS",
+              "PARTIAL",
+              "UNAVAILABLE",
+              "ERROR",
+              "PERMISSION_DENIED"
+            ]
+          },
+          "trace_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source_evidence_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+          "simulation_mode": {
+            "type": "boolean"
+          },
+          "error_code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "work_order_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1
+          },
+          "work_order_status": {
+            "type": "string"
+          },
+          "execution_mode": {
+            "type": "string",
+            "enum": [
+              "SIMULATED",
+              "EXTERNAL"
+            ]
+          },
+          "error": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "retryable": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "retryable"
+            ],
+            "additionalProperties": false
+          },
+          "graph_revision": {
+            "type": [
+              "string",
+              "integer",
+              "null"
+            ]
+          },
+          "truncated": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "status",
+          "trace_id",
+          "source_evidence_ids",
+          "simulation_mode",
+          "work_order_id",
+          "work_order_status",
+          "execution_mode"
+        ]
+      },
+      "requires_mcp_runtime_call": true,
+      "side_effect": true,
+      "result_semantics": "On non-SUCCESS status, return required envelope with null ID(s)/empty lists as applicable; include error; no claimed state change."
+    },
+    {
+      "name": "get_work_order_status",
+      "description": "Read latest work status and blockers",
+      "permission": "READ",
+      "input_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "work_order_id": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "work_order_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "SUCCESS",
+              "PARTIAL",
+              "UNAVAILABLE",
+              "ERROR",
+              "PERMISSION_DENIED"
+            ]
+          },
+          "trace_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source_evidence_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+          "simulation_mode": {
+            "type": "boolean"
+          },
+          "error_code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "work_order_status": {
+            "type": "string"
+          },
+          "blocking_task_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+          "latest_status_event_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+          "error": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "retryable": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "retryable"
+            ],
+            "additionalProperties": false
+          },
+          "graph_revision": {
+            "type": [
+              "string",
+              "integer",
+              "null"
+            ]
+          },
+          "truncated": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "status",
+          "trace_id",
+          "source_evidence_ids",
+          "simulation_mode",
+          "work_order_status",
+          "blocking_task_ids"
+        ]
+      },
+      "requires_mcp_runtime_call": true,
+      "side_effect": false,
+      "result_semantics": "On non-SUCCESS status, return required envelope with null ID(s)/empty lists as applicable; include error; no claimed state change."
+    },
+    {
+      "name": "record_intervention_outcome",
+      "description": "Record attributable operation result; does not directly mark problem resolved",
+      "permission": "AUTHORIZED_EVIDENCE_WRITE",
+      "input_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "work_order_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "result": {
+            "type": "string",
+            "enum": [
+              "ACTION_COMPLETED",
+              "MITIGATION_VERIFIED",
+              "ROOT_CAUSE_ADDRESSED",
+              "INCONCLUSIVE"
+            ]
+          },
+          "evidence_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+          "observed_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "idempotency_key": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "work_order_id",
+          "result",
+          "evidence_ids",
+          "observed_at",
+          "idempotency_key"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "SUCCESS",
+              "PARTIAL",
+              "UNAVAILABLE",
+              "ERROR",
+              "PERMISSION_DENIED"
+            ]
+          },
+          "trace_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source_evidence_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
+          "simulation_mode": {
+            "type": "boolean"
+          },
+          "error_code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "outcome_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1
+          },
+          "monitoring_status": {
+            "type": "string",
+            "enum": [
+              "MONITORING",
+              "RESOLUTION_VERIFIED",
+              "RECURRENCE_DETECTED",
+              "INCONCLUSIVE"
+            ]
+          },
+          "error": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "retryable": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "retryable"
+            ],
+            "additionalProperties": false
+          },
+          "graph_revision": {
+            "type": [
+              "string",
+              "integer",
+              "null"
+            ]
+          },
+          "truncated": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "status",
+          "trace_id",
+          "source_evidence_ids",
+          "simulation_mode",
+          "outcome_id",
+          "monitoring_status"
+        ]
+      },
+      "requires_mcp_runtime_call": true,
+      "side_effect": true,
+      "result_semantics": "On non-SUCCESS status, return required envelope with null ID(s)/empty lists as applicable; include error; no claimed state change."
+    },
+    {
+      "name": "get_pickup_execution_history",
+      "description": "Review actual vs scheduled waste collection for location or route",
+      "permission": "READ",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "collection_point_id": {
+            "type": "string"
+          },
+          "days": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 180
+          }
+        },
+        "required": [
+          "collection_point_id"
+        ],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "SUCCESS",
+              "PARTIAL",
+              "UNAVAILABLE",
+              "ERROR",
+              "PERMISSION_DENIED"
+            ]
+          },
+          "trace_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source_evidence_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "simulation_mode": {
+            "type": "boolean"
+          },
+          "graph_revision": {
+            "type": [
+              "string",
+              "integer",
+              "null"
+            ]
+          },
+          "truncated": {
+            "type": "boolean"
+          },
+          "error": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "pickup_executions": {
+            "type": "array"
+          }
+        },
+        "required": [
+          "status",
+          "trace_id",
+          "source_evidence_ids",
+          "simulation_mode",
+          "pickup_executions"
+        ],
+        "additionalProperties": false
+      },
+      "result_semantics": "Never infer success from missing source; unavailable returns status UNAVAILABLE and empty data.",
+      "side_effect": false,
+      "requires_mcp_runtime_call": true
+    },
+    {
+      "name": "get_road_condition_history",
+      "description": "Retrieve evidence-linked chronological road conditions and repair attempts",
+      "permission": "READ",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "road_segment_id": {
+            "type": "string"
+          },
+          "days": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 730
+          }
+        },
+        "required": [
+          "road_segment_id"
+        ],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "SUCCESS",
+              "PARTIAL",
+              "UNAVAILABLE",
+              "ERROR",
+              "PERMISSION_DENIED"
+            ]
+          },
+          "trace_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source_evidence_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "simulation_mode": {
+            "type": "boolean"
+          },
+          "graph_revision": {
+            "type": [
+              "string",
+              "integer",
+              "null"
+            ]
+          },
+          "truncated": {
+            "type": "boolean"
+          },
+          "error": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "road_conditions": {
+            "type": "array"
+          }
+        },
+        "required": [
+          "status",
+          "trace_id",
+          "source_evidence_ids",
+          "simulation_mode",
+          "road_conditions"
+        ],
+        "additionalProperties": false
+      },
+      "result_semantics": "Never infer success from missing source; unavailable returns status UNAVAILABLE and empty data.",
+      "side_effect": false,
+      "requires_mcp_runtime_call": true
+    },
+    {
+      "name": "get_source_document_excerpt",
+      "description": "Read cited versioned municipal procedure passage by document ID",
+      "permission": "READ",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "document_id": {
+            "type": "string"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "document_id"
+        ],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "SUCCESS",
+              "PARTIAL",
+              "UNAVAILABLE",
+              "ERROR",
+              "PERMISSION_DENIED"
+            ]
+          },
+          "trace_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source_evidence_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "simulation_mode": {
+            "type": "boolean"
+          },
+          "graph_revision": {
+            "type": [
+              "string",
+              "integer",
+              "null"
+            ]
+          },
+          "truncated": {
+            "type": "boolean"
+          },
+          "error": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "document_excerpt": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "status",
+          "trace_id",
+          "source_evidence_ids",
+          "simulation_mode",
+          "document_excerpt"
+        ],
+        "additionalProperties": false
+      },
+      "result_semantics": "Never infer success from missing source; unavailable returns status UNAVAILABLE and empty data.",
+      "side_effect": false,
+      "requires_mcp_runtime_call": true
+    },
+    {
+      "name": "get_monitoring_status",
+      "description": "Return condition-specific monitoring and verification status",
+      "permission": "READ",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "problem_cluster_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "problem_cluster_id"
+        ],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "SUCCESS",
+              "PARTIAL",
+              "UNAVAILABLE",
+              "ERROR",
+              "PERMISSION_DENIED"
+            ]
+          },
+          "trace_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source_evidence_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "simulation_mode": {
+            "type": "boolean"
+          },
+          "graph_revision": {
+            "type": [
+              "string",
+              "integer",
+              "null"
+            ]
+          },
+          "truncated": {
+            "type": "boolean"
+          },
+          "error": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "monitoring": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "status",
+          "trace_id",
+          "source_evidence_ids",
+          "simulation_mode",
+          "monitoring"
+        ],
+        "additionalProperties": false
+      },
+      "result_semantics": "Never infer success from missing source; unavailable returns status UNAVAILABLE and empty data.",
+      "side_effect": false,
+      "requires_mcp_runtime_call": true
+    },
+    {
+      "name": "get_decision_evidence_path",
+      "description": "Return bounded FalkorDB justification graph path for a decision",
+      "permission": "READ",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "decision_id": {
+            "type": "string"
+          },
+          "max_hops": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 6
+          }
+        },
+        "required": [
+          "decision_id"
+        ],
+        "additionalProperties": false
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "SUCCESS",
+              "PARTIAL",
+              "UNAVAILABLE",
+              "ERROR",
+              "PERMISSION_DENIED"
+            ]
+          },
+          "trace_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source_evidence_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "simulation_mode": {
+            "type": "boolean"
+          },
+          "graph_revision": {
+            "type": [
+              "string",
+              "integer",
+              "null"
+            ]
+          },
+          "truncated": {
+            "type": "boolean"
+          },
+          "error": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "graph_paths": {
+            "type": "array"
+          }
+        },
+        "required": [
+          "status",
+          "trace_id",
+          "source_evidence_ids",
+          "simulation_mode",
+          "graph_paths"
+        ],
+        "additionalProperties": false
+      },
+      "result_semantics": "Never infer success from missing source; unavailable returns status UNAVAILABLE and empty data.",
+      "side_effect": false,
+      "requires_mcp_runtime_call": true
+    }
+  ]
+}

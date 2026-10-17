@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "scenarios": [
+    {
+      "id": "WATERLOGGING_DOWNSTREAM",
+      "issue_types": [
+        "WATERLOGGING"
+      ],
+      "given": [
+        "Repeated flooding at Junction A across distinct rainfall events",
+        "Local inlet cleaned twice but flooding recurred",
+        "Verified upstream topology reaches shared downstream segment"
+      ],
+      "hidden_ground_truth": "Downstream restriction confirmed only after later inspection",
+      "initial_expected_actions": [
+        "trace_infrastructure_dependencies",
+        "get_maintenance_history",
+        "propose_inspection"
+      ],
+      "after_evidence": "When inspection confirms restriction, move leading hypothesis to supported and draft a targeted drainage intervention",
+      "negative_variant": "If inspected downstream segment is clear, reject obstruction and investigate capacity/grade"
+    },
+    {
+      "id": "ROAD_DAMAGE_RETURN",
+      "issue_types": [
+        "ROAD_DAMAGE"
+      ],
+      "given": [
+        "Road R-08 has repeated potholes after resurfacing",
+        "WaterPipe P-02 underlies R-08 but leak unverified",
+        "Previous patch failed"
+      ],
+      "hidden_ground_truth": "Poor subgrade drainage rather than water supply pipe leak",
+      "initial_expected_actions": [
+        "get_maintenance_history",
+        "trace_infrastructure_dependencies",
+        "propose_inspection"
+      ],
+      "after_evidence": "Reject unsupported leak hypothesis when pressure/inspection is normal; inspect subgrade drainage",
+      "negative_variant": "Location proximity alone cannot be treated as a verified pipe leak"
+    },
+    {
+      "id": "WASTE_OVERFLOW_MARKET",
+      "issue_types": [
+        "WASTE_ACCUMULATION"
+      ],
+      "given": [
+        "Market waste point W-03 repeatedly overflows",
+        "Scheduled and actual pickup records differ",
+        "Authorized waste handling procedure exists"
+      ],
+      "hidden_ground_truth": "Missed pickups plus insufficient peak-day capacity",
+      "initial_expected_actions": [
+        "find_related_incidents",
+        "get_organizational_procedures",
+        "propose_resolution_plan"
+      ],
+      "after_evidence": "Plan route adjustments plus capacity and pickup monitoring",
+      "negative_variant": "One-time cleanup cannot mark recurring waste issue resolved"
+    },
+    {
+      "id": "CROSS_CATEGORY_WASTE_DRAIN_ROAD",
+      "issue_types": [
+        "WATERLOGGING",
+        "ROAD_DAMAGE",
+        "WASTE_ACCUMULATION"
+      ],
+      "given": [
+        "Repeated waste piles near inlet I-01",
+        "Flooding at Junction A and recurrent road damage R-08",
+        "Verified network edges connect I-01 to D-12 and downstream D-18",
+        "Prior road patch did not resolve recurrence"
+      ],
+      "hidden_ground_truth": "Waste-related inlet obstruction contributes to waterlogging which contributes to road moisture; capacity may also be limiting",
+      "initial_expected_actions": [
+        "find_related_incidents",
+        "trace_infrastructure_dependencies",
+        "retrieve_case_memory",
+        "propose_inspection"
+      ],
+      "after_evidence": "After controlled inspection and human approval, sequence sanitation, drainage verification and road work appropriately",
+      "negative_variant": "Remove DRAINS_TO edge or add clear drain inspection; agent must change causal assessment and next tool/action"
+    }
+  ],
+  "evaluation_rule": "Hidden ground truth must remain outside agent-visible graph; no canned LLM answers. Evaluate actual MCP traces and graph mutation sensitivity."
+}

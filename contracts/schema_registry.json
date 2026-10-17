@@ -1,0 +1,2807 @@
+{
+  "schema_version": 2,
+  "graph_name": "civicly_knowledge",
+  "timestamp_semantics": "ISO8601 UTC at API boundary; define graph storage adapter consistently",
+  "enums": {
+    "issue_type": [
+      "WATERLOGGING",
+      "ROAD_DAMAGE",
+      "WASTE_ACCUMULATION"
+    ],
+    "source_kind": [
+      "SYNTHETIC",
+      "PUBLIC",
+      "MUNICIPAL",
+      "USER",
+      "AGENT"
+    ],
+    "association_status": [
+      "CANDIDATE",
+      "REPORTED",
+      "VERIFIED"
+    ],
+    "observation_basis": [
+      "OBSERVED",
+      "REPORTED",
+      "DERIVED"
+    ],
+    "reliability": [
+      "UNVERIFIED",
+      "CORROBORATED",
+      "VERIFIED"
+    ],
+    "severity": [
+      "LOW",
+      "MODERATE",
+      "HIGH",
+      "CRITICAL"
+    ],
+    "cluster_pattern": [
+      "SINGLE_EVENT",
+      "PERSISTENT",
+      "RECURRENT",
+      "CROSS_CATEGORY"
+    ],
+    "agent_role": [
+      "SUPERVISOR",
+      "INVESTIGATOR",
+      "ROOT_CAUSE_ANALYST",
+      "PLANNER",
+      "COORDINATOR"
+    ],
+    "approval_status": [
+      "PENDING",
+      "APPROVED",
+      "REJECTED",
+      "REVOKED",
+      "EXPIRED"
+    ],
+    "execution_mode": [
+      "SIMULATED",
+      "EXTERNAL"
+    ],
+    "hypothesis_assessment": [
+      "POSSIBLE",
+      "SUPPORTED",
+      "CONTRADICTED",
+      "VERIFIED",
+      "INCONCLUSIVE"
+    ],
+    "agent_decision": [
+      "GATHER_EVIDENCE",
+      "REQUEST_INSPECTION",
+      "REASSESS_HYPOTHESES",
+      "CREATE_PLAN",
+      "REQUEST_APPROVAL",
+      "TRACK_EXECUTION",
+      "REPLAN",
+      "MONITOR_OUTCOME",
+      "COMPLETE_CASE"
+    ],
+    "work_result": [
+      "ACTION_COMPLETED",
+      "MITIGATION_VERIFIED",
+      "ROOT_CAUSE_ADDRESSED",
+      "INCONCLUSIVE"
+    ],
+    "resolution_result": [
+      "MONITORING",
+      "RESOLUTION_VERIFIED",
+      "RECURRENCE_DETECTED",
+      "INCONCLUSIVE"
+    ],
+    "actor_type": [
+      "AGENT",
+      "HUMAN",
+      "SYSTEM",
+      "EXTERNAL"
+    ],
+    "role": [
+      "ANALYST",
+      "DEPARTMENT_LEAD",
+      "APPROVER",
+      "ADMIN"
+    ],
+    "event_origin": [
+      "SIMULATED",
+      "MUNICIPAL",
+      "PUBLIC",
+      "SYSTEM",
+      "AGENT"
+    ],
+    "source_verification": [
+      "UNVERIFIED",
+      "REPORTED",
+      "CORROBORATED",
+      "VERIFIED",
+      "REJECTED"
+    ]
+  },
+  "node_types": {
+    "Zone": {
+      "required": [
+        "created_at",
+        "id",
+        "name",
+        "schema_version",
+        "updated_at",
+        "zone_type"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "zone_type": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schema_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "labels": [],
+      "immutable": false,
+      "unique_id": true
+    },
+    "Location": {
+      "required": [
+        "created_at",
+        "id",
+        "latitude",
+        "longitude",
+        "name",
+        "schema_version",
+        "updated_at"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "latitude": {
+          "type": "number",
+          "minimum": -90,
+          "maximum": 90
+        },
+        "longitude": {
+          "type": "number",
+          "minimum": -180,
+          "maximum": 180
+        },
+        "geo_point": {
+          "type": "point",
+          "storage": "FalkorDB native point (implementation adapter)"
+        },
+        "geometry_ref": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schema_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "labels": [],
+      "immutable": false,
+      "unique_id": true
+    },
+    "InfrastructureAsset": {
+      "required": [
+        "asset_type",
+        "created_at",
+        "id",
+        "name",
+        "operational_status",
+        "schema_version",
+        "updated_at"
+      ],
+      "properties": {
+        "asset_type": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "operational_status": {
+          "type": "string"
+        },
+        "condition": {
+          "type": "string"
+        },
+        "geometry_ref": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schema_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "labels": [],
+      "immutable": false,
+      "unique_id": true
+    },
+    "DrainSegment": {
+      "required": [
+        "asset_type",
+        "created_at",
+        "id",
+        "name",
+        "operational_status",
+        "schema_version",
+        "updated_at"
+      ],
+      "properties": {
+        "asset_type": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "operational_status": {
+          "type": "string"
+        },
+        "drain_type": {
+          "type": "string"
+        },
+        "design_capacity": {
+          "type": "number"
+        },
+        "capacity_unit": {
+          "type": "string"
+        },
+        "condition": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schema_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "labels": [
+        "InfrastructureAsset"
+      ],
+      "immutable": false,
+      "unique_id": true
+    },
+    "DrainInlet": {
+      "required": [
+        "asset_type",
+        "created_at",
+        "id",
+        "name",
+        "operational_status",
+        "schema_version",
+        "updated_at"
+      ],
+      "properties": {
+        "asset_type": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "operational_status": {
+          "type": "string"
+        },
+        "inlet_type": {
+          "type": "string"
+        },
+        "condition": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schema_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "labels": [
+        "InfrastructureAsset"
+      ],
+      "immutable": false,
+      "unique_id": true
+    },
+    "RoadSegment": {
+      "required": [
+        "asset_type",
+        "created_at",
+        "id",
+        "name",
+        "operational_status",
+        "schema_version",
+        "updated_at"
+      ],
+      "properties": {
+        "asset_type": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "operational_status": {
+          "type": "string"
+        },
+        "surface_type": {
+          "type": "string"
+        },
+        "road_class": {
+          "type": "string"
+        },
+        "condition": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schema_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "labels": [
+        "InfrastructureAsset"
+      ],
+      "immutable": false,
+      "unique_id": true
+    },
+    "WaterPipe": {
+      "required": [
+        "asset_type",
+        "created_at",
+        "id",
+        "name",
+        "operational_status",
+        "schema_version",
+        "updated_at"
+      ],
+      "properties": {
+        "asset_type": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "operational_status": {
+          "type": "string"
+        },
+        "pipe_type": {
+          "type": "string"
+        },
+        "diameter_mm": {
+          "type": "number"
+        },
+        "condition": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schema_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "labels": [
+        "InfrastructureAsset"
+      ],
+      "immutable": false,
+      "unique_id": true
+    },
+    "WasteCollectionPoint": {
+      "required": [
+        "asset_type",
+        "created_at",
+        "id",
+        "name",
+        "operational_status",
+        "schema_version",
+        "updated_at"
+      ],
+      "properties": {
+        "asset_type": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "operational_status": {
+          "type": "string"
+        },
+        "capacity_liters": {
+          "type": "number"
+        },
+        "collection_type": {
+          "type": "string"
+        },
+        "condition": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schema_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "labels": [
+        "InfrastructureAsset"
+      ],
+      "immutable": false,
+      "unique_id": true
+    },
+    "PumpStation": {
+      "required": [
+        "asset_type",
+        "created_at",
+        "id",
+        "name",
+        "operational_status",
+        "schema_version",
+        "updated_at"
+      ],
+      "properties": {
+        "asset_type": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "operational_status": {
+          "type": "string"
+        },
+        "rated_capacity": {
+          "type": "number"
+        },
+        "capacity_unit": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schema_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "labels": [
+        "InfrastructureAsset"
+      ],
+      "immutable": false,
+      "unique_id": true
+    },
+    "CollectionRoute": {
+      "required": [
+        "created_at",
+        "id",
+        "operational_status",
+        "route_code",
+        "schema_version",
+        "updated_at"
+      ],
+      "properties": {
+        "route_code": {
+          "type": "string"
+        },
+        "operational_status": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schema_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "labels": [],
+      "immutable": false,
+      "unique_id": true
+    },
+    "ServiceSchedule": {
+      "required": [
+        "created_at",
+        "id",
+        "schedule_spec",
+        "schema_version",
+        "service_type",
+        "timezone",
+        "updated_at",
+        "valid_from"
+      ],
+      "properties": {
+        "service_type": {
+          "type": "string"
+        },
+        "timezone": {
+          "type": "string"
+        },
+        "schedule_spec": {
+          "type": "string"
+        },
+        "valid_from": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "valid_to": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schema_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "labels": [],
+      "immutable": false,
+      "unique_id": true
+    },
+    "Complaint": {
+      "required": [
+        "created_at",
+        "description",
+        "id",
+        "reported_at",
+        "schema_version",
+        "source_channel",
+        "source_kind",
+        "status",
+        "updated_at"
+      ],
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "reported_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "source_channel": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "source_kind": {
+          "type": "string",
+          "enum_ref": "source_kind"
+        },
+        "external_record_id": {
+          "type": "string"
+        },
+        "source_id": {
+          "type": "string"
+        },
+        "source_version": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schema_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "labels": [],
+      "immutable": false,
+      "unique_id": true
+    },
+    "Incident": {
+      "required": [
+        "created_at",
+        "id",
+        "issue_type",
+        "schema_version",
+        "severity",
+        "started_at",
+        "status",
+        "subtype",
+        "updated_at"
+      ],
+      "properties": {
+        "issue_type": {
+          "type": "string",
+          "enum_ref": "issue_type"
+        },
+        "subtype": {
+          "type": "string"
+        },
+        "started_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string"
+        },
+        "severity": {
+          "type": "string",
+          "enum_ref": "severity"
+        },
+        "ended_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schema_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "labels": [],
+      "immutable": false,
+      "unique_id": true
+    },
+    "ProblemCluster": {
+      "required": [
+        "created_at",
+        "first_seen_at",
+        "id",
+        "pattern_type",
+        "schema_version",
+        "status",
+        "title",
+        "updated_at"
+      ],
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "pattern_type": {
+          "type": "string",
+          "enum_ref": "cluster_pattern"
+        },
+        "status": {
+          "type": "string"
+        },
+        "first_seen_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "next_check_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schema_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "labels": [],
+      "immutable": false,
+      "unique_id": true
+    },
+    "Observation": {
+      "required": [
+        "created_at",
+        "id",
+        "observation_type",
+        "observed_at",
+        "schema_version",
+        "source_kind",
+        "updated_at"
+      ],
+      "properties": {
+        "observation_type": {
+          "type": "string"
+        },
+        "observed_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "source_kind": {
+          "type": "string",
+          "enum_ref": "source_kind"
+        },
+        "value": {
+          "type": "number"
+        },
+        "unit": {
+          "type": "string"
+        },
+        "observation_basis": {
+          "type": "string",
+          "enum_ref": "observation_basis"
+        },
+        "method": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schema_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "labels": [],
+      "immutable": false,
+      "unique_id": true
+    },
+    "Inspection": {
+      "required": [
+        "created_at",
+        "id",
+        "inspection_type",
+        "requested_at",
+        "schema_version",
+        "status",
+        "updated_at"
+      ],
+      "properties": {
+        "inspection_type": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "requested_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "scheduled_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "completed_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schema_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "labels": [],
+      "immutable": false,
+      "unique_id": true
+    },
+    "Evidence": {
+      "required": [
+        "created_at",
+        "evidence_type",
+        "id",
+        "recorded_at",
+        "reliability",
+        "schema_version",
+        "source_kind",
+        "summary",
+        "updated_at"
+      ],
+      "properties": {
+        "evidence_type": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "reliability": {
+          "type": "string",
+          "enum_ref": "reliability"
+        },
+        "recorded_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "source_kind": {
+          "type": "string",
+          "enum_ref": "source_kind"
+        },
+        "observed_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "basis": {
+          "type": "string",
+          "enum_ref": "observation_basis"
+        },
+        "source_record_id": {
+          "type": "string"
+        },
+        "content_hash": {
+          "type": "string"
+        },
+        "review_status": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schema_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "labels": [],
+      "immutable": false,
+      "unique_id": true
+    },
+    "DataSource": {
+      "required": [
+        "created_at",
+        "id",
+        "name",
+        "origin",
+        "schema_version",
+        "source_type",
+        "updated_at"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "source_type": {
+          "type": "string"
+        },
+        "origin": {
+          "type": "string"
+        },
+        "source_uri": {
+          "type": "string"
+        },
+        "source_kind": {
+          "type": "string",
+          "enum_ref": "source_kind"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schema_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "labels": [],
+      "immutable": false,
+      "unique_id": true
+    },
+    "Document": {
+      "required": [
+        "content_ref",
+        "created_at",
+        "document_type",
+        "id",
+        "schema_version",
+        "title",
+        "updated_at"
+      ],
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "document_type": {
+          "type": "string"
+        },
+        "content_ref": {
+          "type": "string"
+        },
+        "content_hash": {
+          "type": "string"
+        },
+        "source_uri": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schema_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "labels": [],
+      "immutable": false,
+      "unique_id": true
+    },
+    "Investigation": {
+      "required": [
+        "created_at",
+        "id",
+        "opened_at",
+        "priority",
+        "schema_version",
+        "status",
+        "updated_at"
+      ],
+      "properties": {
+        "status": {
+          "type": "string"
+        },
+        "opened_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "priority": {
+          "type": "string"
+        },
+        "thread_id": {
+          "type": "string"
+        },
+        "graph_revision": {
+          "type": "integer"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schema_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "labels": [],
+      "immutable": false,
+      "unique_id": true
+    },
+    "Hypothesis": {
+      "required": [
+        "cause_code",
+        "created_at",
+        "id",
+        "schema_version",
+        "statement",
+        "status",
+        "updated_at"
+      ],
+      "properties": {
+        "cause_code": {
+          "type": "string"
+        },
+        "statement": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schema_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "labels": [],
+      "immutable": false,
+      "unique_id": true
+    },
+    "HypothesisAssessment": {
+      "required": [
+        "assessed_at",
+        "assessment",
+        "created_at",
+        "id",
+        "rationale",
+        "schema_version"
+      ],
+      "properties": {
+        "assessment": {
+          "type": "string",
+          "enum_ref": "hypothesis_assessment"
+        },
+        "rationale": {
+          "type": "string"
+        },
+        "assessed_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "created_by_agent": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schema_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "labels": [],
+      "immutable": true,
+      "unique_id": true
+    },
+    "Finding": {
+      "required": [
+        "created_at",
+        "finding_type",
+        "id",
+        "schema_version",
+        "statement",
+        "updated_at",
+        "verification_status"
+      ],
+      "properties": {
+        "statement": {
+          "type": "string"
+        },
+        "finding_type": {
+          "type": "string"
+        },
+        "verification_status": {
+          "type": "string"
+        },
+        "verified_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schema_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "labels": [],
+      "immutable": false,
+      "unique_id": true
+    },
+    "AgentRun": {
+      "required": [
+        "agent_role",
+        "created_at",
+        "id",
+        "schema_version",
+        "started_at",
+        "status",
+        "updated_at"
+      ],
+      "properties": {
+        "agent_role": {
+          "type": "string",
+          "enum_ref": "agent_role"
+        },
+        "started_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string"
+        },
+        "finished_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schema_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "labels": [],
+      "immutable": false,
+      "unique_id": true
+    },
+    "ToolExecution": {
+      "required": [
+        "created_at",
+        "id",
+        "schema_version",
+        "started_at",
+        "status",
+        "tool_name",
+        "updated_at"
+      ],
+      "properties": {
+        "tool_name": {
+          "type": "string"
+        },
+        "started_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string"
+        },
+        "finished_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "trace_id": {
+          "type": "string"
+        },
+        "input_digest": {
+          "type": "string"
+        },
+        "output_digest": {
+          "type": "string"
+        },
+        "error_code": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schema_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "labels": [],
+      "immutable": false,
+      "unique_id": true
+    },
+    "AgentDecision": {
+      "required": [
+        "created_at",
+        "decided_at",
+        "decision_type",
+        "id",
+        "rationale",
+        "schema_version"
+      ],
+      "properties": {
+        "decision_type": {
+          "type": "string",
+          "enum_ref": "agent_decision"
+        },
+        "rationale": {
+          "type": "string"
+        },
+        "decided_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schema_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "labels": [],
+      "immutable": true,
+      "unique_id": true
+    },
+    "CaseMemory": {
+      "required": [
+        "created_at",
+        "id",
+        "memory_type",
+        "schema_version",
+        "summary",
+        "updated_at"
+      ],
+      "properties": {
+        "memory_type": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "embedding_model": {
+          "type": "string"
+        },
+        "embedding_ref": {
+          "type": "string"
+        },
+        "source_investigation_id": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schema_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "labels": [],
+      "immutable": false,
+      "unique_id": true
+    },
+    "Department": {
+      "required": [
+        "created_at",
+        "department_type",
+        "id",
+        "name",
+        "schema_version",
+        "updated_at"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "department_type": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schema_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "labels": [],
+      "immutable": false,
+      "unique_id": true
+    },
+    "KnowledgeProcedure": {
+      "required": [
+        "created_at",
+        "id",
+        "schema_version",
+        "status",
+        "title",
+        "updated_at",
+        "version"
+      ],
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "valid_from": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "valid_to": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "document_ref": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schema_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "labels": [],
+      "immutable": false,
+      "unique_id": true
+    },
+    "ResolutionPlan": {
+      "required": [
+        "created_at",
+        "id",
+        "plan_hash",
+        "schema_version",
+        "status",
+        "updated_at",
+        "version"
+      ],
+      "properties": {
+        "version": {
+          "type": "integer"
+        },
+        "status": {
+          "type": "string"
+        },
+        "plan_hash": {
+          "type": "string"
+        },
+        "graph_revision": {
+          "type": "integer"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schema_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "labels": [],
+      "immutable": false,
+      "unique_id": true
+    },
+    "ActionTask": {
+      "required": [
+        "action_type",
+        "created_at",
+        "id",
+        "priority",
+        "schema_version",
+        "status",
+        "updated_at"
+      ],
+      "properties": {
+        "action_type": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "priority": {
+          "type": "string"
+        },
+        "dependency_waiver_ref": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schema_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "labels": [],
+      "immutable": false,
+      "unique_id": true
+    },
+    "WorkOrder": {
+      "required": [
+        "created_at",
+        "execution_mode",
+        "id",
+        "idempotency_key",
+        "plan_version",
+        "schema_version",
+        "status",
+        "updated_at"
+      ],
+      "properties": {
+        "status": {
+          "type": "string"
+        },
+        "execution_mode": {
+          "type": "string",
+          "enum_ref": "execution_mode"
+        },
+        "plan_version": {
+          "type": "integer"
+        },
+        "idempotency_key": {
+          "type": "string"
+        },
+        "external_ref": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schema_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "labels": [],
+      "immutable": false,
+      "unique_id": true
+    },
+    "Approval": {
+      "required": [
+        "created_at",
+        "id",
+        "plan_hash",
+        "plan_version",
+        "requested_at",
+        "requested_by",
+        "schema_version",
+        "status",
+        "updated_at"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum_ref": "approval_status"
+        },
+        "requested_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "requested_by": {
+          "type": "string"
+        },
+        "plan_version": {
+          "type": "integer"
+        },
+        "plan_hash": {
+          "type": "string"
+        },
+        "decided_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "decided_by": {
+          "type": "string"
+        },
+        "expires_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schema_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "labels": [],
+      "immutable": false,
+      "unique_id": true
+    },
+    "StatusEvent": {
+      "required": [
+        "actor_type",
+        "created_at",
+        "entity_id",
+        "from_status",
+        "id",
+        "occurred_at",
+        "schema_version",
+        "to_status"
+      ],
+      "properties": {
+        "entity_id": {
+          "type": "string"
+        },
+        "from_status": {
+          "type": "string"
+        },
+        "to_status": {
+          "type": "string"
+        },
+        "occurred_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "actor_type": {
+          "type": "string",
+          "enum_ref": "actor_type"
+        },
+        "actor_id": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schema_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "labels": [],
+      "immutable": true,
+      "unique_id": true
+    },
+    "InterventionOutcome": {
+      "required": [
+        "assessment_status",
+        "created_at",
+        "evaluated_at",
+        "id",
+        "result",
+        "schema_version"
+      ],
+      "properties": {
+        "assessment_status": {
+          "type": "string"
+        },
+        "evaluated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "result": {
+          "type": "string",
+          "enum_ref": "work_result"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schema_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "labels": [],
+      "immutable": true,
+      "unique_id": true
+    },
+    "DomainEvent": {
+      "required": [
+        "created_at",
+        "delivery_status",
+        "event_type",
+        "id",
+        "idempotency_key",
+        "occurred_at",
+        "schema_version",
+        "subject_id",
+        "updated_at"
+      ],
+      "properties": {
+        "event_type": {
+          "type": "string"
+        },
+        "subject_id": {
+          "type": "string"
+        },
+        "occurred_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "delivery_status": {
+          "type": "string"
+        },
+        "idempotency_key": {
+          "type": "string"
+        },
+        "processed_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "payload_ref": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schema_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "labels": [],
+      "immutable": false,
+      "unique_id": true
+    },
+    "DrainageCatchment": {
+      "required": [
+        "catchment_type",
+        "created_at",
+        "id",
+        "name",
+        "schema_version",
+        "updated_at"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schema_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "name": {
+          "type": "string"
+        },
+        "catchment_type": {
+          "type": "string"
+        },
+        "area_m2": {
+          "type": "number",
+          "minimum": 0
+        },
+        "geometry_ref": {
+          "type": "string"
+        }
+      },
+      "labels": [],
+      "immutable": false,
+      "unique_id": true
+    },
+    "RainfallEvent": {
+      "required": [
+        "created_at",
+        "duration_minutes",
+        "id",
+        "schema_version",
+        "started_at",
+        "total_mm",
+        "updated_at"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schema_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "started_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "duration_minutes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "total_mm": {
+          "type": "number",
+          "minimum": 0
+        },
+        "source_record_id": {
+          "type": "string"
+        },
+        "zone_id": {
+          "type": "string"
+        }
+      },
+      "labels": [],
+      "immutable": false,
+      "unique_id": true
+    },
+    "PickupExecution": {
+      "required": [
+        "created_at",
+        "id",
+        "route_id",
+        "scheduled_at",
+        "schema_version",
+        "status",
+        "updated_at"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schema_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "scheduled_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "actual_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "COMPLETED",
+            "MISSED",
+            "PARTIAL",
+            "CANCELLED"
+          ]
+        },
+        "route_id": {
+          "type": "string"
+        },
+        "source_record_id": {
+          "type": "string"
+        }
+      },
+      "labels": [],
+      "immutable": false,
+      "unique_id": true
+    },
+    "AssetConditionSnapshot": {
+      "required": [
+        "asset_id",
+        "condition",
+        "created_at",
+        "id",
+        "observed_at",
+        "schema_version",
+        "updated_at"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schema_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "asset_id": {
+          "type": "string"
+        },
+        "observed_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "condition": {
+          "type": "string"
+        },
+        "observation_method": {
+          "type": "string"
+        },
+        "evidence_id": {
+          "type": "string"
+        }
+      },
+      "labels": [],
+      "immutable": false,
+      "unique_id": true
+    },
+    "OperatorAccount": {
+      "required": [
+        "created_at",
+        "department_id",
+        "display_name",
+        "id",
+        "role",
+        "schema_version",
+        "updated_at"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schema_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "display_name": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string",
+          "enum_ref": "role"
+        },
+        "department_id": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        }
+      },
+      "labels": [],
+      "immutable": false,
+      "unique_id": true
+    },
+    "EventDelivery": {
+      "required": [
+        "attempts",
+        "created_at",
+        "domain_event_id",
+        "id",
+        "schema_version",
+        "status",
+        "updated_at"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "schema_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "domain_event_id": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "PENDING",
+            "CLAIMED",
+            "ACKED",
+            "FAILED"
+          ]
+        },
+        "attempts": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "lease_expires_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "labels": [],
+      "immutable": false,
+      "unique_id": true
+    }
+  },
+  "relationship_types": {
+    "LOCATED_AT": {
+      "from": [
+        "InfrastructureAsset"
+      ],
+      "to": [
+        "Location"
+      ],
+      "properties": {},
+      "semantics": ""
+    },
+    "IN_ZONE": {
+      "from": [
+        "Location"
+      ],
+      "to": [
+        "Zone"
+      ],
+      "properties": {},
+      "semantics": ""
+    },
+    "DRAINS_TO": {
+      "from": [
+        "DrainSegment",
+        "DrainInlet"
+      ],
+      "to": [
+        "DrainSegment",
+        "DrainInlet"
+      ],
+      "properties": {
+        "valid_from": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "valid_to": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "association_status": {
+          "type": "string",
+          "enum_ref": "association_status"
+        },
+        "source_evidence_id": {
+          "type": "string"
+        }
+      },
+      "semantics": "Verified/candidate directed water-flow connection, not geographical closeness"
+    },
+    "UNDERLIES": {
+      "from": [
+        "WaterPipe"
+      ],
+      "to": [
+        "RoadSegment"
+      ],
+      "properties": {
+        "valid_from": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "valid_to": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "association_status": {
+          "type": "string",
+          "enum_ref": "association_status"
+        },
+        "source_evidence_id": {
+          "type": "string"
+        }
+      },
+      "semantics": ""
+    },
+    "SERVES": {
+      "from": [
+        "InfrastructureAsset"
+      ],
+      "to": [
+        "Location"
+      ],
+      "properties": {
+        "valid_from": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "valid_to": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "association_status": {
+          "type": "string",
+          "enum_ref": "association_status"
+        },
+        "source_evidence_id": {
+          "type": "string"
+        }
+      },
+      "semantics": ""
+    },
+    "MAINTAINED_BY": {
+      "from": [
+        "InfrastructureAsset"
+      ],
+      "to": [
+        "Department"
+      ],
+      "properties": {
+        "valid_from": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "valid_to": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "association_status": {
+          "type": "string",
+          "enum_ref": "association_status"
+        },
+        "source_evidence_id": {
+          "type": "string"
+        }
+      },
+      "semantics": ""
+    },
+    "COLLECTED_BY": {
+      "from": [
+        "WasteCollectionPoint"
+      ],
+      "to": [
+        "CollectionRoute"
+      ],
+      "properties": {
+        "valid_from": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "valid_to": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "association_status": {
+          "type": "string",
+          "enum_ref": "association_status"
+        },
+        "source_evidence_id": {
+          "type": "string"
+        }
+      },
+      "semantics": ""
+    },
+    "HAS_SCHEDULE": {
+      "from": [
+        "CollectionRoute"
+      ],
+      "to": [
+        "ServiceSchedule"
+      ],
+      "properties": {
+        "valid_from": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "valid_to": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "association_status": {
+          "type": "string",
+          "enum_ref": "association_status"
+        },
+        "source_evidence_id": {
+          "type": "string"
+        }
+      },
+      "semantics": ""
+    },
+    "GOVERNED_BY": {
+      "from": [
+        "ActionTask"
+      ],
+      "to": [
+        "KnowledgeProcedure"
+      ],
+      "properties": {
+        "valid_from": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "valid_to": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "association_status": {
+          "type": "string",
+          "enum_ref": "association_status"
+        },
+        "source_evidence_id": {
+          "type": "string"
+        }
+      },
+      "semantics": ""
+    },
+    "REPORTS": {
+      "from": [
+        "Complaint"
+      ],
+      "to": [
+        "Incident"
+      ],
+      "properties": {},
+      "semantics": ""
+    },
+    "OCCURRED_AT": {
+      "from": [
+        "Incident"
+      ],
+      "to": [
+        "Location"
+      ],
+      "properties": {},
+      "semantics": ""
+    },
+    "AFFECTS": {
+      "from": [
+        "Incident"
+      ],
+      "to": [
+        "InfrastructureAsset"
+      ],
+      "properties": {
+        "association_status": {
+          "type": "string",
+          "enum_ref": "association_status"
+        },
+        "source_evidence_id": {
+          "type": "string"
+        }
+      },
+      "semantics": "Incident has affected asset, not causal proof"
+    },
+    "PART_OF": {
+      "from": [
+        "Incident"
+      ],
+      "to": [
+        "ProblemCluster"
+      ],
+      "properties": {},
+      "semantics": ""
+    },
+    "INVESTIGATES": {
+      "from": [
+        "Investigation"
+      ],
+      "to": [
+        "Incident",
+        "ProblemCluster"
+      ],
+      "properties": {},
+      "semantics": ""
+    },
+    "INSPECTS": {
+      "from": [
+        "Inspection"
+      ],
+      "to": [
+        "InfrastructureAsset"
+      ],
+      "properties": {},
+      "semantics": ""
+    },
+    "PROPOSES": {
+      "from": [
+        "Investigation"
+      ],
+      "to": [
+        "Hypothesis"
+      ],
+      "properties": {},
+      "semantics": ""
+    },
+    "CONCERNS": {
+      "from": [
+        "Hypothesis"
+      ],
+      "to": [
+        "InfrastructureAsset"
+      ],
+      "properties": {},
+      "semantics": ""
+    },
+    "EXPLAINS": {
+      "from": [
+        "Hypothesis"
+      ],
+      "to": [
+        "Incident"
+      ],
+      "properties": {},
+      "semantics": ""
+    },
+    "HAS_ASSESSMENT": {
+      "from": [
+        "Hypothesis"
+      ],
+      "to": [
+        "HypothesisAssessment"
+      ],
+      "properties": {},
+      "semantics": ""
+    },
+    "SUPPORTED_BY": {
+      "from": [
+        "HypothesisAssessment"
+      ],
+      "to": [
+        "Evidence"
+      ],
+      "properties": {},
+      "semantics": ""
+    },
+    "CONTRADICTED_BY": {
+      "from": [
+        "HypothesisAssessment"
+      ],
+      "to": [
+        "Evidence"
+      ],
+      "properties": {},
+      "semantics": ""
+    },
+    "DERIVED_FROM": {
+      "from": [
+        "Evidence"
+      ],
+      "to": [
+        "DataSource"
+      ],
+      "properties": {},
+      "semantics": ""
+    },
+    "DOCUMENTED_IN": {
+      "from": [
+        "Evidence"
+      ],
+      "to": [
+        "Document"
+      ],
+      "properties": {},
+      "semantics": ""
+    },
+    "PRODUCED": {
+      "from": [
+        "Inspection"
+      ],
+      "to": [
+        "Evidence"
+      ],
+      "properties": {},
+      "semantics": ""
+    },
+    "ESTABLISHES": {
+      "from": [
+        "Evidence"
+      ],
+      "to": [
+        "Finding"
+      ],
+      "properties": {},
+      "semantics": ""
+    },
+    "EXECUTED_BY": {
+      "from": [
+        "AgentRun"
+      ],
+      "to": [
+        "AgentDecision"
+      ],
+      "properties": {},
+      "semantics": ""
+    },
+    "USED_TOOL": {
+      "from": [
+        "AgentRun"
+      ],
+      "to": [
+        "ToolExecution"
+      ],
+      "properties": {},
+      "semantics": ""
+    },
+    "JUSTIFIED_BY": {
+      "from": [
+        "AgentDecision"
+      ],
+      "to": [
+        "Evidence",
+        "Finding"
+      ],
+      "properties": {},
+      "semantics": ""
+    },
+    "PRODUCED_PLAN": {
+      "from": [
+        "Investigation"
+      ],
+      "to": [
+        "ResolutionPlan"
+      ],
+      "properties": {},
+      "semantics": ""
+    },
+    "HAS_TASK": {
+      "from": [
+        "ResolutionPlan"
+      ],
+      "to": [
+        "ActionTask"
+      ],
+      "properties": {},
+      "semantics": ""
+    },
+    "DEPENDS_ON": {
+      "from": [
+        "ActionTask"
+      ],
+      "to": [
+        "ActionTask"
+      ],
+      "properties": {},
+      "semantics": "No cycles allowed"
+    },
+    "ASSIGNED_TO": {
+      "from": [
+        "ActionTask"
+      ],
+      "to": [
+        "Department"
+      ],
+      "properties": {},
+      "semantics": ""
+    },
+    "TARGETS": {
+      "from": [
+        "ActionTask"
+      ],
+      "to": [
+        "InfrastructureAsset"
+      ],
+      "properties": {},
+      "semantics": ""
+    },
+    "IMPLEMENTS": {
+      "from": [
+        "WorkOrder"
+      ],
+      "to": [
+        "ActionTask"
+      ],
+      "properties": {},
+      "semantics": ""
+    },
+    "AUTHORIZED_BY": {
+      "from": [
+        "WorkOrder"
+      ],
+      "to": [
+        "Approval"
+      ],
+      "properties": {},
+      "semantics": ""
+    },
+    "RESULTED_IN": {
+      "from": [
+        "WorkOrder"
+      ],
+      "to": [
+        "InterventionOutcome"
+      ],
+      "properties": {},
+      "semantics": ""
+    },
+    "LEARNED_FROM": {
+      "from": [
+        "CaseMemory"
+      ],
+      "to": [
+        "Investigation"
+      ],
+      "properties": {},
+      "semantics": ""
+    },
+    "APPLIES_TO": {
+      "from": [
+        "KnowledgeProcedure"
+      ],
+      "to": [
+        "Department"
+      ],
+      "properties": {},
+      "semantics": ""
+    },
+    "HAS_EVENT": {
+      "from": [
+        "Incident",
+        "ProblemCluster",
+        "Investigation",
+        "WorkOrder",
+        "ActionTask"
+      ],
+      "to": [
+        "StatusEvent"
+      ],
+      "properties": {},
+      "semantics": ""
+    },
+    "EMITTED_EVENT": {
+      "from": [
+        "Investigation",
+        "WorkOrder",
+        "ProblemCluster"
+      ],
+      "to": [
+        "DomainEvent"
+      ],
+      "properties": {},
+      "semantics": ""
+    },
+    "DRAINS_CATCHMENT": {
+      "from": [
+        "DrainageCatchment"
+      ],
+      "to": [
+        "DrainSegment",
+        "DrainInlet"
+      ],
+      "properties": {},
+      "semantics": "Drains contributing area to known infrastructure; no causation claim"
+    },
+    "RAINFALL_AFFECTS": {
+      "from": [
+        "RainfallEvent"
+      ],
+      "to": [
+        "Zone",
+        "DrainageCatchment"
+      ],
+      "properties": {
+        "source_evidence_id": {
+          "type": "string"
+        }
+      },
+      "semantics": "Weather event applies to geographic study area"
+    },
+    "PICKUP_FOR": {
+      "from": [
+        "PickupExecution"
+      ],
+      "to": [
+        "WasteCollectionPoint"
+      ],
+      "properties": {},
+      "semantics": "Actual or missed pickup of collection point"
+    },
+    "ROUTE_EXECUTION": {
+      "from": [
+        "PickupExecution"
+      ],
+      "to": [
+        "CollectionRoute"
+      ],
+      "properties": {},
+      "semantics": "Pickup execution belongs to route"
+    },
+    "CONDITION_OF": {
+      "from": [
+        "AssetConditionSnapshot"
+      ],
+      "to": [
+        "InfrastructureAsset"
+      ],
+      "properties": {},
+      "semantics": "Time-specific measured/reported condition"
+    },
+    "HAS_OPERATOR": {
+      "from": [
+        "Department"
+      ],
+      "to": [
+        "OperatorAccount"
+      ],
+      "properties": {},
+      "semantics": "Demo department membership"
+    },
+    "DELIVERS": {
+      "from": [
+        "EventDelivery"
+      ],
+      "to": [
+        "DomainEvent"
+      ],
+      "properties": {},
+      "semantics": "Durable consumer lease/tracking for domain event"
+    }
+  },
+  "invariants": [
+    "Globally unique stable application IDs",
+    "No evidence-free VERIFIED topology edge",
+    "No cross-category physical causation inferred from closeness",
+    "Complaint maps to exactly one current canonical Incident after acceptance",
+    "Action task dependency DAG must be acyclic",
+    "Approval bound to plan id, version, hash, authenticated APPROVER and expiry",
+    "WorkOrder completion does not mean resolution verified",
+    "Append-only hypothesis assessments and events",
+    "Idempotent source ingestion and work-order creation",
+    "Unknown evidence is missing, not fabricated",
+    "Plan-approved WorkOrder starts only at AUTHORIZED; WorkOrder draft/pending approval states are prohibited.",
+    "No hidden evaluator truth is stored in or reachable from canonical knowledge or document graph.",
+    "GraphRAG SDK-managed document graph is separate from canonical domain ontology, linked via stable IDs and verified cited assertions."
+  ]
+}

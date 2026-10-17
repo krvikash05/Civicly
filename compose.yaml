@@ -1,0 +1,32 @@
+name: civicly
+services:
+  falkordb:
+    # Official image includes the developer Browser; verified on linux/arm64.
+    image: falkordb/falkordb:6.0.2@sha256:107455e862a824e45e8e9f5a7fbfdf5e00a08b14e13eae2577c72fd9e3f59ba6
+    ports:
+      - "127.0.0.1:${FALKORDB_PORT:-6379}:6379"
+      - "127.0.0.1:${FALKORDB_BROWSER_PORT:-3000}:3000"
+    environment:
+      BROWSER: "1"
+      REDIS_ARGS: "--appendonly yes --appendfsync always --save 60 1"
+      AUTH_SECRET: ${AUTH_SECRET:?Run make configure to generate local Browser secrets}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?Run make configure to generate local Browser secrets}
+    volumes:
+      - falkordb_data:/var/lib/falkordb/data
+      - browser_data:/var/lib/falkordb/browser/.data
+    healthcheck:
+      # Verify the graph module as well as Redis and Browser HTTP availability.
+      test:
+        - CMD-SHELL
+        - >-
+          redis-cli ping | grep -qx PONG &&
+          redis-cli --raw COMMAND INFO GRAPH.RO_QUERY | grep -qi graph.ro_query &&
+          node -e "fetch('http://127.0.0.1:3000').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 5s
+      timeout: 4s
+      retries: 20
+      start_period: 10s
+    stop_grace_period: 30s
+volumes:
+  falkordb_data:
+  browser_data:

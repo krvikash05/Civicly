@@ -1,0 +1,1849 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Civicly REST contracts",
+  "description": "Machine-readable expected field contracts. Codex implements Pydantic models and generated OpenAPI, validates endpoints and extends optional fields via ADR and tests.",
+  "schema_version": 2,
+  "$defs": {
+    "Ack": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "status"
+      ],
+      "additionalProperties": false
+    },
+    "DemoSession": {
+      "type": "object",
+      "properties": {
+        "access_token": {
+          "type": "string"
+        },
+        "expires_at": {
+          "type": "string"
+        },
+        "operator_id": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "access_token",
+        "expires_at",
+        "operator_id",
+        "role"
+      ],
+      "additionalProperties": false
+    },
+    "OperatorAccount": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "display_name": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        },
+        "department_id": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "display_name",
+        "role",
+        "department_id",
+        "enabled"
+      ],
+      "additionalProperties": false
+    },
+    "HealthDTO": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string"
+        },
+        "dependencies": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "required": [
+        "status",
+        "dependencies"
+      ],
+      "additionalProperties": false
+    },
+    "DashboardSummary": {
+      "type": "object",
+      "properties": {
+        "open_clusters": {
+          "type": "integer"
+        },
+        "active_investigations": {
+          "type": "integer"
+        },
+        "pending_approvals": {
+          "type": "integer"
+        },
+        "recurrence_counts": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "simulation_mode": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "open_clusters",
+        "active_investigations",
+        "pending_approvals",
+        "recurrence_counts",
+        "simulation_mode"
+      ],
+      "additionalProperties": false
+    },
+    "ComplaintDTO": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "incident_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "reported_at": {
+          "type": "string"
+        },
+        "source_kind": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "issue_type": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "description",
+        "incident_id",
+        "reported_at",
+        "source_kind",
+        "status",
+        "issue_type"
+      ],
+      "additionalProperties": false
+    },
+    "IncidentDTO": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "issue_type": {
+          "type": "string"
+        },
+        "subtype": {
+          "type": "string"
+        },
+        "location_id": {
+          "type": "string"
+        },
+        "started_at": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "cluster_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "complaint_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "issue_type",
+        "subtype",
+        "location_id",
+        "started_at",
+        "status",
+        "cluster_id",
+        "complaint_ids"
+      ],
+      "additionalProperties": false
+    },
+    "ProblemClusterDTO": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "pattern_type": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "incident_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "related_asset_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "monitoring_status": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "pattern_type",
+        "status",
+        "incident_ids",
+        "related_asset_ids",
+        "monitoring_status"
+      ],
+      "additionalProperties": false
+    },
+    "InvestigationDTO": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "incident_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "problem_cluster_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "current_agent_role": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "active_hypothesis_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "pending_inspection_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "current_plan_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "next_action": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "graph_revision": {
+          "type": "string"
+        },
+        "simulation_mode": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "status",
+        "incident_ids",
+        "problem_cluster_id",
+        "current_agent_role",
+        "active_hypothesis_ids",
+        "pending_inspection_ids",
+        "current_plan_id",
+        "next_action",
+        "graph_revision",
+        "simulation_mode"
+      ],
+      "additionalProperties": false
+    },
+    "AgentResumeDTO": {
+      "type": "object",
+      "properties": {
+        "investigation_id": {
+          "type": "string"
+        },
+        "accepted": {
+          "type": "boolean"
+        },
+        "event_id": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "investigation_id",
+        "accepted",
+        "event_id"
+      ],
+      "additionalProperties": false
+    },
+    "EvidenceDTO": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "evidence_type": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "source_kind": {
+          "type": "string"
+        },
+        "source_record_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "reliability": {
+          "type": "string"
+        },
+        "observed_at": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "recorded_at": {
+          "type": "string"
+        },
+        "document_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "simulated": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "evidence_type",
+        "summary",
+        "source_kind",
+        "source_record_id",
+        "reliability",
+        "observed_at",
+        "recorded_at",
+        "document_id",
+        "simulated"
+      ],
+      "additionalProperties": false
+    },
+    "InspectionDTO": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "asset_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "requested_at": {
+          "type": "string"
+        },
+        "assigned_inspector_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "evidence_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "status",
+        "asset_ids",
+        "requested_at",
+        "assigned_inspector_id",
+        "evidence_ids"
+      ],
+      "additionalProperties": false
+    },
+    "HypothesisDTO": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "statement": {
+          "type": "string"
+        },
+        "cause_code": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "assessment_history": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "supporting_evidence_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "contradicting_evidence_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "missing_evidence": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "suspected_asset_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "statement",
+        "cause_code",
+        "status",
+        "assessment_history",
+        "supporting_evidence_ids",
+        "contradicting_evidence_ids",
+        "missing_evidence",
+        "suspected_asset_ids"
+      ],
+      "additionalProperties": false
+    },
+    "PlanDTO": {
+      "type": "object",
+      "properties": {
+        "plan_id": {
+          "type": "string"
+        },
+        "investigation_id": {
+          "type": "string"
+        },
+        "version": {
+          "type": "integer"
+        },
+        "content_hash": {
+          "type": "string"
+        },
+        "tasks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "dependencies": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "status": {
+          "type": "string"
+        },
+        "simulated": {
+          "type": "boolean"
+        },
+        "monitoring_criteria": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "supporting_evidence_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "plan_id",
+        "investigation_id",
+        "version",
+        "content_hash",
+        "tasks",
+        "dependencies",
+        "status",
+        "simulated",
+        "monitoring_criteria",
+        "supporting_evidence_ids"
+      ],
+      "additionalProperties": false
+    },
+    "ApprovalDTO": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "plan_id": {
+          "type": "string"
+        },
+        "plan_version": {
+          "type": "integer"
+        },
+        "plan_hash": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "approved_by": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "requested_at": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "plan_id",
+        "plan_version",
+        "plan_hash",
+        "status",
+        "approved_by",
+        "requested_at"
+      ],
+      "additionalProperties": false
+    },
+    "WorkOrderDTO": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "task_id": {
+          "type": "string"
+        },
+        "plan_id": {
+          "type": "string"
+        },
+        "department_id": {
+          "type": "string"
+        },
+        "execution_mode": {
+          "type": "string"
+        },
+        "authorized_by": {
+          "type": "string"
+        },
+        "status_event_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "status",
+        "task_id",
+        "plan_id",
+        "department_id",
+        "execution_mode",
+        "authorized_by",
+        "status_event_ids"
+      ],
+      "additionalProperties": false
+    },
+    "OutcomeDTO": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "work_order_id": {
+          "type": "string"
+        },
+        "assessment_status": {
+          "type": "string"
+        },
+        "result": {
+          "type": "string"
+        },
+        "evidence_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "evaluated_at": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "work_order_id",
+        "assessment_status",
+        "result",
+        "evidence_ids",
+        "evaluated_at"
+      ],
+      "additionalProperties": false
+    },
+    "DepartmentDTO": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "department_type": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "department_type"
+      ],
+      "additionalProperties": false
+    },
+    "ProcedureDTO": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "version": {
+          "type": "integer"
+        },
+        "source_document_id": {
+          "type": "string"
+        },
+        "effective_from": {
+          "type": "string"
+        },
+        "owning_department_id": {
+          "type": "string"
+        },
+        "excerpt": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "version",
+        "source_document_id",
+        "effective_from",
+        "owning_department_id",
+        "excerpt"
+      ],
+      "additionalProperties": false
+    },
+    "DocumentDTO": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "source_kind": {
+          "type": "string"
+        },
+        "content_ref": {
+          "type": "string"
+        },
+        "version": {
+          "type": "integer"
+        },
+        "sha256": {
+          "type": "string"
+        },
+        "excerpt": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "source_kind",
+        "content_ref",
+        "version",
+        "sha256",
+        "excerpt"
+      ],
+      "additionalProperties": false
+    },
+    "CaseMemoryDTO": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "source_investigation_id": {
+          "type": "string"
+        },
+        "outcome_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "corrections": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "memory_type": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "summary",
+        "source_investigation_id",
+        "outcome_ids",
+        "corrections",
+        "memory_type"
+      ],
+      "additionalProperties": false
+    },
+    "AssetDTO": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "asset_type": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "location_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "condition": {
+          "type": "string"
+        },
+        "owner_department_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "asset_type",
+        "name",
+        "location_id",
+        "condition",
+        "owner_department_id"
+      ],
+      "additionalProperties": false
+    },
+    "GraphNodeDTO": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "labels": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "display_label": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "source_kind": {
+          "type": "string"
+        },
+        "evidence_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "labels",
+        "display_label",
+        "kind",
+        "status",
+        "source_kind",
+        "evidence_ids"
+      ],
+      "additionalProperties": false
+    },
+    "GraphEdgeDTO": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        },
+        "target": {
+          "type": "string"
+        },
+        "verification_status": {
+          "type": "string"
+        },
+        "source_evidence_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "valid_from": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "valid_to": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "source",
+        "target",
+        "verification_status",
+        "source_evidence_ids",
+        "valid_from",
+        "valid_to"
+      ],
+      "additionalProperties": false
+    },
+    "GraphSubgraphDTO": {
+      "type": "object",
+      "properties": {
+        "nodes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GraphNodeDTO"
+          }
+        },
+        "edges": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GraphEdgeDTO"
+          }
+        },
+        "decision_path_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "graph_revision": {
+          "type": "string"
+        },
+        "truncated": {
+          "type": "boolean"
+        },
+        "as_of": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "nodes",
+        "edges",
+        "decision_path_ids",
+        "graph_revision",
+        "truncated",
+        "as_of"
+      ],
+      "additionalProperties": false
+    },
+    "AgentTraceEvent": {
+      "type": "object",
+      "properties": {
+        "event_id": {
+          "type": "string"
+        },
+        "investigation_id": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "string"
+        },
+        "agent_role": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string"
+        },
+        "tool_name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "rationale_summary": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "source_evidence_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "graph_revision": {
+          "type": "string"
+        },
+        "simulation_mode": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "event_id",
+        "investigation_id",
+        "timestamp",
+        "agent_role",
+        "state",
+        "tool_name",
+        "rationale_summary",
+        "status",
+        "source_evidence_ids",
+        "graph_revision",
+        "simulation_mode"
+      ],
+      "additionalProperties": false
+    },
+    "SSEStream": {
+      "type": "object",
+      "properties": {
+        "event_id": {
+          "type": "string"
+        },
+        "event_type": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "string"
+        },
+        "payload": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "required": [
+        "event_id",
+        "event_type",
+        "timestamp",
+        "payload"
+      ],
+      "additionalProperties": false
+    },
+    "MapFeatureCollection": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "FeatureCollection"
+        },
+        "features": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "simulation_mode": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "type",
+        "features",
+        "simulation_mode"
+      ],
+      "additionalProperties": false
+    },
+    "MonitoringDTO": {
+      "type": "object",
+      "properties": {
+        "problem_cluster_id": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "verification_policy": {
+          "type": "string"
+        },
+        "remaining_checks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "outcome_evidence_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "problem_cluster_id",
+        "status",
+        "verification_policy",
+        "remaining_checks",
+        "outcome_evidence_ids"
+      ],
+      "additionalProperties": false
+    },
+    "SimulationStepDTO": {
+      "type": "object",
+      "properties": {
+        "scenario_id": {
+          "type": "string"
+        },
+        "stage": {
+          "type": "string"
+        },
+        "event_id": {
+          "type": "string"
+        },
+        "revealed_evidence_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "scenario_id",
+        "stage",
+        "event_id",
+        "revealed_evidence_ids"
+      ],
+      "additionalProperties": false
+    },
+    "SeedReport": {
+      "type": "object",
+      "properties": {
+        "nodes": {
+          "type": "integer"
+        },
+        "relationships": {
+          "type": "integer"
+        },
+        "source_documents": {
+          "type": "integer"
+        },
+        "seed_fingerprint": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "nodes",
+        "relationships",
+        "source_documents",
+        "seed_fingerprint"
+      ],
+      "additionalProperties": false
+    },
+    "ScenarioDTO": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "issue_types": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "stage": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "issue_types",
+        "stage"
+      ],
+      "additionalProperties": false
+    },
+    "ComplaintPage": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ComplaintDTO"
+          }
+        },
+        "next_cursor": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "total_count": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "items",
+        "next_cursor",
+        "total_count"
+      ],
+      "additionalProperties": false
+    },
+    "IncidentPage": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/IncidentDTO"
+          }
+        },
+        "next_cursor": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "total_count": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "items",
+        "next_cursor",
+        "total_count"
+      ],
+      "additionalProperties": false
+    },
+    "ClusterPage": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ProblemClusterDTO"
+          }
+        },
+        "next_cursor": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "total_count": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "items",
+        "next_cursor",
+        "total_count"
+      ],
+      "additionalProperties": false
+    },
+    "AgentTracePage": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AgentTraceEvent"
+          }
+        },
+        "next_cursor": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "total_count": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "items",
+        "next_cursor",
+        "total_count"
+      ],
+      "additionalProperties": false
+    },
+    "HypothesisPage": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/HypothesisDTO"
+          }
+        },
+        "next_cursor": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "total_count": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "items",
+        "next_cursor",
+        "total_count"
+      ],
+      "additionalProperties": false
+    },
+    "ApprovalPage": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ApprovalDTO"
+          }
+        },
+        "next_cursor": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "total_count": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "items",
+        "next_cursor",
+        "total_count"
+      ],
+      "additionalProperties": false
+    },
+    "WorkOrderPage": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/WorkOrderDTO"
+          }
+        },
+        "next_cursor": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "total_count": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "items",
+        "next_cursor",
+        "total_count"
+      ],
+      "additionalProperties": false
+    },
+    "DepartmentPage": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DepartmentDTO"
+          }
+        },
+        "next_cursor": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "total_count": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "items",
+        "next_cursor",
+        "total_count"
+      ],
+      "additionalProperties": false
+    },
+    "ProcedurePage": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ProcedureDTO"
+          }
+        },
+        "next_cursor": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "total_count": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "items",
+        "next_cursor",
+        "total_count"
+      ],
+      "additionalProperties": false
+    },
+    "CaseMemoryPage": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CaseMemoryDTO"
+          }
+        },
+        "next_cursor": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "total_count": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "items",
+        "next_cursor",
+        "total_count"
+      ],
+      "additionalProperties": false
+    },
+    "MonitoringPage": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/MonitoringDTO"
+          }
+        },
+        "next_cursor": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "total_count": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "items",
+        "next_cursor",
+        "total_count"
+      ],
+      "additionalProperties": false
+    },
+    "OutcomePage": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/OutcomeDTO"
+          }
+        },
+        "next_cursor": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "total_count": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "items",
+        "next_cursor",
+        "total_count"
+      ],
+      "additionalProperties": false
+    },
+    "ScenarioPage": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ScenarioDTO"
+          }
+        },
+        "next_cursor": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "total_count": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "items",
+        "next_cursor",
+        "total_count"
+      ],
+      "additionalProperties": false
+    },
+    "auth_demo-login_Request": {
+      "type": "object",
+      "properties": {
+        "operator_id": {
+          "type": "string"
+        },
+        "demo_password": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "operator_id",
+        "demo_password"
+      ],
+      "additionalProperties": false
+    },
+    "auth_logout_Request": {
+      "type": "object",
+      "properties": {},
+      "additionalProperties": false
+    },
+    "complaints_Request": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "issue_type": {
+          "type": "string"
+        },
+        "location_id": {
+          "type": "string"
+        },
+        "reported_at": {
+          "type": "string"
+        },
+        "source_kind": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "description",
+        "issue_type",
+        "location_id",
+        "reported_at",
+        "source_kind"
+      ],
+      "additionalProperties": false
+    },
+    "investigations_Request": {
+      "type": "object",
+      "properties": {
+        "incident_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "problem_cluster_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "incident_ids",
+        "problem_cluster_id"
+      ],
+      "additionalProperties": false
+    },
+    "investigations_id_resume_Request": {
+      "type": "object",
+      "properties": {
+        "reason": {
+          "type": "string"
+        },
+        "expected_graph_revision": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "reason",
+        "expected_graph_revision"
+      ],
+      "additionalProperties": false
+    },
+    "inspections_id_observations_Request": {
+      "type": "object",
+      "properties": {
+        "asset_id": {
+          "type": "string"
+        },
+        "observed_at": {
+          "type": "string"
+        },
+        "observation_type": {
+          "type": "string"
+        },
+        "value": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "source_kind": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "asset_id",
+        "observed_at",
+        "observation_type",
+        "value",
+        "source_kind"
+      ],
+      "additionalProperties": false
+    },
+    "plans_id_submit-approval_Request": {
+      "type": "object",
+      "properties": {
+        "plan_id": {
+          "type": "string"
+        },
+        "plan_version": {
+          "type": "integer"
+        },
+        "plan_hash": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "plan_id",
+        "plan_version",
+        "plan_hash"
+      ],
+      "additionalProperties": false
+    },
+    "approvals_id_decision_Request": {
+      "type": "object",
+      "properties": {
+        "decision": {
+          "type": "string",
+          "enum": [
+            "APPROVED",
+            "REJECTED"
+          ]
+        },
+        "plan_id": {
+          "type": "string"
+        },
+        "plan_version": {
+          "type": "integer"
+        },
+        "plan_hash": {
+          "type": "string"
+        },
+        "reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "decision",
+        "plan_id",
+        "plan_version",
+        "plan_hash",
+        "reason"
+      ],
+      "additionalProperties": false
+    },
+    "work-orders_id_status_Request": {
+      "type": "object",
+      "properties": {
+        "new_status": {
+          "type": "string"
+        },
+        "expected_revision": {
+          "type": "string"
+        },
+        "evidence_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "note": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "new_status",
+        "expected_revision",
+        "evidence_ids",
+        "note"
+      ],
+      "additionalProperties": false
+    },
+    "work-orders_id_outcomes_Request": {
+      "type": "object",
+      "properties": {
+        "result": {
+          "type": "string"
+        },
+        "evidence_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "observed_at": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "result",
+        "evidence_ids",
+        "observed_at"
+      ],
+      "additionalProperties": false
+    },
+    "demo_reset_Request": {
+      "type": "object",
+      "properties": {
+        "scenario_id": {
+          "type": "string"
+        },
+        "seed": {
+          "type": "integer"
+        },
+        "confirm": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "scenario_id",
+        "seed",
+        "confirm"
+      ],
+      "additionalProperties": false
+    },
+    "demo_scenarios_id_advance_Request": {
+      "type": "object",
+      "properties": {
+        "stage": {
+          "type": "string"
+        },
+        "expected_current_stage": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "stage",
+        "expected_current_stage"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "error_envelope": {
+    "type": "object",
+    "properties": {
+      "error": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "retryable": {
+            "type": "boolean"
+          },
+          "details": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "retryable",
+          "details"
+        ],
+        "additionalProperties": false
+      },
+      "request_id": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "error",
+      "request_id"
+    ],
+    "additionalProperties": false
+  },
+  "success_envelope": {
+    "type": "object",
+    "required": [
+      "data",
+      "request_id",
+      "schema_version"
+    ],
+    "properties": {
+      "data": {},
+      "request_id": {
+        "type": "string"
+      },
+      "schema_version": {
+        "type": "integer"
+      }
+    }
+  }
+}

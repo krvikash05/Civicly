@@ -1,0 +1,255 @@
+{
+  "schema_version": 1,
+  "machines": {
+    "Incident": {
+      "initial": "REPORTED",
+      "transitions": {
+        "REPORTED": [
+          "ACTIVE",
+          "INVALIDATED"
+        ],
+        "ACTIVE": [
+          "MITIGATED",
+          "ENDED",
+          "INVALIDATED"
+        ],
+        "MITIGATED": [
+          "ACTIVE",
+          "ENDED"
+        ],
+        "ENDED": [],
+        "INVALIDATED": []
+      }
+    },
+    "ProblemCluster": {
+      "initial": "OPEN",
+      "transitions": {
+        "OPEN": [
+          "MONITORING",
+          "CONTROLLED",
+          "ARCHIVED"
+        ],
+        "MONITORING": [
+          "CONTROLLED",
+          "REOPENED"
+        ],
+        "CONTROLLED": [
+          "REOPENED",
+          "ARCHIVED"
+        ],
+        "REOPENED": [
+          "MONITORING",
+          "CONTROLLED"
+        ],
+        "ARCHIVED": []
+      }
+    },
+    "Investigation": {
+      "initial": "OPEN",
+      "transitions": {
+        "OPEN": [
+          "INVESTIGATING"
+        ],
+        "INVESTIGATING": [
+          "AWAITING_EVIDENCE",
+          "PLANNING",
+          "AWAITING_APPROVAL",
+          "MONITORING"
+        ],
+        "AWAITING_EVIDENCE": [
+          "INVESTIGATING",
+          "PLANNING"
+        ],
+        "PLANNING": [
+          "INVESTIGATING",
+          "AWAITING_APPROVAL"
+        ],
+        "AWAITING_APPROVAL": [
+          "PLANNING",
+          "MONITORING"
+        ],
+        "MONITORING": [
+          "COMPLETED",
+          "REOPENED",
+          "INVESTIGATING"
+        ],
+        "COMPLETED": [
+          "REOPENED"
+        ],
+        "REOPENED": [
+          "INVESTIGATING"
+        ]
+      }
+    },
+    "Hypothesis": {
+      "initial": "PROPOSED",
+      "transitions": {
+        "PROPOSED": [
+          "UNDER_REVIEW",
+          "INCONCLUSIVE"
+        ],
+        "UNDER_REVIEW": [
+          "SUPPORTED",
+          "REJECTED",
+          "VERIFIED",
+          "INCONCLUSIVE"
+        ],
+        "SUPPORTED": [
+          "UNDER_REVIEW",
+          "VERIFIED",
+          "REJECTED",
+          "INCONCLUSIVE"
+        ],
+        "REJECTED": [
+          "UNDER_REVIEW"
+        ],
+        "VERIFIED": [
+          "UNDER_REVIEW"
+        ],
+        "INCONCLUSIVE": [
+          "UNDER_REVIEW"
+        ]
+      }
+    },
+    "Inspection": {
+      "initial": "PROPOSED",
+      "transitions": {
+        "PROPOSED": [
+          "REQUESTED",
+          "CANCELLED"
+        ],
+        "REQUESTED": [
+          "SCHEDULED",
+          "CANCELLED"
+        ],
+        "SCHEDULED": [
+          "IN_PROGRESS",
+          "CANCELLED"
+        ],
+        "IN_PROGRESS": [
+          "COMPLETED",
+          "FAILED"
+        ],
+        "COMPLETED": [],
+        "FAILED": [
+          "REQUESTED"
+        ],
+        "CANCELLED": []
+      }
+    },
+    "ResolutionPlan": {
+      "initial": "DRAFT",
+      "transitions": {
+        "DRAFT": [
+          "PENDING_APPROVAL",
+          "SUPERSEDED"
+        ],
+        "PENDING_APPROVAL": [
+          "APPROVED",
+          "REJECTED",
+          "SUPERSEDED"
+        ],
+        "APPROVED": [
+          "IN_EXECUTION",
+          "SUPERSEDED"
+        ],
+        "REJECTED": [
+          "SUPERSEDED"
+        ],
+        "IN_EXECUTION": [
+          "MONITORING",
+          "SUPERSEDED"
+        ],
+        "MONITORING": [
+          "COMPLETED",
+          "SUPERSEDED"
+        ],
+        "COMPLETED": [],
+        "SUPERSEDED": []
+      }
+    },
+    "ActionTask": {
+      "initial": "PROPOSED",
+      "transitions": {
+        "PROPOSED": [
+          "APPROVED",
+          "CANCELLED"
+        ],
+        "APPROVED": [
+          "QUEUED",
+          "CANCELLED"
+        ],
+        "QUEUED": [
+          "IN_PROGRESS",
+          "BLOCKED",
+          "CANCELLED"
+        ],
+        "IN_PROGRESS": [
+          "BLOCKED",
+          "COMPLETED",
+          "FAILED"
+        ],
+        "BLOCKED": [
+          "QUEUED",
+          "CANCELLED"
+        ],
+        "COMPLETED": [],
+        "FAILED": [
+          "QUEUED",
+          "CANCELLED"
+        ],
+        "CANCELLED": []
+      }
+    },
+    "WorkOrder": {
+      "initial": "AUTHORIZED",
+      "transitions": {
+        "AUTHORIZED": [
+          "ASSIGNED",
+          "CANCELLED"
+        ],
+        "ASSIGNED": [
+          "IN_PROGRESS",
+          "CANCELLED"
+        ],
+        "IN_PROGRESS": [
+          "BLOCKED",
+          "COMPLETED",
+          "CANCELLED"
+        ],
+        "BLOCKED": [
+          "ASSIGNED",
+          "CANCELLED"
+        ],
+        "COMPLETED": [],
+        "CANCELLED": []
+      },
+      "creation_guard": "Created only after exact plan approval; no draft WorkOrder."
+    },
+    "Approval": {
+      "initial": "PENDING",
+      "transitions": {
+        "PENDING": [
+          "APPROVED",
+          "REJECTED",
+          "EXPIRED"
+        ],
+        "APPROVED": [
+          "REVOKED",
+          "EXPIRED"
+        ],
+        "REJECTED": [],
+        "REVOKED": [],
+        "EXPIRED": []
+      }
+    }
+  },
+  "cross_entity_guards": {
+    "work_order_execution": "Requires valid approval for exact plan/version/hash and authorization actor; dependencies satisfied or approved waiver.",
+    "plan_approval": "All tasks have valid target, accountable department, acyclic dependencies, verification criteria.",
+    "case_completion": "Cannot complete solely on WorkOrder COMPLETED; requires verification policy outcome and no open blocking tasks.",
+    "hypothesis_verified": "Requires attributable physical/operational evidence and human-reviewed or explicit rule-based causality criterion.",
+    "reopen": "Retain all old assessments, tasks, findings and outcomes.",
+    "work_order_creation": "Must validate approval bound to exact immutable plan id/version/hash, task and actor before creating AUTHORIZED WorkOrder; retry idempotent."
+  }
+}

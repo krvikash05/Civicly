@@ -1,0 +1,31 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.1, pytest-9.1.1, pluggy-1.7.0 -- /Users/vikashkumar/Desktop/Civicly/backend/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/vikashkumar/Desktop/Civicly/backend
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 15 items
+
+backend/tests/integration/test_browser.py::test_browser_http_available PASSED
+backend/tests/integration/test_graph_smoke.py::test_parameterized_create_match PASSED
+backend/tests/integration/test_graph_smoke.py::test_readonly_rejects_create_set_delete_without_mutation Expected server denial: graph.RO_QUERY is to be executed only on read-only queries
+Expected server denial: graph.RO_QUERY is to be executed only on read-only queries
+Expected server denial: graph.RO_QUERY is to be executed only on read-only queries
+PASSED
+backend/tests/integration/test_graph_smoke.py::test_foundation_health_uses_graph_read_without_mutation PASSED
+backend/tests/integration/test_graph_smoke.py::test_foundation_health_reports_uninitialized_without_writing PASSED
+backend/tests/integration/test_graph_smoke.py::test_cli_health_success PASSED
+backend/tests/integration/test_graph_smoke.py::test_cli_graph_unavailable_fails_and_redacts PASSED
+backend/tests/integration/test_persistence.py::test_graph_survives_restart_and_recreation before restart: graph=civicly_b01_test_598a4a021f0d4912bd795f2a59fe240c; node=PERSISTENCE; fresh MATCH PASS; Browser HTTP 200; Browser volume PASS
+after restart (same container): graph=civicly_b01_test_598a4a021f0d4912bd795f2a59fe240c; node=PERSISTENCE; fresh MATCH PASS; Browser HTTP 200; Browser volume PASS
+after recreation (different container, retained volume): graph=civicly_b01_test_598a4a021f0d4912bd795f2a59fe240c; node=PERSISTENCE; fresh MATCH PASS; Browser HTTP 200; Browser volume PASS
+PASSED
+backend/tests/unit/test_foundation.py::test_invalid_connection_configuration[values0] PASSED
+backend/tests/unit/test_foundation.py::test_invalid_connection_configuration[values1] PASSED
+backend/tests/unit/test_foundation.py::test_invalid_connection_configuration[values2] PASSED
+backend/tests/unit/test_foundation.py::test_invalid_connection_configuration[values3] PASSED
+backend/tests/unit/test_foundation.py::test_invalid_connection_configuration[values4] PASSED
+backend/tests/unit/test_foundation.py::test_invalid_cli_configuration_is_redacted PASSED
+backend/tests/unit/test_foundation.py::test_fastapi_pydantic_httpx_compatibility PASSED
+
+============================= 15 passed in 14.84s ==============================

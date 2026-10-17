@@ -1,0 +1,25 @@
+PYTHON ?= python3.12
+VENV := backend/.venv/bin
+
+.PHONY: configure setup up health test-unit test-graph test-persistence test-spec down
+configure:
+	$(PYTHON) scripts/configure_local.py
+setup:
+	$(PYTHON) -m venv backend/.venv
+	$(VENV)/python -m pip install uv==0.13.1
+	UV_CACHE_DIR=.uv-cache $(VENV)/uv sync --project backend --frozen --python $(PYTHON)
+up: configure
+	docker compose up -d --wait --wait-timeout 120
+health:
+	$(VENV)/civicly health
+test-unit:
+	$(VENV)/python -m pytest backend/tests/unit -v
+test-graph:
+	$(VENV)/python -m pytest backend/tests/integration -v -m 'not persistence'
+test-persistence:
+	$(VENV)/python -m pytest backend/tests/integration -v -m persistence --run-persistence
+test-spec:
+	$(VENV)/python scripts/validate_blueprint.py
+	$(VENV)/python scripts/validate_handoff.py
+down:
+	docker compose down

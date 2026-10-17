@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools==80.9.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "civicly-backend"
+version = "0.1.0"
+description = "Civicly backend foundation; agent and domain phases pending"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "falkordb==1.8.0",
+    "redis==8.1.0",
+    "fastapi==0.143.3",
+    "pydantic==2.14.1",
+    "pydantic-settings==2.16.0",
+]
+
+[project.scripts]
+civicly = "cli.main:main"
+
+[dependency-groups]
+dev = [
+    "pytest==9.1.1",
+    "httpx==0.28.1",
+    "jsonschema==4.26.0",
+    "uv==0.13.1",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*", "cli*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--strict-markers"
+markers = [
+    "integration: requires actual local FalkorDB and Browser; unavailable services FAIL",
+    "persistence: opt-in restart/recreation of the civicly Compose service",
+]
+
+[tool.uv]
+required-version = "==0.13.1"

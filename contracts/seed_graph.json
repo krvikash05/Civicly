@@ -1,0 +1,901 @@
+{
+  "schema_version": 1,
+  "fixture_id": "DEMO_WARD_07_INITIAL",
+  "description": "Agent-visible initial graph. It intentionally excludes hidden causal ground truth and future inspection outcomes. Synthetic data, not a real city inventory.",
+  "nodes": [
+    {
+      "label": "Zone",
+      "properties": {
+        "id": "ZONE-07",
+        "schema_version": 1,
+        "created_at": "2026-09-01T00:00:00Z",
+        "updated_at": "2026-09-01T00:00:00Z",
+        "name": "Demo Ward 07",
+        "zone_type": "WARD"
+      }
+    },
+    {
+      "label": "Location",
+      "properties": {
+        "id": "LOC-JUNCTION",
+        "schema_version": 1,
+        "created_at": "2026-09-01T00:00:00Z",
+        "updated_at": "2026-09-01T00:00:00Z",
+        "name": "Market Junction",
+        "latitude": 25.3176,
+        "longitude": 82.9739
+      }
+    },
+    {
+      "label": "Location",
+      "properties": {
+        "id": "LOC-MARKET",
+        "schema_version": 1,
+        "created_at": "2026-09-01T00:00:00Z",
+        "updated_at": "2026-09-01T00:00:00Z",
+        "name": "Central Market",
+        "latitude": 25.3183,
+        "longitude": 82.9734
+      }
+    },
+    {
+      "label": "Location",
+      "properties": {
+        "id": "LOC-ROAD",
+        "schema_version": 1,
+        "created_at": "2026-09-01T00:00:00Z",
+        "updated_at": "2026-09-01T00:00:00Z",
+        "name": "Market Approach Road",
+        "latitude": 25.3179,
+        "longitude": 82.9738
+      }
+    },
+    {
+      "label": "Location",
+      "properties": {
+        "id": "LOC-OUTFALL",
+        "schema_version": 1,
+        "created_at": "2026-09-01T00:00:00Z",
+        "updated_at": "2026-09-01T00:00:00Z",
+        "name": "Downstream Outfall",
+        "latitude": 25.3169,
+        "longitude": 82.9743
+      }
+    },
+    {
+      "label": "Department",
+      "properties": {
+        "id": "DEPT-DRAIN",
+        "schema_version": 1,
+        "created_at": "2026-09-01T00:00:00Z",
+        "updated_at": "2026-09-01T00:00:00Z",
+        "name": "Drainage Operations",
+        "department_type": "DRAINAGE"
+      }
+    },
+    {
+      "label": "Department",
+      "properties": {
+        "id": "DEPT-ROAD",
+        "schema_version": 1,
+        "created_at": "2026-09-01T00:00:00Z",
+        "updated_at": "2026-09-01T00:00:00Z",
+        "name": "Road Maintenance",
+        "department_type": "ROADS"
+      }
+    },
+    {
+      "label": "Department",
+      "properties": {
+        "id": "DEPT-SAN",
+        "schema_version": 1,
+        "created_at": "2026-09-01T00:00:00Z",
+        "updated_at": "2026-09-01T00:00:00Z",
+        "name": "Sanitation Services",
+        "department_type": "SANITATION"
+      }
+    },
+    {
+      "label": "Department",
+      "properties": {
+        "id": "DEPT-WATER",
+        "schema_version": 1,
+        "created_at": "2026-09-01T00:00:00Z",
+        "updated_at": "2026-09-01T00:00:00Z",
+        "name": "Water Utilities",
+        "department_type": "WATER"
+      }
+    },
+    {
+      "label": "Department",
+      "properties": {
+        "id": "DEPT-COORD",
+        "schema_version": 1,
+        "created_at": "2026-09-01T00:00:00Z",
+        "updated_at": "2026-09-01T00:00:00Z",
+        "name": "Civic Operations Coordination",
+        "department_type": "COORDINATION"
+      }
+    },
+    {
+      "label": "DrainInlet",
+      "properties": {
+        "id": "INLET-I01",
+        "schema_version": 1,
+        "created_at": "2026-09-01T00:00:00Z",
+        "updated_at": "2026-09-01T00:00:00Z",
+        "name": "Market inlet I-01",
+        "asset_type": "DRAINAGE",
+        "operational_status": "OPERATIONAL",
+        "inlet_type": "CURB",
+        "condition": "UNKNOWN"
+      }
+    },
+    {
+      "label": "DrainSegment",
+      "properties": {
+        "id": "DRAIN-D12",
+        "schema_version": 1,
+        "created_at": "2026-09-01T00:00:00Z",
+        "updated_at": "2026-09-01T00:00:00Z",
+        "name": "Market drain D-12",
+        "asset_type": "DRAINAGE",
+        "operational_status": "OPERATIONAL",
+        "drain_type": "STORMWATER",
+        "condition": "UNKNOWN"
+      }
+    },
+    {
+      "label": "DrainSegment",
+      "properties": {
+        "id": "DRAIN-D18",
+        "schema_version": 1,
+        "created_at": "2026-09-01T00:00:00Z",
+        "updated_at": "2026-09-01T00:00:00Z",
+        "name": "Outfall drain D-18",
+        "asset_type": "DRAINAGE",
+        "operational_status": "OPERATIONAL",
+        "drain_type": "STORMWATER",
+        "condition": "UNKNOWN"
+      }
+    },
+    {
+      "label": "RoadSegment",
+      "properties": {
+        "id": "ROAD-R08",
+        "schema_version": 1,
+        "created_at": "2026-09-01T00:00:00Z",
+        "updated_at": "2026-09-01T00:00:00Z",
+        "name": "Market approach road R-08",
+        "asset_type": "ROAD",
+        "operational_status": "DEGRADED",
+        "road_class": "LOCAL",
+        "surface_type": "ASPHALT",
+        "condition": "DISTRESSED"
+      }
+    },
+    {
+      "label": "WaterPipe",
+      "properties": {
+        "id": "PIPE-P02",
+        "schema_version": 1,
+        "created_at": "2026-09-01T00:00:00Z",
+        "updated_at": "2026-09-01T00:00:00Z",
+        "name": "Water supply P-02",
+        "asset_type": "WATER_PIPE",
+        "operational_status": "OPERATIONAL",
+        "pipe_type": "WATER_SUPPLY",
+        "diameter_mm": 150,
+        "condition": "UNVERIFIED"
+      }
+    },
+    {
+      "label": "WasteCollectionPoint",
+      "properties": {
+        "id": "WASTE-W03",
+        "schema_version": 1,
+        "created_at": "2026-09-01T00:00:00Z",
+        "updated_at": "2026-09-01T00:00:00Z",
+        "name": "Market waste point W-03",
+        "asset_type": "WASTE",
+        "operational_status": "OVER_CAPACITY",
+        "capacity_liters": 1100,
+        "collection_type": "COMMUNAL",
+        "condition": "OVERFLOWING"
+      }
+    },
+    {
+      "label": "CollectionRoute",
+      "properties": {
+        "id": "ROUTE-C03",
+        "schema_version": 1,
+        "created_at": "2026-09-01T00:00:00Z",
+        "updated_at": "2026-09-01T00:00:00Z",
+        "route_code": "C03",
+        "operational_status": "ACTIVE"
+      }
+    },
+    {
+      "label": "ServiceSchedule",
+      "properties": {
+        "id": "SCH-C03",
+        "schema_version": 1,
+        "created_at": "2026-09-01T00:00:00Z",
+        "updated_at": "2026-09-01T00:00:00Z",
+        "service_type": "WASTE_PICKUP",
+        "timezone": "Asia/Kolkata",
+        "schedule_spec": "DAILY 07:00 Asia/Kolkata",
+        "valid_from": "2026-01-01T00:00:00Z"
+      }
+    },
+    {
+      "label": "DataSource",
+      "properties": {
+        "id": "SRC-MUNI-SEED",
+        "schema_version": 1,
+        "created_at": "2026-09-01T00:00:00Z",
+        "updated_at": "2026-09-01T00:00:00Z",
+        "name": "Synthetic asset and maintenance records",
+        "source_type": "SYNTHETIC_FIXTURE",
+        "origin": "Civicly scenario designer",
+        "source_kind": "SYNTHETIC"
+      }
+    },
+    {
+      "label": "DataSource",
+      "properties": {
+        "id": "SRC-COMPLAINTS",
+        "schema_version": 1,
+        "created_at": "2026-09-01T00:00:00Z",
+        "updated_at": "2026-09-01T00:00:00Z",
+        "name": "Synthetic public reports",
+        "source_type": "SYNTHETIC_FIXTURE",
+        "origin": "Civicly scenario designer",
+        "source_kind": "SYNTHETIC"
+      }
+    },
+    {
+      "label": "Evidence",
+      "properties": {
+        "id": "EVD-ASSET-LIST",
+        "schema_version": 1,
+        "created_at": "2026-09-01T00:00:00Z",
+        "updated_at": "2026-09-01T00:00:00Z",
+        "evidence_type": "ASSET_INVENTORY",
+        "summary": "Synthetic authoritative asset topology for controlled test only",
+        "reliability": "VERIFIED",
+        "recorded_at": "2026-08-20T10:00:00Z",
+        "source_kind": "SYNTHETIC",
+        "basis": "OBSERVED"
+      }
+    },
+    {
+      "label": "Incident",
+      "properties": {
+        "id": "INC-FLOOD-01",
+        "schema_version": 1,
+        "created_at": "2026-09-01T00:00:00Z",
+        "updated_at": "2026-09-01T00:00:00Z",
+        "issue_type": "WATERLOGGING",
+        "subtype": "JUNCTION_FLOODING",
+        "started_at": "2026-08-04T13:00:00Z",
+        "status": "ENDED",
+        "severity": "HIGH"
+      }
+    },
+    {
+      "label": "Incident",
+      "properties": {
+        "id": "INC-FLOOD-02",
+        "schema_version": 1,
+        "created_at": "2026-09-01T00:00:00Z",
+        "updated_at": "2026-09-01T00:00:00Z",
+        "issue_type": "WATERLOGGING",
+        "subtype": "JUNCTION_FLOODING",
+        "started_at": "2026-09-12T14:30:00Z",
+        "status": "ACTIVE",
+        "severity": "HIGH"
+      }
+    },
+    {
+      "label": "Incident",
+      "properties": {
+        "id": "INC-ROAD-01",
+        "schema_version": 1,
+        "created_at": "2026-09-01T00:00:00Z",
+        "updated_at": "2026-09-01T00:00:00Z",
+        "issue_type": "ROAD_DAMAGE",
+        "subtype": "RECURRING_POTHOLE",
+        "started_at": "2026-09-15T09:00:00Z",
+        "status": "ACTIVE",
+        "severity": "MODERATE"
+      }
+    },
+    {
+      "label": "Incident",
+      "properties": {
+        "id": "INC-WASTE-01",
+        "schema_version": 1,
+        "created_at": "2026-09-01T00:00:00Z",
+        "updated_at": "2026-09-01T00:00:00Z",
+        "issue_type": "WASTE_ACCUMULATION",
+        "subtype": "OVERFLOWING_POINT",
+        "started_at": "2026-09-13T08:00:00Z",
+        "status": "ACTIVE",
+        "severity": "HIGH"
+      }
+    },
+    {
+      "label": "Incident",
+      "properties": {
+        "id": "INC-WASTE-02",
+        "schema_version": 1,
+        "created_at": "2026-09-01T00:00:00Z",
+        "updated_at": "2026-09-01T00:00:00Z",
+        "issue_type": "WASTE_ACCUMULATION",
+        "subtype": "OVERFLOWING_POINT",
+        "started_at": "2026-09-19T08:00:00Z",
+        "status": "ACTIVE",
+        "severity": "MODERATE"
+      }
+    },
+    {
+      "label": "Evidence",
+      "properties": {
+        "id": "EVD-REPORTS",
+        "schema_version": 1,
+        "created_at": "2026-09-01T00:00:00Z",
+        "updated_at": "2026-09-01T00:00:00Z",
+        "evidence_type": "COMPLAINT_OBSERVATION",
+        "summary": "Synthetic resident reports of repeated issues; not verified causes",
+        "reliability": "UNVERIFIED",
+        "recorded_at": "2026-09-20T10:00:00Z",
+        "source_kind": "SYNTHETIC",
+        "basis": "REPORTED"
+      }
+    },
+    {
+      "label": "Complaint",
+      "properties": {
+        "id": "CMP-01",
+        "schema_version": 1,
+        "created_at": "2026-09-01T00:00:00Z",
+        "updated_at": "2026-09-01T00:00:00Z",
+        "description": "Water standing at junction after rainfall",
+        "reported_at": "2026-08-04T13:10:00Z",
+        "source_channel": "DEMO_INTAKE",
+        "status": "ACCEPTED",
+        "source_kind": "SYNTHETIC"
+      }
+    },
+    {
+      "label": "Complaint",
+      "properties": {
+        "id": "CMP-02",
+        "schema_version": 1,
+        "created_at": "2026-09-01T00:00:00Z",
+        "updated_at": "2026-09-01T00:00:00Z",
+        "description": "Same junction waterlogged now",
+        "reported_at": "2026-08-04T13:12:00Z",
+        "source_channel": "DEMO_INTAKE",
+        "status": "ACCEPTED",
+        "source_kind": "SYNTHETIC"
+      }
+    },
+    {
+      "label": "Complaint",
+      "properties": {
+        "id": "CMP-03",
+        "schema_version": 1,
+        "created_at": "2026-09-01T00:00:00Z",
+        "updated_at": "2026-09-01T00:00:00Z",
+        "description": "Water returned after prior cleaning",
+        "reported_at": "2026-09-12T14:40:00Z",
+        "source_channel": "DEMO_INTAKE",
+        "status": "ACCEPTED",
+        "source_kind": "SYNTHETIC"
+      }
+    },
+    {
+      "label": "Complaint",
+      "properties": {
+        "id": "CMP-04",
+        "schema_version": 1,
+        "created_at": "2026-09-01T00:00:00Z",
+        "updated_at": "2026-09-01T00:00:00Z",
+        "description": "Potholes returned after recent repair",
+        "reported_at": "2026-09-15T09:10:00Z",
+        "source_channel": "DEMO_INTAKE",
+        "status": "ACCEPTED",
+        "source_kind": "SYNTHETIC"
+      }
+    },
+    {
+      "label": "Complaint",
+      "properties": {
+        "id": "CMP-05",
+        "schema_version": 1,
+        "created_at": "2026-09-01T00:00:00Z",
+        "updated_at": "2026-09-01T00:00:00Z",
+        "description": "Market bins overflowing",
+        "reported_at": "2026-09-13T08:10:00Z",
+        "source_channel": "DEMO_INTAKE",
+        "status": "ACCEPTED",
+        "source_kind": "SYNTHETIC"
+      }
+    },
+    {
+      "label": "Complaint",
+      "properties": {
+        "id": "CMP-06",
+        "schema_version": 1,
+        "created_at": "2026-09-01T00:00:00Z",
+        "updated_at": "2026-09-01T00:00:00Z",
+        "description": "Garbage piling up again",
+        "reported_at": "2026-09-19T08:20:00Z",
+        "source_channel": "DEMO_INTAKE",
+        "status": "ACCEPTED",
+        "source_kind": "SYNTHETIC"
+      }
+    },
+    {
+      "label": "ProblemCluster",
+      "properties": {
+        "id": "CLUSTER-FLOOD",
+        "schema_version": 1,
+        "created_at": "2026-09-01T00:00:00Z",
+        "updated_at": "2026-09-01T00:00:00Z",
+        "title": "Recurring flooding at Market Junction",
+        "pattern_type": "RECURRENT",
+        "status": "OPEN",
+        "first_seen_at": "2026-08-04T13:00:00Z"
+      }
+    },
+    {
+      "label": "ProblemCluster",
+      "properties": {
+        "id": "CLUSTER-WASTE",
+        "schema_version": 1,
+        "created_at": "2026-09-01T00:00:00Z",
+        "updated_at": "2026-09-01T00:00:00Z",
+        "title": "Recurring Market waste overflow",
+        "pattern_type": "RECURRENT",
+        "status": "OPEN",
+        "first_seen_at": "2026-08-04T13:00:00Z"
+      }
+    },
+    {
+      "label": "ProblemCluster",
+      "properties": {
+        "id": "CLUSTER-ROAD",
+        "schema_version": 1,
+        "created_at": "2026-09-01T00:00:00Z",
+        "updated_at": "2026-09-01T00:00:00Z",
+        "title": "Repeated R-08 road damage",
+        "pattern_type": "RECURRENT",
+        "status": "OPEN",
+        "first_seen_at": "2026-08-04T13:00:00Z"
+      }
+    },
+    {
+      "label": "KnowledgeProcedure",
+      "properties": {
+        "id": "PROC-ROAD-01",
+        "schema_version": 1,
+        "created_at": "2026-09-01T00:00:00Z",
+        "updated_at": "2026-09-01T00:00:00Z",
+        "title": "Check water-related subgrade and utility issues before final resurfacing",
+        "version": "1",
+        "status": "ACTIVE",
+        "valid_from": "2026-01-01T00:00:00Z"
+      }
+    },
+    {
+      "label": "KnowledgeProcedure",
+      "properties": {
+        "id": "PROC-WASTE-01",
+        "schema_version": 1,
+        "created_at": "2026-09-01T00:00:00Z",
+        "updated_at": "2026-09-01T00:00:00Z",
+        "title": "Validate route pickups and capacity before increasing waste collection",
+        "version": "1",
+        "status": "ACTIVE",
+        "valid_from": "2026-01-01T00:00:00Z"
+      }
+    },
+    {
+      "label": "Inspection",
+      "properties": {
+        "id": "INS-ROAD-PAST",
+        "schema_version": 1,
+        "created_at": "2026-09-01T00:00:00Z",
+        "updated_at": "2026-09-01T00:00:00Z",
+        "inspection_type": "SURFACE_REPAIR_REVIEW",
+        "status": "COMPLETED",
+        "requested_at": "2026-08-05T08:00:00Z",
+        "completed_at": "2026-08-07T09:00:00Z"
+      }
+    },
+    {
+      "label": "Evidence",
+      "properties": {
+        "id": "EVD-PRIOR-REPAIR",
+        "schema_version": 1,
+        "created_at": "2026-09-01T00:00:00Z",
+        "updated_at": "2026-09-01T00:00:00Z",
+        "evidence_type": "MAINTENANCE_REPORT",
+        "summary": "Pothole surface patch was completed; no subgrade investigation recorded",
+        "reliability": "CORROBORATED",
+        "recorded_at": "2026-08-07T12:00:00Z",
+        "source_kind": "SYNTHETIC",
+        "basis": "OBSERVED"
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "type": "IN_ZONE",
+      "source_id": "LOC-JUNCTION",
+      "target_id": "ZONE-07",
+      "properties": {}
+    },
+    {
+      "type": "IN_ZONE",
+      "source_id": "LOC-MARKET",
+      "target_id": "ZONE-07",
+      "properties": {}
+    },
+    {
+      "type": "IN_ZONE",
+      "source_id": "LOC-ROAD",
+      "target_id": "ZONE-07",
+      "properties": {}
+    },
+    {
+      "type": "IN_ZONE",
+      "source_id": "LOC-OUTFALL",
+      "target_id": "ZONE-07",
+      "properties": {}
+    },
+    {
+      "type": "LOCATED_AT",
+      "source_id": "INLET-I01",
+      "target_id": "LOC-JUNCTION",
+      "properties": {}
+    },
+    {
+      "type": "MAINTAINED_BY",
+      "source_id": "INLET-I01",
+      "target_id": "DEPT-DRAIN",
+      "properties": {
+        "valid_from": "2026-01-01T00:00:00Z",
+        "association_status": "VERIFIED",
+        "source_evidence_id": "EVD-ASSET-LIST"
+      }
+    },
+    {
+      "type": "LOCATED_AT",
+      "source_id": "DRAIN-D12",
+      "target_id": "LOC-JUNCTION",
+      "properties": {}
+    },
+    {
+      "type": "MAINTAINED_BY",
+      "source_id": "DRAIN-D12",
+      "target_id": "DEPT-DRAIN",
+      "properties": {
+        "valid_from": "2026-01-01T00:00:00Z",
+        "association_status": "VERIFIED",
+        "source_evidence_id": "EVD-ASSET-LIST"
+      }
+    },
+    {
+      "type": "LOCATED_AT",
+      "source_id": "DRAIN-D18",
+      "target_id": "LOC-OUTFALL",
+      "properties": {}
+    },
+    {
+      "type": "MAINTAINED_BY",
+      "source_id": "DRAIN-D18",
+      "target_id": "DEPT-DRAIN",
+      "properties": {
+        "valid_from": "2026-01-01T00:00:00Z",
+        "association_status": "VERIFIED",
+        "source_evidence_id": "EVD-ASSET-LIST"
+      }
+    },
+    {
+      "type": "LOCATED_AT",
+      "source_id": "ROAD-R08",
+      "target_id": "LOC-ROAD",
+      "properties": {}
+    },
+    {
+      "type": "MAINTAINED_BY",
+      "source_id": "ROAD-R08",
+      "target_id": "DEPT-ROAD",
+      "properties": {
+        "valid_from": "2026-01-01T00:00:00Z",
+        "association_status": "VERIFIED",
+        "source_evidence_id": "EVD-ASSET-LIST"
+      }
+    },
+    {
+      "type": "LOCATED_AT",
+      "source_id": "PIPE-P02",
+      "target_id": "LOC-ROAD",
+      "properties": {}
+    },
+    {
+      "type": "MAINTAINED_BY",
+      "source_id": "PIPE-P02",
+      "target_id": "DEPT-WATER",
+      "properties": {
+        "valid_from": "2026-01-01T00:00:00Z",
+        "association_status": "VERIFIED",
+        "source_evidence_id": "EVD-ASSET-LIST"
+      }
+    },
+    {
+      "type": "LOCATED_AT",
+      "source_id": "WASTE-W03",
+      "target_id": "LOC-MARKET",
+      "properties": {}
+    },
+    {
+      "type": "MAINTAINED_BY",
+      "source_id": "WASTE-W03",
+      "target_id": "DEPT-SAN",
+      "properties": {
+        "valid_from": "2026-01-01T00:00:00Z",
+        "association_status": "VERIFIED",
+        "source_evidence_id": "EVD-ASSET-LIST"
+      }
+    },
+    {
+      "type": "DRAINS_TO",
+      "source_id": "INLET-I01",
+      "target_id": "DRAIN-D12",
+      "properties": {
+        "valid_from": "2026-01-01T00:00:00Z",
+        "association_status": "VERIFIED",
+        "source_evidence_id": "EVD-ASSET-LIST"
+      }
+    },
+    {
+      "type": "DRAINS_TO",
+      "source_id": "DRAIN-D12",
+      "target_id": "DRAIN-D18",
+      "properties": {
+        "valid_from": "2026-01-01T00:00:00Z",
+        "association_status": "VERIFIED",
+        "source_evidence_id": "EVD-ASSET-LIST"
+      }
+    },
+    {
+      "type": "UNDERLIES",
+      "source_id": "PIPE-P02",
+      "target_id": "ROAD-R08",
+      "properties": {
+        "valid_from": "2026-01-01T00:00:00Z",
+        "association_status": "VERIFIED",
+        "source_evidence_id": "EVD-ASSET-LIST"
+      }
+    },
+    {
+      "type": "SERVES",
+      "source_id": "INLET-I01",
+      "target_id": "LOC-JUNCTION",
+      "properties": {
+        "valid_from": "2026-01-01T00:00:00Z",
+        "association_status": "VERIFIED",
+        "source_evidence_id": "EVD-ASSET-LIST"
+      }
+    },
+    {
+      "type": "COLLECTED_BY",
+      "source_id": "WASTE-W03",
+      "target_id": "ROUTE-C03",
+      "properties": {
+        "valid_from": "2026-01-01T00:00:00Z",
+        "association_status": "VERIFIED",
+        "source_evidence_id": "EVD-ASSET-LIST"
+      }
+    },
+    {
+      "type": "HAS_SCHEDULE",
+      "source_id": "ROUTE-C03",
+      "target_id": "SCH-C03",
+      "properties": {
+        "valid_from": "2026-01-01T00:00:00Z",
+        "association_status": "VERIFIED",
+        "source_evidence_id": "EVD-ASSET-LIST"
+      }
+    },
+    {
+      "type": "DERIVED_FROM",
+      "source_id": "EVD-ASSET-LIST",
+      "target_id": "SRC-MUNI-SEED",
+      "properties": {}
+    },
+    {
+      "type": "OCCURRED_AT",
+      "source_id": "INC-FLOOD-01",
+      "target_id": "LOC-JUNCTION",
+      "properties": {}
+    },
+    {
+      "type": "AFFECTS",
+      "source_id": "INC-FLOOD-01",
+      "target_id": "DRAIN-D12",
+      "properties": {
+        "association_status": "REPORTED",
+        "source_evidence_id": "EVD-REPORTS"
+      }
+    },
+    {
+      "type": "OCCURRED_AT",
+      "source_id": "INC-FLOOD-02",
+      "target_id": "LOC-JUNCTION",
+      "properties": {}
+    },
+    {
+      "type": "AFFECTS",
+      "source_id": "INC-FLOOD-02",
+      "target_id": "DRAIN-D12",
+      "properties": {
+        "association_status": "REPORTED",
+        "source_evidence_id": "EVD-REPORTS"
+      }
+    },
+    {
+      "type": "OCCURRED_AT",
+      "source_id": "INC-ROAD-01",
+      "target_id": "LOC-ROAD",
+      "properties": {}
+    },
+    {
+      "type": "AFFECTS",
+      "source_id": "INC-ROAD-01",
+      "target_id": "ROAD-R08",
+      "properties": {
+        "association_status": "REPORTED",
+        "source_evidence_id": "EVD-REPORTS"
+      }
+    },
+    {
+      "type": "OCCURRED_AT",
+      "source_id": "INC-WASTE-01",
+      "target_id": "LOC-MARKET",
+      "properties": {}
+    },
+    {
+      "type": "AFFECTS",
+      "source_id": "INC-WASTE-01",
+      "target_id": "WASTE-W03",
+      "properties": {
+        "association_status": "REPORTED",
+        "source_evidence_id": "EVD-REPORTS"
+      }
+    },
+    {
+      "type": "OCCURRED_AT",
+      "source_id": "INC-WASTE-02",
+      "target_id": "LOC-MARKET",
+      "properties": {}
+    },
+    {
+      "type": "AFFECTS",
+      "source_id": "INC-WASTE-02",
+      "target_id": "WASTE-W03",
+      "properties": {
+        "association_status": "REPORTED",
+        "source_evidence_id": "EVD-REPORTS"
+      }
+    },
+    {
+      "type": "DERIVED_FROM",
+      "source_id": "EVD-REPORTS",
+      "target_id": "SRC-COMPLAINTS",
+      "properties": {}
+    },
+    {
+      "type": "REPORTS",
+      "source_id": "CMP-01",
+      "target_id": "INC-FLOOD-01",
+      "properties": {}
+    },
+    {
+      "type": "REPORTS",
+      "source_id": "CMP-02",
+      "target_id": "INC-FLOOD-01",
+      "properties": {}
+    },
+    {
+      "type": "REPORTS",
+      "source_id": "CMP-03",
+      "target_id": "INC-FLOOD-02",
+      "properties": {}
+    },
+    {
+      "type": "REPORTS",
+      "source_id": "CMP-04",
+      "target_id": "INC-ROAD-01",
+      "properties": {}
+    },
+    {
+      "type": "REPORTS",
+      "source_id": "CMP-05",
+      "target_id": "INC-WASTE-01",
+      "properties": {}
+    },
+    {
+      "type": "REPORTS",
+      "source_id": "CMP-06",
+      "target_id": "INC-WASTE-02",
+      "properties": {}
+    },
+    {
+      "type": "PART_OF",
+      "source_id": "INC-FLOOD-01",
+      "target_id": "CLUSTER-FLOOD",
+      "properties": {}
+    },
+    {
+      "type": "PART_OF",
+      "source_id": "INC-FLOOD-02",
+      "target_id": "CLUSTER-FLOOD",
+      "properties": {}
+    },
+    {
+      "type": "PART_OF",
+      "source_id": "INC-WASTE-01",
+      "target_id": "CLUSTER-WASTE",
+      "properties": {}
+    },
+    {
+      "type": "PART_OF",
+      "source_id": "INC-WASTE-02",
+      "target_id": "CLUSTER-WASTE",
+      "properties": {}
+    },
+    {
+      "type": "PART_OF",
+      "source_id": "INC-ROAD-01",
+      "target_id": "CLUSTER-ROAD",
+      "properties": {}
+    },
+    {
+      "type": "APPLIES_TO",
+      "source_id": "PROC-ROAD-01",
+      "target_id": "DEPT-ROAD",
+      "properties": {}
+    },
+    {
+      "type": "APPLIES_TO",
+      "source_id": "PROC-WASTE-01",
+      "target_id": "DEPT-SAN",
+      "properties": {}
+    },
+    {
+      "type": "INSPECTS",
+      "source_id": "INS-ROAD-PAST",
+      "target_id": "ROAD-R08",
+      "properties": {}
+    },
+    {
+      "type": "DERIVED_FROM",
+      "source_id": "EVD-PRIOR-REPAIR",
+      "target_id": "SRC-MUNI-SEED",
+      "properties": {}
+    },
+    {
+      "type": "PRODUCED",
+      "source_id": "INS-ROAD-PAST",
+      "target_id": "EVD-PRIOR-REPAIR",
+      "properties": {}
+    }
+  ],
+  "ground_truth_visible_to_agent": false
+}

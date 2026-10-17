@@ -1,0 +1,454 @@
+{
+  "schema_version": 2,
+  "routes": [
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/demo-login",
+      "role": "PUBLIC",
+      "response_dto": "DemoSession",
+      "idempotency_key": false,
+      "request_schema_id": "auth_demo-login_Request",
+      "response_schema_id": "DemoSession"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/me",
+      "role": "ANY",
+      "response_dto": "OperatorAccount",
+      "idempotency_key": false,
+      "request_schema_id": null,
+      "response_schema_id": "OperatorAccount"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/logout",
+      "role": "ANY",
+      "response_dto": "Ack",
+      "idempotency_key": false,
+      "request_schema_id": "auth_logout_Request",
+      "response_schema_id": "Ack"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/dashboard/summary",
+      "role": "ANY",
+      "response_dto": "DashboardSummary",
+      "idempotency_key": false,
+      "request_schema_id": null,
+      "response_schema_id": "DashboardSummary"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/complaints",
+      "role": "ANALYST",
+      "response_dto": "ComplaintDTO",
+      "idempotency_key": true,
+      "request_schema_id": "complaints_Request",
+      "response_schema_id": "ComplaintDTO"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/complaints",
+      "role": "ANY",
+      "response_dto": "ComplaintPage",
+      "idempotency_key": false,
+      "request_schema_id": null,
+      "response_schema_id": "ComplaintPage"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/complaints/{id}",
+      "role": "ANY",
+      "response_dto": "ComplaintDTO",
+      "idempotency_key": false,
+      "request_schema_id": null,
+      "response_schema_id": "ComplaintDTO"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/incidents",
+      "role": "ANY",
+      "response_dto": "IncidentPage",
+      "idempotency_key": false,
+      "request_schema_id": null,
+      "response_schema_id": "IncidentPage"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/incidents/{id}",
+      "role": "ANY",
+      "response_dto": "IncidentDTO",
+      "idempotency_key": false,
+      "request_schema_id": null,
+      "response_schema_id": "IncidentDTO"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/problem-clusters",
+      "role": "ANY",
+      "response_dto": "ClusterPage",
+      "idempotency_key": false,
+      "request_schema_id": null,
+      "response_schema_id": "ClusterPage"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/problem-clusters/{id}",
+      "role": "ANY",
+      "response_dto": "ProblemClusterDTO",
+      "idempotency_key": false,
+      "request_schema_id": null,
+      "response_schema_id": "ProblemClusterDTO"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/investigations",
+      "role": "ANALYST",
+      "response_dto": "InvestigationDTO",
+      "idempotency_key": true,
+      "request_schema_id": "investigations_Request",
+      "response_schema_id": "InvestigationDTO"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/investigations/{id}",
+      "role": "ANY",
+      "response_dto": "InvestigationDTO",
+      "idempotency_key": false,
+      "request_schema_id": null,
+      "response_schema_id": "InvestigationDTO"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/investigations/{id}/resume",
+      "role": "ANALYST",
+      "response_dto": "AgentResumeDTO",
+      "idempotency_key": true,
+      "request_schema_id": "investigations_id_resume_Request",
+      "response_schema_id": "AgentResumeDTO"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/investigations/{id}/trace",
+      "role": "ANY",
+      "response_dto": "AgentTracePage",
+      "idempotency_key": false,
+      "request_schema_id": null,
+      "response_schema_id": "AgentTracePage"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/investigations/{id}/hypotheses",
+      "role": "ANY",
+      "response_dto": "HypothesisPage",
+      "idempotency_key": false,
+      "request_schema_id": null,
+      "response_schema_id": "HypothesisPage"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/investigations/{id}/graph",
+      "role": "ANY",
+      "response_dto": "GraphSubgraphDTO",
+      "idempotency_key": false,
+      "request_schema_id": null,
+      "response_schema_id": "GraphSubgraphDTO"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/evidence/{id}",
+      "role": "ANY",
+      "response_dto": "EvidenceDTO",
+      "idempotency_key": false,
+      "request_schema_id": null,
+      "response_schema_id": "EvidenceDTO"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/inspections/{id}",
+      "role": "ANY",
+      "response_dto": "InspectionDTO",
+      "idempotency_key": false,
+      "request_schema_id": null,
+      "response_schema_id": "InspectionDTO"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/inspections/{id}/observations",
+      "role": "DEPARTMENT_LEAD",
+      "response_dto": "EvidenceDTO",
+      "idempotency_key": true,
+      "request_schema_id": "inspections_id_observations_Request",
+      "response_schema_id": "EvidenceDTO"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/plans/{id}",
+      "role": "ANY",
+      "response_dto": "PlanDTO",
+      "idempotency_key": false,
+      "request_schema_id": null,
+      "response_schema_id": "PlanDTO"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/plans/{id}/submit-approval",
+      "role": "ANALYST",
+      "response_dto": "ApprovalDTO",
+      "idempotency_key": true,
+      "request_schema_id": "plans_id_submit-approval_Request",
+      "response_schema_id": "ApprovalDTO"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/approvals",
+      "role": "APPROVER",
+      "response_dto": "ApprovalPage",
+      "idempotency_key": false,
+      "request_schema_id": null,
+      "response_schema_id": "ApprovalPage"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/approvals/{id}/decision",
+      "role": "APPROVER",
+      "response_dto": "ApprovalDTO",
+      "idempotency_key": true,
+      "request_schema_id": "approvals_id_decision_Request",
+      "response_schema_id": "ApprovalDTO"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/work-orders",
+      "role": "ANY",
+      "response_dto": "WorkOrderPage",
+      "idempotency_key": false,
+      "request_schema_id": null,
+      "response_schema_id": "WorkOrderPage"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/work-orders/{id}",
+      "role": "ANY",
+      "response_dto": "WorkOrderDTO",
+      "idempotency_key": false,
+      "request_schema_id": null,
+      "response_schema_id": "WorkOrderDTO"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/work-orders/{id}/status",
+      "role": "DEPARTMENT_LEAD",
+      "response_dto": "WorkOrderDTO",
+      "idempotency_key": true,
+      "request_schema_id": "work-orders_id_status_Request",
+      "response_schema_id": "WorkOrderDTO"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/work-orders/{id}/outcomes",
+      "role": "DEPARTMENT_LEAD",
+      "response_dto": "OutcomeDTO",
+      "idempotency_key": true,
+      "request_schema_id": "work-orders_id_outcomes_Request",
+      "response_schema_id": "OutcomeDTO"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/departments",
+      "role": "ANY",
+      "response_dto": "DepartmentPage",
+      "idempotency_key": false,
+      "request_schema_id": null,
+      "response_schema_id": "DepartmentPage"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/procedures",
+      "role": "ANY",
+      "response_dto": "ProcedurePage",
+      "idempotency_key": false,
+      "request_schema_id": null,
+      "response_schema_id": "ProcedurePage"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/documents/{id}",
+      "role": "ANY",
+      "response_dto": "DocumentDTO",
+      "idempotency_key": false,
+      "request_schema_id": null,
+      "response_schema_id": "DocumentDTO"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/cases/{id}/memory",
+      "role": "ANY",
+      "response_dto": "CaseMemoryPage",
+      "idempotency_key": false,
+      "request_schema_id": null,
+      "response_schema_id": "CaseMemoryPage"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/map/features",
+      "role": "ANY",
+      "response_dto": "MapFeatureCollection",
+      "idempotency_key": false,
+      "request_schema_id": null,
+      "response_schema_id": "MapFeatureCollection"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/assets/{id}",
+      "role": "ANY",
+      "response_dto": "AssetDTO",
+      "idempotency_key": false,
+      "request_schema_id": null,
+      "response_schema_id": "AssetDTO"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/assets/{id}/neighbors",
+      "role": "ANY",
+      "response_dto": "GraphSubgraphDTO",
+      "idempotency_key": false,
+      "request_schema_id": null,
+      "response_schema_id": "GraphSubgraphDTO"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/monitoring",
+      "role": "ANY",
+      "response_dto": "MonitoringPage",
+      "idempotency_key": false,
+      "request_schema_id": null,
+      "response_schema_id": "MonitoringPage"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/problem-clusters/{id}/outcomes",
+      "role": "ANY",
+      "response_dto": "OutcomePage",
+      "idempotency_key": false,
+      "request_schema_id": null,
+      "response_schema_id": "OutcomePage"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/events/stream",
+      "role": "ANY",
+      "response_dto": "SSEStream",
+      "idempotency_key": false,
+      "request_schema_id": null,
+      "response_schema_id": "SSEStream"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/demo/reset",
+      "role": "ADMIN",
+      "response_dto": "SeedReport",
+      "idempotency_key": true,
+      "request_schema_id": "demo_reset_Request",
+      "response_schema_id": "SeedReport"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/demo/scenarios/{id}/advance",
+      "role": "ADMIN",
+      "response_dto": "SimulationStepDTO",
+      "idempotency_key": true,
+      "request_schema_id": "demo_scenarios_id_advance_Request",
+      "response_schema_id": "SimulationStepDTO"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/demo/scenarios",
+      "role": "ANY",
+      "response_dto": "ScenarioPage",
+      "idempotency_key": false,
+      "request_schema_id": null,
+      "response_schema_id": "ScenarioPage"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/health/live",
+      "role": "PUBLIC",
+      "response_dto": "HealthDTO",
+      "idempotency_key": false,
+      "request_schema_id": null,
+      "response_schema_id": "HealthDTO"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/health/ready",
+      "role": "PUBLIC",
+      "response_dto": "HealthDTO",
+      "idempotency_key": false,
+      "request_schema_id": null,
+      "response_schema_id": "HealthDTO"
+    }
+  ],
+  "envelope": {
+    "success": [
+      "data",
+      "request_id",
+      "schema_version"
+    ],
+    "error": [
+      "error",
+      "request_id"
+    ]
+  },
+  "sse_cursor": "durable monotonically sortable event_id; Last-Event-ID with replay/refetch semantics",
+  "dto_contracts": {
+    "GraphSubgraphDTO": {
+      "required": [
+        "nodes",
+        "edges",
+        "decision_path_ids",
+        "graph_revision",
+        "truncated",
+        "as_of"
+      ],
+      "bounds": {
+        "nodes": 120,
+        "edges": 200,
+        "hops": 6
+      }
+    },
+    "HypothesisDTO": {
+      "required": [
+        "id",
+        "cause_code",
+        "assessment_history",
+        "supporting_evidence_ids",
+        "contradicting_evidence_ids",
+        "missing_evidence"
+      ]
+    },
+    "AgentTraceEvent": {
+      "required": [
+        "event_id",
+        "investigation_id",
+        "agent_role",
+        "timestamp",
+        "tool_name",
+        "status",
+        "rationale_summary"
+      ]
+    },
+    "PlanDTO": {
+      "required": [
+        "plan_id",
+        "version",
+        "content_hash",
+        "tasks",
+        "dependencies",
+        "status",
+        "simulated",
+        "monitoring_criteria"
+      ]
+    }
+  }
+}

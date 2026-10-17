@@ -1,0 +1,58 @@
+# FalkorDB knowledge graph — data architecture and query semantics
+
+**Canonical graph name:** `civicly_knowledge`; machine definitions in `contracts/schema_registry.json` (v1 plus v2 extensions; do not rename existing entities without migration). The original v1 fixture is a small bootstrap, not the complete demo.
+
+## Domain model — normalized, not denormalized complaint tickets
+- Physical: `Zone`, `Location`, `InfrastructureAsset` multi-label specialized nodes `DrainInlet`, `DrainSegment`, `RoadSegment`, `WaterPipe`, `WasteCollectionPoint`, `PumpStation`; operational route/schedule; `DrainageCatchment` in v2 for contributing area, `RainfallEvent` for observed storm condition, `PickupExecution` for actual collection record, `AssetConditionSnapshot` for time-varying condition.
+- Events: `Complaint` (report) → `Incident` (actual occurrence) → `ProblemCluster` (persistent / recurrent pattern). **20 reports in same downpour != 20 incidents.** An Incident can affect multiple assets; primary location only 1. Cross-category links require separate Incident nodes with justified shared paths.
+- Reasoning: `Investigation` → `Hypothesis` → append-only `HypothesisAssessment` with `SUPPORTED_BY`/`CONTRADICTED_BY` → `Evidence` → `DataSource` or `Document`; independent `Finding` for verified observations/causal assessment. No in-place deletion of bad hypotheses.
+- Operations: `Department`, `KnowledgeProcedure`, `ResolutionPlan` vN, `ActionTask`, `Approval`, `WorkOrder`, `Inspection`, `InterventionOutcome`, `StatusEvent`; `ActionTask DEPENDS_ON ActionTask` acyclic, mandatory accountable department.
+- Agent memory: `AgentRun`, `AgentDecision`, `ToolExecution`, `CaseMemory`, procedural links; checkpoints handled by `FalkorDBSaver` separate from domain schema.
+- Users: v2 `OperatorAccount` with seeded fake identities and role/department; cryptographic auth session remains server-side, never expose password hashes as graph embeddings.
+
+## Hard semantics
+`DRAINS_TO` directed verified/candidate physical water pathway, not nearest drain; `COLLECTED_BY` waste-point to route; `UNDERLIES` pipe to road; `MAINTAINED_BY` authorized department; `AFFECTS` incident-to-asset includes association_status and evidence; `LOCATED_AT` geographic reference not proof of cause. Historical topology relationships have `valid_from`, `valid_to` and provenance. With incomplete topology return `unknown`, do not insert speculative edge. Candidate edges do not enter verified-only reachability unless query requests candidates and clearly labels results.
+
+**Enforce in services**: asset cannot DRAINS_TO itself; no drainage loops unless explicitly modeled as a cycle and inspected; no invalid labels/endpoints; no `DEPENDS_ON` cycles; one active primary ownership/route within temporal validity; evidence required before marking association `VERIFIED`; no inference edge promoted to fact on spatial proximity; plan edits after approval supersede approval. Relationship temporal overlap and cardinality validated against existing graph.
+
+## Type / geometry / index rules
+- Stable ID string across graph; unique indexed node ID per base label. `created_at`/`observed_at`/`recorded_at` in UTC. For schema v2 additional missing fields are optional until migrations set them.
+- FalkorDB scalar node/edge properties only; complex JSON blobs validated at service layer and either serialized explicitly or linked in document store. Relationship arrays in REST DTO are materialized edges in FalkorDB.
+- For point and spatial retrieval follow actual current point syntax from docs and test; full lines/polygons in `data/geometries/*.geojson` with ID+checksum. Spatial proximity proposes candidate asset associations; physical topology validates them.
+- Index `id` all frequently addressed types, occurrence time, issue_type/status, active plan/workorder, location point; verify exact FalkorDB index/constraint syntax and operational status in **real migrations**. Do not assume Neo4j-only procedures.
+- Embedding/full text may support case similarity; retrieval proposes candidates only. Rerank by verified topology, temporal validity, outcomes.
+
+## Required graph operations (bounded, parameterized templates)
+| Operation | Inputs | Result / interpretation |
+|---|---|---|
+| 1. reachability | asset_id, direction, max_hops<=6, as_of | actual connected DRAINS_TO paths, edge provenance |
+| 2. shared-bottleneck | incident_ids, threshold | common downstream nodes reached by >1 incident; not causal proof |
+| 3. impacted-assets | potential failure asset, max_hops | possible downstream coverage and criticality count; not flood prediction |
+| 4. incident history | asset/zone, after, before | distinct canonical incidents and interventions chronologically |
+| 5. path explanation | incident, hypothesis, evidence | serialized graph subgraph with supported/contradicted links |
+| 6. plan DAG | plan_id | unmet dependencies, blocked tasks; topological order validated in service |
+| 7. memory neighbors | asset + issue + temporal overlap | past failures, resolved/reopened cases and outcomes |
+| 8. asset ownership | asset, effective instant | responsible department and applicable procedures |
+
+### Graph algorithms and actual implementation location
+- Bounded reachability, common ancestors/dependencies, component membership, distinct path queries: Cypher matching/traversal in FalkorDB if supported; required query registry + EXPLAIN/PROFILE inspection where safe. Aggregate result in Python if FalkorDB Cypher lacks a specific aggregation.
+- Dependency DAG topological ordering and cycle validation: Python deterministic graph library using FalkorDB-fetched validated edges, results/lineage stored back in canonical graph.
+- Criticality: start with explainable count of distinct serviced/impacted assets through directed verified dependency links; avoid arbitrary PageRank on hydraulic networks. Optional centrality metrics computed in Python over bounded export, and **only** if they improve tested decisions.
+- Counterfactual: clone fixture into separate test graph, alter an edge/inspection and compare agent-selected next_action/evidence_paths without contaminating canonical demo data.
+
+## Cypher templates to implement and runtime-verify
+```
+MATCH (a:DrainSegment {id:$asset_id})-[:DRAINS_TO*1..6]->(d:DrainSegment)
+RETURN DISTINCT d.id, d.condition LIMIT 100
+```
+```
+MATCH (i:Incident)-[:AFFECTS]->(a:InfrastructureAsset {id:$asset_id})
+RETURN i.id,i.issue_type,i.started_at ORDER BY i.started_at DESC LIMIT 40
+```
+The examples show intended operations and are **not claimed to have been executed**. Use supported syntax and explicit read-only query executor, static query templates, parameterize IDs (note `LIMIT` may require safe integer literal after validation), guard timeouts, result size, `association_status`, historical edge validity. Never let the LLM provide executable write Cypher.
+
+## Data-version requirements
+`graph_revision` is **application managed**, not a built-in FalkorDB feature; increment on affected investigation/entity mutations with consistency tests. All agent evidence/path outputs carry provenance IDs + `as_of` and graph_revision. Store `source_kind`/verification and actor in typed status or evidence event; no mutation without audit.
+
+## Compatibility checks
+`B02` migration syntax; `B03` verified/candidate path semantics; `B04` temporal queries; `B05` graph perturbation; test `GRAPH.RO_QUERY`, accepted OpenCypher subset, supported point indexes. Preserve both return path and sources for future FalkorDB Canvas explainability.
