@@ -1,5 +1,13 @@
 # task_board.md — Human-reviewed task queue
 
+## Current status — B07-R, 2026-10-17 (takes precedence over history)
+
+B07 technically accepted. B07-R PASS — human review pending. Final440 PASS/0 FAIL/0 SKIP in368.60s (293 unit/147 real integration), adding5 unit+9 real cases; all426 accepted tests preserved. Both SPEC validators PASS. Independent maintenance provenance, pre-cap UTC history filtering/order/lookahead, and explicit unknown work-order fields verified through real MCP. Retained city/B01/B05/migrations/accepted+corrective traces preserved across actual restart/recreation. B08 TODO; no later work.
+
+## Current status — B07, 2026-10-17 (takes precedence over history)
+
+B06 externally accepted; baseline24e8072. B07 PASS — human review pending. Exposed credential rotated (old DENIED/new scoped RO PASS);12 real READ tools/shared contracts/separate durable traces.426 PASS/0 FAIL/0 SKIP (288 unit/138 real), both SPEC validators PASS. Source evidence and13 preexisting traces survive recreation. B08 TODO; no later work.
+
 ## Current status — B06, 2026-10-17 (takes precedence over history)
 
 B05 externally accepted; local baseline6550d31. B06 PASS — human review pending.361 tests PASS/0 FAIL/0 SKIP (255 unit/106 real integration), both SPEC validators PASS. Real official MCP initialize/list/call, security/recovery and retained evidence verified after recreation. B07 TODO; no B07+ work.
@@ -121,3 +129,44 @@ operations/API/frontend. Stop at human B06 gate; all18 objectives remain mandato
 | B07 | TODO | No | Custom Python MCP typed read tools/shared services/common envelope/traces; only after acceptance |
 
 All18 requirements retained, not fulfilled by this runtime foundation. No B07+ work.
+
+## B07 review ledger | 2026-10-17
+
+| Task | State | Human accepted? | Boundary |
+|---|---|---|---|
+| B06 | PASS | Yes | Accepted by B07 authorization; baseline24e8072 |
+| B07 | IN_PROGRESS | No | Credential incident rotation,12 real READ tools/shared contracts/controlled durable trace store; full regression pending |
+| B08 | TODO | No | Complaint normalization/dedup/Incident-vs-cluster recurrence and3 issue validators only after B07 review |
+
+No agent/GraphRAG/operational workflows/API/frontend implementation started. All18
+requirements remain binding; trace storage/read foundations do not complete them.
+
+## B07 final gate (supersedes in-progress ledger) | 2026-10-17
+
+| Task | State | Human accepted? | Evidence |
+|---|---|---|---|
+| B07 | PASS — review pending | No |426 PASS;12 actual READ handlers/namespaces/shared durable traces; credential incident rotated; source/trace persistence +SPEC gates |
+| B08 | TODO | No | Complaint normalization/dedup/recurrence and3 issue validators; only after B07 acceptance |
+
+All18 objectives retained. No agent/GraphRAG/operations/API/frontend implementation.
+
+## B07-R review ledger | 2026-10-17
+
+| Task | State | Human accepted? | Evidence |
+|---|---|---|---|
+| B07 | Technically accepted | Yes | User external review;426 passing baseline retained |
+| B07-R | IN_PROGRESS | No |5 new unit/9 real focused PASS; full regression pending |
+| B08 | TODO | No |Complaint normalization/dedup/recurrence and3 issue validators, only after review |
+
+No B08/later implementation. Review independent maintenance citations, >100 histories
+and explicit unknown operational relationships through actual broker evidence.
+
+### B07-R final review gate (supersedes in-progress ledger)
+
+| Task | State | Human accepted? | Evidence |
+|---|---|---|---|
+| B07 | Technically accepted | Yes |External review and immutable426-test baseline |
+| B07-R | PASS — review pending | No |440 PASS/0 FAIL/0 SKIP; SPEC, actual broker histories/trace/source lifecycle +security checks PASS |
+| B08 | TODO | No |Complaint normalization/dedup/recurrence,3 issue validators only after human review |
+
+STOP. No later milestone or complete product capability claimed.

@@ -1,0 +1,267 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.1, pytest-9.1.1, pluggy-1.7.0 -- /Users/vikashkumar/Desktop/Civicly/backend/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/vikashkumar/Desktop/Civicly/backend
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 4 items
+
+backend/tests/integration/test_civicly_mcp_review.py::test_maintenance_records_keep_independent_evidence FAILED
+backend/tests/integration/test_civicly_mcp_review.py::test_history_window_and_stable_order_precede_cap[pickup] FAILED
+backend/tests/integration/test_civicly_mcp_review.py::test_history_window_and_stable_order_precede_cap[condition] FAILED
+backend/tests/integration/test_civicly_mcp_review.py::test_existing_work_order_reports_operational_retrieval_gaps FAILED
+
+=================================== FAILURES ===================================
+______________ test_maintenance_records_keep_independent_evidence ______________
+  + Exception Group Traceback (most recent call last):
+  |   File "/Users/vikashkumar/Desktop/Civicly/backend/tests/integration/test_civicly_mcp_review.py", line 107, in test_maintenance_records_keep_independent_evidence
+  |     asyncio.run(run())
+  |   File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 194, in run
+  |     return runner.run(main)
+  |            ^^^^^^^^^^^^^^^^
+  |   File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 118, in run
+  |     return self._loop.run_until_complete(task)
+  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |   File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/base_events.py", line 684, in run_until_complete
+  |     return future.result()
+  |            ^^^^^^^^^^^^^^^
+  |   File "/Users/vikashkumar/Desktop/Civicly/backend/tests/integration/test_civicly_mcp_review.py", line 100, in run
+  |     async with fixture_broker(history_graph) as b:
+  |   File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py", line 231, in __aexit__
+  |     await self.gen.athrow(value)
+  |   File "/Users/vikashkumar/Desktop/Civicly/backend/tests/integration/test_civicly_mcp_review.py", line 88, in fixture_broker
+  |     async with Client(p,mode='legacy',read_timeout_seconds=8) as client:
+  |   File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/mcp/client/client.py", line 480, in __aexit__
+  |     await self._exit_stack.__aexit__(exc_type, exc_val, exc_tb)
+  |   File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py", line 754, in __aexit__
+  |     raise exc_details[1]
+  |   File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py", line 737, in __aexit__
+  |     cb_suppress = await cb(*exc_details)
+  |                   ^^^^^^^^^^^^^^^^^^^^^^
+  |   File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py", line 231, in __aexit__
+  |     await self.gen.athrow(value)
+  |   File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/mcp/client/stdio.py", line 201, in stdio_client
+  |     async with anyio.create_task_group() as tg:
+  |   File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 847, in __aexit__
+  |     raise BaseExceptionGroup(
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Exception Group Traceback (most recent call last):
+    |   File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/mcp/client/stdio.py", line 205, in stdio_client
+    |     yield read_stream, write_stream
+    |   File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py", line 737, in __aexit__
+    |     cb_suppress = await cb(*exc_details)
+    |                   ^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/mcp/client/session.py", line 514, in __aexit__
+    |     result = await self._task_group.__aexit__(exc_type, exc_val, exc_tb)
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 847, in __aexit__
+    |     raise BaseExceptionGroup(
+    | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+    +-+---------------- 1 ----------------
+      | Traceback (most recent call last):
+      |   File "/Users/vikashkumar/Desktop/Civicly/backend/tests/integration/test_civicly_mcp_review.py", line 89, in fixture_broker
+      |     b=DomainBroker(client,TraceStore(writer,trace_graph));await b.discover();yield b
+      |                                                                              ^^^^^^^
+      |   File "/Users/vikashkumar/Desktop/Civicly/backend/tests/integration/test_civicly_mcp_review.py", line 105, in run
+      |     assert records=={'INS-A':['EV-INS-A'],'INS-B':['EV-INS-B']}
+      | AssertionError: assert {'INS-A': ['E..., 'EV-INS-B']} == {'INS-A': ['E... ['EV-INS-B']}
+      |   
+      |   Differing items:
+      |   {'INS-B': ['EV-INS-A', 'EV-INS-B']} != {'INS-B': ['EV-INS-B']}
+      |   {'INS-A': ['EV-INS-A', 'EV-INS-B']} != {'INS-A': ['EV-INS-A']}
+      |   
+      |   Full diff:
+      |     {...
+      |   
+      |   ...Full output truncated (9 lines hidden), use '-vv' to show
+      +------------------------------------
+___________ test_history_window_and_stable_order_precede_cap[pickup] ___________
+  + Exception Group Traceback (most recent call last):
+  |   File "/Users/vikashkumar/Desktop/Civicly/backend/tests/integration/test_civicly_mcp_review.py", line 132, in test_history_window_and_stable_order_precede_cap
+  |     asyncio.run(run())
+  |   File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 194, in run
+  |     return runner.run(main)
+  |            ^^^^^^^^^^^^^^^^
+  |   File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 118, in run
+  |     return self._loop.run_until_complete(task)
+  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |   File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/base_events.py", line 684, in run_until_complete
+  |     return future.result()
+  |            ^^^^^^^^^^^^^^^
+  |   File "/Users/vikashkumar/Desktop/Civicly/backend/tests/integration/test_civicly_mcp_review.py", line 116, in run
+  |     async with fixture_broker(history_graph) as b:
+  |   File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py", line 231, in __aexit__
+  |     await self.gen.athrow(value)
+  |   File "/Users/vikashkumar/Desktop/Civicly/backend/tests/integration/test_civicly_mcp_review.py", line 88, in fixture_broker
+  |     async with Client(p,mode='legacy',read_timeout_seconds=8) as client:
+  |   File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/mcp/client/client.py", line 480, in __aexit__
+  |     await self._exit_stack.__aexit__(exc_type, exc_val, exc_tb)
+  |   File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py", line 754, in __aexit__
+  |     raise exc_details[1]
+  |   File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py", line 737, in __aexit__
+  |     cb_suppress = await cb(*exc_details)
+  |                   ^^^^^^^^^^^^^^^^^^^^^^
+  |   File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py", line 231, in __aexit__
+  |     await self.gen.athrow(value)
+  |   File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/mcp/client/stdio.py", line 201, in stdio_client
+  |     async with anyio.create_task_group() as tg:
+  |   File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 847, in __aexit__
+  |     raise BaseExceptionGroup(
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Exception Group Traceback (most recent call last):
+    |   File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/mcp/client/stdio.py", line 205, in stdio_client
+    |     yield read_stream, write_stream
+    |   File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py", line 737, in __aexit__
+    |     cb_suppress = await cb(*exc_details)
+    |                   ^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/mcp/client/session.py", line 514, in __aexit__
+    |     result = await self._task_group.__aexit__(exc_type, exc_val, exc_tb)
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 847, in __aexit__
+    |     raise BaseExceptionGroup(
+    | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+    +-+---------------- 1 ----------------
+      | Traceback (most recent call last):
+      |   File "/Users/vikashkumar/Desktop/Civicly/backend/tests/integration/test_civicly_mcp_review.py", line 89, in fixture_broker
+      |     b=DomainBroker(client,TraceStore(writer,trace_graph));await b.discover();yield b
+      |                                                                              ^^^^^^^
+      |   File "/Users/vikashkumar/Desktop/Civicly/backend/tests/integration/test_civicly_mcp_review.py", line 121, in run
+      |     assert ids==expected
+      | AssertionError: assert [] == ['P-NEW-000',...NEW-003', ...]
+      |   
+      |   Right contains 100 more items, first extra item: 'P-NEW-000'
+      |   
+      |   Full diff:
+      |   + []
+      |   - [
+      |   -     'P-NEW-000',...
+      |   
+      |   ...Full output truncated (100 lines hidden), use '-vv' to show
+      +------------------------------------
+_________ test_history_window_and_stable_order_precede_cap[condition] __________
+  + Exception Group Traceback (most recent call last):
+  |   File "/Users/vikashkumar/Desktop/Civicly/backend/tests/integration/test_civicly_mcp_review.py", line 132, in test_history_window_and_stable_order_precede_cap
+  |     asyncio.run(run())
+  |   File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 194, in run
+  |     return runner.run(main)
+  |            ^^^^^^^^^^^^^^^^
+  |   File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 118, in run
+  |     return self._loop.run_until_complete(task)
+  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |   File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/base_events.py", line 684, in run_until_complete
+  |     return future.result()
+  |            ^^^^^^^^^^^^^^^
+  |   File "/Users/vikashkumar/Desktop/Civicly/backend/tests/integration/test_civicly_mcp_review.py", line 116, in run
+  |     async with fixture_broker(history_graph) as b:
+  |   File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py", line 231, in __aexit__
+  |     await self.gen.athrow(value)
+  |   File "/Users/vikashkumar/Desktop/Civicly/backend/tests/integration/test_civicly_mcp_review.py", line 88, in fixture_broker
+  |     async with Client(p,mode='legacy',read_timeout_seconds=8) as client:
+  |   File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/mcp/client/client.py", line 480, in __aexit__
+  |     await self._exit_stack.__aexit__(exc_type, exc_val, exc_tb)
+  |   File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py", line 754, in __aexit__
+  |     raise exc_details[1]
+  |   File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py", line 737, in __aexit__
+  |     cb_suppress = await cb(*exc_details)
+  |                   ^^^^^^^^^^^^^^^^^^^^^^
+  |   File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py", line 231, in __aexit__
+  |     await self.gen.athrow(value)
+  |   File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/mcp/client/stdio.py", line 201, in stdio_client
+  |     async with anyio.create_task_group() as tg:
+  |   File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 847, in __aexit__
+  |     raise BaseExceptionGroup(
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Exception Group Traceback (most recent call last):
+    |   File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/mcp/client/stdio.py", line 205, in stdio_client
+    |     yield read_stream, write_stream
+    |   File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py", line 737, in __aexit__
+    |     cb_suppress = await cb(*exc_details)
+    |                   ^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/mcp/client/session.py", line 514, in __aexit__
+    |     result = await self._task_group.__aexit__(exc_type, exc_val, exc_tb)
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 847, in __aexit__
+    |     raise BaseExceptionGroup(
+    | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+    +-+---------------- 1 ----------------
+      | Traceback (most recent call last):
+      |   File "/Users/vikashkumar/Desktop/Civicly/backend/tests/integration/test_civicly_mcp_review.py", line 89, in fixture_broker
+      |     b=DomainBroker(client,TraceStore(writer,trace_graph));await b.discover();yield b
+      |                                                                              ^^^^^^^
+      |   File "/Users/vikashkumar/Desktop/Civicly/backend/tests/integration/test_civicly_mcp_review.py", line 121, in run
+      |     assert ids==expected
+      | AssertionError: assert [] == ['C-NEW-000',...NEW-003', ...]
+      |   
+      |   Right contains 100 more items, first extra item: 'C-NEW-000'
+      |   
+      |   Full diff:
+      |   + []
+      |   - [
+      |   -     'C-NEW-000',...
+      |   
+      |   ...Full output truncated (100 lines hidden), use '-vv' to show
+      +------------------------------------
+_________ test_existing_work_order_reports_operational_retrieval_gaps __________
+  + Exception Group Traceback (most recent call last):
+  |   File "/Users/vikashkumar/Desktop/Civicly/backend/tests/integration/test_civicly_mcp_review.py", line 144, in test_existing_work_order_reports_operational_retrieval_gaps
+  |     asyncio.run(run())
+  |   File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 194, in run
+  |     return runner.run(main)
+  |            ^^^^^^^^^^^^^^^^
+  |   File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 118, in run
+  |     return self._loop.run_until_complete(task)
+  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |   File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/base_events.py", line 684, in run_until_complete
+  |     return future.result()
+  |            ^^^^^^^^^^^^^^^
+  |   File "/Users/vikashkumar/Desktop/Civicly/backend/tests/integration/test_civicly_mcp_review.py", line 137, in run
+  |     async with fixture_broker(history_graph) as b:
+  |   File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py", line 231, in __aexit__
+  |     await self.gen.athrow(value)
+  |   File "/Users/vikashkumar/Desktop/Civicly/backend/tests/integration/test_civicly_mcp_review.py", line 88, in fixture_broker
+  |     async with Client(p,mode='legacy',read_timeout_seconds=8) as client:
+  |   File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/mcp/client/client.py", line 480, in __aexit__
+  |     await self._exit_stack.__aexit__(exc_type, exc_val, exc_tb)
+  |   File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py", line 754, in __aexit__
+  |     raise exc_details[1]
+  |   File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py", line 737, in __aexit__
+  |     cb_suppress = await cb(*exc_details)
+  |                   ^^^^^^^^^^^^^^^^^^^^^^
+  |   File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py", line 231, in __aexit__
+  |     await self.gen.athrow(value)
+  |   File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/mcp/client/stdio.py", line 201, in stdio_client
+  |     async with anyio.create_task_group() as tg:
+  |   File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 847, in __aexit__
+  |     raise BaseExceptionGroup(
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Exception Group Traceback (most recent call last):
+    |   File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/mcp/client/stdio.py", line 205, in stdio_client
+    |     yield read_stream, write_stream
+    |   File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py", line 737, in __aexit__
+    |     cb_suppress = await cb(*exc_details)
+    |                   ^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/mcp/client/session.py", line 514, in __aexit__
+    |     result = await self._task_group.__aexit__(exc_type, exc_val, exc_tb)
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 847, in __aexit__
+    |     raise BaseExceptionGroup(
+    | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+    +-+---------------- 1 ----------------
+      | Traceback (most recent call last):
+      |   File "/Users/vikashkumar/Desktop/Civicly/backend/tests/integration/test_civicly_mcp_review.py", line 89, in fixture_broker
+      |     b=DomainBroker(client,TraceStore(writer,trace_graph));await b.discover();yield b
+      |                                                                              ^^^^^^^
+      |   File "/Users/vikashkumar/Desktop/Civicly/backend/tests/integration/test_civicly_mcp_review.py", line 142, in run
+      |     assert 'blocking_task_ids' in gaps and 'latest_status_event_ids' in gaps
+      | AssertionError: assert ('blocking_task_ids' in 'Status is recorded graph state; no workflow execution or inferred completion')
+      +------------------------------------
+=========================== short test summary info ============================
+FAILED backend/tests/integration/test_civicly_mcp_review.py::test_maintenance_records_keep_independent_evidence
+FAILED backend/tests/integration/test_civicly_mcp_review.py::test_history_window_and_stable_order_precede_cap[pickup]
+FAILED backend/tests/integration/test_civicly_mcp_review.py::test_history_window_and_stable_order_precede_cap[condition]
+FAILED backend/tests/integration/test_civicly_mcp_review.py::test_existing_work_order_reports_operational_retrieval_gaps
+============================== 4 failed in 9.18s ===============================

@@ -1,5 +1,5 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "server_strategy": {
     "official_falkordb": "read-only schema discovery + parameterized bounded graph reads; never general writes",
     "civicly": "Python MCP server implementing custom tools through authorization-validating services",
@@ -16,12 +16,23 @@
         "properties": {
           "incident_id": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "maxLength": 512
           },
           "max_results": {
             "type": "integer",
             "minimum": 1,
             "maximum": 100
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "minLength": 1,
+            "maxLength": 512,
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+          },
+          "include_candidates": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -95,10 +106,10 @@
           },
           "graph_revision": {
             "type": [
-              "string",
               "integer",
               "null"
-            ]
+            ],
+            "minimum": 0
           },
           "error": {
             "type": [
@@ -125,6 +136,263 @@
           },
           "truncated": {
             "type": "boolean"
+          },
+          "context": {
+            "additionalProperties": false,
+            "properties": {
+              "trace_id": {
+                "maxLength": 80,
+                "minLength": 1,
+                "title": "Trace Id",
+                "type": "string"
+              },
+              "execution_id": {
+                "maxLength": 80,
+                "minLength": 1,
+                "title": "Execution Id",
+                "type": "string"
+              },
+              "parent_execution_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Parent Execution Id"
+              },
+              "investigation_id": {
+                "anyOf": [
+                  {
+                    "maxLength": 200,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Investigation Id"
+              },
+              "municipality_id": {
+                "const": "demo-city",
+                "default": "demo-city",
+                "title": "Municipality Id",
+                "type": "string"
+              },
+              "source_graph": {
+                "const": "civicly_b04_test_a84beda80da64aacbc367a9399e07a97",
+                "default": "civicly_b04_test_a84beda80da64aacbc367a9399e07a97",
+                "title": "Source Graph",
+                "type": "string"
+              },
+              "caller_role": {
+                "default": "OPERATOR_REVIEW",
+                "enum": [
+                  "READ_ONLY",
+                  "OPERATOR_REVIEW"
+                ],
+                "title": "Caller Role",
+                "type": "string"
+              },
+              "invocation_origin": {
+                "default": "OPERATOR_REVIEW",
+                "enum": [
+                  "OPERATOR_REVIEW",
+                  "APPLICATION"
+                ],
+                "title": "Invocation Origin",
+                "type": "string"
+              }
+            },
+            "required": [
+              "trace_id",
+              "execution_id"
+            ],
+            "title": "Context",
+            "type": "object"
+          },
+          "search_limited": {
+            "type": "boolean"
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "nodes": {
+                "type": "array",
+                "maxItems": 120,
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "title": "Id",
+                      "type": "string"
+                    },
+                    "kind": {
+                      "title": "Kind",
+                      "type": "string"
+                    },
+                    "labels": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Labels",
+                      "type": "array"
+                    },
+                    "properties": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "kind",
+                    "labels",
+                    "properties"
+                  ],
+                  "title": "NodeRecord",
+                  "type": "object"
+                }
+              },
+              "edges": {
+                "type": "array",
+                "maxItems": 200,
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "title": "Id",
+                      "type": "string"
+                    },
+                    "kind": {
+                      "title": "Kind",
+                      "type": "string"
+                    },
+                    "source": {
+                      "title": "Source",
+                      "type": "string"
+                    },
+                    "target": {
+                      "title": "Target",
+                      "type": "string"
+                    },
+                    "properties": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "kind",
+                    "source",
+                    "target",
+                    "properties"
+                  ],
+                  "title": "EdgeRecord",
+                  "type": "object"
+                }
+              },
+              "paths": {
+                "type": "array",
+                "maxItems": 100,
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "node_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Node Ids",
+                      "type": "array"
+                    },
+                    "edge_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Edge Ids",
+                      "type": "array"
+                    },
+                    "directions": {
+                      "items": {
+                        "enum": [
+                          "OUTGOING",
+                          "INCOMING"
+                        ],
+                        "type": "string"
+                      },
+                      "title": "Directions",
+                      "type": "array"
+                    },
+                    "evidence_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Evidence Ids",
+                      "type": "array"
+                    },
+                    "context": {
+                      "type": "object"
+                    },
+                    "id": {
+                      "title": "Id",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "node_ids",
+                    "edge_ids",
+                    "directions",
+                    "evidence_ids",
+                    "id"
+                  ],
+                  "title": "ProofPath",
+                  "type": "object"
+                }
+              },
+              "gaps": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 100
+              },
+              "reservations": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 100
+              },
+              "as_of": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "required": [
+              "nodes",
+              "edges",
+              "paths",
+              "gaps",
+              "reservations",
+              "as_of"
+            ]
+          },
+          "execution_id": {
+            "type": "string"
+          },
+          "server_id": {
+            "const": "civicly-domain"
+          },
+          "tool_name": {
+            "type": "string"
+          },
+          "schema_version": {
+            "const": 3
+          },
+          "inventory_version": {
+            "type": "string"
           }
         },
         "required": [
@@ -132,16 +400,28 @@
           "trace_id",
           "source_evidence_ids",
           "simulation_mode",
-          "related_incidents"
+          "related_incidents",
+          "context",
+          "graph_revision",
+          "error",
+          "truncated",
+          "search_limited",
+          "data",
+          "execution_id",
+          "server_id",
+          "tool_name",
+          "schema_version",
+          "inventory_version"
         ]
       },
       "requires_mcp_runtime_call": true,
       "side_effect": false,
-      "result_semantics": "On non-SUCCESS status, return required envelope with null ID(s)/empty lists as applicable; include error; no claimed state change."
+      "result_semantics": "On non-SUCCESS status, return required envelope with null ID(s)/empty lists as applicable; include error; no claimed state change.",
+      "b07_runtime": "REGISTERED_READ"
     },
     {
       "name": "trace_infrastructure_dependencies",
-      "description": "Follow verified/candidate directed infrastructure paths from a specified asset",
+      "description": "Follow bounded B05 directed drainage reachability, or explicit forward typed DRAINS_TO/UNDERLIES/COLLECTED_BY dependencies; preserve candidate qualifications",
       "permission": "READ",
       "input_schema": {
         "type": "object",
@@ -149,11 +429,13 @@
         "properties": {
           "investigation_id": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "maxLength": 512
           },
           "asset_id": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "maxLength": 512
           },
           "direction": {
             "type": "string",
@@ -161,12 +443,32 @@
               "UPSTREAM",
               "DOWNSTREAM",
               "BOTH"
-            ]
+            ],
+            "minLength": 1,
+            "maxLength": 512
           },
           "max_hops": {
             "type": "integer",
             "minimum": 1,
             "maximum": 6
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "minLength": 1,
+            "maxLength": 512,
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+          },
+          "include_candidates": {
+            "type": "boolean"
+          },
+          "network": {
+            "type": "string",
+            "enum": [
+              "DRAINAGE",
+              "TYPED_DEPENDENCIES"
+            ],
+            "default": "DRAINAGE"
           }
         },
         "required": [
@@ -174,6 +476,27 @@
           "asset_id",
           "direction",
           "max_hops"
+        ],
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "network": {
+                  "const": "TYPED_DEPENDENCIES"
+                }
+              },
+              "required": [
+                "network"
+              ]
+            },
+            "then": {
+              "properties": {
+                "direction": {
+                  "const": "DOWNSTREAM"
+                }
+              }
+            }
+          }
         ]
       },
       "output_schema": {
@@ -257,10 +580,10 @@
           },
           "graph_revision": {
             "type": [
-              "string",
               "integer",
               "null"
-            ]
+            ],
+            "minimum": 0
           },
           "error": {
             "type": [
@@ -284,6 +607,263 @@
               "retryable"
             ],
             "additionalProperties": false
+          },
+          "context": {
+            "additionalProperties": false,
+            "properties": {
+              "trace_id": {
+                "maxLength": 80,
+                "minLength": 1,
+                "title": "Trace Id",
+                "type": "string"
+              },
+              "execution_id": {
+                "maxLength": 80,
+                "minLength": 1,
+                "title": "Execution Id",
+                "type": "string"
+              },
+              "parent_execution_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Parent Execution Id"
+              },
+              "investigation_id": {
+                "anyOf": [
+                  {
+                    "maxLength": 200,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Investigation Id"
+              },
+              "municipality_id": {
+                "const": "demo-city",
+                "default": "demo-city",
+                "title": "Municipality Id",
+                "type": "string"
+              },
+              "source_graph": {
+                "const": "civicly_b04_test_a84beda80da64aacbc367a9399e07a97",
+                "default": "civicly_b04_test_a84beda80da64aacbc367a9399e07a97",
+                "title": "Source Graph",
+                "type": "string"
+              },
+              "caller_role": {
+                "default": "OPERATOR_REVIEW",
+                "enum": [
+                  "READ_ONLY",
+                  "OPERATOR_REVIEW"
+                ],
+                "title": "Caller Role",
+                "type": "string"
+              },
+              "invocation_origin": {
+                "default": "OPERATOR_REVIEW",
+                "enum": [
+                  "OPERATOR_REVIEW",
+                  "APPLICATION"
+                ],
+                "title": "Invocation Origin",
+                "type": "string"
+              }
+            },
+            "required": [
+              "trace_id",
+              "execution_id"
+            ],
+            "title": "Context",
+            "type": "object"
+          },
+          "search_limited": {
+            "type": "boolean"
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "nodes": {
+                "type": "array",
+                "maxItems": 120,
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "title": "Id",
+                      "type": "string"
+                    },
+                    "kind": {
+                      "title": "Kind",
+                      "type": "string"
+                    },
+                    "labels": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Labels",
+                      "type": "array"
+                    },
+                    "properties": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "kind",
+                    "labels",
+                    "properties"
+                  ],
+                  "title": "NodeRecord",
+                  "type": "object"
+                }
+              },
+              "edges": {
+                "type": "array",
+                "maxItems": 200,
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "title": "Id",
+                      "type": "string"
+                    },
+                    "kind": {
+                      "title": "Kind",
+                      "type": "string"
+                    },
+                    "source": {
+                      "title": "Source",
+                      "type": "string"
+                    },
+                    "target": {
+                      "title": "Target",
+                      "type": "string"
+                    },
+                    "properties": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "kind",
+                    "source",
+                    "target",
+                    "properties"
+                  ],
+                  "title": "EdgeRecord",
+                  "type": "object"
+                }
+              },
+              "paths": {
+                "type": "array",
+                "maxItems": 100,
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "node_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Node Ids",
+                      "type": "array"
+                    },
+                    "edge_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Edge Ids",
+                      "type": "array"
+                    },
+                    "directions": {
+                      "items": {
+                        "enum": [
+                          "OUTGOING",
+                          "INCOMING"
+                        ],
+                        "type": "string"
+                      },
+                      "title": "Directions",
+                      "type": "array"
+                    },
+                    "evidence_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Evidence Ids",
+                      "type": "array"
+                    },
+                    "context": {
+                      "type": "object"
+                    },
+                    "id": {
+                      "title": "Id",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "node_ids",
+                    "edge_ids",
+                    "directions",
+                    "evidence_ids",
+                    "id"
+                  ],
+                  "title": "ProofPath",
+                  "type": "object"
+                }
+              },
+              "gaps": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 100
+              },
+              "reservations": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 100
+              },
+              "as_of": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "required": [
+              "nodes",
+              "edges",
+              "paths",
+              "gaps",
+              "reservations",
+              "as_of"
+            ]
+          },
+          "execution_id": {
+            "type": "string"
+          },
+          "server_id": {
+            "const": "civicly-domain"
+          },
+          "tool_name": {
+            "type": "string"
+          },
+          "schema_version": {
+            "const": 3
+          },
+          "inventory_version": {
+            "type": "string"
           }
         },
         "required": [
@@ -292,12 +872,23 @@
           "source_evidence_ids",
           "simulation_mode",
           "paths",
-          "truncated"
+          "truncated",
+          "context",
+          "graph_revision",
+          "error",
+          "search_limited",
+          "data",
+          "execution_id",
+          "server_id",
+          "tool_name",
+          "schema_version",
+          "inventory_version"
         ]
       },
       "requires_mcp_runtime_call": true,
       "side_effect": false,
-      "result_semantics": "On non-SUCCESS status, return required envelope with null ID(s)/empty lists as applicable; include error; no claimed state change."
+      "result_semantics": "On non-SUCCESS status, return required envelope with null ID(s)/empty lists as applicable; include error; no claimed state change.",
+      "b07_runtime": "REGISTERED_READ"
     },
     {
       "name": "get_maintenance_history",
@@ -309,15 +900,32 @@
         "properties": {
           "asset_id": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "maxLength": 512
           },
           "from_time": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "minLength": 1,
+            "maxLength": 512,
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
           },
           "to_time": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "minLength": 1,
+            "maxLength": 512,
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "minLength": 1,
+            "maxLength": 512,
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+          },
+          "include_candidates": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -419,13 +1027,270 @@
           },
           "graph_revision": {
             "type": [
-              "string",
               "integer",
               "null"
-            ]
+            ],
+            "minimum": 0
           },
           "truncated": {
             "type": "boolean"
+          },
+          "context": {
+            "additionalProperties": false,
+            "properties": {
+              "trace_id": {
+                "maxLength": 80,
+                "minLength": 1,
+                "title": "Trace Id",
+                "type": "string"
+              },
+              "execution_id": {
+                "maxLength": 80,
+                "minLength": 1,
+                "title": "Execution Id",
+                "type": "string"
+              },
+              "parent_execution_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Parent Execution Id"
+              },
+              "investigation_id": {
+                "anyOf": [
+                  {
+                    "maxLength": 200,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Investigation Id"
+              },
+              "municipality_id": {
+                "const": "demo-city",
+                "default": "demo-city",
+                "title": "Municipality Id",
+                "type": "string"
+              },
+              "source_graph": {
+                "const": "civicly_b04_test_a84beda80da64aacbc367a9399e07a97",
+                "default": "civicly_b04_test_a84beda80da64aacbc367a9399e07a97",
+                "title": "Source Graph",
+                "type": "string"
+              },
+              "caller_role": {
+                "default": "OPERATOR_REVIEW",
+                "enum": [
+                  "READ_ONLY",
+                  "OPERATOR_REVIEW"
+                ],
+                "title": "Caller Role",
+                "type": "string"
+              },
+              "invocation_origin": {
+                "default": "OPERATOR_REVIEW",
+                "enum": [
+                  "OPERATOR_REVIEW",
+                  "APPLICATION"
+                ],
+                "title": "Invocation Origin",
+                "type": "string"
+              }
+            },
+            "required": [
+              "trace_id",
+              "execution_id"
+            ],
+            "title": "Context",
+            "type": "object"
+          },
+          "search_limited": {
+            "type": "boolean"
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "nodes": {
+                "type": "array",
+                "maxItems": 120,
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "title": "Id",
+                      "type": "string"
+                    },
+                    "kind": {
+                      "title": "Kind",
+                      "type": "string"
+                    },
+                    "labels": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Labels",
+                      "type": "array"
+                    },
+                    "properties": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "kind",
+                    "labels",
+                    "properties"
+                  ],
+                  "title": "NodeRecord",
+                  "type": "object"
+                }
+              },
+              "edges": {
+                "type": "array",
+                "maxItems": 200,
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "title": "Id",
+                      "type": "string"
+                    },
+                    "kind": {
+                      "title": "Kind",
+                      "type": "string"
+                    },
+                    "source": {
+                      "title": "Source",
+                      "type": "string"
+                    },
+                    "target": {
+                      "title": "Target",
+                      "type": "string"
+                    },
+                    "properties": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "kind",
+                    "source",
+                    "target",
+                    "properties"
+                  ],
+                  "title": "EdgeRecord",
+                  "type": "object"
+                }
+              },
+              "paths": {
+                "type": "array",
+                "maxItems": 100,
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "node_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Node Ids",
+                      "type": "array"
+                    },
+                    "edge_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Edge Ids",
+                      "type": "array"
+                    },
+                    "directions": {
+                      "items": {
+                        "enum": [
+                          "OUTGOING",
+                          "INCOMING"
+                        ],
+                        "type": "string"
+                      },
+                      "title": "Directions",
+                      "type": "array"
+                    },
+                    "evidence_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Evidence Ids",
+                      "type": "array"
+                    },
+                    "context": {
+                      "type": "object"
+                    },
+                    "id": {
+                      "title": "Id",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "node_ids",
+                    "edge_ids",
+                    "directions",
+                    "evidence_ids",
+                    "id"
+                  ],
+                  "title": "ProofPath",
+                  "type": "object"
+                }
+              },
+              "gaps": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 100
+              },
+              "reservations": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 100
+              },
+              "as_of": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "required": [
+              "nodes",
+              "edges",
+              "paths",
+              "gaps",
+              "reservations",
+              "as_of"
+            ]
+          },
+          "execution_id": {
+            "type": "string"
+          },
+          "server_id": {
+            "const": "civicly-domain"
+          },
+          "tool_name": {
+            "type": "string"
+          },
+          "schema_version": {
+            "const": 3
+          },
+          "inventory_version": {
+            "type": "string"
           }
         },
         "required": [
@@ -433,12 +1298,24 @@
           "trace_id",
           "source_evidence_ids",
           "simulation_mode",
-          "records"
+          "records",
+          "context",
+          "graph_revision",
+          "error",
+          "truncated",
+          "search_limited",
+          "data",
+          "execution_id",
+          "server_id",
+          "tool_name",
+          "schema_version",
+          "inventory_version"
         ]
       },
       "requires_mcp_runtime_call": true,
       "side_effect": false,
-      "result_semantics": "On non-SUCCESS status, return required envelope with null ID(s)/empty lists as applicable; include error; no claimed state change."
+      "result_semantics": "B07-R: records[].evidence_ids comes only from that event's own validated asset/evidence proof paths, not the response-wide source_evidence_ids union. History remains contextual, not proof of repair resolution.",
+      "b07_runtime": "REGISTERED_READ"
     },
     {
       "name": "retrieve_external_evidence",
@@ -450,19 +1327,37 @@
         "properties": {
           "location_id": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "maxLength": 512
           },
           "evidence_type": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "maxLength": 512
           },
           "from_time": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "minLength": 1,
+            "maxLength": 512,
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
           },
           "to_time": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "minLength": 1,
+            "maxLength": 512,
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "minLength": 1,
+            "maxLength": 512,
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+          },
+          "include_candidates": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -569,13 +1464,270 @@
           },
           "graph_revision": {
             "type": [
-              "string",
               "integer",
               "null"
-            ]
+            ],
+            "minimum": 0
           },
           "truncated": {
             "type": "boolean"
+          },
+          "context": {
+            "additionalProperties": false,
+            "properties": {
+              "trace_id": {
+                "maxLength": 80,
+                "minLength": 1,
+                "title": "Trace Id",
+                "type": "string"
+              },
+              "execution_id": {
+                "maxLength": 80,
+                "minLength": 1,
+                "title": "Execution Id",
+                "type": "string"
+              },
+              "parent_execution_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Parent Execution Id"
+              },
+              "investigation_id": {
+                "anyOf": [
+                  {
+                    "maxLength": 200,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Investigation Id"
+              },
+              "municipality_id": {
+                "const": "demo-city",
+                "default": "demo-city",
+                "title": "Municipality Id",
+                "type": "string"
+              },
+              "source_graph": {
+                "const": "civicly_b04_test_a84beda80da64aacbc367a9399e07a97",
+                "default": "civicly_b04_test_a84beda80da64aacbc367a9399e07a97",
+                "title": "Source Graph",
+                "type": "string"
+              },
+              "caller_role": {
+                "default": "OPERATOR_REVIEW",
+                "enum": [
+                  "READ_ONLY",
+                  "OPERATOR_REVIEW"
+                ],
+                "title": "Caller Role",
+                "type": "string"
+              },
+              "invocation_origin": {
+                "default": "OPERATOR_REVIEW",
+                "enum": [
+                  "OPERATOR_REVIEW",
+                  "APPLICATION"
+                ],
+                "title": "Invocation Origin",
+                "type": "string"
+              }
+            },
+            "required": [
+              "trace_id",
+              "execution_id"
+            ],
+            "title": "Context",
+            "type": "object"
+          },
+          "search_limited": {
+            "type": "boolean"
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "nodes": {
+                "type": "array",
+                "maxItems": 120,
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "title": "Id",
+                      "type": "string"
+                    },
+                    "kind": {
+                      "title": "Kind",
+                      "type": "string"
+                    },
+                    "labels": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Labels",
+                      "type": "array"
+                    },
+                    "properties": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "kind",
+                    "labels",
+                    "properties"
+                  ],
+                  "title": "NodeRecord",
+                  "type": "object"
+                }
+              },
+              "edges": {
+                "type": "array",
+                "maxItems": 200,
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "title": "Id",
+                      "type": "string"
+                    },
+                    "kind": {
+                      "title": "Kind",
+                      "type": "string"
+                    },
+                    "source": {
+                      "title": "Source",
+                      "type": "string"
+                    },
+                    "target": {
+                      "title": "Target",
+                      "type": "string"
+                    },
+                    "properties": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "kind",
+                    "source",
+                    "target",
+                    "properties"
+                  ],
+                  "title": "EdgeRecord",
+                  "type": "object"
+                }
+              },
+              "paths": {
+                "type": "array",
+                "maxItems": 100,
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "node_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Node Ids",
+                      "type": "array"
+                    },
+                    "edge_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Edge Ids",
+                      "type": "array"
+                    },
+                    "directions": {
+                      "items": {
+                        "enum": [
+                          "OUTGOING",
+                          "INCOMING"
+                        ],
+                        "type": "string"
+                      },
+                      "title": "Directions",
+                      "type": "array"
+                    },
+                    "evidence_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Evidence Ids",
+                      "type": "array"
+                    },
+                    "context": {
+                      "type": "object"
+                    },
+                    "id": {
+                      "title": "Id",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "node_ids",
+                    "edge_ids",
+                    "directions",
+                    "evidence_ids",
+                    "id"
+                  ],
+                  "title": "ProofPath",
+                  "type": "object"
+                }
+              },
+              "gaps": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 100
+              },
+              "reservations": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 100
+              },
+              "as_of": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "required": [
+              "nodes",
+              "edges",
+              "paths",
+              "gaps",
+              "reservations",
+              "as_of"
+            ]
+          },
+          "execution_id": {
+            "type": "string"
+          },
+          "server_id": {
+            "const": "civicly-domain"
+          },
+          "tool_name": {
+            "type": "string"
+          },
+          "schema_version": {
+            "const": 3
+          },
+          "inventory_version": {
+            "type": "string"
           }
         },
         "required": [
@@ -583,12 +1735,24 @@
           "trace_id",
           "source_evidence_ids",
           "simulation_mode",
-          "observations"
+          "observations",
+          "context",
+          "graph_revision",
+          "error",
+          "truncated",
+          "search_limited",
+          "data",
+          "execution_id",
+          "server_id",
+          "tool_name",
+          "schema_version",
+          "inventory_version"
         ]
       },
       "requires_mcp_runtime_call": true,
       "side_effect": false,
-      "result_semantics": "On non-SUCCESS status, return required envelope with null ID(s)/empty lists as applicable; include error; no claimed state change."
+      "result_semantics": "On non-SUCCESS status, return required envelope with null ID(s)/empty lists as applicable; include error; no claimed state change.",
+      "b07_runtime": "REGISTERED_READ"
     },
     {
       "name": "retrieve_case_memory",
@@ -600,12 +1764,23 @@
         "properties": {
           "investigation_id": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "maxLength": 512
           },
           "max_results": {
             "type": "integer",
             "minimum": 1,
             "maximum": 100
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "minLength": 1,
+            "maxLength": 512,
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+          },
+          "include_candidates": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -705,13 +1880,270 @@
           },
           "graph_revision": {
             "type": [
-              "string",
               "integer",
               "null"
-            ]
+            ],
+            "minimum": 0
           },
           "truncated": {
             "type": "boolean"
+          },
+          "context": {
+            "additionalProperties": false,
+            "properties": {
+              "trace_id": {
+                "maxLength": 80,
+                "minLength": 1,
+                "title": "Trace Id",
+                "type": "string"
+              },
+              "execution_id": {
+                "maxLength": 80,
+                "minLength": 1,
+                "title": "Execution Id",
+                "type": "string"
+              },
+              "parent_execution_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Parent Execution Id"
+              },
+              "investigation_id": {
+                "anyOf": [
+                  {
+                    "maxLength": 200,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Investigation Id"
+              },
+              "municipality_id": {
+                "const": "demo-city",
+                "default": "demo-city",
+                "title": "Municipality Id",
+                "type": "string"
+              },
+              "source_graph": {
+                "const": "civicly_b04_test_a84beda80da64aacbc367a9399e07a97",
+                "default": "civicly_b04_test_a84beda80da64aacbc367a9399e07a97",
+                "title": "Source Graph",
+                "type": "string"
+              },
+              "caller_role": {
+                "default": "OPERATOR_REVIEW",
+                "enum": [
+                  "READ_ONLY",
+                  "OPERATOR_REVIEW"
+                ],
+                "title": "Caller Role",
+                "type": "string"
+              },
+              "invocation_origin": {
+                "default": "OPERATOR_REVIEW",
+                "enum": [
+                  "OPERATOR_REVIEW",
+                  "APPLICATION"
+                ],
+                "title": "Invocation Origin",
+                "type": "string"
+              }
+            },
+            "required": [
+              "trace_id",
+              "execution_id"
+            ],
+            "title": "Context",
+            "type": "object"
+          },
+          "search_limited": {
+            "type": "boolean"
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "nodes": {
+                "type": "array",
+                "maxItems": 120,
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "title": "Id",
+                      "type": "string"
+                    },
+                    "kind": {
+                      "title": "Kind",
+                      "type": "string"
+                    },
+                    "labels": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Labels",
+                      "type": "array"
+                    },
+                    "properties": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "kind",
+                    "labels",
+                    "properties"
+                  ],
+                  "title": "NodeRecord",
+                  "type": "object"
+                }
+              },
+              "edges": {
+                "type": "array",
+                "maxItems": 200,
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "title": "Id",
+                      "type": "string"
+                    },
+                    "kind": {
+                      "title": "Kind",
+                      "type": "string"
+                    },
+                    "source": {
+                      "title": "Source",
+                      "type": "string"
+                    },
+                    "target": {
+                      "title": "Target",
+                      "type": "string"
+                    },
+                    "properties": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "kind",
+                    "source",
+                    "target",
+                    "properties"
+                  ],
+                  "title": "EdgeRecord",
+                  "type": "object"
+                }
+              },
+              "paths": {
+                "type": "array",
+                "maxItems": 100,
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "node_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Node Ids",
+                      "type": "array"
+                    },
+                    "edge_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Edge Ids",
+                      "type": "array"
+                    },
+                    "directions": {
+                      "items": {
+                        "enum": [
+                          "OUTGOING",
+                          "INCOMING"
+                        ],
+                        "type": "string"
+                      },
+                      "title": "Directions",
+                      "type": "array"
+                    },
+                    "evidence_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Evidence Ids",
+                      "type": "array"
+                    },
+                    "context": {
+                      "type": "object"
+                    },
+                    "id": {
+                      "title": "Id",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "node_ids",
+                    "edge_ids",
+                    "directions",
+                    "evidence_ids",
+                    "id"
+                  ],
+                  "title": "ProofPath",
+                  "type": "object"
+                }
+              },
+              "gaps": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 100
+              },
+              "reservations": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 100
+              },
+              "as_of": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "required": [
+              "nodes",
+              "edges",
+              "paths",
+              "gaps",
+              "reservations",
+              "as_of"
+            ]
+          },
+          "execution_id": {
+            "type": "string"
+          },
+          "server_id": {
+            "const": "civicly-domain"
+          },
+          "tool_name": {
+            "type": "string"
+          },
+          "schema_version": {
+            "const": 3
+          },
+          "inventory_version": {
+            "type": "string"
           }
         },
         "required": [
@@ -719,12 +2151,24 @@
           "trace_id",
           "source_evidence_ids",
           "simulation_mode",
-          "cases"
+          "cases",
+          "context",
+          "graph_revision",
+          "error",
+          "truncated",
+          "search_limited",
+          "data",
+          "execution_id",
+          "server_id",
+          "tool_name",
+          "schema_version",
+          "inventory_version"
         ]
       },
       "requires_mcp_runtime_call": true,
       "side_effect": false,
-      "result_semantics": "On non-SUCCESS status, return required envelope with null ID(s)/empty lists as applicable; include error; no claimed state change."
+      "result_semantics": "On non-SUCCESS status, return required envelope with null ID(s)/empty lists as applicable; include error; no claimed state change.",
+      "b07_runtime": "REGISTERED_READ_UNAVAILABLE_UNTIL_DESIGNATED_MILESTONE"
     },
     {
       "name": "get_organizational_procedures",
@@ -736,11 +2180,23 @@
         "properties": {
           "department_id": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "maxLength": 512
           },
           "action_type": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "minLength": 1,
+            "maxLength": 512,
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+          },
+          "include_candidates": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -832,13 +2288,270 @@
           },
           "graph_revision": {
             "type": [
-              "string",
               "integer",
               "null"
-            ]
+            ],
+            "minimum": 0
           },
           "truncated": {
             "type": "boolean"
+          },
+          "context": {
+            "additionalProperties": false,
+            "properties": {
+              "trace_id": {
+                "maxLength": 80,
+                "minLength": 1,
+                "title": "Trace Id",
+                "type": "string"
+              },
+              "execution_id": {
+                "maxLength": 80,
+                "minLength": 1,
+                "title": "Execution Id",
+                "type": "string"
+              },
+              "parent_execution_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Parent Execution Id"
+              },
+              "investigation_id": {
+                "anyOf": [
+                  {
+                    "maxLength": 200,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Investigation Id"
+              },
+              "municipality_id": {
+                "const": "demo-city",
+                "default": "demo-city",
+                "title": "Municipality Id",
+                "type": "string"
+              },
+              "source_graph": {
+                "const": "civicly_b04_test_a84beda80da64aacbc367a9399e07a97",
+                "default": "civicly_b04_test_a84beda80da64aacbc367a9399e07a97",
+                "title": "Source Graph",
+                "type": "string"
+              },
+              "caller_role": {
+                "default": "OPERATOR_REVIEW",
+                "enum": [
+                  "READ_ONLY",
+                  "OPERATOR_REVIEW"
+                ],
+                "title": "Caller Role",
+                "type": "string"
+              },
+              "invocation_origin": {
+                "default": "OPERATOR_REVIEW",
+                "enum": [
+                  "OPERATOR_REVIEW",
+                  "APPLICATION"
+                ],
+                "title": "Invocation Origin",
+                "type": "string"
+              }
+            },
+            "required": [
+              "trace_id",
+              "execution_id"
+            ],
+            "title": "Context",
+            "type": "object"
+          },
+          "search_limited": {
+            "type": "boolean"
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "nodes": {
+                "type": "array",
+                "maxItems": 120,
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "title": "Id",
+                      "type": "string"
+                    },
+                    "kind": {
+                      "title": "Kind",
+                      "type": "string"
+                    },
+                    "labels": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Labels",
+                      "type": "array"
+                    },
+                    "properties": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "kind",
+                    "labels",
+                    "properties"
+                  ],
+                  "title": "NodeRecord",
+                  "type": "object"
+                }
+              },
+              "edges": {
+                "type": "array",
+                "maxItems": 200,
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "title": "Id",
+                      "type": "string"
+                    },
+                    "kind": {
+                      "title": "Kind",
+                      "type": "string"
+                    },
+                    "source": {
+                      "title": "Source",
+                      "type": "string"
+                    },
+                    "target": {
+                      "title": "Target",
+                      "type": "string"
+                    },
+                    "properties": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "kind",
+                    "source",
+                    "target",
+                    "properties"
+                  ],
+                  "title": "EdgeRecord",
+                  "type": "object"
+                }
+              },
+              "paths": {
+                "type": "array",
+                "maxItems": 100,
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "node_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Node Ids",
+                      "type": "array"
+                    },
+                    "edge_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Edge Ids",
+                      "type": "array"
+                    },
+                    "directions": {
+                      "items": {
+                        "enum": [
+                          "OUTGOING",
+                          "INCOMING"
+                        ],
+                        "type": "string"
+                      },
+                      "title": "Directions",
+                      "type": "array"
+                    },
+                    "evidence_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Evidence Ids",
+                      "type": "array"
+                    },
+                    "context": {
+                      "type": "object"
+                    },
+                    "id": {
+                      "title": "Id",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "node_ids",
+                    "edge_ids",
+                    "directions",
+                    "evidence_ids",
+                    "id"
+                  ],
+                  "title": "ProofPath",
+                  "type": "object"
+                }
+              },
+              "gaps": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 100
+              },
+              "reservations": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 100
+              },
+              "as_of": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "required": [
+              "nodes",
+              "edges",
+              "paths",
+              "gaps",
+              "reservations",
+              "as_of"
+            ]
+          },
+          "execution_id": {
+            "type": "string"
+          },
+          "server_id": {
+            "const": "civicly-domain"
+          },
+          "tool_name": {
+            "type": "string"
+          },
+          "schema_version": {
+            "const": 3
+          },
+          "inventory_version": {
+            "type": "string"
           }
         },
         "required": [
@@ -846,12 +2559,24 @@
           "trace_id",
           "source_evidence_ids",
           "simulation_mode",
-          "procedures"
+          "procedures",
+          "context",
+          "graph_revision",
+          "error",
+          "truncated",
+          "search_limited",
+          "data",
+          "execution_id",
+          "server_id",
+          "tool_name",
+          "schema_version",
+          "inventory_version"
         ]
       },
       "requires_mcp_runtime_call": true,
       "side_effect": false,
-      "result_semantics": "On non-SUCCESS status, return required envelope with null ID(s)/empty lists as applicable; include error; no claimed state change."
+      "result_semantics": "On non-SUCCESS status, return required envelope with null ID(s)/empty lists as applicable; include error; no claimed state change.",
+      "b07_runtime": "REGISTERED_READ_UNAVAILABLE_UNTIL_DESIGNATED_MILESTONE"
     },
     {
       "name": "record_hypothesis_assessment",
@@ -976,13 +2701,270 @@
           },
           "graph_revision": {
             "type": [
-              "string",
               "integer",
               "null"
-            ]
+            ],
+            "minimum": 0
           },
           "truncated": {
             "type": "boolean"
+          },
+          "context": {
+            "additionalProperties": false,
+            "properties": {
+              "trace_id": {
+                "maxLength": 80,
+                "minLength": 1,
+                "title": "Trace Id",
+                "type": "string"
+              },
+              "execution_id": {
+                "maxLength": 80,
+                "minLength": 1,
+                "title": "Execution Id",
+                "type": "string"
+              },
+              "parent_execution_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Parent Execution Id"
+              },
+              "investigation_id": {
+                "anyOf": [
+                  {
+                    "maxLength": 200,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Investigation Id"
+              },
+              "municipality_id": {
+                "const": "demo-city",
+                "default": "demo-city",
+                "title": "Municipality Id",
+                "type": "string"
+              },
+              "source_graph": {
+                "const": "civicly_b04_test_a84beda80da64aacbc367a9399e07a97",
+                "default": "civicly_b04_test_a84beda80da64aacbc367a9399e07a97",
+                "title": "Source Graph",
+                "type": "string"
+              },
+              "caller_role": {
+                "default": "OPERATOR_REVIEW",
+                "enum": [
+                  "READ_ONLY",
+                  "OPERATOR_REVIEW"
+                ],
+                "title": "Caller Role",
+                "type": "string"
+              },
+              "invocation_origin": {
+                "default": "OPERATOR_REVIEW",
+                "enum": [
+                  "OPERATOR_REVIEW",
+                  "APPLICATION"
+                ],
+                "title": "Invocation Origin",
+                "type": "string"
+              }
+            },
+            "required": [
+              "trace_id",
+              "execution_id"
+            ],
+            "title": "Context",
+            "type": "object"
+          },
+          "search_limited": {
+            "type": "boolean"
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "nodes": {
+                "type": "array",
+                "maxItems": 120,
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "title": "Id",
+                      "type": "string"
+                    },
+                    "kind": {
+                      "title": "Kind",
+                      "type": "string"
+                    },
+                    "labels": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Labels",
+                      "type": "array"
+                    },
+                    "properties": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "kind",
+                    "labels",
+                    "properties"
+                  ],
+                  "title": "NodeRecord",
+                  "type": "object"
+                }
+              },
+              "edges": {
+                "type": "array",
+                "maxItems": 200,
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "title": "Id",
+                      "type": "string"
+                    },
+                    "kind": {
+                      "title": "Kind",
+                      "type": "string"
+                    },
+                    "source": {
+                      "title": "Source",
+                      "type": "string"
+                    },
+                    "target": {
+                      "title": "Target",
+                      "type": "string"
+                    },
+                    "properties": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "kind",
+                    "source",
+                    "target",
+                    "properties"
+                  ],
+                  "title": "EdgeRecord",
+                  "type": "object"
+                }
+              },
+              "paths": {
+                "type": "array",
+                "maxItems": 100,
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "node_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Node Ids",
+                      "type": "array"
+                    },
+                    "edge_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Edge Ids",
+                      "type": "array"
+                    },
+                    "directions": {
+                      "items": {
+                        "enum": [
+                          "OUTGOING",
+                          "INCOMING"
+                        ],
+                        "type": "string"
+                      },
+                      "title": "Directions",
+                      "type": "array"
+                    },
+                    "evidence_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Evidence Ids",
+                      "type": "array"
+                    },
+                    "context": {
+                      "type": "object"
+                    },
+                    "id": {
+                      "title": "Id",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "node_ids",
+                    "edge_ids",
+                    "directions",
+                    "evidence_ids",
+                    "id"
+                  ],
+                  "title": "ProofPath",
+                  "type": "object"
+                }
+              },
+              "gaps": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 100
+              },
+              "reservations": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 100
+              },
+              "as_of": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "required": [
+              "nodes",
+              "edges",
+              "paths",
+              "gaps",
+              "reservations",
+              "as_of"
+            ]
+          },
+          "execution_id": {
+            "type": "string"
+          },
+          "server_id": {
+            "const": "civicly-domain"
+          },
+          "tool_name": {
+            "type": "string"
+          },
+          "schema_version": {
+            "const": 3
+          },
+          "inventory_version": {
+            "type": "string"
           }
         },
         "required": [
@@ -990,12 +2972,24 @@
           "trace_id",
           "source_evidence_ids",
           "simulation_mode",
-          "assessment_id"
+          "assessment_id",
+          "context",
+          "graph_revision",
+          "error",
+          "truncated",
+          "search_limited",
+          "data",
+          "execution_id",
+          "server_id",
+          "tool_name",
+          "schema_version",
+          "inventory_version"
         ]
       },
       "requires_mcp_runtime_call": true,
       "side_effect": true,
-      "result_semantics": "On non-SUCCESS status, return required envelope with null ID(s)/empty lists as applicable; include error; no claimed state change."
+      "result_semantics": "On non-SUCCESS status, return required envelope with null ID(s)/empty lists as applicable; include error; no claimed state change.",
+      "b07_runtime": "NOT_REGISTERED_FUTURE_WRITE"
     },
     {
       "name": "propose_inspection",
@@ -1108,13 +3102,270 @@
           },
           "graph_revision": {
             "type": [
-              "string",
               "integer",
               "null"
-            ]
+            ],
+            "minimum": 0
           },
           "truncated": {
             "type": "boolean"
+          },
+          "context": {
+            "additionalProperties": false,
+            "properties": {
+              "trace_id": {
+                "maxLength": 80,
+                "minLength": 1,
+                "title": "Trace Id",
+                "type": "string"
+              },
+              "execution_id": {
+                "maxLength": 80,
+                "minLength": 1,
+                "title": "Execution Id",
+                "type": "string"
+              },
+              "parent_execution_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Parent Execution Id"
+              },
+              "investigation_id": {
+                "anyOf": [
+                  {
+                    "maxLength": 200,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Investigation Id"
+              },
+              "municipality_id": {
+                "const": "demo-city",
+                "default": "demo-city",
+                "title": "Municipality Id",
+                "type": "string"
+              },
+              "source_graph": {
+                "const": "civicly_b04_test_a84beda80da64aacbc367a9399e07a97",
+                "default": "civicly_b04_test_a84beda80da64aacbc367a9399e07a97",
+                "title": "Source Graph",
+                "type": "string"
+              },
+              "caller_role": {
+                "default": "OPERATOR_REVIEW",
+                "enum": [
+                  "READ_ONLY",
+                  "OPERATOR_REVIEW"
+                ],
+                "title": "Caller Role",
+                "type": "string"
+              },
+              "invocation_origin": {
+                "default": "OPERATOR_REVIEW",
+                "enum": [
+                  "OPERATOR_REVIEW",
+                  "APPLICATION"
+                ],
+                "title": "Invocation Origin",
+                "type": "string"
+              }
+            },
+            "required": [
+              "trace_id",
+              "execution_id"
+            ],
+            "title": "Context",
+            "type": "object"
+          },
+          "search_limited": {
+            "type": "boolean"
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "nodes": {
+                "type": "array",
+                "maxItems": 120,
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "title": "Id",
+                      "type": "string"
+                    },
+                    "kind": {
+                      "title": "Kind",
+                      "type": "string"
+                    },
+                    "labels": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Labels",
+                      "type": "array"
+                    },
+                    "properties": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "kind",
+                    "labels",
+                    "properties"
+                  ],
+                  "title": "NodeRecord",
+                  "type": "object"
+                }
+              },
+              "edges": {
+                "type": "array",
+                "maxItems": 200,
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "title": "Id",
+                      "type": "string"
+                    },
+                    "kind": {
+                      "title": "Kind",
+                      "type": "string"
+                    },
+                    "source": {
+                      "title": "Source",
+                      "type": "string"
+                    },
+                    "target": {
+                      "title": "Target",
+                      "type": "string"
+                    },
+                    "properties": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "kind",
+                    "source",
+                    "target",
+                    "properties"
+                  ],
+                  "title": "EdgeRecord",
+                  "type": "object"
+                }
+              },
+              "paths": {
+                "type": "array",
+                "maxItems": 100,
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "node_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Node Ids",
+                      "type": "array"
+                    },
+                    "edge_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Edge Ids",
+                      "type": "array"
+                    },
+                    "directions": {
+                      "items": {
+                        "enum": [
+                          "OUTGOING",
+                          "INCOMING"
+                        ],
+                        "type": "string"
+                      },
+                      "title": "Directions",
+                      "type": "array"
+                    },
+                    "evidence_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Evidence Ids",
+                      "type": "array"
+                    },
+                    "context": {
+                      "type": "object"
+                    },
+                    "id": {
+                      "title": "Id",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "node_ids",
+                    "edge_ids",
+                    "directions",
+                    "evidence_ids",
+                    "id"
+                  ],
+                  "title": "ProofPath",
+                  "type": "object"
+                }
+              },
+              "gaps": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 100
+              },
+              "reservations": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 100
+              },
+              "as_of": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "required": [
+              "nodes",
+              "edges",
+              "paths",
+              "gaps",
+              "reservations",
+              "as_of"
+            ]
+          },
+          "execution_id": {
+            "type": "string"
+          },
+          "server_id": {
+            "const": "civicly-domain"
+          },
+          "tool_name": {
+            "type": "string"
+          },
+          "schema_version": {
+            "const": 3
+          },
+          "inventory_version": {
+            "type": "string"
           }
         },
         "required": [
@@ -1123,12 +3374,24 @@
           "source_evidence_ids",
           "simulation_mode",
           "inspection_id",
-          "inspection_status"
+          "inspection_status",
+          "context",
+          "graph_revision",
+          "error",
+          "truncated",
+          "search_limited",
+          "data",
+          "execution_id",
+          "server_id",
+          "tool_name",
+          "schema_version",
+          "inventory_version"
         ]
       },
       "requires_mcp_runtime_call": true,
       "side_effect": true,
-      "result_semantics": "On non-SUCCESS status, return required envelope with null ID(s)/empty lists as applicable; include error; no claimed state change."
+      "result_semantics": "On non-SUCCESS status, return required envelope with null ID(s)/empty lists as applicable; include error; no claimed state change.",
+      "b07_runtime": "NOT_REGISTERED_FUTURE_WRITE"
     },
     {
       "name": "propose_resolution_plan",
@@ -1304,13 +3567,270 @@
           },
           "graph_revision": {
             "type": [
-              "string",
               "integer",
               "null"
-            ]
+            ],
+            "minimum": 0
           },
           "truncated": {
             "type": "boolean"
+          },
+          "context": {
+            "additionalProperties": false,
+            "properties": {
+              "trace_id": {
+                "maxLength": 80,
+                "minLength": 1,
+                "title": "Trace Id",
+                "type": "string"
+              },
+              "execution_id": {
+                "maxLength": 80,
+                "minLength": 1,
+                "title": "Execution Id",
+                "type": "string"
+              },
+              "parent_execution_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Parent Execution Id"
+              },
+              "investigation_id": {
+                "anyOf": [
+                  {
+                    "maxLength": 200,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Investigation Id"
+              },
+              "municipality_id": {
+                "const": "demo-city",
+                "default": "demo-city",
+                "title": "Municipality Id",
+                "type": "string"
+              },
+              "source_graph": {
+                "const": "civicly_b04_test_a84beda80da64aacbc367a9399e07a97",
+                "default": "civicly_b04_test_a84beda80da64aacbc367a9399e07a97",
+                "title": "Source Graph",
+                "type": "string"
+              },
+              "caller_role": {
+                "default": "OPERATOR_REVIEW",
+                "enum": [
+                  "READ_ONLY",
+                  "OPERATOR_REVIEW"
+                ],
+                "title": "Caller Role",
+                "type": "string"
+              },
+              "invocation_origin": {
+                "default": "OPERATOR_REVIEW",
+                "enum": [
+                  "OPERATOR_REVIEW",
+                  "APPLICATION"
+                ],
+                "title": "Invocation Origin",
+                "type": "string"
+              }
+            },
+            "required": [
+              "trace_id",
+              "execution_id"
+            ],
+            "title": "Context",
+            "type": "object"
+          },
+          "search_limited": {
+            "type": "boolean"
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "nodes": {
+                "type": "array",
+                "maxItems": 120,
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "title": "Id",
+                      "type": "string"
+                    },
+                    "kind": {
+                      "title": "Kind",
+                      "type": "string"
+                    },
+                    "labels": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Labels",
+                      "type": "array"
+                    },
+                    "properties": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "kind",
+                    "labels",
+                    "properties"
+                  ],
+                  "title": "NodeRecord",
+                  "type": "object"
+                }
+              },
+              "edges": {
+                "type": "array",
+                "maxItems": 200,
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "title": "Id",
+                      "type": "string"
+                    },
+                    "kind": {
+                      "title": "Kind",
+                      "type": "string"
+                    },
+                    "source": {
+                      "title": "Source",
+                      "type": "string"
+                    },
+                    "target": {
+                      "title": "Target",
+                      "type": "string"
+                    },
+                    "properties": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "kind",
+                    "source",
+                    "target",
+                    "properties"
+                  ],
+                  "title": "EdgeRecord",
+                  "type": "object"
+                }
+              },
+              "paths": {
+                "type": "array",
+                "maxItems": 100,
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "node_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Node Ids",
+                      "type": "array"
+                    },
+                    "edge_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Edge Ids",
+                      "type": "array"
+                    },
+                    "directions": {
+                      "items": {
+                        "enum": [
+                          "OUTGOING",
+                          "INCOMING"
+                        ],
+                        "type": "string"
+                      },
+                      "title": "Directions",
+                      "type": "array"
+                    },
+                    "evidence_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Evidence Ids",
+                      "type": "array"
+                    },
+                    "context": {
+                      "type": "object"
+                    },
+                    "id": {
+                      "title": "Id",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "node_ids",
+                    "edge_ids",
+                    "directions",
+                    "evidence_ids",
+                    "id"
+                  ],
+                  "title": "ProofPath",
+                  "type": "object"
+                }
+              },
+              "gaps": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 100
+              },
+              "reservations": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 100
+              },
+              "as_of": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "required": [
+              "nodes",
+              "edges",
+              "paths",
+              "gaps",
+              "reservations",
+              "as_of"
+            ]
+          },
+          "execution_id": {
+            "type": "string"
+          },
+          "server_id": {
+            "const": "civicly-domain"
+          },
+          "tool_name": {
+            "type": "string"
+          },
+          "schema_version": {
+            "const": 3
+          },
+          "inventory_version": {
+            "type": "string"
           }
         },
         "required": [
@@ -1320,12 +3840,24 @@
           "simulation_mode",
           "plan_id",
           "plan_version",
-          "plan_hash"
+          "plan_hash",
+          "context",
+          "graph_revision",
+          "error",
+          "truncated",
+          "search_limited",
+          "data",
+          "execution_id",
+          "server_id",
+          "tool_name",
+          "schema_version",
+          "inventory_version"
         ]
       },
       "requires_mcp_runtime_call": true,
       "side_effect": true,
-      "result_semantics": "On non-SUCCESS status, return required envelope with null ID(s)/empty lists as applicable; include error; no claimed state change."
+      "result_semantics": "On non-SUCCESS status, return required envelope with null ID(s)/empty lists as applicable; include error; no claimed state change.",
+      "b07_runtime": "NOT_REGISTERED_FUTURE_WRITE"
     },
     {
       "name": "request_plan_approval",
@@ -1436,13 +3968,270 @@
           },
           "graph_revision": {
             "type": [
-              "string",
               "integer",
               "null"
-            ]
+            ],
+            "minimum": 0
           },
           "truncated": {
             "type": "boolean"
+          },
+          "context": {
+            "additionalProperties": false,
+            "properties": {
+              "trace_id": {
+                "maxLength": 80,
+                "minLength": 1,
+                "title": "Trace Id",
+                "type": "string"
+              },
+              "execution_id": {
+                "maxLength": 80,
+                "minLength": 1,
+                "title": "Execution Id",
+                "type": "string"
+              },
+              "parent_execution_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Parent Execution Id"
+              },
+              "investigation_id": {
+                "anyOf": [
+                  {
+                    "maxLength": 200,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Investigation Id"
+              },
+              "municipality_id": {
+                "const": "demo-city",
+                "default": "demo-city",
+                "title": "Municipality Id",
+                "type": "string"
+              },
+              "source_graph": {
+                "const": "civicly_b04_test_a84beda80da64aacbc367a9399e07a97",
+                "default": "civicly_b04_test_a84beda80da64aacbc367a9399e07a97",
+                "title": "Source Graph",
+                "type": "string"
+              },
+              "caller_role": {
+                "default": "OPERATOR_REVIEW",
+                "enum": [
+                  "READ_ONLY",
+                  "OPERATOR_REVIEW"
+                ],
+                "title": "Caller Role",
+                "type": "string"
+              },
+              "invocation_origin": {
+                "default": "OPERATOR_REVIEW",
+                "enum": [
+                  "OPERATOR_REVIEW",
+                  "APPLICATION"
+                ],
+                "title": "Invocation Origin",
+                "type": "string"
+              }
+            },
+            "required": [
+              "trace_id",
+              "execution_id"
+            ],
+            "title": "Context",
+            "type": "object"
+          },
+          "search_limited": {
+            "type": "boolean"
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "nodes": {
+                "type": "array",
+                "maxItems": 120,
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "title": "Id",
+                      "type": "string"
+                    },
+                    "kind": {
+                      "title": "Kind",
+                      "type": "string"
+                    },
+                    "labels": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Labels",
+                      "type": "array"
+                    },
+                    "properties": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "kind",
+                    "labels",
+                    "properties"
+                  ],
+                  "title": "NodeRecord",
+                  "type": "object"
+                }
+              },
+              "edges": {
+                "type": "array",
+                "maxItems": 200,
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "title": "Id",
+                      "type": "string"
+                    },
+                    "kind": {
+                      "title": "Kind",
+                      "type": "string"
+                    },
+                    "source": {
+                      "title": "Source",
+                      "type": "string"
+                    },
+                    "target": {
+                      "title": "Target",
+                      "type": "string"
+                    },
+                    "properties": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "kind",
+                    "source",
+                    "target",
+                    "properties"
+                  ],
+                  "title": "EdgeRecord",
+                  "type": "object"
+                }
+              },
+              "paths": {
+                "type": "array",
+                "maxItems": 100,
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "node_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Node Ids",
+                      "type": "array"
+                    },
+                    "edge_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Edge Ids",
+                      "type": "array"
+                    },
+                    "directions": {
+                      "items": {
+                        "enum": [
+                          "OUTGOING",
+                          "INCOMING"
+                        ],
+                        "type": "string"
+                      },
+                      "title": "Directions",
+                      "type": "array"
+                    },
+                    "evidence_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Evidence Ids",
+                      "type": "array"
+                    },
+                    "context": {
+                      "type": "object"
+                    },
+                    "id": {
+                      "title": "Id",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "node_ids",
+                    "edge_ids",
+                    "directions",
+                    "evidence_ids",
+                    "id"
+                  ],
+                  "title": "ProofPath",
+                  "type": "object"
+                }
+              },
+              "gaps": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 100
+              },
+              "reservations": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 100
+              },
+              "as_of": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "required": [
+              "nodes",
+              "edges",
+              "paths",
+              "gaps",
+              "reservations",
+              "as_of"
+            ]
+          },
+          "execution_id": {
+            "type": "string"
+          },
+          "server_id": {
+            "const": "civicly-domain"
+          },
+          "tool_name": {
+            "type": "string"
+          },
+          "schema_version": {
+            "const": 3
+          },
+          "inventory_version": {
+            "type": "string"
           }
         },
         "required": [
@@ -1451,12 +4240,24 @@
           "source_evidence_ids",
           "simulation_mode",
           "approval_id",
-          "approval_status"
+          "approval_status",
+          "context",
+          "graph_revision",
+          "error",
+          "truncated",
+          "search_limited",
+          "data",
+          "execution_id",
+          "server_id",
+          "tool_name",
+          "schema_version",
+          "inventory_version"
         ]
       },
       "requires_mcp_runtime_call": true,
       "side_effect": true,
-      "result_semantics": "On non-SUCCESS status, return required envelope with null ID(s)/empty lists as applicable; include error; no claimed state change."
+      "result_semantics": "On non-SUCCESS status, return required envelope with null ID(s)/empty lists as applicable; include error; no claimed state change.",
+      "b07_runtime": "NOT_REGISTERED_FUTURE_WRITE"
     },
     {
       "name": "create_work_order",
@@ -1577,13 +4378,270 @@
           },
           "graph_revision": {
             "type": [
-              "string",
               "integer",
               "null"
-            ]
+            ],
+            "minimum": 0
           },
           "truncated": {
             "type": "boolean"
+          },
+          "context": {
+            "additionalProperties": false,
+            "properties": {
+              "trace_id": {
+                "maxLength": 80,
+                "minLength": 1,
+                "title": "Trace Id",
+                "type": "string"
+              },
+              "execution_id": {
+                "maxLength": 80,
+                "minLength": 1,
+                "title": "Execution Id",
+                "type": "string"
+              },
+              "parent_execution_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Parent Execution Id"
+              },
+              "investigation_id": {
+                "anyOf": [
+                  {
+                    "maxLength": 200,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Investigation Id"
+              },
+              "municipality_id": {
+                "const": "demo-city",
+                "default": "demo-city",
+                "title": "Municipality Id",
+                "type": "string"
+              },
+              "source_graph": {
+                "const": "civicly_b04_test_a84beda80da64aacbc367a9399e07a97",
+                "default": "civicly_b04_test_a84beda80da64aacbc367a9399e07a97",
+                "title": "Source Graph",
+                "type": "string"
+              },
+              "caller_role": {
+                "default": "OPERATOR_REVIEW",
+                "enum": [
+                  "READ_ONLY",
+                  "OPERATOR_REVIEW"
+                ],
+                "title": "Caller Role",
+                "type": "string"
+              },
+              "invocation_origin": {
+                "default": "OPERATOR_REVIEW",
+                "enum": [
+                  "OPERATOR_REVIEW",
+                  "APPLICATION"
+                ],
+                "title": "Invocation Origin",
+                "type": "string"
+              }
+            },
+            "required": [
+              "trace_id",
+              "execution_id"
+            ],
+            "title": "Context",
+            "type": "object"
+          },
+          "search_limited": {
+            "type": "boolean"
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "nodes": {
+                "type": "array",
+                "maxItems": 120,
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "title": "Id",
+                      "type": "string"
+                    },
+                    "kind": {
+                      "title": "Kind",
+                      "type": "string"
+                    },
+                    "labels": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Labels",
+                      "type": "array"
+                    },
+                    "properties": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "kind",
+                    "labels",
+                    "properties"
+                  ],
+                  "title": "NodeRecord",
+                  "type": "object"
+                }
+              },
+              "edges": {
+                "type": "array",
+                "maxItems": 200,
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "title": "Id",
+                      "type": "string"
+                    },
+                    "kind": {
+                      "title": "Kind",
+                      "type": "string"
+                    },
+                    "source": {
+                      "title": "Source",
+                      "type": "string"
+                    },
+                    "target": {
+                      "title": "Target",
+                      "type": "string"
+                    },
+                    "properties": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "kind",
+                    "source",
+                    "target",
+                    "properties"
+                  ],
+                  "title": "EdgeRecord",
+                  "type": "object"
+                }
+              },
+              "paths": {
+                "type": "array",
+                "maxItems": 100,
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "node_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Node Ids",
+                      "type": "array"
+                    },
+                    "edge_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Edge Ids",
+                      "type": "array"
+                    },
+                    "directions": {
+                      "items": {
+                        "enum": [
+                          "OUTGOING",
+                          "INCOMING"
+                        ],
+                        "type": "string"
+                      },
+                      "title": "Directions",
+                      "type": "array"
+                    },
+                    "evidence_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Evidence Ids",
+                      "type": "array"
+                    },
+                    "context": {
+                      "type": "object"
+                    },
+                    "id": {
+                      "title": "Id",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "node_ids",
+                    "edge_ids",
+                    "directions",
+                    "evidence_ids",
+                    "id"
+                  ],
+                  "title": "ProofPath",
+                  "type": "object"
+                }
+              },
+              "gaps": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 100
+              },
+              "reservations": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 100
+              },
+              "as_of": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "required": [
+              "nodes",
+              "edges",
+              "paths",
+              "gaps",
+              "reservations",
+              "as_of"
+            ]
+          },
+          "execution_id": {
+            "type": "string"
+          },
+          "server_id": {
+            "const": "civicly-domain"
+          },
+          "tool_name": {
+            "type": "string"
+          },
+          "schema_version": {
+            "const": 3
+          },
+          "inventory_version": {
+            "type": "string"
           }
         },
         "required": [
@@ -1593,12 +4651,24 @@
           "simulation_mode",
           "work_order_id",
           "work_order_status",
-          "execution_mode"
+          "execution_mode",
+          "context",
+          "graph_revision",
+          "error",
+          "truncated",
+          "search_limited",
+          "data",
+          "execution_id",
+          "server_id",
+          "tool_name",
+          "schema_version",
+          "inventory_version"
         ]
       },
       "requires_mcp_runtime_call": true,
       "side_effect": true,
-      "result_semantics": "On non-SUCCESS status, return required envelope with null ID(s)/empty lists as applicable; include error; no claimed state change."
+      "result_semantics": "On non-SUCCESS status, return required envelope with null ID(s)/empty lists as applicable; include error; no claimed state change.",
+      "b07_runtime": "NOT_REGISTERED_FUTURE_WRITE"
     },
     {
       "name": "get_work_order_status",
@@ -1610,7 +4680,18 @@
         "properties": {
           "work_order_id": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "minLength": 1,
+            "maxLength": 512,
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+          },
+          "include_candidates": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -1696,13 +4777,270 @@
           },
           "graph_revision": {
             "type": [
-              "string",
               "integer",
               "null"
-            ]
+            ],
+            "minimum": 0
           },
           "truncated": {
             "type": "boolean"
+          },
+          "context": {
+            "additionalProperties": false,
+            "properties": {
+              "trace_id": {
+                "maxLength": 80,
+                "minLength": 1,
+                "title": "Trace Id",
+                "type": "string"
+              },
+              "execution_id": {
+                "maxLength": 80,
+                "minLength": 1,
+                "title": "Execution Id",
+                "type": "string"
+              },
+              "parent_execution_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Parent Execution Id"
+              },
+              "investigation_id": {
+                "anyOf": [
+                  {
+                    "maxLength": 200,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Investigation Id"
+              },
+              "municipality_id": {
+                "const": "demo-city",
+                "default": "demo-city",
+                "title": "Municipality Id",
+                "type": "string"
+              },
+              "source_graph": {
+                "const": "civicly_b04_test_a84beda80da64aacbc367a9399e07a97",
+                "default": "civicly_b04_test_a84beda80da64aacbc367a9399e07a97",
+                "title": "Source Graph",
+                "type": "string"
+              },
+              "caller_role": {
+                "default": "OPERATOR_REVIEW",
+                "enum": [
+                  "READ_ONLY",
+                  "OPERATOR_REVIEW"
+                ],
+                "title": "Caller Role",
+                "type": "string"
+              },
+              "invocation_origin": {
+                "default": "OPERATOR_REVIEW",
+                "enum": [
+                  "OPERATOR_REVIEW",
+                  "APPLICATION"
+                ],
+                "title": "Invocation Origin",
+                "type": "string"
+              }
+            },
+            "required": [
+              "trace_id",
+              "execution_id"
+            ],
+            "title": "Context",
+            "type": "object"
+          },
+          "search_limited": {
+            "type": "boolean"
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "nodes": {
+                "type": "array",
+                "maxItems": 120,
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "title": "Id",
+                      "type": "string"
+                    },
+                    "kind": {
+                      "title": "Kind",
+                      "type": "string"
+                    },
+                    "labels": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Labels",
+                      "type": "array"
+                    },
+                    "properties": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "kind",
+                    "labels",
+                    "properties"
+                  ],
+                  "title": "NodeRecord",
+                  "type": "object"
+                }
+              },
+              "edges": {
+                "type": "array",
+                "maxItems": 200,
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "title": "Id",
+                      "type": "string"
+                    },
+                    "kind": {
+                      "title": "Kind",
+                      "type": "string"
+                    },
+                    "source": {
+                      "title": "Source",
+                      "type": "string"
+                    },
+                    "target": {
+                      "title": "Target",
+                      "type": "string"
+                    },
+                    "properties": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "kind",
+                    "source",
+                    "target",
+                    "properties"
+                  ],
+                  "title": "EdgeRecord",
+                  "type": "object"
+                }
+              },
+              "paths": {
+                "type": "array",
+                "maxItems": 100,
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "node_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Node Ids",
+                      "type": "array"
+                    },
+                    "edge_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Edge Ids",
+                      "type": "array"
+                    },
+                    "directions": {
+                      "items": {
+                        "enum": [
+                          "OUTGOING",
+                          "INCOMING"
+                        ],
+                        "type": "string"
+                      },
+                      "title": "Directions",
+                      "type": "array"
+                    },
+                    "evidence_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Evidence Ids",
+                      "type": "array"
+                    },
+                    "context": {
+                      "type": "object"
+                    },
+                    "id": {
+                      "title": "Id",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "node_ids",
+                    "edge_ids",
+                    "directions",
+                    "evidence_ids",
+                    "id"
+                  ],
+                  "title": "ProofPath",
+                  "type": "object"
+                }
+              },
+              "gaps": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 100
+              },
+              "reservations": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 100
+              },
+              "as_of": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "required": [
+              "nodes",
+              "edges",
+              "paths",
+              "gaps",
+              "reservations",
+              "as_of"
+            ]
+          },
+          "execution_id": {
+            "type": "string"
+          },
+          "server_id": {
+            "const": "civicly-domain"
+          },
+          "tool_name": {
+            "type": "string"
+          },
+          "schema_version": {
+            "const": 3
+          },
+          "inventory_version": {
+            "type": "string"
           }
         },
         "required": [
@@ -1711,12 +5049,24 @@
           "source_evidence_ids",
           "simulation_mode",
           "work_order_status",
-          "blocking_task_ids"
+          "blocking_task_ids",
+          "context",
+          "graph_revision",
+          "error",
+          "truncated",
+          "search_limited",
+          "data",
+          "execution_id",
+          "server_id",
+          "tool_name",
+          "schema_version",
+          "inventory_version"
         ]
       },
       "requires_mcp_runtime_call": true,
       "side_effect": false,
-      "result_semantics": "On non-SUCCESS status, return required envelope with null ID(s)/empty lists as applicable; include error; no claimed state change."
+      "result_semantics": "B07-R: recorded status only. Until B12\u2013B15 implement retrieval, blocking_task_ids/latest_status_event_ids empty placeholders are UNKNOWN, not verified empty relationships. Explicit data.gaps and PARTIAL for an existing visible WorkOrder; absent record UNAVAILABLE. No operational completion claim.",
+      "b07_runtime": "REGISTERED_READ"
     },
     {
       "name": "record_intervention_outcome",
@@ -1840,13 +5190,270 @@
           },
           "graph_revision": {
             "type": [
-              "string",
               "integer",
               "null"
-            ]
+            ],
+            "minimum": 0
           },
           "truncated": {
             "type": "boolean"
+          },
+          "context": {
+            "additionalProperties": false,
+            "properties": {
+              "trace_id": {
+                "maxLength": 80,
+                "minLength": 1,
+                "title": "Trace Id",
+                "type": "string"
+              },
+              "execution_id": {
+                "maxLength": 80,
+                "minLength": 1,
+                "title": "Execution Id",
+                "type": "string"
+              },
+              "parent_execution_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Parent Execution Id"
+              },
+              "investigation_id": {
+                "anyOf": [
+                  {
+                    "maxLength": 200,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Investigation Id"
+              },
+              "municipality_id": {
+                "const": "demo-city",
+                "default": "demo-city",
+                "title": "Municipality Id",
+                "type": "string"
+              },
+              "source_graph": {
+                "const": "civicly_b04_test_a84beda80da64aacbc367a9399e07a97",
+                "default": "civicly_b04_test_a84beda80da64aacbc367a9399e07a97",
+                "title": "Source Graph",
+                "type": "string"
+              },
+              "caller_role": {
+                "default": "OPERATOR_REVIEW",
+                "enum": [
+                  "READ_ONLY",
+                  "OPERATOR_REVIEW"
+                ],
+                "title": "Caller Role",
+                "type": "string"
+              },
+              "invocation_origin": {
+                "default": "OPERATOR_REVIEW",
+                "enum": [
+                  "OPERATOR_REVIEW",
+                  "APPLICATION"
+                ],
+                "title": "Invocation Origin",
+                "type": "string"
+              }
+            },
+            "required": [
+              "trace_id",
+              "execution_id"
+            ],
+            "title": "Context",
+            "type": "object"
+          },
+          "search_limited": {
+            "type": "boolean"
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "nodes": {
+                "type": "array",
+                "maxItems": 120,
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "title": "Id",
+                      "type": "string"
+                    },
+                    "kind": {
+                      "title": "Kind",
+                      "type": "string"
+                    },
+                    "labels": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Labels",
+                      "type": "array"
+                    },
+                    "properties": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "kind",
+                    "labels",
+                    "properties"
+                  ],
+                  "title": "NodeRecord",
+                  "type": "object"
+                }
+              },
+              "edges": {
+                "type": "array",
+                "maxItems": 200,
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "title": "Id",
+                      "type": "string"
+                    },
+                    "kind": {
+                      "title": "Kind",
+                      "type": "string"
+                    },
+                    "source": {
+                      "title": "Source",
+                      "type": "string"
+                    },
+                    "target": {
+                      "title": "Target",
+                      "type": "string"
+                    },
+                    "properties": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "kind",
+                    "source",
+                    "target",
+                    "properties"
+                  ],
+                  "title": "EdgeRecord",
+                  "type": "object"
+                }
+              },
+              "paths": {
+                "type": "array",
+                "maxItems": 100,
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "node_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Node Ids",
+                      "type": "array"
+                    },
+                    "edge_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Edge Ids",
+                      "type": "array"
+                    },
+                    "directions": {
+                      "items": {
+                        "enum": [
+                          "OUTGOING",
+                          "INCOMING"
+                        ],
+                        "type": "string"
+                      },
+                      "title": "Directions",
+                      "type": "array"
+                    },
+                    "evidence_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Evidence Ids",
+                      "type": "array"
+                    },
+                    "context": {
+                      "type": "object"
+                    },
+                    "id": {
+                      "title": "Id",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "node_ids",
+                    "edge_ids",
+                    "directions",
+                    "evidence_ids",
+                    "id"
+                  ],
+                  "title": "ProofPath",
+                  "type": "object"
+                }
+              },
+              "gaps": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 100
+              },
+              "reservations": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 100
+              },
+              "as_of": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "required": [
+              "nodes",
+              "edges",
+              "paths",
+              "gaps",
+              "reservations",
+              "as_of"
+            ]
+          },
+          "execution_id": {
+            "type": "string"
+          },
+          "server_id": {
+            "const": "civicly-domain"
+          },
+          "tool_name": {
+            "type": "string"
+          },
+          "schema_version": {
+            "const": 3
+          },
+          "inventory_version": {
+            "type": "string"
           }
         },
         "required": [
@@ -1855,12 +5462,24 @@
           "source_evidence_ids",
           "simulation_mode",
           "outcome_id",
-          "monitoring_status"
+          "monitoring_status",
+          "context",
+          "graph_revision",
+          "error",
+          "truncated",
+          "search_limited",
+          "data",
+          "execution_id",
+          "server_id",
+          "tool_name",
+          "schema_version",
+          "inventory_version"
         ]
       },
       "requires_mcp_runtime_call": true,
       "side_effect": true,
-      "result_semantics": "On non-SUCCESS status, return required envelope with null ID(s)/empty lists as applicable; include error; no claimed state change."
+      "result_semantics": "On non-SUCCESS status, return required envelope with null ID(s)/empty lists as applicable; include error; no claimed state change.",
+      "b07_runtime": "NOT_REGISTERED_FUTURE_WRITE"
     },
     {
       "name": "get_pickup_execution_history",
@@ -1870,12 +5489,24 @@
         "type": "object",
         "properties": {
           "collection_point_id": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
           },
           "days": {
             "type": "integer",
             "minimum": 1,
             "maximum": 180
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "minLength": 1,
+            "maxLength": 512,
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+          },
+          "include_candidates": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -1911,10 +5542,10 @@
           },
           "graph_revision": {
             "type": [
-              "string",
               "integer",
               "null"
-            ]
+            ],
+            "minimum": 0
           },
           "truncated": {
             "type": "boolean"
@@ -1923,10 +5554,284 @@
             "type": [
               "object",
               "null"
-            ]
+            ],
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "retryable": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "retryable"
+            ],
+            "additionalProperties": false
           },
           "pickup_executions": {
             "type": "array"
+          },
+          "context": {
+            "additionalProperties": false,
+            "properties": {
+              "trace_id": {
+                "maxLength": 80,
+                "minLength": 1,
+                "title": "Trace Id",
+                "type": "string"
+              },
+              "execution_id": {
+                "maxLength": 80,
+                "minLength": 1,
+                "title": "Execution Id",
+                "type": "string"
+              },
+              "parent_execution_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Parent Execution Id"
+              },
+              "investigation_id": {
+                "anyOf": [
+                  {
+                    "maxLength": 200,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Investigation Id"
+              },
+              "municipality_id": {
+                "const": "demo-city",
+                "default": "demo-city",
+                "title": "Municipality Id",
+                "type": "string"
+              },
+              "source_graph": {
+                "const": "civicly_b04_test_a84beda80da64aacbc367a9399e07a97",
+                "default": "civicly_b04_test_a84beda80da64aacbc367a9399e07a97",
+                "title": "Source Graph",
+                "type": "string"
+              },
+              "caller_role": {
+                "default": "OPERATOR_REVIEW",
+                "enum": [
+                  "READ_ONLY",
+                  "OPERATOR_REVIEW"
+                ],
+                "title": "Caller Role",
+                "type": "string"
+              },
+              "invocation_origin": {
+                "default": "OPERATOR_REVIEW",
+                "enum": [
+                  "OPERATOR_REVIEW",
+                  "APPLICATION"
+                ],
+                "title": "Invocation Origin",
+                "type": "string"
+              }
+            },
+            "required": [
+              "trace_id",
+              "execution_id"
+            ],
+            "title": "Context",
+            "type": "object"
+          },
+          "search_limited": {
+            "type": "boolean"
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "nodes": {
+                "type": "array",
+                "maxItems": 120,
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "title": "Id",
+                      "type": "string"
+                    },
+                    "kind": {
+                      "title": "Kind",
+                      "type": "string"
+                    },
+                    "labels": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Labels",
+                      "type": "array"
+                    },
+                    "properties": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "kind",
+                    "labels",
+                    "properties"
+                  ],
+                  "title": "NodeRecord",
+                  "type": "object"
+                }
+              },
+              "edges": {
+                "type": "array",
+                "maxItems": 200,
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "title": "Id",
+                      "type": "string"
+                    },
+                    "kind": {
+                      "title": "Kind",
+                      "type": "string"
+                    },
+                    "source": {
+                      "title": "Source",
+                      "type": "string"
+                    },
+                    "target": {
+                      "title": "Target",
+                      "type": "string"
+                    },
+                    "properties": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "kind",
+                    "source",
+                    "target",
+                    "properties"
+                  ],
+                  "title": "EdgeRecord",
+                  "type": "object"
+                }
+              },
+              "paths": {
+                "type": "array",
+                "maxItems": 100,
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "node_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Node Ids",
+                      "type": "array"
+                    },
+                    "edge_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Edge Ids",
+                      "type": "array"
+                    },
+                    "directions": {
+                      "items": {
+                        "enum": [
+                          "OUTGOING",
+                          "INCOMING"
+                        ],
+                        "type": "string"
+                      },
+                      "title": "Directions",
+                      "type": "array"
+                    },
+                    "evidence_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Evidence Ids",
+                      "type": "array"
+                    },
+                    "context": {
+                      "type": "object"
+                    },
+                    "id": {
+                      "title": "Id",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "node_ids",
+                    "edge_ids",
+                    "directions",
+                    "evidence_ids",
+                    "id"
+                  ],
+                  "title": "ProofPath",
+                  "type": "object"
+                }
+              },
+              "gaps": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 100
+              },
+              "reservations": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 100
+              },
+              "as_of": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "required": [
+              "nodes",
+              "edges",
+              "paths",
+              "gaps",
+              "reservations",
+              "as_of"
+            ]
+          },
+          "execution_id": {
+            "type": "string"
+          },
+          "server_id": {
+            "const": "civicly-domain"
+          },
+          "tool_name": {
+            "type": "string"
+          },
+          "schema_version": {
+            "const": 3
+          },
+          "inventory_version": {
+            "type": "string"
           }
         },
         "required": [
@@ -1934,13 +5839,25 @@
           "trace_id",
           "source_evidence_ids",
           "simulation_mode",
-          "pickup_executions"
+          "pickup_executions",
+          "context",
+          "graph_revision",
+          "error",
+          "truncated",
+          "search_limited",
+          "data",
+          "execution_id",
+          "server_id",
+          "tool_name",
+          "schema_version",
+          "inventory_version"
         ],
         "additionalProperties": false
       },
-      "result_semantics": "Never infer success from missing source; unavailable returns status UNAVAILABLE and empty data.",
+      "result_semantics": "B07-R: inclusive scheduled_at UTC window [as_of-days,as_of], node/relationship/source visibility before LIMIT; normalized time ASC, event ID ASC, relationship ID ASC;100 rows plus one lookahead, additional graph export caps. truncated means omitted eligible rows/context, never verified absence. Source schedule-clock warnings retained.",
       "side_effect": false,
-      "requires_mcp_runtime_call": true
+      "requires_mcp_runtime_call": true,
+      "b07_runtime": "REGISTERED_READ"
     },
     {
       "name": "get_road_condition_history",
@@ -1950,12 +5867,24 @@
         "type": "object",
         "properties": {
           "road_segment_id": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
           },
           "days": {
             "type": "integer",
             "minimum": 1,
             "maximum": 730
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "minLength": 1,
+            "maxLength": 512,
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+          },
+          "include_candidates": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -1991,10 +5920,10 @@
           },
           "graph_revision": {
             "type": [
-              "string",
               "integer",
               "null"
-            ]
+            ],
+            "minimum": 0
           },
           "truncated": {
             "type": "boolean"
@@ -2003,10 +5932,284 @@
             "type": [
               "object",
               "null"
-            ]
+            ],
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "retryable": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "retryable"
+            ],
+            "additionalProperties": false
           },
           "road_conditions": {
             "type": "array"
+          },
+          "context": {
+            "additionalProperties": false,
+            "properties": {
+              "trace_id": {
+                "maxLength": 80,
+                "minLength": 1,
+                "title": "Trace Id",
+                "type": "string"
+              },
+              "execution_id": {
+                "maxLength": 80,
+                "minLength": 1,
+                "title": "Execution Id",
+                "type": "string"
+              },
+              "parent_execution_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Parent Execution Id"
+              },
+              "investigation_id": {
+                "anyOf": [
+                  {
+                    "maxLength": 200,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Investigation Id"
+              },
+              "municipality_id": {
+                "const": "demo-city",
+                "default": "demo-city",
+                "title": "Municipality Id",
+                "type": "string"
+              },
+              "source_graph": {
+                "const": "civicly_b04_test_a84beda80da64aacbc367a9399e07a97",
+                "default": "civicly_b04_test_a84beda80da64aacbc367a9399e07a97",
+                "title": "Source Graph",
+                "type": "string"
+              },
+              "caller_role": {
+                "default": "OPERATOR_REVIEW",
+                "enum": [
+                  "READ_ONLY",
+                  "OPERATOR_REVIEW"
+                ],
+                "title": "Caller Role",
+                "type": "string"
+              },
+              "invocation_origin": {
+                "default": "OPERATOR_REVIEW",
+                "enum": [
+                  "OPERATOR_REVIEW",
+                  "APPLICATION"
+                ],
+                "title": "Invocation Origin",
+                "type": "string"
+              }
+            },
+            "required": [
+              "trace_id",
+              "execution_id"
+            ],
+            "title": "Context",
+            "type": "object"
+          },
+          "search_limited": {
+            "type": "boolean"
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "nodes": {
+                "type": "array",
+                "maxItems": 120,
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "title": "Id",
+                      "type": "string"
+                    },
+                    "kind": {
+                      "title": "Kind",
+                      "type": "string"
+                    },
+                    "labels": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Labels",
+                      "type": "array"
+                    },
+                    "properties": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "kind",
+                    "labels",
+                    "properties"
+                  ],
+                  "title": "NodeRecord",
+                  "type": "object"
+                }
+              },
+              "edges": {
+                "type": "array",
+                "maxItems": 200,
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "title": "Id",
+                      "type": "string"
+                    },
+                    "kind": {
+                      "title": "Kind",
+                      "type": "string"
+                    },
+                    "source": {
+                      "title": "Source",
+                      "type": "string"
+                    },
+                    "target": {
+                      "title": "Target",
+                      "type": "string"
+                    },
+                    "properties": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "kind",
+                    "source",
+                    "target",
+                    "properties"
+                  ],
+                  "title": "EdgeRecord",
+                  "type": "object"
+                }
+              },
+              "paths": {
+                "type": "array",
+                "maxItems": 100,
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "node_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Node Ids",
+                      "type": "array"
+                    },
+                    "edge_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Edge Ids",
+                      "type": "array"
+                    },
+                    "directions": {
+                      "items": {
+                        "enum": [
+                          "OUTGOING",
+                          "INCOMING"
+                        ],
+                        "type": "string"
+                      },
+                      "title": "Directions",
+                      "type": "array"
+                    },
+                    "evidence_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Evidence Ids",
+                      "type": "array"
+                    },
+                    "context": {
+                      "type": "object"
+                    },
+                    "id": {
+                      "title": "Id",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "node_ids",
+                    "edge_ids",
+                    "directions",
+                    "evidence_ids",
+                    "id"
+                  ],
+                  "title": "ProofPath",
+                  "type": "object"
+                }
+              },
+              "gaps": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 100
+              },
+              "reservations": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 100
+              },
+              "as_of": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "required": [
+              "nodes",
+              "edges",
+              "paths",
+              "gaps",
+              "reservations",
+              "as_of"
+            ]
+          },
+          "execution_id": {
+            "type": "string"
+          },
+          "server_id": {
+            "const": "civicly-domain"
+          },
+          "tool_name": {
+            "type": "string"
+          },
+          "schema_version": {
+            "const": 3
+          },
+          "inventory_version": {
+            "type": "string"
           }
         },
         "required": [
@@ -2014,13 +6217,25 @@
           "trace_id",
           "source_evidence_ids",
           "simulation_mode",
-          "road_conditions"
+          "road_conditions",
+          "context",
+          "graph_revision",
+          "error",
+          "truncated",
+          "search_limited",
+          "data",
+          "execution_id",
+          "server_id",
+          "tool_name",
+          "schema_version",
+          "inventory_version"
         ],
         "additionalProperties": false
       },
-      "result_semantics": "Never infer success from missing source; unavailable returns status UNAVAILABLE and empty data.",
+      "result_semantics": "B07-R: inclusive observed_at UTC window [as_of-days,as_of], node/relationship/source visibility before LIMIT; normalized time ASC, event ID ASC, relationship ID ASC;100 rows plus one lookahead, additional graph export caps. truncated means omitted eligible rows/context, never verified absence.",
       "side_effect": false,
-      "requires_mcp_runtime_call": true
+      "requires_mcp_runtime_call": true,
+      "b07_runtime": "REGISTERED_READ"
     },
     {
       "name": "get_source_document_excerpt",
@@ -2030,11 +6245,23 @@
         "type": "object",
         "properties": {
           "document_id": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
           },
           "version": {
             "type": "integer",
             "minimum": 1
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "minLength": 1,
+            "maxLength": 512,
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+          },
+          "include_candidates": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -2070,10 +6297,10 @@
           },
           "graph_revision": {
             "type": [
-              "string",
               "integer",
               "null"
-            ]
+            ],
+            "minimum": 0
           },
           "truncated": {
             "type": "boolean"
@@ -2082,10 +6309,284 @@
             "type": [
               "object",
               "null"
-            ]
+            ],
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "retryable": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "retryable"
+            ],
+            "additionalProperties": false
           },
           "document_excerpt": {
             "type": "object"
+          },
+          "context": {
+            "additionalProperties": false,
+            "properties": {
+              "trace_id": {
+                "maxLength": 80,
+                "minLength": 1,
+                "title": "Trace Id",
+                "type": "string"
+              },
+              "execution_id": {
+                "maxLength": 80,
+                "minLength": 1,
+                "title": "Execution Id",
+                "type": "string"
+              },
+              "parent_execution_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Parent Execution Id"
+              },
+              "investigation_id": {
+                "anyOf": [
+                  {
+                    "maxLength": 200,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Investigation Id"
+              },
+              "municipality_id": {
+                "const": "demo-city",
+                "default": "demo-city",
+                "title": "Municipality Id",
+                "type": "string"
+              },
+              "source_graph": {
+                "const": "civicly_b04_test_a84beda80da64aacbc367a9399e07a97",
+                "default": "civicly_b04_test_a84beda80da64aacbc367a9399e07a97",
+                "title": "Source Graph",
+                "type": "string"
+              },
+              "caller_role": {
+                "default": "OPERATOR_REVIEW",
+                "enum": [
+                  "READ_ONLY",
+                  "OPERATOR_REVIEW"
+                ],
+                "title": "Caller Role",
+                "type": "string"
+              },
+              "invocation_origin": {
+                "default": "OPERATOR_REVIEW",
+                "enum": [
+                  "OPERATOR_REVIEW",
+                  "APPLICATION"
+                ],
+                "title": "Invocation Origin",
+                "type": "string"
+              }
+            },
+            "required": [
+              "trace_id",
+              "execution_id"
+            ],
+            "title": "Context",
+            "type": "object"
+          },
+          "search_limited": {
+            "type": "boolean"
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "nodes": {
+                "type": "array",
+                "maxItems": 120,
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "title": "Id",
+                      "type": "string"
+                    },
+                    "kind": {
+                      "title": "Kind",
+                      "type": "string"
+                    },
+                    "labels": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Labels",
+                      "type": "array"
+                    },
+                    "properties": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "kind",
+                    "labels",
+                    "properties"
+                  ],
+                  "title": "NodeRecord",
+                  "type": "object"
+                }
+              },
+              "edges": {
+                "type": "array",
+                "maxItems": 200,
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "title": "Id",
+                      "type": "string"
+                    },
+                    "kind": {
+                      "title": "Kind",
+                      "type": "string"
+                    },
+                    "source": {
+                      "title": "Source",
+                      "type": "string"
+                    },
+                    "target": {
+                      "title": "Target",
+                      "type": "string"
+                    },
+                    "properties": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "kind",
+                    "source",
+                    "target",
+                    "properties"
+                  ],
+                  "title": "EdgeRecord",
+                  "type": "object"
+                }
+              },
+              "paths": {
+                "type": "array",
+                "maxItems": 100,
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "node_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Node Ids",
+                      "type": "array"
+                    },
+                    "edge_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Edge Ids",
+                      "type": "array"
+                    },
+                    "directions": {
+                      "items": {
+                        "enum": [
+                          "OUTGOING",
+                          "INCOMING"
+                        ],
+                        "type": "string"
+                      },
+                      "title": "Directions",
+                      "type": "array"
+                    },
+                    "evidence_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Evidence Ids",
+                      "type": "array"
+                    },
+                    "context": {
+                      "type": "object"
+                    },
+                    "id": {
+                      "title": "Id",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "node_ids",
+                    "edge_ids",
+                    "directions",
+                    "evidence_ids",
+                    "id"
+                  ],
+                  "title": "ProofPath",
+                  "type": "object"
+                }
+              },
+              "gaps": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 100
+              },
+              "reservations": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 100
+              },
+              "as_of": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "required": [
+              "nodes",
+              "edges",
+              "paths",
+              "gaps",
+              "reservations",
+              "as_of"
+            ]
+          },
+          "execution_id": {
+            "type": "string"
+          },
+          "server_id": {
+            "const": "civicly-domain"
+          },
+          "tool_name": {
+            "type": "string"
+          },
+          "schema_version": {
+            "const": 3
+          },
+          "inventory_version": {
+            "type": "string"
           }
         },
         "required": [
@@ -2093,13 +6594,25 @@
           "trace_id",
           "source_evidence_ids",
           "simulation_mode",
-          "document_excerpt"
+          "document_excerpt",
+          "context",
+          "graph_revision",
+          "error",
+          "truncated",
+          "search_limited",
+          "data",
+          "execution_id",
+          "server_id",
+          "tool_name",
+          "schema_version",
+          "inventory_version"
         ],
         "additionalProperties": false
       },
       "result_semantics": "Never infer success from missing source; unavailable returns status UNAVAILABLE and empty data.",
       "side_effect": false,
-      "requires_mcp_runtime_call": true
+      "requires_mcp_runtime_call": true,
+      "b07_runtime": "REGISTERED_READ_UNAVAILABLE_UNTIL_DESIGNATED_MILESTONE"
     },
     {
       "name": "get_monitoring_status",
@@ -2109,7 +6622,19 @@
         "type": "object",
         "properties": {
           "problem_cluster_id": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "minLength": 1,
+            "maxLength": 512,
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+          },
+          "include_candidates": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -2145,10 +6670,10 @@
           },
           "graph_revision": {
             "type": [
-              "string",
               "integer",
               "null"
-            ]
+            ],
+            "minimum": 0
           },
           "truncated": {
             "type": "boolean"
@@ -2157,10 +6682,284 @@
             "type": [
               "object",
               "null"
-            ]
+            ],
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "retryable": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "retryable"
+            ],
+            "additionalProperties": false
           },
           "monitoring": {
             "type": "object"
+          },
+          "context": {
+            "additionalProperties": false,
+            "properties": {
+              "trace_id": {
+                "maxLength": 80,
+                "minLength": 1,
+                "title": "Trace Id",
+                "type": "string"
+              },
+              "execution_id": {
+                "maxLength": 80,
+                "minLength": 1,
+                "title": "Execution Id",
+                "type": "string"
+              },
+              "parent_execution_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Parent Execution Id"
+              },
+              "investigation_id": {
+                "anyOf": [
+                  {
+                    "maxLength": 200,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Investigation Id"
+              },
+              "municipality_id": {
+                "const": "demo-city",
+                "default": "demo-city",
+                "title": "Municipality Id",
+                "type": "string"
+              },
+              "source_graph": {
+                "const": "civicly_b04_test_a84beda80da64aacbc367a9399e07a97",
+                "default": "civicly_b04_test_a84beda80da64aacbc367a9399e07a97",
+                "title": "Source Graph",
+                "type": "string"
+              },
+              "caller_role": {
+                "default": "OPERATOR_REVIEW",
+                "enum": [
+                  "READ_ONLY",
+                  "OPERATOR_REVIEW"
+                ],
+                "title": "Caller Role",
+                "type": "string"
+              },
+              "invocation_origin": {
+                "default": "OPERATOR_REVIEW",
+                "enum": [
+                  "OPERATOR_REVIEW",
+                  "APPLICATION"
+                ],
+                "title": "Invocation Origin",
+                "type": "string"
+              }
+            },
+            "required": [
+              "trace_id",
+              "execution_id"
+            ],
+            "title": "Context",
+            "type": "object"
+          },
+          "search_limited": {
+            "type": "boolean"
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "nodes": {
+                "type": "array",
+                "maxItems": 120,
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "title": "Id",
+                      "type": "string"
+                    },
+                    "kind": {
+                      "title": "Kind",
+                      "type": "string"
+                    },
+                    "labels": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Labels",
+                      "type": "array"
+                    },
+                    "properties": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "kind",
+                    "labels",
+                    "properties"
+                  ],
+                  "title": "NodeRecord",
+                  "type": "object"
+                }
+              },
+              "edges": {
+                "type": "array",
+                "maxItems": 200,
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "title": "Id",
+                      "type": "string"
+                    },
+                    "kind": {
+                      "title": "Kind",
+                      "type": "string"
+                    },
+                    "source": {
+                      "title": "Source",
+                      "type": "string"
+                    },
+                    "target": {
+                      "title": "Target",
+                      "type": "string"
+                    },
+                    "properties": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "kind",
+                    "source",
+                    "target",
+                    "properties"
+                  ],
+                  "title": "EdgeRecord",
+                  "type": "object"
+                }
+              },
+              "paths": {
+                "type": "array",
+                "maxItems": 100,
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "node_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Node Ids",
+                      "type": "array"
+                    },
+                    "edge_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Edge Ids",
+                      "type": "array"
+                    },
+                    "directions": {
+                      "items": {
+                        "enum": [
+                          "OUTGOING",
+                          "INCOMING"
+                        ],
+                        "type": "string"
+                      },
+                      "title": "Directions",
+                      "type": "array"
+                    },
+                    "evidence_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Evidence Ids",
+                      "type": "array"
+                    },
+                    "context": {
+                      "type": "object"
+                    },
+                    "id": {
+                      "title": "Id",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "node_ids",
+                    "edge_ids",
+                    "directions",
+                    "evidence_ids",
+                    "id"
+                  ],
+                  "title": "ProofPath",
+                  "type": "object"
+                }
+              },
+              "gaps": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 100
+              },
+              "reservations": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 100
+              },
+              "as_of": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "required": [
+              "nodes",
+              "edges",
+              "paths",
+              "gaps",
+              "reservations",
+              "as_of"
+            ]
+          },
+          "execution_id": {
+            "type": "string"
+          },
+          "server_id": {
+            "const": "civicly-domain"
+          },
+          "tool_name": {
+            "type": "string"
+          },
+          "schema_version": {
+            "const": 3
+          },
+          "inventory_version": {
+            "type": "string"
           }
         },
         "required": [
@@ -2168,13 +6967,25 @@
           "trace_id",
           "source_evidence_ids",
           "simulation_mode",
-          "monitoring"
+          "monitoring",
+          "context",
+          "graph_revision",
+          "error",
+          "truncated",
+          "search_limited",
+          "data",
+          "execution_id",
+          "server_id",
+          "tool_name",
+          "schema_version",
+          "inventory_version"
         ],
         "additionalProperties": false
       },
       "result_semantics": "Never infer success from missing source; unavailable returns status UNAVAILABLE and empty data.",
       "side_effect": false,
-      "requires_mcp_runtime_call": true
+      "requires_mcp_runtime_call": true,
+      "b07_runtime": "REGISTERED_READ_UNAVAILABLE_UNTIL_DESIGNATED_MILESTONE"
     },
     {
       "name": "get_decision_evidence_path",
@@ -2184,12 +6995,24 @@
         "type": "object",
         "properties": {
           "decision_id": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
           },
           "max_hops": {
             "type": "integer",
             "minimum": 1,
             "maximum": 6
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "minLength": 1,
+            "maxLength": 512,
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+          },
+          "include_candidates": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -2225,10 +7048,10 @@
           },
           "graph_revision": {
             "type": [
-              "string",
               "integer",
               "null"
-            ]
+            ],
+            "minimum": 0
           },
           "truncated": {
             "type": "boolean"
@@ -2237,10 +7060,284 @@
             "type": [
               "object",
               "null"
-            ]
+            ],
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "retryable": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "retryable"
+            ],
+            "additionalProperties": false
           },
           "graph_paths": {
             "type": "array"
+          },
+          "context": {
+            "additionalProperties": false,
+            "properties": {
+              "trace_id": {
+                "maxLength": 80,
+                "minLength": 1,
+                "title": "Trace Id",
+                "type": "string"
+              },
+              "execution_id": {
+                "maxLength": 80,
+                "minLength": 1,
+                "title": "Execution Id",
+                "type": "string"
+              },
+              "parent_execution_id": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Parent Execution Id"
+              },
+              "investigation_id": {
+                "anyOf": [
+                  {
+                    "maxLength": 200,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Investigation Id"
+              },
+              "municipality_id": {
+                "const": "demo-city",
+                "default": "demo-city",
+                "title": "Municipality Id",
+                "type": "string"
+              },
+              "source_graph": {
+                "const": "civicly_b04_test_a84beda80da64aacbc367a9399e07a97",
+                "default": "civicly_b04_test_a84beda80da64aacbc367a9399e07a97",
+                "title": "Source Graph",
+                "type": "string"
+              },
+              "caller_role": {
+                "default": "OPERATOR_REVIEW",
+                "enum": [
+                  "READ_ONLY",
+                  "OPERATOR_REVIEW"
+                ],
+                "title": "Caller Role",
+                "type": "string"
+              },
+              "invocation_origin": {
+                "default": "OPERATOR_REVIEW",
+                "enum": [
+                  "OPERATOR_REVIEW",
+                  "APPLICATION"
+                ],
+                "title": "Invocation Origin",
+                "type": "string"
+              }
+            },
+            "required": [
+              "trace_id",
+              "execution_id"
+            ],
+            "title": "Context",
+            "type": "object"
+          },
+          "search_limited": {
+            "type": "boolean"
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "nodes": {
+                "type": "array",
+                "maxItems": 120,
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "title": "Id",
+                      "type": "string"
+                    },
+                    "kind": {
+                      "title": "Kind",
+                      "type": "string"
+                    },
+                    "labels": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Labels",
+                      "type": "array"
+                    },
+                    "properties": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "kind",
+                    "labels",
+                    "properties"
+                  ],
+                  "title": "NodeRecord",
+                  "type": "object"
+                }
+              },
+              "edges": {
+                "type": "array",
+                "maxItems": 200,
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "title": "Id",
+                      "type": "string"
+                    },
+                    "kind": {
+                      "title": "Kind",
+                      "type": "string"
+                    },
+                    "source": {
+                      "title": "Source",
+                      "type": "string"
+                    },
+                    "target": {
+                      "title": "Target",
+                      "type": "string"
+                    },
+                    "properties": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "kind",
+                    "source",
+                    "target",
+                    "properties"
+                  ],
+                  "title": "EdgeRecord",
+                  "type": "object"
+                }
+              },
+              "paths": {
+                "type": "array",
+                "maxItems": 100,
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "node_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Node Ids",
+                      "type": "array"
+                    },
+                    "edge_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Edge Ids",
+                      "type": "array"
+                    },
+                    "directions": {
+                      "items": {
+                        "enum": [
+                          "OUTGOING",
+                          "INCOMING"
+                        ],
+                        "type": "string"
+                      },
+                      "title": "Directions",
+                      "type": "array"
+                    },
+                    "evidence_ids": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "title": "Evidence Ids",
+                      "type": "array"
+                    },
+                    "context": {
+                      "type": "object"
+                    },
+                    "id": {
+                      "title": "Id",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "node_ids",
+                    "edge_ids",
+                    "directions",
+                    "evidence_ids",
+                    "id"
+                  ],
+                  "title": "ProofPath",
+                  "type": "object"
+                }
+              },
+              "gaps": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 100
+              },
+              "reservations": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 100
+              },
+              "as_of": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "required": [
+              "nodes",
+              "edges",
+              "paths",
+              "gaps",
+              "reservations",
+              "as_of"
+            ]
+          },
+          "execution_id": {
+            "type": "string"
+          },
+          "server_id": {
+            "const": "civicly-domain"
+          },
+          "tool_name": {
+            "type": "string"
+          },
+          "schema_version": {
+            "const": 3
+          },
+          "inventory_version": {
+            "type": "string"
           }
         },
         "required": [
@@ -2248,13 +7345,25 @@
           "trace_id",
           "source_evidence_ids",
           "simulation_mode",
-          "graph_paths"
+          "graph_paths",
+          "context",
+          "graph_revision",
+          "error",
+          "truncated",
+          "search_limited",
+          "data",
+          "execution_id",
+          "server_id",
+          "tool_name",
+          "schema_version",
+          "inventory_version"
         ],
         "additionalProperties": false
       },
       "result_semantics": "Never infer success from missing source; unavailable returns status UNAVAILABLE and empty data.",
       "side_effect": false,
-      "requires_mcp_runtime_call": true
+      "requires_mcp_runtime_call": true,
+      "b07_runtime": "REGISTERED_READ"
     }
   ],
   "municipality_scope": {

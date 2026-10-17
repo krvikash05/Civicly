@@ -1,0 +1,81 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.1, pytest-9.1.1, pluggy-1.7.0 -- /Users/vikashkumar/Desktop/Civicly/backend/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/vikashkumar/Desktop/Civicly/backend
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 2 items
+
+backend/tests/integration/test_civicly_mcp.py::test_unavailable_custom_server_fails_closed PASSED
+backend/tests/integration/test_civicly_mcp.py::test_trace_write_failure_prevents_acknowledged_success handler for 'tools/call' raised
+Traceback (most recent call last):
+  File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/mcp/shared/jsonrpc_dispatcher.py", line 740, in _handle_request
+    result = await on_request(dctx, req.method, req.params)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/mcp/server/runner.py", line 747, in on_request
+    return await runner.on_request(dctx, method, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/mcp/server/runner.py", line 230, in _on_request
+    result = _dump_result(await call(ctx))
+                          ^^^^^^^^^^^^^^^
+  File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/mcp/server/_otel.py", line 44, in __call__
+    result = await call_next(ctx)
+             ^^^^^^^^^^^^^^^^^^^^
+  File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/mcp/server/runner.py", line 217, in _inner
+    result = await entry.handler(ctx, typed_params)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/vikashkumar/Desktop/Civicly/backend/app/mcp/civicly/server.py", line 63, in call
+    return await execute(request,params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/vikashkumar/Desktop/Civicly/backend/app/mcp/civicly/server.py", line 52, in execute
+    await asyncio.to_thread(store.append,record)
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/threads.py", line 25, in to_thread
+    return await loop.run_in_executor(None, func_call)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/vikashkumar/Desktop/Civicly/backend/app/mcp/civicly/storage.py", line 92, in append
+    with self.repo._session() as session:
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py", line 137, in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+  File "/Users/vikashkumar/Desktop/Civicly/backend/app/graph/repository.py", line 168, in _session
+    if not lock.acquire(blocking=True):
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/redis/lock.py", line 227, in acquire
+    if self.do_acquire(token):
+       ^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/redis/lock.py", line 243, in do_acquire
+    if self.redis.set(self.name, token, nx=True, px=timeout):
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/redis/utils.py", line 523, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/redis/commands/core.py", line 4457, in set
+    return self.execute_command("SET", *pieces, **options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/redis/client.py", line 867, in execute_command
+    return self._execute_command(*args, **options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/redis/client.py", line 889, in _execute_command
+    result = conn.retry.call_with_retry(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/redis/retry.py", line 120, in call_with_retry
+    return do()
+           ^^^^
+  File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/redis/client.py", line 890, in <lambda>
+    lambda: self._send_command_parse_response(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/redis/client.py", line 819, in _send_command_parse_response
+    return self.parse_response(conn, command_name, **options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/redis/client.py", line 935, in parse_response
+    response = connection.read_response()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/redis/connection.py", line 1437, in read_response
+    raise response
+redis.exceptions.NoPermissionError: User civicly_mcp_trace_b07 has no permissions to run the 'set' command
+PASSED
+
+============================== 2 passed in 7.18s ===============================

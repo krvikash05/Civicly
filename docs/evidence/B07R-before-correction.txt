@@ -1,0 +1,424 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.1, pytest-9.1.1, pluggy-1.7.0 -- /Users/vikashkumar/Desktop/Civicly/backend/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/vikashkumar/Desktop/Civicly/backend
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 4 items
+
+backend/tests/integration/test_civicly_mcp_review.py::test_maintenance_records_keep_independent_evidence ERROR
+backend/tests/integration/test_civicly_mcp_review.py::test_history_window_and_stable_order_precede_cap[pickup] ERROR
+backend/tests/integration/test_civicly_mcp_review.py::test_history_window_and_stable_order_precede_cap[condition] ERROR
+backend/tests/integration/test_civicly_mcp_review.py::test_existing_work_order_reports_operational_retrieval_gaps ERROR
+
+==================================== ERRORS ====================================
+_____ ERROR at setup of test_maintenance_records_keep_independent_evidence _____
+
+    @pytest.fixture(scope='module')
+    def history_graph():
+        from app.config import Settings
+        from app.graph.connection import connect
+        with connect(Settings(_env_file='.env')) as db:
+            configure(db);name=new_test_graph_name(7);MigrationRunner(db,name).apply()
+            registry=Registry();nodes={};relations=[]
+            def node(kind,p):registry.validate_node(kind,p);nodes[p['id']]=(kind,p)
+            def relation(kind,s,t,id,ev=None,**kw):
+                p={**edge(id),'created_at':OLD,**kw}
+                if ev:p['source_evidence_id']=ev
+                registry.validate_edge(kind,*nodes[s],*nodes[t],p)
+                relations.append({'kind':kind,'s':s,'t':t,'props':p})
+            for kind,id in [('RoadSegment','R-REVIEW'),('WasteCollectionPoint','W-REVIEW')]:
+                node(kind,{**asset(kind,id),'created_at':OLD,'updated_at':OLD})
+            node('CollectionRoute',props('ROUTE-REVIEW',route_code='TEST',operational_status='ACTIVE'))
+            for id in ['EV-INS-A','EV-INS-B','EV-HISTORY']:
+                node('Evidence',props(id,evidence_type='INSPECTION_REPORT',summary='Synthetic B07-R fixture',reliability='VERIFIED',recorded_at=OLD,observed_at=OLD,source_kind='SYNTHETIC'))
+            for suffix,date in [('A','2026-10-02T00:00:00Z'),('B','2026-10-03T00:00:00Z')]:
+                id='INS-'+suffix;ev='EV-INS-'+suffix
+                node('Inspection',props(id,inspection_type='ROAD',status='COMPLETE',requested_at=date,completed_at=date))
+                relation('INSPECTS',id,'R-REVIEW','LINK-'+id,ev)
+                relation('PRODUCED',id,ev,'PROOF-'+id,ev)
+            node('WorkOrder',props('WO-REVIEW',status='PENDING',execution_mode='SIMULATED',plan_version=1,idempotency_key='B07R-WO'))
+            # Insert110 older events first, then105 relevant events in reverse order.
+            # Second valid record's timestamp uses a fraction to catch naive lexical order.
+            # One future event and one event with expired relationship must be excluded.
+            for pickup in [True,False]:
+                kind='PickupExecution' if pickup else 'AssetConditionSnapshot'
+                prefix='P' if pickup else 'C';rel='PICKUP_FOR' if pickup else 'CONDITION_OF';root='W-REVIEW' if pickup else 'R-REVIEW'
+                dates=[(f'OLD-{i:03}',OLD) for i in range(110)]
+                dates += [(f'NEW-{i:03}',f'2026-10-10T00:{i//60:02}:{i%60:02}Z') for i in reversed(range(105))]
+                dates += [('TIE-A','2026-10-10T00:00:00.1Z'),('TIE-B','2026-10-10T00:00:00.100000Z'),('FUTURE','2026-10-18T00:00:00Z'),('EXPIRED',EARLY)]
+                for suffix,date in dates:
+                    id=prefix+'-'+suffix
+                    extra={'route_id':'ROUTE-REVIEW','scheduled_at':date,'status':'COMPLETED'} if pickup else {'asset_id':root,'evidence_id':'EV-HISTORY','observed_at':date,'condition':'SYNTHETIC'}
+>                   node(kind,props(id,**extra));relation(rel,id,root,'E-'+id,'EV-HISTORY',**({'valid_to':EARLY} if suffix=='EXPIRED' else {}))
+                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+backend/tests/integration/test_civicly_mcp_review.py:69: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+backend/tests/integration/test_civicly_mcp_review.py:44: in relation
+    registry.validate_edge(kind,*nodes[s],*nodes[t],p)
+backend/app/graph/schema.py:132: in validate_edge
+    self._properties(shape, props)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <app.graph.schema.Registry object at 0x103cad040>
+shape = {'from': ['PickupExecution'], 'to': ['WasteCollectionPoint'], 'properties': {'id': {'type': 'string', 'minLength': 1, ...ng', 'format': 'date-time', 'introduced_in': 3}, ...}, 'semantics': 'Actual or missed pickup of collection point', ...}
+props = {'id': 'E-P-EXPIRED', 'municipality_id': 'demo-city', 'created_at': '2026-01-01T00:00:00Z', 'valid_to': '2026-10-01T00:00:00Z', ...}
+
+    def _properties(self, shape: dict, props: dict) -> None:
+        if not isinstance(props, dict) or not all(isinstance(k, str) for k in props):
+            raise SchemaError("Properties must be a string-keyed object")
+        if set(props) - shape["properties"].keys():
+            raise SchemaError("Unknown properties")
+        if set(shape["required"]) - props.keys():
+            raise SchemaError("Missing mandatory properties")
+        for field, value in props.items():
+            desc = shape["properties"][field]
+            kind = desc["type"]
+            numeric = (type(value) is int and -(1 << 63) <= value < (1 << 63)) or (
+                type(value) is float and math.isfinite(value)
+            )
+            valid = {
+                "string": isinstance(value, str),
+                "integer": type(value) is int and numeric,
+                "number": numeric,
+                "boolean": type(value) is bool,
+                "point": isinstance(value, dict),
+            }.get(kind, False)
+            if not valid:
+                raise SchemaError(f"Incorrect property type: {field}")
+            if kind == "point":
+                if set(value) != {"latitude", "longitude"}:
+                    raise SchemaError("Point requires latitude/longitude only")
+                for coordinate, low, high in (("latitude", -90, 90), ("longitude", -180, 180)):
+                    v = value[coordinate]
+                    if type(v) not in (int, float) or not low <= v <= high or not math.isfinite(v):
+                        raise SchemaError("Invalid point coordinate")
+            if "const" in desc and value != desc["const"]:
+                raise SchemaError(f"Incorrect fixed property: {field}")
+            if "enum" in desc and value not in desc["enum"]:
+                raise SchemaError(f"Invalid enum: {field}")
+            if "enum_ref" in desc and value not in self.data["enums"][desc["enum_ref"]]:
+                raise SchemaError(f"Invalid enum: {field}")
+            if kind in ("integer", "number"):
+                if value < desc.get("minimum", -math.inf) or value > desc.get("maximum", math.inf):
+                    raise SchemaError(f"Property outside bounds: {field}")
+            if kind == "string":
+                if len(value) < desc.get("minLength", 0) or (field in {"id", "source_evidence_id"} and not value.strip()):
+                    raise SchemaError(f"Empty property: {field}")
+                if desc.get("format") == "date-time":
+                    timestamp(value)
+        if "valid_to" in props and "valid_from" not in props:
+>           raise SchemaError("valid_to requires valid_from")
+E           app.graph.schema.SchemaError: valid_to requires valid_from
+
+backend/app/graph/schema.py:116: SchemaError
+__ ERROR at setup of test_history_window_and_stable_order_precede_cap[pickup] __
+
+    @pytest.fixture(scope='module')
+    def history_graph():
+        from app.config import Settings
+        from app.graph.connection import connect
+        with connect(Settings(_env_file='.env')) as db:
+            configure(db);name=new_test_graph_name(7);MigrationRunner(db,name).apply()
+            registry=Registry();nodes={};relations=[]
+            def node(kind,p):registry.validate_node(kind,p);nodes[p['id']]=(kind,p)
+            def relation(kind,s,t,id,ev=None,**kw):
+                p={**edge(id),'created_at':OLD,**kw}
+                if ev:p['source_evidence_id']=ev
+                registry.validate_edge(kind,*nodes[s],*nodes[t],p)
+                relations.append({'kind':kind,'s':s,'t':t,'props':p})
+            for kind,id in [('RoadSegment','R-REVIEW'),('WasteCollectionPoint','W-REVIEW')]:
+                node(kind,{**asset(kind,id),'created_at':OLD,'updated_at':OLD})
+            node('CollectionRoute',props('ROUTE-REVIEW',route_code='TEST',operational_status='ACTIVE'))
+            for id in ['EV-INS-A','EV-INS-B','EV-HISTORY']:
+                node('Evidence',props(id,evidence_type='INSPECTION_REPORT',summary='Synthetic B07-R fixture',reliability='VERIFIED',recorded_at=OLD,observed_at=OLD,source_kind='SYNTHETIC'))
+            for suffix,date in [('A','2026-10-02T00:00:00Z'),('B','2026-10-03T00:00:00Z')]:
+                id='INS-'+suffix;ev='EV-INS-'+suffix
+                node('Inspection',props(id,inspection_type='ROAD',status='COMPLETE',requested_at=date,completed_at=date))
+                relation('INSPECTS',id,'R-REVIEW','LINK-'+id,ev)
+                relation('PRODUCED',id,ev,'PROOF-'+id,ev)
+            node('WorkOrder',props('WO-REVIEW',status='PENDING',execution_mode='SIMULATED',plan_version=1,idempotency_key='B07R-WO'))
+            # Insert110 older events first, then105 relevant events in reverse order.
+            # Second valid record's timestamp uses a fraction to catch naive lexical order.
+            # One future event and one event with expired relationship must be excluded.
+            for pickup in [True,False]:
+                kind='PickupExecution' if pickup else 'AssetConditionSnapshot'
+                prefix='P' if pickup else 'C';rel='PICKUP_FOR' if pickup else 'CONDITION_OF';root='W-REVIEW' if pickup else 'R-REVIEW'
+                dates=[(f'OLD-{i:03}',OLD) for i in range(110)]
+                dates += [(f'NEW-{i:03}',f'2026-10-10T00:{i//60:02}:{i%60:02}Z') for i in reversed(range(105))]
+                dates += [('TIE-A','2026-10-10T00:00:00.1Z'),('TIE-B','2026-10-10T00:00:00.100000Z'),('FUTURE','2026-10-18T00:00:00Z'),('EXPIRED',EARLY)]
+                for suffix,date in dates:
+                    id=prefix+'-'+suffix
+                    extra={'route_id':'ROUTE-REVIEW','scheduled_at':date,'status':'COMPLETED'} if pickup else {'asset_id':root,'evidence_id':'EV-HISTORY','observed_at':date,'condition':'SYNTHETIC'}
+>                   node(kind,props(id,**extra));relation(rel,id,root,'E-'+id,'EV-HISTORY',**({'valid_to':EARLY} if suffix=='EXPIRED' else {}))
+                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+backend/tests/integration/test_civicly_mcp_review.py:69: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+backend/tests/integration/test_civicly_mcp_review.py:44: in relation
+    registry.validate_edge(kind,*nodes[s],*nodes[t],p)
+backend/app/graph/schema.py:132: in validate_edge
+    self._properties(shape, props)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <app.graph.schema.Registry object at 0x103cad040>
+shape = {'from': ['PickupExecution'], 'to': ['WasteCollectionPoint'], 'properties': {'id': {'type': 'string', 'minLength': 1, ...ng', 'format': 'date-time', 'introduced_in': 3}, ...}, 'semantics': 'Actual or missed pickup of collection point', ...}
+props = {'id': 'E-P-EXPIRED', 'municipality_id': 'demo-city', 'created_at': '2026-01-01T00:00:00Z', 'valid_to': '2026-10-01T00:00:00Z', ...}
+
+    def _properties(self, shape: dict, props: dict) -> None:
+        if not isinstance(props, dict) or not all(isinstance(k, str) for k in props):
+            raise SchemaError("Properties must be a string-keyed object")
+        if set(props) - shape["properties"].keys():
+            raise SchemaError("Unknown properties")
+        if set(shape["required"]) - props.keys():
+            raise SchemaError("Missing mandatory properties")
+        for field, value in props.items():
+            desc = shape["properties"][field]
+            kind = desc["type"]
+            numeric = (type(value) is int and -(1 << 63) <= value < (1 << 63)) or (
+                type(value) is float and math.isfinite(value)
+            )
+            valid = {
+                "string": isinstance(value, str),
+                "integer": type(value) is int and numeric,
+                "number": numeric,
+                "boolean": type(value) is bool,
+                "point": isinstance(value, dict),
+            }.get(kind, False)
+            if not valid:
+                raise SchemaError(f"Incorrect property type: {field}")
+            if kind == "point":
+                if set(value) != {"latitude", "longitude"}:
+                    raise SchemaError("Point requires latitude/longitude only")
+                for coordinate, low, high in (("latitude", -90, 90), ("longitude", -180, 180)):
+                    v = value[coordinate]
+                    if type(v) not in (int, float) or not low <= v <= high or not math.isfinite(v):
+                        raise SchemaError("Invalid point coordinate")
+            if "const" in desc and value != desc["const"]:
+                raise SchemaError(f"Incorrect fixed property: {field}")
+            if "enum" in desc and value not in desc["enum"]:
+                raise SchemaError(f"Invalid enum: {field}")
+            if "enum_ref" in desc and value not in self.data["enums"][desc["enum_ref"]]:
+                raise SchemaError(f"Invalid enum: {field}")
+            if kind in ("integer", "number"):
+                if value < desc.get("minimum", -math.inf) or value > desc.get("maximum", math.inf):
+                    raise SchemaError(f"Property outside bounds: {field}")
+            if kind == "string":
+                if len(value) < desc.get("minLength", 0) or (field in {"id", "source_evidence_id"} and not value.strip()):
+                    raise SchemaError(f"Empty property: {field}")
+                if desc.get("format") == "date-time":
+                    timestamp(value)
+        if "valid_to" in props and "valid_from" not in props:
+>           raise SchemaError("valid_to requires valid_from")
+E           app.graph.schema.SchemaError: valid_to requires valid_from
+
+backend/app/graph/schema.py:116: SchemaError
+_ ERROR at setup of test_history_window_and_stable_order_precede_cap[condition] _
+
+    @pytest.fixture(scope='module')
+    def history_graph():
+        from app.config import Settings
+        from app.graph.connection import connect
+        with connect(Settings(_env_file='.env')) as db:
+            configure(db);name=new_test_graph_name(7);MigrationRunner(db,name).apply()
+            registry=Registry();nodes={};relations=[]
+            def node(kind,p):registry.validate_node(kind,p);nodes[p['id']]=(kind,p)
+            def relation(kind,s,t,id,ev=None,**kw):
+                p={**edge(id),'created_at':OLD,**kw}
+                if ev:p['source_evidence_id']=ev
+                registry.validate_edge(kind,*nodes[s],*nodes[t],p)
+                relations.append({'kind':kind,'s':s,'t':t,'props':p})
+            for kind,id in [('RoadSegment','R-REVIEW'),('WasteCollectionPoint','W-REVIEW')]:
+                node(kind,{**asset(kind,id),'created_at':OLD,'updated_at':OLD})
+            node('CollectionRoute',props('ROUTE-REVIEW',route_code='TEST',operational_status='ACTIVE'))
+            for id in ['EV-INS-A','EV-INS-B','EV-HISTORY']:
+                node('Evidence',props(id,evidence_type='INSPECTION_REPORT',summary='Synthetic B07-R fixture',reliability='VERIFIED',recorded_at=OLD,observed_at=OLD,source_kind='SYNTHETIC'))
+            for suffix,date in [('A','2026-10-02T00:00:00Z'),('B','2026-10-03T00:00:00Z')]:
+                id='INS-'+suffix;ev='EV-INS-'+suffix
+                node('Inspection',props(id,inspection_type='ROAD',status='COMPLETE',requested_at=date,completed_at=date))
+                relation('INSPECTS',id,'R-REVIEW','LINK-'+id,ev)
+                relation('PRODUCED',id,ev,'PROOF-'+id,ev)
+            node('WorkOrder',props('WO-REVIEW',status='PENDING',execution_mode='SIMULATED',plan_version=1,idempotency_key='B07R-WO'))
+            # Insert110 older events first, then105 relevant events in reverse order.
+            # Second valid record's timestamp uses a fraction to catch naive lexical order.
+            # One future event and one event with expired relationship must be excluded.
+            for pickup in [True,False]:
+                kind='PickupExecution' if pickup else 'AssetConditionSnapshot'
+                prefix='P' if pickup else 'C';rel='PICKUP_FOR' if pickup else 'CONDITION_OF';root='W-REVIEW' if pickup else 'R-REVIEW'
+                dates=[(f'OLD-{i:03}',OLD) for i in range(110)]
+                dates += [(f'NEW-{i:03}',f'2026-10-10T00:{i//60:02}:{i%60:02}Z') for i in reversed(range(105))]
+                dates += [('TIE-A','2026-10-10T00:00:00.1Z'),('TIE-B','2026-10-10T00:00:00.100000Z'),('FUTURE','2026-10-18T00:00:00Z'),('EXPIRED',EARLY)]
+                for suffix,date in dates:
+                    id=prefix+'-'+suffix
+                    extra={'route_id':'ROUTE-REVIEW','scheduled_at':date,'status':'COMPLETED'} if pickup else {'asset_id':root,'evidence_id':'EV-HISTORY','observed_at':date,'condition':'SYNTHETIC'}
+>                   node(kind,props(id,**extra));relation(rel,id,root,'E-'+id,'EV-HISTORY',**({'valid_to':EARLY} if suffix=='EXPIRED' else {}))
+                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+backend/tests/integration/test_civicly_mcp_review.py:69: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+backend/tests/integration/test_civicly_mcp_review.py:44: in relation
+    registry.validate_edge(kind,*nodes[s],*nodes[t],p)
+backend/app/graph/schema.py:132: in validate_edge
+    self._properties(shape, props)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <app.graph.schema.Registry object at 0x103cad040>
+shape = {'from': ['PickupExecution'], 'to': ['WasteCollectionPoint'], 'properties': {'id': {'type': 'string', 'minLength': 1, ...ng', 'format': 'date-time', 'introduced_in': 3}, ...}, 'semantics': 'Actual or missed pickup of collection point', ...}
+props = {'id': 'E-P-EXPIRED', 'municipality_id': 'demo-city', 'created_at': '2026-01-01T00:00:00Z', 'valid_to': '2026-10-01T00:00:00Z', ...}
+
+    def _properties(self, shape: dict, props: dict) -> None:
+        if not isinstance(props, dict) or not all(isinstance(k, str) for k in props):
+            raise SchemaError("Properties must be a string-keyed object")
+        if set(props) - shape["properties"].keys():
+            raise SchemaError("Unknown properties")
+        if set(shape["required"]) - props.keys():
+            raise SchemaError("Missing mandatory properties")
+        for field, value in props.items():
+            desc = shape["properties"][field]
+            kind = desc["type"]
+            numeric = (type(value) is int and -(1 << 63) <= value < (1 << 63)) or (
+                type(value) is float and math.isfinite(value)
+            )
+            valid = {
+                "string": isinstance(value, str),
+                "integer": type(value) is int and numeric,
+                "number": numeric,
+                "boolean": type(value) is bool,
+                "point": isinstance(value, dict),
+            }.get(kind, False)
+            if not valid:
+                raise SchemaError(f"Incorrect property type: {field}")
+            if kind == "point":
+                if set(value) != {"latitude", "longitude"}:
+                    raise SchemaError("Point requires latitude/longitude only")
+                for coordinate, low, high in (("latitude", -90, 90), ("longitude", -180, 180)):
+                    v = value[coordinate]
+                    if type(v) not in (int, float) or not low <= v <= high or not math.isfinite(v):
+                        raise SchemaError("Invalid point coordinate")
+            if "const" in desc and value != desc["const"]:
+                raise SchemaError(f"Incorrect fixed property: {field}")
+            if "enum" in desc and value not in desc["enum"]:
+                raise SchemaError(f"Invalid enum: {field}")
+            if "enum_ref" in desc and value not in self.data["enums"][desc["enum_ref"]]:
+                raise SchemaError(f"Invalid enum: {field}")
+            if kind in ("integer", "number"):
+                if value < desc.get("minimum", -math.inf) or value > desc.get("maximum", math.inf):
+                    raise SchemaError(f"Property outside bounds: {field}")
+            if kind == "string":
+                if len(value) < desc.get("minLength", 0) or (field in {"id", "source_evidence_id"} and not value.strip()):
+                    raise SchemaError(f"Empty property: {field}")
+                if desc.get("format") == "date-time":
+                    timestamp(value)
+        if "valid_to" in props and "valid_from" not in props:
+>           raise SchemaError("valid_to requires valid_from")
+E           app.graph.schema.SchemaError: valid_to requires valid_from
+
+backend/app/graph/schema.py:116: SchemaError
+_ ERROR at setup of test_existing_work_order_reports_operational_retrieval_gaps _
+
+    @pytest.fixture(scope='module')
+    def history_graph():
+        from app.config import Settings
+        from app.graph.connection import connect
+        with connect(Settings(_env_file='.env')) as db:
+            configure(db);name=new_test_graph_name(7);MigrationRunner(db,name).apply()
+            registry=Registry();nodes={};relations=[]
+            def node(kind,p):registry.validate_node(kind,p);nodes[p['id']]=(kind,p)
+            def relation(kind,s,t,id,ev=None,**kw):
+                p={**edge(id),'created_at':OLD,**kw}
+                if ev:p['source_evidence_id']=ev
+                registry.validate_edge(kind,*nodes[s],*nodes[t],p)
+                relations.append({'kind':kind,'s':s,'t':t,'props':p})
+            for kind,id in [('RoadSegment','R-REVIEW'),('WasteCollectionPoint','W-REVIEW')]:
+                node(kind,{**asset(kind,id),'created_at':OLD,'updated_at':OLD})
+            node('CollectionRoute',props('ROUTE-REVIEW',route_code='TEST',operational_status='ACTIVE'))
+            for id in ['EV-INS-A','EV-INS-B','EV-HISTORY']:
+                node('Evidence',props(id,evidence_type='INSPECTION_REPORT',summary='Synthetic B07-R fixture',reliability='VERIFIED',recorded_at=OLD,observed_at=OLD,source_kind='SYNTHETIC'))
+            for suffix,date in [('A','2026-10-02T00:00:00Z'),('B','2026-10-03T00:00:00Z')]:
+                id='INS-'+suffix;ev='EV-INS-'+suffix
+                node('Inspection',props(id,inspection_type='ROAD',status='COMPLETE',requested_at=date,completed_at=date))
+                relation('INSPECTS',id,'R-REVIEW','LINK-'+id,ev)
+                relation('PRODUCED',id,ev,'PROOF-'+id,ev)
+            node('WorkOrder',props('WO-REVIEW',status='PENDING',execution_mode='SIMULATED',plan_version=1,idempotency_key='B07R-WO'))
+            # Insert110 older events first, then105 relevant events in reverse order.
+            # Second valid record's timestamp uses a fraction to catch naive lexical order.
+            # One future event and one event with expired relationship must be excluded.
+            for pickup in [True,False]:
+                kind='PickupExecution' if pickup else 'AssetConditionSnapshot'
+                prefix='P' if pickup else 'C';rel='PICKUP_FOR' if pickup else 'CONDITION_OF';root='W-REVIEW' if pickup else 'R-REVIEW'
+                dates=[(f'OLD-{i:03}',OLD) for i in range(110)]
+                dates += [(f'NEW-{i:03}',f'2026-10-10T00:{i//60:02}:{i%60:02}Z') for i in reversed(range(105))]
+                dates += [('TIE-A','2026-10-10T00:00:00.1Z'),('TIE-B','2026-10-10T00:00:00.100000Z'),('FUTURE','2026-10-18T00:00:00Z'),('EXPIRED',EARLY)]
+                for suffix,date in dates:
+                    id=prefix+'-'+suffix
+                    extra={'route_id':'ROUTE-REVIEW','scheduled_at':date,'status':'COMPLETED'} if pickup else {'asset_id':root,'evidence_id':'EV-HISTORY','observed_at':date,'condition':'SYNTHETIC'}
+>                   node(kind,props(id,**extra));relation(rel,id,root,'E-'+id,'EV-HISTORY',**({'valid_to':EARLY} if suffix=='EXPIRED' else {}))
+                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+backend/tests/integration/test_civicly_mcp_review.py:69: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+backend/tests/integration/test_civicly_mcp_review.py:44: in relation
+    registry.validate_edge(kind,*nodes[s],*nodes[t],p)
+backend/app/graph/schema.py:132: in validate_edge
+    self._properties(shape, props)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <app.graph.schema.Registry object at 0x103cad040>
+shape = {'from': ['PickupExecution'], 'to': ['WasteCollectionPoint'], 'properties': {'id': {'type': 'string', 'minLength': 1, ...ng', 'format': 'date-time', 'introduced_in': 3}, ...}, 'semantics': 'Actual or missed pickup of collection point', ...}
+props = {'id': 'E-P-EXPIRED', 'municipality_id': 'demo-city', 'created_at': '2026-01-01T00:00:00Z', 'valid_to': '2026-10-01T00:00:00Z', ...}
+
+    def _properties(self, shape: dict, props: dict) -> None:
+        if not isinstance(props, dict) or not all(isinstance(k, str) for k in props):
+            raise SchemaError("Properties must be a string-keyed object")
+        if set(props) - shape["properties"].keys():
+            raise SchemaError("Unknown properties")
+        if set(shape["required"]) - props.keys():
+            raise SchemaError("Missing mandatory properties")
+        for field, value in props.items():
+            desc = shape["properties"][field]
+            kind = desc["type"]
+            numeric = (type(value) is int and -(1 << 63) <= value < (1 << 63)) or (
+                type(value) is float and math.isfinite(value)
+            )
+            valid = {
+                "string": isinstance(value, str),
+                "integer": type(value) is int and numeric,
+                "number": numeric,
+                "boolean": type(value) is bool,
+                "point": isinstance(value, dict),
+            }.get(kind, False)
+            if not valid:
+                raise SchemaError(f"Incorrect property type: {field}")
+            if kind == "point":
+                if set(value) != {"latitude", "longitude"}:
+                    raise SchemaError("Point requires latitude/longitude only")
+                for coordinate, low, high in (("latitude", -90, 90), ("longitude", -180, 180)):
+                    v = value[coordinate]
+                    if type(v) not in (int, float) or not low <= v <= high or not math.isfinite(v):
+                        raise SchemaError("Invalid point coordinate")
+            if "const" in desc and value != desc["const"]:
+                raise SchemaError(f"Incorrect fixed property: {field}")
+            if "enum" in desc and value not in desc["enum"]:
+                raise SchemaError(f"Invalid enum: {field}")
+            if "enum_ref" in desc and value not in self.data["enums"][desc["enum_ref"]]:
+                raise SchemaError(f"Invalid enum: {field}")
+            if kind in ("integer", "number"):
+                if value < desc.get("minimum", -math.inf) or value > desc.get("maximum", math.inf):
+                    raise SchemaError(f"Property outside bounds: {field}")
+            if kind == "string":
+                if len(value) < desc.get("minLength", 0) or (field in {"id", "source_evidence_id"} and not value.strip()):
+                    raise SchemaError(f"Empty property: {field}")
+                if desc.get("format") == "date-time":
+                    timestamp(value)
+        if "valid_to" in props and "valid_from" not in props:
+>           raise SchemaError("valid_to requires valid_from")
+E           app.graph.schema.SchemaError: valid_to requires valid_from
+
+backend/app/graph/schema.py:116: SchemaError
+=========================== short test summary info ============================
+ERROR backend/tests/integration/test_civicly_mcp_review.py::test_maintenance_records_keep_independent_evidence
+ERROR backend/tests/integration/test_civicly_mcp_review.py::test_history_window_and_stable_order_precede_cap[pickup]
+ERROR backend/tests/integration/test_civicly_mcp_review.py::test_history_window_and_stable_order_precede_cap[condition]
+ERROR backend/tests/integration/test_civicly_mcp_review.py::test_existing_work_order_reports_operational_retrieval_gaps
+============================== 4 errors in 6.21s ===============================

@@ -15,16 +15,16 @@ Names, permissions, JSON request and response shapes remain defined in `contract
 Five additional evidence-specific tools are now registered in `contracts/mcp_tools.json`: `get_pickup_execution_history`, `get_road_condition_history`, `get_source_document_excerpt`, `get_decision_evidence_path`, and `get_monitoring_status`. Use these for demonstrably useful evidence retrieval, not mandatory invocation in every case. `retrieve_case_memory` covers episodic/semantic/procedural retrieval categories. `get_organizational_procedures` uses GraphRAG retrieval with source citations/versions.
 
 ## Contract fields for every tool result
-```
-{
-  status: "SUCCESS|PARTIAL|UNAVAILABLE|ERROR|PERMISSION_DENIED",
-  trace_id: "...", investigation_id: "...",
-  data: <tool-specific validated JSON>, source_evidence_ids: ["..."],
-  graph_revision: <application revision>, simulated: true|false,
-  truncated: true|false, error: {code, message, retryable}|null
-}
-```
-The current v1 tool registry may include narrower `status` enum; expand registry and handlers together, preserve backward compatibility until all tests updated.
+B07 machine authority is contracts/mcp_tools.json schema3 and contracts/mcp_envelopes.json.
+Every custom result retains its tool-specific payload and requires status,trace_id,
+execution_id,context,server_id,tool_name,schema_version,inventory_version,data,
+source_evidence_ids,graph_revision,simulation_mode,truncated,search_limited,error.
+Context carries invocation/parent IDs, optional correlation investigation ID, fixed
+municipality/source graph and trusted host role/origin. simulation_mode replaces the
+superseded prose simulated spelling. Graph revision is actual integer|null; errors
+are typed objects|null. Data includes bounded nodes/edges/paths/gaps/reservations/as_of.
+No empty SUCCESS when required source/capability is unavailable. Official vendor
+results retain their B06 typed shape; routed trace metadata uses the shared contract.
 
 ## Tool trace and explanation contract
 Persist timestamp, agent role, tool name, input schema version, redacted normalized input hash, output summary, source IDs, graph path IDs, duration, error code, tool inventory revision, rationale summary, simulator flag. These fields power frontend agent activity timeline and diagnostics; no internal private reasoning transcript. All tools have explicit timeouts and result limits.
@@ -60,3 +60,15 @@ and operator JSON evidence do not fulfill B07/B17 graph-backed common envelope/t
 persistence. Existing custom18-tool contracts and all remaining DEC-004 findings stay
 binding for their designated milestones. Agent interfaces receive broker schemas,
 never upstream arbitrary Cypher/session/credential capabilities.
+
+## B07 implemented read tools and trace persistence
+See backend/CIVICLY_MCP.md.12 declared READ handlers registered on actual Python SDK
+server civicly-domain1.0.0;6 future write tools unregistered/denied. Namespaces civicly::
+and official:: are separated at RuntimeBroker. B03/B05 reused; source city read-only;
+memory/GraphRAG/versioned documents/monitoring explicitly UNAVAILABLE until their
+milestones. Separate trace graph uses unchanged ToolExecution v3 plus sanitized
+companion metadata via compatible additive trace-storage migration0002. Server and
+broker observations persisted through controlled fenced services; no fabricated
+model rationale or B15 delivery claim. Shared trace/envelope portion of DEC-004 is
+implemented/tested in B07; remaining API/agent/source/approval/event/evaluator work
+retains designated milestones.

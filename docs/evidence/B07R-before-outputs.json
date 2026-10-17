@@ -1,0 +1,418 @@
+{
+  "evidence_class": "REAL_MCP_DB_WITH_TEST_ONLY_SOURCE_SUBSTITUTION",
+  "note": "Fixture source injected only in tests.b07r_server; fixed production context unchanged. Not retained city evidence.",
+  "results": {
+    "maintenance": {
+      "status": "PARTIAL",
+      "trace_id": "ba3b7f1a88c54a22bd0e9c738aa94cf8",
+      "execution_id": "fed10e7dc58041aaa691ed52ab94e7e5",
+      "context": {
+        "trace_id": "ba3b7f1a88c54a22bd0e9c738aa94cf8",
+        "execution_id": "fed10e7dc58041aaa691ed52ab94e7e5",
+        "parent_execution_id": null,
+        "investigation_id": null,
+        "municipality_id": "demo-city",
+        "source_graph": "civicly_b04_test_a84beda80da64aacbc367a9399e07a97",
+        "caller_role": "OPERATOR_REVIEW",
+        "invocation_origin": "OPERATOR_REVIEW"
+      },
+      "server_id": "civicly-domain",
+      "tool_name": "get_maintenance_history",
+      "schema_version": 3,
+      "inventory_version": "220d1f3df5c6b7878e0cf2f821f0425b431718ba08736f5ac626992f76711987",
+      "source_evidence_ids": [
+        "EV-INS-A",
+        "EV-INS-B"
+      ],
+      "simulation_mode": true,
+      "graph_revision": 0,
+      "truncated": false,
+      "search_limited": false,
+      "error": null,
+      "records": [
+        {
+          "record_id": "INS-A",
+          "event_type": "Inspection",
+          "occurred_at": "2026-10-02T00:00:00Z",
+          "evidence_ids": [
+            "EV-INS-A",
+            "EV-INS-B"
+          ]
+        },
+        {
+          "record_id": "INS-B",
+          "event_type": "Inspection",
+          "occurred_at": "2026-10-03T00:00:00Z",
+          "evidence_ids": [
+            "EV-INS-A",
+            "EV-INS-B"
+          ]
+        }
+      ],
+      "data": {
+        "nodes": [
+          {
+            "id": "R-REVIEW",
+            "kind": "RoadSegment",
+            "labels": [
+              "InfrastructureAsset",
+              "RoadSegment"
+            ],
+            "properties": {
+              "id": "R-REVIEW",
+              "updated_at": "2026-01-01T00:00:00Z",
+              "municipality_id": "demo-city",
+              "created_at": "2026-01-01T00:00:00Z",
+              "schema_version": 3,
+              "operational_status": "ACTIVE",
+              "name": "Synthetic asset",
+              "asset_type": "ROAD_SEGMENT"
+            }
+          },
+          {
+            "id": "INS-A",
+            "kind": "Inspection",
+            "labels": [
+              "Inspection"
+            ],
+            "properties": {
+              "id": "INS-A",
+              "updated_at": "2026-01-01T00:00:00Z",
+              "municipality_id": "demo-city",
+              "status": "COMPLETE",
+              "created_at": "2026-01-01T00:00:00Z",
+              "schema_version": 3,
+              "requested_at": "2026-10-02T00:00:00Z",
+              "inspection_type": "ROAD",
+              "completed_at": "2026-10-02T00:00:00Z"
+            }
+          },
+          {
+            "id": "INS-B",
+            "kind": "Inspection",
+            "labels": [
+              "Inspection"
+            ],
+            "properties": {
+              "id": "INS-B",
+              "updated_at": "2026-01-01T00:00:00Z",
+              "municipality_id": "demo-city",
+              "status": "COMPLETE",
+              "created_at": "2026-01-01T00:00:00Z",
+              "schema_version": 3,
+              "requested_at": "2026-10-03T00:00:00Z",
+              "inspection_type": "ROAD",
+              "completed_at": "2026-10-03T00:00:00Z"
+            }
+          },
+          {
+            "id": "EV-INS-A",
+            "kind": "Evidence",
+            "labels": [
+              "Evidence"
+            ],
+            "properties": {
+              "id": "EV-INS-A",
+              "updated_at": "2026-01-01T00:00:00Z",
+              "municipality_id": "demo-city",
+              "observed_at": "2026-01-01T00:00:00Z",
+              "recorded_at": "2026-01-01T00:00:00Z",
+              "created_at": "2026-01-01T00:00:00Z",
+              "schema_version": 3,
+              "summary": "Synthetic B07-R fixture",
+              "source_kind": "SYNTHETIC",
+              "evidence_type": "INSPECTION_REPORT",
+              "reliability": "VERIFIED"
+            }
+          },
+          {
+            "id": "EV-INS-B",
+            "kind": "Evidence",
+            "labels": [
+              "Evidence"
+            ],
+            "properties": {
+              "id": "EV-INS-B",
+              "updated_at": "2026-01-01T00:00:00Z",
+              "municipality_id": "demo-city",
+              "observed_at": "2026-01-01T00:00:00Z",
+              "recorded_at": "2026-01-01T00:00:00Z",
+              "created_at": "2026-01-01T00:00:00Z",
+              "schema_version": 3,
+              "summary": "Synthetic B07-R fixture",
+              "source_kind": "SYNTHETIC",
+              "evidence_type": "INSPECTION_REPORT",
+              "reliability": "VERIFIED"
+            }
+          }
+        ],
+        "edges": [
+          {
+            "id": "LINK-INS-A",
+            "kind": "INSPECTS",
+            "source": "INS-A",
+            "target": "R-REVIEW",
+            "properties": {
+              "id": "LINK-INS-A",
+              "municipality_id": "demo-city",
+              "created_at": "2026-01-01T00:00:00Z",
+              "source_evidence_id": "EV-INS-A"
+            }
+          },
+          {
+            "id": "LINK-INS-B",
+            "kind": "INSPECTS",
+            "source": "INS-B",
+            "target": "R-REVIEW",
+            "properties": {
+              "id": "LINK-INS-B",
+              "municipality_id": "demo-city",
+              "created_at": "2026-01-01T00:00:00Z",
+              "source_evidence_id": "EV-INS-B"
+            }
+          },
+          {
+            "id": "PROOF-INS-A",
+            "kind": "PRODUCED",
+            "source": "INS-A",
+            "target": "EV-INS-A",
+            "properties": {
+              "id": "PROOF-INS-A",
+              "municipality_id": "demo-city",
+              "created_at": "2026-01-01T00:00:00Z",
+              "source_evidence_id": "EV-INS-A"
+            }
+          },
+          {
+            "id": "PROOF-INS-B",
+            "kind": "PRODUCED",
+            "source": "INS-B",
+            "target": "EV-INS-B",
+            "properties": {
+              "id": "PROOF-INS-B",
+              "municipality_id": "demo-city",
+              "created_at": "2026-01-01T00:00:00Z",
+              "source_evidence_id": "EV-INS-B"
+            }
+          }
+        ],
+        "paths": [
+          {
+            "id": "8a10cc5826c0ecf3af9bc71f1e1cb5d8a3c4fdcd80db6b587cc0b233e7f624b3",
+            "node_ids": [
+              "R-REVIEW",
+              "INS-A"
+            ],
+            "edge_ids": [
+              "LINK-INS-A"
+            ],
+            "directions": [
+              "INCOMING"
+            ],
+            "evidence_ids": [
+              "EV-INS-A"
+            ],
+            "context": {}
+          },
+          {
+            "id": "5c4ec853585e998e6dc7d6ce242e211356388a398bc65e60ef09aa91ff4e2c7d",
+            "node_ids": [
+              "R-REVIEW",
+              "INS-B"
+            ],
+            "edge_ids": [
+              "LINK-INS-B"
+            ],
+            "directions": [
+              "INCOMING"
+            ],
+            "evidence_ids": [
+              "EV-INS-B"
+            ],
+            "context": {}
+          },
+          {
+            "id": "bab31a47cdd704c6c46f5a240717b46916119799f19cf4c0f8784bb3f5efc324",
+            "node_ids": [
+              "R-REVIEW",
+              "INS-A",
+              "EV-INS-A"
+            ],
+            "edge_ids": [
+              "LINK-INS-A",
+              "PROOF-INS-A"
+            ],
+            "directions": [
+              "INCOMING",
+              "OUTGOING"
+            ],
+            "evidence_ids": [
+              "EV-INS-A"
+            ],
+            "context": {}
+          },
+          {
+            "id": "4ffff3dc54c5a4a0c92cebae447f77dab46ba497c0ae9da78a8c534720b7c93c",
+            "node_ids": [
+              "R-REVIEW",
+              "INS-B",
+              "EV-INS-B"
+            ],
+            "edge_ids": [
+              "LINK-INS-B",
+              "PROOF-INS-B"
+            ],
+            "directions": [
+              "INCOMING",
+              "OUTGOING"
+            ],
+            "evidence_ids": [
+              "EV-INS-B"
+            ],
+            "context": {}
+          }
+        ],
+        "gaps": [
+          "Asset-linked history is contextual; absent repair/decision chains are not proof of resolution"
+        ],
+        "reservations": [
+          "Graph connections are evidence context, not verified physical causation.",
+          "Historical node versions are not reconstructed; future-updated records are excluded.",
+          "Some relationship validity start dates are unknown."
+        ],
+        "as_of": "2026-10-17T12:00:00Z"
+      }
+    },
+    "get_pickup_execution_history": {
+      "status": "PARTIAL",
+      "trace_id": "799d79fcea9c4b3d8d3c6a2c89247d78",
+      "execution_id": "cddc238543234ae586fa471f9b0a0562",
+      "context": {
+        "trace_id": "799d79fcea9c4b3d8d3c6a2c89247d78",
+        "execution_id": "cddc238543234ae586fa471f9b0a0562",
+        "parent_execution_id": null,
+        "investigation_id": null,
+        "municipality_id": "demo-city",
+        "source_graph": "civicly_b04_test_a84beda80da64aacbc367a9399e07a97",
+        "caller_role": "OPERATOR_REVIEW",
+        "invocation_origin": "OPERATOR_REVIEW"
+      },
+      "server_id": "civicly-domain",
+      "tool_name": "get_pickup_execution_history",
+      "schema_version": 3,
+      "inventory_version": "220d1f3df5c6b7878e0cf2f821f0425b431718ba08736f5ac626992f76711987",
+      "source_evidence_ids": [],
+      "simulation_mode": true,
+      "graph_revision": 0,
+      "truncated": true,
+      "search_limited": true,
+      "error": null,
+      "pickup_executions": [],
+      "data": {
+        "nodes": [],
+        "edges": [],
+        "paths": [],
+        "gaps": [
+          "Source pickup local-clock/service alias warnings remain; no schedule reinterpretation",
+          "No matching recorded results within this bounded query; not proof of global absence"
+        ],
+        "reservations": [],
+        "as_of": "2026-10-17T12:00:00Z"
+      }
+    },
+    "get_road_condition_history": {
+      "status": "PARTIAL",
+      "trace_id": "c6150c6457ac4bebb04466832543febd",
+      "execution_id": "a30566b13ac64fb5ac08c1abeab38ba7",
+      "context": {
+        "trace_id": "c6150c6457ac4bebb04466832543febd",
+        "execution_id": "a30566b13ac64fb5ac08c1abeab38ba7",
+        "parent_execution_id": null,
+        "investigation_id": null,
+        "municipality_id": "demo-city",
+        "source_graph": "civicly_b04_test_a84beda80da64aacbc367a9399e07a97",
+        "caller_role": "OPERATOR_REVIEW",
+        "invocation_origin": "OPERATOR_REVIEW"
+      },
+      "server_id": "civicly-domain",
+      "tool_name": "get_road_condition_history",
+      "schema_version": 3,
+      "inventory_version": "220d1f3df5c6b7878e0cf2f821f0425b431718ba08736f5ac626992f76711987",
+      "source_evidence_ids": [],
+      "simulation_mode": true,
+      "graph_revision": 0,
+      "truncated": true,
+      "search_limited": true,
+      "error": null,
+      "road_conditions": [],
+      "data": {
+        "nodes": [],
+        "edges": [],
+        "paths": [],
+        "gaps": [
+          "No matching recorded results within this bounded query; not proof of global absence"
+        ],
+        "reservations": [],
+        "as_of": "2026-10-17T12:00:00Z"
+      }
+    },
+    "work_order": {
+      "status": "PARTIAL",
+      "trace_id": "e9ae3c947b49412ead00a2e24faec50b",
+      "execution_id": "6636c7482c3a4ccb9b768a0c5bb2e212",
+      "context": {
+        "trace_id": "e9ae3c947b49412ead00a2e24faec50b",
+        "execution_id": "6636c7482c3a4ccb9b768a0c5bb2e212",
+        "parent_execution_id": null,
+        "investigation_id": null,
+        "municipality_id": "demo-city",
+        "source_graph": "civicly_b04_test_a84beda80da64aacbc367a9399e07a97",
+        "caller_role": "OPERATOR_REVIEW",
+        "invocation_origin": "OPERATOR_REVIEW"
+      },
+      "server_id": "civicly-domain",
+      "tool_name": "get_work_order_status",
+      "schema_version": 3,
+      "inventory_version": "220d1f3df5c6b7878e0cf2f821f0425b431718ba08736f5ac626992f76711987",
+      "source_evidence_ids": [],
+      "simulation_mode": true,
+      "graph_revision": 0,
+      "truncated": false,
+      "search_limited": true,
+      "error": null,
+      "work_order_status": "PENDING",
+      "data": {
+        "nodes": [
+          {
+            "id": "WO-REVIEW",
+            "kind": "WorkOrder",
+            "labels": [
+              "WorkOrder"
+            ],
+            "properties": {
+              "id": "WO-REVIEW",
+              "updated_at": "2026-01-01T00:00:00Z",
+              "municipality_id": "demo-city",
+              "status": "PENDING",
+              "created_at": "2026-01-01T00:00:00Z",
+              "schema_version": 3,
+              "plan_version": 1,
+              "idempotency_key": "B07R-WO",
+              "execution_mode": "SIMULATED"
+            }
+          }
+        ],
+        "edges": [],
+        "paths": [],
+        "gaps": [
+          "Status is recorded graph state; no workflow execution or inferred completion"
+        ],
+        "reservations": [],
+        "as_of": "2026-10-17T12:00:00Z"
+      },
+      "blocking_task_ids": [],
+      "latest_status_event_ids": []
+    }
+  },
+  "fixture_graph": "civicly_b07_test_6416213219bf478492dd7323b6e0e70d"
+}

@@ -1,0 +1,66 @@
+{
+  "id": "0002",
+  "family": "civicly_mcp_trace_storage",
+  "version": 2,
+  "compatible_registry_version": 3,
+  "requires_0001_sha256": "94ab9fae6079fe7e87b41afd80701409db6bb51d529c2565dbd340896a5c923b",
+  "indexes": [
+    {
+      "entity": "NODE",
+      "label": "CivicMCPTraceDetail",
+      "properties": [
+        "id"
+      ]
+    },
+    {
+      "entity": "NODE",
+      "label": "CivicMCPTraceMigration",
+      "properties": [
+        "id"
+      ]
+    }
+  ],
+  "constraints": [
+    {
+      "entity": "NODE",
+      "label": "CivicMCPTraceDetail",
+      "type": "UNIQUE",
+      "properties": [
+        "id"
+      ]
+    },
+    {
+      "entity": "NODE",
+      "label": "CivicMCPTraceDetail",
+      "type": "MANDATORY",
+      "properties": [
+        "id",
+        "payload_json",
+        "payload_sha256"
+      ]
+    },
+    {
+      "entity": "NODE",
+      "label": "CivicMCPTraceMigration",
+      "type": "UNIQUE",
+      "properties": [
+        "id"
+      ]
+    },
+    {
+      "entity": "NODE",
+      "label": "CivicMCPTraceMigration",
+      "type": "MANDATORY",
+      "properties": [
+        "id",
+        "checksum",
+        "state",
+        "updated_at"
+      ]
+    }
+  ],
+  "storage_contract": "ToolExecution conforms to unchanged registry v3. Companion shares id, holds validated sanitized trace JSON/hash, created atomically through fenced repository commit. No public ontology additions.",
+  "ledger_label": "CivicMCPTraceMigration",
+  "scope": "Only explicitly configured separate B07 trace graph; never accepted source city or canonical graph",
+  "recovery": "Additive: retain FAILED ledger, existing traces/constraints; explicit retry only after operational inspection. Never drop graph, data or volumes. 0001 ledger remains unchanged."
+}

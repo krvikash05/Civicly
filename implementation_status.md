@@ -1,5 +1,13 @@
 # implementation_status.md — Current implementation truth
 
+## Current status — B07-R, 2026-10-17 (takes precedence over history)
+
+B07 technically accepted. B07-R PASS — human review pending. Final440 PASS/0 FAIL/0 SKIP in368.60s (293 unit/147 real integration), adding5 unit+9 real cases; all426 accepted tests preserved. Both SPEC validators PASS. Independent maintenance provenance, pre-cap UTC history filtering/order/lookahead, and explicit unknown work-order fields verified through real MCP. Retained city/B01/B05/migrations/accepted+corrective traces preserved across actual restart/recreation. B08 TODO; no later work.
+
+## Current status — B07, 2026-10-17 (takes precedence over history)
+
+B07 implemented/verified: actual custom Python MCP,12 READ handlers, official/domain namespaces, synchronized envelopes and graph-backed ToolExecution observations via isolated compatible0002.426 PASS/0 FAIL/0 SKIP; both SPEC validators PASS. Credential rotation verified; city/0001/registry/B01/B05 evidence preserved. No agent/GraphRAG/operations/API/frontend capability claimed complete. STOP for B07 review.
+
 ## Current status — B06, 2026-10-17 (takes precedence over history)
 
 B06 implemented and verified: official Node1.3.0/Python MCP2.3.0 private stdio, four allowlisted read tools, graph-scoped DB ACL, strict templates and sanitized traces.361 PASS/0 FAIL/0 SKIP; both SPEC validators PASS. B01/B04/B05 retained fingerprints and canonical0001 readiness unchanged. No agent/custom MCP/GraphRAG/operations/API/frontend feature claimed complete. STOP for B06 review.
@@ -189,3 +197,48 @@ original B01 row and retained B05 source57/clone59 unchanged. Canonical0001 READ
 91 index groups/182 OPERATIONAL constraints. Security/source/process audit PASS.
 Exact paths/diff/commands in B06-FILES.md/B06-changes.patch/B06-COMMANDS.md. No B06 ZIP
 or remote push. STOP — human review required before B07.
+
+## B07 implemented read/runtime foundation | 2026-10-17
+- Verified credential rotation before integration; accepted B06 local baseline24e8072.
+-12 actual custom READ handlers;6 future write handlers unregistered/denied. B05
+  cases/reachability +B03 maintenance reused; fixed bounded registered-history reads.
+  Unsupported later capabilities/unlinked observations explicit UNAVAILABLE/gaps.
+- Actual Python SDK2.3.0 server civicly-domain1.0.0/private stdio. Domain/official
+  namespace router, strict discovery/input/output/scope/budget/permission checks.
+- Shared MCP schema3/context/result/provenance/revision/error/limits; AgentTraceEvent
+  metadata aligned without API implementation. rationale null, no model selected tool.
+- Separate B07 trace graph, immutable0001/registryv3 compatibility; storage adjunct0002
+  adds2 indexes/4 constraints with own checksummed ledger and operational readiness.
+  Controlled fenced atomic ToolExecution+detail/hash and parented broker observations;
+  source credentials cannot write, trace credentials cannot access city.
+- Unit/real negatives, transient/partial/failed migration, trace idempotence/persistence
+  and failure refusal tested. Final full regression/review pending; no B08+ work.
+
+B07 final gate:426 PASS/0 FAIL/0 SKIP in350.75s (288unit/138real); both SPEC validators
+PASS. Actual post-recreation MCP proof initializes civicly-domain1.0.0/protocol2025-11-25,
+lists12 schemas and reads all12 handlers plus candidate/typed examples.15 server
+observations verified;13 preexisting traces survived recreation. Isolated trace0002
+READY (2 index groups/4 constraints added;93/186 total). Source city2104 record hashes/
+audit/writer state, original B01 and retained B05 source/clone unchanged; canonical
+0001 READY91/182. Credential rotation/source/secret/process audit PASS. No B07 ZIP,
+remote push or later work. STOP — human review required before B08.
+
+## B07-R narrow corrective implementation | 2026-10-17
+
+B07 technically accepted. Corrected per-event maintenance evidence, chronological
+windowed pickup/condition retrieval before cap, and explicit unknown work-order
+relationship placeholders. Preserved wire schemas/shared envelopes/trace architecture.
+New5 structural unit and9 real DB/MCP cases PASS focused; full regression pending.
+Only service/server projections, contract semantic descriptions and review evidence
+changed; all B03–B06 source/algorithms/policies/migrations/dataset remain protected.
+No B08 business logic or product completion claim. All18 requirements remain binding.
+
+### B07-R final gate (supersedes pending entry)
+
+440 PASS/0 FAIL/0 SKIP in368.60s;293 unit/147 real DB/MCP integration. Adds5 unit+9
+real tests;426 previous tests unchanged. Both SPEC validators PASS. Fresh actual-city
+MCP proof12 tools/no ERROR +15 readback observations; all retained city/B01/B05 hashes
+and migrations unchanged. Accepted and corrective trace persistence after lifecycle
+verified;333 old files outside11 deliberate modifications unchanged, wire schemas/
+permissions/pins preserved and actual local-secret/process audit PASS. All six tracking
+files +guide/contracts/evidence updated. B07-R PASS, awaiting human review; B08 unstarted.

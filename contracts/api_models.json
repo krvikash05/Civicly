@@ -994,22 +994,209 @@
           ]
         },
         "rationale_summary": {
-          "type": "string"
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "status": {
           "type": "string"
         },
         "source_evidence_ids": {
-          "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "maxItems": 200,
+          "title": "Source Evidence Ids",
+          "type": "array"
         },
         "graph_revision": {
-          "type": "string"
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
         },
         "simulation_mode": {
           "type": "boolean"
+        },
+        "execution_id": {
+          "type": "string"
+        },
+        "context": {
+          "additionalProperties": false,
+          "properties": {
+            "trace_id": {
+              "maxLength": 80,
+              "minLength": 1,
+              "title": "Trace Id",
+              "type": "string"
+            },
+            "execution_id": {
+              "maxLength": 80,
+              "minLength": 1,
+              "title": "Execution Id",
+              "type": "string"
+            },
+            "parent_execution_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Parent Execution Id"
+            },
+            "investigation_id": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Investigation Id"
+            },
+            "municipality_id": {
+              "const": "demo-city",
+              "default": "demo-city",
+              "title": "Municipality Id",
+              "type": "string"
+            },
+            "source_graph": {
+              "const": "civicly_b04_test_a84beda80da64aacbc367a9399e07a97",
+              "default": "civicly_b04_test_a84beda80da64aacbc367a9399e07a97",
+              "title": "Source Graph",
+              "type": "string"
+            },
+            "caller_role": {
+              "default": "OPERATOR_REVIEW",
+              "enum": [
+                "READ_ONLY",
+                "OPERATOR_REVIEW"
+              ],
+              "title": "Caller Role",
+              "type": "string"
+            },
+            "invocation_origin": {
+              "default": "OPERATOR_REVIEW",
+              "enum": [
+                "OPERATOR_REVIEW",
+                "APPLICATION"
+              ],
+              "title": "Invocation Origin",
+              "type": "string"
+            }
+          },
+          "required": [
+            "trace_id",
+            "execution_id"
+          ],
+          "title": "Context",
+          "type": "object"
+        },
+        "server_id": {
+          "type": "string",
+          "enum": [
+            "civicly-domain",
+            "official-falkordb"
+          ]
+        },
+        "schema_version": {
+          "const": 3
+        },
+        "inventory_version": {
+          "type": "string"
+        },
+        "server_version": {
+          "title": "Server Version",
+          "type": "string"
+        },
+        "arguments_sha256": {
+          "title": "Arguments Sha256",
+          "type": "string"
+        },
+        "arguments_summary": {
+          "const": "values withheld",
+          "default": "values withheld",
+          "title": "Arguments Summary",
+          "type": "string"
+        },
+        "output_sha256": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Output Sha256"
+        },
+        "validated_output": {
+          "default": false,
+          "title": "Validated Output",
+          "type": "boolean"
+        },
+        "latency_ms": {
+          "minimum": 0,
+          "title": "Latency Ms",
+          "type": "number"
+        },
+        "started_at": {
+          "title": "Started At",
+          "type": "string"
+        },
+        "finished_at": {
+          "title": "Finished At",
+          "type": "string"
+        },
+        "graph_path_ids": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 100,
+          "title": "Graph Path Ids",
+          "type": "array"
+        },
+        "error_code": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Error Code"
+        },
+        "protocol_version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Protocol Version"
+        },
+        "phase": {
+          "enum": [
+            "SERVER",
+            "BROKER"
+          ],
+          "title": "Phase",
+          "type": "string"
         }
       },
       "required": [
@@ -1852,5 +2039,6 @@
     "mode": "single_synthetic_municipality",
     "caller_selectable": false,
     "framework_tenant_id_mapping": "explicit boundary adapter only; never a domain property"
-  }
+  },
+  "b07_trace_contract": "B07 shares identity/context/hash/latency fields; B17 SSE/API projection remains unimplemented"
 }

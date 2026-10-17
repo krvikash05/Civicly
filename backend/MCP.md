@@ -165,3 +165,12 @@ Official sources verified against installed release:
 - https://py.sdk.modelcontextprotocol.io/
 - Installed official dist/index.js, dist/mcp/tools.js, dist/config/index.js,
   dist/services/falkordb.service.js and Node falkordb Sentinel detection source.
+
+## B07 integration and credential incident
+B06 accepted. B07 rotated the reported exposed MCP password, verified old denial/new
+read-only access and preserved this official client/server/allowlist. See
+[CIVICLY_MCP.md](CIVICLY_MCP.md) for separate namespaces/custom12 READ tools and shared
+graph-backed traces. B06 process-local trace evidence below is historical; future
+runtime callers use the B07 namespace router for controlled durable observations.
+Git-ignore checks do not sanitize full-folder archives; ignored.runtime credentials
+must be excluded explicitly from any future export. No B07 ZIP is generated.

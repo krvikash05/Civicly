@@ -1,5 +1,13 @@
 # test_log.md — Append-only verification record
 
+## Current status — B07-R, 2026-10-17 (takes precedence over history)
+
+B07 technically accepted. B07-R PASS — human review pending. Final440 PASS/0 FAIL/0 SKIP in368.60s (293 unit/147 real integration), adding5 unit+9 real cases; all426 accepted tests preserved. Both SPEC validators PASS. Independent maintenance provenance, pre-cap UTC history filtering/order/lookahead, and explicit unknown work-order fields verified through real MCP. Retained city/B01/B05/migrations/accepted+corrective traces preserved across actual restart/recreation. B08 TODO; no later work.
+
+## Current status — B07, 2026-10-17 (takes precedence over history)
+
+Final B01–B07 regression426 PASS/0 FAIL/0 SKIP in350.75s:288 unit/138 real integration. B07 adds33 unit+32 real cases; all original361 tests unchanged. Both SPEC validators PASS. Actual MCP proof after recreation, all retained fingerprints and13 preexisting trace records PASS. Unit/mock and AFTER-REAL-READ fault cases labeled; no live model rationale claimed.
+
 ## Current status — B06, 2026-10-17 (takes precedence over history)
 
 Final B01–B06 regression361 PASS/0 FAIL/0 SKIP in329.97s:255 unit/106 real database/MCP integration. B06 adds37 unit+15 real cases; all original309 tests retained unchanged. Both SPEC validators PASS. Post-recreation MCP proof/independent read, full retained fingerprints and canonical readiness PASS. HTTP bearer auth not applicable to private stdio; no live model test.
@@ -583,3 +591,124 @@ PY
 - HTTP bearer tests NOT APPLICABLE to stdio; live LLM, custom domain MCP, agents,
  GraphRAG, operations/API/frontend NOT IMPLEMENTED/NOT RUN in B06; not skipped runtime
  acceptance tests. Remaining source/DEC-004 findings stay OPEN. STOP for human review.
+
+### TEST-20261017-B07-01 — Incident rotation / accepted baseline
+- `PYTHONPATH=backend backend/.venv/bin/python scripts/rotate_b07_mcp.py`: PASS old
+  credential AUTH DENIED, replacement PING/RO read PASS; named-user connections killed,
+  graph-scoped readonly commands retained, file atomic0600. No values or password
+  hashes logged. Report B07-credential-rotation.json. No graph record/migration edit.
+- Accepted B06 baseline361 PASS/0 FAIL/0 SKIP in305.72s.52-file staged secret/exclusion
+  audit PASS; local24e80725ead2903516ecd36db2142f8fe36b2760, no push. User's reported
+  unsafe full-folder archive is external/not inspected here; Git candidate audit does
+  not claim it excluded ignored.runtime. No B07 archive generated.
+
+### TEST-20261017-B07-02 — Actual handlers / strict contracts / negative faults
+- Initial32 unit PASS in0.73s (structural/pure/mock only), first25 actual custom MCP
+  integration PASS in49.73s. Strengthened60 PASS in49.55s (32unit/28real); extra2 real
+  unavailable-server/trace-write-failure boundaries PASS in7.18s. Trace permission
+  revocation is deliberate fault; SDK stderr NoPermissionError is retained evidence,
+  not a failed passing test. Permissions restored in finally.
+- First operator all-handler proof surfaced maintenance ERROR: duplicate provenance
+  IDs correctly rejected by uniqueItems. Direct readonly service reproduction failed
+  schema validation; deduplicate/copy lists, then proof rerun with explicit no-ERROR
+  assertion PASS. Valid LOC-004 operator request exercises unlinked-observation gap;
+  no fixture repair. Prior proof preserved before final schema/hash regeneration.
+- Actual12 registered READ names /6 forbidden write names, unknown tools/query/admin/
+  graph/scope/role arguments, strict input/date/hop/byte limits, namespace separation,
+  real metadata/provenance/revision, no candidate promotion, unavailable capabilities,
+  durable server+parented broker traces, idempotence/conflict, timeout/SIGSTOP, kill/
+  reconnect, AFTER-REAL-READ local corruption/recovery PASS. No live model rationale.
+- Compatible0002 actual indexes/unique/mandatory readiness, safe rerun, checksum
+  mismatch no overwrite, duplicate constraint failure preserving2 records+FAILED
+  ledger, partial migration finish PASS. Only test-minted graphs cleaned up.
+- Typed forward B05 mode actual WASTE-W03→route/COLLECTED_BY and PIPE-P02→ROAD-R08/
+  UNDERLIES2 PASS in7.13s; reverse/BOTH typed requests rejected, no invented reverse
+  physical connection. Default drainage still verified-only/no city qualifying path.
+
+### TEST-20261017-B07-03 — Full regression progression
+- Interim complete423 PASS/0 FAIL/0 SKIP in374.07s, retained as
+  B07-regression-before-typed-mode.txt. Final full425 rerun after typed-mode adapter/
+  input schema/proof additions; original361 tests unchanged. Final result pending.
+- Both SPEC validators PASS after shared custom/API trace metadata changes; STATIC,
+  not a replacement for live MCP/DB tests. API tool_name remains nullable for later
+  state events, server IDs cover both namespaces; no B17 route/SSE implementation.
+- Final metadata review copied validated domain error codes into SERVER trace records;
+  BROKER receipt SUCCESS is explicitly distinct from domain status. Added pure trace
+  regression;33 B07 unit PASS in0.84s. Operator proof now records actual SDK initialize
+  identity/protocol and tools/list schemas, not only safe broker inventory. Final full
+ 426 run follows this correction (33 unit+32 real additions to accepted361).
+- Intermediate425 PASS/0 FAIL/0 SKIP in370.65s retained as
+  B07-regression-before-trace-metadata-fix.txt. Final426 rerun against final code with
+  trace-domain error codes/actual initialize+tools-list proof and typed InfrastructureAsset
+  root guard (existing2 real typed tests also reject Incident as asset root).
+- Clarification: the very first CLI proof exited PASS despite its maintenance result
+  containing ERROR because that early proof harness only checked transport return.
+  Manual status inspection exposed it; the harness now rejects any handler ERROR,
+  and subsequent real integration tests assert actual inspection records/provenance.
+  No initial transport-only PASS is used as final domain acceptance evidence.
+
+### TEST-20261017-B07-04 — Final complete acceptance / persistence / safety
+- Final `backend/.venv/bin/python -m pytest backend/tests -v -s --run-persistence`:
+ **426 PASS/0 FAIL/0 SKIP in350.75s**.288 unit/138 real integration, including2
+ lifecycle tests whose PASS prints on standalone lines. B07 adds33 unit/32 real;
+ all original361 source tests unchanged. Intermediate423/425 logs preserved.
+- Both specification validators PASS after final contracts/docs (STATIC only).
+ Compile and whitespace/source-patch checks PASS. Dependency pins unchanged from
+ accepted B06 (Python3.12.1/MCP2.3.0/FalkorDB6.0.2/officialMCP1.3.0/Node24.21.0).
+- Actual same-container restart +different-container recreation retained graph and
+ Browser volumes, fresh MATCH/HTTP200/storage PASS. Trusted configure reprovisions
+ volatile ACL using replacement credentials. `scripts/verify_b07.py` PASS all2104
+ city record hashes/content/revision2104/audit/writer state, original B01 probe,
+ B05 source57/clone59 and canonical0001 readiness91/182.13 preexisting server traces
+ exactly preserved across recreation. No source data or immutable0001 edit.
+- Final actual operator proof PASS:SDK initialize civicly-domain1.0.0/protocol2025-11-25,
+ actual tools/list12 schemas, tools/call all12 results without ERROR; explicit gaps/
+ UNAVAILABLE as appropriate, no fabricated provider success. Candidate drainage and
+ WASTE-W03→ROUTE-C03/COLLECTED_BY, PIPE-P02→ROAD-R08/UNDERLIES remain CANDIDATE.
+ 15 persisted server observations read back. Trace migration0002 READY;native totals
+ 93 index groups/186 constraints,2/4 additive specs OPERATIONAL.482 trace nodes observed.
+- Final Git candidate audit PASS94 protected original files/old tests/pins intact,
+ 18 names/permissions unchanged, intentional MCP/API trace contract updates recorded.
+ Actual local.env/reader/writer secrets absent from candidate source/logs; no leaked
+ official/custom MCP process. Audit explicitly excludes any claim about external unsafe
+ full-folder archive. No B07 ZIP or push. Credential old denial/new scoped auth proven.
+- Live LLM/agent selection, GraphRAG/memory/operational workflows/API/frontend NOT RUN/
+ NOT IMPLEMENTED by B07; not skipped real acceptance tests. Remaining designated
+ DEC-004/source/history/approval/event/evaluator findings OPEN. STOP for human review.
+
+### TEST-20261017-B07R-01 — Real failure reproductions, then corrected focus
+- New fixture setup first failed strict registry: valid_to requires valid_from.
+  B07R-before-correction.txt records4 setup ERROR in6.21s, not product reproductions.
+  Corrected the test fixture; setup now validates before initializing its source.
+- Actual DB +SDK stdio +unchanged DomainBroker/TraceStore harness then reproduced
+ 4 FAIL in9.18s: per-record evidence incorrectly unioned; pickup/condition windows
+ starved by older limited rows; work-order gap absent. B07R-failure-reproduction.txt
+ and B07R-before-outputs.json preserve actual failures/results. No source city writes.
+- Corrected initial4 real PASS in10.51s; strengthened final9 real PASS in14.33s.
+  Tests exercise110 out-of-window +107 relevant dated rows per history, fractions/ID
+  tie order, future/expired records,100/101 lookahead, narrow inclusive lower bound,
+  two independent dated inspection sources, present/absent work-order limitations.
+ 5 new pure structural/fake projection unit PASS in0.51s; not runtime acceptance.
+- Full-suite initial collection stopped: unit/integration new modules shared basename.
+  B07R-collection-failure.txt retains1 ERROR in0.81s; renamed new unit module to
+  test_civicly_mcp_history_projection.py, no preexisting test/source removal. Full rerun.
+- Test harness source substitution is explicit fixture-only, not retained-city evidence;
+  server callbacks, discovery, wire schemas, broker checks and trace writes are real.
+  All production/source/authorization paths remain covered by unchanged regressions.
+
+### TEST-20261017-B07R-02 — Final full regression / retained runtime / security
+- Exact command: `backend/.venv/bin/python -m pytest backend/tests -v -s --run-persistence > docs/evidence/B07R-regression-tests.txt 2>&1`.
+- Actual440 PASS/0 FAIL/0 SKIP in368.60s;293 unit/147 real integration. Adds5 unit/9
+  real tests; all426 old tests unchanged. Expected revoked trace ACL emits
+  NoPermissionError stderr and passes fail-closed assertion; not a regression failure.
+- `make test-spec > docs/evidence/B07R-spec-validation.txt 2>&1`: both SPEC validators
+  PASS (STATIC only). Python compilation/whitespace checks PASS. No live-model claim.
+- After real restart/recreation: `PYTHONPATH=backend backend/.venv/bin/python -m app.mcp.civicly configure --output docs/evidence/B07R-runtime-configuration.json`; same replacement credentials/ACL, no rotation rollback.
+- Actual production-city `... -m app.mcp.civicly proof --output docs/evidence/B07R-city-proof.json`: PASS,12 discovered tools/all12 calls/no handler ERROR;15 persisted observations.
+- `PYTHONPATH=backend backend/.venv/bin/python scripts/verify_b07.py --output docs/evidence/B07R-post-lifecycle.json`: PASS; all2104 city record hashes/revision/audit/writer state, B01 probe, B05 source/clone, READY0001/0002 unchanged;13 early proof traces preserved.666 total ToolExecutions observed after final proof, not agent runs.
+- `PYTHONPATH=backend backend/.venv/bin/python scripts/verify_b07r_traces.py`: PASS;15 accepted final B07 records exactly unchanged,4 pre-correction +11 corrected fixture output/evidence hashes preserved. Actual log proves corrected calls preceded successful restart/recreation; no unsupported persistence claim.
+- `backend/.venv/bin/python scripts/audit_b07r.py`: PASS;333 original files unchanged
+  outside11 intended edits, all18 wire schemas/permissions stable, private values absent
+  from Git candidates/logs; no leaked MCP process. No external ZIP sanitization claim.
+- Commands/results/file inventory/working-tree patch under docs/evidence/B07R-*; no
+  B08 work, no push/archive. Remaining capabilities/gaps remain designated later gates.

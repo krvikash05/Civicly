@@ -302,3 +302,92 @@ read helper verifies all retained fingerprints and migration readiness. Source a
 compares86 original protected file hashes/direct pins, scans actual private values
 without emitting them and checks child-process absence. Source diff excludes generated
 evidence bodies (exact evidence paths inventoried separately); no B06 review ZIP.
+
+## B07 implemented file/import/control flow | 2026-10-17
+
+```text
+scripts.rotate_b07_mcp -> admin ACL password replacement/CLIENT KILL
+                       -> atomic private file -> old AUTH denial/new RO verification
+mcp.civicly.contracts/models -> normative12 READ + shared context/envelope/trace schemas
+mcp.civicly.runtime.configure -> admin0001 on separate new B07 trace graph
+ -> storage.TraceMigration0002 -> OPERATIONAL additive indexes/constraints/own ledger
+ -> dedicated trace graph+lock-key ACL/private config (source city credential unchanged)
+mcp.civicly.server -> SDK2.3 lowlevel Server -> real stdio initialize/list/call
+ -> strict wire args/_context -> service.CivicReadService -> ScopedClient/read-only city
+ -> existing B05 GraphAnalysis reachability/cases + B03 GraphQueries maintenance
+ -> fixed bounded registered pickup/road/direct-decision reads or explicit UNAVAILABLE
+ -> shared validated result -> TraceStore atomic fenced ToolExecution+detail append
+mcp.civicly.broker -> actual discovery/identity/input+output schema compatibility
+ -> agent-safe civicly:: args -> server call -> strict result graph/proof validation
+ -> persisted server output-hash verification -> separate parented BROKER observation
+mcp.civicly.router -> civicly:: domain broker | official:: unchanged B06 read broker
+ -> shared persisted trace metadata for both; vendor/domain result shapes distinct
+```
+
+Runtime/new files:contracts.py,models.py,storage.py,runtime.py,service.py,server.py,
+broker.py,router.py,__main__.py,__init__.py. Additional storage migration0002 and shared
+mcp_envelopes plus synchronized mcp_tools/API AgentTraceEvent schemas; no registryv3/
+0001/source-dataset change. __main__ configure/proof is operator CLI only. New unit
+and real integration tests cover strict boundaries/data gaps/trace/migration failures.
+
+Source reads use rotated one-city readonly account; ScopedClient substitutes restricted
+GRAPH.LIST with actual fixed READY lookup, never invented catalog success. Normal
+repository catalog/registry checks still execute via RO_QUERY. Trace writer is separate
+and cannot access city. Trace writes use existing session/fence/intent/CAS/audit and
+atomic core/detail creation, with zero Redis automatic retries. Persisted data is
+metadata/hashes/references, not raw arguments/output bodies. No cross-graph atomicity
+claim; no source mutation. Server append precedes reply, broker append follows actual
+validated receipt. Distinct execution IDs/parent preserve failed/corrupted observations.
+
+Transport is private Python stdio; no model credentials/raw clients exposed by tool
+schemas. Session budgets, serialization/timeout/restart behavior explicit. Model
+rationale remains null. Procedure/memory/document/monitor capability gaps remain
+UNAVAILABLE; external55 measurements have no legitimate location link. All42 drainage
+links stay CANDIDATE. Shared node/edge/path IDs and evidence dates retain future API/UI
+compatibility without implementing either. Trace records persist in existing DB volume,
+separate trace graph referenced only by private configuration. No B08+ work.
+
+Typed dependency mode is an optional read-RPC field, not a stored ontology change.
+DRAINAGE(default) -> B05 directed reachability/BOTH bounded merge;
+TYPED_DEPENDENCIES -> existing B05 forward dependencies (DRAINS_TO/UNDERLIES/COLLECTED_BY).
+Unsupported reverse typed traversal is rejected by input schema. Legacy asset_ids
+lists actual infrastructure assets only; full typed route/asset paths retain all IDs.
+B07 proof includes actual waste→route and utility→road paths, candidate qualified.
+
+Final verification flow:full426 tests -> actual DB restart/recreation -> trusted ACL
+reprovision (same replacement credentials) -> read-only verify_b07 helper checks all
+retained source hashes/B01/B05/canonical readiness and13 preexisting trace IDs -> fresh
+actual custom initialize/tools-list/calls -> verified-vs-candidate and typed dependency
+proof ->15 persisted server observations read back -> native0002 status93indexes/
+186constraints total (2/4 additive) -> final source/secret/process audit. No source
+mutation or B07 archive. Actual normalized SDK discovery included in operator proof.
+
+## B07-R corrected history projection and query flow | 2026-10-17
+
+- service.py imports the existing GraphQueries._time_key; schema.timestamp supplies
+  normalized UTC parameters. history_query selects one of two fixed label/relation/date
+  triples. RO_QUERY MATCH + optional typed Evidence -> visibility + requested date
+  WHERE -> normalized chronological ORDER BY/time+eventID+edgeID -> LIMIT101 -> strict
+  repository decode ->100 rows -> atomic record/Evidence export within existing caps.
+- maintenance_history still calls B03 GraphQueries; maintenance_evidence intersects
+  each event's path prefix with validated edges/Evidence, extending Inspection through
+  PRODUCED only. Aggregate project evidence stays at envelope level.
+- result() records operational field gaps before WorkOrder lookup. server.py appends
+  absence/failure gaps without replacing capability gaps. Normal SDK/broker validation,
+  durable SERVER observation, hash read-back and child BROKER observation unchanged.
+- New tests/unit/test_civicly_mcp_history_projection.py exercises pure projection with structural
+  fakes. integration/test_civicly_mcp_review.py creates canonical-validated disposable
+  fixtures -> tests.b07r_server build() real SDK stdio -> unchanged DomainBroker +
+  actual TraceStore. Source substitution is explicitly test-only; production CITY_GRAPH
+  and readonly ACL unchanged. No dataset/policy/migration/algorithm edits.
+- docs/evidence/B07R-* preserves before/after output/commands/patch; audit_b07r.py checks
+  accepted working-tree hashes and actual private values without printing secrets.
+  Full existing lifecycle/official/domain tests and fresh retained-source checks follow.
+
+B07-R final verification flow:440-test full regression -> actual restart/recreation
+(including B01/Browser volume) -> existing ACL reprovision -> production CITY_GRAPH
+SDK initialize/list/all12 calls/15 trace readbacks -> verify_b07.py all retained
+source/metadata fingerprints +13 earlier traces -> verify_b07r_traces.py actual log
+ordering and fresh readback of15 final B07 +4 before +11 corrected observations ->
+audit_b07r.py333 preserved old files, unchanged wire contracts, actual local-secret/
+process checks -> B07-R-only inventory/patch. No source/volume reset or new migration.

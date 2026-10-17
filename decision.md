@@ -508,3 +508,169 @@ Decisions are recorded chronologically. Codex must append an entry whenever a si
   typed read capabilities, shared service boundary/common envelope and trace-contract
   synchronization, real discovery/call/provenance/error/permission tests. No B08+
   complaint/agent/GraphRAG/operational/API/frontend features started. STOP for review.
+
+### DEC-025 — B07 scope/security prerequisite before implementation | 2026-10-17
+- B06 accepted; B07 ONLY. User reports exposed.runtime/mcp-credentials.json in an
+ external full-project archive. Rotate that DB credential before integration, revoke
+ active named-user connections, prove old auth denied/new read works; never log values.
+ Existing B06 audit covered Git candidates, not arbitrary full-folder archives; do not
+ equate its exclusions to proof that an external archive excluded ignored files.
+- R04/R07/R09/R15 foundations; all18 objectives remain. Implement declared READ
+ tools using B03/B05 interfaces only. Future write tools remain unregistered/denied;
+ unavailable memory/GraphRAG/workflows/doc-version capabilities return explicit gaps,
+ never scaffold their later business features or fabricate success.
+- Preserve city/0001/registryv3. Separate B07 trace graph: existing normative
+ ToolExecution node + storage-only companion detail, with explicit additive0002
+ trace-storage migration/own bookkeeping. No extra domain ontology properties or
+ modification of immutable0001. Controlled atomic trace writes use existing repository
+ fence/revision/audit protocol; source DB credential remains read-only/one graph.
+- Synchronize shared closed MCP envelope/trace schemas, retain public tool-specific
+ payloads and simulation_mode (documented simulated alias retired). Namespaces official
+ and civicly distinct. Future model interfaces receive typed broker tools only.
+- Test actual server/list/call, strict args/output/permissions/graphs, provenance/time/
+ candidate separation, unavailable data, malformed-output fault injection, timeout/
+ restart, graph-backed traces and original361 regressions incl persistence; both SPEC
+ validators. Human checks exposed-password denial, real inventory/results/trace IDs,
+ exact retained fingerprints and limits. No model-selected rationale claim or B08+ work.
+
+### DEC-026 — B07 contract/storage and runtime implementation choices | 2026-10-17
+- Credential incident rotation: actual old password auth DENIED/new auth+city RO PASS;
+ active named-user connections revoked, replacement0600 atomically written. No values
+ or password hashes in evidence. Accepted B06 index52-file secret audit/local baseline
+ 24e80725ead2903516ecd36db2142f8fe36b2760; no push. Inherited361 PASS in305.72s.
+- Keep registryv3 and0001 immutable. Add storage-family0002 adjunct only to separate
+ capability-owned B07 trace graph, own CivicMCPTraceMigration ledger. Existing
+ ToolExecution stores normative core properties; same-ID CivicMCPTraceDetail stores
+ sanitized validated JSON/hash. Compatible native indexes/unique/mandatory readiness
+ verified. Existing MigrationRunner still verifies0001; no migration downgrade or
+ city trace pollution. Alternative adding fields to v3 would invalidate immutable
+ checksum/all B02–B06 readers; companion isolates storage without changing ontology.
+- Source uses rotated readonly city credential. Trace writer has only trace graph+
+ exact repository lock key and required GRAPH.QUERY/RO_QUERY/INFO/PING/CLIENT SETINFO/
+ SET/GET/DEL/EVAL/EVALSHA/SCRIPT LOAD commands. Trace writes reuse fenced intent,
+ atomic record+detail+revision+audit and read-back verification. No auto Redis retry;
+ uncertain trace writes fail closed with existing pending/recovery protocol. No
+ cross-graph transaction/exactly-once claim or general mutation MCP interface.
+- Two correlated observations: server execution persisted before reply; broker
+ validates response and checks persisted output hash, then appends separate child
+ observation (actual transport protocol/latency/denial). A corrupted output never
+ overwrites server history. Trace failure prevents acknowledging successful calls.
+ Invocation context roles/origin are operator/application, not model choice; rationale
+ null. Same-user trusted process boundary remains, not B13 operator authentication.
+- mcp_tools schema3 retains18 names/permissions/tool-specific fields; registers12
+ READ and no6 future writes. Adds shared required context/data/revision/error/search
+ bounds/server/execution/schema/inventory fields. simulation_mode is canonical;
+ documented simulated alias retired. New mcp_envelopes holds shared TraceRecord.
+ AgentTraceEvent synchronized identity/hash/latency fields; revision now integer|null
+ and rationale nullable, optional new API metadata; no B17 route/SSE implementation
+ or claim all future API discrepancies resolved. Other DEC-004 findings stay OPEN.
+- B03 maintenance/graph decoding and B05 reachability/cases reused. Manual fixed
+ bounded reads only for already registered pickup/road snapshots/direct decision
+ evidence. No Observation->Location association exists: external tool reports gap,
+ never assigns55 unlinked measurements. Memory/procedure/doc/monitor tools explicitly
+ UNAVAILABLE until B10/B11/B14/B15; no filesystem source/evaluator exposure. Work-order
+ lookup reads only existing status, no workflow implementation. Default physical
+ traversal VERIFIED; include_candidates explicit, candidate context never causality.
+- Bounded templates use parameter values, max100 rows +lookahead/120 nodes/200 edges/
+ 100 paths/6 hops and B03/B05 UTC rules. Wire schemas include trusted _context;
+ public broker schemas exclude it. Namespace civicly:: vs official::, actual server/
+ input+output schema identity checks. Private stdio with64 server calls/serialized
+ handlers,32 default broker calls/8s client deadline; finite DB query/socket budgets.
+- First all-handler proof surfaced maintenance duplicate evidence IDs: strict
+ validation correctly returned ERROR. Deduplicate provenance/copy lists, rerun actual
+ proof and assert no handler ERROR. First25 real cases PASS; final strengthened suite
+ and full regressions follow. No source data repaired or later feature implemented.
+- API compatibility refinement: AgentTraceEvent retains nullable tool_name for later
+  non-tool state events and permits both official-falkordb/civicly-domain server IDs.
+  This is shared metadata contract work only; no API/SSE handler is implemented.
+- Typed dependency exposure refinement within the existing READ tool: optional RPC
+  network=DRAINAGE(default) or TYPED_DEPENDENCIES. Reuse B05 dependencies for forward
+  DRAINS_TO/UNDERLIES/COLLECTED_BY, rather than narrowing all infrastructure to drains.
+  Reverse/BOTH typed mode rejected explicitly (B05 only implements forward typed
+  dependency traversal). Legacy asset_ids contains only actual InfrastructureAsset
+  IDs; full route/asset/edge path remains in typed data. No ontology property/enum
+  change. Actual WASTE-W03→route and PIPE-P02→ROAD-R08 candidate proofs2 PASS in7.13s.
+  Final full regression rerun after this bounded adapter/schema refinement.
+- Final trace review ensures SERVER observations copy the validated domain error code
+  (e.g. DATA_UNAVAILABLE/READ_FAILED), rather than only protocol/argument denial codes.
+  BROKER SUCCESS means validated transport receipt, not domain capability success;
+  the parent SERVER observation retains domain status/error. Added pure trace-contract
+  unit regression; final complete suite rerun after this metadata correction.
+
+### DEC-027 — B07 final evidence and review gate | 2026-10-17
+- Final complete426 PASS/0 FAIL/0 SKIP in350.75s:288unit/138actual integration. B07
+  adds33unit/32real; all original361 source tests preserved. Both SPEC validators
+  PASS; actual operator MCP proof after recreation has initialize2025-11-25 /
+  civicly-domain1.0.0 /12 actual tools-list schemas /all12 responses/no handler ERROR,
+  plus explicit candidate exploration/waste→route/utility→road and15 server traces.
+- Credential incident old AUTH DENIED/new scoped RO PASS; replacement persists in
+  private file and volatile ACL reprovisioned after DB recreation, never reintroducing
+  exposed value. No credentials in candidate source/logs; no B07 archive generated.
+- Compatible trace family0002 READY:2 additive index groups/4 OPERATIONAL constraints;
+  trace graph native totals93/186.482 ToolExecution records observed after final proof.
+  Fresh connection verifies13 pre-final proof traces survived actual recreation.
+  Source all2104 record hashes/content/revision/audit/writer state, B01 probe and B05
+  source57/clone59 exactly retained. Canonical0001 still READY91/182; immutable sha
+  and registryv3 unchanged. No source/canonical domain writes or volume removal.
+-94 protected original files unchanged; only explicitly authorized MCP/API trace
+  contracts updated. Original dependency pins/18 tool names+permissions preserved;
+  no leaked official/custom child process. Source patch/file inventory/evidence
+  finalized under docs/evidence; B07 remains uncommitted for human review, no push.
+- B07 completes runtime read/trace foundation only. Shared MCP/trace DEC-004 portion
+  resolved; agent rationale/API projection/event durability/document/source/history/
+  approval/evaluator findings retain designated gates. Proposed B08 ONLY after review:
+  complaint normalization/de-duplication, Incident-vs-cluster recurrence grouping and
+  three issue validators; no agents/GraphRAG/operations/API/frontend. STOP.
+
+### DEC-028 — B07-R authorized corrective scope and compatibility | 2026-10-17
+- B07 technically accepted; only B07-R authorized before B08. Supports R07/R09/R15,
+  preserving graph reasoning R04/R05 and all18 binding requirements. No operational
+  lifecycle, ingestion, agents, API or frontend implementation.
+- Maintenance evidence must be attributed from each event's own validated B03 proof
+  paths, never the response-wide union; aggregate evidence remains response-level.
+- Fixed pickup/condition reads must apply UTC-normalized window/visibility predicates
+  and deterministic chronological order before100+1 lookahead. Existing graph/output
+  caps and RO_QUERY remain; no B03 policy or migration changes.
+- Work-order empty blocking/latest-event lists represent unavailable B12–B15 facts,
+  not verified absence. Preserve wire schemas and express limitations in existing
+  gaps/reservations +PARTIAL envelope; document machine-contract semantics.
+- Tests use disposable graphs through a test-only actual SDK server harness and the
+  unchanged actual DomainBroker/TraceStore; harness source substitution is explicit
+  fixture evidence, never production city evidence or caller-selectable graph access.
+  Production fixed-city context/ACL/identity and existing real city tests unchanged.
+- Before edits snapshot accepted uncommitted B07 Git candidates to /tmp for exact
+  B07-R-only patch and original-file hash comparison; no credentials/ignored files.
+  Verification: focused unit/real MCP+DB, full pytest --run-persistence, both SPEC
+  validators, fresh retained city/B01/B05/trace proof and secret/source audit. Human
+  checks independent event sources, >100 date-window ordering and explicit work gaps.
+
+### DEC-029 — B07-R corrected semantics, final verification and stop | 2026-10-17
+- Accepted B07 working-tree baseline retained (Git HEAD still accepted B06 baseline
+  24e8072; no forced commit/push). Exact B07-R-only diff uses snapshot/hash manifest.
+- Per-event evidence is its own validated prefix/supporting PRODUCED path, not response
+  union. Later outcome evidence does not retroactively support an order event. Existing
+  response-level union preserved. No new properties, entity types or relationships.
+- Existing fixed pickup/condition templates apply inclusive requested window +node/edge/
+  referenced-Evidence visibility before UTC-normalized time/eventID/edgeID ASC and
+  LIMIT101. Existing GraphQueries._time_key reused unchanged.100 eligible false versus
+  101 true truncation proven; graph export still capped with atomic citation context.
+- Keep blocking/latest-status lists wire-compatible as explicit UNKNOWN placeholders,
+  not verified absence. Existing data.gaps +PARTIAL suffice; no operational schema
+  expansion. Server preserves these gaps on absence/failure. Only four machine
+  result_semantics descriptions changed; all18 input/output schemas/permissions and
+  inventory hashes unchanged. Future B12–B15 supplies facts, not this corrective pass.
+- Actual4 product FAIL before fix; final focused5 structural/fake units +9 real SDK/
+  FalkorDB cases PASS. Full440 PASS/0 FAIL/0 SKIP in368.60s (293 unit/147 integration),
+  original426 tests unchanged; both SPEC validators PASS. Initial fixture validity and
+  new test-module collision errors preserved separately, not passed off as product
+  reproduction or hidden by weakening constraints. No live agent/model rationale.
+- Fresh city fingerprints858/1246/revision2104/audit, B01 and B05 source57/clone59 and
+  canonical0001/trace0002 retained.13 early B07 traces +15 final B07 traces unchanged;
+  4 pre-correction +11 corrected fixture observations verified after actual lifecycle.
+  Production-city initialize/list/all12 calls,15 server trace readbacks/no ERROR PASS.
+-333 accepted B07 files unchanged outside11 deliberate edits; dependency pins/schema/
+  migration/policies/algorithms/data/official broker/shared envelopes preserved. Actual
+  local secret scan PASS/no child process leak; no archive/external ZIP safety claim.
+- No B07-R acceptance blocker; human review gate remains. Proposed B08 ONLY after
+  review: complaint normalization/same-event dedup, Incident-vs-ProblemCluster recurrence
+  grouping and three issue validators. No B08+, operational workflows or ontology seed.

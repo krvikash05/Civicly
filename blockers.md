@@ -1,5 +1,13 @@
 # blockers.md — Current blockers and verification spikes
 
+## Current status — B07-R, 2026-10-17 (takes precedence over history)
+
+B07 technically accepted. B07-R PASS — human review pending. Final440 PASS/0 FAIL/0 SKIP in368.60s (293 unit/147 real integration), adding5 unit+9 real cases; all426 accepted tests preserved. Both SPEC validators PASS. Independent maintenance provenance, pre-cap UTC history filtering/order/lookahead, and explicit unknown work-order fields verified through real MCP. Retained city/B01/B05/migrations/accepted+corrective traces preserved across actual restart/recreation. B08 TODO; no later work.
+
+## Current status — B07, 2026-10-17 (takes precedence over history)
+
+No unresolved B07 acceptance failure. Credential incident rotated/old denial verified;426 tests and both SPEC validators PASS. Human review pending. Shared MCP envelope/trace portion of DEC-004 resolved; remaining data/history/source/approval/event/API/evaluator gaps remain OPEN. Later memory/GraphRAG/versioned source/monitoring explicitly UNAVAILABLE; source city/0001/registry unchanged.
+
 ## Current status — B06, 2026-10-17 (takes precedence over history)
 
 No active B06 environment blocker. B06 PASS with361 tests and both SPEC validators; human review pending. Local stdio/privileged-user/client-timeout/volatile-ACL boundaries documented. B07/B17 common envelope/graph-backed traces and all remaining DEC-004/source/history/evaluator dependencies stay OPEN; no data or later-task repair.
@@ -186,3 +194,55 @@ B06 final review:361 PASS/0 FAIL/0 SKIP; both SPEC validators PASS. Reprovisione
 read-only account and live proof after recreation PASS; canonical readiness and all
 retained fingerprints preserved. No unresolved B06 acceptance failure. Human review
 is the next gate; B07 and all later implementation remain unstarted.
+
+## B07 security, tracing and remaining limits | 2026-10-17
+- Reported B06 full-folder archive exposed ignored MCP credential. Actual old AUTH
+  denied after replacement; new readonly scoped auth/read PASS. No values logged,
+  active named-user connections revoked. Existing external unsafe archive not
+  recreated or claimed safe by Git-ignore audit. No B07 archive generated.
+- B07 shared custom envelope/ToolExecution trace metadata portion of DEC-004 is
+  implemented; final regressions/review pending. Trace storage isolated from immutable
+  city, separate compatible0002. B17 API/SSE projection and real agent rationale/
+  roles remain future tasks; no invented model decision. Same-user admin remains
+  privileged; private stdio is not an OS sandbox or B13 operator authentication.
+- Memory(B10), sourced GraphRAG/versioned source retrieval(B11), monitoring(B14/B15)
+  return UNAVAILABLE.55 Observation location links do not exist; no guessed links.
+  Missing historical orders/decisions/repairs, S07 topology/source bindings, source
+  clock warnings and42 CANDIDATE drainage links remain unchanged/open.
+- Trace writes use existing fenced audit and zero automatic retry. Uncertain outcome
+  fails closed; explicit existing recovery required. Server/broker observations are
+  separate linked events, not exactly-once domain-event delivery (B15 remains open).
+  Audit grows O(N) per append and capped10k; later reviewed archival needed. No cleanup
+  or bulk bypass introduced. Client timeout cannot guarantee thread/DB cancellation.
+- BLOCK-B00-02 remains OPEN in aggregate for designated document/source, approval,
+  event/API/evaluator/history gaps. Numeric55 conversion remains valid; originals
+  frozen. B04/B05 source/performance/partial-search reservations retained.
+
+B07 final:426 PASS/0 FAIL/0 SKIP and both SPEC validators PASS. Shared MCP envelopes/
+ToolExecution metadata portion of DEC-004 resolved with real source/trace durability
+and negative tests; no active B07 acceptance blocker. All designated later findings
+remain OPEN. Trace DB outage/unknown outcome fails closed, not guaranteed replay or
+B15 domain-event delivery. Human B07 review is the next gate; B08 remains unstarted.
+
+## B07-R corrective review limitations | 2026-10-17
+
+History accuracy defects reproduced and fixed; focused tests PASS, complete regression
+pending. Initial test-fixture validity and new-module collection collision corrected
+without weakening registry or altering old tests. No active implementation blocker.
+Work-order blocking/latest-event retrieval remains explicitly UNKNOWN until B12–B15;
+no operational relationship absence or outcome is verified by this read handler.
+Memory/GraphRAG/source versions/monitoring/history gaps and remaining DEC-004 findings
+remain at designated milestones. Source city42 drainage links CANDIDATE; frozen55
+original numeric defects/B04 conversion and unlinked measurements unchanged.
+Historical node versions, bounded exports, local stdio privilege boundary, client
+timeout cancellation and trace O(N)/10k audit limits remain as documented in B07.
+B08 is blocked by the human review gate, not silently started. All18 requirements bind.
+
+### B07-R final outcome (supersedes pending entry)
+
+No active B07-R acceptance blocker.440 tests and both SPEC validators PASS; actual
+history outputs, original source/architecture/file preservation, real MCP and accepted/
+corrected trace lifecycle verified. Work-order unknown relationship facts remain
+explicit limitations for B12–B15, not resolved operational features. All other B07/
+DEC-004/source/history/evaluator/clock/agent/GraphRAG/event/API gaps retain their gates.
+Human review required before proposed B08; no B08 implementation.

@@ -40,3 +40,11 @@ mcp-proof: mcp-configure
 	PYTHONPATH=backend $(VENV)/python -m app.mcp proof --output docs/evidence/B06-runtime-proof.json
 test-mcp:
 	$(VENV)/python -m pytest backend/tests/unit/test_mcp_broker_policy.py backend/tests/integration/test_official_mcp.py -v -s
+
+.PHONY: civicly-mcp-configure civicly-mcp-proof test-civicly-mcp
+civicly-mcp-configure:
+	PYTHONPATH=backend $(VENV)/python -m app.mcp.civicly configure
+civicly-mcp-proof: civicly-mcp-configure
+	PYTHONPATH=backend $(VENV)/python -m app.mcp.civicly proof --output docs/evidence/B07-runtime-proof.json
+test-civicly-mcp:
+	$(VENV)/python -m pytest backend/tests/unit/test_civicly_mcp_contracts.py backend/tests/integration/test_civicly_mcp.py -v -s

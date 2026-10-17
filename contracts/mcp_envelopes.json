@@ -1,0 +1,655 @@
+{
+  "schema_version": 3,
+  "common_result_properties": {
+    "context": {
+      "additionalProperties": false,
+      "properties": {
+        "trace_id": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Trace Id",
+          "type": "string"
+        },
+        "execution_id": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Execution Id",
+          "type": "string"
+        },
+        "parent_execution_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Parent Execution Id"
+        },
+        "investigation_id": {
+          "anyOf": [
+            {
+              "maxLength": 200,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Investigation Id"
+        },
+        "municipality_id": {
+          "const": "demo-city",
+          "default": "demo-city",
+          "title": "Municipality Id",
+          "type": "string"
+        },
+        "source_graph": {
+          "const": "civicly_b04_test_a84beda80da64aacbc367a9399e07a97",
+          "default": "civicly_b04_test_a84beda80da64aacbc367a9399e07a97",
+          "title": "Source Graph",
+          "type": "string"
+        },
+        "caller_role": {
+          "default": "OPERATOR_REVIEW",
+          "enum": [
+            "READ_ONLY",
+            "OPERATOR_REVIEW"
+          ],
+          "title": "Caller Role",
+          "type": "string"
+        },
+        "invocation_origin": {
+          "default": "OPERATOR_REVIEW",
+          "enum": [
+            "OPERATOR_REVIEW",
+            "APPLICATION"
+          ],
+          "title": "Invocation Origin",
+          "type": "string"
+        }
+      },
+      "required": [
+        "trace_id",
+        "execution_id"
+      ],
+      "title": "Context",
+      "type": "object"
+    },
+    "graph_revision": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "error": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "retryable": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "code",
+        "message",
+        "retryable"
+      ],
+      "additionalProperties": false
+    },
+    "truncated": {
+      "type": "boolean"
+    },
+    "search_limited": {
+      "type": "boolean"
+    },
+    "data": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "nodes": {
+          "type": "array",
+          "maxItems": 120,
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "title": "Id",
+                "type": "string"
+              },
+              "kind": {
+                "title": "Kind",
+                "type": "string"
+              },
+              "labels": {
+                "items": {
+                  "type": "string"
+                },
+                "title": "Labels",
+                "type": "array"
+              },
+              "properties": {
+                "type": "object"
+              }
+            },
+            "required": [
+              "id",
+              "kind",
+              "labels",
+              "properties"
+            ],
+            "title": "NodeRecord",
+            "type": "object"
+          }
+        },
+        "edges": {
+          "type": "array",
+          "maxItems": 200,
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "title": "Id",
+                "type": "string"
+              },
+              "kind": {
+                "title": "Kind",
+                "type": "string"
+              },
+              "source": {
+                "title": "Source",
+                "type": "string"
+              },
+              "target": {
+                "title": "Target",
+                "type": "string"
+              },
+              "properties": {
+                "type": "object"
+              }
+            },
+            "required": [
+              "id",
+              "kind",
+              "source",
+              "target",
+              "properties"
+            ],
+            "title": "EdgeRecord",
+            "type": "object"
+          }
+        },
+        "paths": {
+          "type": "array",
+          "maxItems": 100,
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "node_ids": {
+                "items": {
+                  "type": "string"
+                },
+                "title": "Node Ids",
+                "type": "array"
+              },
+              "edge_ids": {
+                "items": {
+                  "type": "string"
+                },
+                "title": "Edge Ids",
+                "type": "array"
+              },
+              "directions": {
+                "items": {
+                  "enum": [
+                    "OUTGOING",
+                    "INCOMING"
+                  ],
+                  "type": "string"
+                },
+                "title": "Directions",
+                "type": "array"
+              },
+              "evidence_ids": {
+                "items": {
+                  "type": "string"
+                },
+                "title": "Evidence Ids",
+                "type": "array"
+              },
+              "context": {
+                "type": "object"
+              },
+              "id": {
+                "title": "Id",
+                "type": "string"
+              }
+            },
+            "required": [
+              "node_ids",
+              "edge_ids",
+              "directions",
+              "evidence_ids",
+              "id"
+            ],
+            "title": "ProofPath",
+            "type": "object"
+          }
+        },
+        "gaps": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 100
+        },
+        "reservations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 100
+        },
+        "as_of": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "nodes",
+        "edges",
+        "paths",
+        "gaps",
+        "reservations",
+        "as_of"
+      ]
+    },
+    "execution_id": {
+      "type": "string"
+    },
+    "server_id": {
+      "const": "civicly-domain"
+    },
+    "tool_name": {
+      "type": "string"
+    },
+    "schema_version": {
+      "const": 3
+    },
+    "inventory_version": {
+      "type": "string"
+    }
+  },
+  "InvocationContext": {
+    "additionalProperties": false,
+    "properties": {
+      "trace_id": {
+        "maxLength": 80,
+        "minLength": 1,
+        "title": "Trace Id",
+        "type": "string"
+      },
+      "execution_id": {
+        "maxLength": 80,
+        "minLength": 1,
+        "title": "Execution Id",
+        "type": "string"
+      },
+      "parent_execution_id": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Parent Execution Id"
+      },
+      "investigation_id": {
+        "anyOf": [
+          {
+            "maxLength": 200,
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Investigation Id"
+      },
+      "municipality_id": {
+        "const": "demo-city",
+        "default": "demo-city",
+        "title": "Municipality Id",
+        "type": "string"
+      },
+      "source_graph": {
+        "const": "civicly_b04_test_a84beda80da64aacbc367a9399e07a97",
+        "default": "civicly_b04_test_a84beda80da64aacbc367a9399e07a97",
+        "title": "Source Graph",
+        "type": "string"
+      },
+      "caller_role": {
+        "default": "OPERATOR_REVIEW",
+        "enum": [
+          "READ_ONLY",
+          "OPERATOR_REVIEW"
+        ],
+        "title": "Caller Role",
+        "type": "string"
+      },
+      "invocation_origin": {
+        "default": "OPERATOR_REVIEW",
+        "enum": [
+          "OPERATOR_REVIEW",
+          "APPLICATION"
+        ],
+        "title": "Invocation Origin",
+        "type": "string"
+      }
+    },
+    "required": [
+      "trace_id",
+      "execution_id"
+    ],
+    "title": "Context",
+    "type": "object"
+  },
+  "ToolExecutionTrace": {
+    "$defs": {
+      "Context": {
+        "additionalProperties": false,
+        "properties": {
+          "trace_id": {
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Trace Id",
+            "type": "string"
+          },
+          "execution_id": {
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Execution Id",
+            "type": "string"
+          },
+          "parent_execution_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Parent Execution Id"
+          },
+          "investigation_id": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Investigation Id"
+          },
+          "municipality_id": {
+            "const": "demo-city",
+            "default": "demo-city",
+            "title": "Municipality Id",
+            "type": "string"
+          },
+          "source_graph": {
+            "const": "civicly_b04_test_a84beda80da64aacbc367a9399e07a97",
+            "default": "civicly_b04_test_a84beda80da64aacbc367a9399e07a97",
+            "title": "Source Graph",
+            "type": "string"
+          },
+          "caller_role": {
+            "default": "OPERATOR_REVIEW",
+            "enum": [
+              "READ_ONLY",
+              "OPERATOR_REVIEW"
+            ],
+            "title": "Caller Role",
+            "type": "string"
+          },
+          "invocation_origin": {
+            "default": "OPERATOR_REVIEW",
+            "enum": [
+              "OPERATOR_REVIEW",
+              "APPLICATION"
+            ],
+            "title": "Invocation Origin",
+            "type": "string"
+          }
+        },
+        "required": [
+          "trace_id",
+          "execution_id"
+        ],
+        "title": "Context",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "context": {
+        "$ref": "#/$defs/Context"
+      },
+      "phase": {
+        "enum": [
+          "SERVER",
+          "BROKER"
+        ],
+        "title": "Phase",
+        "type": "string"
+      },
+      "server_id": {
+        "enum": [
+          "civicly-domain",
+          "official-falkordb"
+        ],
+        "title": "Server Id",
+        "type": "string"
+      },
+      "server_version": {
+        "title": "Server Version",
+        "type": "string"
+      },
+      "tool_name": {
+        "maxLength": 80,
+        "title": "Tool Name",
+        "type": "string"
+      },
+      "schema_version": {
+        "default": 3,
+        "title": "Schema Version",
+        "type": "integer"
+      },
+      "inventory_version": {
+        "title": "Inventory Version",
+        "type": "string"
+      },
+      "schema_sha256": {
+        "title": "Schema Sha256",
+        "type": "string"
+      },
+      "arguments_sha256": {
+        "title": "Arguments Sha256",
+        "type": "string"
+      },
+      "arguments_summary": {
+        "const": "values withheld",
+        "default": "values withheld",
+        "title": "Arguments Summary",
+        "type": "string"
+      },
+      "output_sha256": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Output Sha256"
+      },
+      "validated_output": {
+        "default": false,
+        "title": "Validated Output",
+        "type": "boolean"
+      },
+      "started_at": {
+        "title": "Started At",
+        "type": "string"
+      },
+      "finished_at": {
+        "title": "Finished At",
+        "type": "string"
+      },
+      "latency_ms": {
+        "minimum": 0,
+        "title": "Latency Ms",
+        "type": "number"
+      },
+      "status": {
+        "maxLength": 80,
+        "title": "Status",
+        "type": "string"
+      },
+      "error_code": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Error Code"
+      },
+      "protocol_version": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Protocol Version"
+      },
+      "graph_revision": {
+        "anyOf": [
+          {
+            "minimum": 0,
+            "type": "integer"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Graph Revision"
+      },
+      "source_evidence_ids": {
+        "items": {
+          "type": "string"
+        },
+        "maxItems": 200,
+        "title": "Source Evidence Ids",
+        "type": "array"
+      },
+      "graph_path_ids": {
+        "items": {
+          "type": "string"
+        },
+        "maxItems": 100,
+        "title": "Graph Path Ids",
+        "type": "array"
+      },
+      "result_summary": {
+        "additionalProperties": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "boolean"
+            }
+          ]
+        },
+        "title": "Result Summary",
+        "type": "object"
+      },
+      "simulation_mode": {
+        "const": true,
+        "default": true,
+        "title": "Simulation Mode",
+        "type": "boolean"
+      },
+      "rationale_summary": {
+        "default": null,
+        "title": "Rationale Summary",
+        "type": "null"
+      }
+    },
+    "required": [
+      "context",
+      "phase",
+      "server_id",
+      "server_version",
+      "tool_name",
+      "inventory_version",
+      "schema_sha256",
+      "arguments_sha256",
+      "started_at",
+      "finished_at",
+      "latency_ms",
+      "status"
+    ],
+    "title": "TraceRecord",
+    "type": "object"
+  },
+  "trace_storage": "Separate capability-scoped B07 graph; normative ToolExecution + storage-only companion; additive0002; no city changes",
+  "rationale_policy": "null until real agent; OPERATOR_REVIEW/APPLICATION origin only",
+  "namespaces": {
+    "official": "official::",
+    "civicly": "civicly::"
+  },
+  "deferred": "Operational write tools, live agent traces/API SSE remain later tasks; no hidden data or source document filesystem exposure",
+  "server_identity_mapping": {
+    "civicly-domain": {
+      "mcp_name": "civicly-domain",
+      "version": "1.0.0"
+    },
+    "official-falkordb": {
+      "mcp_name": "falkordb",
+      "version": "1.3.0"
+    }
+  }
+}

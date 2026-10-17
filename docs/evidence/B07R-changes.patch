@@ -1,0 +1,821 @@
+diff --git a/README.md b/README.md
+--- a/README.md
++++ b/README.md
+@@ -1,11 +1,11 @@
+ # Civicly — Backend-First Codex Build System (v2.0)
+ 
+-**Status:** B06 externally accepted; B07 custom read MCP/shared durable traces implemented and tested (426 PASS), awaiting human review. The full civic AI application remains unimplemented. Current truth is in the engineering tracking files.
++**Status:** B07 technically accepted; B07-R history/provenance corrections verified (440 PASS), awaiting human review. The full civic AI application remains unimplemented. Current truth is in the engineering tracking files.
+ See [algorithm guide](backend/ALGORITHMS.md) and [official MCP guide](backend/MCP.md) and [Civicly domain MCP guide](backend/CIVICLY_MCP.md) for scope and real evidence.
+ 
+ For the current Python 3.12/Docker setup, CLI health and verified persistence tests,
+ see [backend/README.md](backend/README.md) and [schema/recovery guide](backend/SCHEMA.md).
+-B00–B06 are accepted; B07 awaits human review; B08 has not started. The 18 objectives, remaining B00
++B00–B07 are accepted; B07-R awaits human review; B08 has not started. The 18 objectives, remaining B00
+ contract findings and backend-first gates remain binding.
+ 
+ **Purpose:** Implement a genuinely agentic, FalkorDB-native, MCP-connected civic investigation system covering recurring WATERLOGGING, ROAD_DAMAGE and WASTE_ACCUMULATION, including interlinked failures, persistent memory, municipal knowledge, approved actions, progress tracking, and verifiable outcomes. Backend first; frontend last, but its data requirements are fixed now.
+diff --git a/backend/CIVICLY_MCP.md b/backend/CIVICLY_MCP.md
+--- a/backend/CIVICLY_MCP.md
++++ b/backend/CIVICLY_MCP.md
+@@ -175,3 +175,40 @@
+ Stable trace server_id official-falkordb maps to verified MCP server name falkordb;
+ civicly-domain maps directly to its actual server name. The shared contract records
+ this mapping; schema/inventory hashes and protocol are observed during discovery.
++
++## B07-R history accuracy and compatible corrections
++
++Maintenance records cite evidence from their own validated B03 path prefix. Inspection
++prefixes may extend through their own PRODUCED→Evidence link. An order does not inherit
++a later outcome's evidence merely because both occur on one path. Response-level
++source_evidence_ids remains the aggregate union. No relationship/ontology change.
++
++Pickup history uses scheduled_at (preserving source local-clock warnings); road history
++uses observed_at. Both apply inclusive [as_of-days,as_of] and current node/relationship/
++source-evidence visibility in GRAPH.RO_QUERY before the result cap. UTC seconds/fractions
++normalize via unchanged B03 GraphQueries._time_key; order is time ASC, event ID ASC, then
++relationship ID ASC. LIMIT101 supplies one lookahead for100 returned rows. Exactly100
++eligible rows alone does not imply truncation. Graph export caps may stop earlier; row
++plus Evidence context is admitted atomically, so caps cannot leave missing citations.
++A capped search is never evidence of absence. Historical node versions are not rebuilt.
++
++WorkOrder status remains recorded state only. blocking_task_ids/latest_status_event_ids
++are unknown empty placeholders until B12–B15 implement operational retrieval. Existing
++visible records return PARTIAL and explicit data.gaps; absent records UNAVAILABLE. Server
++error/absence handling preserves these capability gaps. No operation or inferred result.
++
++Wire schemas/versions, inventory hash,18 names/permissions and shared envelopes unchanged;
++only four result_semantics descriptions in mcp_tools.json clarified. No migration changes.
++New tests: tests/unit/test_civicly_mcp_history_projection.py (structural fakes explicitly labeled),
++tests/integration/test_civicly_mcp_review.py (actual FalkorDB/SDK stdio/DomainBroker/TraceStore).
++The test-only tests.b07r_server harness injects a disposable synthetic source internally
++to cover histories absent from city; its evidence is labeled fixture substitution, not
++a retained-city snapshot. It does not add a production graph selector, change fixed
++Context, credentials, broker or runtime server startup. Fixture setup validates canonical
++properties/endpoints then parameterizes bounded test-only CREATE statements; it is not
++an ingestion shortcut or repository write-guarantee claim. Real retained-city/official
++MCP regressions separately verify the unchanged production path.
++
++Reproduce: python pytest commands in docs/evidence/B07R-COMMANDS.md; corrected outputs,
++real failures before correction, complete regression/SPEC evidence, exact file inventory
++and B07-R-only patch are in docs/evidence/B07R-*. No B08 work; stop for human review.
+diff --git a/backend/app/mcp/civicly/server.py b/backend/app/mcp/civicly/server.py
+--- a/backend/app/mcp/civicly/server.py
++++ b/backend/app/mcp/civicly/server.py
+@@ -37,10 +37,10 @@
+             try:result=await asyncio.to_thread(service.run,name,values,c)
+             except NotFound:
+                 result=service.result(name,c,values.get('as_of',utc_now()));result.update(status='UNAVAILABLE',error={'code':'DATA_UNAVAILABLE','message':'Requested sourced record is absent','retryable':False})
+-                result['data']['gaps']=['Requested record/history does not exist in accepted dataset']
++                result['data']['gaps'].append('Requested record/history does not exist in accepted dataset')
+             except Exception:
+                 result=service.result(name,c,values.get('as_of',utc_now()));result.update(status='ERROR',error={'code':'READ_FAILED','message':'Read failed closed; no state change','retryable':True})
+-                result['data']['gaps']=['Read failed validation, temporal, revision or availability checks']
++                result['data']['gaps'].append('Read failed validation, temporal, revision or availability checks')
+             validate(READ[name]['output_schema'],result)
+         except Exception:
+             error='DENIED_TOOL' if name not in READ else 'INVALID_ARGUMENTS'
+diff --git a/backend/app/mcp/civicly/service.py b/backend/app/mcp/civicly/service.py
+--- a/backend/app/mcp/civicly/service.py
++++ b/backend/app/mcp/civicly/service.py
+@@ -36,7 +36,9 @@
+            'server_id':SERVER,'tool_name':name,'schema_version':SCHEMA_VERSION,'inventory_version':INVENTORY_HASH,
+            'source_evidence_ids':[],'simulation_mode':True,'graph_revision':None,'truncated':False,'search_limited':True,'error':None,
+            PAYLOADS[name]:payload,'data':{'nodes':[],'edges':[],'paths':[],'gaps':[],'reservations':[], 'as_of':as_of}}
+-        if name=='get_work_order_status':r.update(blocking_task_ids=[],latest_status_event_ids=[])
++        if name=='get_work_order_status':
++            r.update(blocking_task_ids=[],latest_status_event_ids=[])
++            r['data']['gaps'].append('blocking_task_ids and latest_status_event_ids retrieval unavailable until B12–B15; empty lists are unknown, not verified empty operational relationships')
+         return r
+     def run(self,name,args,ctx):
+         as_of=args.get('as_of',utc_now());timestamp(as_of);r=self.result(name,ctx,as_of);before=self.revision();r['graph_revision']=before
+@@ -70,24 +72,33 @@
+                 if n.kind not in {'Inspection','WorkOrder','InterventionOutcome'}:continue
+                 date=next((n.properties[k] for k in ['observed_at','completed_at','requested_at','created_at'] if k in n.properties),None)
+                 if date and timestamp(args['from_time'])<=timestamp(date)<=timestamp(args['to_time']):
+-                    r['records'].append({'record_id':n.id,'event_type':n.kind,'occurred_at':date,'evidence_ids':sorted(set(r['source_evidence_ids']))})
++                    r['records'].append({'record_id':n.id,'event_type':n.kind,'occurred_at':date,'evidence_ids':self.maintenance_evidence(result,n)})
+             r['data']['gaps'].append('Asset-linked history is contextual; absent repair/decision chains are not proof of resolution')
+         elif name in {'get_pickup_execution_history','get_road_condition_history'}:
+             pickup=name=='get_pickup_execution_history';root=args['collection_point_id' if pickup else 'road_segment_id']
+             self.repo.get_node(root,'WasteCollectionPoint' if pickup else 'RoadSegment')
+-            label='PickupExecution' if pickup else 'AssetConditionSnapshot';relation='PICKUP_FOR' if pickup else 'CONDITION_OF'
+-            # Fixed identifier pair from code, never user text; values parameterized.
+-            rows=self.repo._read(f'MATCH (n:{label})-[e:{relation}]->(a:CivicEntity {{id:$id,municipality_id:$scope}}) RETURN labels(n),properties(n),type(e),properties(e),labels(a),properties(a) LIMIT 101',{'id':root,'scope':'demo-city'})
+-            r['truncated']=len(rows)>100;after=timestamp(as_of)-timedelta(days=args.get('days',30))
++            after=timestamp(as_of)-timedelta(days=args.get('days',30))
++            # WHERE/ORDER BY precede the100+1 cap in the actual RO query, including
++            # source evidence visibility. UTC normalization reuses accepted B03.
++            rows=self.repo._read(self.history_query(pickup),{'id':root,'scope':'demo-city',
++                'as_of':timestamp(as_of).strftime('%Y-%m-%dT%H:%M:%S.%f'),
++                'after':after.strftime('%Y-%m-%dT%H:%M:%S.%f')})
++            r['truncated']=len(rows)>100
++            r['data']['reservations'].append('History window inclusive; chronological UTC ascending, stable event ID then relationship ID;100 records plus one lookahead, before export graph caps. Truncation is not absence.')
+             for labels,props,kind,ep,al,ap in rows[:100]:
+                 n=self.repo.decode_node(labels,props);a=self.repo.decode_node(al,ap);e=self.repo._decode_edge_row([kind,ep,labels,props,al,ap])
+                 # No schedule clock reinterpretation or guessed dates.
+                 date=props['scheduled_at' if pickup else 'observed_at']
+                 if visible(props,as_of) and visible(ep,as_of) and visible(ap,as_of) and after<=timestamp(date)<=timestamp(as_of):
+-                    self.add_records(r,[n,a],[e],[])
+-                    if ep.get('source_evidence_id'):self.evidence(r,ep['source_evidence_id'],as_of)
++                    evidence_ids=sorted({v for v in (ep.get('source_evidence_id'),props.get('evidence_id')) if v})
++                    evidence=[self.repo.get_node(id,'Evidence') for id in evidence_ids]
++                    if any(not visible(v.properties,as_of) for v in evidence):raise ValueError('Future evidence excluded')
++                    existing={v['id'] for v in r['data']['nodes']}
++                    if len(existing|{v.id for v in [n,a,*evidence]})>120 or len(r['data']['edges'])>=200:
++                        r['truncated']=True;break
++                    self.add_records(r,[n,a,*evidence],[e],[])
++                    r['source_evidence_ids'].extend(evidence_ids)
+                     r[PAYLOADS[name]].append({'id':n.id,'properties':n.properties})
+-                    if props.get('evidence_id'):self.evidence(r,props['evidence_id'],as_of)
+             if pickup:r['data']['gaps'].append('Source pickup local-clock/service alias warnings remain; no schedule reinterpretation')
+         elif name=='get_work_order_status':
+             node=self.repo.get_node(args['work_order_id'],'WorkOrder')
+@@ -121,6 +132,48 @@
+         if not r[PAYLOADS[name]] and not r['data']['nodes'] and r['status']=='SUCCESS':r['status']='UNAVAILABLE'
+         if r['status']=='UNAVAILABLE':r['error']={'code':'DATA_UNAVAILABLE','message':'Required sourced data or designated capability is unavailable','retryable':False}
+         validate(READ[name]['output_schema'],r);return r
++    @staticmethod
++    def maintenance_evidence(result,event):
++        """Evidence on the event's own validated prefix; PRODUCED extends inspections.
++
++        A WorkOrder prefix does not inherit evidence from a later outcome merely
++        because both occur on an exported path. Response-wide union stays separate.
++        """
++        nodes={n.id:n for n in result.nodes};edges={e.id:e for e in result.edges};ids=set()
++        for path in result.paths:
++            if event.id not in path.node_ids:continue
++            end=path.node_ids.index(event.id)
++            if (event.kind=='Inspection' and end<len(path.edge_ids)
++                and edges[path.edge_ids[end]].kind=='PRODUCED'
++                and nodes[path.node_ids[end+1]].kind=='Evidence'):
++                end+=1
++            ids.update(nodes[id].id for id in path.node_ids[:end+1] if nodes[id].kind=='Evidence')
++            ids.update(edges[id].properties['source_evidence_id'] for id in path.edge_ids[:end]
++                       if edges[id].properties.get('source_evidence_id'))
++        return sorted(ids)
++
++    @staticmethod
++    def history_query(pickup):
++        """Two fixed bounded templates; no identifiers or query text from callers."""
++        label,relation,date=('PickupExecution','PICKUP_FOR','scheduled_at') if pickup else ('AssetConditionSnapshot','CONDITION_OF','observed_at')
++        key=GraphQueries._time_key
++        def visibility(var):
++            fields=('created_at','updated_at','observed_at','recorded_at','requested_at','actual_at','decided_at')
++            checks=[f'({var}.{field} IS NULL OR {key(var+"."+field)}<=$as_of)' for field in fields]
++            checks += [f'({var}.valid_from IS NULL OR {key(var+".valid_from")}<=$as_of)',
++                       f'({var}.valid_to IS NULL OR $as_of<{key(var+".valid_to")})']
++            return ' AND '.join(checks)
++        checks=[f'{var}.municipality_id=$scope AND '+visibility(var) for var in ('n','e','a')]
++        checks += [f'(n.evidence_id IS NULL OR (ne IS NOT NULL AND {visibility("ne")}))',
++                   f'(e.source_evidence_id IS NULL OR (ee IS NOT NULL AND {visibility("ee")}))',
++                   f'$after<={key("n."+date)} AND {key("n."+date)}<=$as_of']
++        return (f'MATCH (n:{label})-[e:{relation}]->(a:CivicEntity {{id:$id,municipality_id:$scope}}) '
++                'OPTIONAL MATCH (ne:Evidence {id:n.evidence_id,municipality_id:$scope}) '
++                'OPTIONAL MATCH (ee:Evidence {id:e.source_evidence_id,municipality_id:$scope}) '
++                'WITH n,e,a,ne,ee WHERE '+' AND '.join(checks)+
++                f' WITH n,e,a,{key("n."+date)} AS event_time ORDER BY event_time ASC,n.id ASC,e.id ASC LIMIT 101 '
++                'RETURN labels(n),properties(n),type(e),properties(e),labels(a),properties(a)')
++
+     def evidence(self,r,id,as_of):
+         node=self.repo.get_node(id,'Evidence')
+         if not visible(node.properties,as_of):raise ValueError('Future evidence excluded')
+diff --git a/blockers.md b/blockers.md
+--- a/blockers.md
++++ b/blockers.md
+@@ -1,4 +1,8 @@
+ # blockers.md — Current blockers and verification spikes
++
++## Current status — B07-R, 2026-10-17 (takes precedence over history)
++
++B07 technically accepted. B07-R PASS — human review pending. Final440 PASS/0 FAIL/0 SKIP in368.60s (293 unit/147 real integration), adding5 unit+9 real cases; all426 accepted tests preserved. Both SPEC validators PASS. Independent maintenance provenance, pre-cap UTC history filtering/order/lookahead, and explicit unknown work-order fields verified through real MCP. Retained city/B01/B05/migrations/accepted+corrective traces preserved across actual restart/recreation. B08 TODO; no later work.
+ 
+ ## Current status — B07, 2026-10-17 (takes precedence over history)
+ 
+@@ -219,3 +223,26 @@
+ and negative tests; no active B07 acceptance blocker. All designated later findings
+ remain OPEN. Trace DB outage/unknown outcome fails closed, not guaranteed replay or
+ B15 domain-event delivery. Human B07 review is the next gate; B08 remains unstarted.
++
++## B07-R corrective review limitations | 2026-10-17
++
++History accuracy defects reproduced and fixed; focused tests PASS, complete regression
++pending. Initial test-fixture validity and new-module collection collision corrected
++without weakening registry or altering old tests. No active implementation blocker.
++Work-order blocking/latest-event retrieval remains explicitly UNKNOWN until B12–B15;
++no operational relationship absence or outcome is verified by this read handler.
++Memory/GraphRAG/source versions/monitoring/history gaps and remaining DEC-004 findings
++remain at designated milestones. Source city42 drainage links CANDIDATE; frozen55
++original numeric defects/B04 conversion and unlinked measurements unchanged.
++Historical node versions, bounded exports, local stdio privilege boundary, client
++timeout cancellation and trace O(N)/10k audit limits remain as documented in B07.
++B08 is blocked by the human review gate, not silently started. All18 requirements bind.
++
++### B07-R final outcome (supersedes pending entry)
++
++No active B07-R acceptance blocker.440 tests and both SPEC validators PASS; actual
++history outputs, original source/architecture/file preservation, real MCP and accepted/
++corrected trace lifecycle verified. Work-order unknown relationship facts remain
++explicit limitations for B12–B15, not resolved operational features. All other B07/
++DEC-004/source/history/evaluator/clock/agent/GraphRAG/event/API gaps retain their gates.
++Human review required before proposed B08; no B08 implementation.
+diff --git a/contracts/mcp_tools.json b/contracts/mcp_tools.json
+--- a/contracts/mcp_tools.json
++++ b/contracts/mcp_tools.json
+@@ -1314,7 +1314,7 @@
+       },
+       "requires_mcp_runtime_call": true,
+       "side_effect": false,
+-      "result_semantics": "On non-SUCCESS status, return required envelope with null ID(s)/empty lists as applicable; include error; no claimed state change.",
++      "result_semantics": "B07-R: records[].evidence_ids comes only from that event's own validated asset/evidence proof paths, not the response-wide source_evidence_ids union. History remains contextual, not proof of repair resolution.",
+       "b07_runtime": "REGISTERED_READ"
+     },
+     {
+@@ -5065,7 +5065,7 @@
+       },
+       "requires_mcp_runtime_call": true,
+       "side_effect": false,
+-      "result_semantics": "On non-SUCCESS status, return required envelope with null ID(s)/empty lists as applicable; include error; no claimed state change.",
++      "result_semantics": "B07-R: recorded status only. Until B12\u2013B15 implement retrieval, blocking_task_ids/latest_status_event_ids empty placeholders are UNKNOWN, not verified empty relationships. Explicit data.gaps and PARTIAL for an existing visible WorkOrder; absent record UNAVAILABLE. No operational completion claim.",
+       "b07_runtime": "REGISTERED_READ"
+     },
+     {
+@@ -5854,7 +5854,7 @@
+         ],
+         "additionalProperties": false
+       },
+-      "result_semantics": "Never infer success from missing source; unavailable returns status UNAVAILABLE and empty data.",
++      "result_semantics": "B07-R: inclusive scheduled_at UTC window [as_of-days,as_of], node/relationship/source visibility before LIMIT; normalized time ASC, event ID ASC, relationship ID ASC;100 rows plus one lookahead, additional graph export caps. truncated means omitted eligible rows/context, never verified absence. Source schedule-clock warnings retained.",
+       "side_effect": false,
+       "requires_mcp_runtime_call": true,
+       "b07_runtime": "REGISTERED_READ"
+@@ -6232,7 +6232,7 @@
+         ],
+         "additionalProperties": false
+       },
+-      "result_semantics": "Never infer success from missing source; unavailable returns status UNAVAILABLE and empty data.",
++      "result_semantics": "B07-R: inclusive observed_at UTC window [as_of-days,as_of], node/relationship/source visibility before LIMIT; normalized time ASC, event ID ASC, relationship ID ASC;100 rows plus one lookahead, additional graph export caps. truncated means omitted eligible rows/context, never verified absence.",
+       "side_effect": false,
+       "requires_mcp_runtime_call": true,
+       "b07_runtime": "REGISTERED_READ"
+diff --git a/decision.md b/decision.md
+--- a/decision.md
++++ b/decision.md
+@@ -621,3 +621,56 @@
+   approval/evaluator findings retain designated gates. Proposed B08 ONLY after review:
+   complaint normalization/de-duplication, Incident-vs-cluster recurrence grouping and
+   three issue validators; no agents/GraphRAG/operations/API/frontend. STOP.
++
++### DEC-028 — B07-R authorized corrective scope and compatibility | 2026-10-17
++- B07 technically accepted; only B07-R authorized before B08. Supports R07/R09/R15,
++  preserving graph reasoning R04/R05 and all18 binding requirements. No operational
++  lifecycle, ingestion, agents, API or frontend implementation.
++- Maintenance evidence must be attributed from each event's own validated B03 proof
++  paths, never the response-wide union; aggregate evidence remains response-level.
++- Fixed pickup/condition reads must apply UTC-normalized window/visibility predicates
++  and deterministic chronological order before100+1 lookahead. Existing graph/output
++  caps and RO_QUERY remain; no B03 policy or migration changes.
++- Work-order empty blocking/latest-event lists represent unavailable B12–B15 facts,
++  not verified absence. Preserve wire schemas and express limitations in existing
++  gaps/reservations +PARTIAL envelope; document machine-contract semantics.
++- Tests use disposable graphs through a test-only actual SDK server harness and the
++  unchanged actual DomainBroker/TraceStore; harness source substitution is explicit
++  fixture evidence, never production city evidence or caller-selectable graph access.
++  Production fixed-city context/ACL/identity and existing real city tests unchanged.
++- Before edits snapshot accepted uncommitted B07 Git candidates to /tmp for exact
++  B07-R-only patch and original-file hash comparison; no credentials/ignored files.
++  Verification: focused unit/real MCP+DB, full pytest --run-persistence, both SPEC
++  validators, fresh retained city/B01/B05/trace proof and secret/source audit. Human
++  checks independent event sources, >100 date-window ordering and explicit work gaps.
++
++### DEC-029 — B07-R corrected semantics, final verification and stop | 2026-10-17
++- Accepted B07 working-tree baseline retained (Git HEAD still accepted B06 baseline
++  24e8072; no forced commit/push). Exact B07-R-only diff uses snapshot/hash manifest.
++- Per-event evidence is its own validated prefix/supporting PRODUCED path, not response
++  union. Later outcome evidence does not retroactively support an order event. Existing
++  response-level union preserved. No new properties, entity types or relationships.
++- Existing fixed pickup/condition templates apply inclusive requested window +node/edge/
++  referenced-Evidence visibility before UTC-normalized time/eventID/edgeID ASC and
++  LIMIT101. Existing GraphQueries._time_key reused unchanged.100 eligible false versus
++  101 true truncation proven; graph export still capped with atomic citation context.
++- Keep blocking/latest-status lists wire-compatible as explicit UNKNOWN placeholders,
++  not verified absence. Existing data.gaps +PARTIAL suffice; no operational schema
++  expansion. Server preserves these gaps on absence/failure. Only four machine
++  result_semantics descriptions changed; all18 input/output schemas/permissions and
++  inventory hashes unchanged. Future B12–B15 supplies facts, not this corrective pass.
++- Actual4 product FAIL before fix; final focused5 structural/fake units +9 real SDK/
++  FalkorDB cases PASS. Full440 PASS/0 FAIL/0 SKIP in368.60s (293 unit/147 integration),
++  original426 tests unchanged; both SPEC validators PASS. Initial fixture validity and
++  new test-module collision errors preserved separately, not passed off as product
++  reproduction or hidden by weakening constraints. No live agent/model rationale.
++- Fresh city fingerprints858/1246/revision2104/audit, B01 and B05 source57/clone59 and
++  canonical0001/trace0002 retained.13 early B07 traces +15 final B07 traces unchanged;
++  4 pre-correction +11 corrected fixture observations verified after actual lifecycle.
++  Production-city initialize/list/all12 calls,15 server trace readbacks/no ERROR PASS.
++-333 accepted B07 files unchanged outside11 deliberate edits; dependency pins/schema/
++  migration/policies/algorithms/data/official broker/shared envelopes preserved. Actual
++  local secret scan PASS/no child process leak; no archive/external ZIP safety claim.
++- No B07-R acceptance blocker; human review gate remains. Proposed B08 ONLY after
++  review: complaint normalization/same-event dedup, Incident-vs-ProblemCluster recurrence
++  grouping and three issue validators. No B08+, operational workflows or ontology seed.
+diff --git a/flow.md b/flow.md
+--- a/flow.md
++++ b/flow.md
+@@ -361,3 +361,33 @@
+ proof ->15 persisted server observations read back -> native0002 status93indexes/
+ 186constraints total (2/4 additive) -> final source/secret/process audit. No source
+ mutation or B07 archive. Actual normalized SDK discovery included in operator proof.
++
++## B07-R corrected history projection and query flow | 2026-10-17
++
++- service.py imports the existing GraphQueries._time_key; schema.timestamp supplies
++  normalized UTC parameters. history_query selects one of two fixed label/relation/date
++  triples. RO_QUERY MATCH + optional typed Evidence -> visibility + requested date
++  WHERE -> normalized chronological ORDER BY/time+eventID+edgeID -> LIMIT101 -> strict
++  repository decode ->100 rows -> atomic record/Evidence export within existing caps.
++- maintenance_history still calls B03 GraphQueries; maintenance_evidence intersects
++  each event's path prefix with validated edges/Evidence, extending Inspection through
++  PRODUCED only. Aggregate project evidence stays at envelope level.
++- result() records operational field gaps before WorkOrder lookup. server.py appends
++  absence/failure gaps without replacing capability gaps. Normal SDK/broker validation,
++  durable SERVER observation, hash read-back and child BROKER observation unchanged.
++- New tests/unit/test_civicly_mcp_history_projection.py exercises pure projection with structural
++  fakes. integration/test_civicly_mcp_review.py creates canonical-validated disposable
++  fixtures -> tests.b07r_server build() real SDK stdio -> unchanged DomainBroker +
++  actual TraceStore. Source substitution is explicitly test-only; production CITY_GRAPH
++  and readonly ACL unchanged. No dataset/policy/migration/algorithm edits.
++- docs/evidence/B07R-* preserves before/after output/commands/patch; audit_b07r.py checks
++  accepted working-tree hashes and actual private values without printing secrets.
++  Full existing lifecycle/official/domain tests and fresh retained-source checks follow.
++
++B07-R final verification flow:440-test full regression -> actual restart/recreation
++(including B01/Browser volume) -> existing ACL reprovision -> production CITY_GRAPH
++SDK initialize/list/all12 calls/15 trace readbacks -> verify_b07.py all retained
++source/metadata fingerprints +13 earlier traces -> verify_b07r_traces.py actual log
++ordering and fresh readback of15 final B07 +4 before +11 corrected observations ->
++audit_b07r.py333 preserved old files, unchanged wire contracts, actual local-secret/
++process checks -> B07-R-only inventory/patch. No source/volume reset or new migration.
+diff --git a/implementation_status.md b/implementation_status.md
+--- a/implementation_status.md
++++ b/implementation_status.md
+@@ -1,4 +1,8 @@
+ # implementation_status.md — Current implementation truth
++
++## Current status — B07-R, 2026-10-17 (takes precedence over history)
++
++B07 technically accepted. B07-R PASS — human review pending. Final440 PASS/0 FAIL/0 SKIP in368.60s (293 unit/147 real integration), adding5 unit+9 real cases; all426 accepted tests preserved. Both SPEC validators PASS. Independent maintenance provenance, pre-cap UTC history filtering/order/lookahead, and explicit unknown work-order fields verified through real MCP. Retained city/B01/B05/migrations/accepted+corrective traces preserved across actual restart/recreation. B08 TODO; no later work.
+ 
+ ## Current status — B07, 2026-10-17 (takes precedence over history)
+ 
+@@ -218,3 +222,23 @@
+ audit/writer state, original B01 and retained B05 source/clone unchanged; canonical
+ 0001 READY91/182. Credential rotation/source/secret/process audit PASS. No B07 ZIP,
+ remote push or later work. STOP — human review required before B08.
++
++## B07-R narrow corrective implementation | 2026-10-17
++
++B07 technically accepted. Corrected per-event maintenance evidence, chronological
++windowed pickup/condition retrieval before cap, and explicit unknown work-order
++relationship placeholders. Preserved wire schemas/shared envelopes/trace architecture.
++New5 structural unit and9 real DB/MCP cases PASS focused; full regression pending.
++Only service/server projections, contract semantic descriptions and review evidence
++changed; all B03–B06 source/algorithms/policies/migrations/dataset remain protected.
++No B08 business logic or product completion claim. All18 requirements remain binding.
++
++### B07-R final gate (supersedes pending entry)
++
++440 PASS/0 FAIL/0 SKIP in368.60s;293 unit/147 real DB/MCP integration. Adds5 unit+9
++real tests;426 previous tests unchanged. Both SPEC validators PASS. Fresh actual-city
++MCP proof12 tools/no ERROR +15 readback observations; all retained city/B01/B05 hashes
++and migrations unchanged. Accepted and corrective trace persistence after lifecycle
++verified;333 old files outside11 deliberate modifications unchanged, wire schemas/
++permissions/pins preserved and actual local-secret/process audit PASS. All six tracking
++files +guide/contracts/evidence updated. B07-R PASS, awaiting human review; B08 unstarted.
+diff --git a/task_board.md b/task_board.md
+--- a/task_board.md
++++ b/task_board.md
+@@ -1,4 +1,8 @@
+ # task_board.md — Human-reviewed task queue
++
++## Current status — B07-R, 2026-10-17 (takes precedence over history)
++
++B07 technically accepted. B07-R PASS — human review pending. Final440 PASS/0 FAIL/0 SKIP in368.60s (293 unit/147 real integration), adding5 unit+9 real cases; all426 accepted tests preserved. Both SPEC validators PASS. Independent maintenance provenance, pre-cap UTC history filtering/order/lookahead, and explicit unknown work-order fields verified through real MCP. Retained city/B01/B05/migrations/accepted+corrective traces preserved across actual restart/recreation. B08 TODO; no later work.
+ 
+ ## Current status — B07, 2026-10-17 (takes precedence over history)
+ 
+@@ -145,3 +149,24 @@
+ | B08 | TODO | No | Complaint normalization/dedup/recurrence and3 issue validators; only after B07 acceptance |
+ 
+ All18 objectives retained. No agent/GraphRAG/operations/API/frontend implementation.
++
++## B07-R review ledger | 2026-10-17
++
++| Task | State | Human accepted? | Evidence |
++|---|---|---|---|
++| B07 | Technically accepted | Yes | User external review;426 passing baseline retained |
++| B07-R | IN_PROGRESS | No |5 new unit/9 real focused PASS; full regression pending |
++| B08 | TODO | No |Complaint normalization/dedup/recurrence and3 issue validators, only after review |
++
++No B08/later implementation. Review independent maintenance citations, >100 histories
++and explicit unknown operational relationships through actual broker evidence.
++
++### B07-R final review gate (supersedes in-progress ledger)
++
++| Task | State | Human accepted? | Evidence |
++|---|---|---|---|
++| B07 | Technically accepted | Yes |External review and immutable426-test baseline |
++| B07-R | PASS — review pending | No |440 PASS/0 FAIL/0 SKIP; SPEC, actual broker histories/trace/source lifecycle +security checks PASS |
++| B08 | TODO | No |Complaint normalization/dedup/recurrence,3 issue validators only after human review |
++
++STOP. No later milestone or complete product capability claimed.
+diff --git a/test_log.md b/test_log.md
+--- a/test_log.md
++++ b/test_log.md
+@@ -1,4 +1,8 @@
+ # test_log.md — Append-only verification record
++
++## Current status — B07-R, 2026-10-17 (takes precedence over history)
++
++B07 technically accepted. B07-R PASS — human review pending. Final440 PASS/0 FAIL/0 SKIP in368.60s (293 unit/147 real integration), adding5 unit+9 real cases; all426 accepted tests preserved. Both SPEC validators PASS. Independent maintenance provenance, pre-cap UTC history filtering/order/lookahead, and explicit unknown work-order fields verified through real MCP. Retained city/B01/B05/migrations/accepted+corrective traces preserved across actual restart/recreation. B08 TODO; no later work.
+ 
+ ## Current status — B07, 2026-10-17 (takes precedence over history)
+ 
+@@ -671,3 +675,40 @@
+ - Live LLM/agent selection, GraphRAG/memory/operational workflows/API/frontend NOT RUN/
+  NOT IMPLEMENTED by B07; not skipped real acceptance tests. Remaining designated
+  DEC-004/source/history/approval/event/evaluator findings OPEN. STOP for human review.
++
++### TEST-20261017-B07R-01 — Real failure reproductions, then corrected focus
++- New fixture setup first failed strict registry: valid_to requires valid_from.
++  B07R-before-correction.txt records4 setup ERROR in6.21s, not product reproductions.
++  Corrected the test fixture; setup now validates before initializing its source.
++- Actual DB +SDK stdio +unchanged DomainBroker/TraceStore harness then reproduced
++ 4 FAIL in9.18s: per-record evidence incorrectly unioned; pickup/condition windows
++ starved by older limited rows; work-order gap absent. B07R-failure-reproduction.txt
++ and B07R-before-outputs.json preserve actual failures/results. No source city writes.
++- Corrected initial4 real PASS in10.51s; strengthened final9 real PASS in14.33s.
++  Tests exercise110 out-of-window +107 relevant dated rows per history, fractions/ID
++  tie order, future/expired records,100/101 lookahead, narrow inclusive lower bound,
++  two independent dated inspection sources, present/absent work-order limitations.
++ 5 new pure structural/fake projection unit PASS in0.51s; not runtime acceptance.
++- Full-suite initial collection stopped: unit/integration new modules shared basename.
++  B07R-collection-failure.txt retains1 ERROR in0.81s; renamed new unit module to
++  test_civicly_mcp_history_projection.py, no preexisting test/source removal. Full rerun.
++- Test harness source substitution is explicit fixture-only, not retained-city evidence;
++  server callbacks, discovery, wire schemas, broker checks and trace writes are real.
++  All production/source/authorization paths remain covered by unchanged regressions.
++
++### TEST-20261017-B07R-02 — Final full regression / retained runtime / security
++- Exact command: `backend/.venv/bin/python -m pytest backend/tests -v -s --run-persistence > docs/evidence/B07R-regression-tests.txt 2>&1`.
++- Actual440 PASS/0 FAIL/0 SKIP in368.60s;293 unit/147 real integration. Adds5 unit/9
++  real tests; all426 old tests unchanged. Expected revoked trace ACL emits
++  NoPermissionError stderr and passes fail-closed assertion; not a regression failure.
++- `make test-spec > docs/evidence/B07R-spec-validation.txt 2>&1`: both SPEC validators
++  PASS (STATIC only). Python compilation/whitespace checks PASS. No live-model claim.
++- After real restart/recreation: `PYTHONPATH=backend backend/.venv/bin/python -m app.mcp.civicly configure --output docs/evidence/B07R-runtime-configuration.json`; same replacement credentials/ACL, no rotation rollback.
++- Actual production-city `... -m app.mcp.civicly proof --output docs/evidence/B07R-city-proof.json`: PASS,12 discovered tools/all12 calls/no handler ERROR;15 persisted observations.
++- `PYTHONPATH=backend backend/.venv/bin/python scripts/verify_b07.py --output docs/evidence/B07R-post-lifecycle.json`: PASS; all2104 city record hashes/revision/audit/writer state, B01 probe, B05 source/clone, READY0001/0002 unchanged;13 early proof traces preserved.666 total ToolExecutions observed after final proof, not agent runs.
++- `PYTHONPATH=backend backend/.venv/bin/python scripts/verify_b07r_traces.py`: PASS;15 accepted final B07 records exactly unchanged,4 pre-correction +11 corrected fixture output/evidence hashes preserved. Actual log proves corrected calls preceded successful restart/recreation; no unsupported persistence claim.
++- `backend/.venv/bin/python scripts/audit_b07r.py`: PASS;333 original files unchanged
++  outside11 intended edits, all18 wire schemas/permissions stable, private values absent
++  from Git candidates/logs; no leaked MCP process. No external ZIP sanitization claim.
++- Commands/results/file inventory/working-tree patch under docs/evidence/B07R-*; no
++  B08 work, no push/archive. Remaining capabilities/gaps remain designated later gates.
+diff --git a/backend/tests/b07r_server.py b/backend/tests/b07r_server.py
+new file mode 100644
+--- /dev/null
++++ b/backend/tests/b07r_server.py
+@@ -0,0 +1,33 @@
++"""TEST ONLY: real SDK stdio with disposable fixture source, never runtime config.
++
++Fixed production Context still describes the approved city capability. This harness
++substitutes the source internally solely to exercise history edge cases unavailable
++in the retained city. Its outputs are labeled fixture proofs, not city snapshots.
++"""
++import asyncio
++import sys
++from mcp.server.stdio import stdio_server
++from app.config import Settings
++from app.graph.connection import connect
++from app.graph.repository import GraphRepository
++from app.graph.analysis.engine import GraphAnalysis
++from app.graph.targets import is_allowed_graph_target
++from app.mcp.civicly.runtime import connections
++from app.mcp.civicly.service import CivicReadService
++from app.mcp.civicly.server import build
++from app.mcp.civicly.storage import TraceStore
++
++
++async def main():
++    name=sys.argv[1]
++    assert name.startswith('civicly_b07_test_') and is_allowed_graph_target(name)
++    with connect(Settings(_env_file='.env')) as source, connections() as (_,writer,trace_graph):
++        service=CivicReadService.__new__(CivicReadService)
++        service.repo=GraphRepository(source,name)
++        service.analysis=GraphAnalysis(service.repo)
++        server=build(service,TraceStore(writer,trace_graph))
++        async with stdio_server() as streams:
++            await server.run(*streams,server.create_initialization_options())
++
++
++if __name__=='__main__':asyncio.run(main())
+diff --git a/backend/tests/integration/test_civicly_mcp_review.py b/backend/tests/integration/test_civicly_mcp_review.py
+new file mode 100644
+--- /dev/null
++++ b/backend/tests/integration/test_civicly_mcp_review.py
+@@ -0,0 +1,169 @@
++"""Real DB/SDK stdio/broker; test-only source injection, no city mutation.
++
++Bulk fixture creation below is canonical-validated, parameterized TEST setup only,
++not a production import path or repository write guarantee/performance shortcut.
++"""
++import asyncio
++import json
++import sys
++from contextlib import asynccontextmanager
++from pathlib import Path
++import pytest
++from mcp import Client,StdioServerParameters
++from app.graph.migration import MigrationRunner
++from app.graph.repository import GraphRepository
++from app.graph.schema import Registry
++from app.graph.targets import new_test_graph_name
++from app.mcp.runtime import ROOT
++from app.mcp.civicly.runtime import configure,connections
++from app.mcp.civicly.broker import DomainBroker
++from app.mcp.civicly.storage import TraceStore
++from tests.schema_examples import common,asset,edge
++
++pytestmark=pytest.mark.integration
++AS_OF='2026-10-17T12:00:00Z'
++OLD='2026-01-01T00:00:00Z'
++EARLY='2026-10-01T00:00:00Z'
++PROOF=ROOT/'docs/evidence/B07R-runtime-proof.json'
++
++
++def props(id,**extra):return {**common(id),'created_at':OLD,'updated_at':OLD,**extra}
++
++
++@pytest.fixture(scope='module')
++def history_graph():
++    from app.config import Settings
++    from app.graph.connection import connect
++    with connect(Settings(_env_file='.env')) as db:
++        configure(db);name=new_test_graph_name(7)
++        registry=Registry();nodes={};relations=[]
++        def node(kind,p):registry.validate_node(kind,p);nodes[p['id']]=(kind,p)
++        def relation(kind,s,t,id,ev=None,**kw):
++            p={**edge(id),'created_at':OLD,**kw}
++            if ev:p['source_evidence_id']=ev
++            registry.validate_edge(kind,*nodes[s],*nodes[t],p)
++            relations.append({'kind':kind,'s':s,'t':t,'props':p})
++        for kind,id in [('RoadSegment','R-REVIEW'),('WasteCollectionPoint','W-REVIEW')]:
++            node(kind,{**asset(kind,id),'created_at':OLD,'updated_at':OLD})
++        node('CollectionRoute',props('ROUTE-REVIEW',route_code='TEST',operational_status='ACTIVE'))
++        for id in ['EV-INS-A','EV-INS-B','EV-HISTORY']:
++            node('Evidence',props(id,evidence_type='INSPECTION_REPORT',summary='Synthetic B07-R fixture',reliability='VERIFIED',recorded_at=OLD,observed_at=OLD,source_kind='SYNTHETIC'))
++        for suffix,date in [('A','2026-10-02T00:00:00Z'),('B','2026-10-03T00:00:00Z')]:
++            id='INS-'+suffix;ev='EV-INS-'+suffix
++            node('Inspection',props(id,inspection_type='ROAD',status='COMPLETE',requested_at=date,completed_at=date))
++            relation('INSPECTS',id,'R-REVIEW','LINK-'+id,ev)
++            relation('PRODUCED',id,ev,'PROOF-'+id,ev)
++        node('WorkOrder',props('WO-REVIEW',status='PENDING',execution_mode='SIMULATED',plan_version=1,idempotency_key='B07R-WO'))
++        # Insert110 older events first, then105 relevant events in reverse order.
++        # Second valid record's timestamp uses a fraction to catch naive lexical order.
++        # One future event and one event with expired relationship must be excluded.
++        for pickup in [True,False]:
++            kind='PickupExecution' if pickup else 'AssetConditionSnapshot'
++            prefix='P' if pickup else 'C';rel='PICKUP_FOR' if pickup else 'CONDITION_OF';root='W-REVIEW' if pickup else 'R-REVIEW'
++            dates=[(f'OLD-{i:03}',OLD) for i in range(110)]
++            dates += [(f'NEW-{i:03}',f'2026-10-10T00:{i//60:02}:{i%60:02}Z') for i in reversed(range(105))]
++            dates += [('TIE-A','2026-10-10T00:00:00.1Z'),('TIE-B','2026-10-10T00:00:00.100000Z'),('FUTURE','2026-10-18T00:00:00Z'),('EXPIRED',EARLY)]
++            for suffix,date in dates:
++                id=prefix+'-'+suffix
++                extra={'route_id':'ROUTE-REVIEW','scheduled_at':date,'status':'COMPLETED'} if pickup else {'asset_id':root,'evidence_id':'EV-HISTORY','observed_at':date,'condition':'SYNTHETIC'}
++                node(kind,props(id,**extra));relation(rel,id,root,'E-'+id,'EV-HISTORY',**({'valid_from':OLD,'valid_to':EARLY} if suffix=='EXPIRED' else {}))
++        graph=db.select_graph(name)
++        try:
++            MigrationRunner(db,name).apply()
++            # Static registry-derived labels/kinds, all values parameterized, isolated graph only.
++            for kind in sorted({kind for kind,_ in nodes.values()}):
++                label=':'.join(registry.labels(kind))
++                graph.query(f'UNWIND $rows AS row CREATE (n:{label}) SET n=row',params={'rows':[p for k,p in nodes.values() if k==kind]})
++            for kind in sorted({e['kind'] for e in relations}):
++                graph.query(f'UNWIND $rows AS row MATCH (s:CivicEntity {{id:row.s}}),(t:CivicEntity {{id:row.t}}) CREATE (s)-[e:{kind}]->(t) SET e=row.props',params={'rows':[e for e in relations if e['kind']==kind]})
++            yield name
++        finally:
++            if name in db.list_graphs():graph.delete()
++
++
++@asynccontextmanager
++async def fixture_broker(name):
++    p=StdioServerParameters(command=sys.executable,args=['-m','tests.b07r_server',name],cwd=str(ROOT),env={'PYTHONPATH':str(ROOT/'backend')})
++    with connections() as (_,writer,trace_graph):
++        async with Client(p,mode='legacy',read_timeout_seconds=8) as client:
++            b=DomainBroker(client,TraceStore(writer,trace_graph));await b.discover();yield b
++
++
++def save(name,result,graph):
++    report=json.loads(PROOF.read_text()) if PROOF.exists() else {'evidence_class':'REAL_MCP_DB_WITH_TEST_ONLY_SOURCE_SUBSTITUTION','note':'Fixture source injected only in tests.b07r_server; fixed production context unchanged. Not retained city evidence.','results':{}}
++    report['fixture_graph']=graph;report['results'][name]=result
++    PROOF.write_text(json.dumps(report,indent=2)+'\n')
++
++
++def test_maintenance_records_keep_independent_evidence(history_graph):
++    async def run():
++        async with fixture_broker(history_graph) as b:
++            r=await b.call('civicly::get_maintenance_history',{'asset_id':'R-REVIEW','from_time':EARLY,'to_time':AS_OF,'as_of':AS_OF})
++            save('maintenance',r,history_graph)
++            assert r['status']=='PARTIAL',r['error']
++            records={v['record_id']:v['evidence_ids'] for v in r['records']}
++            assert records=={'INS-A':['EV-INS-A'],'INS-B':['EV-INS-B']}
++            assert set(r['source_evidence_ids'])=={'EV-INS-A','EV-INS-B'}
++    asyncio.run(run())
++
++
++@pytest.mark.parametrize('pickup',[True,False],ids=['pickup','condition'])
++def test_history_window_and_stable_order_precede_cap(history_graph,pickup):
++    async def run():
++        tool='get_pickup_execution_history' if pickup else 'get_road_condition_history'
++        root={'collection_point_id':'W-REVIEW'} if pickup else {'road_segment_id':'R-REVIEW'}
++        payload='pickup_executions' if pickup else 'road_conditions';prefix='P' if pickup else 'C'
++        async with fixture_broker(history_graph) as b:
++            r=await b.call('civicly::'+tool,{**root,'days':30,'as_of':AS_OF});save(tool,r,history_graph)
++            assert r['status']=='PARTIAL',r['error']
++            ids=[n['id'] for n in r[payload]]
++            expected=[prefix+'-NEW-000',prefix+'-TIE-A',prefix+'-TIE-B']+[f'{prefix}-NEW-{i:03}' for i in range(1,98)]
++            assert ids==expected
++            assert r['truncated'] and r['source_evidence_ids']==['EV-HISTORY']
++            # Narrow interval has one eligible event after110 unrelated historical rows;
++            # no row lookahead truncation and no expiry/future/old leakage.
++            narrow=await b.call('civicly::'+tool,{**root,'days':1,'as_of':'2026-10-11T00:01:43Z'})
++            save(tool+'-narrow',narrow,history_graph)
++            assert [v['id'] for v in narrow[payload]]==[prefix+'-NEW-103',prefix+'-NEW-104']
++            assert not narrow['truncated']
++            with connections() as (_,writer,name):
++                trace=TraceStore(writer,name).get(r['execution_id'])
++                assert trace.validated_output and trace.source_evidence_ids==['EV-HISTORY']
++    asyncio.run(run())
++
++
++def test_existing_work_order_reports_operational_retrieval_gaps(history_graph):
++    async def run():
++        async with fixture_broker(history_graph) as b:
++            r=await b.call('civicly::get_work_order_status',{'work_order_id':'WO-REVIEW','as_of':AS_OF});save('work_order',r,history_graph)
++            assert r['status']=='PARTIAL' and r['work_order_status']=='PENDING'
++            assert r['blocking_task_ids']==[] and r.get('latest_status_event_ids')==[]
++            gaps=' '.join(r['data']['gaps'])
++            assert 'blocking_task_ids' in gaps and 'latest_status_event_ids' in gaps
++            assert 'not verified empty' in gaps and 'B12' in gaps and 'B15' in gaps
++    asyncio.run(run())
++
++
++@pytest.mark.parametrize('pickup',[True,False],ids=['pickup','condition'])
++@pytest.mark.parametrize('second,truncated',[(4,True),(5,False)],ids=['101-eligible','100-eligible'])
++def test_history_exact_lookahead_boundary(history_graph,pickup,second,truncated):
++    async def run():
++        tool='get_pickup_execution_history' if pickup else 'get_road_condition_history'
++        root={'collection_point_id':'W-REVIEW'} if pickup else {'road_segment_id':'R-REVIEW'}
++        payload='pickup_executions' if pickup else 'road_conditions'
++        async with fixture_broker(history_graph) as b:
++            r=await b.call('civicly::'+tool,{**root,'days':1,'as_of':f'2026-10-11T00:00:{second:02}Z'})
++            save(tool+f'-boundary-{second}',r,history_graph)
++            assert r['status']=='PARTIAL' and len(r[payload])==100
++            assert r['truncated']==truncated
++    asyncio.run(run())
++
++
++def test_absent_work_order_keeps_explicit_operational_gaps(history_graph):
++    async def run():
++        async with fixture_broker(history_graph) as b:
++            r=await b.call('civicly::get_work_order_status',{'work_order_id':'WO-ABSENT','as_of':AS_OF})
++            save('work_order-absent',r,history_graph)
++            assert r['status']=='UNAVAILABLE' and r['error']['code']=='DATA_UNAVAILABLE'
++            assert 'not verified empty' in ' '.join(r['data']['gaps'])
++    asyncio.run(run())
+diff --git a/backend/tests/unit/test_civicly_mcp_history_projection.py b/backend/tests/unit/test_civicly_mcp_history_projection.py
+new file mode 100644
+--- /dev/null
++++ b/backend/tests/unit/test_civicly_mcp_history_projection.py
+@@ -0,0 +1,30 @@
++"""Pure projection/contract checks with small structural fakes, not DB/MCP proof."""
++from types import SimpleNamespace as S
++import pytest
++from app.mcp.civicly.service import CivicReadService
++from app.mcp.civicly.contracts import context,validate,READ
++
++
++@pytest.mark.parametrize('record,expected',[
++    ('INS',['EV-INS']),('WO',['EV-ASSIGN']),
++    ('OUT',['EV-ASSIGN','EV-OUT']),('UNLINKED',[])])
++def test_maintenance_evidence_follows_event_prefix_not_other_events(record,expected):
++    kinds={'ASSET':'RoadSegment','INS':'Inspection','WO':'WorkOrder','OUT':'InterventionOutcome',
++           'UNLINKED':'Inspection','EV-INS':'Evidence','EV-OUT':'Evidence'}
++    nodes=[S(id=id,kind=kind) for id,kind in kinds.items()]
++    edges=[S(id='INSPECTS',kind='INSPECTS',properties={}),
++           S(id='PRODUCED',kind='PRODUCED',properties={}),
++           S(id='ASSIGN',kind='IMPLEMENTS',properties={'source_evidence_id':'EV-ASSIGN'}),
++           S(id='OUTCOME',kind='RESULTED_IN',properties={'source_evidence_id':'EV-OUT'})]
++    paths=[S(node_ids=['ASSET','INS','EV-INS'],edge_ids=['INSPECTS','PRODUCED']),
++           S(node_ids=['ASSET','WO','OUT'],edge_ids=['ASSIGN','OUTCOME'])]
++    result=S(nodes=nodes,edges=edges,paths=paths)
++    event=next(n for n in nodes if n.id==record)
++    assert CivicReadService.maintenance_evidence(result,event)==expected
++
++
++def test_work_order_placeholder_limitations_exist_even_before_record_lookup():
++    c=context();r=CivicReadService.__new__(CivicReadService).result('get_work_order_status',c,'2026-10-17T00:00:00Z')
++    r.update(status='UNAVAILABLE',error={'code':'DATA_UNAVAILABLE','message':'Absent','retryable':False})
++    validate(READ['get_work_order_status']['output_schema'],r)
++    assert 'not verified empty' in ' '.join(r['data']['gaps'])
+diff --git a/scripts/audit_b07r.py b/scripts/audit_b07r.py
+new file mode 100644
+--- /dev/null
++++ b/scripts/audit_b07r.py
+@@ -0,0 +1,51 @@
++"""B07-R accepted-working-tree preservation and sanitized local-secret audit.
++
++No credentials/hashes are emitted. Checks Git candidates only, never declares an
++external full-folder archive safe. Baseline manifest contains source file hashes.
++"""
++import hashlib,json,re,subprocess
++from pathlib import Path
++
++ROOT=Path(__file__).resolve().parents[1]
++allowed={'README.md','backend/app/mcp/civicly/service.py','backend/app/mcp/civicly/server.py',
++         'contracts/mcp_tools.json','backend/CIVICLY_MCP.md','decision.md','flow.md',
++         'implementation_status.md','task_board.md','test_log.md','blockers.md'}
++baseline=json.loads((ROOT/'docs/evidence/B07R-baseline-sha256.json').read_text())
++unchanged=[]
++for name,sha in baseline.items():
++    if name in allowed:continue
++    assert hashlib.sha256((ROOT/name).read_bytes()).hexdigest()==sha,'Unexpected accepted B07 file change: '+name
++    unchanged.append(name)
++wire=json.loads((ROOT/'docs/evidence/B07R-contract-baseline.json').read_text())
++current=json.loads((ROOT/'contracts/mcp_tools.json').read_text())
++def digest(value):return hashlib.sha256(json.dumps(value,sort_keys=True,separators=(',',':'),allow_nan=False).encode()).hexdigest()
++assert {t['name']:{'permission':t['permission'],'input_sha256':digest(t['input_schema']),'output_sha256':digest(t['output_schema'])} for t in current['tools']}==wire,'Wire inventory changed'
++secrets=[]
++for line in (ROOT/'.env').read_text().splitlines():
++    if '=' not in line:continue
++    key,value=line.split('=',1);value=value.strip(' \"\'')
++    if any(k in key.upper() for k in ('PASSWORD','SECRET','KEY','TOKEN')) and len(value)>=8:secrets.append(value.encode())
++for name in ['mcp-credentials.json','civicly-mcp.json']:
++    p=ROOT/'.runtime'/name;assert not p.is_symlink() and not p.stat().st_mode&0o077
++    for key,value in json.loads(p.read_text()).items():
++        if 'password' in key and isinstance(value,str):secrets.append(value.encode())
++files=subprocess.check_output(['git','ls-files','--cached','--others','--exclude-standard','-z'],cwd=ROOT).decode().split('\0')
++files=sorted(set(files)-{''})
++for name in files:
++    assert not set(Path(name).parts)&{'.runtime','.env','.git','.venv','node_modules','__pycache__','.pytest_cache','.uv-cache','review_packages'}
++    content=(ROOT/name).read_bytes()
++    assert not any(secret in content for secret in secrets),'Private value in '+name
++    assert not re.search(rb'-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----|\bAKIA[0-9A-Z]{16}\b|\bsk-[A-Za-z0-9_-]{24,}',content),'Private pattern in '+name
++leaked=[]
++for row in subprocess.check_output(['ps','-axo','pid=,command='],text=True).splitlines():
++    parts=row.strip().split(None,2)
++    if len(parts)!=3:continue
++    executable,command=Path(parts[1]).name,parts[2]
++    if ('python' in executable and any(s in command for s in ('-m app.mcp.civicly.server','-m tests.b07r_server'))) or (executable=='node' and 'node_modules/@falkordb/mcpserver/dist/index.js' in command):leaked.append(int(parts[0]))
++assert not leaked,'MCP child left running'
++report={'status':'PASS','accepted_b07_files_unchanged':len(unchanged),'intentional_modifications':sorted(allowed),
++        'all_preexisting_tests_preserved':True,'all18_tool_wire_schemas_and_permissions_unchanged':True,'migrations_registry_dataset_algorithms_official_mcp_and_shared_envelopes_preserved':True,
++        'candidate_files_scanned':len(files),'local_secret_scan':'PASS; values never logged','leaked_processes':leaked,
++        'scope':'Git candidates only; no archive created or external archive sanitization claim'}
++(ROOT/'docs/evidence/B07R-source-audit.json').write_text(json.dumps(report,indent=2)+'\n')
++print(json.dumps(report))
+diff --git a/scripts/verify_b07r_traces.py b/scripts/verify_b07r_traces.py
+new file mode 100644
+--- /dev/null
++++ b/scripts/verify_b07r_traces.py
+@@ -0,0 +1,30 @@
++"""Fresh read-only comparison of accepted and corrective MCP trace observations."""
++import json
++from pathlib import Path
++from app.mcp.civicly.runtime import connections
++from app.mcp.civicly.storage import TraceStore
++from app.mcp.civicly.models import TraceRecord
++from app.mcp.civicly.contracts import digest
++
++ROOT=Path(__file__).resolve().parents[1]
++accepted=json.loads((ROOT/'docs/evidence/B07-runtime-proof.json').read_text())
++before=json.loads((ROOT/'docs/evidence/B07R-before-outputs.json').read_text())
++corrected=json.loads((ROOT/'docs/evidence/B07R-runtime-proof.json').read_text())
++log=(ROOT/'docs/evidence/B07R-regression-tests.txt').read_text()
++assert log.index('test_absent_work_order_keeps_explicit_operational_gaps PASSED')<log.index('after restart (same container)')<log.index('after recreation (different container, retained volume)')
++with connections() as (_,writer,name):
++    store=TraceStore(writer,name)
++    for saved in accepted['persisted_server_traces']:
++        assert store.get(saved['context']['execution_id'])==TraceRecord.model_validate_json(json.dumps(saved))
++    for report in (before,corrected):
++        for result in report['results'].values():
++            record=store.get(result['execution_id'])
++            assert record and record.validated_output and record.output_sha256==digest(result)
++            assert record.source_evidence_ids==result['source_evidence_ids']
++report={'status':'PASS','accepted_b07_server_records_unchanged':len(accepted['persisted_server_traces']),
++        'precorrection_records_preserved_across_lifecycle':len(before['results']),
++        'corrected_fixture_records_preserved_across_lifecycle':len(corrected['results']),
++        'note':'Actual full-suite log verifies corrected fixture calls preceded successful restart and recreation; fresh readback verifies preservation.',
++        'output_hashes_and_evidence_references_verified':True,'credential_values_logged':False}
++(ROOT/'docs/evidence/B07R-trace-continuity.json').write_text(json.dumps(report,indent=2)+'\n')
++print(json.dumps(report))

@@ -1,6 +1,6 @@
-# Backend foundation through B06
+# Backend foundation through B07
 
-B01–B05 are accepted. B06 adds actual official MCP runtime/client integration
+B01–B06 are accepted. B07 adds custom read MCP/shared trace persistence
 (current verification status in tracking files). B02 supplies canonical schema v3,
 strict validation and immutable additive migration0001. See [SCHEMA.md](SCHEMA.md) for established constraints/indexes,
 native enforcement limits and recovery; [INGESTION.md](INGESTION.md) records B04
@@ -91,3 +91,7 @@ API or live agent. Later agent/MCP/GraphRAG acceptance is unverified.
 If verification fails, share `test_log.md`, `blockers.md`, the failing test output
 and `docker compose logs --tail 100`. Do not share `.env` or full Compose config
 output, which can contain generated secrets.
+
+For actual custom Python MCP,12 read handlers, typed namespaces, shared contracts,
+rotated credentials and isolated persistent traces, see [CIVICLY_MCP.md](CIVICLY_MCP.md).
+B08 and later business workflows remain unimplemented; no full product acceptance.
