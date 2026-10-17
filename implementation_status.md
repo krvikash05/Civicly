@@ -1,5 +1,9 @@
 # implementation_status.md — Current implementation truth
 
+## Current status — B08, 2026-10-17 (takes precedence over history)
+
+B07-R accepted; clean local baseline6afdd09. B08 PASS — human review pending. Final507 PASS/0 FAIL/0 SKIP in438.89s (326 unit/181 real integration), adding33 unit+34 real cases; all440 accepted tests unchanged. Both SPEC validators PASS. Typed source-preserving intake, three validators, qualified incident/cluster rules, concurrent idempotence, atomic rollback/unknown-write recovery and reviewed temporal correction verified. Actual B08 journals/chains survive restart/recreation; city/B01/B05/migrations/accepted MCP traces unchanged. No B09+ work; all18 requirements remain mandatory.
+
 ## Current status — B07-R, 2026-10-17 (takes precedence over history)
 
 B07 technically accepted. B07-R PASS — human review pending. Final440 PASS/0 FAIL/0 SKIP in368.60s (293 unit/147 real integration), adding5 unit+9 real cases; all426 accepted tests preserved. Both SPEC validators PASS. Independent maintenance provenance, pre-cap UTC history filtering/order/lookahead, and explicit unknown work-order fields verified through real MCP. Retained city/B01/B05/migrations/accepted+corrective traces preserved across actual restart/recreation. B08 TODO; no later work.
@@ -242,3 +246,23 @@ and migrations unchanged. Accepted and corrective trace persistence after lifecy
 verified;333 old files outside11 deliberate modifications unchanged, wire schemas/
 permissions/pins preserved and actual local-secret/process audit PASS. All six tracking
 files +guide/contracts/evidence updated. B07-R PASS, awaiting human review; B08 unstarted.
+
+## B08 implemented scope (verification running)
+
+Strict typed intake +first raw/canonical source preservation, supported UTC/decimal
+units, three evidence-aware validators, deterministic complaint/incident/cluster rules
+with dated explanations/uncertainty. Safe two-phase journal +single atomic domain batch,
+source identity retries/conflicts, CAS reviewed temporal regrouping and explicit recovery.
+B03/B05 reused; B04 city read-only previews; B06/B07 read tools/traces untouched.
+No new dependency/migration/public ontology or B09+ feature. Final507 regression pending.
+
+### B08 final gate (supersedes in-progress entry)
+
+507 PASS/0 FAIL/0 SKIP in438.89s (326unit/181real), all440 prior tests unchanged; new
+33 unit/34 actual DB-MCP cases. Both SPEC validators PASS. Actual retained B08 graph
+5 complaints/4 incidents/2 clusters (26nodes/23edges/rev26) and journals survive
+restart/recreation;5 replays no domain changes. Qualified city preview/production
+MCP12 tools/no ERROR/15 traces and43 accepted observations/source fingerprints PASS.
+358 old files/locks/registry/migrations/algorithms/MCP preserved; private-value/process
+audit PASS. No B09+, canonical seed promotion, public API/auth, agents or event outbox.
+Human review pending; limitations in COMPLAINTS.md and B08-RESULTS.md remain binding.

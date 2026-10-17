@@ -121,3 +121,13 @@ are owned B05 disposable clones, not canonical mutations or source corrections.
 Actual city verified-only and exploratory results are separate;42 DRAINS_TO remain
 candidate-level, source-binding/history/S07 gaps explicitly tracked. No agent/MCP,
 memory/GraphRAG, planning/approval/operations/API/frontend implementation by B05.
+
+## B08 complaint intelligence consumer
+
+app.services.complaints reuses immutable registryv3, existing B03 policies/fenced
+write protocol and B05 topology. Complaint→REPORTS→Incident→PART_OF→ProblemCluster
+with OCCURRED_AT/REPORTED AFFECTS; no public ontology or migration changes. Existing
+UNVERIFIED Evidence stores bounded validated intake/review journal JSON. Primary
+assignment corrections retain nonoverlapping old/new memberships and source evidence.
+See backend/COMPLAINTS.md/contracts/complaint_intake.json. All18 requirements remain;
+no B09 evidence verification/operations/agents/API/frontend claimed.

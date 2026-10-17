@@ -674,3 +674,144 @@ Decisions are recorded chronologically. Codex must append an entry whenever a si
 - No B07-R acceptance blocker; human review gate remains. Proposed B08 ONLY after
   review: complaint normalization/same-event dedup, Incident-vs-ProblemCluster recurrence
   grouping and three issue validators. No B08+, operational workflows or ontology seed.
+
+### DEC-030 — B08 authorized scope, normalization and consistency design | 2026-10-17
+- B07-R accepted. Local clean baseline6afdd09892502a8b47a7f840ced1491c38a002d3 after440
+  PASS/0 FAIL/0 SKIP in386.74s, retained data/migration/trace proof and actual secret scan.
+  Historical audit references absent Archive.zip; leave absent, exclude archives from
+  Git. Source whitespace check PASS; raw evidence patch/log whitespace preserved rather
+  than rewriting history. No push/archive. B08 ONLY; all18 objectives remain binding.
+- R02/R03 with R01/R04/R05/R09/R15 support. Typed app.services.complaints models/reader/
+  writer/service; new complaint_intake contract, guide and focused real tests. Preserve
+  schema registryv3, migrations0001/0002, source city/B01/B05, MCP and all old tests.
+- Preserve raw submission in existing UNVERIFIED Evidence.summary as bounded validated
+  JSON intake journal; no public ontology/migration change or competing storage. Existing
+  Complaint source fields hold normalized source identity. Stable external key excludes
+  delivery channel/version; changed payload/version conflicts rather than overwrites.
+  IDs are case-sensitive NFKC+trim; description whitespace normalized; aware ISO offsets
+  normalized UTC; unsupported units/types fail, optional missing facts yield gaps.
+- Two durable phases: public repository creates PREPARED journal; one fenced _commit
+  validates all new/update nodes/edges then atomically creates complaint/incident/cluster/
+  REPORTS/PART_OF/OCCURRED_AT/REPORTED AFFECTS +COMMITTED journal receipt +revision/audit.
+  Existing journal anchors before-hash recovery. No automatic unknown-write retries.
+  Explicit retry resumes unchanged PREPARED journals or returns verified historical
+  COMMITTED receipt; no B15 event/outbox claim. All values parameterized.
+- Same-event matching requires same category/subtype/location/explicit asset set,
+  overlapping declared interval, compatible attributed event reference and bounded
+ 24-hour start gap (or identical explicit event reference). No complaint-count rule.
+  Repeated context after a dated ENDED record proposes RECURRENT; unresolved distinct
+  occurrences propose PERSISTENT; reported long duration can propose persistence.
+  Missing end/outcome dates remain uncertainty, never work-completion resolution.
+- Cross-category occurrences stay separate; shared explicitly reported asset or actual
+  verified B05 topology can support contextual CROSS_CATEGORY grouping, never cause.
+  Candidate paths/proximity do not establish physical grouping. Ambiguous multiple
+  eligible clusters get a separate primary cluster and review alternatives.
+- Reviewed grouping correction requires trusted internal reviewer context, reason and
+  expected hashes; closes known old PART_OF interval and adds new membership atomically,
+  retains old edge/audit/evidence. No MCP writes/auth/approval/state-machine bypass.
+- Tests: strict models/units/source preservation; real same-report/same-event/distinct/
+  persistent/recurrent/cross-category/disconnected matching, all issue histories, temporal
+  cardinality/CAS, concurrent intake, real statement failure/lost reply/recovery, city
+  read-only preview and real MCP compatibility. Full regressions/persistence +SPEC.
+  Risks: ambiguous/legacy source context, finite scan budgets, no historical node replay,
+  O(N) audit, trusted local-write boundary. Human verifies graph IDs/paths/gaps and retries.
+
+### DEC-031 — B08 implemented architecture and explicit limitations | 2026-10-17
+- Python3.12.1/Pydantic2.14.1/FalkorDB client1.8.0/Redis8.1.0/MCP2.3.0 existing pins;
+  no installs/lock/image changes. Actual native compound query smoke1 PASS in2.86s;
+  first27 unit PASS/21 real PASS in60.11s; strengthened57 PASS in89.25s plus3 new real
+  PASS in7.01s. Final source covered by complete504-test regression (running).
+- Keep graph schema/migrations unchanged. Existing Evidence.summary is explicitly
+  serialized, strict bounded journal JSON; graph remains source of complaint/incident/
+  cluster identity/relationships. Journal anchors actual before-hash recovery. New
+  writer permits only approved nodes/edges, REPORTED associations, cluster pattern
+  updates (no lifecycle state changes), closing old PART_OF. Native rollback/lost
+  response/concurrent source conflicts tested; no fake success or event-outbox claim.
+- Complaint RECEIVED is intake acknowledgment within existing free string vocabulary;
+  imported ACCEPTED remains unchanged. Incident initial REPORTED and cluster OPEN
+  follow state contracts. Claimed end does not set ENDED; test source histories use
+  explicit authored states/normative transition order, not new operational workflows.
+- First external submission original preserved; same normalized retransmission returns
+  historical receipt, independent source reports keep separate provenance. Matching
+ 24h heuristic can be ambiguous; explicit source event references/intervals and reviewed
+  correction resolve uncertainty. Persistence provisional when termination unrecorded.
+  Multiple eligible clusters produce review alternatives, not arbitrary selection.
+- Typed history summaries retain dated status/outcome records and qualified source
+  context. Conflicting quantities retained; unit conversion overflow/future rainfall
+  rejected. Verified B05 context may relate separate categories in either arrival order
+  without reversing an edge or promoting reported impact/cause to verified fact.
+- Writes restricted canonical/B08 test targets; accepted city read-only previews and
+  original source/B01/B05/trace evidence retained. Canonical seed promotion not performed.
+  Future working graph integration remains explicit; no competing datastore.
+- Actual MCP read of new incidents uses explicitly labeled test-only source substitution
+  while production fixed context/official+domain namespaces,12 READ/6 deferred writes,
+  envelopes/traces untouched. No agent-selected rationale.
+- Retained small B08 graph created for real lifecycle proof. Before-lifecycle operator
+  verification replays5 receipts with no domain changes; owner/epoch alone advances.
+  Post-lifecycle uses latest fingerprint anchor. Corrected generic harness wording
+  before final proof: no lifecycle claim without actual successful lifecycle log.
+- Source/receipt/journal bounds, O(E)/O(N) integrity/audit costs and finite readback
+  explicit. No bulk bypass, generalized auth, event delivery, root-cause verification,
+  complaint HTTP route, LLM/GraphRAG or frontend. All18 objectives retain later gates.
+
+### DEC-032 — B08 equivalent-unit idempotency correction before acceptance | 2026-10-17
+- New exact regression exposed one canonicalization defect: normalized request hash
+  still included input unit representation, so0.29m vs29cm conflicted; float conversion
+  could also produce28.999999999999996. Preserve failure evidence, fix before review.
+- Canonical request hashes now use converted quantity/value/unit with decimal
+  arithmetic, while raw first input and assessment original values/units remain.
+  PREPARED resume plans from first stored original rather than retransmission spelling.
+  Changed actual measurement/source-version still conflicts. No ontology/schema/migration
+  change or accepted B01–B07-R data rewrite. Initial504 run retained as interim; final
+  complete suite rerun after this fix and a real interrupted equivalent-unit retry.
+
+- B08 contract refinement before final regression: require an appropriate primary
+  road/collection-point when explicit assets supplied, while allowing secondary pipe/
+  drain infrastructure. The registry permits Incident AFFECTS any InfrastructureAsset;
+  do not narrow cross-category context to homogeneous asset lists. Waste pickup reads
+  apply only to actual collection points. Added real mixed-asset acceptance test.
+
+### DEC-033 — B08 final acceptance evidence and human gate | 2026-10-17
+- Final507 PASS/0 FAIL/0 SKIP in438.89s:326 unit/181 actual DB-MCP integration; adds
+ 33 pure unit+34 real cases, all440 accepted tests untouched. Both SPEC validators
+ PASS; compilation/source whitespace checks PASS. Unit repro failure/interim504 run
+ retained, final full rerun includes decimal-unit/mixed-asset corrections.
+- Retained actual B08 graph891b6aa292074c03a93c21451c7206f9:5 complaints/4 incidents/
+ 2 clusters,26 nodes/23 edges/revision26. Exact complete fingerprint including writer
+ state survived actual restart/recreation versus latest pre-lifecycle anchor. Five
+ explicit replays preserved domain content/revision/audit/counts; only owner/epoch
+ advanced as documented. All source/receipt/relationship evidence real, no mock success.
+- Actual city858/1246/revision2104/audit/writer fingerprint, original B01 probe, B05
+ source/clone and READY0001/0002 preserved.43 accepted B07/B07-R observations hash-/
+ evidence-verified from committed baseline proof IDs.1038 ToolExecutions observed
+ after new production-city proof, not agent runs. Actual initialize/list12/call12/
+ readback15 PASS with no handler ERROR; candidate42 links unchanged.
+-358 accepted files outside10 explicit documentation edits unchanged, including all
+ existing app code/tests/contracts/data/locks/migrations. Generated B07-R fixture proof
+ saved separately then accepted HEAD bytes restored; no history lost. Actual local
+ secret scan/no leaked process PASS. No review ZIP/archive or external-export claim.
+- Source package/contract/guide/tests/evidence and all six trackers finalized for human
+ review. B08 uncommitted relative clean local6afdd09 baseline; no push. Only baseline
+ prerequisite.gitignore archive exclusions committed alongside accepted B07-R source.
+- Known limits remain explicit: heuristics/ambiguous/end-date/source gaps, provisional
+ patterns, finite context/journal/receipt bounds, O(N) audit, local trusted review not
+ B13 auth; no canonical seed promotion or B15 event delivery. All18 requirements bind.
+ Proposed B09 ONLY after review: evidence/hypotheses/immutable assessments, root-cause
+ verification guards and inspection request/report lifecycle. STOP.
+
+### DEC-034 — B09 baseline trace-test compatibility correction | 2026-10-17
+B08 externally accepted; B09 ONLY authorized. Before B09 application changes, fresh
+507-test baseline:506 PASS/1 FAIL in457.46s. Existing B07 trace-persistence test
+searched arbitrary first1000 detail rows for a new child; retained trace count now
+exceeds1000. Preserve all records and the same test assertions. Replace its unrelated
+row cap with parameterized exact serialized parent_execution_id filtering before
+LIMIT2, then validate actual typed child/hash readback. No runtime/envelope/schema
+change or trace deletion. This genuine compatibility adjustment is included in the
+local B08 baseline after rerun; record both attempts. Do not push or archive.
+
+Correction target PASS:1 test in4.36s; remaining506 passed unchanged in full baseline.
+Both SPEC validators PASS; baseline complete-suite failure retained, not relabeled
+a507-pass single run. Full B09 regression will repeat all507 tests after additions.
+Retained B08 five receipts/domain/revision/audit and source/B01/B05/migrations/traces
+verified after actual restart/recreation. Old B07-R proof restored; B08 fixture tests
+refresh their generated proof during baseline, included in baseline snapshot.

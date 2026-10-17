@@ -1,5 +1,9 @@
 # test_log.md — Append-only verification record
 
+## Current status — B08, 2026-10-17 (takes precedence over history)
+
+B07-R accepted; clean local baseline6afdd09. B08 PASS — human review pending. Final507 PASS/0 FAIL/0 SKIP in438.89s (326 unit/181 real integration), adding33 unit+34 real cases; all440 accepted tests unchanged. Both SPEC validators PASS. Typed source-preserving intake, three validators, qualified incident/cluster rules, concurrent idempotence, atomic rollback/unknown-write recovery and reviewed temporal correction verified. Actual B08 journals/chains survive restart/recreation; city/B01/B05/migrations/accepted MCP traces unchanged. No B09+ work; all18 requirements remain mandatory.
+
 ## Current status — B07-R, 2026-10-17 (takes precedence over history)
 
 B07 technically accepted. B07-R PASS — human review pending. Final440 PASS/0 FAIL/0 SKIP in368.60s (293 unit/147 real integration), adding5 unit+9 real cases; all426 accepted tests preserved. Both SPEC validators PASS. Independent maintenance provenance, pre-cap UTC history filtering/order/lookahead, and explicit unknown work-order fields verified through real MCP. Retained city/B01/B05/migrations/accepted+corrective traces preserved across actual restart/recreation. B08 TODO; no later work.
@@ -712,3 +716,38 @@ PY
   from Git candidates/logs; no leaked MCP process. No external ZIP sanitization claim.
 - Commands/results/file inventory/working-tree patch under docs/evidence/B07R-*; no
   B08 work, no push/archive. Remaining capabilities/gaps remain designated later gates.
+
+### TEST-20261017-B08-01 — Accepted baseline/security/local commit
+- Baseline440 PASS/0 FAIL/0 SKIP in386.74s, including actual restart/recreation, official/
+  domain MCP and Browser volumes. Fresh source/B01/B05/native migration/trace proof PASS.
+- Historical audit FileNotFoundError for absent Archive.zip (non-source), not app defect.
+  Left absent; added archive exclusions, fresh actual private-value check368 candidates
+  PASS. Baseline historical protected331 unchanged (archive absent/ignore guard updated).
+- Initial staged whitespace check exit2 on raw historical patches/traceback logs only;
+  source-only check PASS. Kept evidence byte history. Clean local baseline6afdd09, no push.
+
+### TEST-20261017-B08-02 — New pure units and actual integration progression
+- First27 UNIT PASS0.16s; real compound statement smoke1 PASS2.86s; first21 DB cases
+  PASS60.11s; strengthened57 PASS89.25s (28unit/29real), extra3 real PASS7.01s.
+- Actual source comparisons, independent same-event reports, distinct/unresolved/ended
+  recurrence, qualified cross-category both orders, all validators/history/units,
+  invalid refs, concurrent conflict/idempotence, native rollback and lost response
+  covered. Test-only app-stop and source-substituted MCP harness explicitly labeled.
+- Unit repro1 FAIL0.25s:0.29m and29cm request hashes differed; fixed decimal quantities
+  and canonical hash, first original preserved during prepared resume.33 UNIT PASS0.52s;
+  actual equivalent-unit recovery1 PASS2.55s; mixed-asset/refinement2 real PASS4.82s.
+- Interim full504 PASS448.77s retained explicitly; final507 full rerun after corrections.
+  No original440 test removed/modified and no city/source/registry/migration repair.
+- Retained B08 operator graph5 intake receipts/fingerprints created through actual
+  repository; pre-lifecycle5 retries no domain changes. Generic harness lifecycle
+  wording corrected before final evidence: no assertion without actual successful log.
+
+### TEST-20261017-B08-03 — Final full/source/persistence gates
+- `backend/.venv/bin/python -m pytest backend/tests -v -s --run-persistence > docs/evidence/B08-regression-tests.txt 2>&1`:507 PASS/0 FAIL/0 SKIP in438.89s;326 unit/181 actual integration. All440 accepted tests unchanged;33 new units/34 real cases.
+- `make test-spec > docs/evidence/B08-spec-validation.txt 2>&1`:both static validators PASS. Python compilation and source whitespace PASS. No live model or B09 feature verification claimed. Expected revoked trace ACL stderr remains a PASS fault assertion.
+- Actual final lifecycle retained B08 proof PASS:exact pre-retry fingerprint26 nodes/23 edges/revision26/audit26, all5 receipts/chains survive;5 retries no domain content/revision/audit/count changes, owner/epoch only advances. Actual log supplied to CLI; before report explicitly makes no lifecycle claim.
+- Actual production-city MCP configure/proof PASS:12 discovered/read handlers,0 ERROR,15 persisted server observations; readonly source/isolated trace credentials unchanged.
+- `PYTHONPATH=backend backend/.venv/bin/python scripts/verify_b08.py --output docs/evidence/B08-post-lifecycle.json`:PASS all2104 city record hashes/revision/audit/writer state, B01 probe, retained B05 source/clone, native READY0001/0002 and43 accepted trace observations from Git HEAD proof IDs.1038 current ToolExecution records, not agent runs.
+- Accepted B07R-runtime-proof.json regenerated by original tests; fresh proof saved as B08-B07R-regression-proof.json and accepted HEAD artifact restored byte-for-byte. Original test source untouched.
+- `backend/.venv/bin/python scripts/audit_b08.py`:PASS358 accepted files unchanged outside10 deliberate documentation updates; pins/existing code/tests/contracts/migrations/data/envelopes preserved, actual local secret values absent from candidates/logs and no leaked MCP children.
+- Exact commands/proofs/failed unit repro/interim full/source patch/inventory under docs/evidence/B08-*. No ZIP/push/hidden-evaluator access. B08 STOP for review; B09 unstarted.

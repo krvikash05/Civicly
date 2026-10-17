@@ -1,5 +1,9 @@
 # task_board.md — Human-reviewed task queue
 
+## Current status — B08, 2026-10-17 (takes precedence over history)
+
+B07-R accepted; clean local baseline6afdd09. B08 PASS — human review pending. Final507 PASS/0 FAIL/0 SKIP in438.89s (326 unit/181 real integration), adding33 unit+34 real cases; all440 accepted tests unchanged. Both SPEC validators PASS. Typed source-preserving intake, three validators, qualified incident/cluster rules, concurrent idempotence, atomic rollback/unknown-write recovery and reviewed temporal correction verified. Actual B08 journals/chains survive restart/recreation; city/B01/B05/migrations/accepted MCP traces unchanged. No B09+ work; all18 requirements remain mandatory.
+
 ## Current status — B07-R, 2026-10-17 (takes precedence over history)
 
 B07 technically accepted. B07-R PASS — human review pending. Final440 PASS/0 FAIL/0 SKIP in368.60s (293 unit/147 real integration), adding5 unit+9 real cases; all426 accepted tests preserved. Both SPEC validators PASS. Independent maintenance provenance, pre-cap UTC history filtering/order/lookahead, and explicit unknown work-order fields verified through real MCP. Retained city/B01/B05/migrations/accepted+corrective traces preserved across actual restart/recreation. B08 TODO; no later work.
@@ -170,3 +174,23 @@ and explicit unknown operational relationships through actual broker evidence.
 | B08 | TODO | No |Complaint normalization/dedup/recurrence,3 issue validators only after human review |
 
 STOP. No later milestone or complete product capability claimed.
+
+## B08 review ledger | 2026-10-17
+
+| Task | State | Human accepted? | Evidence |
+|---|---|---|---|
+| B07-R | Accepted | Yes |User authorization; fresh440-test baseline and local6afdd09 |
+| B08 | IN_PROGRESS | No |Typed intake/grouping/validators/recovery and real proofs; final507 regression running |
+| B09 | TODO | No |Evidence/hypotheses/immutable assessments, verification guards and inspection lifecycle after review |
+
+All18 requirements preserved; no B09 implementation or public app completion claim.
+
+### B08 final review gate (supersedes in-progress ledger)
+
+| Task | State | Human accepted? | Evidence |
+|---|---|---|---|
+| B07-R | Accepted | Yes |440-test verified baseline; local6afdd09 |
+| B08 | PASS — review pending | No |507 PASS/0 FAIL/0 SKIP; native/MCP/persistence/SPEC/source-security gates PASS |
+| B09 | TODO | No |Evidence/hypotheses/immutable assessments/root-cause guards/inspection lifecycle after review |
+
+No B09 implementation. All18 product requirements remain mandatory, not complete.

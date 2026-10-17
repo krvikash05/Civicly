@@ -1,0 +1,28 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.1, pytest-9.1.1, pluggy-1.7.0 -- /Users/vikashkumar/Desktop/Civicly/backend/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/vikashkumar/Desktop/Civicly/backend
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 1 item
+
+backend/tests/unit/test_complaint_models.py::test_equivalent_measurements_have_one_canonical_request_identity FAILED [100%]
+
+=================================== FAILURES ===================================
+_______ test_equivalent_measurements_have_one_canonical_request_identity _______
+
+    def test_equivalent_measurements_have_one_canonical_request_identity():
+        m={'name':'water_depth','value':.29,'unit':'m','observed_at':'2026-10-18T04:00:00Z','source_id':'source','source_reference':'reading'}
+        a=payload(details={'measurements':[m]});b=payload(details={'measurements':[{**m,'value':29.,'unit':'cm'}]})
+        qa,na=normalize(a);qb,nb=normalize(b)
+        assert na.original==a and nb.original==b
+>       assert na.request_hash==nb.request_hash
+E       AssertionError: assert '657eb3faec5f...69647a2ae8c98' == '6b3adee651fa...5c3eac0d8b571'
+E         
+E         - 6b3adee651fa1f6c363efe05b81d332c0680f0644e38da3baea5c3eac0d8b571
+E         + 657eb3faec5fb5b02d2b5e919c281152dd5822694c87afcba3869647a2ae8c98
+
+backend/tests/unit/test_complaint_models.py:63: AssertionError
+=========================== short test summary info ============================
+FAILED backend/tests/unit/test_complaint_models.py::test_equivalent_measurements_have_one_canonical_request_identity
+============================== 1 failed in 0.25s ===============================

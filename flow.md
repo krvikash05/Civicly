@@ -391,3 +391,39 @@ source/metadata fingerprints +13 earlier traces -> verify_b07r_traces.py actual 
 ordering and fresh readback of15 final B07 +4 before +11 corrected observations ->
 audit_b07r.py333 preserved old files, unchanged wire contracts, actual local-secret/
 process checks -> B07-R-only inventory/patch. No source/volume reset or new migration.
+
+## B08 actual file/import and data/control flow | 2026-10-17
+
+```text
+services.complaints.models -> strict Pydantic union/normalization/units/original/hash
+services.complaints.reader -> existing GraphRepository.RO +B03 GraphQueries histories
+                          -> B05 GraphAnalysis verified forward/upstream topology
+services.complaints.service -> normalize +references +stable external ID
+ -> repo.create_node(Evidence PREPARED journal) [separate fenced commit]
+ -> repo._session -> actual bounded context +three validators +event/cluster plan
+ -> complaints.writer -> exact registry +identity/endpoints/evidence/cardinality
+ -> repo._commit -> one atomic approved domain batch +COMMITTED receipt +revision/audit
+ -> strict actual relationship/evidence readback -> typed historical receipt
+retry -> same journal hash -> PREPARED resumes current plan | COMMITTED verified replay
+regroup -> trusted Review+CAS -> close old PART_OF/add replacement+review receipt atomically
+preview -> bounded RO plan +preview flag/proposed IDs; no source write
+```
+
+New package has models.py,reader.py,writer.py,service.py,__init__.py; no broad scaffold.
+New complaint_intake contract mirrors models/rules; no registry/0001/0002 changes.
+No MCP module changes: actual fixture server tests.b08_server calls same SDK build()
+with test-only source substitution; production scope/broker/TraceStore remain unchanged.
+New b08_fixtures and tests exercise real DB failure/concurrency/typed history;
+tests.b08_evidence creates retained synthetic graph and verifies exact fingerprint/
+receipt replay after real container lifecycle. Source City/B01/B05/traces independently
+verified. audit_b08.py checks all accepted files/pins/tests against baseline and
+local-secret/process exclusions; exact source patch/file inventory under docs/evidence.
+No domain-event worker/outbox, public API, agent, hypothesis lifecycle or frontend.
+
+B08 final verification:507-test complete regression -> real restart/recreation +Browser
+volume -> fresh retained B08 fingerprint against pre-retry owner/epoch anchor ->5
+receipt replays no domain changes -> re-provision same MCP ACL credentials -> actual
+production-city initialize/list/all12 reads/15 server trace readbacks -> verify_b08.py
+all2104 city records/B01/B05/native schemas +43 accepted trace hashes -> preserve fresh
+B07-R regression proof/restore accepted artifact -> audit_b08.py358 original files and
+private-value/process check -> exact B08 source patch/file inventory. No later feature.

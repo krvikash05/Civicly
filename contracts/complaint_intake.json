@@ -1,0 +1,1384 @@
+{
+  "version": 1,
+  "registry_version": 3,
+  "migration": "0001",
+  "municipality_id": "demo-city",
+  "write_targets": "canonical civicly_knowledge or validated B08 UUID test graphs only; all retained sources read-only",
+  "external_identity": [
+    "municipality_id",
+    "source_kind",
+    "source_id",
+    "external_record_id"
+  ],
+  "normalization": "Strict JSON, NFKC+trim case-sensitive IDs, whitespace-normalized descriptions, aware ISO timestamps to UTC; raw first submission retained; decimal arithmetic for canonical quantities/units also used by request hash, first original preserved on resume",
+  "matching": {
+    "same_event_hours": 24,
+    "criteria": [
+      "issue_type",
+      "subtype",
+      "location_id",
+      "explicit_asset_set",
+      "overlapping_occurrence_interval",
+      "compatible_source_event_reference"
+    ],
+    "no_asset_match": "requires attributed explicit event reference; no proximity-only match",
+    "patterns": [
+      "SINGLE_EVENT",
+      "PERSISTENT",
+      "RECURRENT",
+      "CROSS_CATEGORY"
+    ],
+    "resolution": "dated ENDED interval permits recurrence context; work-order completion is not resolution; missing dates remain indeterminate"
+  },
+  "storage": "Existing UNVERIFIED Evidence COMPLAINT_INTAKE/GROUPING_CORRECTION summary JSON journal (64KiB), no registry/migration additions",
+  "consistency": "PREPARED journal separate controlled commit; domain batch+COMMITTED receipt+revision/audit atomic in one B03 fenced query. Explicit retry/reconcile only; not B15 event outbox",
+  "limits": {
+    "input_bytes": 32768,
+    "journal_bytes": 65536,
+    "asset_ids": 3,
+    "evidence_ids": 10,
+    "incident_scan": 100,
+    "context_edges": 400,
+    "report_journals": 200,
+    "topology_hops": 4,
+    "query_timeout_ms": 1000,
+    "context_wall_seconds": 8,
+    "context_queries": 96,
+    "incoming_dependency_roots_per_asset": 6,
+    "dependency_roots": 9,
+    "reconciliation_journals": 100,
+    "detailed_related_explanations": 20,
+    "proof_paths": 100
+  },
+  "schemas": {
+    "Intake": {
+      "$defs": {
+        "Claim": {
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Kind",
+              "type": "string"
+            },
+            "statement": {
+              "maxLength": 1000,
+              "minLength": 1,
+              "title": "Statement",
+              "type": "string"
+            },
+            "source_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Source Id",
+              "type": "string"
+            },
+            "source_reference": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Source Reference",
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "statement",
+            "source_id",
+            "source_reference"
+          ],
+          "title": "Claim",
+          "type": "object"
+        },
+        "Measurement": {
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "enum": [
+                "water_depth",
+                "duration",
+                "rainfall",
+                "drain_capacity",
+                "pothole_depth",
+                "damage_area",
+                "waste_quantity"
+              ],
+              "title": "Name",
+              "type": "string"
+            },
+            "value": {
+              "minimum": 0,
+              "title": "Value",
+              "type": "number"
+            },
+            "unit": {
+              "maxLength": 20,
+              "minLength": 1,
+              "title": "Unit",
+              "type": "string"
+            },
+            "observed_at": {
+              "title": "Observed At",
+              "type": "string"
+            },
+            "source_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Source Id",
+              "type": "string"
+            },
+            "source_reference": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Source Reference",
+              "type": "string"
+            },
+            "basis": {
+              "default": "REPORTED",
+              "enum": [
+                "OBSERVED",
+                "REPORTED",
+                "DERIVED"
+              ],
+              "title": "Basis",
+              "type": "string"
+            },
+            "evidence_id": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Evidence Id"
+            }
+          },
+          "required": [
+            "name",
+            "value",
+            "unit",
+            "observed_at",
+            "source_id",
+            "source_reference"
+          ],
+          "title": "Measurement",
+          "type": "object"
+        },
+        "RoadDetails": {
+          "additionalProperties": false,
+          "properties": {
+            "measurements": {
+              "items": {
+                "$ref": "#/$defs/Measurement"
+              },
+              "maxItems": 10,
+              "title": "Measurements",
+              "type": "array"
+            },
+            "claims": {
+              "items": {
+                "$ref": "#/$defs/Claim"
+              },
+              "maxItems": 10,
+              "title": "Claims",
+              "type": "array"
+            },
+            "distress_description": {
+              "anyOf": [
+                {
+                  "maxLength": 1000,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Distress Description"
+            }
+          },
+          "title": "RoadDetails",
+          "type": "object"
+        },
+        "RoadIntake": {
+          "additionalProperties": false,
+          "properties": {
+            "description": {
+              "maxLength": 4000,
+              "minLength": 1,
+              "title": "Description",
+              "type": "string"
+            },
+            "source_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Source Id",
+              "type": "string"
+            },
+            "external_record_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "External Record Id",
+              "type": "string"
+            },
+            "source_channel": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Source Channel",
+              "type": "string"
+            },
+            "source_version": {
+              "default": "1",
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Source Version",
+              "type": "string"
+            },
+            "source_kind": {
+              "default": "SYNTHETIC",
+              "enum": [
+                "SYNTHETIC",
+                "PUBLIC",
+                "MUNICIPAL",
+                "USER",
+                "AGENT"
+              ],
+              "title": "Source Kind",
+              "type": "string"
+            },
+            "reported_at": {
+              "title": "Reported At",
+              "type": "string"
+            },
+            "occurred_at": {
+              "title": "Occurred At",
+              "type": "string"
+            },
+            "ended_at": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Ended At"
+            },
+            "location_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Location Id",
+              "type": "string"
+            },
+            "asset_ids": {
+              "items": {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              "maxItems": 3,
+              "title": "Asset Ids",
+              "type": "array"
+            },
+            "evidence_ids": {
+              "items": {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              "maxItems": 10,
+              "title": "Evidence Ids",
+              "type": "array"
+            },
+            "event_reference": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Event Reference"
+            },
+            "subtype": {
+              "default": "UNSPECIFIED",
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Subtype",
+              "type": "string"
+            },
+            "severity": {
+              "default": "MODERATE",
+              "enum": [
+                "LOW",
+                "MODERATE",
+                "HIGH",
+                "CRITICAL"
+              ],
+              "title": "Severity",
+              "type": "string"
+            },
+            "issue_type": {
+              "const": "ROAD_DAMAGE",
+              "title": "Issue Type",
+              "type": "string"
+            },
+            "details": {
+              "$ref": "#/$defs/RoadDetails"
+            }
+          },
+          "required": [
+            "description",
+            "source_id",
+            "external_record_id",
+            "source_channel",
+            "reported_at",
+            "occurred_at",
+            "location_id",
+            "issue_type"
+          ],
+          "title": "RoadIntake",
+          "type": "object"
+        },
+        "WasteDetails": {
+          "additionalProperties": false,
+          "properties": {
+            "measurements": {
+              "items": {
+                "$ref": "#/$defs/Measurement"
+              },
+              "maxItems": 10,
+              "title": "Measurements",
+              "type": "array"
+            },
+            "claims": {
+              "items": {
+                "$ref": "#/$defs/Claim"
+              },
+              "maxItems": 10,
+              "title": "Claims",
+              "type": "array"
+            },
+            "quantity_description": {
+              "anyOf": [
+                {
+                  "maxLength": 1000,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Quantity Description"
+            },
+            "reported_pickup_status": {
+              "default": "UNKNOWN",
+              "enum": [
+                "MISSED",
+                "PARTIAL",
+                "COMPLETED",
+                "UNKNOWN"
+              ],
+              "title": "Reported Pickup Status",
+              "type": "string"
+            },
+            "illegal_dumping_claim": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Illegal Dumping Claim"
+            }
+          },
+          "title": "WasteDetails",
+          "type": "object"
+        },
+        "WasteIntake": {
+          "additionalProperties": false,
+          "properties": {
+            "description": {
+              "maxLength": 4000,
+              "minLength": 1,
+              "title": "Description",
+              "type": "string"
+            },
+            "source_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Source Id",
+              "type": "string"
+            },
+            "external_record_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "External Record Id",
+              "type": "string"
+            },
+            "source_channel": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Source Channel",
+              "type": "string"
+            },
+            "source_version": {
+              "default": "1",
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Source Version",
+              "type": "string"
+            },
+            "source_kind": {
+              "default": "SYNTHETIC",
+              "enum": [
+                "SYNTHETIC",
+                "PUBLIC",
+                "MUNICIPAL",
+                "USER",
+                "AGENT"
+              ],
+              "title": "Source Kind",
+              "type": "string"
+            },
+            "reported_at": {
+              "title": "Reported At",
+              "type": "string"
+            },
+            "occurred_at": {
+              "title": "Occurred At",
+              "type": "string"
+            },
+            "ended_at": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Ended At"
+            },
+            "location_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Location Id",
+              "type": "string"
+            },
+            "asset_ids": {
+              "items": {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              "maxItems": 3,
+              "title": "Asset Ids",
+              "type": "array"
+            },
+            "evidence_ids": {
+              "items": {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              "maxItems": 10,
+              "title": "Evidence Ids",
+              "type": "array"
+            },
+            "event_reference": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Event Reference"
+            },
+            "subtype": {
+              "default": "UNSPECIFIED",
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Subtype",
+              "type": "string"
+            },
+            "severity": {
+              "default": "MODERATE",
+              "enum": [
+                "LOW",
+                "MODERATE",
+                "HIGH",
+                "CRITICAL"
+              ],
+              "title": "Severity",
+              "type": "string"
+            },
+            "issue_type": {
+              "const": "WASTE_ACCUMULATION",
+              "title": "Issue Type",
+              "type": "string"
+            },
+            "details": {
+              "$ref": "#/$defs/WasteDetails"
+            }
+          },
+          "required": [
+            "description",
+            "source_id",
+            "external_record_id",
+            "source_channel",
+            "reported_at",
+            "occurred_at",
+            "location_id",
+            "issue_type"
+          ],
+          "title": "WasteIntake",
+          "type": "object"
+        },
+        "WaterDetails": {
+          "additionalProperties": false,
+          "properties": {
+            "measurements": {
+              "items": {
+                "$ref": "#/$defs/Measurement"
+              },
+              "maxItems": 10,
+              "title": "Measurements",
+              "type": "array"
+            },
+            "claims": {
+              "items": {
+                "$ref": "#/$defs/Claim"
+              },
+              "maxItems": 10,
+              "title": "Claims",
+              "type": "array"
+            },
+            "rainfall_station_reference": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Rainfall Station Reference"
+            },
+            "rainfall_from": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Rainfall From"
+            },
+            "rainfall_to": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Rainfall To"
+            }
+          },
+          "title": "WaterDetails",
+          "type": "object"
+        },
+        "WaterIntake": {
+          "additionalProperties": false,
+          "properties": {
+            "description": {
+              "maxLength": 4000,
+              "minLength": 1,
+              "title": "Description",
+              "type": "string"
+            },
+            "source_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Source Id",
+              "type": "string"
+            },
+            "external_record_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "External Record Id",
+              "type": "string"
+            },
+            "source_channel": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Source Channel",
+              "type": "string"
+            },
+            "source_version": {
+              "default": "1",
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Source Version",
+              "type": "string"
+            },
+            "source_kind": {
+              "default": "SYNTHETIC",
+              "enum": [
+                "SYNTHETIC",
+                "PUBLIC",
+                "MUNICIPAL",
+                "USER",
+                "AGENT"
+              ],
+              "title": "Source Kind",
+              "type": "string"
+            },
+            "reported_at": {
+              "title": "Reported At",
+              "type": "string"
+            },
+            "occurred_at": {
+              "title": "Occurred At",
+              "type": "string"
+            },
+            "ended_at": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Ended At"
+            },
+            "location_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Location Id",
+              "type": "string"
+            },
+            "asset_ids": {
+              "items": {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              "maxItems": 3,
+              "title": "Asset Ids",
+              "type": "array"
+            },
+            "evidence_ids": {
+              "items": {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              "maxItems": 10,
+              "title": "Evidence Ids",
+              "type": "array"
+            },
+            "event_reference": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Event Reference"
+            },
+            "subtype": {
+              "default": "UNSPECIFIED",
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Subtype",
+              "type": "string"
+            },
+            "severity": {
+              "default": "MODERATE",
+              "enum": [
+                "LOW",
+                "MODERATE",
+                "HIGH",
+                "CRITICAL"
+              ],
+              "title": "Severity",
+              "type": "string"
+            },
+            "issue_type": {
+              "const": "WATERLOGGING",
+              "title": "Issue Type",
+              "type": "string"
+            },
+            "details": {
+              "$ref": "#/$defs/WaterDetails"
+            }
+          },
+          "required": [
+            "description",
+            "source_id",
+            "external_record_id",
+            "source_channel",
+            "reported_at",
+            "occurred_at",
+            "location_id",
+            "issue_type"
+          ],
+          "title": "WaterIntake",
+          "type": "object"
+        }
+      },
+      "discriminator": {
+        "mapping": {
+          "ROAD_DAMAGE": "#/$defs/RoadIntake",
+          "WASTE_ACCUMULATION": "#/$defs/WasteIntake",
+          "WATERLOGGING": "#/$defs/WaterIntake"
+        },
+        "propertyName": "issue_type"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/$defs/WaterIntake"
+        },
+        {
+          "$ref": "#/$defs/RoadIntake"
+        },
+        {
+          "$ref": "#/$defs/WasteIntake"
+        }
+      ]
+    },
+    "IntakeResult": {
+      "$defs": {
+        "Assessment": {
+          "additionalProperties": false,
+          "properties": {
+            "measurements": {
+              "items": {
+                "additionalProperties": {
+                  "$ref": "#/$defs/JsonValue"
+                },
+                "type": "object"
+              },
+              "maxItems": 10,
+              "title": "Measurements",
+              "type": "array"
+            },
+            "claims": {
+              "items": {
+                "$ref": "#/$defs/Claim"
+              },
+              "maxItems": 10,
+              "title": "Claims",
+              "type": "array"
+            },
+            "gaps": {
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 100,
+              "title": "Gaps",
+              "type": "array"
+            },
+            "contradictions": {
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 100,
+              "title": "Contradictions",
+              "type": "array"
+            },
+            "history_ids": {
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 100,
+              "title": "History Ids",
+              "type": "array"
+            },
+            "history_records": {
+              "items": {
+                "$ref": "#/$defs/HistorySummary"
+              },
+              "maxItems": 100,
+              "title": "History Records",
+              "type": "array"
+            },
+            "source_evidence_ids": {
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 100,
+              "title": "Source Evidence Ids",
+              "type": "array"
+            }
+          },
+          "title": "Assessment",
+          "type": "object"
+        },
+        "Claim": {
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Kind",
+              "type": "string"
+            },
+            "statement": {
+              "maxLength": 1000,
+              "minLength": 1,
+              "title": "Statement",
+              "type": "string"
+            },
+            "source_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Source Id",
+              "type": "string"
+            },
+            "source_reference": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Source Reference",
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "statement",
+            "source_id",
+            "source_reference"
+          ],
+          "title": "Claim",
+          "type": "object"
+        },
+        "EvidenceRef": {
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "title": "Id",
+              "type": "string"
+            },
+            "recorded_at": {
+              "title": "Recorded At",
+              "type": "string"
+            },
+            "observed_at": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Observed At"
+            },
+            "source_kind": {
+              "title": "Source Kind",
+              "type": "string"
+            },
+            "reliability": {
+              "title": "Reliability",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "recorded_at",
+            "source_kind",
+            "reliability"
+          ],
+          "title": "EvidenceRef",
+          "type": "object"
+        },
+        "HistorySummary": {
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "title": "Id",
+              "type": "string"
+            },
+            "kind": {
+              "enum": [
+                "Inspection",
+                "WorkOrder",
+                "InterventionOutcome",
+                "PickupExecution"
+              ],
+              "title": "Kind",
+              "type": "string"
+            },
+            "occurred_at": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Occurred At"
+            },
+            "status": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Status"
+            },
+            "result": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Result"
+            }
+          },
+          "required": [
+            "id",
+            "kind"
+          ],
+          "title": "HistorySummary",
+          "type": "object"
+        },
+        "JsonValue": {},
+        "PathRecord": {
+          "additionalProperties": false,
+          "properties": {
+            "node_ids": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Node Ids",
+              "type": "array"
+            },
+            "edge_ids": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Edge Ids",
+              "type": "array"
+            },
+            "directions": {
+              "items": {
+                "enum": [
+                  "OUTGOING",
+                  "INCOMING"
+                ],
+                "type": "string"
+              },
+              "title": "Directions",
+              "type": "array"
+            },
+            "evidence_ids": {
+              "items": {
+                "type": "string"
+              },
+              "title": "Evidence Ids",
+              "type": "array"
+            },
+            "context": {
+              "additionalProperties": {
+                "$ref": "#/$defs/JsonValue"
+              },
+              "title": "Context",
+              "type": "object"
+            }
+          },
+          "required": [
+            "node_ids",
+            "edge_ids",
+            "directions",
+            "evidence_ids"
+          ],
+          "title": "PathRecord",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "graph": {
+          "title": "Graph",
+          "type": "string"
+        },
+        "municipality_id": {
+          "const": "demo-city",
+          "default": "demo-city",
+          "title": "Municipality Id",
+          "type": "string"
+        },
+        "complaint_id": {
+          "title": "Complaint Id",
+          "type": "string"
+        },
+        "incident_id": {
+          "title": "Incident Id",
+          "type": "string"
+        },
+        "cluster_id": {
+          "title": "Cluster Id",
+          "type": "string"
+        },
+        "journal_id": {
+          "title": "Journal Id",
+          "type": "string"
+        },
+        "pattern_type": {
+          "enum": [
+            "SINGLE_EVENT",
+            "PERSISTENT",
+            "RECURRENT",
+            "CROSS_CATEGORY"
+          ],
+          "title": "Pattern Type",
+          "type": "string"
+        },
+        "classification": {
+          "enum": [
+            "SAME_INCIDENT",
+            "NEW_OCCURRENCE",
+            "CONTINUING_UNRESOLVED",
+            "AFTER_RECORDED_END",
+            "RELATED_CROSS_CATEGORY"
+          ],
+          "title": "Classification",
+          "type": "string"
+        },
+        "created_incident": {
+          "title": "Created Incident",
+          "type": "boolean"
+        },
+        "related_incident_ids": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 100,
+          "title": "Related Incident Ids",
+          "type": "array"
+        },
+        "matched_attributes": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Matched Attributes",
+          "type": "array"
+        },
+        "explanations": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Explanations",
+          "type": "array"
+        },
+        "uncertainty": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Uncertainty",
+          "type": "array"
+        },
+        "assessment": {
+          "$ref": "#/$defs/Assessment"
+        },
+        "graph_paths": {
+          "items": {
+            "$ref": "#/$defs/PathRecord"
+          },
+          "maxItems": 100,
+          "title": "Graph Paths",
+          "type": "array"
+        },
+        "source_evidence_ids": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 100,
+          "title": "Source Evidence Ids",
+          "type": "array"
+        },
+        "evidence_references": {
+          "items": {
+            "$ref": "#/$defs/EvidenceRef"
+          },
+          "maxItems": 100,
+          "title": "Evidence References",
+          "type": "array"
+        },
+        "graph_revision": {
+          "title": "Graph Revision",
+          "type": "integer"
+        },
+        "as_of": {
+          "title": "As Of",
+          "type": "string"
+        },
+        "simulation_mode": {
+          "const": true,
+          "default": true,
+          "title": "Simulation Mode",
+          "type": "boolean"
+        },
+        "search_limited": {
+          "const": true,
+          "default": true,
+          "title": "Search Limited",
+          "type": "boolean"
+        },
+        "truncated": {
+          "default": false,
+          "title": "Truncated",
+          "type": "boolean"
+        },
+        "replayed": {
+          "default": false,
+          "title": "Replayed",
+          "type": "boolean"
+        },
+        "preview": {
+          "default": false,
+          "title": "Preview",
+          "type": "boolean"
+        },
+        "historical_receipt": {
+          "default": false,
+          "title": "Historical Receipt",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "graph",
+        "complaint_id",
+        "incident_id",
+        "cluster_id",
+        "journal_id",
+        "pattern_type",
+        "classification",
+        "created_incident",
+        "matched_attributes",
+        "explanations",
+        "uncertainty",
+        "assessment",
+        "graph_revision",
+        "as_of"
+      ],
+      "title": "IntakeResult",
+      "type": "object"
+    },
+    "Review": {
+      "additionalProperties": false,
+      "properties": {
+        "request_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Request Id",
+          "type": "string"
+        },
+        "reviewer_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Reviewer Id",
+          "type": "string"
+        },
+        "role": {
+          "enum": [
+            "ANALYST",
+            "ADMIN"
+          ],
+          "title": "Role",
+          "type": "string"
+        },
+        "reviewed": {
+          "title": "Reviewed",
+          "type": "boolean"
+        },
+        "reason": {
+          "maxLength": 1000,
+          "minLength": 1,
+          "title": "Reason",
+          "type": "string"
+        },
+        "incident_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Incident Id",
+          "type": "string"
+        },
+        "target_cluster_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Target Cluster Id",
+          "type": "string"
+        },
+        "expected_incident_hash": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Expected Incident Hash",
+          "type": "string"
+        },
+        "expected_membership_hash": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Expected Membership Hash",
+          "type": "string"
+        },
+        "expected_target_hash": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Expected Target Hash",
+          "type": "string"
+        }
+      },
+      "required": [
+        "request_id",
+        "reviewer_id",
+        "role",
+        "reviewed",
+        "reason",
+        "incident_id",
+        "target_cluster_id",
+        "expected_incident_hash",
+        "expected_membership_hash",
+        "expected_target_hash"
+      ],
+      "title": "Review",
+      "type": "object"
+    }
+  },
+  "units": {
+    "water_depth": {
+      "cm": [
+        "cm",
+        1
+      ],
+      "m": [
+        "cm",
+        100
+      ],
+      "mm": [
+        "cm",
+        0.1
+      ]
+    },
+    "duration": {
+      "min": [
+        "min",
+        1
+      ],
+      "hours": [
+        "min",
+        60
+      ]
+    },
+    "rainfall": {
+      "mm": [
+        "mm",
+        1
+      ],
+      "cm": [
+        "mm",
+        10
+      ]
+    },
+    "drain_capacity": {
+      "m3/s": [
+        "m3/s",
+        1
+      ]
+    },
+    "pothole_depth": {
+      "cm": [
+        "cm",
+        1
+      ],
+      "mm": [
+        "cm",
+        0.1
+      ],
+      "m": [
+        "cm",
+        100
+      ]
+    },
+    "damage_area": {
+      "m2": [
+        "m2",
+        1
+      ],
+      "cm2": [
+        "m2",
+        0.0001
+      ]
+    },
+    "waste_quantity": {
+      "L": [
+        "L",
+        1
+      ],
+      "m3": [
+        "L",
+        1000
+      ]
+    }
+  },
+  "read_templates": [
+    "inventory_location",
+    "incoming_utility_roots",
+    "candidate_incidents_by_location",
+    "candidate_incidents_by_verified_context_asset",
+    "incident_context",
+    "source_report_journals",
+    "active_cluster_members",
+    "dated_pickup_history",
+    "prepared_intake_journals"
+  ],
+  "review_boundary": "Trusted internal typed reviewer context and CAS only; no B13 authenticated operator/API or MCP write capability",
+  "receipt_semantics": "Replay returns immutable historical intake receipt, not current group membership; current graph read required after correction",
+  "asset_context": "Explicit ROAD_DAMAGE assets require at least one RoadSegment, WASTE_ACCUMULATION at least one WasteCollectionPoint; secondary infrastructure subtypes allowed, location-only reports remain qualified. No ontology restriction on AFFECTS added."
+}

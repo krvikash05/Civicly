@@ -1,5 +1,9 @@
 # blockers.md — Current blockers and verification spikes
 
+## Current status — B08, 2026-10-17 (takes precedence over history)
+
+B07-R accepted; clean local baseline6afdd09. B08 PASS — human review pending. Final507 PASS/0 FAIL/0 SKIP in438.89s (326 unit/181 real integration), adding33 unit+34 real cases; all440 accepted tests unchanged. Both SPEC validators PASS. Typed source-preserving intake, three validators, qualified incident/cluster rules, concurrent idempotence, atomic rollback/unknown-write recovery and reviewed temporal correction verified. Actual B08 journals/chains survive restart/recreation; city/B01/B05/migrations/accepted MCP traces unchanged. No B09+ work; all18 requirements remain mandatory.
+
 ## Current status — B07-R, 2026-10-17 (takes precedence over history)
 
 B07 technically accepted. B07-R PASS — human review pending. Final440 PASS/0 FAIL/0 SKIP in368.60s (293 unit/147 real integration), adding5 unit+9 real cases; all426 accepted tests preserved. Both SPEC validators PASS. Independent maintenance provenance, pre-cap UTC history filtering/order/lookahead, and explicit unknown work-order fields verified through real MCP. Retained city/B01/B05/migrations/accepted+corrective traces preserved across actual restart/recreation. B08 TODO; no later work.
@@ -246,3 +250,28 @@ corrected trace lifecycle verified. Work-order unknown relationship facts remain
 explicit limitations for B12–B15, not resolved operational features. All other B07/
 DEC-004/source/history/evaluator/clock/agent/GraphRAG/event/API gaps retain their gates.
 Human review required before proposed B08; no B08 implementation.
+
+## B08 limits and dependencies | 2026-10-17
+
+No active environment blocker; final regression/persistence gate pending. Unit-identity
+edge case reproduced/fixed before acceptance; preserve exact failure/interim evidence.
+Matching is qualified:24h heuristic, unknown event references/end dates, source bindings,
+missing interventions and candidate topology can require reviewed correction. Multiple
+primary alternatives do not trigger arbitrary reassignment. City remains untouched.
+No authenticated public reviewer/API (B13/B16), event outbox/replay worker (B15),
+causal verification/inspection lifecycle (B09), live agents/memory/GraphRAG/UI.
+All remaining DEC-004/source/history/evaluator/clock findings retain their milestones;
+55 original numeric defects frozen and B04 conversion valid; unlinked observations
+not reassigned. ExistingO(N)/10k audit and source/receipt budgets fail closed.
+Human B08 review required before B09.
+
+### B08 final outcome (supersedes pending entry)
+
+No active B08 acceptance/environment blocker.507 tests, both SPEC validators, real
+intake/MCP/lifecycle and source/security gates PASS. First-raw/equivalent-unit retry
+correction verified; remaining finite-budget/heuristic/source/end/history limitations
+explicit. Provisional grouping is not cause/resolution verification; trusted internal
+review is not B13 public authentication. Event delivery/outbox remains B15; canonical
+seed promotion not done. All remaining DEC-004/source/history/evaluator/clock/agent/
+GraphRAG/API findings retain their phases. All18 requirements remain binding.
+B08 human review is next gate; B09 must not begin automatically.

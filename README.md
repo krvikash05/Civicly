@@ -1,11 +1,11 @@
 # Civicly — Backend-First Codex Build System (v2.0)
 
-**Status:** B07 technically accepted; B07-R history/provenance corrections verified (440 PASS), awaiting human review. The full civic AI application remains unimplemented. Current truth is in the engineering tracking files.
-See [algorithm guide](backend/ALGORITHMS.md) and [official MCP guide](backend/MCP.md) and [Civicly domain MCP guide](backend/CIVICLY_MCP.md) for scope and real evidence.
+**Status:** B07-R accepted; B08 complaint intelligence verified (507 PASS), awaiting human review. The full civic AI application remains unimplemented. Current truth is in the engineering tracking files.
+See [complaint intelligence guide](backend/COMPLAINTS.md), [algorithm guide](backend/ALGORITHMS.md) and [official MCP guide](backend/MCP.md) and [Civicly domain MCP guide](backend/CIVICLY_MCP.md) for scope and real evidence.
 
 For the current Python 3.12/Docker setup, CLI health and verified persistence tests,
 see [backend/README.md](backend/README.md) and [schema/recovery guide](backend/SCHEMA.md).
-B00–B07 are accepted; B07-R awaits human review; B08 has not started. The 18 objectives, remaining B00
+B00–B07-R are accepted; B08 awaits human review; B09 has not started. The 18 objectives, remaining B00
 contract findings and backend-first gates remain binding.
 
 **Purpose:** Implement a genuinely agentic, FalkorDB-native, MCP-connected civic investigation system covering recurring WATERLOGGING, ROAD_DAMAGE and WASTE_ACCUMULATION, including interlinked failures, persistent memory, municipal knowledge, approved actions, progress tracking, and verifiable outcomes. Backend first; frontend last, but its data requirements are fixed now.

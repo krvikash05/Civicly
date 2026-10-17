@@ -95,3 +95,10 @@ output, which can contain generated secrets.
 For actual custom Python MCP,12 read handlers, typed namespaces, shared contracts,
 rotated credentials and isolated persistent traces, see [CIVICLY_MCP.md](CIVICLY_MCP.md).
 B08 and later business workflows remain unimplemented; no full product acceptance.
+
+## B08 complaint intelligence
+
+See [COMPLAINTS.md](COMPLAINTS.md) and contracts/complaint_intake.json for strict
+normalization, occurrence/cluster rules, reviewed correction and atomic recovery.
+Source city remains read-only; controlled B08 graph evidence is under docs/evidence.
+No B09 workflows, public API, MCP writes, agents or frontend.

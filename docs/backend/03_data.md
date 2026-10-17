@@ -66,3 +66,15 @@ Missing physical proof remains CANDIDATE; missing dates/histories/geometries are
 invented. Offline reports and evaluator release references are not runtime inputs.
 Complaint/recurrence services, durable domain events, source ownership/version RAG,
 scenario release and evaluator process isolation remain designated later milestones.
+
+## B08 typed intake and original-source preservation
+
+contracts/complaint_intake.json +backend/COMPLAINTS.md define implemented strict source/
+UTC/unit normalization and first-original preservation in an UNVERIFIED intake journal.
+Independent reports remain distinct; same external ID/content matches, changed content
+or source version conflicts. Actual intervals/explicit asset context determine same
+occurrence, provisional persistence, recurrence after dated end or cross-category context.
+No fixed complaint-count rule, proximity-cause inference or automatic resolution from
+completed work. B04 city/fixtures stay frozen; read-only previews expose candidate links,
+missing dates/history/source binding and unlinked measurements. Domain batch/receipt is
+atomic after separate durable preparation; event delivery remains B15.

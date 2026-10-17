@@ -1,0 +1,3321 @@
+diff --git a/README.md b/README.md
+--- a/README.md
++++ b/README.md
+@@ -1,11 +1,11 @@
+ # Civicly — Backend-First Codex Build System (v2.0)
+ 
+-**Status:** B07 technically accepted; B07-R history/provenance corrections verified (440 PASS), awaiting human review. The full civic AI application remains unimplemented. Current truth is in the engineering tracking files.
+-See [algorithm guide](backend/ALGORITHMS.md) and [official MCP guide](backend/MCP.md) and [Civicly domain MCP guide](backend/CIVICLY_MCP.md) for scope and real evidence.
++**Status:** B07-R accepted; B08 complaint intelligence verified (507 PASS), awaiting human review. The full civic AI application remains unimplemented. Current truth is in the engineering tracking files.
++See [complaint intelligence guide](backend/COMPLAINTS.md), [algorithm guide](backend/ALGORITHMS.md) and [official MCP guide](backend/MCP.md) and [Civicly domain MCP guide](backend/CIVICLY_MCP.md) for scope and real evidence.
+ 
+ For the current Python 3.12/Docker setup, CLI health and verified persistence tests,
+ see [backend/README.md](backend/README.md) and [schema/recovery guide](backend/SCHEMA.md).
+-B00–B07 are accepted; B07-R awaits human review; B08 has not started. The 18 objectives, remaining B00
++B00–B07-R are accepted; B08 awaits human review; B09 has not started. The 18 objectives, remaining B00
+ contract findings and backend-first gates remain binding.
+ 
+ **Purpose:** Implement a genuinely agentic, FalkorDB-native, MCP-connected civic investigation system covering recurring WATERLOGGING, ROAD_DAMAGE and WASTE_ACCUMULATION, including interlinked failures, persistent memory, municipal knowledge, approved actions, progress tracking, and verifiable outcomes. Backend first; frontend last, but its data requirements are fixed now.
+diff --git a/backend/README.md b/backend/README.md
+--- a/backend/README.md
++++ b/backend/README.md
+@@ -95,3 +95,10 @@
+ For actual custom Python MCP,12 read handlers, typed namespaces, shared contracts,
+ rotated credentials and isolated persistent traces, see [CIVICLY_MCP.md](CIVICLY_MCP.md).
+ B08 and later business workflows remain unimplemented; no full product acceptance.
++
++## B08 complaint intelligence
++
++See [COMPLAINTS.md](COMPLAINTS.md) and contracts/complaint_intake.json for strict
++normalization, occurrence/cluster rules, reviewed correction and atomic recovery.
++Source city remains read-only; controlled B08 graph evidence is under docs/evidence.
++No B09 workflows, public API, MCP writes, agents or frontend.
+diff --git a/blockers.md b/blockers.md
+--- a/blockers.md
++++ b/blockers.md
+@@ -1,4 +1,8 @@
+ # blockers.md — Current blockers and verification spikes
++
++## Current status — B08, 2026-10-17 (takes precedence over history)
++
++B07-R accepted; clean local baseline6afdd09. B08 PASS — human review pending. Final507 PASS/0 FAIL/0 SKIP in438.89s (326 unit/181 real integration), adding33 unit+34 real cases; all440 accepted tests unchanged. Both SPEC validators PASS. Typed source-preserving intake, three validators, qualified incident/cluster rules, concurrent idempotence, atomic rollback/unknown-write recovery and reviewed temporal correction verified. Actual B08 journals/chains survive restart/recreation; city/B01/B05/migrations/accepted MCP traces unchanged. No B09+ work; all18 requirements remain mandatory.
+ 
+ ## Current status — B07-R, 2026-10-17 (takes precedence over history)
+ 
+@@ -246,3 +250,28 @@
+ explicit limitations for B12–B15, not resolved operational features. All other B07/
+ DEC-004/source/history/evaluator/clock/agent/GraphRAG/event/API gaps retain their gates.
+ Human review required before proposed B08; no B08 implementation.
++
++## B08 limits and dependencies | 2026-10-17
++
++No active environment blocker; final regression/persistence gate pending. Unit-identity
++edge case reproduced/fixed before acceptance; preserve exact failure/interim evidence.
++Matching is qualified:24h heuristic, unknown event references/end dates, source bindings,
++missing interventions and candidate topology can require reviewed correction. Multiple
++primary alternatives do not trigger arbitrary reassignment. City remains untouched.
++No authenticated public reviewer/API (B13/B16), event outbox/replay worker (B15),
++causal verification/inspection lifecycle (B09), live agents/memory/GraphRAG/UI.
++All remaining DEC-004/source/history/evaluator/clock findings retain their milestones;
++55 original numeric defects frozen and B04 conversion valid; unlinked observations
++not reassigned. ExistingO(N)/10k audit and source/receipt budgets fail closed.
++Human B08 review required before B09.
++
++### B08 final outcome (supersedes pending entry)
++
++No active B08 acceptance/environment blocker.507 tests, both SPEC validators, real
++intake/MCP/lifecycle and source/security gates PASS. First-raw/equivalent-unit retry
++correction verified; remaining finite-budget/heuristic/source/end/history limitations
++explicit. Provisional grouping is not cause/resolution verification; trusted internal
++review is not B13 public authentication. Event delivery/outbox remains B15; canonical
++seed promotion not done. All remaining DEC-004/source/history/evaluator/clock/agent/
++GraphRAG/API findings retain their phases. All18 requirements remain binding.
++B08 human review is next gate; B09 must not begin automatically.
+diff --git a/decision.md b/decision.md
+--- a/decision.md
++++ b/decision.md
+@@ -674,3 +674,127 @@
+ - No B07-R acceptance blocker; human review gate remains. Proposed B08 ONLY after
+   review: complaint normalization/same-event dedup, Incident-vs-ProblemCluster recurrence
+   grouping and three issue validators. No B08+, operational workflows or ontology seed.
++
++### DEC-030 — B08 authorized scope, normalization and consistency design | 2026-10-17
++- B07-R accepted. Local clean baseline6afdd09892502a8b47a7f840ced1491c38a002d3 after440
++  PASS/0 FAIL/0 SKIP in386.74s, retained data/migration/trace proof and actual secret scan.
++  Historical audit references absent Archive.zip; leave absent, exclude archives from
++  Git. Source whitespace check PASS; raw evidence patch/log whitespace preserved rather
++  than rewriting history. No push/archive. B08 ONLY; all18 objectives remain binding.
++- R02/R03 with R01/R04/R05/R09/R15 support. Typed app.services.complaints models/reader/
++  writer/service; new complaint_intake contract, guide and focused real tests. Preserve
++  schema registryv3, migrations0001/0002, source city/B01/B05, MCP and all old tests.
++- Preserve raw submission in existing UNVERIFIED Evidence.summary as bounded validated
++  JSON intake journal; no public ontology/migration change or competing storage. Existing
++  Complaint source fields hold normalized source identity. Stable external key excludes
++  delivery channel/version; changed payload/version conflicts rather than overwrites.
++  IDs are case-sensitive NFKC+trim; description whitespace normalized; aware ISO offsets
++  normalized UTC; unsupported units/types fail, optional missing facts yield gaps.
++- Two durable phases: public repository creates PREPARED journal; one fenced _commit
++  validates all new/update nodes/edges then atomically creates complaint/incident/cluster/
++  REPORTS/PART_OF/OCCURRED_AT/REPORTED AFFECTS +COMMITTED journal receipt +revision/audit.
++  Existing journal anchors before-hash recovery. No automatic unknown-write retries.
++  Explicit retry resumes unchanged PREPARED journals or returns verified historical
++  COMMITTED receipt; no B15 event/outbox claim. All values parameterized.
++- Same-event matching requires same category/subtype/location/explicit asset set,
++  overlapping declared interval, compatible attributed event reference and bounded
++ 24-hour start gap (or identical explicit event reference). No complaint-count rule.
++  Repeated context after a dated ENDED record proposes RECURRENT; unresolved distinct
++  occurrences propose PERSISTENT; reported long duration can propose persistence.
++  Missing end/outcome dates remain uncertainty, never work-completion resolution.
++- Cross-category occurrences stay separate; shared explicitly reported asset or actual
++  verified B05 topology can support contextual CROSS_CATEGORY grouping, never cause.
++  Candidate paths/proximity do not establish physical grouping. Ambiguous multiple
++  eligible clusters get a separate primary cluster and review alternatives.
++- Reviewed grouping correction requires trusted internal reviewer context, reason and
++  expected hashes; closes known old PART_OF interval and adds new membership atomically,
++  retains old edge/audit/evidence. No MCP writes/auth/approval/state-machine bypass.
++- Tests: strict models/units/source preservation; real same-report/same-event/distinct/
++  persistent/recurrent/cross-category/disconnected matching, all issue histories, temporal
++  cardinality/CAS, concurrent intake, real statement failure/lost reply/recovery, city
++  read-only preview and real MCP compatibility. Full regressions/persistence +SPEC.
++  Risks: ambiguous/legacy source context, finite scan budgets, no historical node replay,
++  O(N) audit, trusted local-write boundary. Human verifies graph IDs/paths/gaps and retries.
++
++### DEC-031 — B08 implemented architecture and explicit limitations | 2026-10-17
++- Python3.12.1/Pydantic2.14.1/FalkorDB client1.8.0/Redis8.1.0/MCP2.3.0 existing pins;
++  no installs/lock/image changes. Actual native compound query smoke1 PASS in2.86s;
++  first27 unit PASS/21 real PASS in60.11s; strengthened57 PASS in89.25s plus3 new real
++  PASS in7.01s. Final source covered by complete504-test regression (running).
++- Keep graph schema/migrations unchanged. Existing Evidence.summary is explicitly
++  serialized, strict bounded journal JSON; graph remains source of complaint/incident/
++  cluster identity/relationships. Journal anchors actual before-hash recovery. New
++  writer permits only approved nodes/edges, REPORTED associations, cluster pattern
++  updates (no lifecycle state changes), closing old PART_OF. Native rollback/lost
++  response/concurrent source conflicts tested; no fake success or event-outbox claim.
++- Complaint RECEIVED is intake acknowledgment within existing free string vocabulary;
++  imported ACCEPTED remains unchanged. Incident initial REPORTED and cluster OPEN
++  follow state contracts. Claimed end does not set ENDED; test source histories use
++  explicit authored states/normative transition order, not new operational workflows.
++- First external submission original preserved; same normalized retransmission returns
++  historical receipt, independent source reports keep separate provenance. Matching
++ 24h heuristic can be ambiguous; explicit source event references/intervals and reviewed
++  correction resolve uncertainty. Persistence provisional when termination unrecorded.
++  Multiple eligible clusters produce review alternatives, not arbitrary selection.
++- Typed history summaries retain dated status/outcome records and qualified source
++  context. Conflicting quantities retained; unit conversion overflow/future rainfall
++  rejected. Verified B05 context may relate separate categories in either arrival order
++  without reversing an edge or promoting reported impact/cause to verified fact.
++- Writes restricted canonical/B08 test targets; accepted city read-only previews and
++  original source/B01/B05/trace evidence retained. Canonical seed promotion not performed.
++  Future working graph integration remains explicit; no competing datastore.
++- Actual MCP read of new incidents uses explicitly labeled test-only source substitution
++  while production fixed context/official+domain namespaces,12 READ/6 deferred writes,
++  envelopes/traces untouched. No agent-selected rationale.
++- Retained small B08 graph created for real lifecycle proof. Before-lifecycle operator
++  verification replays5 receipts with no domain changes; owner/epoch alone advances.
++  Post-lifecycle uses latest fingerprint anchor. Corrected generic harness wording
++  before final proof: no lifecycle claim without actual successful lifecycle log.
++- Source/receipt/journal bounds, O(E)/O(N) integrity/audit costs and finite readback
++  explicit. No bulk bypass, generalized auth, event delivery, root-cause verification,
++  complaint HTTP route, LLM/GraphRAG or frontend. All18 objectives retain later gates.
++
++### DEC-032 — B08 equivalent-unit idempotency correction before acceptance | 2026-10-17
++- New exact regression exposed one canonicalization defect: normalized request hash
++  still included input unit representation, so0.29m vs29cm conflicted; float conversion
++  could also produce28.999999999999996. Preserve failure evidence, fix before review.
++- Canonical request hashes now use converted quantity/value/unit with decimal
++  arithmetic, while raw first input and assessment original values/units remain.
++  PREPARED resume plans from first stored original rather than retransmission spelling.
++  Changed actual measurement/source-version still conflicts. No ontology/schema/migration
++  change or accepted B01–B07-R data rewrite. Initial504 run retained as interim; final
++  complete suite rerun after this fix and a real interrupted equivalent-unit retry.
++
++- B08 contract refinement before final regression: require an appropriate primary
++  road/collection-point when explicit assets supplied, while allowing secondary pipe/
++  drain infrastructure. The registry permits Incident AFFECTS any InfrastructureAsset;
++  do not narrow cross-category context to homogeneous asset lists. Waste pickup reads
++  apply only to actual collection points. Added real mixed-asset acceptance test.
++
++### DEC-033 — B08 final acceptance evidence and human gate | 2026-10-17
++- Final507 PASS/0 FAIL/0 SKIP in438.89s:326 unit/181 actual DB-MCP integration; adds
++ 33 pure unit+34 real cases, all440 accepted tests untouched. Both SPEC validators
++ PASS; compilation/source whitespace checks PASS. Unit repro failure/interim504 run
++ retained, final full rerun includes decimal-unit/mixed-asset corrections.
++- Retained actual B08 graph891b6aa292074c03a93c21451c7206f9:5 complaints/4 incidents/
++ 2 clusters,26 nodes/23 edges/revision26. Exact complete fingerprint including writer
++ state survived actual restart/recreation versus latest pre-lifecycle anchor. Five
++ explicit replays preserved domain content/revision/audit/counts; only owner/epoch
++ advanced as documented. All source/receipt/relationship evidence real, no mock success.
++- Actual city858/1246/revision2104/audit/writer fingerprint, original B01 probe, B05
++ source/clone and READY0001/0002 preserved.43 accepted B07/B07-R observations hash-/
++ evidence-verified from committed baseline proof IDs.1038 ToolExecutions observed
++ after new production-city proof, not agent runs. Actual initialize/list12/call12/
++ readback15 PASS with no handler ERROR; candidate42 links unchanged.
++-358 accepted files outside10 explicit documentation edits unchanged, including all
++ existing app code/tests/contracts/data/locks/migrations. Generated B07-R fixture proof
++ saved separately then accepted HEAD bytes restored; no history lost. Actual local
++ secret scan/no leaked process PASS. No review ZIP/archive or external-export claim.
++- Source package/contract/guide/tests/evidence and all six trackers finalized for human
++ review. B08 uncommitted relative clean local6afdd09 baseline; no push. Only baseline
++ prerequisite.gitignore archive exclusions committed alongside accepted B07-R source.
++- Known limits remain explicit: heuristics/ambiguous/end-date/source gaps, provisional
++ patterns, finite context/journal/receipt bounds, O(N) audit, local trusted review not
++ B13 auth; no canonical seed promotion or B15 event delivery. All18 requirements bind.
++ Proposed B09 ONLY after review: evidence/hypotheses/immutable assessments, root-cause
++ verification guards and inspection request/report lifecycle. STOP.
+diff --git a/docs/backend/02_graph.md b/docs/backend/02_graph.md
+--- a/docs/backend/02_graph.md
++++ b/docs/backend/02_graph.md
+@@ -121,3 +121,13 @@
+ Actual city verified-only and exploratory results are separate;42 DRAINS_TO remain
+ candidate-level, source-binding/history/S07 gaps explicitly tracked. No agent/MCP,
+ memory/GraphRAG, planning/approval/operations/API/frontend implementation by B05.
++
++## B08 complaint intelligence consumer
++
++app.services.complaints reuses immutable registryv3, existing B03 policies/fenced
++write protocol and B05 topology. Complaint→REPORTS→Incident→PART_OF→ProblemCluster
++with OCCURRED_AT/REPORTED AFFECTS; no public ontology or migration changes. Existing
++UNVERIFIED Evidence stores bounded validated intake/review journal JSON. Primary
++assignment corrections retain nonoverlapping old/new memberships and source evidence.
++See backend/COMPLAINTS.md/contracts/complaint_intake.json. All18 requirements remain;
++no B09 evidence verification/operations/agents/API/frontend claimed.
+diff --git a/docs/backend/03_data.md b/docs/backend/03_data.md
+--- a/docs/backend/03_data.md
++++ b/docs/backend/03_data.md
+@@ -66,3 +66,15 @@
+ invented. Offline reports and evaluator release references are not runtime inputs.
+ Complaint/recurrence services, durable domain events, source ownership/version RAG,
+ scenario release and evaluator process isolation remain designated later milestones.
++
++## B08 typed intake and original-source preservation
++
++contracts/complaint_intake.json +backend/COMPLAINTS.md define implemented strict source/
++UTC/unit normalization and first-original preservation in an UNVERIFIED intake journal.
++Independent reports remain distinct; same external ID/content matches, changed content
++or source version conflicts. Actual intervals/explicit asset context determine same
++occurrence, provisional persistence, recurrence after dated end or cross-category context.
++No fixed complaint-count rule, proximity-cause inference or automatic resolution from
++completed work. B04 city/fixtures stay frozen; read-only previews expose candidate links,
++missing dates/history/source binding and unlinked measurements. Domain batch/receipt is
++atomic after separate durable preparation; event delivery remains B15.
+diff --git a/flow.md b/flow.md
+--- a/flow.md
++++ b/flow.md
+@@ -391,3 +391,39 @@
+ ordering and fresh readback of15 final B07 +4 before +11 corrected observations ->
+ audit_b07r.py333 preserved old files, unchanged wire contracts, actual local-secret/
+ process checks -> B07-R-only inventory/patch. No source/volume reset or new migration.
++
++## B08 actual file/import and data/control flow | 2026-10-17
++
++```text
++services.complaints.models -> strict Pydantic union/normalization/units/original/hash
++services.complaints.reader -> existing GraphRepository.RO +B03 GraphQueries histories
++                          -> B05 GraphAnalysis verified forward/upstream topology
++services.complaints.service -> normalize +references +stable external ID
++ -> repo.create_node(Evidence PREPARED journal) [separate fenced commit]
++ -> repo._session -> actual bounded context +three validators +event/cluster plan
++ -> complaints.writer -> exact registry +identity/endpoints/evidence/cardinality
++ -> repo._commit -> one atomic approved domain batch +COMMITTED receipt +revision/audit
++ -> strict actual relationship/evidence readback -> typed historical receipt
++retry -> same journal hash -> PREPARED resumes current plan | COMMITTED verified replay
++regroup -> trusted Review+CAS -> close old PART_OF/add replacement+review receipt atomically
++preview -> bounded RO plan +preview flag/proposed IDs; no source write
++```
++
++New package has models.py,reader.py,writer.py,service.py,__init__.py; no broad scaffold.
++New complaint_intake contract mirrors models/rules; no registry/0001/0002 changes.
++No MCP module changes: actual fixture server tests.b08_server calls same SDK build()
++with test-only source substitution; production scope/broker/TraceStore remain unchanged.
++New b08_fixtures and tests exercise real DB failure/concurrency/typed history;
++tests.b08_evidence creates retained synthetic graph and verifies exact fingerprint/
++receipt replay after real container lifecycle. Source City/B01/B05/traces independently
++verified. audit_b08.py checks all accepted files/pins/tests against baseline and
++local-secret/process exclusions; exact source patch/file inventory under docs/evidence.
++No domain-event worker/outbox, public API, agent, hypothesis lifecycle or frontend.
++
++B08 final verification:507-test complete regression -> real restart/recreation +Browser
++volume -> fresh retained B08 fingerprint against pre-retry owner/epoch anchor ->5
++receipt replays no domain changes -> re-provision same MCP ACL credentials -> actual
++production-city initialize/list/all12 reads/15 server trace readbacks -> verify_b08.py
++all2104 city records/B01/B05/native schemas +43 accepted trace hashes -> preserve fresh
++B07-R regression proof/restore accepted artifact -> audit_b08.py358 original files and
++private-value/process check -> exact B08 source patch/file inventory. No later feature.
+diff --git a/implementation_status.md b/implementation_status.md
+--- a/implementation_status.md
++++ b/implementation_status.md
+@@ -1,4 +1,8 @@
+ # implementation_status.md — Current implementation truth
++
++## Current status — B08, 2026-10-17 (takes precedence over history)
++
++B07-R accepted; clean local baseline6afdd09. B08 PASS — human review pending. Final507 PASS/0 FAIL/0 SKIP in438.89s (326 unit/181 real integration), adding33 unit+34 real cases; all440 accepted tests unchanged. Both SPEC validators PASS. Typed source-preserving intake, three validators, qualified incident/cluster rules, concurrent idempotence, atomic rollback/unknown-write recovery and reviewed temporal correction verified. Actual B08 journals/chains survive restart/recreation; city/B01/B05/migrations/accepted MCP traces unchanged. No B09+ work; all18 requirements remain mandatory.
+ 
+ ## Current status — B07-R, 2026-10-17 (takes precedence over history)
+ 
+@@ -242,3 +246,23 @@
+ verified;333 old files outside11 deliberate modifications unchanged, wire schemas/
+ permissions/pins preserved and actual local-secret/process audit PASS. All six tracking
+ files +guide/contracts/evidence updated. B07-R PASS, awaiting human review; B08 unstarted.
++
++## B08 implemented scope (verification running)
++
++Strict typed intake +first raw/canonical source preservation, supported UTC/decimal
++units, three evidence-aware validators, deterministic complaint/incident/cluster rules
++with dated explanations/uncertainty. Safe two-phase journal +single atomic domain batch,
++source identity retries/conflicts, CAS reviewed temporal regrouping and explicit recovery.
++B03/B05 reused; B04 city read-only previews; B06/B07 read tools/traces untouched.
++No new dependency/migration/public ontology or B09+ feature. Final507 regression pending.
++
++### B08 final gate (supersedes in-progress entry)
++
++507 PASS/0 FAIL/0 SKIP in438.89s (326unit/181real), all440 prior tests unchanged; new
++33 unit/34 actual DB-MCP cases. Both SPEC validators PASS. Actual retained B08 graph
++5 complaints/4 incidents/2 clusters (26nodes/23edges/rev26) and journals survive
++restart/recreation;5 replays no domain changes. Qualified city preview/production
++MCP12 tools/no ERROR/15 traces and43 accepted observations/source fingerprints PASS.
++358 old files/locks/registry/migrations/algorithms/MCP preserved; private-value/process
++audit PASS. No B09+, canonical seed promotion, public API/auth, agents or event outbox.
++Human review pending; limitations in COMPLAINTS.md and B08-RESULTS.md remain binding.
+diff --git a/task_board.md b/task_board.md
+--- a/task_board.md
++++ b/task_board.md
+@@ -1,4 +1,8 @@
+ # task_board.md — Human-reviewed task queue
++
++## Current status — B08, 2026-10-17 (takes precedence over history)
++
++B07-R accepted; clean local baseline6afdd09. B08 PASS — human review pending. Final507 PASS/0 FAIL/0 SKIP in438.89s (326 unit/181 real integration), adding33 unit+34 real cases; all440 accepted tests unchanged. Both SPEC validators PASS. Typed source-preserving intake, three validators, qualified incident/cluster rules, concurrent idempotence, atomic rollback/unknown-write recovery and reviewed temporal correction verified. Actual B08 journals/chains survive restart/recreation; city/B01/B05/migrations/accepted MCP traces unchanged. No B09+ work; all18 requirements remain mandatory.
+ 
+ ## Current status — B07-R, 2026-10-17 (takes precedence over history)
+ 
+@@ -170,3 +174,23 @@
+ | B08 | TODO | No |Complaint normalization/dedup/recurrence,3 issue validators only after human review |
+ 
+ STOP. No later milestone or complete product capability claimed.
++
++## B08 review ledger | 2026-10-17
++
++| Task | State | Human accepted? | Evidence |
++|---|---|---|---|
++| B07-R | Accepted | Yes |User authorization; fresh440-test baseline and local6afdd09 |
++| B08 | IN_PROGRESS | No |Typed intake/grouping/validators/recovery and real proofs; final507 regression running |
++| B09 | TODO | No |Evidence/hypotheses/immutable assessments, verification guards and inspection lifecycle after review |
++
++All18 requirements preserved; no B09 implementation or public app completion claim.
++
++### B08 final review gate (supersedes in-progress ledger)
++
++| Task | State | Human accepted? | Evidence |
++|---|---|---|---|
++| B07-R | Accepted | Yes |440-test verified baseline; local6afdd09 |
++| B08 | PASS — review pending | No |507 PASS/0 FAIL/0 SKIP; native/MCP/persistence/SPEC/source-security gates PASS |
++| B09 | TODO | No |Evidence/hypotheses/immutable assessments/root-cause guards/inspection lifecycle after review |
++
++No B09 implementation. All18 product requirements remain mandatory, not complete.
+diff --git a/test_log.md b/test_log.md
+--- a/test_log.md
++++ b/test_log.md
+@@ -1,4 +1,8 @@
+ # test_log.md — Append-only verification record
++
++## Current status — B08, 2026-10-17 (takes precedence over history)
++
++B07-R accepted; clean local baseline6afdd09. B08 PASS — human review pending. Final507 PASS/0 FAIL/0 SKIP in438.89s (326 unit/181 real integration), adding33 unit+34 real cases; all440 accepted tests unchanged. Both SPEC validators PASS. Typed source-preserving intake, three validators, qualified incident/cluster rules, concurrent idempotence, atomic rollback/unknown-write recovery and reviewed temporal correction verified. Actual B08 journals/chains survive restart/recreation; city/B01/B05/migrations/accepted MCP traces unchanged. No B09+ work; all18 requirements remain mandatory.
+ 
+ ## Current status — B07-R, 2026-10-17 (takes precedence over history)
+ 
+@@ -712,3 +716,38 @@
+   from Git candidates/logs; no leaked MCP process. No external ZIP sanitization claim.
+ - Commands/results/file inventory/working-tree patch under docs/evidence/B07R-*; no
+   B08 work, no push/archive. Remaining capabilities/gaps remain designated later gates.
++
++### TEST-20261017-B08-01 — Accepted baseline/security/local commit
++- Baseline440 PASS/0 FAIL/0 SKIP in386.74s, including actual restart/recreation, official/
++  domain MCP and Browser volumes. Fresh source/B01/B05/native migration/trace proof PASS.
++- Historical audit FileNotFoundError for absent Archive.zip (non-source), not app defect.
++  Left absent; added archive exclusions, fresh actual private-value check368 candidates
++  PASS. Baseline historical protected331 unchanged (archive absent/ignore guard updated).
++- Initial staged whitespace check exit2 on raw historical patches/traceback logs only;
++  source-only check PASS. Kept evidence byte history. Clean local baseline6afdd09, no push.
++
++### TEST-20261017-B08-02 — New pure units and actual integration progression
++- First27 UNIT PASS0.16s; real compound statement smoke1 PASS2.86s; first21 DB cases
++  PASS60.11s; strengthened57 PASS89.25s (28unit/29real), extra3 real PASS7.01s.
++- Actual source comparisons, independent same-event reports, distinct/unresolved/ended
++  recurrence, qualified cross-category both orders, all validators/history/units,
++  invalid refs, concurrent conflict/idempotence, native rollback and lost response
++  covered. Test-only app-stop and source-substituted MCP harness explicitly labeled.
++- Unit repro1 FAIL0.25s:0.29m and29cm request hashes differed; fixed decimal quantities
++  and canonical hash, first original preserved during prepared resume.33 UNIT PASS0.52s;
++  actual equivalent-unit recovery1 PASS2.55s; mixed-asset/refinement2 real PASS4.82s.
++- Interim full504 PASS448.77s retained explicitly; final507 full rerun after corrections.
++  No original440 test removed/modified and no city/source/registry/migration repair.
++- Retained B08 operator graph5 intake receipts/fingerprints created through actual
++  repository; pre-lifecycle5 retries no domain changes. Generic harness lifecycle
++  wording corrected before final evidence: no assertion without actual successful log.
++
++### TEST-20261017-B08-03 — Final full/source/persistence gates
++- `backend/.venv/bin/python -m pytest backend/tests -v -s --run-persistence > docs/evidence/B08-regression-tests.txt 2>&1`:507 PASS/0 FAIL/0 SKIP in438.89s;326 unit/181 actual integration. All440 accepted tests unchanged;33 new units/34 real cases.
++- `make test-spec > docs/evidence/B08-spec-validation.txt 2>&1`:both static validators PASS. Python compilation and source whitespace PASS. No live model or B09 feature verification claimed. Expected revoked trace ACL stderr remains a PASS fault assertion.
++- Actual final lifecycle retained B08 proof PASS:exact pre-retry fingerprint26 nodes/23 edges/revision26/audit26, all5 receipts/chains survive;5 retries no domain content/revision/audit/count changes, owner/epoch only advances. Actual log supplied to CLI; before report explicitly makes no lifecycle claim.
++- Actual production-city MCP configure/proof PASS:12 discovered/read handlers,0 ERROR,15 persisted server observations; readonly source/isolated trace credentials unchanged.
++- `PYTHONPATH=backend backend/.venv/bin/python scripts/verify_b08.py --output docs/evidence/B08-post-lifecycle.json`:PASS all2104 city record hashes/revision/audit/writer state, B01 probe, retained B05 source/clone, native READY0001/0002 and43 accepted trace observations from Git HEAD proof IDs.1038 current ToolExecution records, not agent runs.
++- Accepted B07R-runtime-proof.json regenerated by original tests; fresh proof saved as B08-B07R-regression-proof.json and accepted HEAD artifact restored byte-for-byte. Original test source untouched.
++- `backend/.venv/bin/python scripts/audit_b08.py`:PASS358 accepted files unchanged outside10 deliberate documentation updates; pins/existing code/tests/contracts/migrations/data/envelopes preserved, actual local secret values absent from candidates/logs and no leaked MCP children.
++- Exact commands/proofs/failed unit repro/interim full/source patch/inventory under docs/evidence/B08-*. No ZIP/push/hidden-evaluator access. B08 STOP for review; B09 unstarted.
+diff --git a/backend/COMPLAINTS.md b/backend/COMPLAINTS.md
+new file mode 100644
+--- /dev/null
++++ b/backend/COMPLAINTS.md
+@@ -0,0 +1,172 @@
++# B08 complaint intelligence — trusted domain service
++
++B07-R accepted at local baseline `6afdd09892502a8b47a7f840ced1491c38a002d3`.
++All18 requirements remain mandatory. This implements deterministic intake/grouping,
++not B09 evidence verification, agents, operations, events, API or frontend.
++
++## Interface and graph ownership
++
++```python
++from app.services.complaints import ComplaintService, Review
++service = ComplaintService(repository)  # existing GraphRepository, real UTC default
++receipt = service.intake(payload)
++proposal = service.preview(payload)    # read-only, proposed IDs explicitly preview=True
++pending_journal_ids = service.incomplete()
++```
++
++Writes require `civicly_knowledge` or validated B08 test graphs, protecting retained
++B01/B04/B05/B07 evidence. Repository constructor still uses the unchanged shared
++canonical/test-target guard and operational0001. Tests operate isolated B08 graphs;
++accepted city is exercised through read-only previews. No canonical seed promotion or
++city mutation. Future phases may explicitly authorize their own working graph policy.
++No new migration, node type, relationship, native constraint, dependency or MCP tool.
++
++`contracts/complaint_intake.json` mirrors actual strict Pydantic input/result/reviewer
++schemas and declares units/rules/budgets. Requests include issue_type, description,
++source_id/external_record_id/channel/kind/version, reported_at/occurred_at, existing
++location_id and optional end, explicit assets/evidence/event reference/issue details.
++No free Cypher, graph/municipality selection or arbitrary node properties accepted.
++Location is an existing canonical Location ID; this is not a geocoding service.
++Explicit road/waste assets require at least one appropriate road/collection-point;
++secondary infrastructure is allowed under the existing AFFECTS ontology. Location-only
++reports remain accepted with explicit uncertainty.
++
++IDs use case-sensitive NFKC+trim; descriptions collapse whitespace; timestamps must
++have an explicit timezone and normalize to UTC. Numeric strings/bools/nonfinite/
++negative values, unknown properties and incompatible units are rejected. Supported
++decimal conversions also canonicalize retry identity and preserve original values/units; no quantities extracted from prose.
++Raw first submission and canonical payload are retained. Measurements labeled OBSERVED
++by a submitter still remain REPORTED/UNVERIFIED until later verification. Source text
++is untrusted data, never instructions. No realistic citizen PII in demo fixtures.
++
++## Reports, occurrences and patterns
++
++Complaint.status RECEIVED acknowledges intake (open string vocabulary; imported
++ACCEPTED statuses untouched). Incident starts at normative REPORTED; cluster OPEN.
++`Complaint → REPORTS → Incident → PART_OF → ProblemCluster`, plus OCCURRED_AT and
++REPORTED AFFECTS. Association validity starts when recorded, not a guessed physical
++impact start; claimed occurrence/end times remain separately on Incident/source journal.
++
++External identity hashes municipality/source_kind/source_id/external_record_id.
++Channel/version are payload, not new identities: changed same-key data/version raises
++Conflict; first original stays intact. Different independent complaints retain separate
++source evidence. No free-text similarity or complaint-count threshold declares recurrence.
++
++Same incident requires category/subtype/exact location/explicit asset set, overlapping
++claimed intervals, compatible attributed event reference and <=24h start gap unless
++that reference matches. With no asset, an explicit matching source event reference is
++required. These are transparent heuristics, not perfect event identity; unknown independent
++occurrences can require reviewed correction. Multiple compatible incidents are not
++arbitrarily merged. Twenty reports alone never imply20 incidents or recurrence.
++
++- SINGLE_EVENT: one reported occurrence without demonstrated prolonged duration.
++- PERSISTENT: reported prolonged duration or related distinct occurrences with no
++  qualifying recorded termination. Provisional context; unrecorded resolution remains possible.
++- RECURRENT: distinct occurrence after an explicitly dated ENDED incident. Missing
++  end dates remain indeterminate. This is recurrence after recorded end, not proof
++  of root-cause resolution. Completed orders/outcomes alone cannot end an incident.
++- CROSS_CATEGORY: separate category incidents share an explicitly reported asset or
++  actual verified B05 dependency context. Connections are not proof of causation.
++
++B05 forward dependencies/upstream drainage are reused; incoming utility lookup only
++selects roots for the same forward algorithm, preserving actual edge direction.
++Candidate links/proximity do not establish physical grouping. Same coordinates with
++disconnected infrastructure remain separate. Multiple eligible clusters produce a
++separate primary cluster with review alternatives, not an arbitrary reassignment.
++
++Receipts contain stable IDs, actual graph/revision/as_of, typed history summaries,
++dated Evidence references, graph paths, compared values/explanations/uncertainty and
++explicit search/truncation flags. Path context preserves stable path_id where available.
++Future MCP/agent/frontend consumers can resolve graph IDs; this is not an HTTP DTO or
++implemented agent. Existing ComplaintDTO can later derive issue_type through REPORTS.
++
++## Three validators and evidence gaps
++
++Water: occurrence/location, depth/duration/rainfall/capacity units and attribution;
++station/interval gaps; blockage claims and candidate drainage qualification.
++Road: distress/measurements, actual B03 inspection/repair/outcome context, suspected
++water/drain/pipe causes remain claims. Missing historical chains stay visible.
++Waste: quantity/unit/ambiguous prose, actual route/schedule/pickup states and dated
++records; completed logs can contradict missed-pickup claims without proving which
++source is correct. Local-clock/service aliases remain warnings; no schedule parsing
++or dumping diagnosis. Conflicting same-time measurements are retained, not averaged.
++
++Histories are source context as_of intake time, not a reconstruction of prior node
++versions or proof an asset-linked repair resolved a specific incident. City42 drainage
++links remain CANDIDATE; unlinked55 observations and source-binding/history gaps are
++not repaired or reassigned. No hidden scenario/evaluator/delayed payload read.
++
++## Atomicity, retry and recovery
++
++1. Public B03 repository persists an UNVERIFIED Evidence COMPLAINT_INTAKE journal:
++   bounded validated JSON summary with original/canonical input/hash and PREPARED state.
++2. Under a new graph lease/fence, read actual matching state; validate registry,
++   existing and within-batch identities/endpoints/temporal cardinality/evidence.
++3. One `_commit` query resolves all existing endpoints before writes, creates the
++   complaint/optional incident/cluster +relationships, updates cluster pattern and
++   COMMITTED journal receipt, then revision/audit/pending metadata atomically.
++4. Strict readback checks actual path endpoints/evidence before acknowledgment.
++
++Journal preparation is a separate commit; whole intake is not a multi-query transaction.
++Normally two revision/audit commits; one domain batch can contain multiple records.
++A crash before step3 leaves PREPARED and no partial chain. Actual constraint failure
++rolls back that single statement. Existing unchanged-prestate recovery aborts pending
++intent under the fence; explicit same-canonical-payload retry re-plans against current graph from the first stored original.
++Lost reply after real commit returns OutcomeUnknown; retry reads COMMITTED receipt
++without duplicate data. No Redis automatic mutation retry or cross-graph transaction.
++Uncertain/inconsistent pre-state fails closed for operator reconciliation.
++
++`incomplete()` lists PREPARED own-type journals within a100-journal scan; exceeding
++that bound fails explicitly rather than returning a false empty list. Inspect journal
++original and call intake again for unchanged INTAKE. Changed external-key payloads
++need explicit reviewed versioning, not overwrite. Stale REGROUP requires a new review
++request/hash; old prepared evidence remains historical. Never clear intents/delete
++nodes/volumes to force a retry. A receipt-size/budget failure can leave PREPARED for
++review. No durable domain event/outbox/worker/replay implemented; B15 remains required.
++
++Replay returns a verified **historical intake receipt**, not current membership after
++reviewed correction. It may advance writer owner/epoch; domain revision/audit/counts do
++not change. For a current binding, read the graph at current as_of.
++
++## Reviewed correction and limits
++
++`regroup(Review(...))` is a trusted internal operator interface requiring explicit
++review, reviewer/role/reason and expected incident/membership/target hashes. It is
++not B13 authentication and is unavailable through MCP. One fenced query closes the
++known old PART_OF interval and creates its replacement, updates patterns and stores
++review evidence/receipt. Old edge and audit remain. Unknown old validity start,
++empty interval, stale hashes and overlapping primary assignment are refused.
++Cluster lifecycle state is not automatically changed; empty historical clusters retained.
++
++Matching caps100 incidents/400 context edges/200 source journals,9 dependency roots,
++4 infrastructure hops,96 metered reads/8s context/1s individual query; fail closed on
++incomplete matching exports. Result paths100, detailed related explanations20 and
++journal64KiB/input32KiB. Finite strict readback can add per-path node/edge fetches.
++Integrity scans/audit serialization remain O(E)/O(N) per operation; normally two writes
++per intake. No bulk shortcut, archival or load/SLA claim. Later reviewed optimization
++must preserve all write guarantees and frozen source data.
++
++## Reproduce and review
++
++From project root with retained local runtime:
++
++```sh
++backend/.venv/bin/python -m pytest backend/tests/unit/test_complaint_models.py backend/tests/integration/test_complaint_intelligence.py -v -s
++backend/.venv/bin/python -m pytest backend/tests -v -s --run-persistence
++make test-spec
++PYTHONPATH=backend backend/.venv/bin/python -m tests.b08_evidence create --proof /tmp/civicly-b08-proof.json
++```
++
++Create refuses overwrite and retains only its own new B08 graph; no reset/delete.
++See docs/evidence/B08-COMMANDS.md for exact before/after lifecycle proof commands,
++operator Browser MATCH, source audit and failed-attempt history. Controlled fixture
++MCP uses explicitly labeled test-only source substitution (same accepted B07-R pattern),
++actual SDK/server/broker/trace persistence; production source/context/namespaces unchanged.
++All previous tests retained. No B08 ZIP. STOP for human review before B09.
++
++Final B08 gate:507 PASS/0 FAIL/0 SKIP in438.89s (326unit/181real), both SPEC validators
++PASS. Retained B08 journals/chains and5 retries, original city/B01/B05/native migrations
++and43 accepted trace observations verified after actual restart/recreation. Production
++city MCP all12 reads/no ERROR +15 trace readbacks PASS. Existing B05 case-retrieval
++reservation about recurrence is operation-local: that reader ranks candidates, while
++B08 receipts own classification. No old algorithm or MCP contract changed.
+diff --git a/backend/app/services/complaints/__init__.py b/backend/app/services/complaints/__init__.py
+new file mode 100644
+--- /dev/null
++++ b/backend/app/services/complaints/__init__.py
+@@ -0,0 +1,4 @@
++"""B08 complaint intelligence; no agent, operational workflow or public API."""
++from .models import normalize, IntakeResult, Review
++from .service import ComplaintService
++__all__=['ComplaintService','normalize','IntakeResult','Review']
+diff --git a/backend/app/services/complaints/models.py b/backend/app/services/complaints/models.py
+new file mode 100644
+--- /dev/null
++++ b/backend/app/services/complaints/models.py
+@@ -0,0 +1,230 @@
++"""Strict report contracts. Source claims are never verified observations."""
++from datetime import datetime,timezone
++from decimal import Decimal
++from typing import Annotated,Literal
++import json,re,unicodedata,math
++from pydantic import BaseModel,ConfigDict,Field,TypeAdapter,AfterValidator,field_validator,model_validator,JsonValue
++from app.graph.models import digest,PathRecord
++
++class Model(BaseModel):
++    model_config=ConfigDict(extra='forbid',strict=True,frozen=True,hide_input_in_errors=True)
++
++
++def text(value):
++    if not isinstance(value,str):raise ValueError('Expected text, no coercion')
++    value=unicodedata.normalize('NFKC',value).strip()
++    if not value or any(ord(c)<32 and c not in '\n\r\t' for c in value):raise ValueError('Blank/control-character text')
++    return value
++
++
++def utc(value):
++    if not isinstance(value,str) or not re.fullmatch(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})',value):raise ValueError('Expected ISO timestamp with explicit timezone')
++    return datetime.fromisoformat(value.replace('Z','+00:00')).astimezone(timezone.utc).isoformat(timespec='microseconds').replace('+00:00','Z')
++
++ID=Annotated[str,Field(min_length=1,max_length=200),AfterValidator(text)]
++UNITS={'water_depth':{'cm':('cm',1),'m':('cm',100),'mm':('cm',.1)},
++       'duration':{'min':('min',1),'hours':('min',60)},'rainfall':{'mm':('mm',1),'cm':('mm',10)},
++       'drain_capacity':{'m3/s':('m3/s',1)},'pothole_depth':{'cm':('cm',1),'mm':('cm',.1),'m':('cm',100)},
++       'damage_area':{'m2':('m2',1),'cm2':('m2',.0001)},'waste_quantity':{'L':('L',1),'m3':('L',1000)}}
++
++class Measurement(Model):
++    name: Literal['water_depth','duration','rainfall','drain_capacity','pothole_depth','damage_area','waste_quantity']
++    value: float=Field(ge=0,allow_inf_nan=False)
++    unit: str=Field(min_length=1,max_length=20)
++    observed_at: str
++    source_id: ID
++    source_reference: ID
++    basis: Literal['OBSERVED','REPORTED','DERIVED']='REPORTED'
++    evidence_id: ID|None=None
++    _time=field_validator('observed_at')(utc)
++    _source=field_validator('source_id','source_reference')(text)
++    @model_validator(mode='after')
++    def units(self):
++        if self.unit not in UNITS[self.name]:raise ValueError('Unsupported measurement unit for quantity')
++        if not math.isfinite(self.value*UNITS[self.name][self.unit][1]):raise ValueError('Canonical measurement overflow')
++        return self
++    def canonical(self):
++        unit,factor=UNITS[self.name][self.unit]
++        return {**self.model_dump(mode='json'),'value':float(Decimal(str(self.value))*Decimal(str(factor))),'unit':unit,'verification_status':'REPORTED','original_value':self.value,'original_unit':self.unit}
++
++class Claim(Model):
++    kind: ID
++    statement: str=Field(min_length=1,max_length=1000)
++    source_id: ID
++    source_reference: ID
++    _text=field_validator('kind','statement','source_id','source_reference')(text)
++
++class Details(Model):
++    measurements: list[Measurement]=Field(default_factory=list,max_length=10)
++    claims: list[Claim]=Field(default_factory=list,max_length=10)
++
++class WaterDetails(Details):
++    rainfall_station_reference: ID|None=None
++    rainfall_from: str|None=None
++    rainfall_to: str|None=None
++    _times=field_validator('rainfall_from','rainfall_to')(lambda v:utc(v) if v is not None else v)
++    @model_validator(mode='after')
++    def period(self):
++        if self.rainfall_from and self.rainfall_to and self.rainfall_from>self.rainfall_to:raise ValueError('Rainfall interval reversed')
++        return self
++class RoadDetails(Details):
++    distress_description: str|None=Field(default=None,max_length=1000)
++class WasteDetails(Details):
++    quantity_description: str|None=Field(default=None,max_length=1000)
++    reported_pickup_status: Literal['MISSED','PARTIAL','COMPLETED','UNKNOWN']='UNKNOWN'
++    illegal_dumping_claim: bool|None=None
++
++class BaseIntake(Model):
++    description: str=Field(min_length=1,max_length=4000)
++    source_id: ID
++    external_record_id: ID
++    source_channel: ID
++    source_version: ID='1'
++    source_kind: Literal['SYNTHETIC','PUBLIC','MUNICIPAL','USER','AGENT']='SYNTHETIC'
++    reported_at: str
++    occurred_at: str
++    ended_at: str|None=None
++    location_id: ID
++    asset_ids: list[ID]=Field(default_factory=list,max_length=3)
++    evidence_ids: list[ID]=Field(default_factory=list,max_length=10)
++    event_reference: ID|None=None
++    subtype: ID='UNSPECIFIED'
++    severity: Literal['LOW','MODERATE','HIGH','CRITICAL']='MODERATE'
++    _times=field_validator('reported_at','occurred_at')(utc)
++    _end=field_validator('ended_at')(lambda v:utc(v) if v is not None else v)
++    _ids=field_validator('source_id','external_record_id','source_channel','source_version','location_id','subtype')(text)
++    _event=field_validator('event_reference')(lambda v:text(v) if v is not None else v)
++    @field_validator('description')
++    @classmethod
++    def description_text(cls,v):return ' '.join(text(v).split())
++    @field_validator('asset_ids','evidence_ids')
++    @classmethod
++    def ids(cls,v):
++        normalized=[text(x) for x in v]
++        if len(set(normalized))!=len(normalized):raise ValueError('Duplicate references')
++        return sorted(normalized)
++    @model_validator(mode='after')
++    def chronology(self):
++        if self.occurred_at>self.reported_at or (self.ended_at and not self.occurred_at<=self.ended_at<=self.reported_at):raise ValueError('Occurrence/report interval inconsistent')
++        for m in self.details.measurements:
++            if m.observed_at>self.reported_at:raise ValueError('Measurement after report')
++        if self.issue_type=='WATERLOGGING' and self.details.rainfall_to and self.details.rainfall_to>self.reported_at:raise ValueError('Rainfall observation interval after report')
++        allowed={'WATERLOGGING':{'water_depth','duration','rainfall','drain_capacity'},'ROAD_DAMAGE':{'pothole_depth','damage_area'},'WASTE_ACCUMULATION':{'waste_quantity'}}[self.issue_type]
++        if any(m.name not in allowed for m in self.details.measurements):raise ValueError('Measurement belongs to a different issue')
++        return self
++class WaterIntake(BaseIntake):
++    issue_type: Literal['WATERLOGGING']
++    details: WaterDetails=Field(default_factory=WaterDetails)
++class RoadIntake(BaseIntake):
++    issue_type: Literal['ROAD_DAMAGE']
++    details: RoadDetails=Field(default_factory=RoadDetails)
++class WasteIntake(BaseIntake):
++    issue_type: Literal['WASTE_ACCUMULATION']
++    details: WasteDetails=Field(default_factory=WasteDetails)
++INTAKE=TypeAdapter(Annotated[WaterIntake|RoadIntake|WasteIntake,Field(discriminator='issue_type')])
++
++class Normalized(Model):
++    original: dict[str,JsonValue]
++    canonical: dict[str,JsonValue]
++    request_hash: str
++
++def normalize(payload):
++    if not isinstance(payload,dict):raise ValueError('Intake requires a JSON object')
++    def json_only(v):
++        if isinstance(v,dict):
++            if not all(isinstance(k,str) for k in v):raise ValueError('JSON keys must be strings')
++            for child in v.values():json_only(child)
++        elif isinstance(v,list):
++            for child in v:json_only(child)
++        elif v is not None and type(v) not in (str,int,float,bool):raise ValueError('JSON values only; no implicit coercion')
++    json_only(payload)
++    raw=json.loads(json.dumps(payload,allow_nan=False))
++    if len(json.dumps(raw).encode())>32768:raise ValueError('Intake exceeds32KiB')
++    request=INTAKE.validate_python(raw);canonical=request.model_dump(mode='json')
++    for encoded,m in zip(canonical['details']['measurements'],request.details.measurements,strict=True):
++        converted=m.canonical();encoded['value']=converted['value'];encoded['unit']=converted['unit']
++    return request,Normalized(original=raw,canonical=canonical,request_hash=digest(canonical))
++
++class HistorySummary(Model):
++    id: str
++    kind: Literal['Inspection','WorkOrder','InterventionOutcome','PickupExecution']
++    occurred_at: str|None=None
++    status: str|None=None
++    result: str|None=None
++
++class Assessment(Model):
++    measurements: list[dict[str,JsonValue]]=Field(default_factory=list,max_length=10)
++    claims: list[Claim]=Field(default_factory=list,max_length=10)
++    gaps: list[str]=Field(default_factory=list,max_length=100)
++    contradictions: list[str]=Field(default_factory=list,max_length=100)
++    history_ids: list[str]=Field(default_factory=list,max_length=100)
++    history_records: list[HistorySummary]=Field(default_factory=list,max_length=100)
++    source_evidence_ids: list[str]=Field(default_factory=list,max_length=100)
++
++class EvidenceRef(Model):
++    id: str
++    recorded_at: str
++    observed_at: str|None=None
++    source_kind: str
++    reliability: str
++
++class IntakeResult(Model):
++    graph: str
++    municipality_id: Literal['demo-city']='demo-city'
++    complaint_id: str
++    incident_id: str
++    cluster_id: str
++    journal_id: str
++    pattern_type: Literal['SINGLE_EVENT','PERSISTENT','RECURRENT','CROSS_CATEGORY']
++    classification: Literal['SAME_INCIDENT','NEW_OCCURRENCE','CONTINUING_UNRESOLVED','AFTER_RECORDED_END','RELATED_CROSS_CATEGORY']
++    created_incident: bool
++    related_incident_ids: list[str]=Field(default_factory=list,max_length=100)
++    matched_attributes: list[str]
++    explanations: list[str]
++    uncertainty: list[str]
++    assessment: Assessment
++    graph_paths: list[PathRecord]=Field(default_factory=list,max_length=100)
++    source_evidence_ids: list[str]=Field(default_factory=list,max_length=100)
++    evidence_references: list[EvidenceRef]=Field(default_factory=list,max_length=100)
++    graph_revision: int
++    as_of: str
++    simulation_mode: Literal[True]=True
++    search_limited: Literal[True]=True
++    truncated: bool=False
++    replayed: bool=False
++    preview: bool=False
++    historical_receipt: bool=False
++
++class Journal(Model):
++    version: Literal[1]=1
++    operation: Literal['INTAKE','REGROUP']='INTAKE'
++    state: Literal['PREPARED','COMMITTED']='PREPARED'
++    original: dict[str,JsonValue]
++    canonical: dict[str,JsonValue]
++    request_hash: str
++    receipt: dict[str,JsonValue]|None=None
++    @model_validator(mode='after')
++    def receipt_state(self):
++        if (self.state=='COMMITTED')!=(self.receipt is not None):raise ValueError('Journal state/receipt inconsistent')
++        return self
++    def serialized(self):
++        value=self.model_dump_json()
++        if len(value.encode())>65536:raise ValueError('Journal exceeds64KiB')
++        return value
++
++class Review(Model):
++    request_id: ID
++    reviewer_id: ID
++    role: Literal['ANALYST','ADMIN']
++    reviewed: bool
++    reason: str=Field(min_length=1,max_length=1000)
++    incident_id: ID
++    target_cluster_id: ID
++    expected_incident_hash: str=Field(pattern='^[a-f0-9]{64}$')
++    expected_membership_hash: str=Field(pattern='^[a-f0-9]{64}$')
++    expected_target_hash: str=Field(pattern='^[a-f0-9]{64}$')
++    _text=field_validator('request_id','reviewer_id','reason','incident_id','target_cluster_id')(text)
++    @model_validator(mode='after')
++    def accepted(self):
++        if self.reviewed is not True:raise ValueError('Explicit review required')
++        return self
+diff --git a/backend/app/services/complaints/reader.py b/backend/app/services/complaints/reader.py
+new file mode 100644
+--- /dev/null
++++ b/backend/app/services/complaints/reader.py
+@@ -0,0 +1,166 @@
++"""Bounded RO context, accepted B03 histories and B05 verified topology."""
++from datetime import timedelta
++import json,time
++from app.graph.queries import GraphQueries
++from app.graph.models import QueryRequest
++from app.graph.analysis.engine import GraphAnalysis
++from app.graph.analysis.models import AnalysisRequest
++from app.graph.repository import PreconditionFailed
++from app.graph.schema import timestamp
++from .models import Assessment,Journal,HistorySummary
++from app.graph.models import digest
++
++
++def visible(props,at):
++    instant=timestamp(at)
++    fields=('created_at','updated_at','observed_at','recorded_at','started_at','requested_at','evaluated_at','completed_at','actual_at')
++    return all(timestamp(props[k])<=instant for k in fields if k in props) and ('valid_from' not in props or timestamp(props['valid_from'])<=instant) and ('valid_to' not in props or instant<timestamp(props['valid_to']))
++
++class Reader:
++    def __init__(self,repo,as_of):
++        self.repo,self.as_of=repo,as_of;self.started=time.monotonic();self.queries=0
++        self.paths=[];self.topology=[];self.gaps=[]
++    def check(self,n=1):
++        self.queries+=n
++        if self.queries>96 or time.monotonic()-self.started>8:raise PreconditionFailed('B08 context budget exceeded; no incomplete matching write')
++    def read(self,query,params,limit):
++        self.check();rows=self.repo._read(query,{**params,'limit':limit+1})
++        if len(rows)>limit:raise PreconditionFailed('B08 context scan truncated; review before intake')
++        return rows
++    def node(self,id,kind=None):
++        self.check();node=self.repo.get_node(id,kind)
++        if not visible(node.properties,self.as_of):raise PreconditionFailed('Referenced record outside knowledge time')
++        return node
++    def references(self,q):
++        self.node(q.location_id,'Location')
++        assets=[self.node(id,'InfrastructureAsset') for id in q.asset_ids]
++        if q.issue_type=='ROAD_DAMAGE' and assets and not any('RoadSegment' in a.labels for a in assets):raise PreconditionFailed('Road damage requires explicit road assets')
++        if q.issue_type=='WASTE_ACCUMULATION' and assets and not any('WasteCollectionPoint' in a.labels for a in assets):raise PreconditionFailed('Waste reports require collection-point assets')
++        self.asset_labels={a.id:set(a.labels) for a in assets}
++        if q.asset_ids:
++            rows=self.read('MATCH (a:InfrastructureAsset)-[r:LOCATED_AT|SERVES]->(l:Location) WHERE a.id IN $ids RETURN type(r),properties(r),labels(a),properties(a),labels(l),properties(l) LIMIT $limit',{'ids':q.asset_ids},30)
++            locations={id:set() for id in q.asset_ids}
++            for row in rows:
++                e=self.repo._decode_edge_row(row)
++                if visible(e.properties,self.as_of):locations[e.source].add(e.target)
++            for id,known in locations.items():
++                if known and q.location_id not in known:self.gaps.append('Reported location conflicts with inventory context for '+id+'; association remains REPORTED.')
++        for id in sorted(set(q.evidence_ids)|{m.evidence_id for m in q.details.measurements if m.evidence_id}):self.node(id,'Evidence')
++        return assets
++    def dependencies(self,q):
++        related=set(q.asset_ids);roots=set(q.asset_ids)
++        # Incoming lookup only discovers roots for the unchanged B05 forward engine;
++        # it never reverses a physical edge or treats a candidate as verified.
++        for id in q.asset_ids:
++            rows=self.read('MATCH (s:InfrastructureAsset)-[:UNDERLIES]->(a:InfrastructureAsset {id:$id}) RETURN s.id LIMIT $limit',{'id':id},6)
++            roots.update(row[0] for row in rows)
++        if len(roots)>9:raise PreconditionFailed('Dependency root budget exceeded')
++        for id in sorted(roots):
++            self.check()
++            result=GraphAnalysis(self.repo).run(AnalysisRequest(operation='dependencies',ids=(id,),as_of=self.as_of,max_hops=4,include_candidates=False))
++            self.check(int(result.measurements['queries']))
++            if result.truncated:raise PreconditionFailed('Topology export truncated; no automatic grouping')
++            self.topology.extend(result.paths);self.paths.extend(result.paths)
++            related.update(n.id for n in result.nodes if 'InfrastructureAsset' in n.labels)
++        for id in q.asset_ids:
++            self.check()
++            result=GraphAnalysis(self.repo).run(AnalysisRequest(operation='reachability',ids=(id,),as_of=self.as_of,direction='upstream',max_hops=4,include_candidates=False))
++            self.check(int(result.measurements['queries']))
++            if result.truncated:raise PreconditionFailed('Upstream context truncated; no automatic grouping')
++            self.topology.extend(result.paths);self.paths.extend(result.paths)
++            related.update(n.id for n in result.nodes if 'InfrastructureAsset' in n.labels)
++        return related
++    def candidates(self,q):
++        related=self.dependencies(q);key=GraphQueries._time_key
++        params={'location':q.location_id,'assets':sorted(related),'as_of':timestamp(self.as_of).strftime('%Y-%m-%dT%H:%M:%S.%f')}
++        # Separate bounded branches; fail closed on overflow instead of arbitrary sampling.
++        bodies=["MATCH (i:Incident)-[r:OCCURRED_AT]->(l:Location {id:$location})",
++                'MATCH (i:Incident)-[r:AFFECTS]->(a:InfrastructureAsset) WHERE a.id IN $assets']
++        found={}
++        for body in bodies:
++            rows=self.read(body+(' AND ' if ' WHERE ' in body else ' WHERE ')+key('i.started_at')+'<=$as_of RETURN labels(i),properties(i) ORDER BY i.started_at ASC,i.id ASC LIMIT $limit',params,100)
++            for labels,props in rows:
++                n=self.repo.decode_node(labels,props)
++                if visible(n.properties,self.as_of):found[n.id]=n
++        if len(found)>100:raise PreconditionFailed('Incident context exceeds100; no incomplete match')
++        contexts={id:{'node':n,'assets':set(),'locations':set(),'clusters':set(),'events':set(),'edges':[]} for id,n in found.items()}
++        if not found:return contexts
++        rows=self.read('MATCH (i:Incident)-[r:AFFECTS|OCCURRED_AT|PART_OF]->(n:CivicEntity) WHERE i.id IN $ids RETURN type(r),properties(r),labels(i),properties(i),labels(n),properties(n) LIMIT $limit',{'ids':sorted(found)},400)
++        for row in rows:
++            e=self.repo._decode_edge_row(row);n=self.repo.decode_node(row[4],row[5])
++            if not visible(e.properties,self.as_of) or not visible(n.properties,self.as_of):continue
++            ev=self.repo._check_evidence(e.properties)
++            if ev and not visible(ev.properties,self.as_of):continue
++            kind={'AFFECTS':'assets','OCCURRED_AT':'locations','PART_OF':'clusters'}[e.kind]
++            contexts[e.source][kind].add(e.target);contexts[e.source]['edges'].append(e)
++        rows=self.read('MATCH (c:Complaint)-[r:REPORTS]->(i:Incident) WHERE i.id IN $ids OPTIONAL MATCH (v:Evidence {id:r.source_evidence_id}) RETURN i.id,properties(v) LIMIT $limit',{'ids':sorted(found)},200)
++        for id,props in rows:
++            if props and props.get('evidence_type')=='COMPLAINT_INTAKE' and visible(props,self.as_of):
++                self.repo.registry.validate_node('Evidence',props)
++                journal=Journal.model_validate_json(props['summary'])
++                if digest(journal.canonical)!=journal.request_hash:raise PreconditionFailed('Corrupt intake context journal')
++                if journal.state=='COMMITTED' and journal.canonical.get('event_reference'):
++                    contexts[id]['events'].add((journal.canonical['source_id'],journal.canonical['event_reference']))
++        return contexts
++    def members(self,cluster):
++        rows=self.read('MATCH (i:Incident)-[r:PART_OF]->(c:ProblemCluster {id:$id}) RETURN type(r),properties(r),labels(i),properties(i),labels(c),properties(c) LIMIT $limit',{'id':cluster},100)
++        result=[]
++        for row in rows:
++            e=self.repo._decode_edge_row(row);n=self.repo.decode_node(row[2],row[3])
++            if visible(e.properties,self.as_of) and visible(n.properties,self.as_of):result.append(n)
++        return result
++    def assessment(self,q):
++        a=Assessment(measurements=[m.canonical() for m in q.details.measurements],claims=q.details.claims)
++        groups={}
++        for m in a.measurements:groups.setdefault((m['name'],m['observed_at']),set()).add(m['value'])
++        for (name,at),values in groups.items():
++            if len(values)>1:a.contradictions.append('Conflicting reported '+name+' at '+at+'; no arbitrary winner or averaging.')
++        gaps=['Submitted measurements/claims are source reports, not verified observations or causal findings.']
++        if not q.asset_ids:gaps.append('No explicit infrastructure asset reference; location alone cannot establish physical connectivity.')
++        if q.subtype=='UNSPECIFIED':gaps.append('Issue subtype unspecified; matching is qualified.')
++        names={m.name for m in q.details.measurements}
++        expected={'WATERLOGGING':['water_depth','duration','rainfall'],'ROAD_DAMAGE':['pothole_depth','damage_area'],'WASTE_ACCUMULATION':['waste_quantity']}[q.issue_type]
++        gaps += [name+' measurement missing; no quantity manufactured.' for name in expected if name not in names]
++        history=[];evs=set(q.evidence_ids)|{m.evidence_id for m in q.details.measurements if m.evidence_id}
++        if q.issue_type=='WATERLOGGING':
++            if 'rainfall' in names and (not q.details.rainfall_station_reference or not q.details.rainfall_from or not q.details.rainfall_to):gaps.append('Rainfall station/interval incomplete; cannot attribute a rainfall cause.')
++            gaps.append('Blockage/capacity allegations require inspection; verified-only topology excludes candidate drainage links.')
++        for asset in q.asset_ids:
++            self.check();r=GraphQueries(self.repo).run(QueryRequest(template='maintenance_history',id=asset,as_of=self.as_of))
++            if r.truncated:gaps.append('Maintenance history capped; missing rows are not absence.')
++            for n in r.nodes:
++                if n.kind not in {'Inspection','WorkOrder','InterventionOutcome'}:continue
++                history.append(n.id)
++                date=next((n.properties[k] for k in ('evaluated_at','completed_at','requested_at','created_at') if k in n.properties),None)
++                a.history_records.append(HistorySummary(id=n.id,kind=n.kind,occurred_at=date,status=n.properties.get('status'),result=n.properties.get('result')))
++            self.paths.extend(r.paths);evs.update(id for p in r.paths for id in p.evidence_ids)
++            if q.issue_type=='ROAD_DAMAGE':
++                if not any(n.kind=='Inspection' for n in r.nodes):gaps.append('No linked inspection for '+asset+' in bounded history.')
++                if not any(n.kind=='WorkOrder' for n in r.nodes):gaps.append('No linked repair/work-order history for '+asset+'.')
++                gaps.append('Completed work orders and asset-linked outcomes do not verify resolution of this incident.')
++                if not q.details.distress_description:gaps.append('Specific road distress description missing.')
++            if q.issue_type=='WASTE_ACCUMULATION' and 'WasteCollectionPoint' in self.asset_labels.get(asset,set()):
++                self.check();r=GraphQueries(self.repo).run(QueryRequest(template='ownership_dependencies',id=asset,as_of=self.as_of))
++                self.paths.extend(r.paths);evs.update(id for p in r.paths for id in p.evidence_ids)
++                if not any(n.kind=='ServiceSchedule' for n in r.nodes):gaps.append('No applicable collection schedule in bounded context.')
++                gaps.append('Source pickup local-clock/service-alias warnings retained; schedule adherence is not inferred.')
++                after=(timestamp(q.occurred_at)-timedelta(hours=24)).strftime('%Y-%m-%dT%H:%M:%S.%f')
++                at=timestamp(self.as_of).strftime('%Y-%m-%dT%H:%M:%S.%f');key=GraphQueries._time_key
++                rows=self.read('MATCH (p:PickupExecution)-[r:PICKUP_FOR]->(a:WasteCollectionPoint {id:$id}) WHERE '+key('p.scheduled_at')+'>=$after AND '+key('p.scheduled_at')+'<=$at RETURN type(r),properties(r),labels(p),properties(p),labels(a),properties(a) ORDER BY '+key('p.scheduled_at')+',p.id,r.id LIMIT $limit',{'id':asset,'after':after,'at':at},100)
++                for row in rows:
++                    e=self.repo._decode_edge_row(row);n=self.repo.decode_node(row[2],row[3])
++                    if not visible(n.properties,self.as_of) or not visible(e.properties,self.as_of):continue
++                    ev=self.repo._check_evidence(e.properties)
++                    if ev and not visible(ev.properties,self.as_of):continue
++                    history.append(n.id)
++                    a.history_records.append(HistorySummary(id=n.id,kind=n.kind,occurred_at=n.properties['scheduled_at'],status=n.properties['status']))
++                    if n.properties['status']!='MISSED' and not n.properties.get('actual_at'):gaps.append('Pickup '+n.id+' lacks actual execution time; timing remains unknown.')
++                    if ev:evs.add(ev.id)
++                    if q.details.reported_pickup_status=='MISSED' and n.properties['status']=='COMPLETED':a.contradictions.append('Reported missed collection contrasts with recorded COMPLETED '+n.id+'; source/service timing review required.')
++                if not rows:gaps.append('Actual pickup execution records unavailable for this bounded window.')
++                if q.details.illegal_dumping_claim is not None:gaps.append('Illegal dumping is a submitted claim; collection failure alone does not verify dumping.')
++                if q.details.quantity_description and not names:gaps.append('Quantity text is ambiguous; no numeric waste volume inferred.')
++        unique={r.id:r for r in a.history_records}
++        a.history_records[:]=sorted(unique.values(),key=lambda r:(timestamp(r.occurred_at) if r.occurred_at else timestamp(self.as_of),r.id))
++        a.gaps.extend(dict.fromkeys([*self.gaps,*gaps]));a.history_ids.extend(sorted(set(history)))
++        a.source_evidence_ids.extend(sorted(evs));return a
+diff --git a/backend/app/services/complaints/service.py b/backend/app/services/complaints/service.py
+new file mode 100644
+--- /dev/null
++++ b/backend/app/services/complaints/service.py
+@@ -0,0 +1,225 @@
++"""B08 trusted domain intake, transparent grouping and explicit reviewed correction."""
++import json
++from datetime import timedelta
++from app.graph.models import EdgeRecord,PathRecord,digest
++from app.graph.queries import GraphQueries
++from app.graph.repository import Conflict,PreconditionFailed,intersection,interval
++from app.graph.schema import utc_now,timestamp
++from .models import normalize,INTAKE,Journal,IntakeResult,Review,utc,EvidenceRef
++from .reader import Reader
++from .writer import Writer,node
++
++
++def stable(prefix,*parts):return prefix+'-'+digest(parts)[:32]
++def common(id,now):return {'id':id,'schema_version':3,'municipality_id':'demo-city','created_at':now,'updated_at':now}
++def link(kind,s,t,journal,now):
++    return EdgeRecord(id=stable('REL-B08',kind,s,t,journal),kind=kind,source=s,target=t,
++        properties={'id':stable('REL-B08',kind,s,t,journal),'municipality_id':'demo-city','created_at':now,'valid_from':now,'source_evidence_id':journal,**({'association_status':'REPORTED'} if kind=='AFFECTS' else {})})
++
++def same_event(q,c):
++    n=c['node'];p=n.properties
++    if not q.asset_ids and not q.event_reference:return False
++    if p['status'] not in {'REPORTED','ACTIVE','MITIGATED'}:return False
++    if p['issue_type']!=q.issue_type or p['subtype']!=q.subtype or c['locations']!={q.location_id} or c['assets']!=set(q.asset_ids):return False
++    if q.event_reference:
++        if c['events']!={(q.source_id,q.event_reference)}:return False
++    elif c['events']:return False
++    if intersection((timestamp(q.occurred_at),timestamp(q.ended_at) if q.ended_at else None),
++                    (timestamp(p['started_at']),timestamp(p['ended_at']) if p.get('ended_at') else None)) is None:return False
++    return bool(q.event_reference) or abs(timestamp(q.occurred_at)-timestamp(p['started_at']))<=timedelta(hours=24)
++
++
++def pattern(members,q):
++    if len({n.properties['issue_type'] for n in members})>1:return 'CROSS_CATEGORY','RELATED_CROSS_CATEGORY'
++    ended=[n for n in members if n.properties['status']=='ENDED' and n.properties.get('ended_at') and timestamp(n.properties['ended_at'])<timestamp(q.occurred_at)]
++    if ended:return 'RECURRENT','AFTER_RECORDED_END'
++    if len(members)>1 or timestamp(q.reported_at)-timestamp(q.occurred_at)>=timedelta(hours=24):return 'PERSISTENT','CONTINUING_UNRESOLVED'
++    return 'SINGLE_EVENT','NEW_OCCURRENCE'
++
++class ComplaintService:
++    def __init__(self,repository,*,clock=utc_now):self.repo=repository;self.clock=clock
++    def write_target(self):
++        name=self.repo.graph.name
++        if name!='civicly_knowledge' and not name.startswith('civicly_b08_test_'):raise PreconditionFailed('B08 writes restricted to canonical or isolated B08 graph; retained sources read-only')
++    def load(self,id,request_hash,operation='INTAKE'):
++        n=self.repo._node_optional(id)
++        if n is None:return None,None
++        expected='COMPLAINT_INTAKE' if operation=='INTAKE' else 'GROUPING_CORRECTION'
++        if n.kind!='Evidence' or n.properties['evidence_type']!=expected or n.properties['reliability']!='UNVERIFIED':raise Conflict('Reserved journal identity collision/invalid reliability')
++        j=Journal.model_validate_json(n.properties['summary'])
++        if j.operation!=operation or j.request_hash!=request_hash or digest(j.canonical)!=j.request_hash:raise Conflict('External source ID/request reused with different content/version')
++        return n,j
++    def prepare(self,id,original,canonical,request_hash,now,source_kind,source_record,operation='INTAKE'):
++        n,j=self.load(id,request_hash,operation)
++        if n:return n,j
++        j=Journal(operation=operation,original=original,canonical=canonical,request_hash=request_hash)
++        try:
++            n=self.repo.create_node('Evidence',{**common(id,now),'evidence_type':'COMPLAINT_INTAKE' if operation=='INTAKE' else 'GROUPING_CORRECTION',
++                'summary':j.serialized(),'reliability':'UNVERIFIED','recorded_at':now,'source_kind':source_kind,'source_record_id':source_record})
++            return n,j
++        except Conflict:return self.load(id,request_hash,operation) # concurrent exact prepare; no uncertain-write retry
++    def receipt(self,journal,replayed=False):
++        r=IntakeResult.model_validate_json(json.dumps(journal.receipt))
++        # A durable historical receipt is not a reconstruction of present memberships.
++        if {ref.id for ref in r.evidence_references}!=set(r.source_evidence_ids):raise PreconditionFailed('Persisted receipt evidence references mismatch')
++        for path in r.graph_paths:
++            supported={id for id in path.node_ids if self.repo.get_node(id).kind=='Evidence'}
++            for i,id in enumerate(path.edge_ids):
++                e=self.repo.get_relationship(id)
++                ends=(e.source,e.target) if path.directions[i]=='OUTGOING' else (e.target,e.source)
++                if ends!=(path.node_ids[i],path.node_ids[i+1]):raise PreconditionFailed('Persisted receipt relationship mismatch')
++                if e.properties.get('source_evidence_id'):supported.add(e.properties['source_evidence_id'])
++            if not set(path.evidence_ids)<=supported or not set(path.evidence_ids)<=set(r.source_evidence_ids):raise PreconditionFailed('Persisted receipt path evidence mismatch')
++        for id in r.source_evidence_ids:self.repo.get_node(id,'Evidence')
++        if replayed:return r.model_copy(update={'replayed':True,'historical_receipt':True,'uncertainty':[*r.uncertainty,'Historical intake receipt; later reviewed grouping changes require a current graph read.']})
++        return r
++    def preview(self,payload):
++        q,norm=normalize(payload);now=utc(self.clock())
++        if timestamp(q.reported_at)>timestamp(now):raise PreconditionFailed('Report after service clock')
++        before=GraphQueries(self.repo)._state();result,*_=self.plan(q,norm,now,before,preview=True)
++        if GraphQueries(self.repo)._state()!=before:raise PreconditionFailed('Source changed during preview')
++        return result
++    def intake(self,payload):
++        self.write_target();q,norm=normalize(payload);now=utc(self.clock())
++        if timestamp(q.reported_at)>timestamp(now):raise PreconditionFailed('Report after service clock')
++        jid=stable('EV-B08',q.source_kind,q.source_id,q.external_record_id)
++        # Invalid missing references cannot create an orphan intake journal.
++        Reader(self.repo,now).references(q)
++        self.prepare(jid,norm.original,norm.canonical,norm.request_hash,now,q.source_kind,q.source_id+':'+q.external_record_id)
++        with self.repo._session() as session:
++            journal,j=self.load(jid,norm.request_hash)
++            if j.state=='COMMITTED':return self.receipt(j,True)
++            q,norm=normalize(j.original)
++            if norm.request_hash!=j.request_hash:raise Conflict('Stored original/canonical request mismatch')
++            now=utc(self.clock());result,new,updates,edges=self.plan(q,norm,now,session.revision+1)
++            committed=j.model_copy(update={'state':'COMMITTED','receipt':result.model_dump(mode='json')})
++            Writer(self.repo).commit(session,journal,new,updates,edges,[],committed.serialized(),now)
++        _,actual=self.load(jid,norm.request_hash)
++        if actual.state!='COMMITTED':raise PreconditionFailed('Intake commit did not persist receipt')
++        return self.receipt(actual)
++    def plan(self,q,norm,now,revision,preview=False):
++        reader=Reader(self.repo,now);reader.references(q);contexts=reader.candidates(q);assessment=reader.assessment(q)
++        same=[c for c in contexts.values() if same_event(q,c)]
++        uncertainty=['Reported associations and grouping are context, not verified causes or resolution.',
++            'Search limited to100 incidents/400 context edges/200 report journals,4 infrastructure hops; no global-absence claim.',
++            'Historical node versions are not reconstructed; future-updated records excluded.']
++        if len(same)>1:uncertainty.append('Multiple compatible ongoing incidents; no arbitrary event merge.');same=[]
++        related=[]
++        topology_pairs={(p.node_ids[0],p.node_ids[-1]) for p in reader.topology}
++        for c in contexts.values():
++            p=c['node'].properties
++            if p['status']=='INVALIDATED':continue
++            if p['status']=='ENDED' and not p.get('ended_at'):
++                uncertainty.append('Ended incident '+c['node'].id+' lacks termination date; recurrence indeterminate.');continue
++            exact=bool(q.asset_ids) and c['assets']==set(q.asset_ids) and c['locations']=={q.location_id} and p['issue_type']==q.issue_type and p['subtype']==q.subtype
++            cross=p['issue_type']!=q.issue_type and (bool(set(q.asset_ids)&c['assets']) or any((a,b) in topology_pairs or (b,a) in topology_pairs for a in q.asset_ids for b in c['assets']))
++            if exact or cross:related.append(c)
++        cid=stable('CMP-B08',q.source_kind,q.source_id,q.external_record_id);jid=stable('EV-B08',q.source_kind,q.source_id,q.external_record_id)
++        incident=same[0]['node'] if same else node(self.repo,'Incident',{**common(stable('INC-B08',cid),now),
++            'issue_type':q.issue_type,'subtype':q.subtype,'severity':q.severity,'status':'REPORTED','started_at':q.occurred_at,
++            **({'ended_at':q.ended_at} if q.ended_at else {})})
++        cluster_ids=set(same[0]['clusters']) if same else {id for c in related for id in c['clusters']}
++        clusters=[reader.node(id,'ProblemCluster') for id in sorted(cluster_ids)]
++        clusters=[n for n in clusters if n.properties['status']!='ARCHIVED']
++        if len(clusters)>1:uncertainty.append('Multiple eligible primary clusters '+','.join(n.id for n in clusters)+'; separate cluster proposed for review.');clusters=[]
++        if same and len(same[0]['clusters'])>1:raise PreconditionFailed('Existing incident has conflicting primary assignments')
++        if same and same[0]['clusters'] and not clusters:raise PreconditionFailed('Existing primary cluster unavailable; review before intake')
++        members=reader.members(clusters[0].id) if clusters else []
++        if incident.id not in {n.id for n in members}:members.append(incident)
++        kind,classification=pattern(members,q)
++        if same:classification='SAME_INCIDENT'
++        if kind=='PERSISTENT':uncertainty.append('Persistence is provisional reported context; missing termination/outcome verification cannot rule out unrecorded resolution.')
++        cluster=clusters[0] if clusters else node(self.repo,'ProblemCluster',{**common(stable('PC-B08',incident.id),now),
++            'title':q.issue_type+' reported at '+q.location_id,'status':'OPEN','first_seen_at':min((n.properties['started_at'] for n in members),key=timestamp),'pattern_type':kind})
++        updates=[]
++        if clusters:
++            cluster=node(self.repo,'ProblemCluster',{**cluster.properties,'pattern_type':kind,'updated_at':now,
++                'first_seen_at':min([cluster.properties['first_seen_at'],*[n.properties['started_at'] for n in members]],key=timestamp)})
++            updates=[cluster]
++        complaint=node(self.repo,'Complaint',{**common(cid,now),'description':q.description,'reported_at':q.reported_at,
++            'source_channel':q.source_channel,'source_kind':q.source_kind,'source_id':q.source_id,'external_record_id':q.external_record_id,
++            'source_version':q.source_version,'status':'RECEIVED'})
++        new=[complaint]+([] if same else [incident])+([] if clusters else [cluster])
++        edges=[link('REPORTS',cid,incident.id,jid,now)]
++        if not same:
++            edges+=[link('OCCURRED_AT',incident.id,q.location_id,jid,now)]
++            edges+=[link('AFFECTS',incident.id,id,jid,now) for id in q.asset_ids]
++        if not same or not same[0]['clusters']:edges.append(link('PART_OF',incident.id,cluster.id,jid,now))
++        paths=[]
++        for e in edges:
++            paths.append(PathRecord(node_ids=(e.source,e.target),edge_ids=(e.id,),directions=('OUTGOING',),evidence_ids=(jid,),context={'classification':'REPORTED_INTAKE_CONTEXT'}))
++        membership=next((e for e in edges if e.kind=='PART_OF'),None)
++        if membership is None and same:membership=next(e for e in same[0]['edges'] if e.kind=='PART_OF' and e.target==cluster.id)
++        chain_evidence=tuple(sorted({jid}|({membership.properties['source_evidence_id']} if membership.properties.get('source_evidence_id') else set())))
++        paths.append(PathRecord(node_ids=(cid,incident.id,cluster.id),edge_ids=(edges[0].id,membership.id),directions=('OUTGOING','OUTGOING'),evidence_ids=chain_evidence,context={'classification':'COMPLAINT_INCIDENT_PRIMARY_CLUSTER'}))
++        for c in related:
++            for e in c['edges']:
++                reader.paths.append(PathRecord(node_ids=(e.source,e.target),edge_ids=(e.id,),directions=('OUTGOING',),evidence_ids=(e.properties['source_evidence_id'],) if e.properties.get('source_evidence_id') else (),context={'classification':'RECORDED_PRIOR_CONTEXT'}))
++        if len(reader.paths)>90:uncertainty.append('Supporting proof export capped; omitted context is not absence.')
++        unique_paths={digest(p.model_dump(mode='json')):p for p in reader.paths}
++        context_paths=list(unique_paths.values())[:90]
++        source_ids=set(assessment.source_evidence_ids)|{id for p in context_paths for id in p.evidence_ids}|(set(chain_evidence) if not preview else set())
++        references=[]
++        for id in sorted(source_ids):
++            ev=reader.node(id,'Evidence').properties
++            references.append(EvidenceRef(id=id,recorded_at=ev['recorded_at'],observed_at=ev.get('observed_at'),source_kind=ev['source_kind'],reliability=ev['reliability']))
++        explanations=['Same-event start gap is at most24 hours unless source+event reference matches; declared intervals must overlap.',
++            'Matched by explicit issue/subtype/location/assets and occurrence intervals, never report count or spatial proximity.',
++            'Incident status remains REPORTED; claimed end does not establish verified resolution.',
++            'RECURRENT requires a distinct occurrence after a recorded ENDED interval; completed orders alone do not qualify.']
++        if kind=='CROSS_CATEGORY':explanations.append('Different issue categories remain distinct incidents; shared reported asset or verified dependency provides contextual grouping only.')
++        for c in related[:20]:
++            p=c['node'].properties
++            explanations.append('Related '+c['node'].id+': issue='+p['issue_type']+', status='+p['status']+', started_at='+p['started_at']+', ended_at='+p.get('ended_at','unknown')+', explicit_assets='+','.join(sorted(c['assets']))+', primary_clusters='+','.join(sorted(c['clusters']))+'.')
++        if len(related)>20:uncertainty.append('Detailed matching explanations capped at20 related incidents.')
++        projected=[]
++        for p in [*context_paths,*([] if preview else paths)]:
++            projected.append(p.model_copy(update={'context':{**p.context,'path_id':getattr(p,'id',stable('PATH-B08',p.node_ids,p.edge_ids,p.directions))}}))
++        uncertainty.extend(assessment.gaps)
++        return (IntakeResult(graph=self.repo.graph.name,complaint_id=cid,incident_id=incident.id,cluster_id=cluster.id,journal_id=jid,pattern_type=kind,
++            classification=classification,created_incident=not bool(same),related_incident_ids=sorted({c['node'].id for c in related}),
++            matched_attributes=['issue_type='+q.issue_type,'subtype='+q.subtype,'location_id='+q.location_id,'explicit_assets='+','.join(q.asset_ids),'occurred_at='+q.occurred_at,'ended_at='+(q.ended_at or 'unknown'),'source_event_reference='+((q.source_id+':'+q.event_reference) if q.event_reference else 'absent')],
++            explanations=explanations,uncertainty=list(dict.fromkeys(uncertainty)),assessment=assessment,
++            graph_paths=projected,source_evidence_ids=sorted(source_ids|({jid} if not preview else set())),
++            evidence_references=references,graph_revision=revision,as_of=now,truncated=len(reader.paths)>90 or len(related)>20,preview=preview),new,updates,edges)
++    def incomplete(self):
++        rows=self.repo._read("MATCH (e:Evidence) WHERE e.evidence_type IN $types RETURN e.id,e.summary LIMIT 101",{'types':['COMPLAINT_INTAKE','GROUPING_CORRECTION']})
++        if len(rows)>100:raise PreconditionFailed('Intake reconciliation budget exceeded')
++        return [id for id,summary in rows if Journal.model_validate_json(summary).state=='PREPARED']
++    def regroup(self,review):
++        self.write_target()
++        if not isinstance(review,Review):raise TypeError('Trusted typed reviewer context required')
++        now=utc(self.clock());canonical=review.model_dump(mode='json');sha=digest(canonical);jid=stable('EV-REGROUP-B08',review.reviewer_id,review.request_id)
++        self.prepare(jid,canonical,canonical,sha,now,'USER',review.reviewer_id+':'+review.request_id,'REGROUP')
++        with self.repo._session() as session:
++            journal,j=self.load(jid,sha,'REGROUP')
++            if j.state=='COMMITTED':return {**j.receipt,'replayed':True}
++            reader=Reader(self.repo,now);incident=reader.node(review.incident_id,'Incident');target=reader.node(review.target_cluster_id,'ProblemCluster')
++            rows=self.repo._edges('PART_OF');active=[e for e in rows if e.source==incident.id and visible_edge(e,now)]
++            if len(active)!=1:raise PreconditionFailed('Exactly one active primary membership required')
++            old=active[0]
++            if incident.content_hash!=review.expected_incident_hash or old.content_hash!=review.expected_membership_hash or target.content_hash!=review.expected_target_hash:raise PreconditionFailed('Stale grouping review')
++            if old.target==target.id or target.properties['status']=='ARCHIVED':raise PreconditionFailed('Correction target must be a different active cluster')
++            if not old.properties.get('valid_from') or timestamp(old.properties['valid_from'])>=timestamp(now):raise PreconditionFailed('Known nonempty old membership interval required')
++            closed=old.model_copy(update={'properties':{**old.properties,'valid_to':now}})
++            replacement=link('PART_OF',incident.id,target.id,jid,now)
++            # Recalculate category pattern; unresolved/ended ambiguity remains explicit.
++            updates=[]
++            for id in [old.target,target.id]:
++                cluster=reader.node(id,'ProblemCluster');members=[n for n in reader.members(id) if n.id!=incident.id]
++                if id==target.id:members.append(incident)
++                categories={n.properties['issue_type'] for n in members}
++                kind='CROSS_CATEGORY' if len(categories)>1 else 'PERSISTENT' if len(members)>1 else 'SINGLE_EVENT'
++                if len(categories)==1 and any(a.properties['status']=='ENDED' and a.properties.get('ended_at') and timestamp(a.properties['ended_at'])<timestamp(b.properties['started_at']) for a in members for b in members if a.id!=b.id):kind='RECURRENT'
++                updates.append(node(self.repo,'ProblemCluster',{**cluster.properties,'pattern_type':kind,'updated_at':now}))
++            receipt={'journal_id':jid,'incident_id':incident.id,'old_cluster_id':old.target,'cluster_id':target.id,
++                     'old_membership_id':old.id,'membership_id':replacement.id,'effective_at':now,'reviewer_id':review.reviewer_id,
++                     'reason':review.reason,'graph_revision':session.revision+1,'replayed':False,
++                     'limitations':['Reviewed grouping correction, not causal verification or operational resolution.']}
++            committed=j.model_copy(update={'state':'COMMITTED','receipt':receipt})
++            Writer(self.repo).commit(session,journal,[],updates,[replacement],[closed],committed.serialized(),now)
++        _,actual=self.load(jid,sha,'REGROUP');return actual.receipt
++
++def visible_edge(edge,now):
++    start,end=interval(edge.properties);at=timestamp(now)
++    return (start is None or start<=at) and (end is None or at<end)
+diff --git a/backend/app/services/complaints/writer.py b/backend/app/services/complaints/writer.py
+new file mode 100644
+--- /dev/null
++++ b/backend/app/services/complaints/writer.py
+@@ -0,0 +1,72 @@
++"""Narrow single-query batches through unchanged B03 fence/intent/audit machinery."""
++from app.graph.models import NodeRecord,EdgeRecord
++from app.graph.repository import Conflict,PreconditionFailed,interval,intersection
++from app.graph.schema import timestamp
++
++
++def node(repo,kind,props):
++    repo.registry.validate_node(kind,props)
++    return NodeRecord(id=props['id'],kind=kind,labels=tuple(sorted(set(repo.registry.labels(kind))-{repo.registry.base_label})),properties=props)
++
++class Writer:
++    def __init__(self,repo):self.repo=repo
++    def commit(self,session,journal,new_nodes,updates,new_edges,edge_updates,summary,now):
++        r=self.repo
++        if r.graph.name!='civicly_knowledge' and not r.graph.name.startswith('civicly_b08_test_'):raise PreconditionFailed('B08 batch target protected')
++        if any(n.kind not in {'Complaint','Incident','ProblemCluster'} for n in new_nodes) or any(n.kind!='ProblemCluster' for n in updates):raise PreconditionFailed('Unapproved intake node mutation')
++        if any(e.kind not in {'REPORTS','PART_OF','OCCURRED_AT','AFFECTS'} for e in new_edges) or any(e.kind!='PART_OF' for e in edge_updates):raise PreconditionFailed('Unapproved intake relationship mutation')
++        if any(e.properties.get('source_evidence_id')!=journal.id or (e.kind=='AFFECTS' and e.properties.get('association_status')!='REPORTED') for e in new_edges):raise PreconditionFailed('Intake cannot assert verified/unattributed associations')
++        if journal.kind!='Evidence' or journal.properties['reliability']!='UNVERIFIED':raise PreconditionFailed('Intake journal must remain unverified')
++        new={n.id:n for n in new_nodes}
++        all_ids=[n.id for n in new_nodes]+[e.id for e in new_edges]
++        if len(all_ids)!=len(set(all_ids)):raise Conflict('Cross-kind batch identity collision')
++        if len(new)!=len(new_nodes) or len(new_edges)>8 or len(new_nodes)>3:raise PreconditionFailed('Intake batch shape exceeds scope')
++        for n in [*new_nodes,*updates]:
++            r.registry.validate_node(n.kind,n.properties);r._node_references(n.kind,n.properties)
++            if n.id in new and (r._node_optional(n.id) or r._edge_optional(n.id)):raise Conflict('Intake identity collision')
++        changed_edges={e.id for e in edge_updates}
++        planned=[*new_edges,*edge_updates]
++        if len({e.id for e in planned})!=len(planned):raise Conflict('Duplicate batch edge IDs')
++        existing={journal.id:journal}
++        for n in updates:
++            old=r.get_node(n.id,n.kind);existing[n.id]=old
++            if any(n.properties[k]!=old.properties[k] for k in ('id','created_at','municipality_id','schema_version','status')):raise PreconditionFailed('B08 cannot change cluster origin/state')
++            if timestamp(n.properties['updated_at'])<timestamp(old.properties['updated_at']):raise PreconditionFailed('Update time moved backwards')
++        for e in edge_updates:
++            old=r.get_relationship(e.id)
++            if e.kind!=old.kind or e.source!=old.source or e.target!=old.target or any(e.properties.get(k)!=v for k,v in old.properties.items() if k!='valid_to') or set(e.properties)-set(old.properties)-{'valid_to'}:raise PreconditionFailed('Regroup may only close old validity interval')
++        for e in planned:
++            for id in [e.source,e.target]:
++                if id not in new and id not in existing:existing[id]=r.get_node(id)
++            s=new.get(e.source) or existing[e.source];t=new.get(e.target) or existing[e.target]
++            r.registry.validate_edge(e.kind,s.kind,s.properties,t.kind,t.properties,e.properties)
++            r._check_evidence(e.properties)
++            # Policy checks against persisted graph; closing old membership is excluded
++            # only from the replacement check, then batch intervals checked together.
++            excluded=e.id if e.id in changed_edges else next((old.id for old in edge_updates if old.kind==e.kind and old.source==e.source),None)
++            r._relationship_policies(e.kind,s,t,e.properties,exclude=excluded)
++            if e in new_edges and (r._node_optional(e.id) or r._edge_optional(e.id)):raise Conflict('Intake relationship ID collision')
++        for i,e in enumerate(planned):
++            for other in planned[:i]:
++                if e.kind==other.kind and e.source==other.source and intersection(interval(e.properties),interval(other.properties)) is not None:
++                    if e.target==other.target or e.kind in r.policy['singleton_outgoing']:raise Conflict('Batch temporal/cardinality conflict')
++        params={'summary':summary,'now':now};parts=[];aliases={}
++        # Resolve every existing endpoint BEFORE any writes. Missing endpoints cannot
++        # leave preceding CREATEs behind through an empty later MATCH.
++        for i,(id,n) in enumerate(sorted(existing.items())):
++            alias='j' if id==journal.id else 'x'+str(i);aliases[id]=alias
++            parts.append(f'MATCH ({alias}:CivicEntity {{id:$existing{i},municipality_id:$scope}}) ');params['existing'+str(i)]=id
++        params['scope']=r.registry.scope
++        for i,n in enumerate(new_nodes):
++            alias='n'+str(i);aliases[n.id]=alias
++            parts.append(f'CREATE ({alias}:'+':'.join(r.registry.labels(n.kind))+f') SET {alias}=$node{i} ');params['node'+str(i)]=n.properties
++        for i,n in enumerate(updates):
++            parts.append(f'SET {aliases[n.id]}=$update{i} ');params['update'+str(i)]=n.properties
++        for i,e in enumerate(edge_updates):
++            parts.insert(0,f'MATCH (es{i}:CivicEntity {{id:$es{i}}})-[old{i}:{e.kind} {{id:$oldid{i}}}]->(et{i}:CivicEntity {{id:$et{i}}}) ')
++            params.update({f'es{i}':e.source,f'et{i}':e.target,f'oldid{i}':e.id,f'edgeupdate{i}':e.properties})
++            parts.append(f'SET old{i}=$edgeupdate{i} ')
++        for i,e in enumerate(new_edges):
++            parts.append(f'CREATE ({aliases[e.source]})-[e{i}:{e.kind}]->({aliases[e.target]}) SET e{i}=$edge{i} ');params['edge'+str(i)]=e.properties
++        parts.append('SET j.summary=$summary,j.updated_at=$now ')
++        r._commit(session,'node',journal.id,journal.content_hash,''.join(parts),params,'j')
+diff --git a/backend/tests/b08_evidence.py b/backend/tests/b08_evidence.py
+new file mode 100644
+--- /dev/null
++++ b/backend/tests/b08_evidence.py
+@@ -0,0 +1,46 @@
++"""Operator-only synthetic B08 fixture proof. No city import or graph deletion."""
++import argparse,json
++from pathlib import Path
++from app.config import Settings
++from app.graph.connection import connect
++from app.graph.migration import MigrationRunner
++from app.graph.repository import GraphRepository
++from app.graph.targets import new_test_graph_name
++from app.graph.analysis.counterfactual import capture
++from app.services.complaints import ComplaintService
++from tests.b08_fixtures import populate,payload,CLOCK
++from tests.schema_examples import edge
++
++
++def run():
++    parser=argparse.ArgumentParser();parser.add_argument('action',choices=['create','verify']);parser.add_argument('--proof',type=Path,required=True);parser.add_argument('--output',type=Path);parser.add_argument('--anchor',type=Path);parser.add_argument('--lifecycle-log',type=Path)
++    args=parser.parse_args()
++    with connect(Settings(_env_file='.env')) as db:
++        if args.action=='create':
++            if args.proof.exists():raise ValueError('Refuse to overwrite retained proof; verify it or choose a new path')
++            name=new_test_graph_name(8);MigrationRunner(db,name).apply();repo=GraphRepository(db,name,lease_seconds=30);populate(repo)
++            repo.create_relationship('UNDERLIES','P1','R1',{**edge('RETAINED-P-R'),'association_status':'VERIFIED','source_evidence_id':'EV'})
++            before=capture(repo).fingerprint;s=ComplaintService(repo,clock=lambda:CLOCK)
++            requests=[payload(ref='retained-a'),payload(ref='retained-b',source_id='independent-source'),payload(ref='retained-c',event_reference='independent-event'),payload('ROAD_DAMAGE',ref='retained-road'),payload(ref='retained-pipe',asset_ids=['P1'])]
++            receipts=[s.intake(request).model_dump(mode='json') for request in requests]
++            rows=repo._read('MATCH (c:Complaint)-[:REPORTS]->(i:Incident)-[:PART_OF]->(p:ProblemCluster) RETURN c.id,i.id,i.issue_type,p.id,p.pattern_type ORDER BY c.id')
++            report={'status':'PASS','evidence_class':'REAL_FALKORDB_AUTHORED_SYNTHETIC_B08_FIXTURE','source_city_modified':False,'graph':name,'before':before,'after':capture(repo).fingerprint,'requests':requests,'receipts':receipts,'actual_chains':rows,'note':'Retained for human review and real lifecycle verification; no hidden scenario sources.'}
++            args.proof.write_text(json.dumps(report,indent=2)+'\n')
++        else:
++            proof=json.loads(args.proof.read_text());repo=GraphRepository(db,proof['graph'],lease_seconds=30)
++            fresh=capture(repo).fingerprint
++            anchor=json.loads(args.anchor.read_text())['after_retry'] if args.anchor else proof['after']
++            assert fresh==anchor
++            if args.lifecycle_log:
++                log=args.lifecycle_log.read_text();assert 'after restart (same container)' in log and 'after recreation (different container, retained volume)' in log and 'passed in' in log
++            s=ComplaintService(repo,clock=lambda:CLOCK)
++            for request,old in zip(proof['requests'],proof['receipts'],strict=True):
++                replay=s.intake(request);assert replay.replayed and replay.complaint_id==old['complaint_id'] and replay.incident_id==old['incident_id'] and replay.cluster_id==old['cluster_id']
++            after=capture(repo).fingerprint
++            for key in ['content_hash','graph_revision','audit_hash','audit_entries','nodes','edges']:assert fresh[key]==after[key]
++            report={'status':'PASS','graph':repo.graph.name,'fresh_before_retry':fresh,'after_retry':after,'all_journals_and_chains_preserved':True,'all5_retries_no_domain_changes':True,'lifecycle_log_verified':bool(args.lifecycle_log),'note':'Writer owner/epoch can change on replay; domain revision/audit/content do not. Lifecycle asserted only when actual successful log supplied.'}
++            if not args.output:raise ValueError('Verification output required')
++            args.output.write_text(json.dumps(report,indent=2)+'\n')
++    print(json.dumps({'status':'PASS','action':args.action,'output':str(args.proof if args.action=='create' else args.output)}))
++
++if __name__=='__main__':run()
+diff --git a/backend/tests/b08_fixtures.py b/backend/tests/b08_fixtures.py
+new file mode 100644
+--- /dev/null
++++ b/backend/tests/b08_fixtures.py
+@@ -0,0 +1,41 @@
++"""Authored synthetic source records, not operational execution or hidden answers."""
++from tests.schema_examples import common,asset,edge,NOW
++from tests.graph_fixtures import evidence
++
++CLOCK='2026-10-18T12:00:00Z'
++
++def payload(issue='WATERLOGGING',ref='report-1',**changes):
++    return {'issue_type':issue,'description':'Synthetic reported condition; cause unverified',
++        'source_id':'fixture-portal','external_record_id':ref,'source_channel':'TEST',
++        'reported_at':'2026-10-18T05:00:00Z','occurred_at':'2026-10-18T04:00:00Z','location_id':'L1',
++        'asset_ids':[{'WATERLOGGING':'D1','ROAD_DAMAGE':'R1','WASTE_ACCUMULATION':'W1'}[issue]],**changes}
++
++
++def populate(repo,history=False):
++    evidence(repo,'EV');evidence(repo,'EV-INS')
++    for id in ['L1','L2','L3']:
++        repo.create_node('Location',{**common(id),'name':'Synthetic equal-coordinate locations','latitude':12.0,'longitude':77.0})
++    for kind,id,loc in [('DrainSegment','D1','L1'),('DrainSegment','D2','L2'),('RoadSegment','R1','L1'),('WaterPipe','P1','L1'),('WasteCollectionPoint','W1','L1')]:
++        repo.create_node(kind,asset(kind,id))
++        repo.create_relationship('LOCATED_AT',id,loc,{**edge('LOC-'+id),'valid_from':NOW,'source_evidence_id':'EV'})
++    if history:populate_history(repo)
++
++
++def populate_history(repo):
++    repo.create_node('Inspection',{**common('INS'),'inspection_type':'ROAD','status':'COMPLETED','requested_at':NOW,'completed_at':NOW})
++    repo.create_relationship('INSPECTS','INS','R1',{**edge('INS-R1'),'source_evidence_id':'EV-INS'})
++    repo.create_relationship('PRODUCED','INS','EV-INS',edge('PRODUCED-EV'))
++    repo.create_node('ActionTask',{**common('TASK'),'action_type':'HISTORICAL_TEST','status':'COMPLETED','priority':'HIGH'})
++    repo.create_node('WorkOrder',{**common('ORDER'),'status':'COMPLETED','execution_mode':'SIMULATED','plan_version':1,'idempotency_key':'AUTHORED-HISTORY'})
++    outcome=common('OUTCOME');outcome.pop('updated_at')
++    repo.create_node('InterventionOutcome',{**outcome,'assessment_status':'HISTORICAL','evaluated_at':NOW,'result':'ACTION_COMPLETED'})
++    for kind,s,t,id in [('TARGETS','TASK','R1','TARGET'),('IMPLEMENTS','ORDER','TASK','IMPL'),('RESULTED_IN','ORDER','OUTCOME','OUT')]:repo.create_relationship(kind,s,t,{**edge(id),'source_evidence_id':'EV'})
++    repo.create_node('CollectionRoute',{**common('ROUTE'),'route_code':'SYNTHETIC','operational_status':'ACTIVE'})
++    repo.create_node('ServiceSchedule',{**common('SCHEDULE'),'service_type':'WASTE','timezone':'Asia/Kolkata','schedule_spec':'local07:00; source alias retained','valid_from':NOW})
++    for kind,s,t,id in [('COLLECTED_BY','W1','ROUTE','ROUTE-W1'),('HAS_SCHEDULE','ROUTE','SCHEDULE','SCHED-ROUTE')]:repo.create_relationship(kind,s,t,{**edge(id),'valid_from':NOW,'association_status':'VERIFIED','source_evidence_id':'EV'})
++    for i,status in enumerate(['MISSED','PARTIAL','COMPLETED']):
++        id='PICKUP-'+status;at=f'2026-10-18T03:{i:02}:00Z'
++        props={**common(id),'route_id':'ROUTE','scheduled_at':at,'status':status,'source_record_id':'SYNTHETIC-'+id}
++        if status!='MISSED':props['actual_at']=at
++        repo.create_node('PickupExecution',props)
++        repo.create_relationship('PICKUP_FOR',id,'W1',{**edge('FOR-'+id),'source_evidence_id':'EV'})
+diff --git a/backend/tests/b08_server.py b/backend/tests/b08_server.py
+new file mode 100644
+--- /dev/null
++++ b/backend/tests/b08_server.py
+@@ -0,0 +1,25 @@
++"""TEST ONLY: real SDK server with disposable B08 source substitution.
++
++Accepted fixed production Context is unchanged, as in the B07-R fixture harness.
++This is labeled fixture evidence, never represented as a retained-city snapshot.
++"""
++import asyncio,sys
++from mcp.server.stdio import stdio_server
++from app.config import Settings
++from app.graph.connection import connect
++from app.graph.repository import GraphRepository
++from app.graph.analysis.engine import GraphAnalysis
++from app.graph.targets import is_allowed_graph_target
++from app.mcp.civicly.runtime import connections
++from app.mcp.civicly.service import CivicReadService
++from app.mcp.civicly.server import build
++from app.mcp.civicly.storage import TraceStore
++
++async def main():
++    name=sys.argv[1];assert name.startswith('civicly_b08_test_') and is_allowed_graph_target(name)
++    with connect(Settings(_env_file='.env')) as source,connections() as (_,writer,trace_graph):
++        service=CivicReadService.__new__(CivicReadService);service.repo=GraphRepository(source,name);service.analysis=GraphAnalysis(service.repo)
++        server=build(service,TraceStore(writer,trace_graph))
++        async with stdio_server() as streams:await server.run(*streams,server.create_initialization_options())
++
++if __name__=='__main__':asyncio.run(main())
+diff --git a/backend/tests/integration/test_complaint_intelligence.py b/backend/tests/integration/test_complaint_intelligence.py
+new file mode 100644
+--- /dev/null
++++ b/backend/tests/integration/test_complaint_intelligence.py
+@@ -0,0 +1,336 @@
++"""Real canonical FalkorDB writes/reads; injected failures surround actual queries."""
++import json,asyncio,sys
++from concurrent.futures import ThreadPoolExecutor
++from threading import Barrier
++from pathlib import Path
++from uuid import uuid4
++import pytest
++from redis.exceptions import ConnectionError
++from app.graph.migration import MigrationRunner
++from app.graph.repository import GraphRepository,Conflict,PreconditionFailed,OutcomeUnknown,NotFound
++from app.graph.targets import new_test_graph_name
++from app.graph.models import QueryRequest
++from app.graph.queries import GraphQueries
++from app.graph.analysis.engine import GraphAnalysis
++from app.graph.analysis.models import CaseRequest
++from app.graph.analysis.evaluation import verify_city
++from app.mcp.runtime import CITY_GRAPH,ROOT
++from app.services.complaints import ComplaintService,Review
++from app.services.complaints.models import Journal
++from tests.b08_fixtures import payload,populate,CLOCK
++from tests.schema_examples import common,edge,NOW
++
++pytestmark=pytest.mark.integration
++PROOF=ROOT/'docs/evidence/B08-runtime-proof.json'
++
++@pytest.fixture
++def repo(db):
++    name=new_test_graph_name(8)
++    try:
++        MigrationRunner(db,name).apply();r=GraphRepository(db,name,lease_seconds=30);populate(r);yield r
++    finally:
++        if name in db.list_graphs():db.select_graph(name).delete()
++
++def service(repo):return ComplaintService(repo,clock=lambda:CLOCK)
++def counts(repo):return repo._read('MATCH (n:CivicEntity) RETURN count(n)')[0][0],repo._read('MATCH ()-[e]->() RETURN count(e)')[0][0]
++def save(name,value,repo):
++    report=json.loads(PROOF.read_text()) if PROOF.exists() else {'evidence_class':'REAL_FALKORDB_CONTROLLED_FIXTURES_AND_READONLY_CITY','examples':{}}
++    report['examples'][name]={'graph':repo.graph.name,'result':value.model_dump(mode='json') if hasattr(value,'model_dump') else value,'counts':counts(repo)}
++    PROOF.write_text(json.dumps(report,indent=2)+'\n')
++
++
++def test_same_report_stable_retry_and_raw_source_preservation(repo):
++    s=service(repo);raw=payload(description='  Synthetic\n reported condition  ');before=counts(repo);r=s.intake(raw);after=counts(repo)
++    retry=s.intake(raw);assert counts(repo)==after and retry.incident_id==r.incident_id and retry.replayed and retry.historical_receipt
++    assert r.graph_revision==GraphQueries(repo)._state() and r.pattern_type=='SINGLE_EVENT'
++    j=Journal.model_validate_json(repo.get_node(r.journal_id).properties['summary'])
++    assert j.original==raw and j.state=='COMMITTED';assert repo.get_node(r.complaint_id).properties['description']=='Synthetic reported condition'
++    assert repo._read('MATCH (c:Complaint {id:$id})-[:REPORTS]->(i:Incident)-[:PART_OF]->(p:ProblemCluster) RETURN c.id,i.id,p.id',{'id':r.complaint_id})==[[r.complaint_id,r.incident_id,r.cluster_id]]
++    assert all(repo.get_relationship(e).properties.get('association_status')!='VERIFIED' for p in r.graph_paths for e in p.edge_ids)
++    save('same-report',{'before':before,'after':after,'first':r.model_dump(mode='json'),'retry':retry.model_dump(mode='json')},repo)
++
++
++def test_changed_source_version_or_content_conflicts(repo):
++    s=service(repo);s.intake(payload());before=counts(repo)
++    for raw in [payload(description='changed'),payload(source_version='2'),payload(issue_type='ROAD_DAMAGE',asset_ids=['R1'])]:
++        with pytest.raises(Conflict):s.intake(raw)
++    assert counts(repo)==before
++
++
++def test_independent_reports_share_ongoing_incident_not_complaint_identity(repo):
++    s=service(repo);a=s.intake(payload());b=s.intake(payload(ref='report-2',source_id='independent-source'))
++    assert a.complaint_id!=b.complaint_id and a.journal_id!=b.journal_id and a.incident_id==b.incident_id and b.classification=='SAME_INCIDENT'
++    assert b.pattern_type=='SINGLE_EVENT';assert len(repo._read('MATCH (c:Complaint)-[:REPORTS]->(i:Incident {id:$id}) RETURN c.id',{'id':a.incident_id}))==2
++    save('independent-reports',b,repo)
++
++
++def test_distinct_explicit_occurrences_and_continued_unresolved_context(repo):
++    s=service(repo);a=s.intake(payload(event_reference='event-1'));b=s.intake(payload(ref='next',event_reference='event-2'))
++    assert a.incident_id!=b.incident_id and a.cluster_id==b.cluster_id
++    assert b.pattern_type=='PERSISTENT' and b.classification=='CONTINUING_UNRESOLVED'
++    save('distinct-unresolved',b,repo)
++
++
++def test_persistent_duration_does_not_require_report_count(repo):
++    r=service(repo).intake(payload(occurred_at='2026-10-16T04:00:00Z'))
++    assert r.pattern_type=='PERSISTENT' and r.classification=='CONTINUING_UNRESOLVED'
++
++
++def test_after_recorded_end_is_recurrent_with_separate_incident(repo):
++    s=service(repo);a=s.intake(payload(occurred_at='2026-10-17T01:00:00Z',reported_at='2026-10-17T02:00:00Z'))
++    n=repo.get_node(a.incident_id);n=repo.update_node(n.id,{'status':'ACTIVE'},expected_hash=n.content_hash);repo.update_node(n.id,{'status':'ENDED','ended_at':'2026-10-17T03:00:00Z'},expected_hash=n.content_hash)
++    b=s.intake(payload(ref='later'));assert b.incident_id!=a.incident_id and b.cluster_id==a.cluster_id and b.pattern_type=='RECURRENT'
++    assert b.classification=='AFTER_RECORDED_END' and any('completed orders alone' in x for x in b.explanations)
++    save('recurrent-after-end',b,repo)
++
++
++def test_missing_end_date_is_explicit_unknown_not_invented_recurrence(repo):
++    s=service(repo);a=s.intake(payload(occurred_at='2026-10-17T01:00:00Z',reported_at='2026-10-17T02:00:00Z'))
++    n=repo.get_node(a.incident_id);n=repo.update_node(n.id,{'status':'ACTIVE'},expected_hash=n.content_hash);repo.update_node(n.id,{'status':'ENDED'},expected_hash=n.content_hash)
++    b=s.intake(payload(ref='later'));assert b.cluster_id!=a.cluster_id and b.pattern_type!='RECURRENT'
++    assert any('termination date' in g for g in b.uncertainty)
++
++
++def test_nearby_disconnected_assets_do_not_merge(repo):
++    s=service(repo);a=s.intake(payload());b=s.intake(payload(ref='nearby',location_id='L2',asset_ids=['D2']))
++    assert a.incident_id!=b.incident_id and a.cluster_id!=b.cluster_id and b.pattern_type=='SINGLE_EVENT'
++    save('nearby-disconnected',b,repo)
++
++@pytest.mark.parametrize('reverse',[False,True])
++@pytest.mark.parametrize('status,shared',[('VERIFIED',True),('CANDIDATE',False)])
++def test_cross_category_topology_qualification_keeps_incidents_distinct(repo,status,shared,reverse):
++    repo.create_relationship('UNDERLIES','P1','R1',{**edge('P-R'),'association_status':status,'source_evidence_id':'EV'})
++    s=service(repo)
++    first=payload(ref='water',asset_ids=['P1']) if reverse else payload('ROAD_DAMAGE')
++    second=payload('ROAD_DAMAGE') if reverse else payload(ref='water',asset_ids=['P1'])
++    a=s.intake(first);b=s.intake(second)
++    assert a.incident_id!=b.incident_id
++    assert (a.cluster_id==b.cluster_id)==shared
++    assert b.pattern_type==('CROSS_CATEGORY' if shared else 'SINGLE_EVENT')
++    if shared:assert any('P-R' in p.edge_ids for p in b.graph_paths)
++    save('cross-category-'+status+'-'+str(reverse),b,repo)
++
++
++def test_all_issue_validators_histories_claims_and_measurements(repo):
++    # Add source history to the existing base without duplicating base identities.
++    from tests.b08_fixtures import populate_history
++    populate_history(repo)
++    s=service(repo)
++    measurement={'name':'water_depth','value':.2,'unit':'m','observed_at':'2026-10-18T04:00:00Z','source_id':'fixture-observer','source_reference':'depth-1','basis':'OBSERVED'}
++    water=s.intake(payload(ref='depth',details={'measurements':[measurement],'claims':[{'kind':'BLOCKAGE','statement':'Reporter suspects blockage','source_id':'fixture-observer','source_reference':'claim-1'}]}))
++    assert water.assessment.measurements[0]['value']==20. and water.assessment.measurements[0]['verification_status']=='REPORTED'
++    assert any('rainfall measurement missing' in g for g in water.assessment.gaps)
++    road=s.intake(payload('ROAD_DAMAGE',ref='road',details={'distress_description':'Pothole','claims':[{'kind':'PIPE_LEAK','statement':'Suspected cause only','source_id':'s','source_reference':'r'}]}))
++    assert {'INS','ORDER','OUTCOME'}<=set(road.assessment.history_ids)
++    assert 'EV-INS' in road.source_evidence_ids and any('do not verify resolution' in g for g in road.assessment.gaps)
++    waste=s.intake(payload('WASTE_ACCUMULATION',ref='waste',details={'reported_pickup_status':'MISSED','illegal_dumping_claim':True,'quantity_description':'several bags'}))
++    assert {'PICKUP-MISSED','PICKUP-PARTIAL','PICKUP-COMPLETED'}<=set(waste.assessment.history_ids)
++    assert waste.assessment.contradictions and any('clock' in g for g in waste.assessment.gaps) and any('ambiguous' in g for g in waste.assessment.gaps)
++    for name,r in [('water-validator',water),('road-validator',road),('waste-validator',waste)]:save(name,r,repo)
++
++@pytest.mark.parametrize('change',[{'location_id':'MISSING'},{'asset_ids':['MISSING']},{'evidence_ids':['MISSING']},{'issue_type':'ROAD_DAMAGE','asset_ids':['D1']}])
++def test_invalid_references_do_not_prepare_journal(repo,change):
++    before=counts(repo)
++    with pytest.raises((NotFound,PreconditionFailed)):service(repo).intake(payload(**change))
++    assert counts(repo)==before
++
++
++def test_concurrent_external_retry_and_same_event_intake(repo):
++    barrier=Barrier(2)
++    def run(raw):barrier.wait();return service(repo).intake(raw)
++    with ThreadPoolExecutor(2) as pool:results=list(pool.map(run,[payload(),payload()]))
++    assert len({r.complaint_id for r in results})==1
++    barrier=Barrier(2)
++    with ThreadPoolExecutor(2) as pool:results=list(pool.map(run,[payload(ref='two'),payload(ref='three',source_id='independent')]))
++    assert len({r.incident_id for r in results})==1
++    assert repo._read('MATCH (n:Complaint) RETURN count(n)')==[[3]] and repo._read('MATCH (n:Incident) RETURN count(n)')==[[1]]
++    save('concurrent',{'complaints':3,'incidents':1,'result':results[0].model_dump(mode='json')},repo)
++
++@pytest.mark.parametrize('committed',[False,True])
++def test_real_uncertain_response_recovery_without_duplicate_batches(repo,monkeypatch,committed):
++    original=repo.graph.query;fired=False
++    def fault(query,*args,**kwargs):
++        nonlocal fired
++        if 'SET j.summary=$summary' in query and not fired:
++            fired=True
++            if committed:original(query,*args,**kwargs)
++            raise ConnectionError('B08 injected lost response; real graph state retained')
++        return original(query,*args,**kwargs)
++    monkeypatch.setattr(repo.graph,'query',fault)
++    with pytest.raises(OutcomeUnknown):service(repo).intake(payload())
++    state=repo._read("MATCH (e:Evidence {evidence_type:'COMPLAINT_INTAKE'}) RETURN e.summary")[0][0]
++    assert Journal.model_validate_json(state).state==('COMMITTED' if committed else 'PREPARED')
++    assert repo._read('MATCH (c:Complaint) RETURN count(c)')==[[1 if committed else 0]]
++    monkeypatch.setattr(repo.graph,'query',original);r=service(repo).intake(payload())
++    assert repo._read('MATCH (c:Complaint) RETURN count(c)')==[[1]] and service(repo).incomplete()==[]
++    save('uncertain-'+str(committed),r,repo)
++
++
++def test_real_native_batch_failure_rolls_back_and_resumes(repo,monkeypatch):
++    original=repo.graph.query;fired=False
++    def fault(query,*args,**kw):
++        nonlocal fired
++        if 'SET j.summary=$summary' in query and not fired:
++            fired=True;query=query.replace('SET j.summary=$summary','CREATE (:CivicEntity {id:$existing0}) SET j.summary=$summary')
++        return original(query,*args,**kw)
++    monkeypatch.setattr(repo.graph,'query',fault)
++    with pytest.raises(OutcomeUnknown):service(repo).intake(payload())
++    assert repo._read('MATCH (c:Complaint) RETURN count(c)')==[[0]] and service(repo).incomplete()
++    assert repo._read('MATCH (i:Incident) RETURN count(i)')==[[0]] and repo._read('MATCH (p:ProblemCluster) RETURN count(p)')==[[0]]
++    monkeypatch.setattr(repo.graph,'query',original);r=service(repo).intake(payload());assert service(repo).incomplete()==[]
++    save('native-rollback-recovery',r,repo)
++
++
++def test_reviewed_regroup_preserves_old_interval_and_rejects_stale_review(repo):
++    s=service(repo);a=s.intake(payload());b=s.intake(payload(ref='other',asset_ids=['D2'],location_id='L2'))
++    old=next(e for e in repo._edges('PART_OF') if e.source==a.incident_id)
++    args={'request_id':'correction-1','reviewer_id':'synthetic-analyst','role':'ANALYST','reviewed':True,'reason':'Reviewed mistaken grouping; preserve history',
++        'incident_id':a.incident_id,'target_cluster_id':b.cluster_id,'expected_incident_hash':repo.get_node(a.incident_id).content_hash,'expected_membership_hash':old.content_hash,'expected_target_hash':repo.get_node(b.cluster_id).content_hash}
++    newer=ComplaintService(repo,clock=lambda:'2026-10-18T12:01:00Z');r=newer.regroup(Review(**args))
++    assert repo.get_relationship(old.id).properties['valid_to']==r['effective_at']
++    assert repo.get_relationship(r['membership_id']).properties['valid_from']==r['effective_at']
++    assert newer.regroup(Review(**args))['replayed']
++    with pytest.raises(PreconditionFailed):newer.regroup(Review(**{**args,'request_id':'stale-new-request'}))
++    with pytest.raises(Conflict):repo.create_relationship('PART_OF',a.incident_id,a.cluster_id,{**edge('CONFLICT'),'valid_from':r['effective_at']})
++    replay=s.intake(payload());assert replay.historical_receipt and replay.cluster_id==a.cluster_id
++    save('reviewed-correction',r,repo)
++
++
++def test_city_readonly_preview_preserves_all_source_fingerprints(db):
++    bundle=json.loads(Path('data/ingestion/city-v3.json').read_text());repo=GraphRepository(db,CITY_GRAPH)
++    before=verify_city(repo,bundle)
++    r=ComplaintService(repo,clock=lambda:CLOCK).preview(payload(ref='city',location_id='LOC-004',asset_ids=['DRAIN-D12']))
++    assert r.preview and r.search_limited and r.uncertainty and not any(p.context.get('classification')=='REPORTED_INTAKE_CONTEXT' for p in r.graph_paths)
++    with pytest.raises(PreconditionFailed):ComplaintService(repo).intake(payload())
++    assert verify_city(repo,bundle)==before;save('city-preview',r,repo)
++
++
++def test_claimed_end_and_completed_work_do_not_verify_resolution(repo):
++    from tests.b08_fixtures import populate_history
++    populate_history(repo);s=service(repo)
++    a=s.intake(payload('ROAD_DAMAGE',event_reference='road-1',ended_at='2026-10-18T04:30:00Z'))
++    b=s.intake(payload('ROAD_DAMAGE',ref='road-2',event_reference='road-2',occurred_at='2026-10-18T04:40:00Z'))
++    assert repo.get_node(a.incident_id).properties['status']=='REPORTED'
++    assert b.pattern_type=='PERSISTENT' and b.classification!='AFTER_RECORDED_END'
++    assert any(h.result=='ACTION_COMPLETED' for h in b.assessment.history_records)
++    save('completion-not-resolution',b,repo)
++
++
++def test_same_location_different_infrastructure_and_claim_conflict(repo):
++    s=service(repo);a=s.intake(payload());b=s.intake(payload(ref='different-asset',asset_ids=['D2']))
++    assert a.cluster_id!=b.cluster_id and a.incident_id!=b.incident_id
++    assert any('conflicts with inventory' in g for g in b.assessment.gaps)
++
++
++def test_measurement_units_and_rainfall_attribution_real_intake(repo):
++    s=service(repo)
++    rainfall={'name':'rainfall','value':2.,'unit':'cm','observed_at':'2026-10-18T04:00:00Z','source_id':'synthetic-weather','source_reference':'rain-1','basis':'OBSERVED'}
++    water=s.intake(payload(ref='rain',details={'measurements':[rainfall],'rainfall_station_reference':'SYNTHETIC-STATION','rainfall_from':'2026-10-18T03:00:00Z','rainfall_to':'2026-10-18T04:00:00Z'}))
++    assert water.assessment.measurements[0]['value']==20. and water.assessment.measurements[0]['unit']=='mm'
++    road=s.intake(payload('ROAD_DAMAGE',ref='damage',details={'distress_description':'Pothole','measurements':[{**rainfall,'name':'pothole_depth','value':30.,'unit':'mm'}]}))
++    assert road.assessment.measurements[0]['value']==3. and road.assessment.measurements[0]['unit']=='cm'
++    waste=s.intake(payload('WASTE_ACCUMULATION',ref='volume',details={'measurements':[{**rainfall,'name':'waste_quantity','value':.25,'unit':'m3'}]}))
++    assert waste.assessment.measurements[0]['value']==250. and waste.assessment.measurements[0]['unit']=='L'
++    for name,r in [('rain-attribution',water),('road-measurement',road),('waste-measurement',waste)]:
++        assert all(x.reliability=='UNVERIFIED' for x in r.evidence_references if x.id==r.journal_id);save(name,r,repo)
++
++
++def test_incomplete_journal_can_resume_after_application_interruption(repo,monkeypatch):
++    from app.services.complaints.writer import Writer
++    original=Writer.commit
++    def stopped(*a,**k):raise RuntimeError('Actual prepared journal retained; application stopped before domain commit')
++    monkeypatch.setattr(Writer,'commit',stopped)
++    with pytest.raises(RuntimeError):service(repo).intake(payload())
++    assert service(repo).incomplete() and repo._read('MATCH (n:Complaint) RETURN count(n)')==[[0]]
++    monkeypatch.setattr(Writer,'commit',original)
++    r=service(repo).intake(payload());assert not service(repo).incomplete();save('application-resume',r,repo)
++
++
++def test_concurrent_conflicting_external_identity_fails_closed(repo):
++    barrier=Barrier(2)
++    def run(desc):
++        barrier.wait()
++        try:return service(repo).intake(payload(description=desc)).complaint_id
++        except Conflict:return 'CONFLICT'
++    with ThreadPoolExecutor(2) as pool:results=list(pool.map(run,['synthetic report A','synthetic report B']))
++    assert results.count('CONFLICT')==1 and repo._read('MATCH (c:Complaint) RETURN count(c)')==[[1]]
++
++
++def test_b03_b05_and_actual_mcp_broker_read_new_incidents(repo,db):
++    from mcp import Client,StdioServerParameters
++    from app.mcp.civicly.runtime import configure,connections
++    from app.mcp.civicly.broker import DomainBroker
++    from app.mcp.civicly.storage import TraceStore
++    s=service(repo)
++    a=s.intake(payload(event_reference='first',occurred_at='2026-10-18T02:00:00Z'))
++    b=s.intake(payload(ref='second',event_reference='second'))
++    paths=GraphQueries(repo).run(QueryRequest(template='incident_history',id='D1',as_of=CLOCK,include_candidates=True))
++    assert {a.incident_id,b.incident_id}<={n.id for n in paths.nodes if n.kind=='Incident'}
++    verified=GraphQueries(repo).run(QueryRequest(template='incident_history',id='D1',as_of=CLOCK))
++    assert not verified.paths # reported intake does not become verified association
++    cases=GraphAnalysis(repo).cases(CaseRequest(seed_incident_id=b.incident_id,as_of=CLOCK,include_candidates=True))
++    assert a.incident_id in {row.id for row in cases.rows}
++    configure(db)
++    async def run():
++        params=StdioServerParameters(command=sys.executable,args=['-m','tests.b08_server',repo.graph.name],cwd=str(ROOT),env={'PYTHONPATH':str(ROOT/'backend')})
++        with connections() as (_,writer,name):
++            store=TraceStore(writer,name)
++            async with Client(params,mode='legacy',read_timeout_seconds=8) as client:
++                broker=DomainBroker(client,store);await broker.discover()
++                assert len(broker.tools())==12 and not any('intake' in t['name'] for t in broker.tools())
++                r=await broker.call('civicly::find_related_incidents',{'incident_id':b.incident_id,'max_results':10,'include_candidates':True,'as_of':CLOCK})
++                assert r['status']=='PARTIAL' and r['graph_revision']==GraphQueries(repo)._state()
++                assert a.incident_id in {v['incident_id'] for v in r['related_incidents']}
++                assert all(e['properties'].get('association_status')!='VERIFIED' for e in r['data']['edges'] if e['kind']=='AFFECTS')
++                assert store.get(r['execution_id']).validated_output
++                save('actual-mcp-fixture-source',{'note':'TEST ONLY source substitution; production context/namespace unchanged','result':r},repo)
++    asyncio.run(run())
++
++
++def test_conflicting_measurements_retained_without_arbitrary_choice(repo):
++    m={'name':'water_depth','value':.2,'unit':'m','observed_at':'2026-10-18T04:00:00Z','source_id':'source-a','source_reference':'a'}
++    r=service(repo).intake(payload(details={'measurements':[m,{**m,'value':5.,'unit':'cm','source_id':'source-b','source_reference':'b'}]}))
++    assert {x['value'] for x in r.assessment.measurements}=={20.,5.}
++    assert r.assessment.contradictions and 'no arbitrary winner' in r.assessment.contradictions[0]
++    save('contradictory-measurements',r,repo)
++
++
++def test_missing_asset_context_does_not_merge_location_only_reports(repo):
++    s=service(repo);a=s.intake(payload(asset_ids=[]));b=s.intake(payload(ref='location-only',asset_ids=[]))
++    assert a.incident_id!=b.incident_id and a.cluster_id!=b.cluster_id
++    assert any('No explicit infrastructure' in g for g in b.uncertainty)
++
++
++def test_multiple_eligible_clusters_require_review_instead_of_arbitrary_assignment(repo):
++    s=service(repo);a=s.intake(payload(event_reference='event-a'));b=s.intake(payload(ref='b',event_reference='event-b'))
++    repo.create_node('ProblemCluster',{**common('REVIEW-TARGET'),'title':'Explicit synthetic review target','status':'OPEN','first_seen_at':NOW,'pattern_type':'SINGLE_EVENT'})
++    old=next(e for e in repo._edges('PART_OF') if e.source==b.incident_id)
++    review=Review(request_id='split-b',reviewer_id='synthetic-analyst',role='ANALYST',reviewed=True,reason='Reviewed separate group',incident_id=b.incident_id,target_cluster_id='REVIEW-TARGET',expected_incident_hash=repo.get_node(b.incident_id).content_hash,expected_membership_hash=old.content_hash,expected_target_hash=repo.get_node('REVIEW-TARGET').content_hash)
++    ComplaintService(repo,clock=lambda:'2026-10-18T12:01:00Z').regroup(review)
++    c=ComplaintService(repo,clock=lambda:'2026-10-18T12:02:00Z').intake(payload(ref='c',event_reference='event-c'))
++    assert c.cluster_id not in {a.cluster_id,'REVIEW-TARGET'} and any('Multiple eligible primary clusters' in g for g in c.uncertainty)
++    save('ambiguous-cluster-review',c,repo)
++
++
++def test_prepared_equivalent_unit_retry_preserves_first_raw_measurement(repo,monkeypatch):
++    from app.services.complaints.writer import Writer
++    m={'name':'water_depth','value':.29,'unit':'m','observed_at':'2026-10-18T04:00:00Z','source_id':'source','source_reference':'reading'}
++    first=payload(details={'measurements':[m]});equivalent=payload(details={'measurements':[{**m,'value':29.,'unit':'cm'}]})
++    original=Writer.commit
++    def stopped(*a,**kw):raise RuntimeError('Real prepared intake interrupted')
++    monkeypatch.setattr(Writer,'commit',stopped)
++    with pytest.raises(RuntimeError):service(repo).intake(first)
++    monkeypatch.setattr(Writer,'commit',original);r=service(repo).intake(equivalent)
++    assert r.assessment.measurements[0]['value']==29. and r.assessment.measurements[0]['original_value']==.29 and r.assessment.measurements[0]['original_unit']=='m'
++    j=Journal.model_validate_json(repo.get_node(r.journal_id).properties['summary'])
++    assert j.original==first and j.canonical['details']['measurements'][0]['unit']=='cm'
++    before=counts(repo);assert service(repo).intake(first).replayed and counts(repo)==before
++    save('equivalent-unit-original-recovery',r,repo)
++
++
++def test_issue_primary_asset_allows_secondary_cross_category_infrastructure(repo):
++    repo.create_relationship('UNDERLIES','P1','R1',{**edge('MIXED-P-R'),'association_status':'VERIFIED','source_evidence_id':'EV'})
++    r=service(repo).intake(payload('ROAD_DAMAGE',asset_ids=['R1','P1','D1']))
++    actual={e.target for e in repo._edges('AFFECTS') if e.source==r.incident_id}
++    assert actual=={'R1','P1','D1'} and all(e.properties['association_status']=='REPORTED' for e in repo._edges('AFFECTS'))
++    save('mixed-asset-context',r,repo)
+diff --git a/backend/tests/unit/test_complaint_models.py b/backend/tests/unit/test_complaint_models.py
+new file mode 100644
+--- /dev/null
++++ b/backend/tests/unit/test_complaint_models.py
+@@ -0,0 +1,64 @@
++"""Pure typed normalization/units checks, not graph or MCP proof."""
++import json,math
++from pathlib import Path
++import pytest
++from pydantic import ValidationError
++from app.services.complaints.models import normalize,Measurement,INTAKE,Review,IntakeResult,UNITS
++from tests.b08_fixtures import payload
++
++
++def test_normalization_preserves_original_and_does_not_infer_facts():
++    raw=payload(description='  Reported\n standing   water  ',source_id='  fixture-portal ',reported_at='2026-10-18T10:30:00+05:30')
++    q,n=normalize(raw)
++    assert n.original==raw and q.description=='Reported standing water'
++    assert q.source_id=='fixture-portal' and q.reported_at=='2026-10-18T05:00:00.000000Z'
++    assert not q.details.measurements and not q.details.claims
++    assert normalize(payload(description='Reported standing water'))[1].request_hash==n.request_hash
++
++@pytest.mark.parametrize('changes',[{'issue_type':'UNKNOWN'},{'description':' '},{'source_id':5},{'reported_at':'2026-10-18T05:00:00'},{'occurred_at':'2026-10-19T00:00:00Z'},{'ended_at':'2026-10-18T03:00:00Z'},{'unknown':'discard-me'},{'asset_ids':['D1',' D1 ']},{'asset_ids':('D1',)},{'severity':'URGENT'},{'source_kind':'PRIVATE'}])
++def test_invalid_report_rejected_explicitly(changes):
++    with pytest.raises((ValueError,ValidationError)):normalize(payload(**changes))
++
++@pytest.mark.parametrize('name,value,unit,expected,canonical',[
++ ('water_depth',.5,'m',50.0,'cm'),('rainfall',2.,'cm',20.,'mm'),('duration',2.,'hours',120.,'min'),
++ ('pothole_depth',30.,'mm',3.,'cm'),('damage_area',10000.,'cm2',1.,'m2'),('waste_quantity',.25,'m3',250.,'L'),('drain_capacity',2.,'m3/s',2.,'m3/s')])
++def test_supported_units_lossless_source_retention(name,value,unit,expected,canonical):
++    m=Measurement(name=name,value=value,unit=unit,observed_at='2026-10-18T04:00:00Z',source_id='reported-source',source_reference='measurement-1',basis='OBSERVED')
++    result=m.canonical();assert result['value']==expected and result['unit']==canonical
++    assert result['original_value']==value and result['original_unit']==unit and result['verification_status']=='REPORTED'
++
++@pytest.mark.parametrize('value,unit',[(True,'cm'),('10','cm'),(-1.,'cm'),(math.inf,'cm'),(1.,'bags'),(math.nan,'cm')])
++def test_invalid_measurement_rejected(value,unit):
++    with pytest.raises(ValidationError):Measurement(name='water_depth',value=value,unit=unit,observed_at='2026-10-18T04:00:00Z',source_id='s',source_reference='r')
++
++
++def test_issue_specific_measurement_and_rainfall_chronology():
++    m={'name':'water_depth','value':10.,'unit':'cm','observed_at':'2026-10-18T04:00:00Z','source_id':'s','source_reference':'r'}
++    with pytest.raises(ValidationError):normalize(payload('ROAD_DAMAGE',details={'measurements':[m]}))
++    with pytest.raises(ValidationError):normalize(payload(details={'rainfall_from':'2026-10-18T04:00:00Z','rainfall_to':'2026-10-17T04:00:00Z'}))
++
++
++def test_contract_schemas_match_actual_strict_models():
++    c=json.loads(Path('contracts/complaint_intake.json').read_text())
++    assert c['schemas']=={'Intake':INTAKE.json_schema(),'IntakeResult':IntakeResult.model_json_schema(),'Review':Review.model_json_schema()}
++    assert c['units']=={name:{unit:list(v) for unit,v in units.items()} for name,units in UNITS.items()}
++
++
++def test_unit_conversion_overflow_and_future_rainfall_are_rejected():
++    with pytest.raises(ValidationError):Measurement(name='water_depth',value=1e308,unit='m',observed_at='2026-10-18T04:00:00Z',source_id='s',source_reference='r')
++    with pytest.raises(ValidationError):normalize(payload(details={'rainfall_from':'2026-10-18T03:00:00Z','rainfall_to':'2026-10-18T06:00:00Z'}))
++
++
++@pytest.mark.parametrize('changes',[{'reviewed':False},{'reviewed':1},{'role':'AGENT'},{'reason':' '}])
++def test_grouping_requires_explicit_typed_review_context(changes):
++    args={'request_id':'r','reviewer_id':'synthetic-analyst','role':'ANALYST','reviewed':True,'reason':'Reviewed correction','incident_id':'i','target_cluster_id':'p','expected_incident_hash':'a'*64,'expected_membership_hash':'b'*64,'expected_target_hash':'c'*64}
++    with pytest.raises(ValidationError):Review(**{**args,**changes})
++
++
++def test_equivalent_measurements_have_one_canonical_request_identity():
++    m={'name':'water_depth','value':.29,'unit':'m','observed_at':'2026-10-18T04:00:00Z','source_id':'source','source_reference':'reading'}
++    a=payload(details={'measurements':[m]});b=payload(details={'measurements':[{**m,'value':29.,'unit':'cm'}]})
++    qa,na=normalize(a);qb,nb=normalize(b)
++    assert na.original==a and nb.original==b
++    assert na.request_hash==nb.request_hash
++    assert qa.details.measurements[0].canonical()['value']==29.
+diff --git a/contracts/complaint_intake.json b/contracts/complaint_intake.json
+new file mode 100644
+--- /dev/null
++++ b/contracts/complaint_intake.json
+@@ -0,0 +1,1384 @@
++{
++  "version": 1,
++  "registry_version": 3,
++  "migration": "0001",
++  "municipality_id": "demo-city",
++  "write_targets": "canonical civicly_knowledge or validated B08 UUID test graphs only; all retained sources read-only",
++  "external_identity": [
++    "municipality_id",
++    "source_kind",
++    "source_id",
++    "external_record_id"
++  ],
++  "normalization": "Strict JSON, NFKC+trim case-sensitive IDs, whitespace-normalized descriptions, aware ISO timestamps to UTC; raw first submission retained; decimal arithmetic for canonical quantities/units also used by request hash, first original preserved on resume",
++  "matching": {
++    "same_event_hours": 24,
++    "criteria": [
++      "issue_type",
++      "subtype",
++      "location_id",
++      "explicit_asset_set",
++      "overlapping_occurrence_interval",
++      "compatible_source_event_reference"
++    ],
++    "no_asset_match": "requires attributed explicit event reference; no proximity-only match",
++    "patterns": [
++      "SINGLE_EVENT",
++      "PERSISTENT",
++      "RECURRENT",
++      "CROSS_CATEGORY"
++    ],
++    "resolution": "dated ENDED interval permits recurrence context; work-order completion is not resolution; missing dates remain indeterminate"
++  },
++  "storage": "Existing UNVERIFIED Evidence COMPLAINT_INTAKE/GROUPING_CORRECTION summary JSON journal (64KiB), no registry/migration additions",
++  "consistency": "PREPARED journal separate controlled commit; domain batch+COMMITTED receipt+revision/audit atomic in one B03 fenced query. Explicit retry/reconcile only; not B15 event outbox",
++  "limits": {
++    "input_bytes": 32768,
++    "journal_bytes": 65536,
++    "asset_ids": 3,
++    "evidence_ids": 10,
++    "incident_scan": 100,
++    "context_edges": 400,
++    "report_journals": 200,
++    "topology_hops": 4,
++    "query_timeout_ms": 1000,
++    "context_wall_seconds": 8,
++    "context_queries": 96,
++    "incoming_dependency_roots_per_asset": 6,
++    "dependency_roots": 9,
++    "reconciliation_journals": 100,
++    "detailed_related_explanations": 20,
++    "proof_paths": 100
++  },
++  "schemas": {
++    "Intake": {
++      "$defs": {
++        "Claim": {
++          "additionalProperties": false,
++          "properties": {
++            "kind": {
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Kind",
++              "type": "string"
++            },
++            "statement": {
++              "maxLength": 1000,
++              "minLength": 1,
++              "title": "Statement",
++              "type": "string"
++            },
++            "source_id": {
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Source Id",
++              "type": "string"
++            },
++            "source_reference": {
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Source Reference",
++              "type": "string"
++            }
++          },
++          "required": [
++            "kind",
++            "statement",
++            "source_id",
++            "source_reference"
++          ],
++          "title": "Claim",
++          "type": "object"
++        },
++        "Measurement": {
++          "additionalProperties": false,
++          "properties": {
++            "name": {
++              "enum": [
++                "water_depth",
++                "duration",
++                "rainfall",
++                "drain_capacity",
++                "pothole_depth",
++                "damage_area",
++                "waste_quantity"
++              ],
++              "title": "Name",
++              "type": "string"
++            },
++            "value": {
++              "minimum": 0,
++              "title": "Value",
++              "type": "number"
++            },
++            "unit": {
++              "maxLength": 20,
++              "minLength": 1,
++              "title": "Unit",
++              "type": "string"
++            },
++            "observed_at": {
++              "title": "Observed At",
++              "type": "string"
++            },
++            "source_id": {
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Source Id",
++              "type": "string"
++            },
++            "source_reference": {
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Source Reference",
++              "type": "string"
++            },
++            "basis": {
++              "default": "REPORTED",
++              "enum": [
++                "OBSERVED",
++                "REPORTED",
++                "DERIVED"
++              ],
++              "title": "Basis",
++              "type": "string"
++            },
++            "evidence_id": {
++              "anyOf": [
++                {
++                  "maxLength": 200,
++                  "minLength": 1,
++                  "type": "string"
++                },
++                {
++                  "type": "null"
++                }
++              ],
++              "default": null,
++              "title": "Evidence Id"
++            }
++          },
++          "required": [
++            "name",
++            "value",
++            "unit",
++            "observed_at",
++            "source_id",
++            "source_reference"
++          ],
++          "title": "Measurement",
++          "type": "object"
++        },
++        "RoadDetails": {
++          "additionalProperties": false,
++          "properties": {
++            "measurements": {
++              "items": {
++                "$ref": "#/$defs/Measurement"
++              },
++              "maxItems": 10,
++              "title": "Measurements",
++              "type": "array"
++            },
++            "claims": {
++              "items": {
++                "$ref": "#/$defs/Claim"
++              },
++              "maxItems": 10,
++              "title": "Claims",
++              "type": "array"
++            },
++            "distress_description": {
++              "anyOf": [
++                {
++                  "maxLength": 1000,
++                  "type": "string"
++                },
++                {
++                  "type": "null"
++                }
++              ],
++              "default": null,
++              "title": "Distress Description"
++            }
++          },
++          "title": "RoadDetails",
++          "type": "object"
++        },
++        "RoadIntake": {
++          "additionalProperties": false,
++          "properties": {
++            "description": {
++              "maxLength": 4000,
++              "minLength": 1,
++              "title": "Description",
++              "type": "string"
++            },
++            "source_id": {
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Source Id",
++              "type": "string"
++            },
++            "external_record_id": {
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "External Record Id",
++              "type": "string"
++            },
++            "source_channel": {
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Source Channel",
++              "type": "string"
++            },
++            "source_version": {
++              "default": "1",
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Source Version",
++              "type": "string"
++            },
++            "source_kind": {
++              "default": "SYNTHETIC",
++              "enum": [
++                "SYNTHETIC",
++                "PUBLIC",
++                "MUNICIPAL",
++                "USER",
++                "AGENT"
++              ],
++              "title": "Source Kind",
++              "type": "string"
++            },
++            "reported_at": {
++              "title": "Reported At",
++              "type": "string"
++            },
++            "occurred_at": {
++              "title": "Occurred At",
++              "type": "string"
++            },
++            "ended_at": {
++              "anyOf": [
++                {
++                  "type": "string"
++                },
++                {
++                  "type": "null"
++                }
++              ],
++              "default": null,
++              "title": "Ended At"
++            },
++            "location_id": {
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Location Id",
++              "type": "string"
++            },
++            "asset_ids": {
++              "items": {
++                "maxLength": 200,
++                "minLength": 1,
++                "type": "string"
++              },
++              "maxItems": 3,
++              "title": "Asset Ids",
++              "type": "array"
++            },
++            "evidence_ids": {
++              "items": {
++                "maxLength": 200,
++                "minLength": 1,
++                "type": "string"
++              },
++              "maxItems": 10,
++              "title": "Evidence Ids",
++              "type": "array"
++            },
++            "event_reference": {
++              "anyOf": [
++                {
++                  "maxLength": 200,
++                  "minLength": 1,
++                  "type": "string"
++                },
++                {
++                  "type": "null"
++                }
++              ],
++              "default": null,
++              "title": "Event Reference"
++            },
++            "subtype": {
++              "default": "UNSPECIFIED",
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Subtype",
++              "type": "string"
++            },
++            "severity": {
++              "default": "MODERATE",
++              "enum": [
++                "LOW",
++                "MODERATE",
++                "HIGH",
++                "CRITICAL"
++              ],
++              "title": "Severity",
++              "type": "string"
++            },
++            "issue_type": {
++              "const": "ROAD_DAMAGE",
++              "title": "Issue Type",
++              "type": "string"
++            },
++            "details": {
++              "$ref": "#/$defs/RoadDetails"
++            }
++          },
++          "required": [
++            "description",
++            "source_id",
++            "external_record_id",
++            "source_channel",
++            "reported_at",
++            "occurred_at",
++            "location_id",
++            "issue_type"
++          ],
++          "title": "RoadIntake",
++          "type": "object"
++        },
++        "WasteDetails": {
++          "additionalProperties": false,
++          "properties": {
++            "measurements": {
++              "items": {
++                "$ref": "#/$defs/Measurement"
++              },
++              "maxItems": 10,
++              "title": "Measurements",
++              "type": "array"
++            },
++            "claims": {
++              "items": {
++                "$ref": "#/$defs/Claim"
++              },
++              "maxItems": 10,
++              "title": "Claims",
++              "type": "array"
++            },
++            "quantity_description": {
++              "anyOf": [
++                {
++                  "maxLength": 1000,
++                  "type": "string"
++                },
++                {
++                  "type": "null"
++                }
++              ],
++              "default": null,
++              "title": "Quantity Description"
++            },
++            "reported_pickup_status": {
++              "default": "UNKNOWN",
++              "enum": [
++                "MISSED",
++                "PARTIAL",
++                "COMPLETED",
++                "UNKNOWN"
++              ],
++              "title": "Reported Pickup Status",
++              "type": "string"
++            },
++            "illegal_dumping_claim": {
++              "anyOf": [
++                {
++                  "type": "boolean"
++                },
++                {
++                  "type": "null"
++                }
++              ],
++              "default": null,
++              "title": "Illegal Dumping Claim"
++            }
++          },
++          "title": "WasteDetails",
++          "type": "object"
++        },
++        "WasteIntake": {
++          "additionalProperties": false,
++          "properties": {
++            "description": {
++              "maxLength": 4000,
++              "minLength": 1,
++              "title": "Description",
++              "type": "string"
++            },
++            "source_id": {
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Source Id",
++              "type": "string"
++            },
++            "external_record_id": {
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "External Record Id",
++              "type": "string"
++            },
++            "source_channel": {
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Source Channel",
++              "type": "string"
++            },
++            "source_version": {
++              "default": "1",
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Source Version",
++              "type": "string"
++            },
++            "source_kind": {
++              "default": "SYNTHETIC",
++              "enum": [
++                "SYNTHETIC",
++                "PUBLIC",
++                "MUNICIPAL",
++                "USER",
++                "AGENT"
++              ],
++              "title": "Source Kind",
++              "type": "string"
++            },
++            "reported_at": {
++              "title": "Reported At",
++              "type": "string"
++            },
++            "occurred_at": {
++              "title": "Occurred At",
++              "type": "string"
++            },
++            "ended_at": {
++              "anyOf": [
++                {
++                  "type": "string"
++                },
++                {
++                  "type": "null"
++                }
++              ],
++              "default": null,
++              "title": "Ended At"
++            },
++            "location_id": {
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Location Id",
++              "type": "string"
++            },
++            "asset_ids": {
++              "items": {
++                "maxLength": 200,
++                "minLength": 1,
++                "type": "string"
++              },
++              "maxItems": 3,
++              "title": "Asset Ids",
++              "type": "array"
++            },
++            "evidence_ids": {
++              "items": {
++                "maxLength": 200,
++                "minLength": 1,
++                "type": "string"
++              },
++              "maxItems": 10,
++              "title": "Evidence Ids",
++              "type": "array"
++            },
++            "event_reference": {
++              "anyOf": [
++                {
++                  "maxLength": 200,
++                  "minLength": 1,
++                  "type": "string"
++                },
++                {
++                  "type": "null"
++                }
++              ],
++              "default": null,
++              "title": "Event Reference"
++            },
++            "subtype": {
++              "default": "UNSPECIFIED",
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Subtype",
++              "type": "string"
++            },
++            "severity": {
++              "default": "MODERATE",
++              "enum": [
++                "LOW",
++                "MODERATE",
++                "HIGH",
++                "CRITICAL"
++              ],
++              "title": "Severity",
++              "type": "string"
++            },
++            "issue_type": {
++              "const": "WASTE_ACCUMULATION",
++              "title": "Issue Type",
++              "type": "string"
++            },
++            "details": {
++              "$ref": "#/$defs/WasteDetails"
++            }
++          },
++          "required": [
++            "description",
++            "source_id",
++            "external_record_id",
++            "source_channel",
++            "reported_at",
++            "occurred_at",
++            "location_id",
++            "issue_type"
++          ],
++          "title": "WasteIntake",
++          "type": "object"
++        },
++        "WaterDetails": {
++          "additionalProperties": false,
++          "properties": {
++            "measurements": {
++              "items": {
++                "$ref": "#/$defs/Measurement"
++              },
++              "maxItems": 10,
++              "title": "Measurements",
++              "type": "array"
++            },
++            "claims": {
++              "items": {
++                "$ref": "#/$defs/Claim"
++              },
++              "maxItems": 10,
++              "title": "Claims",
++              "type": "array"
++            },
++            "rainfall_station_reference": {
++              "anyOf": [
++                {
++                  "maxLength": 200,
++                  "minLength": 1,
++                  "type": "string"
++                },
++                {
++                  "type": "null"
++                }
++              ],
++              "default": null,
++              "title": "Rainfall Station Reference"
++            },
++            "rainfall_from": {
++              "anyOf": [
++                {
++                  "type": "string"
++                },
++                {
++                  "type": "null"
++                }
++              ],
++              "default": null,
++              "title": "Rainfall From"
++            },
++            "rainfall_to": {
++              "anyOf": [
++                {
++                  "type": "string"
++                },
++                {
++                  "type": "null"
++                }
++              ],
++              "default": null,
++              "title": "Rainfall To"
++            }
++          },
++          "title": "WaterDetails",
++          "type": "object"
++        },
++        "WaterIntake": {
++          "additionalProperties": false,
++          "properties": {
++            "description": {
++              "maxLength": 4000,
++              "minLength": 1,
++              "title": "Description",
++              "type": "string"
++            },
++            "source_id": {
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Source Id",
++              "type": "string"
++            },
++            "external_record_id": {
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "External Record Id",
++              "type": "string"
++            },
++            "source_channel": {
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Source Channel",
++              "type": "string"
++            },
++            "source_version": {
++              "default": "1",
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Source Version",
++              "type": "string"
++            },
++            "source_kind": {
++              "default": "SYNTHETIC",
++              "enum": [
++                "SYNTHETIC",
++                "PUBLIC",
++                "MUNICIPAL",
++                "USER",
++                "AGENT"
++              ],
++              "title": "Source Kind",
++              "type": "string"
++            },
++            "reported_at": {
++              "title": "Reported At",
++              "type": "string"
++            },
++            "occurred_at": {
++              "title": "Occurred At",
++              "type": "string"
++            },
++            "ended_at": {
++              "anyOf": [
++                {
++                  "type": "string"
++                },
++                {
++                  "type": "null"
++                }
++              ],
++              "default": null,
++              "title": "Ended At"
++            },
++            "location_id": {
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Location Id",
++              "type": "string"
++            },
++            "asset_ids": {
++              "items": {
++                "maxLength": 200,
++                "minLength": 1,
++                "type": "string"
++              },
++              "maxItems": 3,
++              "title": "Asset Ids",
++              "type": "array"
++            },
++            "evidence_ids": {
++              "items": {
++                "maxLength": 200,
++                "minLength": 1,
++                "type": "string"
++              },
++              "maxItems": 10,
++              "title": "Evidence Ids",
++              "type": "array"
++            },
++            "event_reference": {
++              "anyOf": [
++                {
++                  "maxLength": 200,
++                  "minLength": 1,
++                  "type": "string"
++                },
++                {
++                  "type": "null"
++                }
++              ],
++              "default": null,
++              "title": "Event Reference"
++            },
++            "subtype": {
++              "default": "UNSPECIFIED",
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Subtype",
++              "type": "string"
++            },
++            "severity": {
++              "default": "MODERATE",
++              "enum": [
++                "LOW",
++                "MODERATE",
++                "HIGH",
++                "CRITICAL"
++              ],
++              "title": "Severity",
++              "type": "string"
++            },
++            "issue_type": {
++              "const": "WATERLOGGING",
++              "title": "Issue Type",
++              "type": "string"
++            },
++            "details": {
++              "$ref": "#/$defs/WaterDetails"
++            }
++          },
++          "required": [
++            "description",
++            "source_id",
++            "external_record_id",
++            "source_channel",
++            "reported_at",
++            "occurred_at",
++            "location_id",
++            "issue_type"
++          ],
++          "title": "WaterIntake",
++          "type": "object"
++        }
++      },
++      "discriminator": {
++        "mapping": {
++          "ROAD_DAMAGE": "#/$defs/RoadIntake",
++          "WASTE_ACCUMULATION": "#/$defs/WasteIntake",
++          "WATERLOGGING": "#/$defs/WaterIntake"
++        },
++        "propertyName": "issue_type"
++      },
++      "oneOf": [
++        {
++          "$ref": "#/$defs/WaterIntake"
++        },
++        {
++          "$ref": "#/$defs/RoadIntake"
++        },
++        {
++          "$ref": "#/$defs/WasteIntake"
++        }
++      ]
++    },
++    "IntakeResult": {
++      "$defs": {
++        "Assessment": {
++          "additionalProperties": false,
++          "properties": {
++            "measurements": {
++              "items": {
++                "additionalProperties": {
++                  "$ref": "#/$defs/JsonValue"
++                },
++                "type": "object"
++              },
++              "maxItems": 10,
++              "title": "Measurements",
++              "type": "array"
++            },
++            "claims": {
++              "items": {
++                "$ref": "#/$defs/Claim"
++              },
++              "maxItems": 10,
++              "title": "Claims",
++              "type": "array"
++            },
++            "gaps": {
++              "items": {
++                "type": "string"
++              },
++              "maxItems": 100,
++              "title": "Gaps",
++              "type": "array"
++            },
++            "contradictions": {
++              "items": {
++                "type": "string"
++              },
++              "maxItems": 100,
++              "title": "Contradictions",
++              "type": "array"
++            },
++            "history_ids": {
++              "items": {
++                "type": "string"
++              },
++              "maxItems": 100,
++              "title": "History Ids",
++              "type": "array"
++            },
++            "history_records": {
++              "items": {
++                "$ref": "#/$defs/HistorySummary"
++              },
++              "maxItems": 100,
++              "title": "History Records",
++              "type": "array"
++            },
++            "source_evidence_ids": {
++              "items": {
++                "type": "string"
++              },
++              "maxItems": 100,
++              "title": "Source Evidence Ids",
++              "type": "array"
++            }
++          },
++          "title": "Assessment",
++          "type": "object"
++        },
++        "Claim": {
++          "additionalProperties": false,
++          "properties": {
++            "kind": {
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Kind",
++              "type": "string"
++            },
++            "statement": {
++              "maxLength": 1000,
++              "minLength": 1,
++              "title": "Statement",
++              "type": "string"
++            },
++            "source_id": {
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Source Id",
++              "type": "string"
++            },
++            "source_reference": {
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Source Reference",
++              "type": "string"
++            }
++          },
++          "required": [
++            "kind",
++            "statement",
++            "source_id",
++            "source_reference"
++          ],
++          "title": "Claim",
++          "type": "object"
++        },
++        "EvidenceRef": {
++          "additionalProperties": false,
++          "properties": {
++            "id": {
++              "title": "Id",
++              "type": "string"
++            },
++            "recorded_at": {
++              "title": "Recorded At",
++              "type": "string"
++            },
++            "observed_at": {
++              "anyOf": [
++                {
++                  "type": "string"
++                },
++                {
++                  "type": "null"
++                }
++              ],
++              "default": null,
++              "title": "Observed At"
++            },
++            "source_kind": {
++              "title": "Source Kind",
++              "type": "string"
++            },
++            "reliability": {
++              "title": "Reliability",
++              "type": "string"
++            }
++          },
++          "required": [
++            "id",
++            "recorded_at",
++            "source_kind",
++            "reliability"
++          ],
++          "title": "EvidenceRef",
++          "type": "object"
++        },
++        "HistorySummary": {
++          "additionalProperties": false,
++          "properties": {
++            "id": {
++              "title": "Id",
++              "type": "string"
++            },
++            "kind": {
++              "enum": [
++                "Inspection",
++                "WorkOrder",
++                "InterventionOutcome",
++                "PickupExecution"
++              ],
++              "title": "Kind",
++              "type": "string"
++            },
++            "occurred_at": {
++              "anyOf": [
++                {
++                  "type": "string"
++                },
++                {
++                  "type": "null"
++                }
++              ],
++              "default": null,
++              "title": "Occurred At"
++            },
++            "status": {
++              "anyOf": [
++                {
++                  "type": "string"
++                },
++                {
++                  "type": "null"
++                }
++              ],
++              "default": null,
++              "title": "Status"
++            },
++            "result": {
++              "anyOf": [
++                {
++                  "type": "string"
++                },
++                {
++                  "type": "null"
++                }
++              ],
++              "default": null,
++              "title": "Result"
++            }
++          },
++          "required": [
++            "id",
++            "kind"
++          ],
++          "title": "HistorySummary",
++          "type": "object"
++        },
++        "JsonValue": {},
++        "PathRecord": {
++          "additionalProperties": false,
++          "properties": {
++            "node_ids": {
++              "items": {
++                "type": "string"
++              },
++              "title": "Node Ids",
++              "type": "array"
++            },
++            "edge_ids": {
++              "items": {
++                "type": "string"
++              },
++              "title": "Edge Ids",
++              "type": "array"
++            },
++            "directions": {
++              "items": {
++                "enum": [
++                  "OUTGOING",
++                  "INCOMING"
++                ],
++                "type": "string"
++              },
++              "title": "Directions",
++              "type": "array"
++            },
++            "evidence_ids": {
++              "items": {
++                "type": "string"
++              },
++              "title": "Evidence Ids",
++              "type": "array"
++            },
++            "context": {
++              "additionalProperties": {
++                "$ref": "#/$defs/JsonValue"
++              },
++              "title": "Context",
++              "type": "object"
++            }
++          },
++          "required": [
++            "node_ids",
++            "edge_ids",
++            "directions",
++            "evidence_ids"
++          ],
++          "title": "PathRecord",
++          "type": "object"
++        }
++      },
++      "additionalProperties": false,
++      "properties": {
++        "graph": {
++          "title": "Graph",
++          "type": "string"
++        },
++        "municipality_id": {
++          "const": "demo-city",
++          "default": "demo-city",
++          "title": "Municipality Id",
++          "type": "string"
++        },
++        "complaint_id": {
++          "title": "Complaint Id",
++          "type": "string"
++        },
++        "incident_id": {
++          "title": "Incident Id",
++          "type": "string"
++        },
++        "cluster_id": {
++          "title": "Cluster Id",
++          "type": "string"
++        },
++        "journal_id": {
++          "title": "Journal Id",
++          "type": "string"
++        },
++        "pattern_type": {
++          "enum": [
++            "SINGLE_EVENT",
++            "PERSISTENT",
++            "RECURRENT",
++            "CROSS_CATEGORY"
++          ],
++          "title": "Pattern Type",
++          "type": "string"
++        },
++        "classification": {
++          "enum": [
++            "SAME_INCIDENT",
++            "NEW_OCCURRENCE",
++            "CONTINUING_UNRESOLVED",
++            "AFTER_RECORDED_END",
++            "RELATED_CROSS_CATEGORY"
++          ],
++          "title": "Classification",
++          "type": "string"
++        },
++        "created_incident": {
++          "title": "Created Incident",
++          "type": "boolean"
++        },
++        "related_incident_ids": {
++          "items": {
++            "type": "string"
++          },
++          "maxItems": 100,
++          "title": "Related Incident Ids",
++          "type": "array"
++        },
++        "matched_attributes": {
++          "items": {
++            "type": "string"
++          },
++          "title": "Matched Attributes",
++          "type": "array"
++        },
++        "explanations": {
++          "items": {
++            "type": "string"
++          },
++          "title": "Explanations",
++          "type": "array"
++        },
++        "uncertainty": {
++          "items": {
++            "type": "string"
++          },
++          "title": "Uncertainty",
++          "type": "array"
++        },
++        "assessment": {
++          "$ref": "#/$defs/Assessment"
++        },
++        "graph_paths": {
++          "items": {
++            "$ref": "#/$defs/PathRecord"
++          },
++          "maxItems": 100,
++          "title": "Graph Paths",
++          "type": "array"
++        },
++        "source_evidence_ids": {
++          "items": {
++            "type": "string"
++          },
++          "maxItems": 100,
++          "title": "Source Evidence Ids",
++          "type": "array"
++        },
++        "evidence_references": {
++          "items": {
++            "$ref": "#/$defs/EvidenceRef"
++          },
++          "maxItems": 100,
++          "title": "Evidence References",
++          "type": "array"
++        },
++        "graph_revision": {
++          "title": "Graph Revision",
++          "type": "integer"
++        },
++        "as_of": {
++          "title": "As Of",
++          "type": "string"
++        },
++        "simulation_mode": {
++          "const": true,
++          "default": true,
++          "title": "Simulation Mode",
++          "type": "boolean"
++        },
++        "search_limited": {
++          "const": true,
++          "default": true,
++          "title": "Search Limited",
++          "type": "boolean"
++        },
++        "truncated": {
++          "default": false,
++          "title": "Truncated",
++          "type": "boolean"
++        },
++        "replayed": {
++          "default": false,
++          "title": "Replayed",
++          "type": "boolean"
++        },
++        "preview": {
++          "default": false,
++          "title": "Preview",
++          "type": "boolean"
++        },
++        "historical_receipt": {
++          "default": false,
++          "title": "Historical Receipt",
++          "type": "boolean"
++        }
++      },
++      "required": [
++        "graph",
++        "complaint_id",
++        "incident_id",
++        "cluster_id",
++        "journal_id",
++        "pattern_type",
++        "classification",
++        "created_incident",
++        "matched_attributes",
++        "explanations",
++        "uncertainty",
++        "assessment",
++        "graph_revision",
++        "as_of"
++      ],
++      "title": "IntakeResult",
++      "type": "object"
++    },
++    "Review": {
++      "additionalProperties": false,
++      "properties": {
++        "request_id": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Request Id",
++          "type": "string"
++        },
++        "reviewer_id": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Reviewer Id",
++          "type": "string"
++        },
++        "role": {
++          "enum": [
++            "ANALYST",
++            "ADMIN"
++          ],
++          "title": "Role",
++          "type": "string"
++        },
++        "reviewed": {
++          "title": "Reviewed",
++          "type": "boolean"
++        },
++        "reason": {
++          "maxLength": 1000,
++          "minLength": 1,
++          "title": "Reason",
++          "type": "string"
++        },
++        "incident_id": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Incident Id",
++          "type": "string"
++        },
++        "target_cluster_id": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Target Cluster Id",
++          "type": "string"
++        },
++        "expected_incident_hash": {
++          "pattern": "^[a-f0-9]{64}$",
++          "title": "Expected Incident Hash",
++          "type": "string"
++        },
++        "expected_membership_hash": {
++          "pattern": "^[a-f0-9]{64}$",
++          "title": "Expected Membership Hash",
++          "type": "string"
++        },
++        "expected_target_hash": {
++          "pattern": "^[a-f0-9]{64}$",
++          "title": "Expected Target Hash",
++          "type": "string"
++        }
++      },
++      "required": [
++        "request_id",
++        "reviewer_id",
++        "role",
++        "reviewed",
++        "reason",
++        "incident_id",
++        "target_cluster_id",
++        "expected_incident_hash",
++        "expected_membership_hash",
++        "expected_target_hash"
++      ],
++      "title": "Review",
++      "type": "object"
++    }
++  },
++  "units": {
++    "water_depth": {
++      "cm": [
++        "cm",
++        1
++      ],
++      "m": [
++        "cm",
++        100
++      ],
++      "mm": [
++        "cm",
++        0.1
++      ]
++    },
++    "duration": {
++      "min": [
++        "min",
++        1
++      ],
++      "hours": [
++        "min",
++        60
++      ]
++    },
++    "rainfall": {
++      "mm": [
++        "mm",
++        1
++      ],
++      "cm": [
++        "mm",
++        10
++      ]
++    },
++    "drain_capacity": {
++      "m3/s": [
++        "m3/s",
++        1
++      ]
++    },
++    "pothole_depth": {
++      "cm": [
++        "cm",
++        1
++      ],
++      "mm": [
++        "cm",
++        0.1
++      ],
++      "m": [
++        "cm",
++        100
++      ]
++    },
++    "damage_area": {
++      "m2": [
++        "m2",
++        1
++      ],
++      "cm2": [
++        "m2",
++        0.0001
++      ]
++    },
++    "waste_quantity": {
++      "L": [
++        "L",
++        1
++      ],
++      "m3": [
++        "L",
++        1000
++      ]
++    }
++  },
++  "read_templates": [
++    "inventory_location",
++    "incoming_utility_roots",
++    "candidate_incidents_by_location",
++    "candidate_incidents_by_verified_context_asset",
++    "incident_context",
++    "source_report_journals",
++    "active_cluster_members",
++    "dated_pickup_history",
++    "prepared_intake_journals"
++  ],
++  "review_boundary": "Trusted internal typed reviewer context and CAS only; no B13 authenticated operator/API or MCP write capability",
++  "receipt_semantics": "Replay returns immutable historical intake receipt, not current group membership; current graph read required after correction",
++  "asset_context": "Explicit ROAD_DAMAGE assets require at least one RoadSegment, WASTE_ACCUMULATION at least one WasteCollectionPoint; secondary infrastructure subtypes allowed, location-only reports remain qualified. No ontology restriction on AFFECTS added."
++}
+diff --git a/scripts/audit_b08.py b/scripts/audit_b08.py
+new file mode 100644
+--- /dev/null
++++ b/scripts/audit_b08.py
+@@ -0,0 +1,41 @@
++"""B08 source/secret audit against accepted local B07-R commit; values never logged."""
++from pathlib import Path
++import subprocess,json,re
++ROOT=Path(__file__).resolve().parents[1]
++ALLOWED={'README.md','backend/README.md','docs/backend/02_graph.md','docs/backend/03_data.md',
++         'decision.md','flow.md','implementation_status.md','task_board.md','test_log.md','blockers.md'}
++tracked=subprocess.check_output(['git','ls-files','-z'],cwd=ROOT).decode().split('\0')[:-1]
++protected=0
++for name in tracked:
++    if name in ALLOWED:continue
++    assert (ROOT/name).read_bytes()==subprocess.check_output(['git','show','HEAD:'+name],cwd=ROOT),'Accepted source/evidence changed: '+name
++    protected+=1
++secrets=[]
++for line in (ROOT/'.env').read_text().splitlines():
++    if '=' not in line:continue
++    key,value=line.split('=',1);value=value.strip(' \"\'')
++    if any(k in key.upper() for k in ('PASSWORD','SECRET','KEY','TOKEN')) and len(value)>=8:secrets.append(value.encode())
++for name in ['mcp-credentials.json','civicly-mcp.json']:
++    p=ROOT/'.runtime'/name;assert not p.is_symlink() and not p.stat().st_mode&0o077
++    for key,value in json.loads(p.read_text()).items():
++        if 'password' in key and isinstance(value,str):secrets.append(value.encode())
++new=subprocess.check_output(['git','ls-files','--others','--exclude-standard','-z'],cwd=ROOT).decode().split('\0')[:-1]
++files=sorted(set(tracked+new))
++for name in files:
++    assert not set(Path(name).parts)&{'.runtime','.env','.git','.venv','node_modules','__pycache__','.pytest_cache','.uv-cache','review_packages'}
++    assert not name.endswith(('.zip','.tar','.tar.gz','.tgz','.pem','.key','.p12'))
++    raw=(ROOT/name).read_bytes();assert not any(secret in raw for secret in secrets),'Private value found in '+name
++    assert not re.search(rb'-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----|\bAKIA[0-9A-Z]{16}\b|\bsk-[A-Za-z0-9_-]{24,}',raw),'Private pattern found in '+name
++leaked=[]
++for row in subprocess.check_output(['ps','-axo','pid=,command='],text=True).splitlines():
++    parts=row.strip().split(None,2)
++    if len(parts)!=3:continue
++    executable,command=Path(parts[1]).name,parts[2]
++    if ('python' in executable and any(s in command for s in ('-m app.mcp.civicly.server','-m tests.b07r_server','-m tests.b08_server'))) or (executable=='node' and 'node_modules/@falkordb/mcpserver/dist/index.js' in command):leaked.append(int(parts[0]))
++assert not leaked,'MCP child left running'
++report={'status':'PASS','baseline':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),
++ 'accepted_files_unchanged':protected,'all440_preexisting_tests_unchanged':True,
++ 'existing_migrations_registry_policies_algorithms_dataset_ingestion_mcp_and_envelopes_unchanged':True,
++ 'dependencies_and_locks_unchanged':True,'candidate_files_scanned':len(files),'actual_local_secret_scan':'PASS; values never logged',
++ 'leaked_processes':leaked,'archive':'No archive generated; Git-candidate audit does not claim external full-folder exports safe'}
++(ROOT/'docs/evidence/B08-source-audit.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report))
+diff --git a/scripts/verify_b08.py b/scripts/verify_b08.py
+new file mode 100644
+--- /dev/null
++++ b/scripts/verify_b08.py
+@@ -0,0 +1,39 @@
++"""Fresh read-only preservation check for accepted source graphs and trace records."""
++import json,subprocess,argparse
++from pathlib import Path
++from app.config import Settings
++from app.graph.connection import connect
++from app.graph.repository import GraphRepository
++from app.graph.analysis.evaluation import verify_city,CITY_GRAPH
++from app.graph.analysis.counterfactual import capture
++from app.graph.migration import MigrationRunner
++from app.mcp.civicly.runtime import connections,load_config
++from app.mcp.civicly.storage import TraceStore,TraceMigration
++from app.mcp.civicly.models import TraceRecord
++from app.mcp.civicly.contracts import digest
++
++ROOT=Path(__file__).resolve().parents[1]
++def accepted(name):return json.loads(subprocess.check_output(['git','show','HEAD:docs/evidence/'+name],cwd=ROOT))
++p=argparse.ArgumentParser();p.add_argument('--output',type=Path,required=True);args=p.parse_args()
++base=json.loads((ROOT/'docs/evidence/B08-baseline-retained.json').read_text())
++b05=accepted('B06-post-lifecycle.json')
++with connect(Settings(_env_file='.env')) as admin:
++    city=verify_city(GraphRepository(admin,CITY_GRAPH),json.loads((ROOT/'data/ingestion/city-v3.json').read_text()));assert city==base['city']
++    for key in ['controlled_source','counterfactual_clone']:assert capture(GraphRepository(admin,b05[key]['graph'])).fingerprint==b05[key]
++    probe=admin.select_graph('civicly_b01_runtime').ro_query('MATCH (n:B01Probe {id:$id}) RETURN n.id,n.source_kind,n.task LIMIT 1',params={'id':'B01-PERSISTENCE'}).result_set
++    assert probe==base['b01_probe']
++    canonical=MigrationRunner(admin,'civicly_knowledge').status();assert canonical['ready']
++    trace_schema=TraceMigration(admin,load_config()['trace_graph']).status();assert trace_schema['ready']
++with connections() as (_,writer,name):
++    store=TraceStore(writer,name);verified=0
++    for file in ['B07-runtime-proof-before-final-contract.json','B07-runtime-proof.json']:
++        for saved in accepted(file)['persisted_server_traces']:
++            assert store.get(saved['context']['execution_id'])==TraceRecord.model_validate_json(json.dumps(saved));verified+=1
++    for file in ['B07R-before-outputs.json','B07R-runtime-proof.json']:
++        for result in accepted(file)['results'].values():
++            record=store.get(result['execution_id']);assert record and record.output_sha256==digest(result) and record.source_evidence_ids==result['source_evidence_ids'];verified+=1
++    count=store.repo._read('MATCH (n:ToolExecution) RETURN count(n)')[0][0]
++    assert count>=base['trace_records_current']
++report={'status':'PASS','city':city,'b01_probe':probe,'b05_source_clone_unchanged':True,'canonical':canonical,'trace_migration':trace_schema,
++        'accepted_trace_records_verified':verified,'trace_records_current':count,'source_data_modified':False,'credential_values_logged':False}
++args.output.write_text(json.dumps(report,indent=2)+'\n');print(json.dumps({'status':'PASS','accepted_traces_preserved':verified,'source_fingerprints_unchanged':True}))

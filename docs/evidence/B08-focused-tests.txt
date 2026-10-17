@@ -1,0 +1,67 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.1, pytest-9.1.1, pluggy-1.7.0 -- /Users/vikashkumar/Desktop/Civicly/backend/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/vikashkumar/Desktop/Civicly/backend
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 57 items
+
+backend/tests/unit/test_complaint_models.py::test_normalization_preserves_original_and_does_not_infer_facts PASSED
+backend/tests/unit/test_complaint_models.py::test_invalid_report_rejected_explicitly[changes0] PASSED
+backend/tests/unit/test_complaint_models.py::test_invalid_report_rejected_explicitly[changes1] PASSED
+backend/tests/unit/test_complaint_models.py::test_invalid_report_rejected_explicitly[changes2] PASSED
+backend/tests/unit/test_complaint_models.py::test_invalid_report_rejected_explicitly[changes3] PASSED
+backend/tests/unit/test_complaint_models.py::test_invalid_report_rejected_explicitly[changes4] PASSED
+backend/tests/unit/test_complaint_models.py::test_invalid_report_rejected_explicitly[changes5] PASSED
+backend/tests/unit/test_complaint_models.py::test_invalid_report_rejected_explicitly[changes6] PASSED
+backend/tests/unit/test_complaint_models.py::test_invalid_report_rejected_explicitly[changes7] PASSED
+backend/tests/unit/test_complaint_models.py::test_invalid_report_rejected_explicitly[changes8] PASSED
+backend/tests/unit/test_complaint_models.py::test_invalid_report_rejected_explicitly[changes9] PASSED
+backend/tests/unit/test_complaint_models.py::test_invalid_report_rejected_explicitly[changes10] PASSED
+backend/tests/unit/test_complaint_models.py::test_supported_units_lossless_source_retention[water_depth-0.5-m-50.0-cm] PASSED
+backend/tests/unit/test_complaint_models.py::test_supported_units_lossless_source_retention[rainfall-2.0-cm-20.0-mm] PASSED
+backend/tests/unit/test_complaint_models.py::test_supported_units_lossless_source_retention[duration-2.0-hours-120.0-min] PASSED
+backend/tests/unit/test_complaint_models.py::test_supported_units_lossless_source_retention[pothole_depth-30.0-mm-3.0-cm] PASSED
+backend/tests/unit/test_complaint_models.py::test_supported_units_lossless_source_retention[damage_area-10000.0-cm2-1.0-m2] PASSED
+backend/tests/unit/test_complaint_models.py::test_supported_units_lossless_source_retention[waste_quantity-0.25-m3-250.0-L] PASSED
+backend/tests/unit/test_complaint_models.py::test_supported_units_lossless_source_retention[drain_capacity-2.0-m3/s-2.0-m3/s] PASSED
+backend/tests/unit/test_complaint_models.py::test_invalid_measurement_rejected[True-cm] PASSED
+backend/tests/unit/test_complaint_models.py::test_invalid_measurement_rejected[10-cm] PASSED
+backend/tests/unit/test_complaint_models.py::test_invalid_measurement_rejected[-1.0-cm] PASSED
+backend/tests/unit/test_complaint_models.py::test_invalid_measurement_rejected[inf-cm] PASSED
+backend/tests/unit/test_complaint_models.py::test_invalid_measurement_rejected[1.0-bags] PASSED
+backend/tests/unit/test_complaint_models.py::test_invalid_measurement_rejected[nan-cm] PASSED
+backend/tests/unit/test_complaint_models.py::test_issue_specific_measurement_and_rainfall_chronology PASSED
+backend/tests/unit/test_complaint_models.py::test_contract_schemas_match_actual_strict_models PASSED
+backend/tests/unit/test_complaint_models.py::test_unit_conversion_overflow_and_future_rainfall_are_rejected PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_same_report_stable_retry_and_raw_source_preservation PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_changed_source_version_or_content_conflicts PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_independent_reports_share_ongoing_incident_not_complaint_identity PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_distinct_explicit_occurrences_and_continued_unresolved_context PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_persistent_duration_does_not_require_report_count PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_after_recorded_end_is_recurrent_with_separate_incident PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_missing_end_date_is_explicit_unknown_not_invented_recurrence PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_nearby_disconnected_assets_do_not_merge PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_cross_category_topology_qualification_keeps_incidents_distinct[VERIFIED-True-False] PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_cross_category_topology_qualification_keeps_incidents_distinct[VERIFIED-True-True] PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_cross_category_topology_qualification_keeps_incidents_distinct[CANDIDATE-False-False] PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_cross_category_topology_qualification_keeps_incidents_distinct[CANDIDATE-False-True] PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_all_issue_validators_histories_claims_and_measurements PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_invalid_references_do_not_prepare_journal[change0] PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_invalid_references_do_not_prepare_journal[change1] PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_invalid_references_do_not_prepare_journal[change2] PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_invalid_references_do_not_prepare_journal[change3] PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_concurrent_external_retry_and_same_event_intake PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_real_uncertain_response_recovery_without_duplicate_batches[False] PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_real_uncertain_response_recovery_without_duplicate_batches[True] PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_real_native_batch_failure_rolls_back_and_resumes PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_reviewed_regroup_preserves_old_interval_and_rejects_stale_review PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_city_readonly_preview_preserves_all_source_fingerprints PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_claimed_end_and_completed_work_do_not_verify_resolution PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_same_location_different_infrastructure_and_claim_conflict PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_measurement_units_and_rainfall_attribution_real_intake PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_incomplete_journal_can_resume_after_application_interruption PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_concurrent_conflicting_external_identity_fails_closed PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_b03_b05_and_actual_mcp_broker_read_new_incidents PASSED
+
+======================== 57 passed in 89.25s (0:01:29) =========================

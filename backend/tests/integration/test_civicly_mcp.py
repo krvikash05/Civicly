@@ -108,9 +108,11 @@ def test_trace_nodes_persist_after_session_shutdown_and_idempotence():
   assert store.append(record)==result['execution_id']
   assert store.repo._read('MATCH (n:ToolExecution) RETURN count(n)')[0][0]==before
   with pytest.raises(Conflict):store.append(record.model_copy(update={'status':'FORGED'}))
-  rows=store.repo._read('MATCH (d:CivicMCPTraceDetail) RETURN d.payload_json LIMIT 1000')
+  rows=store.repo._read('MATCH (d:CivicMCPTraceDetail) WHERE d.payload_json CONTAINS $parent RETURN d.payload_json LIMIT 2',
+                          {'parent':'"parent_execution_id":'+json.dumps(result['execution_id'])})
   children=[json.loads(row[0]) for row in rows if json.loads(row[0])['context']['parent_execution_id']==result['execution_id']]
   assert len(children)==1 and children[0]['phase']=='BROKER' and children[0]['validated_output']
+  assert store.get(children[0]['context']['execution_id']).validated_output
   assert record.context.source_graph==CITY_GRAPH and record.graph_revision==2104
 
 
