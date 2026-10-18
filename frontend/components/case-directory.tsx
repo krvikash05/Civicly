@@ -11,10 +11,13 @@ import {
   caseHref,
   issueName,
   displayTime,
-  displayStatus,
   type Issue,
   type RegisteredCase,
 } from '../lib/read/cases';
+import {
+  translateStatus,
+  formatShortIdentifier,
+} from '../lib/read/display';
 import { Icon } from './icons';
 
 export function CaseDirectory({
@@ -70,6 +73,7 @@ export function CaseDirectory({
     incident_id: string;
     issue_type: Issue | string;
     stage: string;
+    title?: string;
   };
 
   const scenarioCases: RegisteredCase[] = catalog.data ? registeredCases(catalog.data, issue) : [];
@@ -80,6 +84,7 @@ export function CaseDirectory({
       incident_id: inv.incident_ids[0] ?? '',
       issue_type: issue ?? 'WATERLOGGING',
       stage: inv.status,
+      title: `${issueName(issue || 'WATERLOGGING')} Investigation`,
     }));
   const cases: DirectoryCase[] = [...scenarioCases, ...liveCases];
 
@@ -102,7 +107,12 @@ export function CaseDirectory({
   return (
     <div className="case-directory" id="case-directory">
       <div className="directory-heading">
-        <h3>Active demo investigations</h3>
+        <div>
+          <h3>Active demo investigations</h3>
+          <p className="muted text-sm" style={{ margin: '2px 0 0' }}>
+            Pre-registered municipal defect investigations with graph traceability
+          </p>
+        </div>
         <button
           className="text-button"
           type="button"
@@ -115,55 +125,80 @@ export function CaseDirectory({
           Refresh list
         </button>
       </div>
+
       {catalog.status === 'loading' && invList.status === 'loading' ? (
-        <ReadMessage state={catalog} retry={() => { catalog.refresh(); invList.refresh(); }} />
+        <ReadMessage state={catalog} resourceName="case directory" retry={() => { catalog.refresh(); invList.refresh(); }} />
       ) : cases.length ? (
         <div className="registered-cases">
-          {cases.map((c) => (
-            <Link
-              key={c.investigation_id + ':' + c.incident_id}
-              className="registered-case"
-              href={caseHref({ issue, incident: c.incident_id, investigation: c.investigation_id })}
-            >
-              <span>
-                <Icon name="search" size={17} />
-                <strong>{issueName(c.issue_type)}</strong>
-                <small className="small-tag">SIMULATED</small>
-              </span>
-              <small>{c.investigation_id}</small>
-              <span className="category-link">
-                Open investigation <Icon name="arrow" size={14} />
-              </span>
-            </Link>
-          ))}
+          {cases.map((c) => {
+            const shortInv = formatShortIdentifier(c.investigation_id);
+            const readableIssue = issueName(c.issue_type);
+
+            return (
+              <Link
+                key={c.investigation_id + ':' + c.incident_id}
+                className="registered-case"
+                href={caseHref({ issue, incident: c.incident_id, investigation: c.investigation_id })}
+              >
+                <div className="case-card-top">
+                  <span className="case-icon-title">
+                    <Icon name="search" size={17} />
+                    <strong>{readableIssue}</strong>
+                  </span>
+                  <span className="small-tag">SIMULATED</span>
+                </div>
+
+                <div className="case-card-body">
+                  <p className="case-card-desc">
+                    Investigation Case <span className="id-sub">{shortInv}</span>
+                  </p>
+                  <span className="stage-pill-mini">{translateStatus(c.stage)}</span>
+                </div>
+
+                <span className="category-link">
+                  Open investigation <Icon name="arrow" size={14} />
+                </span>
+              </Link>
+            );
+          })}
         </div>
       ) : (
         <p className="directory-empty">No active investigations match this filter.</p>
       )}
 
-      <div className="directory-heading">
-        <h3>Reported incidents</h3>
-        {page.data && <small>{page.data.total_count} matching · up to 10 per page</small>}
+      <div className="directory-heading" style={{ marginTop: '1.5rem' }}>
+        <div>
+          <h3>Reported civic incidents</h3>
+          {page.data && <p className="muted text-sm" style={{ margin: '2px 0 0' }}>{page.data.total_count} matching records &bull; up to 10 per page</p>}
+        </div>
       </div>
+
       {page.status !== 'ready' ? (
-        <ReadMessage state={page} retry={page.refresh} />
+        <ReadMessage state={page} resourceName="incidents" retry={page.refresh} />
       ) : page.data?.items.length ? (
         <ul className="incident-list">
           {page.data.items.map((incident) => {
             const linkedId = getLinkedInvId(incident.id);
+            const readableIssue = issueName(incident.issue_type);
+            const shortInc = formatShortIdentifier(incident.id);
+
             return (
               <li key={incident.id}>
                 <Link href={caseHref({ issue, incident: incident.id, investigation: linkedId })}>
-                  <div>
-                    <strong>{issueName(incident.issue_type)}</strong>
-                    <span className="status-tag">{displayStatus(incident.status)}</span>
+                  <div className="incident-row-header">
+                    <div className="incident-title-group">
+                      <strong>{readableIssue} Incident</strong>
+                      <span className="id-sub">{shortInc}</span>
+                    </div>
+                    <span className="status-tag">{translateStatus(incident.status)}</span>
                   </div>
-                  <span className="resource-id">{incident.id}</span>
+
                   <span className="incident-meta">
-                    {displayTime(incident.started_at)} · {incident.location_id ?? 'Location not recorded'}
+                    {displayTime(incident.started_at)} &bull; {incident.location_id ?? 'Civic location not specified'}
                   </span>
+
                   <span className="category-link">
-                    {linkedId ? 'Open investigation' : 'View incident'} <span aria-hidden="true">↗</span>
+                    {linkedId ? 'Open linked investigation' : 'View incident record'} <span aria-hidden="true">↗</span>
                   </span>
                 </Link>
               </li>
@@ -173,6 +208,7 @@ export function CaseDirectory({
       ) : (
         <p className="directory-empty">No incidents match this category.</p>
       )}
+
       {page.data && (
         <div className="pagination">
           <button
@@ -184,7 +220,7 @@ export function CaseDirectory({
             First page
           </button>
           <span>
-            {page.data.items.length} shown · {page.data.total_count} matching
+            {page.data.items.length} shown &bull; {page.data.total_count} matching
           </span>
           <button
             type="button"
@@ -196,6 +232,7 @@ export function CaseDirectory({
           </button>
         </div>
       )}
+
       {page.data?.truncated || page.data?.limitations?.length ? (
         <details className="resource-notes">
           <summary>List bounds and limitations</summary>

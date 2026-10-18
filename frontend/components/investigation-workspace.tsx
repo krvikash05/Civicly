@@ -37,6 +37,13 @@ import {
   displayTime,
   loadSelectedCase,
 } from '../lib/read/cases';
+import {
+  translateStatus,
+  translateRole,
+  translateActionType,
+  formatEntityDisplayName,
+} from '../lib/read/display';
+import { TechnicalDetails, CopyableIdentifier } from './technical-details';
 
 const stages = [
   'Report',
@@ -73,6 +80,7 @@ export function InvestigationWorkspace() {
   const [inspectedEvidenceId, setInspectedEvidenceId] = useState<string | null>(null);
   const [isJourneysOpen, setIsJourneysOpen] = useState(false);
   const [isRolesOpen, setIsRolesOpen] = useState(false);
+  const [isGraphExpanded, setIsGraphExpanded] = useState(false);
 
   const issueParam = parseIssue(searchParams.get('issue'));
   const investigationParam = searchParams.get('investigation') ?? undefined;
@@ -399,7 +407,7 @@ export function InvestigationWorkspace() {
       {hasSelection && selectedCase.status === 'ready' && (
         <div className="selected-case-card">
           <div className="selected-case-header">
-            <div>
+            <div className="case-header-main">
               <div className="case-pills">
                 <span className="case-kind-tag">
                   {investigation ? 'REGISTERED INVESTIGATION' : 'REPORTED INCIDENT'}
@@ -410,12 +418,25 @@ export function InvestigationWorkspace() {
                   </span>
                 )}
                 <span className="status-tag">
-                  {displayStatus(investigation?.status ?? primaryIncident?.status)}
+                  {translateStatus(investigation?.status ?? primaryIncident?.status)}
                 </span>
               </div>
               <h2 className="selected-case-title">
-                {investigation ? investigation.id : primaryIncident?.id}
+                {investigation
+                  ? `${issueName(primaryIncident?.issue_type || 'Civic Defect')} Investigation`
+                  : `Reported Incident: ${issueName(primaryIncident?.issue_type || 'Civic Defect')}`}
               </h2>
+              <p className="selected-case-subtitle">
+                {investigation ? (
+                  <>
+                    Case reference: <strong>{formatEntityDisplayName({ id: investigation.id }).shortId}</strong> &bull; Status: {translateStatus(investigation.status)} &bull; {investigation.problem_cluster_id ? `Problem cluster ${investigation.problem_cluster_id}` : 'Single defect context'}
+                  </>
+                ) : (
+                  <>
+                    Incident reference: <strong>{formatEntityDisplayName({ id: primaryIncident?.id || '' }).shortId}</strong> &bull; Started: {displayTime(primaryIncident?.started_at || '')}
+                  </>
+                )}
+              </p>
             </div>
             <button
               type="button"
@@ -436,23 +457,25 @@ export function InvestigationWorkspace() {
                 )}
                 {investigation.current_agent_role && (
                   <span>
-                    Agent role: <strong>{investigation.current_agent_role}</strong>
+                    Active agent role: <strong>{translateRole(investigation.current_agent_role)}</strong>
                   </span>
                 )}
                 {investigation.next_action && (
                   <span>
-                    Next required action: <strong>{investigation.next_action}</strong>
+                    Next required action: <strong>{translateActionType(investigation.next_action)}</strong>
                   </span>
                 )}
-                <span>
-                  Graph revision: <strong>{investigation.graph_revision}</strong>
-                </span>
+                {investigation.graph_revision !== undefined && (
+                  <span>
+                    Graph revision: <strong>{investigation.graph_revision}</strong>
+                  </span>
+                )}
               </>
             )}
             {primaryIncident && !investigation && (
               <>
                 <span>
-                  Location: <strong>{primaryIncident.location_id ?? 'Not recorded'}</strong>
+                  Location: <strong>{primaryIncident.location_id ?? 'Civic location not specified'}</strong>
                 </span>
                 <span>
                   Started: <strong>{displayTime(primaryIncident.started_at)}</strong>
@@ -464,6 +487,25 @@ export function InvestigationWorkspace() {
                 )}
               </>
             )}
+          </div>
+
+          {/* Technical Details for Selected Case */}
+          <div style={{ marginTop: '0.85rem' }}>
+            <TechnicalDetails
+              title="Technical case identifiers & references"
+              items={[
+                ...(investigation ? [
+                  { label: 'Investigation ID', value: <code>{investigation.id}</code>, rawString: investigation.id },
+                  { label: 'Raw Investigation Status', value: <code>{investigation.status}</code>, rawString: investigation.status },
+                  { label: 'Graph Revision', value: <span>{investigation.graph_revision}</span>, rawString: String(investigation.graph_revision) },
+                  ...(investigation.problem_cluster_id ? [{ label: 'Problem Cluster ID', value: <code>{investigation.problem_cluster_id}</code>, rawString: investigation.problem_cluster_id }] : []),
+                ] : []),
+                ...(primaryIncident ? [
+                  { label: 'Primary Incident ID', value: <code>{primaryIncident.id}</code>, rawString: primaryIncident.id },
+                  { label: 'Location Identifier', value: <code>{primaryIncident.location_id || 'null'}</code>, rawString: primaryIncident.location_id || undefined },
+                ] : []),
+              ]}
+            />
           </div>
 
           {!investigation && primaryIncident && (
@@ -505,7 +547,7 @@ export function InvestigationWorkspace() {
       </nav>
 
       {/* Investigation Grid: Left Workspace Panel + Right Graph Panel */}
-      <div className="investigation-grid" id="case-workspace">
+      <div className={`investigation-grid ${isGraphExpanded ? 'graph-expanded' : ''}`} id="case-workspace">
         {/* Left Case Workspace Panel */}
         <section className="panel case-panel" aria-live="polite">
           <div className="panel-heading">
@@ -673,6 +715,7 @@ export function InvestigationWorkspace() {
                   {hypothesesRead.status === 'ready' && (
                     <HypothesesPanel
                       hypothesisPage={hypothesesRead.data}
+                      plan={plansRead.data?.items?.[0] || null}
                       onSelectEvidenceId={setInspectedEvidenceId}
                     />
                   )}
@@ -726,7 +769,7 @@ export function InvestigationWorkspace() {
                   {workOrdersRead.status === 'ready' && (
                     <WorkOrdersPanel
                       investigationId={investigation.id}
-                      planId={investigation.current_plan_id}
+                      planId={investigation.current_plan_id || plansRead.data?.items?.[0]?.plan_id}
                       pendingInspectionIds={investigation.pending_inspection_ids}
                       workOrders={workOrdersRead.data?.items || []}
                       onSelectEvidenceId={setInspectedEvidenceId}
@@ -801,6 +844,8 @@ export function InvestigationWorkspace() {
                     subgraph={graphRead.data}
                     selectedDecisionPathId={selectedDecisionPathId}
                     onSelectEvidenceId={setInspectedEvidenceId}
+                    isExpanded={isGraphExpanded}
+                    onToggleExpand={() => setIsGraphExpanded(!isGraphExpanded)}
                   />
                 ) : graphRead.status === 'loading' ? (
                   <div className="graph-loading-box">

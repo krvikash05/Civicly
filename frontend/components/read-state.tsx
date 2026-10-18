@@ -11,7 +11,7 @@ interface ReadMessageProps {
 }
 
 export function ReadMessage({ state, resourceName = 'resource', retry }: ReadMessageProps) {
-  if (state.status === 'idle') return null;
+  if (state.status === 'ready') return null;
 
   if (state.status === 'loading') {
     return (

@@ -13,8 +13,13 @@ import {
   getMonitoringStatusStyle,
   formatQuoteExcerpt,
 } from '../lib/read/memory';
-import { formatShortHash } from '../lib/read/plans';
 import { displayTime } from '../lib/read/cases';
+import {
+  translateStatus,
+  translateDepartment,
+  formatEntityDisplayName,
+} from '../lib/read/display';
+import { TechnicalDetails, CopyableIdentifier } from './technical-details';
 
 interface MonitoringMemoryPanelProps {
   investigationId: string;
@@ -51,29 +56,14 @@ export function MonitoringMemoryPanel({
     : getMonitoringStatusStyle('OPEN');
 
   return (
-    <div className="monitoring-memory-container" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+    <div className="monitoring-memory-container" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       {/* 1. Core Invariant Callout */}
-      <div
-        className="resolution-distinction-banner"
-        style={{
-          padding: '1rem 1.25rem',
-          borderRadius: '8px',
-          backgroundColor: '#fef7e0',
-          border: '1px solid #f9ab00',
-          color: '#5c3b00',
-          fontSize: '0.85rem',
-          display: 'flex',
-          gap: '0.85rem',
-          alignItems: 'flex-start',
-        }}
-      >
-        <div style={{ fontWeight: 700, fontSize: '1.15rem', lineHeight: 1 }}>⚠</div>
-        <div>
-          <strong style={{ fontSize: '0.95rem' }}>
-            Operational Fact: Work Completion is NOT Verified Resolution
-          </strong>
-          <p style={{ margin: '0.35rem 0 0 0', lineHeight: 1.45 }}>
-            Physical completion of field work orders (clearing a drain inlet, patching subgrade, or running a recovery collection)
+      <div className="resolution-distinction-banner">
+        <div className="banner-icon" aria-hidden="true">⚠</div>
+        <div className="banner-text">
+          <strong>Operational Fact: Work Completion is NOT Verified Resolution</strong>
+          <p>
+            Physical execution of field work orders (clearing a drain inlet, patching road subgrade, or running a recovery collection)
             records work execution only.
             <strong> Verified resolution</strong> requires subsequent post-intervention monitoring across an independent observation opportunity
             (such as a comparable rainfall event or regular collection cycle) confirming no problem recurrence.
@@ -82,398 +72,302 @@ export function MonitoringMemoryPanel({
       </div>
 
       {/* 2. Cluster Monitoring & Verification Policy */}
-      <div
-        className="monitoring-section"
-        style={{
-          padding: '1.25rem',
-          border: '1px solid var(--border)',
-          borderRadius: '8px',
-          backgroundColor: 'var(--surface)',
-        }}
-      >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.75rem' }}>
+      <section className="monitoring-section">
+        <header className="section-header-row">
           <div>
-            <span className="eyebrow" style={{ margin: 0 }}>POST-INTERVENTION MONITORING</span>
-            <h3 style={{ margin: '0.15rem 0', fontSize: '1.1rem' }}>
-              Problem Cluster {problemClusterId || 'General Context'}
+            <span className="card-type-label">POST-INTERVENTION MONITORING</span>
+            <h3 className="section-title">
+              {problemClusterId
+                ? `Recurrence Zone Monitoring`
+                : 'Environmental Recurrence Monitoring'}
             </h3>
             <p className="muted text-sm" style={{ margin: 0 }}>
-              Independent environmental observation tracking recurrence risks.
+              Independent environmental observation tracking recurrence risks across comparable civic conditions.
             </p>
           </div>
           {clusterMonitoring && (
             <span
+              className="badge"
               style={{
-                fontSize: '0.75rem',
-                fontWeight: 600,
-                padding: '3px 10px',
-                borderRadius: '12px',
                 backgroundColor: statusStyle.bg,
                 color: statusStyle.color,
-                border: `1px solid ${statusStyle.border}`,
+                borderColor: statusStyle.border,
               }}
             >
-              {clusterMonitoring.status}
+              {translateStatus(clusterMonitoring.status)}
             </span>
           )}
-        </div>
+        </header>
 
         {clusterMonitoring ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.85rem' }}>
-            <div
-              style={{
-                padding: '0.75rem',
-                borderRadius: '6px',
-                backgroundColor: '#ffffff',
-                border: '1px solid var(--border)',
-              }}
-            >
-              <strong style={{ color: '#202124' }}>Verification Policy:</strong>
-              <p style={{ margin: '0.2rem 0 0 0', color: 'var(--text-secondary)' }}>
+          <div className="monitoring-content-stack">
+            <div className="monitoring-policy-box">
+              <strong className="box-title">Verification Policy:</strong>
+              <p className="policy-text">
                 {clusterMonitoring.verification_policy}
               </p>
             </div>
 
-            <div
-              style={{
-                padding: '0.75rem',
-                borderRadius: '6px',
-                backgroundColor: '#ffffff',
-                border: '1px solid var(--border)',
-              }}
-            >
-              <strong style={{ color: '#202124' }}>Required Verification Checks:</strong>
+            <div className="monitoring-checks-box">
+              <strong className="box-title">Required Verification Checks:</strong>
               {clusterMonitoring.remaining_checks?.length ? (
-                <ul style={{ margin: '0.35rem 0 0 0', paddingLeft: '1.2rem', color: 'var(--text-secondary)' }}>
+                <ul className="checks-list">
                   {clusterMonitoring.remaining_checks.map((check, idx) => (
                     <li key={idx}>{check}</li>
                   ))}
                 </ul>
               ) : (
-                <p className="muted text-sm" style={{ margin: '0.2rem 0 0 0' }}>
-                  All scheduled verification checks completed.
+                <p className="muted text-sm" style={{ margin: '0.25rem 0 0' }}>
+                  All scheduled verification observation cycles have completed.
                 </p>
               )}
             </div>
 
-            {clusterMonitoring.outcome_evidence_ids?.length ? (
-              <div style={{ fontSize: '0.8rem' }}>
-                <strong style={{ color: '#202124' }}>Outcome Evidence Collected: </strong>
-                {clusterMonitoring.outcome_evidence_ids.map((evId) => (
-                  <button
-                    key={evId}
-                    type="button"
-                    onClick={() => onSelectEvidenceId?.(evId)}
-                    style={{
-                      background: '#e6f4ea',
-                      color: '#137333',
-                      border: '1px solid #b7e1cd',
-                      borderRadius: '3px',
-                      padding: '1px 6px',
-                      fontSize: '0.75rem',
-                      cursor: 'pointer',
-                      marginRight: '4px',
-                      fontWeight: 600,
-                    }}
-                  >
-                    {evId} ↗
-                  </button>
-                ))}
+            {clusterMonitoring.outcome_evidence_ids && clusterMonitoring.outcome_evidence_ids.length > 0 && (
+              <div className="outcome-evidence-row">
+                <strong>Outcome Evidence Collected: </strong>
+                <div className="chips-row" style={{ display: 'inline-flex', marginLeft: '0.5rem' }}>
+                  {clusterMonitoring.outcome_evidence_ids.map((evId) => (
+                    <button
+                      key={evId}
+                      type="button"
+                      className="chip chip-evidence"
+                      onClick={() => onSelectEvidenceId?.(evId)}
+                      title={`Inspect evidence ${evId}`}
+                    >
+                      Evidence ({evId.slice(-4)})
+                    </button>
+                  ))}
+                </div>
               </div>
-            ) : null}
+            )}
+
+            <TechnicalDetails
+              title="Technical cluster monitoring details"
+              items={[
+                { label: 'Problem Cluster ID', value: <code>{problemClusterId || clusterMonitoring.problem_cluster_id}</code>, rawString: problemClusterId || clusterMonitoring.problem_cluster_id },
+                { label: 'Raw Monitoring Status', value: <code>{clusterMonitoring.status}</code>, rawString: clusterMonitoring.status },
+                { label: 'Remaining Verification Checks', value: <span>{clusterMonitoring.remaining_checks?.length || 0} checks</span> },
+              ]}
+            />
           </div>
         ) : (
-          <p className="muted text-sm" style={{ margin: '0.5rem 0 0 0' }}>
+          <div className="empty-boxed-notice">
             No dedicated problem cluster monitoring record registered for this case.
-          </p>
+          </div>
         )}
-      </div>
+      </section>
 
       {/* 3. Recurrence & Historical Incident Context */}
-      <div
-        className="recurrence-section"
-        style={{
-          padding: '1.25rem',
-          border: '1px solid var(--border)',
-          borderRadius: '8px',
-          backgroundColor: 'var(--surface)',
-        }}
-      >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+      <section className="recurrence-section">
+        <header className="section-header-row">
           <div>
-            <h3 style={{ margin: '0 0 0.15rem 0', fontSize: '1.05rem' }}>Recurrence Context</h3>
+            <h3 className="section-title">Prior Recurrence History</h3>
             <p className="muted text-sm" style={{ margin: 0 }}>
-              Earlier occurrences linked to this civic defect pattern.
+              Earlier incidents recorded at or adjacent to this civic asset location.
             </p>
           </div>
           <span className="count-pill">{historicalIncidentIds.length}</span>
-        </div>
+        </header>
 
         {historicalIncidentIds.length === 0 ? (
-          <div style={{ padding: '0.75rem', borderRadius: '4px', backgroundColor: '#f8f9fa', fontSize: '0.85rem', color: '#5f6368' }}>
+          <div className="empty-boxed-notice">
             No prior historical incidents registered in this cluster. This is an initial occurrence in the civic ledger.
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <p className="muted text-sm" style={{ margin: 0 }}>
+          <div className="recurrence-content">
+            <p className="muted text-sm" style={{ margin: '0 0 0.5rem' }}>
               Prior incidents linked to this recurrence pattern:
             </p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
+            <div className="chips-row">
               {historicalIncidentIds.map((id) => (
-                <span
-                  key={id}
-                  style={{
-                    padding: '2px 8px',
-                    borderRadius: '4px',
-                    backgroundColor: '#ffffff',
-                    border: '1px solid var(--border)',
-                    fontSize: '0.8rem',
-                    fontFamily: 'monospace',
-                  }}
-                >
-                  {id}
+                <span key={id} className="chip chip-asset">
+                  Reported incident <small>({id.slice(-4)})</small>
                 </span>
               ))}
             </div>
+
+            <div style={{ marginTop: '0.75rem' }}>
+              <TechnicalDetails
+                title="Technical incident list"
+                items={historicalIncidentIds.map((id, idx) => ({
+                  label: `Incident ${idx + 1}`,
+                  value: <code>{id}</code>,
+                  rawString: id,
+                }))}
+              />
+            </div>
           </div>
         )}
-      </div>
+      </section>
 
       {/* 4. Relevant Municipal Procedures & Cited Knowledge */}
-      <div
-        className="procedures-section"
-        style={{
-          padding: '1.25rem',
-          border: '1px solid var(--border)',
-          borderRadius: '8px',
-          backgroundColor: 'var(--surface)',
-        }}
-      >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+      <section className="procedures-section">
+        <header className="section-header-row">
           <div>
-            <h3 style={{ margin: '0 0 0.15rem 0', fontSize: '1.05rem' }}>
+            <h3 className="section-title">
               Sourced Municipal Procedures ({relevantProcedures.length})
             </h3>
             <p className="muted text-sm" style={{ margin: 0 }}>
-              Official standard operating procedures and cited guidelines.
+              Standard operating procedures and cited engineering specifications.
             </p>
           </div>
           <span className="count-pill">{relevantProcedures.length}</span>
-        </div>
+        </header>
 
         {relevantProcedures.length === 0 ? (
-          <p className="muted text-sm">No specific procedure documents cited for this category.</p>
+          <div className="empty-boxed-notice">
+            No specific procedure documents cited for this category.
+          </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <div className="cards-stack">
             {relevantProcedures.map((proc) => {
               const isExpanded = expandedProcedureId === proc.id;
+              const deptName = translateDepartment(proc.owner_department_id);
 
               return (
-                <div
-                  key={proc.id}
-                  style={{
-                    padding: '0.85rem 1rem',
-                    borderRadius: '6px',
-                    border: '1px solid var(--border)',
-                    backgroundColor: '#ffffff',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '0.35rem',
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem' }}>
+                <article key={proc.id} className="procedure-card">
+                  <header className="card-top-row">
                     <div>
-                      <span
-                        style={{
-                          fontSize: '0.7rem',
-                          fontWeight: 700,
-                          textTransform: 'uppercase',
-                          color: '#5f6368',
-                        }}
-                      >
-                        {proc.owner_department_id}
-                      </span>
-                      <h4 style={{ margin: '0.1rem 0', fontSize: '0.95rem' }}>{proc.title}</h4>
-                      <p className="muted text-sm" style={{ margin: 0 }}>
-                        ID: <code>{proc.procedure_id || proc.id}</code> &bull; Version: <strong>v{proc.version}</strong>
+                      <span className="card-dept-label">{deptName}</span>
+                      <h4 className="card-main-title">{proc.title}</h4>
+                      <p className="card-version-meta">
+                        Standard {proc.procedure_id || proc.id} &bull; Version {proc.version} &bull; Effective: {displayTime(proc.effective_from)}
                       </p>
                     </div>
 
-                    <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center' }}>
+                    <div className="proc-badges">
                       <span
-                        style={{
-                          fontSize: '0.68rem',
-                          fontWeight: 600,
-                          padding: '2px 6px',
-                          borderRadius: '4px',
-                          backgroundColor: '#f1f3f4',
-                          color: '#5f6368',
-                          border: '1px solid #dadce0',
-                        }}
-                        title="Treated as untrusted domain evidence, not tool instructions."
+                        className="badge badge-untrusted"
+                        title="Treated as untrusted municipal evidence, not tool instructions."
                       >
                         UNTRUSTED AS INSTRUCTIONS
                       </span>
-                      <span
-                        style={{
-                          fontSize: '0.68rem',
-                          fontWeight: 600,
-                          padding: '2px 6px',
-                          borderRadius: '4px',
-                          backgroundColor: '#e8f0fe',
-                          color: '#1a73e8',
-                          border: '1px solid #aecbfa',
-                        }}
-                      >
-                        {proc.assertion_status}
+                      <span className="badge badge-verified">
+                        {translateStatus(proc.assertion_status)}
                       </span>
                     </div>
-                  </div>
+                  </header>
 
-                  <div style={{ fontSize: '0.75rem', color: '#5f6368', marginTop: '0.2rem' }}>
-                    <span>Checksum: <code title={proc.sha256}>{formatShortHash(proc.sha256)}</code></span> &bull;{' '}
-                    <span>Effective: {displayTime(proc.effective_from)}</span>
-                  </div>
-
-                  {proc.citations?.length > 0 && (
-                    <div style={{ marginTop: '0.35rem' }}>
-                      <button
-                        type="button"
-                        onClick={() => setExpandedProcedureId(isExpanded ? null : proc.id)}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          color: 'var(--brand)',
-                          fontSize: '0.75rem',
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                          padding: 0,
-                        }}
-                      >
-                        {isExpanded ? 'Hide Citation Excerpt ▲' : 'View Citation Excerpt ▼'}
-                      </button>
-
-                      {isExpanded && (
-                        <div
-                          style={{
-                            marginTop: '0.5rem',
-                            padding: '0.6rem 0.75rem',
-                            backgroundColor: '#f8f9fa',
-                            borderRadius: '4px',
-                            border: '1px solid #e8eaed',
-                            fontSize: '0.8rem',
-                          }}
+                  <div className="card-content-body">
+                    {proc.citations?.length > 0 && (
+                      <div className="citation-block">
+                        <button
+                          type="button"
+                          className="toggle-specs-btn"
+                          onClick={() => setExpandedProcedureId(isExpanded ? null : proc.id)}
                         >
-                          <blockquote
-                            style={{
-                              margin: 0,
-                              paddingLeft: '0.5rem',
-                              borderLeft: '2px solid #bdc1c6',
-                              fontStyle: 'italic',
-                              color: '#3c4043',
-                            }}
-                          >
-                            "{formatQuoteExcerpt(proc.citations[0].quote_excerpt, 320)}"
-                          </blockquote>
-                          {proc.citations[0].passage_location && (
-                            <div style={{ marginTop: '0.35rem', fontSize: '0.7rem', color: '#5f6368' }}>
-                              Passage: <code>{proc.citations[0].passage_location}</code>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
+                          {isExpanded ? 'Hide Citation Excerpt ▲' : 'View Citation Excerpt ▼'}
+                        </button>
+
+                        {isExpanded && (
+                          <div className="citation-drawer">
+                            <blockquote className="citation-quote">
+                              "{formatQuoteExcerpt(proc.citations[0].quote_excerpt, 320)}"
+                            </blockquote>
+                            {proc.citations[0].passage_location && (
+                              <p className="passage-meta">
+                                Section reference: <code>{proc.citations[0].passage_location}</code>
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    <TechnicalDetails
+                      title="Technical procedure metadata & checksum"
+                      items={[
+                        { label: 'Procedure ID', value: <code>{proc.procedure_id || proc.id}</code>, rawString: proc.procedure_id || proc.id },
+                        { label: 'Owner Department ID', value: <code>{proc.owner_department_id}</code>, rawString: proc.owner_department_id },
+                        { label: 'Document SHA-256', value: <code className="hash-code">{proc.sha256}</code>, rawString: proc.sha256 },
+                        { label: 'Assertion Status', value: <code>{proc.assertion_status}</code>, rawString: proc.assertion_status },
+                      ]}
+                    />
+                  </div>
+                </article>
               );
             })}
           </div>
         )}
-      </div>
+      </section>
 
       {/* 5. Case Memory & Evaluated Outcomes */}
-      <div
-        className="case-memory-section"
-        style={{
-          padding: '1.25rem',
-          border: '1px solid var(--border)',
-          borderRadius: '8px',
-          backgroundColor: 'var(--surface)',
-        }}
-      >
-        <h3 style={{ margin: '0 0 0.15rem 0', fontSize: '1.05rem' }}>Case Memory &amp; Outcomes</h3>
-        <p className="muted text-sm" style={{ margin: '0 0 0.75rem 0' }}>
-          Long-term learning and closed resolution assessments.
-        </p>
+      <section className="case-memory-section">
+        <header className="section-header-row">
+          <div>
+            <h3 className="section-title">Case Memory &amp; Outcomes</h3>
+            <p className="muted text-sm" style={{ margin: 0 }}>
+              Permanent learning records compiled upon verified civic resolution.
+            </p>
+          </div>
+        </header>
 
         {memory ? (
-          <div
-            style={{
-              padding: '0.85rem 1rem',
-              borderRadius: '6px',
-              backgroundColor: '#ffffff',
-              border: '1px solid var(--border)',
-              fontSize: '0.85rem',
-            }}
-          >
-            <div><strong>Memory Context ID:</strong> <code>{memory.id}</code></div>
-            <div><strong>Type:</strong> {memory.memory_type}</div>
-            <p style={{ margin: '0.25rem 0 0 0', color: 'var(--text-secondary)' }}>{memory.summary}</p>
+          <div className="memory-card">
+            <h4 className="memory-type-title">Case Resolution Memory Record</h4>
+            <p className="memory-summary-text">{memory.summary}</p>
             {memory.gaps?.length ? (
-              <div style={{ marginTop: '0.35rem', fontSize: '0.8rem', color: '#5f6368' }}>
-                <strong>Evidence Gaps:</strong> {memory.gaps.join(', ')}
+              <div className="memory-gaps-box">
+                <strong>Noted Knowledge Gaps:</strong> {memory.gaps.join(', ')}
               </div>
             ) : null}
+
+            <TechnicalDetails
+              title="Technical memory references"
+              items={[
+                { label: 'Memory ID', value: <code>{memory.id}</code>, rawString: memory.id },
+                { label: 'Memory Type', value: <code>{memory.memory_type}</code>, rawString: memory.memory_type },
+              ]}
+            />
           </div>
         ) : (
-          <div
-            style={{
-              padding: '1rem',
-              borderRadius: '6px',
-              backgroundColor: '#f8f9fa',
-              border: '1px dashed #dadce0',
-              textAlign: 'center',
-            }}
-          >
-            <p style={{ margin: '0 0 0.25rem 0', fontWeight: 600, fontSize: '0.9rem', color: '#3c4043' }}>
+          <div className="empty-boxed-notice">
+            <strong style={{ display: 'block', marginBottom: '0.25rem' }}>
               Case Memory Pending Verified Closure
-            </p>
-            <p className="muted text-sm" style={{ margin: 0, maxWidth: '500px', marginLeft: 'auto', marginRight: 'auto' }}>
-              Permanent case memory records are compiled upon final outcome evaluation and verified case closure.
-              While this case remains in planning or active execution, decisions are grounded in active cluster monitoring and cited standard procedures.
-            </p>
+            </strong>
+            Permanent case memory records are compiled upon final outcome evaluation and verified case closure.
+            While this case remains in active execution or monitoring, operational reasoning is grounded in active cluster monitoring and cited standard operating procedures.
           </div>
         )}
 
         {outcomes.length > 0 && (
-          <div style={{ marginTop: '1rem' }}>
-            <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.95rem' }}>Evaluated Outcomes ({outcomes.length})</h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          <div className="outcomes-block" style={{ marginTop: '1.25rem' }}>
+            <h4 className="outcomes-title">Evaluated Resolution Outcomes ({outcomes.length})</h4>
+            <div className="cards-stack">
               {outcomes.map((out) => (
-                <div
-                  key={out.id}
-                  style={{
-                    padding: '0.65rem 0.85rem',
-                    borderRadius: '4px',
-                    border: '1px solid var(--border)',
-                    backgroundColor: '#ffffff',
-                    fontSize: '0.8rem',
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <strong>Outcome {out.id}</strong>
-                    <span style={{ fontWeight: 600, color: out.case_closed ? '#137333' : '#b06000' }}>
+                <div key={out.id} className="outcome-card">
+                  <div className="outcome-top">
+                    <strong>Resolution Evaluation</strong>
+                    <span
+                      className={`badge ${
+                        out.case_closed ? 'badge-verified' : 'badge-candidate'
+                      }`}
+                    >
                       {out.case_closed ? 'CASE CLOSED' : 'MONITORING CONTINUES'}
                     </span>
                   </div>
-                  <div>Result: {out.result}</div>
-                  <div>Evaluated: {displayTime(out.evaluated_at)}</div>
+                  <p className="outcome-result-text">
+                    <strong>Result:</strong> {translateStatus(out.result)}
+                  </p>
+                  <p className="outcome-date-meta">
+                    Evaluated: {displayTime(out.evaluated_at)}
+                  </p>
+
+                  <TechnicalDetails
+                    title="Technical outcome references"
+                    items={[
+                      { label: 'Outcome ID', value: <code>{out.id}</code>, rawString: out.id },
+                      { label: 'Raw Result', value: <code>{out.result}</code>, rawString: out.result },
+                      { label: 'Case Closed', value: <span>{out.case_closed ? 'True' : 'False'}</span> },
+                    ]}
+                  />
                 </div>
               ))}
             </div>
           </div>
         )}
-      </div>
+      </section>
     </div>
   );
 }

@@ -3,6 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import type { WorkOrderDTO, InspectionDTO } from '../lib/generated/models';
 import { getStatusBadgeStyle } from '../lib/read/plans';
+import {
+  translateStatus,
+  translateActionType,
+  translateDepartment,
+  translateRole,
+  formatEntityDisplayName,
+} from '../lib/read/display';
+import { TechnicalDetails, CopyableIdentifier } from './technical-details';
 import { useDemo } from './demo-connection';
 
 interface WorkOrdersPanelProps {
@@ -46,7 +54,7 @@ export function WorkOrdersPanel({
             { params: { id } }
           );
           if (res.data) results.push(res.data);
-        } catch (e) {
+        } catch {
           // Ignore individual inspection fetch errors
         }
       }
@@ -63,249 +71,208 @@ export function WorkOrdersPanel({
     };
   }, [pendingInspectionIds.join(','), demo.status]);
 
-  // Filter work orders that belong to the current plan if planId is provided
   const relevantWorkOrders = planId
     ? workOrders.filter((wo) => wo.plan_id === planId)
     : workOrders;
 
   return (
-    <div className="work-orders-container" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+    <div className="work-orders-container" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       {/* 1. Critical Invariant Callout */}
-      <div
-        className="resolution-distinction-banner"
-        style={{
-          padding: '0.85rem 1rem',
-          borderRadius: '6px',
-          backgroundColor: '#fef7e0',
-          border: '1px solid #f9ab00',
-          color: '#5c3b00',
-          fontSize: '0.85rem',
-          display: 'flex',
-          gap: '0.75rem',
-          alignItems: 'flex-start',
-        }}
-      >
-        <div style={{ fontWeight: 700, fontSize: '1rem', lineHeight: 1 }}>⚠</div>
-        <div>
+      <div className="resolution-distinction-banner">
+        <div className="banner-icon" aria-hidden="true">⚠</div>
+        <div className="banner-text">
           <strong>Operational Distinction: Work Completion is NOT Verified Resolution</strong>
-          <p style={{ margin: '0.25rem 0 0 0', lineHeight: 1.4 }}>
-            Physical completion of a work order records only that department crews performed the designated action.
-            Long-term resolution cannot be assumed until independent post-intervention monitoring confirms the problem does not recur under comparable civic conditions (verified in Stage 6).
+          <p>
+            Physical execution of a work order records that field crews completed their assigned tasks.
+            Civic resolution cannot be assumed until subsequent post-intervention monitoring confirms the problem does not recur under comparable civic conditions (verified in Stage 6).
           </p>
         </div>
       </div>
 
       {/* 2. Field Inspections Section */}
-      <div
-        className="inspections-section"
-        style={{
-          padding: '1.25rem',
-          border: '1px solid var(--border)',
-          borderRadius: '8px',
-          backgroundColor: 'var(--surface)',
-        }}
-      >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+      <section className="inspections-section">
+        <div className="section-header-row">
           <div>
-            <h3 style={{ margin: '0 0 0.25rem 0', fontSize: '1.05rem' }}>Field Inspections</h3>
+            <h3 className="section-title">Field Inspections</h3>
             <p className="muted text-sm" style={{ margin: 0 }}>
-              Physical verifications requested to establish or refute competing hypotheses.
+              Physical on-site checks requested to verify or refute diagnostic hypotheses.
             </p>
           </div>
           <span className="count-pill">{pendingInspectionIds.length}</span>
         </div>
 
         {loadingInspections ? (
-          <p className="muted text-sm">Loading field inspection records...</p>
+          <p className="muted text-sm" style={{ padding: '0.75rem' }}>Loading field inspection records…</p>
         ) : inspections.length === 0 ? (
-          <div style={{ padding: '0.75rem', borderRadius: '4px', backgroundColor: '#f8f9fa', fontSize: '0.85rem', color: '#5f6368' }}>
+          <div className="empty-boxed-notice">
             No pending field inspections currently registered for this case.
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+          <div className="cards-stack">
             {inspections.map((ins) => {
               const statusStyle = getStatusBadgeStyle(ins.status);
+              const deptName = translateDepartment(ins.department_id);
 
               return (
-                <div
-                  key={ins.id}
-                  style={{
-                    padding: '0.75rem 1rem',
-                    borderRadius: '6px',
-                    border: '1px solid var(--border)',
-                    backgroundColor: '#ffffff',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '0.35rem',
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <strong>{ins.id}</strong>
+                <article key={ins.id} className="inspection-card">
+                  <header className="card-top-row">
+                    <div>
+                      <span className="card-type-label">FIELD INSPECTION</span>
+                      <h4 className="card-main-title">{deptName}</h4>
+                    </div>
                     <span
+                      className="badge"
                       style={{
-                        fontSize: '0.7rem',
-                        fontWeight: 600,
-                        padding: '2px 8px',
-                        borderRadius: '10px',
                         backgroundColor: statusStyle.bg,
                         color: statusStyle.color,
-                        border: `1px solid ${statusStyle.border}`,
+                        borderColor: statusStyle.border,
                       }}
                     >
-                      {ins.status}
+                      {translateStatus(ins.status)}
                     </span>
-                  </div>
+                  </header>
 
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                    <span>Department: <strong>{ins.department_id}</strong></span> &bull;{' '}
-                    <span>Target Assets: <code>{ins.asset_ids.join(', ') || 'General'}</code></span>
-                  </div>
+                  <div className="card-content-body">
+                    {ins.asset_ids && ins.asset_ids.length > 0 && (
+                      <div className="prop-line">
+                        <span className="prop-name">Target Assets:</span>
+                        <div className="chips-row">
+                          {ins.asset_ids.map((aid) => (
+                            <span key={aid} className="chip chip-asset">
+                              {formatEntityDisplayName({ id: aid, kind: 'InfrastructureAsset' }).primary}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
-                  {ins.evidence_ids?.length > 0 && (
-                    <div style={{ marginTop: '0.25rem', fontSize: '0.8rem' }}>
-                      <span className="muted">Collected Evidence: </span>
-                      {ins.evidence_ids.map((evId) => (
-                        <button
-                          key={evId}
-                          type="button"
-                          onClick={() => onSelectEvidenceId?.(evId)}
-                          style={{
-                            background: '#e6f4ea',
-                            color: '#137333',
-                            border: '1px solid #b7e1cd',
-                            borderRadius: '3px',
-                            padding: '1px 6px',
-                            fontSize: '0.75rem',
-                            cursor: 'pointer',
-                            marginRight: '4px',
-                            fontWeight: 600,
-                          }}
-                        >
-                          {evId} ↗
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                    {(ins as any).findings && (
+                      <div className="findings-summary-box">
+                        <span className="box-label">Inspection Findings:</span>
+                        <p className="findings-text">{(ins as any).findings}</p>
+                      </div>
+                    )}
+
+                    {ins.evidence_ids && ins.evidence_ids.length > 0 && (
+                      <div className="prop-line">
+                        <span className="prop-name">Linked Evidence:</span>
+                        <div className="chips-row">
+                          {ins.evidence_ids.map((eid) => (
+                            <button
+                              key={eid}
+                              type="button"
+                              className="chip chip-evidence"
+                              onClick={() => onSelectEvidenceId?.(eid)}
+                            >
+                              Evidence ({eid.slice(-4)})
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <TechnicalDetails
+                      title="Technical inspection references"
+                      items={[
+                        { label: 'Inspection ID', value: <code>{ins.id}</code>, rawString: ins.id },
+                        { label: 'Department ID', value: <code>{ins.department_id}</code>, rawString: ins.department_id },
+                        { label: 'Raw Status', value: <code>{ins.status}</code>, rawString: ins.status },
+                      ]}
+                    />
+                  </div>
+                </article>
               );
             })}
           </div>
         )}
-      </div>
+      </section>
 
       {/* 3. Authorized Work Orders Section */}
-      <div
-        className="work-orders-section"
-        style={{
-          padding: '1.25rem',
-          border: '1px solid var(--border)',
-          borderRadius: '8px',
-          backgroundColor: 'var(--surface)',
-        }}
-      >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+      <section className="work-orders-section">
+        <div className="section-header-row">
           <div>
-            <h3 style={{ margin: '0 0 0.25rem 0', fontSize: '1.05rem' }}>Dispatched Work Orders</h3>
+            <h3 className="section-title">Authorized Work Orders</h3>
             <p className="muted text-sm" style={{ margin: 0 }}>
-              Physical remediation operations authorized by municipal approval.
+              Physical interventions authorized under approved remediation plans.
             </p>
           </div>
           <span className="count-pill">{relevantWorkOrders.length}</span>
         </div>
 
         {relevantWorkOrders.length === 0 ? (
-          <div
-            style={{
-              padding: '1.25rem',
-              borderRadius: '6px',
-              backgroundColor: '#f8f9fa',
-              border: '1px dashed #dadce0',
-              textAlign: 'center',
-            }}
-          >
-            <p style={{ margin: '0 0 0.35rem 0', fontWeight: 600, fontSize: '0.9rem', color: '#3c4043' }}>
-              No Work Orders Dispatched Yet
-            </p>
-            <p className="muted text-sm" style={{ margin: 0, maxWidth: '520px', marginLeft: 'auto', marginRight: 'auto' }}>
-              Per backend creation guards, work orders cannot exist in draft state. They are generated only after formal approval of the plan by an authorized municipal approver (Role: <code>APPROVER</code>).
-            </p>
+          <div className="empty-boxed-notice">
+            No work orders deployed yet. Work orders are generated only after an action plan receives formal municipal approval.
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <div className="cards-stack">
             {relevantWorkOrders.map((wo) => {
               const statusStyle = getStatusBadgeStyle(wo.status);
+              const actionTitle = translateActionType((wo as any).action_type || wo.task_id);
+              const deptName = translateDepartment(wo.department_id);
+              const assigneeName = translateRole(wo.assignee_id || (wo as any).assigned_to);
 
               return (
-                <div
-                  key={wo.id}
-                  style={{
-                    padding: '0.85rem 1rem',
-                    borderRadius: '6px',
-                    border: '1px solid var(--border)',
-                    backgroundColor: '#ffffff',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '0.35rem',
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <article key={wo.id} className="work-order-card">
+                  <header className="card-top-row">
                     <div>
-                      <span className="eyebrow" style={{ margin: 0 }}>WORK ORDER</span>
-                      <h4 style={{ margin: '0.1rem 0', fontSize: '0.95rem' }}>{wo.id}</h4>
+                      <span className="card-type-label">WORK ORDER</span>
+                      <h4 className="card-main-title">{actionTitle}</h4>
+                      <p className="card-subtitle-dept">{deptName}</p>
                     </div>
                     <span
+                      className="badge"
                       style={{
-                        fontSize: '0.7rem',
-                        fontWeight: 600,
-                        padding: '2px 8px',
-                        borderRadius: '10px',
                         backgroundColor: statusStyle.bg,
                         color: statusStyle.color,
-                        border: `1px solid ${statusStyle.border}`,
+                        borderColor: statusStyle.border,
                       }}
                     >
-                      {wo.status}
+                      {translateStatus(wo.status)}
                     </span>
-                  </div>
+                  </header>
 
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                    <span>Task: <code>{wo.task_id}</code></span> &bull;{' '}
-                    <span>Department: <strong>{wo.department_id}</strong></span> &bull;{' '}
-                    <span>Assignee: <strong>{wo.assignee_id}</strong></span>
-                  </div>
-
-                  <div style={{ fontSize: '0.75rem', color: '#5f6368', marginTop: '0.2rem' }}>
-                    <span>Authorized By: <strong>{wo.authorized_by}</strong></span> &bull;{' '}
-                    <span>Execution Mode: <em>{wo.execution_mode || 'SIMULATED'}</em></span> &bull;{' '}
-                    <span>
-                      Resolution Verified:{' '}
-                      <strong style={{ color: wo.resolution_verified ? '#137333' : '#b06000' }}>
-                        {wo.resolution_verified ? 'YES' : 'PENDING MONITORING'}
-                      </strong>
-                    </span>
-                  </div>
-
-                  {wo.status === 'BLOCKED' && (
-                    <div
-                      style={{
-                        marginTop: '0.5rem',
-                        padding: '0.5rem',
-                        borderRadius: '4px',
-                        backgroundColor: '#fce8e6',
-                        color: '#c5221f',
-                        fontSize: '0.75rem',
-                        border: '1px solid #f5c2c7',
-                      }}
-                    >
-                      <strong>Execution Blocked: </strong> Field crews reported an impediment preventing task completion.
+                  <div className="card-content-body">
+                    <div className="prop-line">
+                      <span className="prop-name">Assigned Crew:</span>
+                      <span className="prop-val font-semibold">{assigneeName}</span>
                     </div>
-                  )}
-                </div>
+
+                    {(wo as any).target_ids && (wo as any).target_ids.length > 0 && (
+                      <div className="prop-line">
+                        <span className="prop-name">Target Assets:</span>
+                        <div className="chips-row">
+                          {((wo as any).target_ids as string[]).map((tid) => (
+                            <span key={tid} className="chip chip-asset">
+                              {formatEntityDisplayName({ id: tid, kind: 'InfrastructureAsset' }).primary}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {(wo as any).execution_blocker && (
+                      <div className="blocker-alert" role="alert">
+                        <strong>Deployment Blocker:</strong> {(wo as any).execution_blocker}
+                      </div>
+                    )}
+
+                    <TechnicalDetails
+                      title="Technical work order details"
+                      items={[
+                        { label: 'Work Order ID', value: <code>{wo.id}</code>, rawString: wo.id },
+                        { label: 'Plan ID', value: <code>{wo.plan_id}</code>, rawString: wo.plan_id },
+                        ...((wo as any).plan_version ? [{ label: 'Plan Version', value: <span>Version {(wo as any).plan_version}</span> }] : []),
+                        { label: 'Task ID', value: <code>{wo.task_id}</code>, rawString: wo.task_id },
+                        { label: 'Raw Status', value: <code>{wo.status}</code>, rawString: wo.status },
+                      ]}
+                    />
+                  </div>
+                </article>
               );
             })}
           </div>
         )}
-      </div>
+      </section>
     </div>
   );
 }

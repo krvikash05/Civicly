@@ -8,7 +8,11 @@ import type {
   HypothesisPage,
   HypothesisDTO,
   EvidenceDTO,
-} from '../generated/models';
+} from '../generated/models.ts';
+import {
+  formatEntityDisplayName,
+  translateStatus,
+} from './display.ts';
 
 export interface CanvasNode {
   id: string;
@@ -21,6 +25,8 @@ export interface CanvasNode {
     originalId: string;
     kind: string;
     display_label: string;
+    readableName: string;
+    shortId: string;
     status?: string | null;
     source_kind?: string | null;
     evidence_ids: string[];
@@ -32,6 +38,7 @@ export interface CanvasNode {
 export interface CanvasLink {
   id: string;
   relationship: string;
+  readableRelationship: string;
   color: string;
   source: string;
   target: string;
@@ -64,6 +71,7 @@ export interface GraphDisplayStats {
   graphRevision: number;
   asOf: string;
   reservations: string[];
+  whatThisGraphShows: string;
 }
 
 export interface DecisionTraceItem {
@@ -122,6 +130,36 @@ export function getLinkColor(status: string, isDecisionPath: boolean): string {
   return EDGE_STATUS_COLORS.default;
 }
 
+export function translateRelationshipType(relType: string): string {
+  switch (relType.toUpperCase()) {
+    case 'DRAINS_TO':
+      return 'Drains into';
+    case 'MAINTAINED_BY':
+      return 'Maintained by';
+    case 'UNDERLIES':
+      return 'Underlies road';
+    case 'OBSERVED_AT':
+      return 'Observed at';
+    case 'PART_OF':
+      return 'Part of cluster';
+    case 'EVALUATES':
+      return 'Evaluates cause';
+    case 'HAS_OUTCOME':
+      return 'Has outcome';
+    case 'HAS_EVIDENCE':
+      return 'Supported by evidence';
+    case 'AFFECTS':
+      return 'Affects asset';
+    case 'CONNECTED_TO':
+      return 'Connected to';
+    default:
+      return relType
+        .split('_')
+        .map((w) => w.charAt(0) + w.slice(1).toLowerCase())
+        .join(' ');
+  }
+}
+
 export function mapGraphSubgraphToCanvas(
   subgraph: GraphSubgraphDTO,
   selectedDecisionPathId?: string | null,
@@ -140,23 +178,36 @@ export function mapGraphSubgraphToCanvas(
     }
   }
 
+  // Count entities by kind for grounded explanation
+  const kindCounts: Record<string, number> = {};
+
   const nodes: CanvasNode[] = subgraph.nodes.map((node: GraphNode) => {
     const isDecisionPath = decisionPathNodeIds.has(node.id);
     const color = isDecisionPath
       ? '#2563EB'
       : getNodeColor(node.kind, node.labels);
 
+    const nameInfo = formatEntityDisplayName({
+      id: node.id,
+      kind: node.kind,
+      displayLabel: node.display_label,
+    });
+
+    kindCounts[nameInfo.kindLabel] = (kindCounts[nameInfo.kindLabel] || 0) + 1;
+
     return {
       id: node.id,
       labels: node.labels || [],
       color,
       visible: true,
-      caption: node.display_label || node.id,
-      size: isDecisionPath ? 12 : 9,
+      caption: nameInfo.primary,
+      size: isDecisionPath ? 13 : 10,
       data: {
         originalId: node.id,
         kind: node.kind,
         display_label: node.display_label,
+        readableName: nameInfo.primary,
+        shortId: nameInfo.shortId,
         status: node.status ?? null,
         source_kind: node.source_kind ?? null,
         evidence_ids: node.evidence_ids || [],
@@ -182,6 +233,7 @@ export function mapGraphSubgraphToCanvas(
     return {
       id: edge.id,
       relationship: edge.type,
+      readableRelationship: translateRelationshipType(edge.type),
       color: getLinkColor(edge.verification_status, isDecisionPath),
       source: edge.source,
       target: edge.target,
@@ -199,6 +251,19 @@ export function mapGraphSubgraphToCanvas(
     };
   });
 
+  // Build grounded "What this graph shows" narrative
+  const kindSummary = Object.entries(kindCounts)
+    .map(([kind, count]) => `${count} ${kind.toLowerCase()}${count > 1 ? 's' : ''}`)
+    .join(', ');
+
+  let whatThisGraphShows = `This view displays ${nodes.length} connected entities${kindSummary ? ` (${kindSummary})` : ''} and ${links.length} infrastructure relationships in FalkorDB.`;
+  if (verifiedCount > 0 || candidateCount > 0) {
+    whatThisGraphShows += ` ${verifiedCount} connection${verifiedCount !== 1 ? 's are' : ' is'} verified by municipal engineering records, and ${candidateCount} connection${candidateCount !== 1 ? 's remain' : ' remains'} candidate hypotheses.`;
+  }
+  if (decisionPathCount > 0) {
+    whatThisGraphShows += ` ${decisionPathCount} relationship${decisionPathCount !== 1 ? 's are' : ' is'} highlighted as active decision paths influencing agent actions.`;
+  }
+
   const stats: GraphDisplayStats = {
     totalNodes: nodes.length,
     totalEdges: links.length,
@@ -210,6 +275,7 @@ export function mapGraphSubgraphToCanvas(
     graphRevision: subgraph.graph_revision,
     asOf: subgraph.as_of,
     reservations: subgraph.reservations || [],
+    whatThisGraphShows,
   };
 
   return {
@@ -226,7 +292,6 @@ export function extractDecisionTraces(
     return [];
   }
 
-  // Pre-index subgraph decision paths for quick lookup
   const pathMap = new Map<string, DecisionPath>();
   if (subgraph?.decision_paths) {
     for (const dp of subgraph.decision_paths) {
@@ -235,7 +300,6 @@ export function extractDecisionTraces(
   }
 
   return tracePage.items.map((event: AgentTraceEvent) => {
-    // 1. Question Asked: establish agent intent
     let question = event.rationale_summary || '';
     if (!question) {
       if (event.tool_name) {
@@ -245,7 +309,6 @@ export function extractDecisionTraces(
       }
     }
 
-    // 2. Graph Evidence: collect nodes, edges, and evidence returned
     const nodeIds: string[] = [];
     const edgeIds: string[] = [];
     const evidenceIds: string[] = [...(event.evidence_ids || [])];
@@ -272,11 +335,9 @@ export function extractDecisionTraces(
       evidenceSummary = `No direct graph path entities recorded for this step.`;
     }
 
-    // 3. Recorded Decision
     const action = event.tool_name ? `Execute ${event.tool_name}` : event.kind;
     const rationale = event.rationale_summary || 'No rationale recorded by agent.';
 
-    // Influence Category & Attribution Guarantee
     let influenceCategory: 'MODEL_SELECTED_PATH' | 'CONTEXTUAL_GRAPH_QUERY' | 'UNESTABLISHED_INFLUENCE' = 'UNESTABLISHED_INFLUENCE';
     let influenceExplanation = 'Graph query executed as contextual background; no causal influence trace established for this step.';
 
@@ -285,7 +346,7 @@ export function extractDecisionTraces(
       influenceExplanation = `Decision explicitly bound to FalkorDB path(s): ${event.graph_path_ids.join(', ')}.`;
     } else if (event.tool_name && event.tool_name.startsWith('civicly::') && event.status === 'SUCCESS') {
       influenceCategory = 'CONTEXTUAL_GRAPH_QUERY';
-      influenceExplanation = 'Contextual graph read retrieved knowledge from FalkorDB; agent reasoned over returned evidence without recording a isolated decision path.';
+      influenceExplanation = 'Contextual graph read retrieved knowledge from FalkorDB; agent reasoned over returned evidence without recording an isolated decision path.';
     }
 
     return {

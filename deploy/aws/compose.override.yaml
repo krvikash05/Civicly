@@ -1,0 +1,8 @@
+# Combine with the repository's compose.yaml; database ports remain loopback-only.
+services:
+  falkordb:
+    restart: unless-stopped
+    environment:
+      BROWSER: "0"
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep -qx PONG && redis-cli --raw COMMAND INFO GRAPH.RO_QUERY | grep -qi graph.ro_query"]

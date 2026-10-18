@@ -71,3 +71,23 @@ test('finishing old logout cannot erase a new connection',async()=>{
  await c.open();const closing=c.close();await c.open();end(ok({status:'LOGGED_OUT'}));await closing;
  assert.equal((await c.client.request('GET /api/v1/auth/me')).data.id,'OP-ANALYST');
 });
+
+test('hosted proxy permits only the configured HTTPS host and origin',async()=>{
+ const publicOrigin='https://civicly.example.com';
+ const request=(host:string,origin?:string,extra:Record<string,string>={})=>new Request('http://localhost:3100/api/v1/auth/me',{headers:{Host:host,...(origin?{Origin:origin}:{}),...extra}});
+ const fetcher:typeof fetch=async()=>ok(account);
+ assert.equal((await proxy(request('civicly.example.com',publicOrigin),'http://localhost:8011',fetcher,publicOrigin)).status,200);
+ assert.equal((await proxy(request('civicly.example.com'),'http://localhost:8011',fetcher,publicOrigin)).status,200);
+ for(const [host,origin] of [['other.example',publicOrigin],['civicly.example.com','https://other.example'],['civicly.example.com','http://civicly.example.com']])assert.equal((await proxy(request(host,origin),'http://localhost:8011',noFetch,publicOrigin)).status,403);
+ assert.equal((await proxy(request('other.example',publicOrigin,{'X-Forwarded-Host':'civicly.example.com'}),'http://localhost:8011',noFetch,publicOrigin)).status,403);
+ assert.equal((await proxy(request('civicly.example.com',publicOrigin,{'Sec-Fetch-Site':'cross-site'}),'http://localhost:8011',noFetch,publicOrigin)).status,403);
+});
+test('hosted sessions require an exact browser Origin and HTTPS configuration',async()=>{
+ const publicOrigin='https://civicly.example.com';
+ const request=(origin?:string)=>new Request('http://localhost:3100/api/demo-session',{method:'POST',headers:{Host:'civicly.example.com',...(origin?{Origin:origin}:{})}});
+ for(const origin of [undefined,'https://other.example'])assert.equal((await demoSession(request(origin),{publicOrigin},noFetch)).status,403);
+ for(const configured of ['http://civicly.example.com','https://u:p@civicly.example.com','https://civicly.example.com/path','https://civicly.example.com?x=1'])assert.equal((await demoSession(request(publicOrigin),{publicOrigin:configured},noFetch)).status,403);
+ const response=await demoSession(request(publicOrigin),{publicOrigin,origin:'http://localhost:8011',password:'PRIVATE'},async()=>ok(session));
+ assert.equal(response.status,200);
+ assert(!(await response.text()).includes('PRIVATE'));
+});

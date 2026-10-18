@@ -12,7 +12,15 @@ export function backendOrigin(value:string|undefined):string|null {
     return url.origin;
   } catch{return null;}
 }
-function sameOrigin(request:Request) {
+function sameOrigin(request:Request,publicOrigin?:string) {
+  if(publicOrigin){
+    let expected:URL;
+    try{expected=new URL(publicOrigin);}catch{return false;}
+    if(expected.protocol!=='https:'||expected.username||expected.password||expected.pathname!=='/'||expected.search||expected.hash)return false;
+    const host=request.headers.get('Host')??new URL(request.url).host;
+    const origin=request.headers.get('Origin');
+    return host===expected.host && (origin===expected.origin || (!origin&&request.method==='GET')) && !['cross-site','same-site'].includes(request.headers.get('Sec-Fetch-Site')??'');
+  }
   const internal=new URL(request.url);
   // Next can normalize request.url to localhost while the browser used 127.0.0.1.
   // Use the original Host, never a caller-supplied forwarded-host selector.
@@ -24,8 +32,8 @@ function sameOrigin(request:Request) {
   return (!origin||origin===external.origin) && !['cross-site','same-site'].includes(request.headers.get('Sec-Fetch-Site')??'');
 }
 
-export async function proxy(request:Request,configuredOrigin:string|undefined,fetcher:typeof fetch=fetch):Promise<Response> {
-  if(!sameOrigin(request))return failure('PERMISSION_DENIED',403);
+export async function proxy(request:Request,configuredOrigin:string|undefined,fetcher:typeof fetch=fetch,publicOrigin?:string):Promise<Response> {
+  if(!sameOrigin(request,publicOrigin))return failure('PERMISSION_DENIED',403);
   const url=new URL(request.url);
   const route=Object.values(routes).find(route=>route.method===request.method && new RegExp('^'+route.path.replace(/\{[^}]+\}/g,'[^/]+')+'$').test(url.pathname));
   if(!route)return failure('NOT_FOUND',404);
@@ -65,8 +73,8 @@ export async function proxy(request:Request,configuredOrigin:string|undefined,fe
     return failure(request.method==='POST'&&route.idempotency_key?'RECOVERY_REQUIRED':'EXTERNAL_UNAVAILABLE',request.method==='POST'&&route.idempotency_key?409:503);
   }
 }
-export async function demoSession(request:Request,config:{origin?:string;password?:string;operator?:string},fetcher:typeof fetch=fetch):Promise<Response> {
-  if(request.method!=='POST'||!sameOrigin(request))return failure('PERMISSION_DENIED',403);
+export async function demoSession(request:Request,config:{origin?:string;password?:string;operator?:string;publicOrigin?:string},fetcher:typeof fetch=fetch):Promise<Response> {
+  if(request.method!=='POST'||!sameOrigin(request,config.publicOrigin))return failure('PERMISSION_DENIED',403);
   // No credentials, roles or target selectors are accepted from the browser.
   if(new URL(request.url).search||request.headers.get('Content-Length') && request.headers.get('Content-Length')!=='0')return failure('VALIDATION_ERROR',422);
   if((await request.text()).length)return failure('VALIDATION_ERROR',422);

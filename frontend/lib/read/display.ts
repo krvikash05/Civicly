@@ -31,6 +31,12 @@ export const STATUS_TRANSLATIONS: Record<string, string> = {
   BLOCKED: 'Blocked by prerequisite',
   FAILED: 'Failed',
 
+  // Technical Observation & Test Statuses
+  STRUCTURAL_TEST_FAILED: 'Structural test failed',
+  SUBGRADE_FAILURE_OBSERVED: 'Failure observed in the ground beneath the road',
+  PRESSURE_TEST_NORMAL: 'Pressure test was normal',
+  FLOW_RESTRICTED: 'Flow restricted',
+
   // Hypothesis Assessments (strictly separated from plan coverage)
   SUPPORTED: 'Supported by verified evidence',
   CONTRADICTED: 'Contradicted by field inspection',
@@ -47,7 +53,7 @@ export const STATUS_TRANSLATIONS: Record<string, string> = {
 };
 
 export function translateStatus(status?: string | null): string {
-  if (!status) return 'Status unavailable';
+  if (!status) return 'Not recorded';
   const upper = status.trim().toUpperCase();
   if (STATUS_TRANSLATIONS[upper]) {
     return STATUS_TRANSLATIONS[upper];
@@ -77,6 +83,18 @@ export const CAUSE_CODE_TRANSLATIONS: Record<string, CauseCodeTranslation> = {
   PRESSURE_TEST_NORMAL: {
     title: 'Pressure test was normal',
     explanation: 'Utility water pressure met standard operating range at time of testing.',
+  },
+  'HYP-SUBGRADE': {
+    title: 'Subgrade Failure',
+    explanation: 'Subgrade refers to the ground and foundational soil layers directly supporting the road pavement.',
+  },
+  'HYP-DRAIN-CLOG': {
+    title: 'Drainage Inflow Blockage',
+    explanation: 'Accumulation of sediment, silt, and urban debris obstructing inlet grates.',
+  },
+  'HYP-WATER-MAIN-LEAK': {
+    title: 'Pressurized Water Main Leak',
+    explanation: 'Subsurface leak from pressurized water utility pipe undermining road foundation.',
   },
   DRAIN_BLOCKED: {
     title: 'Drainage inlet obstructed',
@@ -143,13 +161,20 @@ export function translateCauseCode(code?: string | null): CauseCodeTranslation {
   if (CAUSE_CODE_TRANSLATIONS[upper]) {
     return CAUSE_CODE_TRANSLATIONS[upper];
   }
-  const title = upper
-    .split('_')
-    .map((w) => w.charAt(0) + w.slice(1).toLowerCase())
-    .join(' ');
+  // Check if code contains subgrade
+  if (upper.includes('SUBGRADE')) {
+    return CAUSE_CODE_TRANSLATIONS['HYP-SUBGRADE'];
+  }
+  if (upper.includes('DRAIN') && (upper.includes('CLOG') || upper.includes('BLOCK'))) {
+    return CAUSE_CODE_TRANSLATIONS['HYP-DRAIN-CLOG'];
+  }
+  if (upper.includes('WATER') && upper.includes('LEAK')) {
+    return CAUSE_CODE_TRANSLATIONS['HYP-WATER-MAIN-LEAK'];
+  }
+
   return {
-    title,
-    explanation: `Diagnostic finding recorded under code ${code}.`,
+    title: `Possible cause: ${code}`,
+    explanation: 'Hypothesis recorded during diagnostic reasoning.',
   };
 }
 
@@ -159,6 +184,9 @@ export interface AssessmentInfo {
   badgeClass: string;
   tone: 'supported' | 'contradicted' | 'inconclusive' | 'default';
   description: string;
+  isSupported: boolean;
+  isContradicted: boolean;
+  isInconclusive: boolean;
 }
 
 export function translateAssessment(status?: string | null): AssessmentInfo {
@@ -170,6 +198,9 @@ export function translateAssessment(status?: string | null): AssessmentInfo {
         badgeClass: 'badge-verified',
         tone: 'supported',
         description: 'Verified physical evidence corroborates this possible cause.',
+        isSupported: true,
+        isContradicted: false,
+        isInconclusive: false,
       };
     case 'CONTRADICTED':
       return {
@@ -177,26 +208,39 @@ export function translateAssessment(status?: string | null): AssessmentInfo {
         badgeClass: 'badge-danger',
         tone: 'contradicted',
         description: 'Verified inspection or diagnostic measurements refute this cause.',
+        isSupported: false,
+        isContradicted: true,
+        isInconclusive: false,
       };
     case 'INCONCLUSIVE':
       return {
         label: 'Inconclusive',
-        badgeClass: 'badge-candidate',
+        badgeClass: 'badge-warning',
         tone: 'inconclusive',
         description: 'Evidence is insufficient or conflicting; requires targeted field verification.',
+        isSupported: false,
+        isContradicted: false,
+        isInconclusive: true,
       };
     default:
       return {
-        label: status || 'Pending',
+        label: status === 'UNASSESSED' ? 'Awaiting evaluation' : (status || 'Pending'),
         badgeClass: 'badge-default',
         tone: 'default',
         description: 'Assessment pending further evidence.',
+        isSupported: false,
+        isContradicted: false,
+        isInconclusive: false,
       };
   }
 }
 
 // --- Action Types Translations ---
 export const ACTION_TYPE_TRANSLATIONS: Record<string, string> = {
+  EXCAVATE_TRENCH: 'Trench excavation',
+  CLEAR_CULVERT: 'Culvert clearance',
+  PATCH_ASPHALT: 'Asphalt pavement patching',
+  INSPECT_MANHOLE: 'Manhole inspection',
   ISOLATE_UTILITY_SEGMENT: 'Isolate underground water pipe',
   REPAIR_UTILITY_LEAK: 'Repair pipe leak and verify seal',
   STABILIZE_ROAD_SUBGRADE: 'Stabilize road subgrade (ground beneath pavement)',
@@ -226,10 +270,13 @@ export function translateActionType(action?: string | null): string {
 
 // --- Municipal Departments ---
 export const DEPARTMENT_TRANSLATIONS: Record<string, string> = {
+  'DEPT-ROADS': 'Roads & Infrastructure Maintenance',
+  'DEPT-WATER': 'Water & Sewage Utility',
+  'DEPT-ENVIRONMENT': 'Environmental & Waste Management',
+  'DEPT-PUBLIC-WORKS': 'Public Works Department',
   'DEPT-DRAIN': 'Drainage & Stormwater Department',
   'DEPT-ROAD': 'Roads & Infrastructure Department',
   'DEPT-SAN': 'Sanitation & Waste Management',
-  'DEPT-WATER': 'Water Supply & Sewerage Board',
   UNKNOWN: 'Unassigned Department',
 };
 
@@ -244,6 +291,10 @@ export function translateDepartment(deptId?: string | null): string {
 
 // --- Municipal Roles ---
 export const ROLE_TRANSLATIONS: Record<string, string> = {
+  OPERATOR_ANALYST: 'Investigation Analyst',
+  OPERATOR_APPROVER: 'Supervising Approval Officer',
+  OPERATOR_FIELD_LEAD: 'Field Operations Lead',
+  OPERATOR_AUDITOR: 'Compliance Auditor',
   'OP-ANALYST': 'Investigation Analyst',
   'OP-APPROVER': 'Supervising Approval Officer',
   'OP-DRAIN-LEAD': 'Drainage Operations Lead',
@@ -273,33 +324,36 @@ export interface EntityDisplay {
 
 export function formatShortIdentifier(id: string): string {
   if (!id) return '';
-  if (id.length <= 14) return id;
-  // If format PREFIX-Bxx-hash, show prefix and tail
+  if (id.length <= 10) return id;
   const parts = id.split('-');
-  if (parts.length >= 3) {
-    const prefix = parts[0];
-    const tail = parts[parts.length - 1];
-    return `${prefix}-…${tail.slice(-4)}`;
+  if (parts.length >= 4 && parts[0] === 'INV') {
+    return parts.slice(-3).join('-');
   }
-  return `${id.slice(0, 6)}…${id.slice(-4)}`;
+  if (parts.length >= 3) {
+    return parts.slice(-2).join('-');
+  }
+  return id;
 }
 
 export function formatEntityDisplayName(params: {
   id: string;
+  name?: string;
+  statement?: string;
   kind?: string;
   displayLabel?: string;
   issueType?: string;
   location?: string;
   causeCode?: string;
 }): EntityDisplay {
-  const { id, kind, displayLabel, issueType, location, causeCode } = params;
+  const { id, name, statement, kind, displayLabel, issueType, location, causeCode } = params;
   const shortId = formatShortIdentifier(id);
 
-  // If a descriptive displayLabel exists and is not just the raw ID
-  if (displayLabel && displayLabel.trim() && displayLabel !== id) {
+  // If a descriptive name or displayLabel exists and is not just the raw ID
+  const effectiveLabel = name || displayLabel;
+  if (effectiveLabel && effectiveLabel.trim() && effectiveLabel !== id) {
     return {
-      primary: displayLabel,
-      secondary: shortId !== displayLabel ? shortId : undefined,
+      primary: effectiveLabel,
+      secondary: shortId !== effectiveLabel ? shortId : undefined,
       shortId,
       kindLabel: translateEntityKind(kind),
     };
@@ -337,7 +391,11 @@ export function formatEntityDisplayName(params: {
   }
 
   if (id.startsWith('HYP-')) {
-    const cause = causeCode ? translateCauseCode(causeCode).title : 'Possible cause';
+    const cause = causeCode
+      ? translateCauseCode(causeCode).title
+      : statement
+      ? translateCauseCode(statement).title
+      : 'Possible cause';
     return {
       primary: cause,
       secondary: shortId,

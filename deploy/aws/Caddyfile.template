@@ -1,0 +1,14 @@
+# Replace DEMO_HOSTNAME with the actual generated hostname before startup.
+DEMO_HOSTNAME {
+    @compressible not path /api/v1/events/stream
+    encode @compressible gzip
+    header {
+        X-Content-Type-Options nosniff
+        Referrer-Policy same-origin
+    }
+    reverse_proxy 127.0.0.1:3100 {
+        header_up Host {host}
+        header_up Accept-Encoding identity
+        flush_interval -1
+    }
+}

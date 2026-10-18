@@ -1,0 +1,61 @@
+{
+  "status": "PASS",
+  "url": "https://civicly-13-55-205-208.sslip.io",
+  "instance_id": "i-00e332036cd609ff0",
+  "scope": "real public HTTPS Caddy/Next/FastAPI/FalkorDB/GraphRAG/MCP/Saver retained demo",
+  "checks": [
+    {
+      "check": "public_https_homepage_valid_certificate",
+      "status": 200
+    },
+    {
+      "check": "cross_origin_login_denied",
+      "status": 403
+    },
+    {
+      "check": "unauthenticated_identity_denied",
+      "status": 401
+    },
+    {
+      "path": "/api/v1/auth/me",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/dashboard/summary",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/investigations/INV-B09-b9d4d66e130ed348c4f6a50e9d66a891",
+      "status": 200,
+      "case_status": "COMPLETED"
+    },
+    {
+      "path": "/api/v1/investigations/INV-B09-b9d4d66e130ed348c4f6a50e9d66a891/trace",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/investigations/INV-B09-b9d4d66e130ed348c4f6a50e9d66a891/graph?depth=4&include_candidates=true",
+      "status": 200,
+      "graph_nodes": 61
+    },
+    {
+      "path": "/api/v1/cases/INC-B08-27a2cb5d89ae9ab9d86f999cf7b50472/memory",
+      "status": 200,
+      "memory_items": 1
+    },
+    {
+      "path": "/api/v1/procedures",
+      "status": 200
+    },
+    {
+      "check": "authenticated_sse_headers_and_first_line",
+      "status": 200,
+      "first_line_received": true
+    },
+    {
+      "check": "revoked_session_denied",
+      "status": 401
+    }
+  ],
+  "live_provider_calls": 0
+}

@@ -137,7 +137,7 @@ export function PlanApprovalPanel({
     { label: 'Raw Status', value: <code>{plan.status}</code>, rawString: plan.status },
     { label: 'Content Hash (SHA-256)', value: <code className="hash-code">{plan.content_hash}</code>, rawString: plan.content_hash },
     { label: 'Expected Hash', value: <code className="hash-code">{plan.expected_hash}</code>, rawString: plan.expected_hash },
-    { label: 'Graph Revision', value: <span>{plan.graph_revision}</span>, rawString: String(plan.graph_revision) },
+    ...((plan as any).graph_revision ? [{ label: 'Graph Revision', value: <span>{(plan as any).graph_revision}</span>, rawString: String((plan as any).graph_revision) }] : []),
     { label: 'Execution Gates Verified', value: <span>{plan.execution_gates_verified ? 'Yes' : 'No (Pending Approval)'}</span> },
   ];
 
@@ -420,7 +420,7 @@ export function PlanApprovalPanel({
                               <div className="spec-item">
                                 <span className="spec-label">Remediation Details:</span>
                                 <p className="spec-val">
-                                  Scope: {task.remediation.scope || 'Standard'} &bull; Method: {task.remediation.method || 'Standard operating procedure'}
+                                  Mode: {task.remediation.mode || 'Standard'} &bull; Conditions: {Array.isArray(task.remediation.conditions) ? `${task.remediation.conditions.length} prerequisite condition(s)` : 'Standard operating procedure'}
                                 </p>
                               </div>
                             )}
@@ -429,7 +429,7 @@ export function PlanApprovalPanel({
                               <div className="spec-item">
                                 <span className="spec-label">Municipal Procedure Citation:</span>
                                 <p className="spec-val">
-                                  Standard {task.procedure_citation.procedure_id} (Version {task.procedure_citation.version})
+                                  Standard {task.procedure_citation.canonical_document_id || task.procedure_citation.source_document_id} (Version {task.procedure_citation.source_version})
                                 </p>
                               </div>
                             )}

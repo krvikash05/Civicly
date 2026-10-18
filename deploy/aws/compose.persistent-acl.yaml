@@ -1,0 +1,9 @@
+# Install as root compose.override.yaml only after users.acl exists.
+services:
+  falkordb:
+    restart: unless-stopped
+    environment:
+      BROWSER: "0"
+      REDIS_ARGS: "--appendonly yes --appendfsync always --save 60 1 --aclfile /var/lib/falkordb/data/users.acl"
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep -qx PONG && redis-cli --raw COMMAND INFO GRAPH.RO_QUERY | grep -qi graph.ro_query"]

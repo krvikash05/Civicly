@@ -1,0 +1,15 @@
+[Unit]
+Description=Civicly Next.js frontend
+After=network-online.target civicly-api.service
+[Service]
+User=civicly
+WorkingDirectory=/opt/civicly/frontend
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/npm run start
+Restart=on-failure
+RestartSec=5
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+[Install]
+WantedBy=multi-user.target

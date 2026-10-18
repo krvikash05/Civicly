@@ -1,8 +1,15 @@
 'use client';
 
 import React from 'react';
-import type { AgentTracePage, GraphSubgraphDTO, DecisionPath } from '../lib/generated/models';
+import type { AgentTracePage, GraphSubgraphDTO } from '../lib/generated/models';
 import { extractDecisionTraces, DecisionTraceItem } from '../lib/read/graph';
+import {
+  translateRole,
+  translateStatus,
+  translateActionType,
+  formatEntityDisplayName,
+} from '../lib/read/display';
+import { TechnicalDetails, CopyableIdentifier } from './technical-details';
 
 interface DecisionTracePanelProps {
   tracePage: AgentTracePage | null;
@@ -22,8 +29,11 @@ export function DecisionTracePanel({
   if (!tracePage || !tracePage.items || tracePage.items.length === 0) {
     return (
       <div className="empty-trace-notice">
-        <p className="muted">
+        <p className="muted" style={{ fontSize: '15px', fontWeight: 600 }}>
           No agent trace events have been recorded for this investigation yet.
+        </p>
+        <p className="muted text-sm" style={{ marginTop: '0.4rem' }}>
+          When the autonomous investigator executes tool calls, retrieves graph evidence, or records decisions, the 3-part traceability record will display here.
         </p>
       </div>
     );
@@ -45,142 +55,157 @@ export function DecisionTracePanel({
       </div>
 
       <div className="trace-timeline">
-        {items.map((item, idx) => (
-          <article
-            key={item.eventId || idx}
-            className={`trace-card ${
-              item.influenceCategory === 'MODEL_SELECTED_PATH' ? 'card-highlighted' : ''
-            }`}
-          >
-            {/* Step Header */}
-            <header className="trace-card-header">
-              <div className="trace-step-badge">
-                Step {idx + 1} &bull; {item.agentRole}
-              </div>
-              <div className="trace-timestamp">
-                {new Date(item.timestamp).toLocaleTimeString('en-IN', {
-                  timeZone: 'Asia/Kolkata',
-                  hour12: false,
-                })}{' '}
-                IST
-              </div>
-              <span
-                className={`badge ${
-                  item.status === 'SUCCESS' ? 'badge-verified' : 'badge-candidate'
-                }`}
-              >
-                {item.status}
-              </span>
-            </header>
+        {items.map((item, idx) => {
+          const roleTitle = translateRole(item.agentRole);
+          const readableStatus = translateStatus(item.status);
+          const toolAction = item.toolName ? translateActionType(item.toolName) : null;
 
-            {/* 3-Part Traceability Grid */}
-            <div className="trace-three-part-grid">
-              {/* Part 1: Question Asked */}
-              <div className="trace-column col-question">
-                <div className="column-label">1. Question Asked</div>
-                <div className="column-content">
-                  <p className="question-text">{item.questionAsked}</p>
-                  {item.toolName && (
-                    <div className="tool-tag">
-                      Tool: <code>{item.toolName}</code>
-                    </div>
-                  )}
+          const techItems = [
+            { label: 'Event ID', value: <code>{item.eventId}</code>, rawString: item.eventId },
+            ...(item.recordedDecision.decisionId
+              ? [{ label: 'Decision ID', value: <code>{item.recordedDecision.decisionId}</code>, rawString: item.recordedDecision.decisionId }]
+              : []),
+            ...(item.recordedDecision.parentExecutionId
+              ? [{ label: 'Parent Execution ID', value: <code>{item.recordedDecision.parentExecutionId}</code>, rawString: item.recordedDecision.parentExecutionId }]
+              : []),
+            ...(item.toolName
+              ? [{ label: 'Raw Tool Identifier', value: <code>{item.toolName}</code>, rawString: item.toolName }]
+              : []),
+            { label: 'Agent Role Code', value: <code>{item.agentRole}</code>, rawString: item.agentRole },
+          ];
+
+          return (
+            <article
+              key={item.eventId || idx}
+              className={`trace-card ${
+                item.influenceCategory === 'MODEL_SELECTED_PATH' ? 'card-highlighted' : ''
+              }`}
+            >
+              {/* Step Header with Clean Wrapped Badges */}
+              <header className="trace-card-header">
+                <div className="trace-step-badge">
+                  Step {idx + 1} &bull; {roleTitle}
                 </div>
-              </div>
-
-              {/* Part 2: Graph Evidence Returned */}
-              <div className="trace-column col-evidence">
-                <div className="column-label">2. FalkorDB Graph Evidence</div>
-                <div className="column-content">
-                  <p className="evidence-summary">{item.graphEvidence.summary}</p>
-
-                  {item.graphEvidence.nodeIds.length > 0 && (
-                    <div className="entity-pills">
-                      <span className="pill-group-title">Nodes:</span>
-                      {item.graphEvidence.nodeIds.map((id) => (
-                        <code key={id} className="pill-code">
-                          {id}
-                        </code>
-                      ))}
-                    </div>
-                  )}
-
-                  {item.graphEvidence.evidenceIds.length > 0 && (
-                    <div className="evidence-links">
-                      <span className="pill-group-title">Evidence:</span>
-                      {item.graphEvidence.evidenceIds.map((eid) => (
-                        <button
-                          key={eid}
-                          type="button"
-                          className="chip chip-evidence"
-                          onClick={() => onSelectEvidenceId?.(eid)}
-                        >
-                          {eid}
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                <div className="trace-timestamp">
+                  {new Date(item.timestamp).toLocaleTimeString('en-IN', {
+                    timeZone: 'Asia/Kolkata',
+                    hour12: false,
+                  })}{' '}
+                  IST
                 </div>
-              </div>
-
-              {/* Part 3: Recorded Decision */}
-              <div className="trace-column col-decision">
-                <div className="column-label">3. Recorded Decision</div>
-                <div className="column-content">
-                  <div className="decision-action">
-                    <strong>Action:</strong> {item.recordedDecision.action}
-                  </div>
-                  <p className="rationale-text">
-                    <strong>Rationale:</strong> {item.recordedDecision.rationaleSummary}
-                  </p>
-                  {item.recordedDecision.decisionId && (
-                    <div className="decision-meta">
-                      Decision ID: <code>{item.recordedDecision.decisionId}</code>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Influence Attribution Footer */}
-            <footer className="trace-card-footer">
-              <span
-                className={`influence-badge ${
-                  item.influenceCategory === 'MODEL_SELECTED_PATH'
-                    ? 'influence-selected'
-                    : item.influenceCategory === 'CONTEXTUAL_GRAPH_QUERY'
-                    ? 'influence-contextual'
-                    : 'influence-unestablished'
-                }`}
-              >
-                {item.influenceCategory === 'MODEL_SELECTED_PATH' && '★ Model-Selected Path'}
-                {item.influenceCategory === 'CONTEXTUAL_GRAPH_QUERY' && 'ℹ Contextual Graph Query'}
-                {item.influenceCategory === 'UNESTABLISHED_INFLUENCE' && '⚠ Unestablished Influence'}
-              </span>
-              <span className="influence-text">{item.influenceExplanation}</span>
-
-              {/* Optional decision path highlight trigger */}
-              {item.influenceCategory === 'MODEL_SELECTED_PATH' && subgraph?.decision_paths && (
-                <button
-                  type="button"
-                  className="btn-link-action"
-                  onClick={() => {
-                    const matchedPath = subgraph.decision_paths?.find((p: DecisionPath) =>
-                      p.node_ids.some((nid: string) => item.graphEvidence.nodeIds.includes(nid)),
-                    );
-                    if (matchedPath) {
-                      onHighlightDecisionPath?.(
-                        selectedDecisionPathId === matchedPath.id ? null : matchedPath.id,
-                      );
-                    }
-                  }}
+                <span
+                  className={`badge ${
+                    item.status === 'SUCCESS' ? 'badge-verified' : 'badge-candidate'
+                  }`}
                 >
-                  {selectedDecisionPathId ? 'Clear Highlight' : 'Highlight in Graph'}
-                </button>
-              )}
-            </footer>
-          </article>
-        ))}
+                  {readableStatus}
+                </span>
+              </header>
+
+              {/* 3-Part Traceability Grid */}
+              <div className="trace-three-part-grid">
+                {/* Part 1: Question Asked */}
+                <div className="trace-column col-question">
+                  <div className="column-label">1. Question Asked</div>
+                  <div className="column-content">
+                    <p className="question-text">{item.questionAsked}</p>
+                    {toolAction && (
+                      <div className="tool-tag">
+                        Action: <strong>{toolAction}</strong>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Part 2: Graph Evidence Returned */}
+                <div className="trace-column col-evidence">
+                  <div className="column-label">2. FalkorDB Graph Evidence</div>
+                  <div className="column-content">
+                    <p className="evidence-summary">{item.graphEvidence.summary}</p>
+
+                    {item.graphEvidence.nodeIds.length > 0 && (
+                      <div className="entity-pills">
+                        <span className="pill-group-title">Connected entities:</span>
+                        <div className="chips-row">
+                          {item.graphEvidence.nodeIds.map((id) => {
+                            const nameInfo = formatEntityDisplayName({ id });
+                            return (
+                              <span key={id} className="chip chip-asset" title={id}>
+                                {nameInfo.primary} <small>({nameInfo.shortId})</small>
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {item.graphEvidence.evidenceIds.length > 0 && (
+                      <div className="evidence-links" style={{ marginTop: '0.4rem' }}>
+                        <span className="pill-group-title">Attributed evidence:</span>
+                        <div className="chips-row">
+                          {item.graphEvidence.evidenceIds.map((eid) => (
+                            <button
+                              key={eid}
+                              type="button"
+                              className="chip chip-evidence"
+                              onClick={() => onSelectEvidenceId?.(eid)}
+                              title={`Inspect evidence ${eid}`}
+                            >
+                              Evidence ({eid.slice(-4)})
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Part 3: Recorded Decision */}
+                <div className="trace-column col-decision">
+                  <div className="column-label">3. Recorded Decision</div>
+                  <div className="column-content">
+                    <div className="decision-action">
+                      <strong>Action taken:</strong> {item.recordedDecision.action}
+                    </div>
+                    <p className="rationale-text">
+                      <strong>Rationale:</strong> {item.recordedDecision.rationaleSummary}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Step Footer with Influence Attribution */}
+              <footer className="trace-card-footer">
+                <div className="influence-block">
+                  <span
+                    className={`influence-badge ${
+                      item.influenceCategory === 'MODEL_SELECTED_PATH'
+                        ? 'influence-selected'
+                        : item.influenceCategory === 'CONTEXTUAL_GRAPH_QUERY'
+                        ? 'influence-contextual'
+                        : 'influence-unestablished'
+                    }`}
+                  >
+                    {item.influenceCategory === 'MODEL_SELECTED_PATH'
+                      ? 'Decision bound to graph path'
+                      : item.influenceCategory === 'CONTEXTUAL_GRAPH_QUERY'
+                      ? 'Contextual graph background'
+                      : 'No causal trace established'}
+                  </span>
+                  <span className="influence-text">{item.influenceExplanation}</span>
+                </div>
+
+                {/* Technical Details for Step */}
+                <div style={{ width: '100%', marginTop: '0.5rem' }}>
+                  <TechnicalDetails
+                    title="Technical step references"
+                    items={techItems}
+                  />
+                </div>
+              </footer>
+            </article>
+          );
+        })}
       </div>
     </div>
   );

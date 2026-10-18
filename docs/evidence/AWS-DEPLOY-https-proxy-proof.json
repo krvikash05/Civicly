@@ -1,0 +1,35 @@
+{
+  "status": "PASS",
+  "scope": "real local TCP Next/FastAPI/FalkorDB/MCP/memory proxy under configured HTTPS Host/Origin; no actual public TLS or cloud yet",
+  "checks": [
+    {
+      "check": "foreign_origin_session_denied",
+      "status": 403
+    },
+    {
+      "path": "/api/v1/auth/me",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/dashboard/summary",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/investigations/INV-B09-b9d4d66e130ed348c4f6a50e9d66a891/trace",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/investigations/INV-B09-b9d4d66e130ed348c4f6a50e9d66a891/graph?depth=4&include_candidates=true",
+      "status": 200
+    },
+    {
+      "path": "/api/v1/cases/INC-B08-27a2cb5d89ae9ab9d86f999cf7b50472/memory",
+      "status": 200
+    },
+    {
+      "check": "authenticated_sse_headers",
+      "status": 200
+    }
+  ],
+  "provider_requests": 0
+}

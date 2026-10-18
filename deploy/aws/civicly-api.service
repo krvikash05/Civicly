@@ -1,0 +1,17 @@
+[Unit]
+Description=Civicly presenter API
+After=network-online.target docker.service
+Requires=docker.service
+[Service]
+User=civicly
+WorkingDirectory=/opt/civicly
+Environment=PYTHONPATH=/opt/civicly/backend
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/opt/civicly/backend/.venv/bin/python -m app.demo_host --config /opt/civicly/.runtime/aws-host.json api --port 8010
+Restart=on-failure
+RestartSec=5
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+[Install]
+WantedBy=multi-user.target
