@@ -34,3 +34,26 @@ All normative machine contracts reference this same municipality_scope policy.
 This is one synthetic municipality, not enterprise tenant isolation. Legacy v1/v2
 fixtures require explicit conversion before canonical import; no implicit scope,
 unknown-field dropping, or invented temporal evidence is permitted.
+
+## B11 implemented source memory contract
+
+`contracts/organizational_memory.json` and `backend/MEMORY.md` define the actual
+SDK1.4.0 integration. Immutable registryv3/0001/0002 remain; compatible additive
+0003 stores validated version/effective/owner/review/authority and SDK chunk/hash
+metadata in canonical companion storage alongside strict version-bound Document
+nodes. Frozen source manifest remains unchanged; data/documents/b11/manifest.json
+maps canonical department IDs explicitly and adds a synthetic D001 PDF derivative.
+SDK document/ontology labels and vector/fulltext indexes stay in civicly_docs and
+civicly_docs__ontology; validated disposable targets are used in tests.
+
+Actual SDK parsing/chunking/indexing and LocalRetrieval run offline with lexical
+hash embeddings and lossless proposed-source extraction; no model quality or
+verified extracted policy is claimed. Runtime retrieval uses GRAPH.RO_QUERY,
+exact-key capability, citations and temporal/supersession/revocation checks.
+No generated Cypher or operational permissions. Existing episodic B09 history
+and B05 semantic case paths remain sourced context, not verified new outcomes.
+Application-managed staged journal and fenced canonical registration reconcile
+cross-graph interruptions; internal incomplete SDK ingestion fails closed for
+explicit repair. Original source versions and correction audit remain available.
+B10 genuine Gemini acceptance is explicitly deferred, OPEN/PARTIAL, never passed
+by B11 simulations. No B12 or later work is implemented.

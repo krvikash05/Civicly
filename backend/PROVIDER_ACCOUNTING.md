@@ -99,3 +99,17 @@ See `docs/evidence/B10OR2-COMMANDS.md` for reproducible zero-provider tests and
 The provider records `TOKEN_BUDGET` when its next request cannot fit; the supervisor can also pause as `BUDGET_EXHAUSTED` when an iteration, tool, wake, time or cumulative-token boundary is already reached. Both persist the same thread before operator review.
 
 Outer request-deadline cancellation also distinguishes stages: a count-only request reports `NOT_GENERATED`; `reservation_retained` is derived from the exact attempts and their count-policy settlements or generation holds. A settled-zero count does not create an uncertain-generation summary. Unknown count policy and missing generation receipts still report retained allowances.
+
+
+## DEMO-3 lossless provider context wire
+
+Before prompt serialization, repeated context values may be encoded once in wire_values and referenced by short wire_ref IDs. The original runtime context still validates model READ schemas; exact reconstruction is checked before sending. Literal source tag collisions are escaped, never trusted host instructions. No evidence/historical contradiction/source hash is summarized or removed. Actual countTokens and spending reservations use the complete encoded body, prompt and output schema; no budget reset or cap change. Metadata records original/wire hashes/bytes/version only.
+
+Offline full-request proxy measurements:10.95%water,11.60%road,4.77%waste reduction on retained demo contexts. This is not measured live billing or proof of Gemini comprehension. DEMO-3 live semantic acceptance remains unrun; blocked/budget-exhausted cases remain blocked. Results/patch: docs/evidence/DEMO-CONTEXT-BUDGET-RESULTS.md. No further live calls are authorized merely by this guide.
+
+Packed context is opt-in via CIVICLY_LLM_CONTEXT_WIRE (default false) until live reference comprehension acceptance. Ordinary presenter configuration was not changed. Test/mock evidence does not authorize enabling it in a live demo.
+
+
+### Live compact-format limited compatibility
+
+One independent read-only probe using actual watercontext selected valid official nodeREAD DRAIN-101 and actualbrokerSUCCESS. Originalworkflow/source unchanged.1count+1generationSETTLED,28893prompt+68candidate=28961tokens,$0.02192475knowncost; noplainproviderbaseline orlivecomparativesavingsclaim. Initialharnessstatus-envelopefailure retained and verifiedfromdurabletracewithoutpaidretry. Keepcontextwire opt-in pending broadersemanticacceptance. No blockedcasebudgetrestored. Publicproof/reproduction: docs/evidence/DEMO-CONTEXT-SMOKE-RESULTS.md.

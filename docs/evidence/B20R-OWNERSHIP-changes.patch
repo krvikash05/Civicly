@@ -1,0 +1,2045 @@
+--- a/backend/API.md
++++ b/backend/API.md
+@@ -133,3 +133,5 @@
+ 
+ ## Current B19 scenario controls — 2026-10-18
+ This section supersedes earlier B19-deferred statements without removing history.55operations/52paths now include authenticated GET /demo/scenarios, ADMIN POST /demo/reset and ADMIN POST /demo/scenarios/{id}/advance. Strict generated schemas and neutral public inventory; no query parameters or graph/file selectors. Release requires actual in-progress bound inspection plus authenticated X-Field-Authorization department lead and independent X-Reviewer-Authorization analyst. Idempotency/UNKNOWN recovery use the existing transport adapter. Safe optional ErrorDetails.blocker_code identifies allowlisted scenario prerequisites only; no raw exception text. Full runbook/limitations: backend/DEMO.md; actual OpenAPI docs/evidence/B19-openapi.json. B19 mechanics are not agent-success or backend-complete acceptance; B20/frontend/live require review/authorization.
++
++B20-R-OWNERSHIP adds only POST /responsibilities (DEPARTMENT_LEAD), POST /responsibilities/{id}/review (independent ANALYST) and GET /responsibilities/{id} (seeded read roles, lead department scope). Closed typed schemas, existing source-bound keys and sanitized UNKNOWN recovery. No query parameters or graph selectors. Full contract/operator semantics: backend/RESPONSIBILITY.md.
+--- a/backend/DEMO.md
++++ b/backend/DEMO.md
+@@ -70,3 +70,6 @@
+ 
+ ### Final normative transport reconciliation
+ Reserved DTO fields are preserved: ScenarioDTO.stage; ScenarioPage.next_cursor(null)/total_count(12); SeedReport.nodes/relationships/source_documents/seed_fingerprint; SimulationStepDTO.scenario_id/stage/event_id/revealed_evidence_ids. Returned source/profile/case/readiness fields are additive. SeedReport counts are actual fresh canonical CivicEntity nodes/relationships/Document nodes; reused external SDK documents are not newly seeded, so source_documents is0. Stable seed_fingerprint equals baseline_content_hash. Explicit seed19 selects the version1 fixture; other seeds are rejected, confirm must be actual booleantrue. Advance uses expected_current_stage, not expected_stage. The released event_id is an actual durable PENDING B15 inspection event registered from its COMMITTED B09 journal, never a transport ID/fake execution. Registration is not worker delivery. Later stage event IDs reference actual approval/outcome prerequisites. Runtime investigation request identities include the fresh source via existing request_identity; logical assets/reports stay stable while actual investigations/threads/traces are disjoint, avoiding global trace collision across fresh resets.
++
++## B20-R-OWNERSHIP explicit prerequisite
++Fresh scenario reset still imports CANDIDATE ownership only. For legitimate planning, use the actual case asset/department returned by reset: authenticate as that seeded department lead, submit attributed SYNTHETIC inventory evidence, then switch to the independent analyst and review using returned responsibility ID/expected_hash. Verify CURRENT applicability via API/CLI readback before creating the sourced draft. No reset/planner promotion, approval bypass or inferred responsibility. Exact commands/temporal/provenance and UNKNOWN handling: backend/RESPONSIBILITY.md. Missing utility/capacity/route/dumping actions and pickup chronology remain separate blockers; full B20 is not complete.
+--- a/backend/OPERATOR_CLI.md
++++ b/backend/OPERATOR_CLI.md
+@@ -88,3 +88,5 @@
+ 
+ ## Current B19 additions — 2026-10-18
+ B18 accepted; B19 adds `demo scenarios`, `demo reset --payload ... --key ...`, and `demo advance --id Snn --payload ... --key ... --field-session ... --reviewer-session ...`, delegating the three accepted demo API routes. Historical B18 bare `reset` remains the same4node starter command; `demo reset` is the explicit twelve-scenario entrypoint. No caller graph/path/world/tool/shell selector. Use returned private profile reference and fresh source-bound login files. backend/DEMO.md contains actual returned-ID workflow, required field/reviewer/lifecycle/prerequisite gates and all limitations. B20/frontend/live remain unauthorized; B10 genuine OPEN/PARTIAL.
++
++B20-R-OWNERSHIP fixed commands: `responsibility submit --payload FILE --key KEY`, `responsibility review --id ID --payload FILE --key KEY`, `responsibility get --id ID`. Use department lead then independent analyst sessions; shared API/domain validation and recovery apply. See backend/RESPONSIBILITY.md. Candidate reset behavior remains unchanged; no other B20 correction or live execution is authorized.
+--- /dev/null
++++ b/backend/RESPONSIBILITY.md
+@@ -0,0 +1,36 @@
++# Explicit synthetic responsibility acquisition
++
++B20-R-OWNERSHIP only. All18 requirements remain binding; full B20 remains PARTIAL/BLOCKED. Existing B19 reset stays candidate-only. No MCP write tool or automatic owner promotion exists.
++
++A seeded DEPARTMENT_LEAD submits responsibility only for its authenticated department. A distinct authenticated ANALYST independently reviews it. ADMIN and APPROVER may read but cannot submit/review; approval and work authority remain unchanged. Caller-supplied actor, verification status, graph selector or arbitrary edge fields are rejected.
++
++- POST `/api/v1/responsibilities`: actual asset_id, department_id, source_id, source_record_id, source_version(default1), source_kind=SYNTHETIC, observed_at, valid_from, optional valid_to. UTC Z timestamps normalize consistently; observed_at<=valid_from, observation not future to submission, valid_to>valid_from. Source identity is source graph/source ID/record/version. Same identity with different content/submitter conflicts. This creates immutable UNVERIFIED/REPORTED assertion Evidence and durable audit/event, never ownership authority.
++- POST `/api/v1/responsibilities/{id}/review`: expected_hash returned by submission, reviewed=true and reason; authenticate as independent ANALYST. The source native/hash/typed provenance, actual asset/department, submitter scope and chronology are revalidated under the writer fence. Overlapping verified ownership rejects. A successful atomic review adds immutable VERIFIED synthetic inventory Evidence, sourced MAINTAINED_BY and hashed operation/state/event. VERIFIED means independently reviewed synthetic administrative responsibility, not a physical cause or executable approval.
++- GET `/api/v1/responsibilities/{id}`: bounded safe typed IDs/source/version/dates/hash/submitter/reviewer/relationship/event status. No raw source prose or private journal returned. Department leads read only their own department; other seeded read roles may inspect. Status and applicability are separate: SUBMITTED/UNREVIEWED or VERIFIED with HISTORICAL/FUTURE/CURRENT. Future/historical records are not current planning authority.
++
++Original candidate links/evidence and assertion bytes stay unchanged. Verified intervals are exclusive, half-open. No API can silently end, replace, revoke or rewrite an open-ended verified assignment. A new overlapping assertion may remain SUBMITTED but its review fails; a disputed open-ended assignment requires separately authorized correction, not this workflow. Finite nonoverlapping intervals provide explicit succession. Existing scan bounds fail closed. Existing procedures, reviewed causal evidence and typed safety gates remain independently mandatory.
++
++Every new draft binds exact ownership source/edge IDs and hashes. Operations revalidate these against the saved proof before new approval/work. An expired assignment and same-department replacement still invalidate the old binding; old draft payload/hash/receipt/checkpoint bytes are retained. Compatible older proofs bind their existing IDs, with hashes checked where recorded. No approval is fabricated and no historical plan is rewritten merely to mark it stale.
++
++Writes reuse the existing0005 CivicOperationState and canonical Evidence/DomainEvent/MAINTAINED_BY schema. The repository fence/CAS and one fixed parameterized batch atomically commit source/review/relationship/operation/event. Staged verified review evidence is validated against its immutable submitted source before compilation; no generic caller-controlled source exemption. GRAPH_EVIDENCE_CHANGED remains durable through existing B15 source discovery; it is informational until explicitly bound to a case, with no automatic worker execution.
++
++Exact authenticated HTTP replay returns the saved DONE response; changed same-key content conflicts. Post-commit/readback/projection uncertainty returns existing409RECOVERY_REQUIRED/UNKNOWN with original source-bound request/entity IDs. Intent remains DISPATCHING, exact replay blocks without redispatch. Safe GET can verify committed records but does not clear the intent or quarantine. Operators must inspect the existing operation receipt/native graph evidence and use supported reconciliation review; do not change keys, delete records or fabricate success. A failed checkpoint/write may prevent additional recovery feedback; last durable intent remains authoritative.
++
++## Operator commands (normal private globals/session setup)
++
++Use backend/OPERATOR_CLI.md for profile/auth/memory/session globals. Each POST requires explicit key. The submitting session belongs to the department lead; switch to the independent analyst session for review. Actual returned IDs/hashes must be used; never hand-insert a verified edge.
++
++```sh
++cli responsibility submit --payload /tmp/responsibility.json --key inventory-assertion-1
++cli responsibility get --id RETURNED_RESPONSIBILITY_ID
++# Review JSON: {"expected_hash":"RETURNED_HASH","reviewed":true,"reason":"Independent synthetic inventory review"}
++cli responsibility review --id RETURNED_RESPONSIBILITY_ID --payload /tmp/responsibility-review.json --key inventory-review-1
++cli responsibility get --id RETURNED_RESPONSIBILITY_ID
++```
++
++Example explicitly synthetic assertion payload:
++```json
++{"asset_id":"DRAIN-101","department_id":"DEPT-DRAIN","source_id":"synthetic-inventory","source_record_id":"drain-101-responsibility","source_version":1,"source_kind":"SYNTHETIC","observed_at":"2026-10-18T12:00:00Z","valid_from":"2026-10-19T12:00:00Z","valid_to":"2026-10-19T13:00:00Z"}
++```
++
++These are illustrative dates; applicability follows the host's actual/configured synthetic clock. Responsibility evidence is untrusted as instructions. No utility/capacity/route/dumping intervention or pickup chronology capability is implemented here; B10 genuine-provider gate stays OPEN/PARTIAL. STOP for review.
+--- a/backend/app/api/coverage.py
++++ b/backend/app/api/coverage.py
+@@ -49,3 +49,5 @@
+ ('GET','/events/stream','ANY',None,m.SSEStream,'stream')])
+ 
+ ROUTES.extend([('GET','/demo/scenarios','ANY',None,m.ScenarioPage,'demo_catalog'),('POST','/demo/reset','ADMIN',m.DemoResetRequest,m.SeedReport,'demo_reset'),('POST','/demo/scenarios/{id}/advance','ADMIN',m.DemoAdvanceRequest,m.SimulationStepDTO,'demo_advance')])
++
++ROUTES.extend([('POST','/responsibilities','DEPARTMENT_LEAD',m.ResponsibilitySubmission,m.ResponsibilityDTO,'responsibility_submit'),('POST','/responsibilities/{id}/review','ANALYST',m.ResponsibilityReview,m.ResponsibilityDTO,'responsibility_review'),('GET','/responsibilities/{id}','ANY',None,m.ResponsibilityDTO,'responsibility_get')])
+--- a/backend/app/api/models.py
++++ b/backend/app/api/models.py
+@@ -262,3 +262,6 @@
+ 
+ # B19 closed scenario controls/projections.
+ from app.services.demo.models import DemoResetRequest,DemoAdvanceRequest,SeedReport,SimulationStepDTO,ScenarioPage
++
++# Explicit operator-only responsibility acquisition; no MCP write tool.
++from app.services.responsibility.models import Submission as ResponsibilitySubmission,Review as ResponsibilityReview,ResponsibilityDTO
+--- a/backend/app/graph/repository.py
++++ b/backend/app/graph/repository.py
+@@ -255,10 +255,12 @@
+                          {**statement.params, "id": id, "scope": self.registry.scope}, "n")
+         return self.get_node(id)
+ 
+-    def _check_evidence(self, props, *, inspection=False):
++    def _check_evidence(self, props, *, inspection=False, planned=None):
+         if "source_evidence_id" not in props:
+             return
+-        evidence = self.get_node(props["source_evidence_id"], "Evidence")
++        evidence = planned if planned is not None else self.get_node(props["source_evidence_id"], "Evidence")
++        if evidence.kind != "Evidence" or evidence.id != props["source_evidence_id"]:
++            raise PreconditionFailed("Evidence source identity mismatch")
+         if props.get("association_status") == "VERIFIED" or inspection:
+             ep = evidence.properties
+             if ep["reliability"] != "VERIFIED" or ep["source_kind"] == "AGENT" or not ep.get("observed_at") or not ep.get("source_record_id"):
+@@ -291,12 +293,20 @@
+                     raise Conflict("Overlapping route schedules for the same service")
+             group.append(active)
+ 
+-    def _relationship_policies(self, kind, source, target, props, *, exclude=None, inspected_cycle_evidence_id=None):
++    def _relationship_policies(self, kind, source, target, props, *, exclude=None, inspected_cycle_evidence_id=None, planned_evidence=None):
+         self.registry.validate_edge(kind, source.kind, source.properties, target.kind, target.properties, props)
+-        self._check_evidence(props)
++        if planned_evidence is not None:
++            if kind != "MAINTAINED_BY":
++                raise PreconditionFailed("Staged review source is restricted to responsibility")
++            from app.services.responsibility.service import validate_review_evidence
++            validate_review_evidence(self, planned_evidence.properties)
++        self._check_evidence(props, planned=planned_evidence)
+         edges = self._edges(kind, exclude=exclude)
+         span = interval(props)
+         for edge in edges:
++            # Unaccepted inventory claims do not occupy verified responsibility.
++            if kind == "MAINTAINED_BY" and ((props.get("association_status") == "VERIFIED") != (edge.properties.get("association_status") == "VERIFIED")):
++                continue
+             if edge.source == source.id and intersection(span, interval(edge.properties)) is not None:
+                 if edge.target == target.id or kind in self.policy["singleton_outgoing"]:
+                     raise Conflict("Duplicate or cardinality-conflicting active relationship")
+--- a/backend/app/services/http/reads.py
++++ b/backend/app/services/http/reads.py
+@@ -24,10 +24,19 @@
+   return rows
+  def targets(self,kind,id):return [e.target for e in self.edges(kind,source=id)]
+  def sources(self,kind,id):return [e.source for e in self.edges(kind,target=id)]
++ def ownership_departments(self,id,*,verified_only=False):
++  edges=self.edges('MAINTAINED_BY',source=id)
++  verified=[e for e in edges if e.properties.get('association_status')=='VERIFIED']
++  if verified:
++   if len(verified)!=1:return [] # Conflict is not resolved by target deduplication.
++   self.repo._check_evidence(verified[0].properties)
++   Reader(self.repo,self.clock()).node(verified[0].properties['source_evidence_id'],'Evidence')
++   return [verified[0].target]
++  return [] if verified_only else sorted({e.target for e in edges})
+  def allowed(self,n,actor,token):
+   if actor.role!='DEPARTMENT_LEAD':return True
+   k=n.kind;p=n.properties
+-  if 'InfrastructureAsset' in n.labels:return self.targets('MAINTAINED_BY',n.id)==[actor.department_id]
++  if 'InfrastructureAsset' in n.labels:return self.ownership_departments(n.id)==[actor.department_id]
+   if k=='Location':
+    ids=self.sources('LOCATED_AT',n.id)+self.sources('OCCURRED_AT',n.id)
+    return bool(ids) and all(self.allowed(self.repo.get_node(i),actor,token) for i in ids)
+@@ -47,7 +56,7 @@
+   if k=='Complaint':
+    ids=self.targets('REPORTS',n.id);return bool(ids) and all(self.allowed(self.repo.get_node(i,'Incident'),actor,token) for i in ids)
+   if k=='Incident':
+-   assets=self.targets('AFFECTS',n.id);return bool(assets) and all(self.targets('MAINTAINED_BY',i)==[actor.department_id] for i in assets)
++   assets=self.targets('AFFECTS',n.id);return bool(assets) and all(self.ownership_departments(i)==[actor.department_id] for i in assets)
+   if k=='ProblemCluster':
+    ids=self.sources('PART_OF',n.id);return bool(ids) and all(self.allowed(self.repo.get_node(i,'Incident'),actor,token) for i in ids)
+   if k=='Hypothesis':
+--- a/backend/app/services/http/service.py
++++ b/backend/app/services/http/service.py
+@@ -151,6 +151,12 @@
+   return Recovery(request,identities=identities)
+  async def dispatch(self,name,id,v,actor,token,request,reviewer_token,boundary):
+   reads=self.reads;ev=EvidenceService(self.repo,clock=self.clock)
++  if name in {'responsibility_submit','responsibility_review'}:
++   from app.services.responsibility.service import Responsibility,identity
++   service=Responsibility(self.repo,self.auth,clock=self.clock);operation=name.removeprefix('responsibility_')
++   q,_=service.prepare(operation,id,v,token)
++   boundary.identities['entity_id']=identity(self.repo.graph.name,q) if operation=='submit' else id
++   return await boundary.invoke(self.repo,lambda:service.execute(operation,id,v,request_id=request,token=token))
+   if name=='intake':
+    from app.services.complaints.models import normalize
+    from app.services.complaints.service import stable
+@@ -211,6 +217,9 @@
+   raise ValueError('CLOSED_API_COMMAND')
+  async def read(self,name,id,actor,token,limit,cursor):
+   r=self.reads
++  if name=='responsibility_get':
++   from app.services.responsibility.service import Responsibility
++   return Responsibility(self.repo,self.auth,clock=self.clock).get(id,token=token)
+   if name=='demo_catalog':
+    from app.services.demo.service import Demo
+    return Demo(self).catalog()
+--- a/backend/app/services/http/views.py
++++ b/backend/app/services/http/views.py
+@@ -83,7 +83,7 @@
+    return self.issues(self.node(plan['draft']['investigation_id']))
+   return set()
+  def departments(self,n):
+-  if 'InfrastructureAsset' in n.labels:return set(self.r.targets('MAINTAINED_BY',n.id))
++  if 'InfrastructureAsset' in n.labels:return set(self.r.ownership_departments(n.id))
+   if n.kind=='Department':return {n.id}
+   if n.kind=='WorkOrder':return {self.s.ops.store.get('order',n.id)['assignment']['department_id']}
+   if n.kind=='Approval':return {a['department_id'] for a in self.s.ops.store.get('approval',n.id)['binding']['assignments']}
+@@ -139,7 +139,7 @@
+   return {'checkpoint_graph_revision':state.graph_revision if state else None,'refresh_required':bool(state and (state.refresh_required or state.graph_revision!=self.state())),'error_codes':codes,'items':page,'total_count':len(items),'next_cursor':key(page[-1]) if len(eligible)>len(page) and page else None,'graph_revision':self.state(),'as_of':self.s.clock(),'phase':state.phase if state else None,'pause_reason':state.pause_reason if state else None,'recovery_required':quarantined or bool(state and state.pause_reason and 'RECOVERY' in state.pause_reason),'current_agent_role':state.phase if state else None,'active_incident_ids':inv['incident_ids'],'historical_incident_ids':inv['historical_incident_ids'],'limitations':[*LIMITATIONS,'Only persisted public decision summaries and validated broker metadata; raw arguments and private reasoning withheld','Scripted execution modes are test behavior, not genuine live autonomy',*(['No persisted checkpoint available'] if state is None else [])]}
+  def asset(self,id):
+   n=self.require(id,'InfrastructureAsset');p=n.properties;locations=self.r.targets('LOCATED_AT',id)
+-  return {'location_id':locations[0] if len(locations)==1 else None,'owner_department_id':self.r.targets('MAINTAINED_BY',id)[0] if len(self.r.targets('MAINTAINED_BY',id))==1 else None,'condition':p.get('condition'),'id':id,'labels':list(n.labels),'asset_type':p['asset_type'],'name':p['name'],'operational_status':p['operational_status'],'department_ids':self.r.targets('MAINTAINED_BY',id),'location_ids':locations,'incident_ids':[i for i in self.r.sources('AFFECTS',id) if self.allowed(self.node(i))],'graph_revision':self.state(),'as_of':self.s.clock(),'geometry_status':'LOCATION_REFERENCES' if locations else 'UNAVAILABLE'}
++  return {'location_id':locations[0] if len(locations)==1 else None,'owner_department_id':self.r.ownership_departments(id,verified_only=True)[0] if len(self.r.ownership_departments(id,verified_only=True))==1 else None,'condition':p.get('condition'),'id':id,'labels':list(n.labels),'asset_type':p['asset_type'],'name':p['name'],'operational_status':p['operational_status'],'department_ids':self.r.ownership_departments(id),'location_ids':locations,'incident_ids':[i for i in self.r.sources('AFFECTS',id) if self.allowed(self.node(i))],'graph_revision':self.state(),'as_of':self.s.clock(),'geometry_status':'LOCATION_REFERENCES' if locations else 'UNAVAILABLE'}
+  def graph(self,id,kind):
+   root=self.require(id,kind);nodes={id:root};edges={};front=[id];truncated=False
+   # Finite breadth-first fixed query. Authorization and temporal checks precede
+--- a/backend/app/services/operations/service.py
++++ b/backend/app/services/operations/service.py
+@@ -73,7 +73,11 @@
+   before=memory.repo._read("MATCH (m:CivicSchemaMigration {id:'0001'}) RETURN m.repo_revision,m.repo_pending") if memory else None
+   proofs={}
+   for t in draft.tasks:
+-   proofs[t.id]={'resolution':await self.planning.resolve(t,reader,at),'remediation':validate_remediation(t,draft,reader,assessments,PlanningBlocked)}
++   resolution=await self.planning.resolve(t,reader,at)
++   original_owners=saved['proof']['tasks'][t.id]['owners']
++   current={v['asset_id']:v for v in resolution['owners']}
++   if len(current)!=len(original_owners) or any(o['asset_id'] not in current or any(current[o['asset_id']].get(k)!=v for k,v in o.items()) for o in original_owners):raise PreconditionFailed('OWNERSHIP_BINDING_CHANGED_REVISED_PLAN_REQUIRED')
++   proofs[t.id]={'resolution':resolution,'remediation':validate_remediation(t,draft,reader,assessments,PlanningBlocked)}
+   if memory and before!=memory.repo._read("MATCH (m:CivicSchemaMigration {id:'0001'}) RETURN m.repo_revision,m.repo_pending"):raise PreconditionFailed('SOURCE_REVISION_CHANGED')
+   return saved,draft,tasks,{'validated_at':at,'tasks':proofs,'memory_revision':before}
+  def approval(self,id,binding):
+--- a/backend/app/services/operations/storage.py
++++ b/backend/app/services/operations/storage.py
+@@ -6,7 +6,7 @@
+ from .models import OpsRecovery
+ NODES={'Approval','WorkOrder','DomainEvent','StatusEvent','InterventionOutcome','Evidence','Finding','Inspection','HypothesisAssessment','Complaint','Incident','ProblemCluster'}
+ UPDATES={'DomainEvent','ResolutionPlan','ActionTask','Approval','WorkOrder','Inspection','Hypothesis','Incident','Investigation','ProblemCluster'}
+-EDGES={'INVESTIGATES','IMPLEMENTS','AUTHORIZED_BY','HAS_EVENT','EMITTED_EVENT','RESULTED_IN','INSPECTS','PRODUCED','ESTABLISHES','HAS_ASSESSMENT','SUPPORTED_BY','CONTRADICTED_BY','REPORTS','OCCURRED_AT','AFFECTS','PART_OF'}
++EDGES={'MAINTAINED_BY','INVESTIGATES','IMPLEMENTS','AUTHORIZED_BY','HAS_EVENT','EMITTED_EVENT','RESULTED_IN','INSPECTS','PRODUCED','ESTABLISHES','HAS_ASSESSMENT','SUPPORTED_BY','CONTRADICTED_BY','REPORTS','OCCURRED_AT','AFFECTS','PART_OF'}
+ class Storage:
+  def __init__(self,repo):self.repo=repo
+  def get(self,kind,id):
+@@ -38,14 +38,22 @@
+    self.repo.registry.validate_edge(kind,source.kind,source.properties,target.kind,target.properties,props)
+    policy_props=props
+    evidence=props.get('source_evidence_id')
+-   if evidence in fresh:
++   planned=None
++   if evidence in fresh and kind=='MAINTAINED_BY':
++    ek,ep=records[evidence]
++    from app.services.responsibility.service import validate_review_evidence
++    if ek!='Evidence' or props.get('association_status')!='VERIFIED':raise PreconditionFailed('PLANNED_RESPONSIBILITY_SOURCE')
++    review,assertion=validate_review_evidence(self.repo,ep)
++    if (a,b,props.get('valid_from'),props.get('valid_to'))!=(assertion.command.asset_id,assertion.command.department_id,assertion.command.valid_from,assertion.command.valid_to):raise PreconditionFailed('PLANNED_RESPONSIBILITY_SCOPE')
++    planned=self.repo.decode_node(self.repo.registry.labels('Evidence'),ep)
++   elif evidence in fresh:
+     # B09/B08 command journal is created atomically with its links. Validate that
+     # narrow planned source rather than weakening B03's persisted-source checks.
+     ek,ep=records[evidence]
+     if ek!='Evidence' or ep['evidence_type'] not in {'B09_OPERATION','COMPLAINT_INTAKE'} or ep['reliability']!='UNVERIFIED' or props.get('association_status')=='VERIFIED':raise PreconditionFailed('PLANNED_OPERATION_EVIDENCE_SCOPE')
+     if timestamp(ep['recorded_at'])>timestamp(props['created_at']):raise PreconditionFailed('PLANNED_OPERATION_EVIDENCE_TIME')
+     policy_props={k:v for k,v in props.items() if k!='source_evidence_id'}
+-   self.repo._relationship_policies(kind,source,target,policy_props)
++   self.repo._relationship_policies(kind,source,target,policy_props,planned_evidence=planned)
+    if self.repo._edge_optional(props['id']):raise Conflict('OPERATIONS_EDGE_COLLISION')
+   from app.graph.repository import interval,intersection
+   for i,(kind,a,b,props) in enumerate(edges):
+--- a/backend/app/services/planning/service.py
++++ b/backend/app/services/planning/service.py
+@@ -32,11 +32,17 @@
+     reader.node(department,'Department')
+     evidence=reader.node(edge.properties.get('source_evidence_id',''),'Evidence')
+     if evidence.properties['reliability']!='VERIFIED' or evidence.properties.get('source_kind')=='AGENT' or not evidence.properties.get('observed_at'):raise PlanningBlocked('OWNERSHIP_EVIDENCE_INVALID')
++    if evidence.properties['evidence_type']=='RESPONSIBILITY_REVIEW':
++     from app.services.responsibility.service import validate_review_evidence
++     review,record=validate_review_evidence(self.repo,evidence.properties)
++     state=__import__('app.services.operations.storage',fromlist=['Storage']).Storage(self.repo).get('responsibility',review.submission_id)
++     q=record.command
++     if not state or state['relationship_id']!=edge_id or state['relationship_hash']!=edge.content_hash or (q.asset_id,q.department_id,q.valid_from,q.valid_to)!=(target,department,edge.properties.get('valid_from'),edge.properties.get('valid_to')):raise PlanningBlocked('OWNERSHIP_REVIEW_BINDING')
+     self.repo._check_evidence(edge.properties)  # Reuse B03 attribution/date ordering guarantees.
+     verified.append((department,edge_id,evidence.id))
+    if len(verified)!=1:raise PlanningBlocked('OWNERSHIP_UNKNOWN_OR_CONFLICTING')
+    if verified[0][0]!=task.department_id:raise PlanningBlocked('ACCOUNTABLE_DEPARTMENT_MISMATCH')
+-   owners.append({'asset_id':target,'department_id':verified[0][0],'relationship_id':verified[0][1],'evidence_id':verified[0][2]})
++   owners.append({'asset_id':target,'department_id':verified[0][0],'relationship_id':verified[0][1],'evidence_id':verified[0][2],'relationship_hash':self.repo.get_relationship(verified[0][1]).content_hash,'evidence_hash':self.repo.get_node(verified[0][2],'Evidence').content_hash})
+   if self.memory is None:raise PlanningBlocked('PROCEDURE_CAPABILITY_UNAVAILABLE')
+   citation=task.procedure_citation
+   if timestamp(citation.retrieved_at)>timestamp(as_of):raise PlanningBlocked('PROCEDURE_CITATION_FROM_FUTURE')
+--- /dev/null
++++ b/backend/app/services/responsibility/models.py
+@@ -0,0 +1,70 @@
++"""Closed synthetic inventory assertion and independently authenticated review."""
++from typing import Literal
++from pydantic import Field,field_validator,model_validator
++from app.services.evidence.models import Model,ID,Time,Hash,Text
++from app.graph.schema import timestamp
++class ResponsibilitySubmission(Model):
++ asset_id:ID
++ department_id:ID
++ source_id:ID
++ source_record_id:ID
++ source_version:int=Field(default=1,ge=1,le=100)
++ source_kind:Literal['SYNTHETIC']='SYNTHETIC'
++ observed_at:Time
++ valid_from:Time
++ valid_to:Time|None=None
++ @field_validator('observed_at','valid_from','valid_to')
++ @classmethod
++ def canonical(cls,v):return timestamp(v).isoformat(timespec='microseconds').replace('+00:00','Z') if v is not None else None
++ @model_validator(mode='after')
++ def chronology(self):
++  if timestamp(self.observed_at)>timestamp(self.valid_from) or self.valid_to and timestamp(self.valid_to)<=timestamp(self.valid_from):raise ValueError('RESPONSIBILITY_INTERVAL')
++  return self
++class ResponsibilityReview(Model):
++ expected_hash:Hash
++ reviewed:Literal[True]
++ reason:Text
++ @field_validator('reviewed',mode='before')
++ @classmethod
++ def explicit(cls,v):
++  if type(v) is not bool:raise ValueError('EXPLICIT_REVIEW_REQUIRED')
++  return v
++class SubmissionRecord(Model):
++ format_version:Literal[1]=1
++ command:ResponsibilitySubmission
++ submitted_by:ID
++ submitted_at:Time
++ command_hash:Hash
++class ReviewRecord(Model):
++ format_version:Literal[1]=1
++ submission_id:ID
++ submission_hash:Hash
++ reviewed_by:ID
++ reviewed_at:Time
++ reviewed:Literal[True]=True
++ reason:Text
++class ResponsibilityDTO(Model):
++ id:ID
++ asset_id:ID
++ department_id:ID
++ source_id:ID
++ source_record_id:ID
++ source_version:int
++ source_kind:Literal['SYNTHETIC']='SYNTHETIC'
++ observed_at:Time
++ valid_from:Time
++ valid_to:Time|None
++ submitted_by:ID
++ reviewed_by:ID|None
++ status:Literal['SUBMITTED','VERIFIED']
++ applicability:Literal['UNREVIEWED','HISTORICAL','FUTURE','CURRENT']
++ expected_hash:Hash
++ source_evidence_id:ID
++ review_evidence_id:ID|None
++ relationship_id:ID|None
++ event_id:ID
++ as_of:Time
++ simulation_mode:Literal[True]=True
++
++Submission=ResponsibilitySubmission
++Review=ResponsibilityReview
+--- /dev/null
++++ b/backend/app/services/responsibility/service.py
+@@ -0,0 +1,126 @@
++"""Explicit inventory authority acquisition; existing fenced operations batch only."""
++import json
++from app.graph.models import digest
++from app.graph.schema import utc_now,timestamp
++from app.graph.repository import Conflict,PreconditionFailed
++from app.services.evidence.reader import Reader
++from app.services.operations.auth import Denied
++from app.services.operations.storage import Storage
++from app.services.operations.models import OpsRecovery
++from app.services.operations.service import common
++from .models import Submission,Review,SubmissionRecord,ReviewRecord,ResponsibilityDTO
++SUBMISSION='RESPONSIBILITY_ASSERTION'
++REVIEW='RESPONSIBILITY_REVIEW'
++def identity(graph,q):return 'RESP-B20R-'+digest([graph,q.source_id,q.source_record_id,q.source_version])[:32]
++def stable(prefix,*parts):return prefix+'-B20R-'+digest(parts)[:32]
++def authorization(actor,operation,department=None,submitted_by=None):
++ if operation=='submit':
++  if actor.role!='DEPARTMENT_LEAD' or actor.department_id!=department:raise Denied('RESPONSIBILITY_DEPARTMENT_SCOPE')
++ elif operation=='review':
++  if actor.role!='ANALYST' or actor.id==submitted_by:raise Denied('RESPONSIBILITY_INDEPENDENT_REVIEW')
++ elif actor.role not in {'ANALYST','APPROVER','DEPARTMENT_LEAD','ADMIN'}:raise Denied('RESPONSIBILITY_READ_DENIED')
++def source(repo,id):
++ node=repo.get_node(id,'Evidence');record=SubmissionRecord.model_validate_json(node.properties['summary'])
++ q=record.command
++ if node.properties['evidence_type']!=SUBMISSION or node.properties['reliability']!='UNVERIFIED' or node.properties['source_kind']!='SYNTHETIC' or record.command_hash!=digest(q.model_dump(mode='json')) or id!=identity(repo.graph.name,q):raise PreconditionFailed('RESPONSIBILITY_SOURCE_INTEGRITY')
++ expected={'observed_at':q.observed_at,'recorded_at':record.submitted_at,'created_at':record.submitted_at,'updated_at':record.submitted_at,'source_record_id':q.source_id+':'+q.source_record_id+':'+str(q.source_version),'basis':'REPORTED'}
++ if any(node.properties.get(k)!=v for k,v in expected.items()):raise PreconditionFailed('RESPONSIBILITY_SOURCE_INTEGRITY')
++ return node,record
++def validate_review_evidence(repo,props):
++ """Also validates the narrowly staged atomic review source before persistence."""
++ review=ReviewRecord.model_validate_json(props['summary']);node,record=source(repo,review.submission_id)
++ if node.content_hash!=review.submission_hash or review.reviewed_by==record.submitted_by or props.get('id')!=stable('EV-RESP-REVIEW',node.id) or props.get('evidence_type')!=REVIEW or props.get('reliability')!='VERIFIED' or props.get('source_kind')!='SYNTHETIC' or props.get('basis')!='OBSERVED':raise PreconditionFailed('RESPONSIBILITY_REVIEW_INTEGRITY')
++ if timestamp(record.command.observed_at)>timestamp(record.submitted_at) or timestamp(record.submitted_at)>timestamp(review.reviewed_at):raise PreconditionFailed('RESPONSIBILITY_REVIEW_TIME')
++ expected={'observed_at':record.command.observed_at,'created_at':review.reviewed_at,'updated_at':review.reviewed_at,'recorded_at':review.reviewed_at,'source_record_id':node.properties['source_record_id']+':review'}
++ if any(props.get(k)!=v for k,v in expected.items()):raise PreconditionFailed('RESPONSIBILITY_REVIEW_INTEGRITY')
++ return review,record
++class Responsibility:
++ def __init__(self,repo,auth,*,clock=utc_now):
++  from app.services.operations.migration import OperationsMigration
++  if not OperationsMigration(repo.client,repo.graph.name).status()['ready']:raise PreconditionFailed('RESPONSIBILITY_0005_REQUIRED')
++  self.repo,self.auth,self.clock=repo,auth,clock;self.store=Storage(repo)
++ def readback(self,id):
++  node,record=source(self.repo,id);state=self.store.get('responsibility',id)
++  if not state or state['submission_hash']!=node.content_hash:raise PreconditionFailed('RESPONSIBILITY_STATE_INTEGRITY')
++  op=self.store.get('operation',state['last_operation'])
++  if not op or op['receipt']['id']!=id:raise PreconditionFailed('RESPONSIBILITY_AUDIT_INTEGRITY')
++  reviewer=None
++  if state['review_evidence_id']:
++   evidence=self.repo.get_node(state['review_evidence_id'],'Evidence');review,_=validate_review_evidence(self.repo,evidence.properties);reviewer=review.reviewed_by
++   edge=self.repo.get_relationship(state['relationship_id']);q=record.command
++   if edge.kind!='MAINTAINED_BY' or edge.source!=q.asset_id or edge.target!=q.department_id or edge.properties.get('source_evidence_id')!=evidence.id or edge.properties.get('association_status')!='VERIFIED' or edge.properties.get('valid_from')!=q.valid_from or edge.properties.get('valid_to')!=q.valid_to:raise PreconditionFailed('RESPONSIBILITY_EDGE_INTEGRITY')
++   if op['native_hashes'].get(evidence.id)!=digest(evidence.properties) or state['relationship_hash']!=edge.content_hash:raise PreconditionFailed('RESPONSIBILITY_REVIEW_INTEGRITY')
++  q=record.command;at=self.clock()
++  applicability='UNREVIEWED' if reviewer is None else 'FUTURE' if timestamp(q.valid_from)>timestamp(at) else 'HISTORICAL' if q.valid_to and timestamp(q.valid_to)<=timestamp(at) else 'CURRENT'
++  return ResponsibilityDTO(id=id,**q.model_dump(mode='json'),submitted_by=record.submitted_by,reviewed_by=reviewer,status='VERIFIED' if reviewer else 'SUBMITTED',applicability=applicability,expected_hash=node.content_hash,source_evidence_id=id,review_evidence_id=state['review_evidence_id'],relationship_id=state['relationship_id'],event_id=state['event_id'],as_of=at).model_dump(mode='json')
++ def get(self,id,*,token):
++  actor=self.auth.resolve(token);authorization(actor,'read');out=self.readback(id)
++  if actor.role=='DEPARTMENT_LEAD' and actor.department_id!=out['department_id']:raise Denied('RESPONSIBILITY_DEPARTMENT_SCOPE')
++  return out
++ def prepare(self,operation,id,value,token):
++  if operation not in {'submit','review'}:raise PreconditionFailed('RESPONSIBILITY_CLOSED_OPERATION')
++  actor=self.auth.resolve(token);q=(Submission if operation=='submit' else Review).model_validate(value)
++  if operation=='submit':authorization(actor,operation,q.department_id)
++  else:
++   node,record=source(self.repo,id);authorization(actor,operation,submitted_by=record.submitted_by)
++   if node.content_hash!=q.expected_hash:raise Conflict('STALE_RESPONSIBILITY_SOURCE')
++  return q,actor
++ def execute(self,operation,id,value,*,request_id,token):
++  from app.active import is_shared_target
++  from pydantic import TypeAdapter
++  from app.services.evidence.models import ID
++  TypeAdapter(ID).validate_python(request_id)
++  if self.repo.graph.name!='civicly_knowledge' and not is_shared_target(self.repo.graph.name):raise PreconditionFailed('RESPONSIBILITY_EXACT_TARGET_REQUIRED')
++  q,actor=self.prepare(operation,id,value,token);id=identity(self.repo.graph.name,q) if operation=='submit' else id
++  opid=stable('OP-RESP',request_id);sha=digest([actor.id,operation,id,q.model_dump(mode='json')]);at=self.clock()
++  with self.repo._session() as session:
++   prior=self.store.get('operation',opid)
++   if prior:
++    if prior['request_hash']!=sha:raise Conflict('RESPONSIBILITY_REQUEST_CONFLICT')
++    return self.readback(id)
++   nodes=[];edges=[];hashes={}
++   def node(kind,props):nodes.append((kind,props));hashes[props['id']]=digest(props)
++   if operation=='submit':
++    Reader(self.repo,at).node(q.asset_id,'InfrastructureAsset');Reader(self.repo,at).node(q.department_id,'Department')
++    if timestamp(q.observed_at)>timestamp(at):raise PreconditionFailed('RESPONSIBILITY_FUTURE_OBSERVATION')
++    old=self.repo._node_optional(id)
++    if old:
++     _,previous=source(self.repo,id)
++     if previous.command!=q or previous.submitted_by!=actor.id:raise Conflict('RESPONSIBILITY_SOURCE_IDENTITY_CONFLICT')
++     return self.readback(id)
++    record=SubmissionRecord(command=q,submitted_by=actor.id,submitted_at=at,command_hash=digest(q.model_dump(mode='json')))
++    node('Evidence',{**common(id,at),'evidence_type':SUBMISSION,'reliability':'UNVERIFIED','recorded_at':at,'observed_at':q.observed_at,'source_kind':'SYNTHETIC','source_record_id':q.source_id+':'+q.source_record_id+':'+str(q.source_version),'basis':'REPORTED','summary':record.model_dump_json()})
++    submission_hash=self.repo.decode_node(self.repo.registry.labels('Evidence'),nodes[0][1]).content_hash
++    state={'submission_hash':submission_hash,'review_evidence_id':None,'relationship_id':None}
++   else:
++    original,record=source(self.repo,id);qsource=record.command
++    actor=self.auth.resolve(token);authorization(actor,'review',submitted_by=record.submitted_by)
++    submitting=self.auth.operator(record.submitted_by);authorization(submitting,'submit',qsource.department_id)
++    if original.content_hash!=q.expected_hash:raise Conflict('STALE_RESPONSIBILITY_SOURCE')
++    state=self.store.get('responsibility',id)
++    if not state or state['submission_hash']!=original.content_hash:raise PreconditionFailed('RESPONSIBILITY_STATE_INTEGRITY')
++    if state['review_evidence_id']:raise Conflict('RESPONSIBILITY_ALREADY_REVIEWED')
++    reader=Reader(self.repo,at);reader.node(qsource.asset_id,'InfrastructureAsset');reader.node(qsource.department_id,'Department')
++    review=ReviewRecord(submission_id=id,submission_hash=original.content_hash,reviewed_by=actor.id,reviewed_at=at,reason=q.reason)
++    eid=stable('EV-RESP-REVIEW',id);rid=stable('REL-RESP',id)
++    ep={**common(eid,at),'evidence_type':REVIEW,'reliability':'VERIFIED','recorded_at':at,'observed_at':qsource.observed_at,'source_kind':'SYNTHETIC','source_record_id':original.properties['source_record_id']+':review','basis':'OBSERVED','summary':review.model_dump_json()}
++    validate_review_evidence(self.repo,ep);node('Evidence',ep)
++    props={'id':rid,'municipality_id':'demo-city','created_at':at,'valid_from':qsource.valid_from,'association_status':'VERIFIED','source_evidence_id':eid}
++    if qsource.valid_to:props['valid_to']=qsource.valid_to
++    edges=[('MAINTAINED_BY',qsource.asset_id,qsource.department_id,props)]
++    # Preflight before dispatch; Storage rechecks under this same writer fence.
++    src=self.repo.get_node(qsource.asset_id);dst=self.repo.get_node(qsource.department_id)
++    planned=self.repo.decode_node(self.repo.registry.labels('Evidence'),ep)
++    self.repo._relationship_policies('MAINTAINED_BY',src,dst,props,planned_evidence=planned)
++    from app.graph.models import EdgeRecord
++    state={**state,'review_evidence_id':eid,'relationship_id':rid,'relationship_hash':EdgeRecord(id=rid,kind='MAINTAINED_BY',source=src.id,target=dst.id,properties=props).content_hash}
++   eventid=stable('EVENT-RESP',opid)
++   event={'id':eventid,'type':'GRAPH_EVIDENCE_CHANGED','entity_id':id,'aggregate_revision':session.revision+1,'occurred_at':at,'payload_schema_version':1,'source_kind':'SYNTHETIC','idempotency_key':request_id,'actor_id':actor.id,'actor_role':actor.role,'payload':{'operation':'responsibility_'+operation}}
++   node('DomainEvent',{**common(eventid,at),'event_type':event['type'],'subject_id':id,'occurred_at':at,'delivery_status':'PENDING','idempotency_key':request_id,'payload_ref':'operation:'+opid})
++   state={**state,'last_operation':opid,'event_id':eventid}
++   saved={'request_hash':sha,'request_id':request_id,'actor':actor.model_dump(mode='json'),'command':q.model_dump(mode='json'),'receipt':{'id':id},'native_hashes':hashes,'events':[event],'occurred_at':at}
++   self.auth.resolve(token)
++   try:
++    self.store.commit(session,id,nodes,[],edges,[('responsibility',id,state),('operation',opid,saved)])
++    return self.readback(id)
++   except Exception:raise OpsRecovery(self.repo.graph.name,request_id,id,operation='responsibility_'+operation) from None
+--- a/backend/cli/main.py
++++ b/backend/cli/main.py
+@@ -4,6 +4,7 @@
+ 
+ # action: accepted API method/path. No caller-controlled URL or executable query.
+ ACTIONS={
++ 'responsibility':{'submit':('POST','/responsibilities'),'review':('POST','/responsibilities/{id}/review'),'get':('GET','/responsibilities/{id}')},
+  'demo':{'scenarios':('GET','/demo/scenarios'),'reset':('POST','/demo/reset'),'advance':('POST','/demo/scenarios/{id}/advance')},
+  'complaint':{'create':('POST','/complaints'),'get':('GET','/complaints/{id}'),'list':('GET','/complaints')},
+  'investigate':{'open':('POST','/investigations'),'get':('GET','/investigations/{id}'),'resume':('POST','/investigations/{id}/resume'),'trace':('GET','/investigations/{id}/trace'),'hypotheses':('GET','/investigations/{id}/hypotheses')},
+--- /dev/null
++++ b/backend/tests/integration/test_responsibility_runtime.py
+@@ -0,0 +1,137 @@
++"""One fresh B19 journey: real API/CLI/DB/SDK/MCP/Saver, scripted model only."""
++import asyncio,copy,hashlib,json,os,subprocess,sys
++from pathlib import Path
++import httpx,pytest
++from app.active import load,active_scope
++from app.api.__main__ import configured_app
++from app.agents.checkpoints import saver
++from app.services.evidence import EvidenceService
++from app.services.evidence.reader import Reader
++from app.services.planning.models import PlanDraft
++from app.services.planning.service import PlanningService,PlanningBlocked
++from app.services.responsibility.service import Responsibility
++from app.graph.repository import GraphRepository
++from tests.b20_fixtures import shared
++from tests.integration.test_demo_runtime import fresh,client_run,headers,inspection,AT
++from tests.integration.test_scenario_behavior import run_agent,histories
++from tests.b12_fixtures import sample
++from tests.b13_fixtures import binding
++pytestmark=pytest.mark.integration
++T0='2026-10-19T12:00:00.000000Z';T1='2026-10-19T13:00:00.000000Z';T2='2026-10-19T14:00:00.000000Z'
++async def api(shared,path,at,fn):
++ app=configured_app(path,shared.auth.path,path.parent/'memory.json',at)
++ async with app.router.lifespan_context(app),httpx.AsyncClient(transport=httpx.ASGITransport(app=app,raise_app_exceptions=False),base_url='http://local') as c:return await fn(c,app.state.services)
++def checkpoints(p):return {x.config['configurable']['checkpoint_id']:hashlib.sha256(json.dumps(x.checkpoint,sort_keys=True,default=str).encode()).hexdigest() for x in saver(p).list(None)}
++def test_acquire_review_plan_stale_binding_and_uncertain_replay(shared,monkeypatch):
++ async def run():
++  receipt=await fresh(shared,'S01','PRIMARY','B20RO-source');path=shared.path.parent/receipt['profile_reference']/'profile.json';p=load(path);case=receipt['scenario']['cases'][0]
++  with active_scope(p):
++   r=GraphRepository(shared.db,p.graph);candidate=r.get_relationship(next(x[0] for x in r._read("MATCH (:InfrastructureAsset {id:$id})-[e:MAINTAINED_BY]->() RETURN e.id",{'id':case['asset_id']})))
++   evidence=r.get_node(candidate.properties['source_evidence_id']);original=(candidate,evidence)
++   agent,thread,baseline,old=await run_agent(p,r,path,case)
++   async def release(c,s):
++    view,lead=await inspection(shared,c,case,'B20RO-release')
++    q={'expected_current_stage':'BASELINE_VISIBLE','stage':'EVIDENCE_REVEALED','investigation_id':case['investigation_id'],'inspection_id':view['id'],'expected_hash':view['expected_hash']}
++    out=await c.post('/api/v1/demo/scenarios/S01/advance',json=q,headers=headers(shared,key='B20RO-release',field=lead,reviewer='OP-ANALYST'));assert out.status_code==200,out.json()
++   await client_run(shared,path,release)
++   agent,_,state,new=await run_agent(p,r,path,case,resume=True,thread=thread);frozen=checkpoints(p)
++   from app.memory.models import sources
++   src=next(s for s in sources(Path('data/documents/b12r/manifest.json')) if s.owner_department_id=='DEPT-DRAIN');await shared.memory.ingest(src)
++   citation=(await shared.memory.retrieve(as_of=T0,document_id=src.document_id))['citations'][0]
++   # Explicit new synthetic safety/causal inspection through existing accepted domain service.
++   ev=EvidenceService(r,clock=lambda:T0);actor=shared.auth.resolve(shared.tokens['OP-DRAIN-LEAD']);analyst=shared.auth.resolve(shared.tokens['OP-ANALYST'])
++   ins=ev.execute({'operation':'request_inspection','request_id':'B20RO-safety-request','investigation_id':case['investigation_id'],'asset_ids':[case['asset_id']],'department_id':'DEPT-DRAIN','inspection_type':'SYNTHETIC_CAUSAL_SAFETY_SURVEY'},analyst).entity_id
++   for status in ['REQUESTED','SCHEDULED','IN_PROGRESS']:
++    ev.execute({'operation':'transition_inspection','request_id':'B20RO-safety-'+status,'inspection_id':ins,'expected_hash':r.get_node(ins).content_hash,'status':status,**({'scheduled_at':T0} if status=='SCHEDULED' else {})},actor)
++   report=ev.execute({'operation':'report_inspection','request_id':'B20RO-safety-report','inspection_id':ins,'expected_hash':r.get_node(ins).content_hash,'source_id':'B20RO-synthetic-field-team','record_id':'causal-safety-1','observations':[{'asset_id':case['asset_id'],'code':code,'statement':'Explicit authored synthetic field observation '+code,'method':'SYNTHETIC_FIELD_SURVEY','observed_at':T0} for code in ['OBSTRUCTION_OBSERVED','FLOW_RESTRICTED','DRAIN_CLEARANCE_SAFETY_REVIEWED']],'review':{'reviewer_id':analyst.id,'role':analyst.role,'reviewed':True,'reason':'Independent review of synthetic causal/safety survey'},'attribution':{'incident_ids':[case['incident_id']],'rationale':'Direct current episode survey'}},actor).entity_id
++   hs={r.get_node(e.target).properties['cause_code']:e.target for e in Reader(r,T0).edges('PROPOSES',source=case['investigation_id'])};assessments=[]
++   for cause in ['BLOCKAGE','CAPACITY_DEFICIT']:
++    h=hs[cause];a=ev.execute({'operation':'assess','request_id':'B20RO-assess-'+cause,'hypothesis_id':h,'expected_hash':r.get_node(h).content_hash,'evidence_ids':[report],'as_of':T0},analyst).assessment;assessments.append(a)
++   assert assessments[0].assessment=='SUPPORTED'
++   value=sample();value['investigation_id']=case['investigation_id'];value['basis']=[{'hypothesis_id':a.hypothesis_id,'assessment_id':a.id,'reason':'Preserve reviewed evidence and competing mechanism','addressed':i==0} for i,a in enumerate(assessments)];value['evidence_ids']=[report]
++   value['tasks'][0].update(action_type='DRAIN_BLOCKAGE_CLEARANCE',target_ids=[case['asset_id']],procedure_citation=citation,evidence_ids=[report],assessment_ids=[assessments[0].id],remediation={'mode':'SUPPORTED_NOW','conditions':[{'kind':k,'status':'MET','evidence_ids':[report]} for k in ['CAUSAL_INSPECTION','SAFETY_REVIEW']]})
++   draft=PlanDraft.model_validate(value)
++   private=path.parent;from cli.private import write_private,scope
++   sessions={}
++   for who in ['OP-DRAIN-LEAD','OP-ANALYST']:
++    sessions[who]=private/(who+'.ownership-session.json');write_private(sessions[who],{'version':1,'scope':scope(p,shared.auth.path),'token':shared.tokens[who],'operator_id':who,'login_key':'B20RO-host-session'})
++   calls=[]
++   def cli(args,who='OP-DRAIN-LEAD'):
++    env={**os.environ,'PYTHONPATH':str(Path('backend/test_guards').resolve())+os.pathsep+str(Path('backend').resolve())}
++    done=subprocess.run([sys.executable,'-m','cli','--profile',str(path),'--auth-store',str(shared.auth.path),'--memory-profile',str(path.parent/'memory.json'),'--session',str(sessions[who]),'--at',T0,*args],capture_output=True,text=True,env=env,timeout=60)
++    out=json.loads(done.stdout);assert done.returncode==0,out;assert all(t not in done.stdout+done.stderr for t in shared.tokens.values());calls.append({'command':' '.join(args[:2]),'status':out['status']});return out['data']
++   body={'asset_id':case['asset_id'],'department_id':'DEPT-DRAIN','source_id':'B20RO-synthetic-inventory','source_record_id':'asset-responsibility','source_version':1,'source_kind':'SYNTHETIC','observed_at':AT,'valid_from':T0,'valid_to':T1}
++   async def journey(c,s):
++    blocked=await c.post('/api/v1/plans',json={'draft':value},headers=headers(shared,'OP-ANALYST','candidate-plan'));assert blocked.status_code==409
++    for who in ['OP-ADMIN','OP-ANALYST','OP-APPROVER','OP-ROAD-LEAD']:
++     denied=await c.post('/api/v1/responsibilities',json=body,headers=headers(shared,who,'wrong-submit-'+who));assert denied.status_code==403,denied.json()
++    payload=private/'ownership-submit.json';payload.write_text(json.dumps(body));submitted=cli(['responsibility','submit','--payload',str(payload),'--key','B20RO-submit'])
++    assert submitted['status']=='SUBMITTED' and submitted['applicability']=='UNREVIEWED'
++    replay=await c.post('/api/v1/responsibilities',json=body,headers=headers(shared,'OP-DRAIN-LEAD','B20RO-submit'));assert replay.status_code==200 and replay.json()['data']==submitted
++    conflict_source=await c.post('/api/v1/responsibilities',json={**body,'valid_to':T2},headers=headers(shared,'OP-DRAIN-LEAD','same-source-changed'));assert conflict_source.status_code==409
++    rid=submitted['id'];submission_bytes=r.get_node(rid);review={'expected_hash':submitted['expected_hash'],'reviewed':True,'reason':'Independent authenticated synthetic inventory review'}
++    for who in ['OP-DRAIN-LEAD','OP-ADMIN','OP-APPROVER']:
++     denied=await c.post('/api/v1/responsibilities/'+rid+'/review',json=review,headers=headers(shared,who,'wrong-review-'+who));assert denied.status_code==403
++    stale=await c.post('/api/v1/responsibilities/'+rid+'/review',json={**review,'expected_hash':'0'*64},headers=headers(shared,'OP-ANALYST','stale-review'));assert stale.status_code==409
++    payload=private/'ownership-review.json';payload.write_text(json.dumps(review));verified=cli(['responsibility','review','--id',rid,'--payload',str(payload),'--key','B20RO-review'],'OP-ANALYST')
++    assert r.get_node(rid)==submission_bytes
++    assert verified['status']=='VERIFIED' and verified['applicability']=='CURRENT' and verified['reviewed_by']!=verified['submitted_by']
++    replay=await c.post('/api/v1/responsibilities/'+rid+'/review',json=review,headers=headers(shared,'OP-ANALYST','B20RO-review'));assert replay.status_code==200 and replay.json()['data']==verified
++    read=cli(['responsibility','get','--id',rid],'OP-ANALYST');assert read==verified
++    asset=await c.get('/api/v1/assets/'+case['asset_id'],headers=headers(shared,'OP-DRAIN-LEAD'));assert asset.status_code==200,asset.json();assert asset.json()['data']['owner_department_id']=='DEPT-DRAIN' and asset.json()['data']['department_ids']==['DEPT-DRAIN']
++    assert r.get_relationship(candidate.id)==original[0] and r.get_node(evidence.id)==original[1]
++    made=await c.post('/api/v1/plans',json={'draft':value},headers=headers(shared,'OP-ANALYST','verified-plan'));assert made.status_code==200,made.json();planid=made.json()['data']['plan_id'];saved=s.ops.planning.store.get(planid);payload_hash=r._read('MATCH (d:CivicPlanDraft {id:$id}) RETURN d.payload_sha256',{'id':planid})
++    assert saved['proof']['tasks']['inspect']['owners'][0]['relationship_id']==verified['relationship_id']
++    # Ownership never satisfies a missing safety guard or a mismatching procedure.
++    from app.services.planning.policy import validate_remediation
++    bad=draft.model_copy(deep=True);bad.tasks[0].remediation.conditions[1].evidence_ids[:]=['MISSING']
++    with pytest.raises(PlanningBlocked):validate_remediation(bad.tasks[0],bad,Reader(r,T0),assessments,PlanningBlocked)
++    bad_task=draft.tasks[0].model_copy(update={'procedure_citation':draft.tasks[0].procedure_citation.model_copy(update={'quote_excerpt':'Not the actual source quote'})})
++    with pytest.raises(PlanningBlocked,match='PROCEDURE_STALE'):await s.ops.planning.resolve(bad_task,Reader(r,T0),T0)
++    # Same asset overlapping verified interval is rejected; the claim remains auditable.
++    async def acquire(source,begin,end,department='DEPT-DRAIN'):
++     lead='OP-DRAIN-LEAD' if department=='DEPT-DRAIN' else 'OP-ROAD-LEAD'
++     sub=await c.post('/api/v1/responsibilities',json={**body,'department_id':department,'source_record_id':source,'valid_from':begin,'valid_to':end},headers=headers(shared,lead,source+'-submit'));assert sub.status_code==200,sub.json();data=sub.json()['data'];q={'expected_hash':data['expected_hash'],'reviewed':True,'reason':'Independent synthetic interval review'}
++     return data,q
++    conflict,q=await acquire('overlap',T0,T2,'DEPT-ROAD')
++    rejected=await c.post('/api/v1/responsibilities/'+conflict['id']+'/review',json=q,headers=headers(shared,'OP-ANALYST','overlap-review'));assert rejected.status_code==409,rejected.json()
++    future,q=await acquire('successor',T1,T2)
++    reviewed=await c.post('/api/v1/responsibilities/'+future['id']+'/review',json=q,headers=headers(shared,'OP-ANALYST','successor-review'));assert reviewed.status_code==200,reviewed.json();assert reviewed.json()['data']['applicability']=='FUTURE'
++    historical,q=await acquire('history','2026-10-18T12:00:00.000000Z','2026-10-18T13:00:00.000000Z')
++    old=await c.post('/api/v1/responsibilities/'+historical['id']+'/review',json=q,headers=headers(shared,'OP-ANALYST','history-review'));assert old.status_code==200 and old.json()['data']['applicability']=='HISTORICAL',old.json()
++    b=binding(saved);submitted_plan=await c.post('/api/v1/plans/'+planid+'/submit-approval',json={k:v for k,v in b.items() if k!='plan_id'},headers=headers(shared,'OP-ANALYST','submit-plan'));assert submitted_plan.status_code==200,submitted_plan.json();approval=submitted_plan.json()['data']
++    decision={**b,'expected_hash':s.repo.get_node(approval['id']).content_hash,'decision':'APPROVED','reason':'Explicit independently approved exact synthetic plan'}
++    res=await c.post('/api/v1/approvals/'+approval['id']+'/decision',json=decision,headers=headers(shared,'OP-APPROVER','decide-plan'));assert res.status_code==200,res.json()
++    # Fault is an actual committed review followed by an injected readback error.
++    uncertain,q=await acquire('fault-future',T2,'2026-10-19T15:00:00.000000Z')
++    real=Responsibility.readback;invocations=[];execute=Responsibility.execute
++    def counted(self,*a,**kw):invocations.append(a[0]);return execute(self,*a,**kw)
++    def fault(self,id):
++     out=real(self,id)
++     if id==uncertain['id'] and out['status']=='VERIFIED':raise ValueError('PRIVATE_INJECTED_READBACK')
++     return out
++    monkeypatch.setattr(Responsibility,'execute',counted);monkeypatch.setattr(Responsibility,'readback',fault)
++    response=await c.post('/api/v1/responsibilities/'+uncertain['id']+'/review',json=q,headers=headers(shared,'OP-ANALYST','uncertain-review'));assert response.status_code==409,response.json();error=response.json()['error'];assert error['code']=='RECOVERY_REQUIRED' and error['details']['commitment']=='UNKNOWN' and error['details']['entity_id']==uncertain['id']
++    monkeypatch.setattr(Responsibility,'readback',real)
++    replay=await c.post('/api/v1/responsibilities/'+uncertain['id']+'/review',json=q,headers=headers(shared,'OP-ANALYST','uncertain-review'));assert replay.status_code==409 and replay.json()['error']['details']==error['details']
++    assert invocations==['review']
++    retained=Responsibility(r,shared.auth,clock=lambda:T0).get(uncertain['id'],token=shared.tokens['OP-ANALYST']);assert retained['status']=='VERIFIED' and retained['applicability']=='FUTURE'
++    assert r._read('MATCH ()-[e:MAINTAINED_BY {id:$id}]->() RETURN count(e)',{'id':retained['relationship_id']})==[[1]]
++    intent=s.delivery.store.get('api_request',error['details']['request_id']);assert intent['status']=='DISPATCHING'
++    events=s.delivery.discover();assert events # Includes the actual committed responsibility native events.
++    assert s.delivery.store.get('delivery',retained['event_id'])['event']['type']=='GRAPH_EVIDENCE_CHANGED'
++    assert checkpoints(p)==frozen and r.get_relationship(candidate.id)==candidate and r.get_node(evidence.id)==evidence
++    return {'plan_id':planid,'binding':b,'approval_id':approval['id'],'saved_draft':saved,'payload_hash':payload_hash,'verified':verified,'successor':reviewed.json()['data'],'historical':old.json()['data'],'recovery':error,'uncertain_retained':retained,'same_key_no_redispatch':True,'candidate_and_source_hashes':[candidate.content_hash,evidence.content_hash],'checkpoints_preserved':True,'cli_calls':calls}
++   proof=await api(shared,path,T0,journey)
++   async def expired(c,s):
++    current=await s.ops.planning.resolve(draft.tasks[0],Reader(r,T1),T1);assert current['owners'][0]['relationship_id']==proof['successor']['relationship_id']
++    request={**proof['binding'],'approval_id':proof['approval_id'],'task_id':proof['binding']['assignments'][0]['task_id']}
++    denied=await c.post('/api/v1/work-orders',json=request,headers=headers(shared,'OP-APPROVER','stale-owner-order'));assert denied.status_code==409,denied.json();assert r._read('MATCH (w:WorkOrder) RETURN count(w)')==[[0]]
++    with pytest.raises(Exception,match='OWNERSHIP_BINDING_CHANGED'):await s.ops.validate(proof['binding'],T1)
++    now=s.ops.planning.store.get(proof['plan_id']);assert now['draft']==proof['saved_draft']['draft'] and now['receipt']==proof['saved_draft']['receipt']
++    assert r._read('MATCH (d:CivicPlanDraft {id:$id}) RETURN d.payload_sha256',{'id':proof['plan_id']})==proof['payload_hash']
++    return {'old_approval_cannot_authorize_new_work':True,'exact_half_open_successor_selected':True,'historical_draft_receipt_hash_unchanged':True,'work_orders':0}
++   proof['stale_binding']=await api(shared,path,T1,expired)
++   assert checkpoints(p)==frozen
++   Path('docs/evidence/B20R-OWNERSHIP-real-proof.json').write_text(json.dumps({'mode':'REAL_B19_HTTP_CLI_FALKORDB_SDK_MCP_LANGGRAPH_SAVER_SCRIPTED_MODEL_NOT_GENUINE_AI','source_graph':p.graph,'case':case,'thread_id':thread,'baseline_checkpoint_id':old.config['configurable']['checkpoint_id'],'checkpoints':frozen,'synthetic_clock':[T0,T1,T2],'proof':proof,'provider_requests':0},indent=2)+'\n')
++ asyncio.run(run())
+--- /dev/null
++++ b/backend/tests/unit/test_responsibility.py
+@@ -0,0 +1,57 @@
++"""Typed/operator authority boundaries; no real DB or live-model claim."""
++import pytest
++from app.services.responsibility.models import Submission,Review
++from app.services.responsibility.service import authorization,identity
++from app.services.evidence.models import Actor
++from app.services.operations.auth import Denied
++from app.graph.repository import interval,intersection
++BASE={'asset_id':'DRAIN-101','department_id':'DEPT-DRAIN','source_id':'synthetic-inventory','source_record_id':'row1','observed_at':'2026-10-18T10:00:00Z','valid_from':'2026-10-19T00:00:00Z'}
++@pytest.mark.parametrize('extra',[{'reliability':'VERIFIED'},{'association_status':'VERIFIED'},{'source_kind':'MUNICIPAL'},{'reviewed_by':'OP-ADMIN'},{'graph':'civicly_knowledge'},{'source_version':True},{'observed_at':'2026-10-20T00:00:00Z'},{'valid_to':'2026-10-18T00:00:00Z'}])
++def test_closed_submission_and_chronology(extra):
++ with pytest.raises(ValueError):Submission.model_validate({**BASE,**extra})
++@pytest.mark.parametrize('extra',[{'reviewed':False},{'reviewed':1},{'reviewed_by':'OP-ANALYST'},{'expected_hash':'invalid'},{'reason':''}])
++def test_explicit_review_and_cas(extra):
++ with pytest.raises(ValueError):Review.model_validate({'expected_hash':'a'*64,'reviewed':True,'reason':'Independent synthetic inventory review',**extra})
++@pytest.mark.parametrize('role,department,operation,submitter',[('ADMIN','DEPT-COORD','submit',None),('ANALYST','DEPT-COORD','submit',None),('DEPARTMENT_LEAD','DEPT-ROAD','submit',None),('DEPARTMENT_LEAD','DEPT-DRAIN','review','OTHER'),('APPROVER','DEPT-COORD','review','OTHER'),('ADMIN','DEPT-COORD','review','OTHER'),('ANALYST','DEPT-COORD','review','SELF')])
++def test_role_scope_and_independence(role,department,operation,submitter):
++ with pytest.raises(Denied):authorization(Actor(id='SELF',role=role,department_id=department),operation,'DEPT-DRAIN',submitter)
++def test_valid_authority_and_stable_scoped_source_identity():
++ authorization(Actor(id='LEAD',role='DEPARTMENT_LEAD',department_id='DEPT-DRAIN'),'submit','DEPT-DRAIN')
++ authorization(Actor(id='ANALYST',role='ANALYST'),'review',submitted_by='LEAD')
++ a=Submission.model_validate(BASE);b=Submission.model_validate({**BASE,'observed_at':'2026-10-18T10:00:00.000000Z'})
++ assert a==b and identity('graph-a',a)==identity('graph-a',b)!=identity('graph-b',b)
++def test_verified_intervals_overlap_but_adjacent_history_is_distinct():
++ a=interval({'valid_from':'2026-10-19T00:00:00Z','valid_to':'2026-10-20T00:00:00Z'})
++ assert intersection(a,interval({'valid_from':'2026-10-19T12:00:00Z'})) is not None
++ assert intersection(a,interval({'valid_from':'2026-10-20T00:00:00Z'})) is None
++
++def test_service_rejects_unknown_operation_before_any_auth_or_dispatch():
++ from app.services.responsibility.service import Responsibility
++ from app.graph.repository import PreconditionFailed
++ service=object.__new__(Responsibility)
++ with pytest.raises(PreconditionFailed,match='CLOSED_OPERATION'):service.prepare('delete',None,{},None)
++
++def test_required_existing_operations_migration_not_bypassed(monkeypatch):
++ from types import SimpleNamespace
++ from app.services.responsibility.service import Responsibility
++ from app.graph.repository import PreconditionFailed
++ import app.services.operations.migration as migration
++ monkeypatch.setattr(migration,'OperationsMigration',lambda *a:SimpleNamespace(status=lambda:{'ready':False}))
++ with pytest.raises(PreconditionFailed,match='0005_REQUIRED'):Responsibility(SimpleNamespace(client=None,graph=SimpleNamespace(name='SOURCE')),None)
++
++@pytest.mark.parametrize('rows,verified_only,expected',[
++ ([('CANDIDATE','DEPT-DRAIN'),('VERIFIED','DEPT-DRAIN')],False,['DEPT-DRAIN']),
++ ([('CANDIDATE','DEPT-ROAD'),('VERIFIED','DEPT-DRAIN')],False,['DEPT-DRAIN']),
++ ([('VERIFIED','DEPT-DRAIN'),('VERIFIED','DEPT-DRAIN')],False,[]),
++ ([('CANDIDATE','DEPT-DRAIN')],True,[]),
++ ([('CANDIDATE','DEPT-DRAIN')],False,['DEPT-DRAIN']),
++])
++def test_read_projection_prioritizes_single_verified_source_without_hiding_claims(monkeypatch,rows,verified_only,expected):
++ # Unit source/visibility dependencies are explicit stubs; real projection is in journey.
++ from types import SimpleNamespace
++ from app.services.http.reads import Reads,Reader
++ read=object.__new__(Reads);read.clock=lambda:'2026-10-19T12:00:00Z'
++ read.repo=SimpleNamespace(_check_evidence=lambda p:None)
++ read.edges=lambda *a,**kw:[SimpleNamespace(target=dept,properties={'association_status':status,'source_evidence_id':'EV'}) for status,dept in rows]
++ monkeypatch.setattr(Reader,'node',lambda *a,**kw:None)
++ assert read.ownership_departments('ASSET',verified_only=verified_only)==expected
+--- a/blockers.md
++++ b/blockers.md
+@@ -637,3 +637,25 @@
+ 
+ ### B20 final retention evidence — 2026-10-18
+ Read-only auditPASS: all1534pre-B20 public files retained,1085earlier evidence files byte-identical,116accepted test files unchanged, allsix tracker histories append-only. Production logic/contracts/migrations/data unchanged; original city858nodes/1246relationships/fullcontenthash and42CANDIDATE drainage links intact, B01probe and original B12R2singleplan/quarantine + B19quarantines retained. Historical2paidrequests unchanged with no active sessions/holds. Finalpublicartifact/patchprivate-value scanPASS;9guardreports0external/0unexpected. Actual FalkorDBmodule60002(6.0.2); installed falkordb1.8.0,mcp2.3.0,langgraph1.2.16,langchain-falkordb0.2.0,fastapi0.143.3,pydantic2.14.1; no dependency changes. Exact inventory/patch use pre-B20 snapshot, excluding earlier accepted uncommitted Git work. No old failed graph repaired. B20acceptance remainsPARTIAL/BLOCKED; STOPforreview.
++
++
++## F00 frontend limits — 2026-10-18
++No blocker to F01 frontend shell. Human authorized parallel frontend development; this changes only the frontend sequencing gate. Existing backend blockers/ownership work/live acceptance remain under backend ownership. Compatibility is baseline/static only until generated client and real isolated API journeys are exercised; no promise of complete runtime compatibility yet. System Python lacks validator dependencies; use existing backend/.venv/bin/python for root validators. No UI exists in F00. Do not overwrite another worker's contract changes to resolve drift. Next frontend task F01; stop for review.
++
++
++## CURRENT B20-R-OWNERSHIP — technically passing; human review pending (2026-10-18)
++B20 evaluation accepted; full B20 remains PARTIAL/BLOCKED. Implemented only explicit synthetic verified-responsibility acquisition (DEC-067): department-scoped authenticated lead submission, distinct authenticated analyst review with CAS/explicit consent, immutable attributed Evidence plus sourced temporal VERIFIED MAINTAINED_BY, fixed API/CLI and safe status readback. Original candidate/source/submission bytes retained; no reset/planner promotion. Verified overlaps conflict; historical/future/adjacent intervals distinguished. Existing0005 fenced atomic source/relationship/audit/event/operation and HTTP UNKNOWN recovery reused, migration0001 unchanged.
++
++New plan proofs bind exact ownership evidence/edge hashes; operations compare original bindings before new authority. Same-department temporal successor cannot authorize work under old approval; historical draft/receipt/Saver hashes unchanged. Existing procedure/causal/safety guards still mandatory. Related Reads/Views select one current VERIFIED owner with source checks, retain candidate-only read context and fail closed on multiple verified assignments; no candidate mislabeled as owner. No MCP write tools/roles/storage subsystem introduced; ADMIN/APPROVER acquire no submission/review/execution bypass.
++
++Final101distinctPASS=29focused responsibilityunits+71direct graph/HTTP/CLI-mappingunits+1sharedrealB19/HTTP/CLI/FalkorDB/SDK/MCP/LangGraph/Saverjourney.0unresolvedFAIL/0SKIP. One historical unit-input failure (offset timestamp violated canonicalZ) and2fixture socket-timeoutERROR retained; no failed graph repaired. Final realPASS35.63s after test-only bounded socket10second override; ordinary broker/query budgets unchanged. Final bothSPECvalidatorsPASS after source changes;14interlockreports0external Gemini/countTokens/0unexpected. Scripted choices explicitly not genuine AI.
++
++Actual committed review + injected readback ValueError returns409RECOVERY_REQUIRED/UNKNOWN with original request/entity IDs; exact replay blocks without redispatch, one effect retained, rootintentDISPATCHING. Safe readback verifies provenance but does not clear intent/quarantine; operator must inspect original operation/native records and obtain supported reconciliation review. No automatic retry/delete/replacementkey/clearance. Durably discoverable responsibility events retained; no worker automatic execution.
++
++Review backend/RESPONSIBILITY.md and docs/evidence/B20R-OWNERSHIP-RESULTS.md/COMMANDS.md/FILES.md/changes.patch/real-proof.json/audit.json/WALKTHROUGH.md. BLOCK-B20-01 technically addressed pending human review; BLOCK-B20-02..05 (utility/capacity/route/dumping interventions and pickup/dumping chronology) remain OPEN. AllR01–R18binding; B10 genuine gate OPEN/PARTIAL. Proposed next: human review and separately authorize one remaining B20 corrective microtask; B21/frontend/live remain unauthorized. STOP.
++
++
++### B20-R-OWNERSHIP final preservation/security evidence
++Read-only auditPASS:1581pre-task public files retained,1129earlier evidence files byte-identical,119accepted test files unchanged; allsix tracker histories append-only. Original migrations0001–0005/schema registry/city/scenario/evaluator data/dependency files unchanged. B04fullcityhash/858nodes/1246edges/42candidate drainage links, B01probe, B12R2singleplan/quarantine and B19quarantines retained; original candidate/source/submission and draft/receipt/checkpoint hashes intact. Historical2paidrequests exactly unchanged;14guards0external/0unexpected; public-artifact/patchprivate-value scanPASS. ActualFalkorDB6.0.2/Redis8.10.2 and pinnedpackageversions recorded in audit; no dependency changes.
++
++Two audit utility bookkeeping stops retained separately (missing authorized CLI path in allowlist, then concurrentnewfrontend additions). Corrected the task allowlist/exclusion; no application/evidence/data repair. Seven concurrentfrontend files were not created/edited/executed by this task, preserved and excluded from ownership patch/inventory; hashes recorded separately. No frontend work performed here. Final task101distinctPASS100unit/1real,0unresolvedFAIL/0SKIP; full B20PARTIAL/BLOCKED, B10genuineOPEN/PARTIAL. STOPforhumanreview; proposed next B20-R-UTILITY only after separateauthorization, noB21/live/frontend.
+--- a/contracts/api_endpoints.json
++++ b/contracts/api_endpoints.json
+@@ -749,6 +749,40 @@
+       "request_schema_id": null,
+       "response_schema_id": "HypothesisDTO",
+       "milestone": "B16",
++      "status": "IMPLEMENTED",
++      "query_parameters": []
++    },
++    {
++      "method": "POST",
++      "path": "/api/v1/responsibilities",
++      "role": "DEPARTMENT_LEAD",
++      "response_dto": "ResponsibilityDTO",
++      "idempotency_key": true,
++      "request_schema_id": "ResponsibilitySubmission",
++      "response_schema_id": "ResponsibilityDTO",
++      "milestone": "B20-R-OWNERSHIP",
++      "status": "IMPLEMENTED"
++    },
++    {
++      "method": "POST",
++      "path": "/api/v1/responsibilities/{id}/review",
++      "role": "ANALYST",
++      "response_dto": "ResponsibilityDTO",
++      "idempotency_key": true,
++      "request_schema_id": "ResponsibilityReview",
++      "response_schema_id": "ResponsibilityDTO",
++      "milestone": "B20-R-OWNERSHIP",
++      "status": "IMPLEMENTED"
++    },
++    {
++      "method": "GET",
++      "path": "/api/v1/responsibilities/{id}",
++      "role": "ANY",
++      "response_dto": "ResponsibilityDTO",
++      "idempotency_key": false,
++      "request_schema_id": null,
++      "response_schema_id": "ResponsibilityDTO",
++      "milestone": "B20-R-OWNERSHIP",
+       "status": "IMPLEMENTED",
+       "query_parameters": []
+     }
+--- a/contracts/api_models.json
++++ b/contracts/api_models.json
+@@ -9625,6 +9625,283 @@
+         "stage"
+       ],
+       "title": "DemoAdvanceRequest",
++      "type": "object"
++    },
++    "ResponsibilitySubmission": {
++      "additionalProperties": false,
++      "properties": {
++        "asset_id": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Asset Id",
++          "type": "string"
++        },
++        "department_id": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Department Id",
++          "type": "string"
++        },
++        "source_id": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Source Id",
++          "type": "string"
++        },
++        "source_record_id": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Source Record Id",
++          "type": "string"
++        },
++        "source_version": {
++          "default": 1,
++          "maximum": 100,
++          "minimum": 1,
++          "title": "Source Version",
++          "type": "integer"
++        },
++        "source_kind": {
++          "const": "SYNTHETIC",
++          "default": "SYNTHETIC",
++          "title": "Source Kind",
++          "type": "string"
++        },
++        "observed_at": {
++          "title": "Observed At",
++          "type": "string"
++        },
++        "valid_from": {
++          "title": "Valid From",
++          "type": "string"
++        },
++        "valid_to": {
++          "anyOf": [
++            {
++              "type": "string"
++            },
++            {
++              "type": "null"
++            }
++          ],
++          "default": null,
++          "title": "Valid To"
++        }
++      },
++      "required": [
++        "asset_id",
++        "department_id",
++        "source_id",
++        "source_record_id",
++        "observed_at",
++        "valid_from"
++      ],
++      "title": "ResponsibilitySubmission",
++      "type": "object"
++    },
++    "ResponsibilityReview": {
++      "additionalProperties": false,
++      "properties": {
++        "expected_hash": {
++          "pattern": "^[0-9a-f]{64}$",
++          "title": "Expected Hash",
++          "type": "string"
++        },
++        "reviewed": {
++          "const": true,
++          "title": "Reviewed",
++          "type": "boolean"
++        },
++        "reason": {
++          "maxLength": 2000,
++          "minLength": 1,
++          "title": "Reason",
++          "type": "string"
++        }
++      },
++      "required": [
++        "expected_hash",
++        "reviewed",
++        "reason"
++      ],
++      "title": "ResponsibilityReview",
++      "type": "object"
++    },
++    "ResponsibilityDTO": {
++      "additionalProperties": false,
++      "properties": {
++        "id": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Id",
++          "type": "string"
++        },
++        "asset_id": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Asset Id",
++          "type": "string"
++        },
++        "department_id": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Department Id",
++          "type": "string"
++        },
++        "source_id": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Source Id",
++          "type": "string"
++        },
++        "source_record_id": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Source Record Id",
++          "type": "string"
++        },
++        "source_version": {
++          "title": "Source Version",
++          "type": "integer"
++        },
++        "source_kind": {
++          "const": "SYNTHETIC",
++          "default": "SYNTHETIC",
++          "title": "Source Kind",
++          "type": "string"
++        },
++        "observed_at": {
++          "title": "Observed At",
++          "type": "string"
++        },
++        "valid_from": {
++          "title": "Valid From",
++          "type": "string"
++        },
++        "valid_to": {
++          "anyOf": [
++            {
++              "type": "string"
++            },
++            {
++              "type": "null"
++            }
++          ],
++          "title": "Valid To"
++        },
++        "submitted_by": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Submitted By",
++          "type": "string"
++        },
++        "reviewed_by": {
++          "anyOf": [
++            {
++              "maxLength": 200,
++              "minLength": 1,
++              "type": "string"
++            },
++            {
++              "type": "null"
++            }
++          ],
++          "title": "Reviewed By"
++        },
++        "status": {
++          "enum": [
++            "SUBMITTED",
++            "VERIFIED"
++          ],
++          "title": "Status",
++          "type": "string"
++        },
++        "applicability": {
++          "enum": [
++            "UNREVIEWED",
++            "HISTORICAL",
++            "FUTURE",
++            "CURRENT"
++          ],
++          "title": "Applicability",
++          "type": "string"
++        },
++        "expected_hash": {
++          "pattern": "^[0-9a-f]{64}$",
++          "title": "Expected Hash",
++          "type": "string"
++        },
++        "source_evidence_id": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Source Evidence Id",
++          "type": "string"
++        },
++        "review_evidence_id": {
++          "anyOf": [
++            {
++              "maxLength": 200,
++              "minLength": 1,
++              "type": "string"
++            },
++            {
++              "type": "null"
++            }
++          ],
++          "title": "Review Evidence Id"
++        },
++        "relationship_id": {
++          "anyOf": [
++            {
++              "maxLength": 200,
++              "minLength": 1,
++              "type": "string"
++            },
++            {
++              "type": "null"
++            }
++          ],
++          "title": "Relationship Id"
++        },
++        "event_id": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Event Id",
++          "type": "string"
++        },
++        "as_of": {
++          "title": "As Of",
++          "type": "string"
++        },
++        "simulation_mode": {
++          "const": true,
++          "default": true,
++          "title": "Simulation Mode",
++          "type": "boolean"
++        }
++      },
++      "required": [
++        "id",
++        "asset_id",
++        "department_id",
++        "source_id",
++        "source_record_id",
++        "source_version",
++        "observed_at",
++        "valid_from",
++        "valid_to",
++        "submitted_by",
++        "reviewed_by",
++        "status",
++        "applicability",
++        "expected_hash",
++        "source_evidence_id",
++        "review_evidence_id",
++        "relationship_id",
++        "event_id",
++        "as_of"
++      ],
++      "title": "ResponsibilityDTO",
+       "type": "object"
+     }
+   },
+--- a/contracts/graph_access.json
++++ b/contracts/graph_access.json
+@@ -68,7 +68,7 @@
+     "task_dependencies"
+   ],
+   "temporal": "half-open validity intersection; absent start/end is unknown/open; created/observed/recorded/updated time cannot exceed query as_of",
+-  "cardinality": "All declared singleton edges are primary. Concurrent overlapping assignments are refused; nonoverlapping history retained. Other relationship types are not universally singleton or acyclic.",
++  "cardinality": "All declared singleton edges are primary. Concurrent overlapping assignments are refused; nonoverlapping history retained. Other relationship types are not universally singleton or acyclic. MAINTAINED_BY unaccepted claims and VERIFIED responsibility occupy separate tiers (DEC-067); both retain exclusive temporal cardinality within their tier.",
+   "write_boundary": "Trusted domain services only; auth, approval binding, state transitions and durable event delivery are later gates, not supplied by these low-level repositories.",
+   "schedule_cardinality": {
+     "relationship": "HAS_SCHEDULE",
+@@ -156,5 +156,12 @@
+     "infrastructure_hops": "DRAINS_TO edges only; derived as effective total minus fixed connectors",
+     "search_limited": "true for variable-length families or omitted fixed branches; empty result is only a bounded negative",
+     "truncated": "result row/node/edge cap reached; independent of hop/search bounds"
++  },
++  "ownership_cardinality": {
++    "relationship": "MAINTAINED_BY",
++    "decision": "DEC-067",
++    "verified": "One nonoverlapping reviewed responsibility interval per asset, independent of retained candidate claims",
++    "unverified": "Candidate/reported claims retain existing exclusivity within their claim tier",
++    "candidate_promotion": "Never automatic; acquisition adds immutable sourced records"
+   }
+ }
+--- a/contracts/operator_cli.json
++++ b/contracts/operator_cli.json
+@@ -51,6 +51,20 @@
+     "genuineB10fullacceptanceOPEN/PARTIAL"
+   ],
+   "commands": {
++    "responsibility": {
++      "submit": {
++        "method": "POST",
++        "path": "/api/v1/responsibilities"
++      },
++      "review": {
++        "method": "POST",
++        "path": "/api/v1/responsibilities/{id}/review"
++      },
++      "get": {
++        "method": "GET",
++        "path": "/api/v1/responsibilities/{id}"
++      }
++    },
+     "demo": {
+       "scenarios": {
+         "method": "GET",
+--- a/contracts/resolution_planning.json
++++ b/contracts/resolution_planning.json
+@@ -749,5 +749,6 @@
+   },
+   "remediation_rules": "Latest addressed SUPPORTED/VERIFIED with reviewed target-specific causal support, no contradictions. Supported-now requires typed MET full causal confirmation and action-specific safety observations through validated B09 reports. Conditional causal gap requires explicit UNMET and inspection DAG dependency; unmet safety remains unresolved. Procedure source is documentary, PROPOSED, not physical causal evidence. No execution authority.",
+   "hash_compatibility": "Absent remediation omitted from normalized old inspection drafts; existing B12 accepted hashes unchanged. Conditions and their evidence normalize deterministically.",
+-  "source_manifest": "data/documents/b12r/manifest.json; three version1 synthetic policies with explicit automated author self-review only; B11 KnowledgeProcedure stays PROPOSED"
++  "source_manifest": "data/documents/b12r/manifest.json; three version1 synthetic policies with explicit automated author self-review only; B11 KnowledgeProcedure stays PROPOSED",
++  "responsibility_acquisition": "Explicit independently reviewed synthetic inventory via contracts/responsibility.json; candidate remains immutable; new drafts bind relationship/evidence hashes, operations reject changed ownership bindings; source/procedure/safety remain independent"
+ }
+--- /dev/null
++++ b/contracts/responsibility.json
+@@ -0,0 +1,465 @@
++{
++  "version": 1,
++  "microtask": "B20-R-OWNERSHIP",
++  "municipality_id": "demo-city",
++  "models": {
++    "ResponsibilitySubmission": {
++      "additionalProperties": false,
++      "properties": {
++        "asset_id": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Asset Id",
++          "type": "string"
++        },
++        "department_id": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Department Id",
++          "type": "string"
++        },
++        "source_id": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Source Id",
++          "type": "string"
++        },
++        "source_record_id": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Source Record Id",
++          "type": "string"
++        },
++        "source_version": {
++          "default": 1,
++          "maximum": 100,
++          "minimum": 1,
++          "title": "Source Version",
++          "type": "integer"
++        },
++        "source_kind": {
++          "const": "SYNTHETIC",
++          "default": "SYNTHETIC",
++          "title": "Source Kind",
++          "type": "string"
++        },
++        "observed_at": {
++          "title": "Observed At",
++          "type": "string"
++        },
++        "valid_from": {
++          "title": "Valid From",
++          "type": "string"
++        },
++        "valid_to": {
++          "anyOf": [
++            {
++              "type": "string"
++            },
++            {
++              "type": "null"
++            }
++          ],
++          "default": null,
++          "title": "Valid To"
++        }
++      },
++      "required": [
++        "asset_id",
++        "department_id",
++        "source_id",
++        "source_record_id",
++        "observed_at",
++        "valid_from"
++      ],
++      "title": "ResponsibilitySubmission",
++      "type": "object"
++    },
++    "ResponsibilityReview": {
++      "additionalProperties": false,
++      "properties": {
++        "expected_hash": {
++          "pattern": "^[0-9a-f]{64}$",
++          "title": "Expected Hash",
++          "type": "string"
++        },
++        "reviewed": {
++          "const": true,
++          "title": "Reviewed",
++          "type": "boolean"
++        },
++        "reason": {
++          "maxLength": 2000,
++          "minLength": 1,
++          "title": "Reason",
++          "type": "string"
++        }
++      },
++      "required": [
++        "expected_hash",
++        "reviewed",
++        "reason"
++      ],
++      "title": "ResponsibilityReview",
++      "type": "object"
++    },
++    "ResponsibilityDTO": {
++      "additionalProperties": false,
++      "properties": {
++        "id": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Id",
++          "type": "string"
++        },
++        "asset_id": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Asset Id",
++          "type": "string"
++        },
++        "department_id": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Department Id",
++          "type": "string"
++        },
++        "source_id": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Source Id",
++          "type": "string"
++        },
++        "source_record_id": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Source Record Id",
++          "type": "string"
++        },
++        "source_version": {
++          "title": "Source Version",
++          "type": "integer"
++        },
++        "source_kind": {
++          "const": "SYNTHETIC",
++          "default": "SYNTHETIC",
++          "title": "Source Kind",
++          "type": "string"
++        },
++        "observed_at": {
++          "title": "Observed At",
++          "type": "string"
++        },
++        "valid_from": {
++          "title": "Valid From",
++          "type": "string"
++        },
++        "valid_to": {
++          "anyOf": [
++            {
++              "type": "string"
++            },
++            {
++              "type": "null"
++            }
++          ],
++          "title": "Valid To"
++        },
++        "submitted_by": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Submitted By",
++          "type": "string"
++        },
++        "reviewed_by": {
++          "anyOf": [
++            {
++              "maxLength": 200,
++              "minLength": 1,
++              "type": "string"
++            },
++            {
++              "type": "null"
++            }
++          ],
++          "title": "Reviewed By"
++        },
++        "status": {
++          "enum": [
++            "SUBMITTED",
++            "VERIFIED"
++          ],
++          "title": "Status",
++          "type": "string"
++        },
++        "applicability": {
++          "enum": [
++            "UNREVIEWED",
++            "HISTORICAL",
++            "FUTURE",
++            "CURRENT"
++          ],
++          "title": "Applicability",
++          "type": "string"
++        },
++        "expected_hash": {
++          "pattern": "^[0-9a-f]{64}$",
++          "title": "Expected Hash",
++          "type": "string"
++        },
++        "source_evidence_id": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Source Evidence Id",
++          "type": "string"
++        },
++        "review_evidence_id": {
++          "anyOf": [
++            {
++              "maxLength": 200,
++              "minLength": 1,
++              "type": "string"
++            },
++            {
++              "type": "null"
++            }
++          ],
++          "title": "Review Evidence Id"
++        },
++        "relationship_id": {
++          "anyOf": [
++            {
++              "maxLength": 200,
++              "minLength": 1,
++              "type": "string"
++            },
++            {
++              "type": "null"
++            }
++          ],
++          "title": "Relationship Id"
++        },
++        "event_id": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Event Id",
++          "type": "string"
++        },
++        "as_of": {
++          "title": "As Of",
++          "type": "string"
++        },
++        "simulation_mode": {
++          "const": true,
++          "default": true,
++          "title": "Simulation Mode",
++          "type": "boolean"
++        }
++      },
++      "required": [
++        "id",
++        "asset_id",
++        "department_id",
++        "source_id",
++        "source_record_id",
++        "source_version",
++        "observed_at",
++        "valid_from",
++        "valid_to",
++        "submitted_by",
++        "reviewed_by",
++        "status",
++        "applicability",
++        "expected_hash",
++        "source_evidence_id",
++        "review_evidence_id",
++        "relationship_id",
++        "event_id",
++        "as_of"
++      ],
++      "title": "ResponsibilityDTO",
++      "type": "object"
++    },
++    "SubmissionRecord": {
++      "$defs": {
++        "ResponsibilitySubmission": {
++          "additionalProperties": false,
++          "properties": {
++            "asset_id": {
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Asset Id",
++              "type": "string"
++            },
++            "department_id": {
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Department Id",
++              "type": "string"
++            },
++            "source_id": {
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Source Id",
++              "type": "string"
++            },
++            "source_record_id": {
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Source Record Id",
++              "type": "string"
++            },
++            "source_version": {
++              "default": 1,
++              "maximum": 100,
++              "minimum": 1,
++              "title": "Source Version",
++              "type": "integer"
++            },
++            "source_kind": {
++              "const": "SYNTHETIC",
++              "default": "SYNTHETIC",
++              "title": "Source Kind",
++              "type": "string"
++            },
++            "observed_at": {
++              "title": "Observed At",
++              "type": "string"
++            },
++            "valid_from": {
++              "title": "Valid From",
++              "type": "string"
++            },
++            "valid_to": {
++              "anyOf": [
++                {
++                  "type": "string"
++                },
++                {
++                  "type": "null"
++                }
++              ],
++              "default": null,
++              "title": "Valid To"
++            }
++          },
++          "required": [
++            "asset_id",
++            "department_id",
++            "source_id",
++            "source_record_id",
++            "observed_at",
++            "valid_from"
++          ],
++          "title": "ResponsibilitySubmission",
++          "type": "object"
++        }
++      },
++      "additionalProperties": false,
++      "properties": {
++        "format_version": {
++          "const": 1,
++          "default": 1,
++          "title": "Format Version",
++          "type": "integer"
++        },
++        "command": {
++          "$ref": "#/$defs/ResponsibilitySubmission"
++        },
++        "submitted_by": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Submitted By",
++          "type": "string"
++        },
++        "submitted_at": {
++          "title": "Submitted At",
++          "type": "string"
++        },
++        "command_hash": {
++          "pattern": "^[0-9a-f]{64}$",
++          "title": "Command Hash",
++          "type": "string"
++        }
++      },
++      "required": [
++        "command",
++        "submitted_by",
++        "submitted_at",
++        "command_hash"
++      ],
++      "title": "SubmissionRecord",
++      "type": "object"
++    },
++    "ReviewRecord": {
++      "additionalProperties": false,
++      "properties": {
++        "format_version": {
++          "const": 1,
++          "default": 1,
++          "title": "Format Version",
++          "type": "integer"
++        },
++        "submission_id": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Submission Id",
++          "type": "string"
++        },
++        "submission_hash": {
++          "pattern": "^[0-9a-f]{64}$",
++          "title": "Submission Hash",
++          "type": "string"
++        },
++        "reviewed_by": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Reviewed By",
++          "type": "string"
++        },
++        "reviewed_at": {
++          "title": "Reviewed At",
++          "type": "string"
++        },
++        "reviewed": {
++          "const": true,
++          "default": true,
++          "title": "Reviewed",
++          "type": "boolean"
++        },
++        "reason": {
++          "maxLength": 2000,
++          "minLength": 1,
++          "title": "Reason",
++          "type": "string"
++        }
++      },
++      "required": [
++        "submission_id",
++        "submission_hash",
++        "reviewed_by",
++        "reviewed_at",
++        "reason"
++      ],
++      "title": "ReviewRecord",
++      "type": "object"
++    }
++  },
++  "authority": {
++    "submit": "Authenticated DEPARTMENT_LEAD in asserted department",
++    "review": "Distinct authenticated ANALYST with explicit reviewed=true and submission hash",
++    "admin_bypass": false
++  },
++  "storage": "Existing immutable Evidence + sourced MAINTAINED_BY + hashed0005companions + atomic DomainEvent;0001 unchanged",
++  "cardinality": "Candidate claims coexist with verified responsibility; verified intervals exclusive and half-open; no automatic termination or promotion",
++  "source_identity": [
++    "source_graph",
++    "source_id",
++    "source_record_id",
++    "source_version"
++  ],
++  "source_integrity": "Server canonical command hash, immutable submission native hash and reviewed source/relationship hashes; no caller verification labels",
++  "approval": "Exact ownership source/edge bindings retained in draft proof and checked before new approval/work; compatible historical proof IDs preserved",
++  "recovery": "Existing HTTP DISPATCHING and OpsRecovery UNKNOWN; exact uncertain replay blocked; no auto retry or reconciliation",
++  "public_tools": "API/CLI only; MCP write inventory unchanged"
++}
+--- a/decision.md
++++ b/decision.md
+@@ -1577,3 +1577,24 @@
+ 
+ ### B20 final retention evidence — 2026-10-18
+ Read-only auditPASS: all1534pre-B20 public files retained,1085earlier evidence files byte-identical,116accepted test files unchanged, allsix tracker histories append-only. Production logic/contracts/migrations/data unchanged; original city858nodes/1246relationships/fullcontenthash and42CANDIDATE drainage links intact, B01probe and original B12R2singleplan/quarantine + B19quarantines retained. Historical2paidrequests unchanged with no active sessions/holds. Finalpublicartifact/patchprivate-value scanPASS;9guardreports0external/0unexpected. Actual FalkorDBmodule60002(6.0.2); installed falkordb1.8.0,mcp2.3.0,langgraph1.2.16,langchain-falkordb0.2.0,fastapi0.143.3,pydantic2.14.1; no dependency changes. Exact inventory/patch use pre-B20 snapshot, excluding earlier accepted uncommitted Git work. No old failed graph repaired. B20acceptance remainsPARTIAL/BLOCKED; STOPforreview.
++
++
++## F00 frontend decision — parallel isolation (2026-10-18)
++Human explicitly authorized frontend in parallel with ongoing backend work, superseding the former B-END prerequisite for frontend only. Preserve all R01–R18/backend acceptance gates. Choose independent frontend/ workspace and separate frontend/docs/tasks.md sequence; root backend sequencing unchanged. Alternative of editing backend APIs or sharing its dependency lifecycle rejected because it disrupts concurrent ownership. F00 implements foundation only; Next.js/React/TS shell deferred to F01, typed client to F02. No framework dependencies selected/installed in F00.
++Read current contracts instead of frozen B19 OpenAPI: concurrent ownership work already added routes. Captured 58operations/55paths/182schemas and four SHA256 fingerprints. Read-only checker validates route identities and referenced request/response/query schema existence and detects any source drift; explicit --record requires impact review, never automatic acceptance. Static fingerprints do not prove UI or runtime compatibility. Proxy/auth/SSE/approval semantics documented for later implementation; not claimed implemented.
++
++
++## DEC-067 — explicit reviewed synthetic responsibility (B20-R-OWNERSHIP,2026-10-18)
++Pre-edit authority/provenance/risk/tests in B20R-OWNERSHIP-PLAN.md. Reuse existing Evidence/MAINTAINED_BY/DomainEvent/0005companions and writer fence; add no ontology, migration, role or storage subsystem. DEPARTMENT_LEAD attests only its own department's synthetic inventory source/record/version and effective interval; distinct ANALYST independently reviews immutable source hash with explicit consent. ADMIN/APPROVER cannot submit/review or gain execution bypass. Source and reviewer identities resolved from existing Auth, not input labels.
++
++Candidate and verified ownership occupy distinct cardinality tiers: immutable unaccepted claims cannot block explicit reviewed responsibility, while overlaps within accepted VERIFIED intervals reject. Other B03 relationship policies unchanged. Alternative candidate promotion/deletion would destroy provenance; choosing newest owner or expanding to ownership administration/revocation would violate scope. Therefore append immutable source/review/relationship records only, permit explicit half-open succession, reject open-ended overlap. Staged source support is restricted to MAINTAINED_BY with validated responsibility review evidence; existing causal/source checks retained. Existing0005 readiness required;0001–0005bytes unchanged.
++
++Draft owner proof records edge/evidence hashes; operations compare persisted proof IDs/hashes before new approval/work, preserving compatible older ID-only proof bindings. Reads/Views must select one verified owner before candidate context; otherwise candidate+reviewed rows duplicate a department and break legacy scopes. Candidate-only owner field stays absent; no unrelated frontend/filter redesign. Same-department successor still requires revised plan/approval; old hashes/checkpoints unchanged.
++
++101distinctfocused testsPASS(100unit/1realsharedjourney),2finalSPECvalidatorsPASS,14guards0providers. One unit timestamp expectation corrected,2setup timeouts retained. Final new fixture uses accepted bounded socket setting10seconds only in test environment, no production/.env/query/broker change. Real commit/readback fault retains one responsibility and UNKNOWN/DISPATCHING/no redispatch. No automatic recovery or other B20 corrective feature. Full B20PARTIAL/BLOCKED; B10genuineOPEN/PARTIAL. STOPhumanreview.
++
++
++### B20-R-OWNERSHIP final preservation/security evidence
++Read-only auditPASS:1581pre-task public files retained,1129earlier evidence files byte-identical,119accepted test files unchanged; allsix tracker histories append-only. Original migrations0001–0005/schema registry/city/scenario/evaluator data/dependency files unchanged. B04fullcityhash/858nodes/1246edges/42candidate drainage links, B01probe, B12R2singleplan/quarantine and B19quarantines retained; original candidate/source/submission and draft/receipt/checkpoint hashes intact. Historical2paidrequests exactly unchanged;14guards0external/0unexpected; public-artifact/patchprivate-value scanPASS. ActualFalkorDB6.0.2/Redis8.10.2 and pinnedpackageversions recorded in audit; no dependency changes.
++
++Two audit utility bookkeeping stops retained separately (missing authorized CLI path in allowlist, then concurrentnewfrontend additions). Corrected the task allowlist/exclusion; no application/evidence/data repair. Seven concurrentfrontend files were not created/edited/executed by this task, preserved and excluded from ownership patch/inventory; hashes recorded separately. No frontend work performed here. Final task101distinctPASS100unit/1real,0unresolvedFAIL/0SKIP; full B20PARTIAL/BLOCKED, B10genuineOPEN/PARTIAL. STOPforhumanreview; proposed next B20-R-UTILITY only after separateauthorization, noB21/live/frontend.
+--- a/docs/backend/02_graph.md
++++ b/docs/backend/02_graph.md
+@@ -142,3 +142,6 @@
+ and actual verified-only B05 topology, never candidate/proximity/count/model claims.
+ Corrections append history; no dispatch/work orders/outbox/agent/API implementation.
+ Active graph stays explicit; no seed promotion. See backend/EVIDENCE.md.
++
++## B20-R-OWNERSHIP — reviewed responsibility versus inventory claims (DEC-067)
++`MAINTAINED_BY` CANDIDATE/REPORTED inventory claims remain immutable and cannot authorize planning. Explicit department-lead submission and independent analyst review add a distinct synthetic reviewed Evidence source and VERIFIED responsibility interval. Claims and accepted responsibility occupy separate temporal cardinality tiers; existing unverified exclusivity is retained, and overlapping VERIFIED assignments reject regardless of department or timestamp recency. No candidate is promoted, automatically closed or deleted. Half-open intervals permit historical/future succession without overlap; knowledge time still bounds visibility. New plan proofs bind reviewed evidence and relationship identities/hashes; changed active ownership requires revised plan/approval before new work. See contracts/responsibility.json and backend/RESPONSIBILITY.md. Migration0001 and canonical property names unchanged.
+--- /dev/null
++++ b/docs/evidence/B20R-OWNERSHIP-COMMANDS.md
+@@ -0,0 +1,73 @@
++# B20-R-OWNERSHIP exact commands and distinct results
++
++Project root `/Users/vikashkumar/Desktop/Civicly`; existing Python3.12 virtual environment/locks unchanged. Every ordinary pytest invocation and Python child installs the existing no-live interlock. No full historical/lifecycle suite or external provider execution.
++
++```sh
++CIVICLY_TEST_REQUEST_LOG=/tmp/b20ro-unit-provider.jsonl backend/.venv/bin/python -m pytest backend/tests/unit/test_responsibility.py backend/tests/unit/test_graph_access_models.py backend/tests/unit/test_http_boundary.py backend/tests/unit/test_operator_cli.py::test_command_exact_accepted_api_mapping -q
++```
++92PASS/1FAIL1.10s. New canonical-time identity test initially used an offset timestamp; accepted graph timestamp boundary requires UTC Z. Corrected test to whole/fractional Z aliases; production rule preserved.
++```sh
++CIVICLY_TEST_REQUEST_LOG=/tmp/b20ro-unit-retry-provider.jsonl backend/.venv/bin/python -m pytest backend/tests/unit/test_responsibility.py::test_valid_authority_and_stable_scoped_source_identity -q
++```
++1PASS0.31s, overlaps original unit selection.
++
++```sh
++CIVICLY_TEST_REQUEST_LOG=/tmp/b20ro-real-provider.jsonl backend/.venv/bin/python -m pytest backend/tests/integration/test_responsibility_runtime.py -xq
++```
++1setupERROR6.96s, localRedis socket timeout before workflow execution. Failed fixture retained, no repair or old request retry. Read-only health and fresh-fixture retry:
++```sh
++PYTHONPATH=backend backend/.venv/bin/python -m cli health --env-file .env
++CIVICLY_TEST_REQUEST_LOG=/tmp/b20ro-real2-provider.jsonl backend/.venv/bin/python -m pytest backend/tests/integration/test_responsibility_runtime.py -xq
++```
++HealthPASS;1realPASS38.65s. Real API/CLI/FalkorDB/SDK/MCP/LangGraph/Saver with scripted choices; no fake tool success. Prior passing proof retained separately.
++
++After explicitly restricting staged review sources to MAINTAINED_BY, strengthening different-department overlap/source-conflict assertions and immutable assertion bytes:
++```sh
++CIVICLY_TEST_REQUEST_LOG=/tmp/b20ro-real-final-provider.jsonl backend/.venv/bin/python -m pytest backend/tests/integration/test_responsibility_runtime.py -xq
++```
++1realPASS36.22s, same distinct case; original proof preserved as real-proof-final-before-readiness.json. Explicit existing0005 readiness gate then added to direct domain service (API bootstrap already checked it):
++```sh
++CIVICLY_TEST_REQUEST_LOG=/tmp/b20ro-ready-provider.jsonl backend/.venv/bin/python -m pytest backend/tests/integration/test_responsibility_runtime.py -xq
++```
++Final1realPASS35.52s, same single journey;3existingSDK/PDF deprecation warnings. Actual candidate→submitted→reviewed→supported sourced draft, future/historical selection, stale exact approval denial, conflicting department, source identity/CAS conflict, authenticated CLI and real committed-readback UNKNOWN/no redispatch all exercised.
++
++```sh
++CIVICLY_TEST_REQUEST_LOG=/tmp/b20ro-unit-final-provider.jsonl backend/.venv/bin/python -m pytest backend/tests/unit/test_responsibility.py -q
++CIVICLY_TEST_REQUEST_LOG=/tmp/b20ro-ready-unit-provider.jsonl backend/.venv/bin/python -m pytest backend/tests/unit/test_responsibility.py::test_required_existing_operations_migration_not_bypassed -q
++```
++23PASS0.16s plus newly added readiness1PASS0.15s =24distinct focused responsibility units.71other selected graph-model/HTTP-boundary/CLI-mapping units passed in initial selection; includes three new CLI mappings. Total95distinctunitPASS. No old assertion/test removed. Final total96distinctPASS=95unit+1real,0unresolvedFAIL/0SKIP. Retain1historicalunitFAIL and1setupERROR, not counted as passing proof. Repeated real cases/overlapping units count once.
++
++```sh
++CIVICLY_TEST_NO_LIVE=1 CIVICLY_REQUEST_AUDIT_FILE=/tmp/b20ro-spec-provider.jsonl PYTHONPATH=backend/test_guards:backend make test-spec
++CIVICLY_TEST_NO_LIVE=1 CIVICLY_REQUEST_AUDIT_FILE=/tmp/b20ro-final-spec-provider.jsonl PYTHONPATH=backend/test_guards:backend make test-spec
++```
++Both validatorsPASS in both invocations; final after last production/test edits. Static checks are not extra pytest cases. Generated OpenAPI/JSON contracts58operations/55paths, existing18MCPtools and9state machines unchanged. Ten pytest/child/spec zero-live reports,0external/0unexpected.
++
++Pre-edit public snapshot command: Python/git ls-files SHA256/copy to `/tmp/b20r-ownership-baseline` (1581publicfiles); task diff generated with Python difflib relative to this snapshot, excluding previously accepted uncommitted Git work. No Git commit or push.
++
++Final read-only audit:
++```sh
++PYTHONPATH=backend backend/.venv/bin/python docs/evidence/B20R-OWNERSHIP-audit-script.py
++```
++Audit checks prior public bytes/history, migrations/data/tests/evidence/accounting, retained city/B01probe/B12R2+B19 quarantines and actual new responsibility/recovery bindings. No graph/volume deletion, checkpoint rewrite or quarantine clearance. One initial registry-inspection utility used the wrong dictionary key and raised KeyError; corrected by reading actual node_types/relationship_types, no mutation or acceptance result attributed.
++
++## Final directly related read compatibility verification (supersedes96subtotal)
++Retained candidate+VERIFIED links exposed legacy read assumptions. Corrected only Reads/Views owner selection and lead scopes; added five focused selection units and a real lead asset GET to the existing journey. Candidate-only fallback remains read context; owner_department_id requires verified responsibility.
++```sh
++CIVICLY_TEST_REQUEST_LOG=/tmp/b20ro-view-real-provider.jsonl backend/.venv/bin/python -m pytest backend/tests/integration/test_responsibility_runtime.py -xq
++```
++1setupERROR5.74s (constraint-list socket timeout), before the new projection path. Failed source retained; read-only healthPASS. Existing bounded socket configuration overridden only for the fresh test invocation and inherited children (default3seconds→10seconds); no file, broker10second or query1second budget changed:
++```sh
++FALKORDB_SOCKET_TIMEOUT_SECONDS=10 PYTHONPATH=backend backend/.venv/bin/python -m cli health --env-file .env
++FALKORDB_SOCKET_TIMEOUT_SECONDS=10 CIVICLY_TEST_REQUEST_LOG=/tmp/b20ro-view-retry-provider.jsonl backend/.venv/bin/python -m pytest backend/tests/integration/test_responsibility_runtime.py -xq
++CIVICLY_TEST_REQUEST_LOG=/tmp/b20ro-view-unit-provider.jsonl backend/.venv/bin/python -m pytest backend/tests/unit/test_responsibility.py -q
++CIVICLY_TEST_NO_LIVE=1 CIVICLY_REQUEST_AUDIT_FILE=/tmp/b20ro-view-spec-provider.jsonl PYTHONPATH=backend/test_guards:backend make test-spec
++```
++Final real1PASS35.63s;29focusedunitPASS0.47s; final2SPECvalidatorsPASS. Final101distinctPASS=29focusedresponsibilityunits+71graph/HTTP/CLI-mappingunits+1sharedrealjourney.0unresolvedFAIL/0SKIP. Four passing real invocations are overlap, count once.1historicalunitFAIL+2setupERROR retained. Fourteen pytest/child/spec guard reports0external/0unexpected. No broad/lifecycle/live suite. Normal pytest query/transport budgets remain finite; readiness migration prerequisite and new source/tier semantics actually exercised.
++
++## Read-only audit bookkeeping and preservation
++First audit stopped because its whitelist omitted the authorized backend/cli/main.py change; retained audit-attempt1.txt. Second stopped on7concurrentnewfrontend paths not created/edited/executed by this task; retained audit-attempt2.txt. Corrected only audit bookkeeping, preserved/hash-listed external additions, excluded their source from ownership patch/inventory. No frontend tests/work performed. Final read-only auditPASS1581previouspublicfiles/1129byte-identicalevidence/119unchangedacceptedtests; original migrations/city/probe/quarantines/checkpoints/paidledger unchanged,14providerproofs0external/0unexpected; public patch/private-value scanPASS. Audit failures are metadata checks, not pytest passes/failures or application mutation.
++```sh
++FALKORDB_SOCKET_TIMEOUT_SECONDS=10 PYTHONPATH=backend backend/.venv/bin/python docs/evidence/B20R-OWNERSHIP-audit-script.py
++```
++Actual pinned runtime versions in audit: FalkorDBmodule60002(6.0.2), Redis8.10.2, falkordb1.8.0, mcp2.3.0, langgraph1.2.16, langchain-falkordb0.2.0, FastAPI0.143.3, Pydantic2.14.1. No dependency installation/change. Final patch scope verified relative to pre-task snapshot, nofrontenddiff.
+--- /dev/null
++++ b/docs/evidence/B20R-OWNERSHIP-PLAN.md
+@@ -0,0 +1,26 @@
++# B20-R-OWNERSHIP — pre-edit decision and verification scope
++
++Only responsibility acquisition/review authorized; B20 remains PARTIAL/BLOCKED. AllR01–R18 preserved; direct scope R09,R10,R11,R12,R14,R15,R16,R18. No B21, other interventions, pickup chronology, frontend or live provider execution.
++
++Authority: authenticated seeded DEPARTMENT_LEAD submits only its own department's synthetic asset responsibility assertion. Distinct authenticated ANALYST independently reviews with explicit reviewed=true, reason and submitted evidence expected hash. ADMIN/APPROVER cannot submit/review or bypass work approvals. Reviewer identity is resolved from session, never a body field. Analyst provides cross-department independent review; lead supplies department-scoped inventory attribution. Source ID/record/version, actual asset/department, observed/effective dates fixed at submission. Server assigns reliability; caller verification labels rejected.
++
++Reuse canonical Evidence, MAINTAINED_BY, DomainEvent and0005 hashed CivicOperationState under existing repository fence; no new ontology/migration/storage subsystem. Submission is immutable UNVERIFIED evidence. Review adds distinct VERIFIED synthetic dated evidence, sourced relationship and atomic audit/event/companion. Both original candidate links and submission bytes remain intact. Temporal intervals half-open; overlaps among verified ownership reject. Candidate claims are not accepted responsibility and may coexist with one verified assignment; candidate-vs-candidate exclusivity remains. This explicit minimal correction updates graph_access semantics/docs and tests, without changing any other relationship policy or migration0001.
++
++Existing planning resolver continues requiring unique visible verified ownership plus independent procedure/causal/safety guards. New ownership proofs include source/edge hashes; operations compare exact persisted draft ownership binding before new authority, including compatible old proof IDs. Expiry/new nonoverlapping assignment requires revised draft/approval; historical draft hashes/receipts/checkpoints unchanged. No implicit termination/revocation or overlap resolution. Future-effective/historical records remain readable but not current planning authority.
++
++Mutation protocol: existing source/actor/key HTTP intent; strict pre-dispatch input/role/CAS checks; existing one fenced parameterized batch creates evidence/relationship/audit/event/operation; post-commit/readback failure raises existing sanitized UNKNOWN recovery. Original request/entity IDs retained, exact uncertain HTTP replay blocked without redispatch. No rollback/retry/replacement/quarantine clearance. Native GRAPH_EVIDENCE_CHANGED is durable via accepted operation envelope/B15 discovery; no automatic worker/wake.
++
++Planned paths: new app/services/responsibility/{models,service}.py and guide; targeted graph repository/evidence-check and operations Storage planned-source support; planning ownership proof/operations approval binding; HTTP adapter/API models+coverage, CLI fixed inventory; graph_access/resolution_planning/API/CLI and new responsibility contracts; affected static validators; new focused unit/integration tests; all six append-only trackers and new B20R-OWNERSHIP evidence/patch. No accepted test deletion.
++
++Risks: candidate cardinality distinction must not permit two verified owners; staged source must be validated before atomic commit; reviewed source integrity/chronology/department must fail closed; immutable historical approval/source bindings; UNKNOWN cannot become a validation rejection; bounded scan costs; no fabricated synthetic authority. Human verifies candidate bytes, submitted/reviewed provenance, half-open applicability, legitimate sourced draft, stale binding denial and committed-fault replay.
++
++Focused commands from project root:
++- CIVICLY_TEST_REQUEST_LOG=/tmp/b20ro-unit-provider.jsonl backend/.venv/bin/python -m pytest backend/tests/unit/test_responsibility.py -q
++- CIVICLY_TEST_REQUEST_LOG=/tmp/b20ro-real-provider.jsonl backend/.venv/bin/python -m pytest backend/tests/integration/test_responsibility_runtime.py -xq
++- Directly affected repository policy / HTTP recovery / CLI mapping units selected explicitly after inspection, no broad suites.
++- CIVICLY_TEST_NO_LIVE=1 CIVICLY_REQUEST_AUDIT_FILE=/tmp/b20ro-spec-provider.jsonl PYTHONPATH=backend/test_guards:backend make test-spec
++
++Real shared fresh B19 source: candidate planning denial → department submission → independent review → sourced supported drainage draft, actual API/CLI readback. Same fixture tests roles/self-review, source conflict/overlap, replay, historical/future intervals, missing procedure/safety and committed-readback fault/blocked redispatch. Reuse accepted approved-plan setup only if needed for stale ownership binding. Ordinary pytest/children interlock mandatory, zero provider calls; script choices separate from DB/MCP/Saver proof. Preserve all prior public bytes and retained failed graphs.
++
++## Related read compatibility correction found during review
++Reads.allowed and Views.asset assumed exactly one MAINTAINED_BY edge, treating retained candidate plus reviewed link as duplicate ownership. Minimal correction in existing HTTP reads/views: select a single currently visible VERIFIED responsibility first, validate its source; fail closed on multiple verified edges. Candidate-only department context remains the accepted read fallback but owner_department_id is absent until verified. Preserve graph edges and source metadata. Add focused unit source/tier conflicts and actual lead GET asset assertions in the existing single real journey; no frontend implementation or contract shape changes. Append these paths to inventory. Re-run only this affected journey/changed units, then final specification checks.
+--- /dev/null
++++ b/docs/evidence/B20R-OWNERSHIP-RESULTS.md
+@@ -0,0 +1,25 @@
++# B20-R-OWNERSHIP — technically passing, human review pending
++
++Only the authorized ownership correction implemented. B20 evaluation accepted; **full B20 remains PARTIAL/BLOCKED**. All18 requirements binding; B10 genuine-provider gate OPEN/PARTIAL. No B21, other intervention/chronology correction, frontend, live call or backend-complete claim.
++
++Authenticated department lead submits a typed attributed synthetic assertion; distinct authenticated analyst explicitly reviews its immutable source hash. Server assigns authority after validation. ADMIN/APPROVER cannot submit/review or bypass approvals. Immutable UNVERIFIED assertion and VERIFIED review Evidence, half-open sourced MAINTAINED_BY, hashed0005 state/operation and durable event reuse accepted fenced parameterized storage. No migration/schema/entity/role/dependency addition. Original candidate/source/submission bytes retained; verified overlaps reject and finite historical/future succession is explicit. No automatic promotion, termination, deletion or newest-owner selection.
++
++Planning continues to require unique currently applicable verified responsibility plus independent procedure, causal evidence and safety gates. New owner proofs bind source/edge hashes; operations compare persisted bindings before new authority, preserving older ID-based proof compatibility. Same-department replacement invalidates an old approval for new work; historical draft hashes/receipts/checkpoints remain unchanged. Related HTTP read scopes and asset projection select the verified owner rather than treating candidate+reviewed rows as duplicate departments. Candidate-only context is still readable; owner field requires verified evidence.
++
++Actual public inventory: POST `/api/v1/responsibilities`, POST `/api/v1/responsibilities/{id}/review`, GET `/api/v1/responsibilities/{id}`; fixed CLI `responsibility submit/review/get`. Generated OpenAPI/JSON/command inventory58operations/55paths. No arbitrary Cypher, graph selector, MCP mutation tool or generic relationship-write endpoint.
++
++**101distinctpytestPASS:29focusedresponsibilityunits +71directgraph/HTTP/CLI-mappingunits +1sharedrealjourney.0unresolvedFAIL/0SKIP.** Final real1PASS35.63s, final focusedunits29PASS0.47s; both finalSPECvalidatorsPASS after source changes. Four passing real invocations overlap and count once. One corrected unit-inputFAIL plus2setup socket-timeoutERROR retained; failed graphs untouched. Existing finite socket setting overridden to10seconds only for final fresh test/inherited children after read-only healthPASS; no production/.env/broker/query budget change. Fourteen pytest/child/spec interlock proofs0external Gemini/countTokens/0unexpected attempts. Unit dependency stubs are labelled; actual graph/MCP/Saver/SDK/HTTP/CLI results are real, model choices scripted, not genuine AI reasoning.
++
++The one fresh B19 S01 journey proves candidate-only planning denial, actual staged reviewed causal evidence and independent safety survey, actual GraphRAG procedure citation, operator submission/review via3CLIchildren, API exact replay/readback, wrong role/department/self-review/CAS denial, conflicting different-department overlap, source identity conflict, historical/future half-open applicability and supported sourced drainage draft. Existing analyst/approver submit and approve the exact plan; at interval boundary new same-department responsibility cannot authorize a work order under old binding.0workorders. Original candidate/source and all Saver checkpoints retained; plan payload/hash/receipt unchanged.
++
++A real future responsibility review is atomically committed, then test-injected acknowledgment readback ValueError triggers409RECOVERY_REQUIRED/UNKNOWN. Original request/entity IDs are preserved, exactly1service invocation/relationship remains, exact replay never redispatches, root transport intent remains DISPATCHING. Safe GET verifies native source/status without clearing intent/quarantine. Operator still must inspect original operation receipt/native records and obtain supported human reconciliation; no automatic repair/retry/replacement-key/rollback/deletion/clearance performed. Durable native ownership events are actually discoverable through B15; no automatic worker execution.
++
++BLOCK-B20-01 is technically addressed pending review. BLOCK-B20-02..05 remain OPEN: utility repair/isolation and dependencies, capacity/route intervention, dumping response and independent pickup-before-dumping chronology. Open-ended disputed responsibility cannot be silently terminated here; it requires separate authorized correction. Historical responsibility is evidence, not retroactive knowledge before it was recorded/reviewed. Synthetic administrative responsibility is not physical causation or execution authority.
++
++Review [commands/failures](B20R-OWNERSHIP-COMMANDS.md), [exact files](B20R-OWNERSHIP-FILES.md), [patch](B20R-OWNERSHIP-changes.patch), [actual proof](B20R-OWNERSHIP-real-proof.json), [preservation/security audit](B20R-OWNERSHIP-audit.json), [operator walkthrough](B20R-OWNERSHIP-WALKTHROUGH.md), and backend/RESPONSIBILITY.md. Earlier phase evidence remains unchanged. STOP for human review; separately authorize any next B20 corrective task. B21 remains deferred.
++
++
++### B20-R-OWNERSHIP final preservation/security evidence
++Read-only auditPASS:1581pre-task public files retained,1129earlier evidence files byte-identical,119accepted test files unchanged; allsix tracker histories append-only. Original migrations0001–0005/schema registry/city/scenario/evaluator data/dependency files unchanged. B04fullcityhash/858nodes/1246edges/42candidate drainage links, B01probe, B12R2singleplan/quarantine and B19quarantines retained; original candidate/source/submission and draft/receipt/checkpoint hashes intact. Historical2paidrequests exactly unchanged;14guards0external/0unexpected; public-artifact/patchprivate-value scanPASS. ActualFalkorDB6.0.2/Redis8.10.2 and pinnedpackageversions recorded in audit; no dependency changes.
++
++Two audit utility bookkeeping stops retained separately (missing authorized CLI path in allowlist, then concurrentnewfrontend additions). Corrected the task allowlist/exclusion; no application/evidence/data repair. Seven concurrentfrontend files were not created/edited/executed by this task, preserved and excluded from ownership patch/inventory; hashes recorded separately. No frontend work performed here. Final task101distinctPASS100unit/1real,0unresolvedFAIL/0SKIP; full B20PARTIAL/BLOCKED, B10genuineOPEN/PARTIAL. STOPforhumanreview; proposed next B20-R-UTILITY only after separateauthorization, noB21/live/frontend.
+--- /dev/null
++++ b/docs/evidence/B20R-OWNERSHIP-WALKTHROUGH.md
+@@ -0,0 +1,13 @@
++# B20-R-OWNERSHIP operator verification
++
++1. Open backend/RESPONSIBILITY.md. Use a fresh actual B19 scenario's returned asset/department/profile. Reset remains CANDIDATE-only. A supported, properly sourced/safety-qualified draft must still fail until ownership is reviewed.
++2. Authenticate with that department's seeded lead session. `responsibility submit --payload FILE --key KEY` records explicitly synthetic source/record/version, observation and half-open effective interval. Expect SUBMITTED/UNREVIEWED and actual returned ID/hash. Same key/body returns the same response; changed source identity/content conflicts. ADMIN, other department lead or analyst cannot submit for this department.
++3. Switch to the independent analyst session. `responsibility review --id RETURNED_ID --payload REVIEW_FILE --key DIFFERENT_KEY` uses returned expected_hash, explicit reviewed=true and reason. Expect VERIFIED with CURRENT/FUTURE/HISTORICAL applicability. Original candidate and submission hashes stay unchanged. Lead self-review/admin/approver fail403; stale hash/conflicting verified intervals fail409. No raw Cypher or manual source promotion.
++4. `responsibility get --id RETURNED_ID` exposes safe source/actor/date/event/relationship IDs. Only CURRENT responsibility can satisfy existing planner ownership guard; procedure/cause/safety remain independent. A valid sourced drainage draft succeeds. Actual plan submission/approval still require analyst/approver roles; responsibility review grants no work authority.
++5. Inspect docs/evidence/B20R-OWNERSHIP-real-proof.json: original candidate/source hashes, independently authenticated reviewer,3actualCLIcalls, real source-backed draft, retained Saver checkpoint hashes, accepted finite succession and denied old-approval new work at the exact interval boundary. No work orders were created. Source/candidate/draft/receipt/checkpoint history retained.
++
++The real injected fault committed one future reviewed responsibility then failed acknowledgment readback. HTTP returned409RECOVERY_REQUIRED/UNKNOWN; exact replay did not redispatch (one service invocation/one relationship), root intent remains DISPATCHING. Safe GET verifies stored source/status without clearing recovery. Use the proof's original request/entity IDs to inspect the existing operation receipt and native records; retain the intent and obtain human reconciliation review. No automatic retry, replacement key, rollback, record deletion or quarantine clearance is supported by this task. Actual source profile remains private under .runtime/b20-review; match proof.source_graph to the host-only profile. Never share profile/auth/credential files.
++
++To reproduce the single real journey, run the focused integration command in B20R-OWNERSHIP-COMMANDS.md. Tests create fresh retained sources and explicitly use synthetic Oct19clock intervals, with issue-only scripted choices distinct from genuine AI; actual DB/MCP/Saver/HTTP/CLI/SDK execute. Expect1PASS, not a whole historical suite. If failure occurs, share sanitized pytest log/zero-live report only, preserve failed source.
++
++Ownership correction is reviewable; full B20 remains PARTIAL/BLOCKED by utility/capacity/route/dumping actions and pickup/dumping chronology. B10 genuine gate OPEN/PARTIAL; no B21/frontend/live calls authorized. STOP.
+--- /dev/null
++++ b/docs/evidence/B20R-OWNERSHIP-audit-script.py
+@@ -0,0 +1,122 @@
++"""B20-R-OWNERSHIP read-only retention/private-artifact audit. Never emits credential values."""
++import hashlib,importlib.metadata,json,re,sqlite3,subprocess,sys
++from pathlib import Path
++root=Path.cwd();base=Path('/tmp/b20r-ownership-baseline');before=json.loads((base/'hashes.json').read_text())
++public=sorted(n for n in subprocess.check_output(['git','ls-files','--cached','--others','--exclude-standard','-z']).decode().split('\0') if n and Path(n).is_file())
++sha=lambda p:hashlib.sha256(Path(p).read_bytes()).hexdigest()
++assert set(before)<=set(public)
++changed=sorted(n for n,h in before.items() if sha(n)!=h);new=sorted(set(public)-set(before))
++trackers={'decision.md','flow.md','implementation_status.md','test_log.md','blockers.md','task_board.md'}
++allowed=trackers|{'backend/cli/main.py','backend/API.md','backend/DEMO.md','backend/OPERATOR_CLI.md','backend/app/api/models.py','backend/app/api/coverage.py','backend/app/graph/repository.py','backend/app/services/http/service.py','backend/app/services/http/reads.py','backend/app/services/http/views.py','backend/app/services/planning/service.py','backend/app/services/operations/service.py','backend/app/services/operations/storage.py','contracts/api_endpoints.json','contracts/api_models.json','contracts/graph_access.json','contracts/operator_cli.json','contracts/resolution_planning.json','docs/backend/02_graph.md','scripts/validate_api.py','scripts/validate_blueprint.py','scripts/validate_handoff.py'}
++assert set(changed)==allowed,(set(changed)^allowed)
++for n in trackers:assert Path(n).read_bytes().startswith((base/'files'/n).read_bytes())
++old_evidence=[n for n in before if n.startswith('docs/evidence/')];old_tests=[n for n in before if n.startswith('backend/tests/')]
++assert not (set(old_evidence)|set(old_tests))&set(changed)
++concurrent_new=[n for n in new if n.startswith('frontend/')]
++concurrent_hashes={n:sha(n) for n in concurrent_new}
++new=[n for n in new if n not in concurrent_new]
++assert {n for n in new if not n.startswith('docs/evidence/B20R-OWNERSHIP-')}=={'backend/RESPONSIBILITY.md','backend/app/services/responsibility/models.py','backend/app/services/responsibility/service.py','backend/tests/integration/test_responsibility_runtime.py','backend/tests/unit/test_responsibility.py','scripts/validate_responsibility.py','contracts/responsibility.json'}
++private=[]
++for line in Path('.env').read_text().splitlines():
++ if '=' in line:
++  k,v=line.split('=',1);v=v.strip(' \"\'')
++  if any(t in k.upper() for t in ['KEY','SECRET','TOKEN','PASSWORD']) and len(v)>7:private.append(v.encode())
++def collect(x):
++ if isinstance(x,dict):
++  for k,v in x.items():
++   if any(t in k.lower() for t in ['password','secret','api_key','token']) and isinstance(v,str) and len(v)>7:private.append(v.encode())
++   else:collect(v)
++ elif isinstance(x,list):
++  for v in x:collect(v)
++for p in [*Path('.runtime').glob('*.json'),*Path('.runtime/b20-review').glob('**/profile.json'),*Path('.runtime/b20-review').glob('**/agent.json'),*Path('.runtime/b20-review').glob('**/memory.json')]:collect(json.loads(p.read_text()))
++for n in changed+new:
++ raw=Path(n).read_bytes()
++ assert not any(v in raw for v in private),'PRIVATE_VALUE_IN_PUBLIC_ARTIFACT'
++ assert not re.search(rb'-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----|\bAKIA[0-9A-Z]{16}\b|\bsk-[A-Za-z0-9_-]{24,}|[A-Za-z0-9_-]{43}\.[0-9a-f]{64}',raw),'PRIVATE_PATTERN'
++guards=list(Path('docs/evidence').glob('B20R-OWNERSHIP-*-zero-live.json'))
++for p in guards:
++ v=json.loads(p.read_text());assert v['external_gemini_requests_sent']==v['ordinary_unexpected_attempts']==0
++accepted=json.loads(Path('docs/evidence/B11-LIVE-SMOKE-R-fresh-process.json').read_text())['accounting']['requests']
++with sqlite3.connect('file:'+str(root/'.runtime/ai-spend.sqlite3')+'?mode=ro',uri=True) as conn:
++ conn.row_factory=sqlite3.Row;requests=[dict(r) for r in conn.execute('SELECT * FROM requests ORDER BY created,id')];assert requests==accepted
++ assert conn.execute('SELECT count(*) FROM sessions').fetchone()[0]==0
++ assert conn.execute("SELECT count(*) FROM request_holds WHERE status='OPEN'").fetchone()[0]==0
++sys.path.insert(0,str(root/'backend'))
++from app.config import Settings
++from app.graph.connection import connect
++from app.graph.repository import GraphRepository
++from app.graph.models import digest
++from app.mcp.runtime import CITY_GRAPH
++from app.active import load,active_scope
++profiles={load(p).graph:load(p) for p in Path('.runtime/b20-review').glob('*/demo-runs/*/profile.json')}
++runs=[]
++with connect(Settings(_env_file='.env')) as db:
++ server=db.connection.info('server')['redis_version'];modules=db.connection.execute_command('MODULE','LIST')
++ module_versions={}
++ for row in modules:
++  d={str(row[i].decode() if isinstance(row[i],bytes) else row[i]):row[i+1] for i in range(0,len(row),2)}
++  name=d['name'];module_versions[name.decode() if isinstance(name,bytes) else name]=d['ver']
++ for path in sorted(Path('docs/evidence').glob('B20-S0*-*.json')):
++  proof=json.loads(path.read_text());p=profiles[proof['source_graph']]
++  with active_scope(p):
++   r=GraphRepository(db,p.graph);assert r._read('MATCH (w:WorkOrder) RETURN count(w)')==[[0]]
++   for e in proof['released_evidence']:r.get_node(e['id'],'Evidence')
++   from app.agents.checkpoints import saver
++   saved=saver(p).get_tuple({'configurable':{'thread_id':proof['thread_id'],'checkpoint_id':proof['baseline_checkpoint_id']}})
++   assert saved and saved.checkpoint['channel_values']['data']==proof['baseline']
++   if proof['scenario']=='S01':
++    assert any(x['verification_status']=='VERIFIED' and x['relationship']=='DRAINS_TO' for x in proof['baseline']['observations'][1]['paths'])
++    edge=r.get_relationship('B19-SURVEY-FLOW');assert edge.source=='DRAIN-100' and edge.target=='DRAIN-101'
++   if proof['scenario'] in {'S03','S04'}:
++    assert any(x['verification_status']=='VERIFIED' and x['relationship']=='UNDERLIES' for x in proof['baseline']['observations'][1]['paths'])
++   if proof['scenario'] in {'S05','S06'}:
++    assert r._read('MATCH (p:PickupExecution) RETURN count(p)')==[[0]]
++    assert r._read('MATCH ()-[r:HAS_SCHEDULE]->() RETURN r.association_status')==[['CANDIDATE']]
++   if proof['scenario']=='S02':
++    journals=r._read("MATCH (e:Evidence {evidence_type:'COMPLAINT_INTAKE'}) RETURN e.summary")
++    obs=[m for row in journals for m in json.loads(row[0])['canonical']['details']['measurements']]
++    assert any(m['name']=='rainfall' and m['value']==125.0 and m['unit']=='mm' and m['basis']=='REPORTED' for m in obs)
++   runs.append({'scenario':proof['scenario'],'variant':proof['variant'],'source_graph':p.graph,'baseline_checkpoint_unchanged':True})
++ assert len(runs)==12
++ city=GraphRepository(db,CITY_GRAPH);ns=city._read('MATCH (n:CivicEntity) RETURN labels(n),properties(n) LIMIT 859');es=city._read('MATCH (s:CivicEntity)-[e]->(t:CivicEntity) RETURN type(e),properties(e),labels(s),properties(s),labels(t),properties(t) LIMIT 1247')
++ assert len(ns)==858 and len(es)==1246
++ records=[city.decode_node(*n) for n in ns]+[city._decode_edge_row(e) for e in es]
++ city_hash=digest({n.id:n.content_hash for n in records});assert city_hash==json.loads(Path('docs/evidence/B04-retained-post-recreation.json').read_text())['verified_content_hash']
++ assert city._read("MATCH ()-[e:DRAINS_TO]->() WHERE e.association_status='CANDIDATE' RETURN count(e)")==[[42]]
++ assert db.select_graph('civicly_b01_runtime').ro_query('MATCH (n:B01Probe {id:$id}) RETURN n.id,n.source_kind,n.task LIMIT 1',params={'id':'B01-PERSISTENCE'}).result_set==[['B01-PERSISTENCE','SYNTHETIC','B01']]
++ fault=json.loads(Path('docs/evidence/B12R2-postcommit-recovery.json').read_text());ctx=fault['reconciliation']
++ assert db.connection.get('civicly:b10:'+ctx['graph']+':'+digest(fault['thread_id'])+':quarantine')
++ assert db.select_graph(ctx['graph']).ro_query('MATCH (p:ResolutionPlan) RETURN p.id,p.version,p.plan_hash').result_set==[[ctx['plan_id'],1,ctx['expected_plan_hash']]]
++ previous=json.loads(Path('docs/evidence/B19-retained-failed-wake.json').read_text())
++ for f in previous['failed_wakes']:assert db.connection.get('civicly:b10:'+f['source_graph']+':'+digest(f['thread_id'])+':quarantine')
++proof=json.loads(Path('docs/evidence/B20R-OWNERSHIP-real-proof.json').read_text())
++profile_path=next(p for p in Path('.runtime/b20-review').glob('*/demo-runs/*/profile.json') if load(p).graph==proof['source_graph'])
++p=load(profile_path)
++with connect(Settings(_env_file='.env')) as db,active_scope(p):
++ from app.services.responsibility.service import Responsibility
++ from app.services.operations.auth import Auth
++ from app.services.operations.storage import Storage
++ r=GraphRepository(db,p.graph);service=Responsibility(r,Auth(profile_path.parents[2]/'auth.sqlite3'),clock=lambda:proof['synthetic_clock'][0])
++ state=proof['proof'];checked=[]
++ for key in ['verified','successor','historical','uncertain_retained']:
++  record=service.readback(state[key]['id']);assert record['status']=='VERIFIED';checked.append(record)
++ intent=Storage(r).get('api_request',state['recovery']['details']['request_id']);assert intent['status']=='DISPATCHING'
++ assert r._read('MATCH (w:WorkOrder) RETURN count(w)')==[[0]]
++ assert r._read('MATCH (d:CivicPlanDraft {id:$id}) RETURN d.payload_sha256',{'id':state['plan_id']})==state['payload_hash']
++ candidates=r._read("MATCH (:InfrastructureAsset {id:$id})-[e:MAINTAINED_BY]->() WHERE e.association_status='CANDIDATE' RETURN e.id,e.source_evidence_id",{'id':proof['case']['asset_id']})
++ assert len(candidates)==1
++ assert [r.get_relationship(candidates[0][0]).content_hash,r.get_node(candidates[0][1]).content_hash]==state['candidate_and_source_hashes']
++ from app.agents.checkpoints import saver
++ saved={x.config['configurable']['checkpoint_id']:hashlib.sha256(json.dumps(x.checkpoint,sort_keys=True,default=str).encode()).hexdigest() for x in saver(p).list(None)}
++ assert saved==proof['checkpoints']
++value={'task':'B20-R-OWNERSHIP','status':'TECHNICALLY_PASS_HUMAN_REVIEW_PENDING','B20':'PARTIAL_BLOCKED',
++ 'baseline_public_files_retained':len(before),'prior_evidence_byte_identical':len(old_evidence),'prior_tests_unchanged':len(old_tests),
++ 'all_six_trackers_append_only':True,'modified':changed,'new':new,'concurrent_frontend_files_not_touched_or_executed':concurrent_hashes,'old_migrations_schema_city_scenarios_dependencies_unchanged':True,
++ 'private_value_scan':'PASS including patch','provider_guard_reports':len(guards),'external_provider_requests':0,'paid_requests_unchanged':len(requests),
++ 'prior_B20_scenario_checkpoints_and_sources_retained':len(runs),'B01_probe_unchanged':True,'B04_city_hash':city_hash,'candidate_drains':42,
++ 'B12R2_quarantine_single_plan_retained':True,'B19_quarantines_retained':True,'original_candidate_and_source_hashes_unchanged':True,
++ 'new_responsibility_records_verified':checked,'unknown_transport_intent_retained':True,'historical_draft_hash_receipt_checkpoint_preserved':True,
++ 'no_work_under_stale_approval':True,'tests':{'distinct_pass':101,'unit':100,'real':1,'unresolved_fail':0,'skip':0},
++ 'versions':{n:importlib.metadata.version(n) for n in ['falkordb','mcp','langgraph','langchain-falkordb','fastapi','pydantic']},'redis_version':server,'module_versions':module_versions}
++Path('docs/evidence/B20R-OWNERSHIP-audit.json').write_text(json.dumps(value,indent=2)+'\n')
++print(json.dumps(value,indent=2))
+--- a/flow.md
++++ b/flow.md
+@@ -1027,3 +1027,23 @@
+ 
+ ### B20 final retention evidence — 2026-10-18
+ Read-only auditPASS: all1534pre-B20 public files retained,1085earlier evidence files byte-identical,116accepted test files unchanged, allsix tracker histories append-only. Production logic/contracts/migrations/data unchanged; original city858nodes/1246relationships/fullcontenthash and42CANDIDATE drainage links intact, B01probe and original B12R2singleplan/quarantine + B19quarantines retained. Historical2paidrequests unchanged with no active sessions/holds. Finalpublicartifact/patchprivate-value scanPASS;9guardreports0external/0unexpected. Actual FalkorDBmodule60002(6.0.2); installed falkordb1.8.0,mcp2.3.0,langgraph1.2.16,langchain-falkordb0.2.0,fastapi0.143.3,pydantic2.14.1; no dependency changes. Exact inventory/patch use pre-B20 snapshot, excluding earlier accepted uncommitted Git work. No old failed graph repaired. B20acceptance remainsPARTIAL/BLOCKED; STOPforreview.
++
++
++## F00 frontend file/data flow — 2026-10-18
++frontend/AGENTS.md + README.md → frontend/docs/tasks.md and docs/integration.md → isolated frontend task sequence. Current contracts/{api_endpoints,api_models,event_delivery,event_types}.json → frontend/scripts/check_contracts.py (read-only JSON/schema identity checks + SHA256) → compare frontend/contracts.baseline.json → PASS or explicit drift failure. Only --record writes the frontend baseline. frontend/scripts/test_contracts.py → disposable temporary contract copies → unchanged/drift/duplicate/missing-schema checks. No HTTP/DB/MCP/worker/provider call in frontend tooling. Planned later browser→frontend proxy→existing authenticated REST/SSE→backend services; no browser DB credentials or graph writes.
++
++
++## B20-R-OWNERSHIP file/import and control flow — 2026-10-18
++New services/responsibility/models.py imports accepted strict Model/ID/Hash/Time and canonical timestamp; service.py imports existing Auth, Evidence Reader, Operations Storage/Migration/OpsRecovery and repository types. Existing API models/coverage expose three typed routes; HTTP dispatch imports shared Responsibility, prepares typed/auth/CAS inputs before Boundary.invoke and uses existing source-bound intent/recovery. CLI fixed responsibility submit/review/get mappings invoke that same API. contracts/responsibility.json plus generated API/CLI and graph/planning contracts match source; static validate_responsibility joins both validators. No new MCP tool or migration.
++
++Lead authenticated assertion → source/record/version identity+canonical hash → immutable UNVERIFIED/REPORTED Evidence + hashed0005 state/operation + durable native GRAPH_EVIDENCE_CHANGED in one parameterized fenced batch. Independent analyst CAS review → revalidate source hash/actor department/assets/times → reject any VERIFIED overlap → immutable VERIFIED synthetic inventory review Evidence + sourced MAINTAINED_BY + state/audit/event atomically. Storage/compiler only accepts narrowly validated staged review source for this relationship. Candidate/source/submission records untouched; safe DTO separately labels source status and temporal applicability. B15 native adapter discovers actual operation-backed event; no automatic case/worker execution.
++
++Planning.resolve requires one currently visible verified assignment and independently sourced procedure/causal/safety prerequisites; new proof includes ownership source/edge hashes. Operations.validate compares original draft owner binding before approval/new work; expired assignment+new same-department edge fails without rewriting plan. Reads.ownership_departments/Views resolve single current verified source, retain candidate-only read context and reject conflicts. Existing rootHTTPintent persists DISPATCHING before dispatch; committed readback/projection faults → OpsRecovery→existing409UNKNOWNoriginalIDs; exact replay returns recovery without dispatch. GET verifies source/status, never reconciles or clears quarantine.
++
++New focused unit/integration tests reuse retained B19/B20/B12-R helpers. Actual fresh candidate→review→supported sourced drainage plan/approval→temporal successor→denied work, independent evidence/safety,3CLIchildren, actual MCP/Saver/scriptedchoices, original checkpoints and source hashes retained. Injected postcommit fault is real database persistence plus test-only readback fault, no mocked success. B20R-OWNERSHIP evidence/audit/patch preserve all earlier artifacts. Full B20 remainsPARTIAL/BLOCKED; noB21/frontend/live.
++
++
++### B20-R-OWNERSHIP final preservation/security evidence
++Read-only auditPASS:1581pre-task public files retained,1129earlier evidence files byte-identical,119accepted test files unchanged; allsix tracker histories append-only. Original migrations0001–0005/schema registry/city/scenario/evaluator data/dependency files unchanged. B04fullcityhash/858nodes/1246edges/42candidate drainage links, B01probe, B12R2singleplan/quarantine and B19quarantines retained; original candidate/source/submission and draft/receipt/checkpoint hashes intact. Historical2paidrequests exactly unchanged;14guards0external/0unexpected; public-artifact/patchprivate-value scanPASS. ActualFalkorDB6.0.2/Redis8.10.2 and pinnedpackageversions recorded in audit; no dependency changes.
++
++Two audit utility bookkeeping stops retained separately (missing authorized CLI path in allowlist, then concurrentnewfrontend additions). Corrected the task allowlist/exclusion; no application/evidence/data repair. Seven concurrentfrontend files were not created/edited/executed by this task, preserved and excluded from ownership patch/inventory; hashes recorded separately. No frontend work performed here. Final task101distinctPASS100unit/1real,0unresolvedFAIL/0SKIP; full B20PARTIAL/BLOCKED, B10genuineOPEN/PARTIAL. STOPforhumanreview; proposed next B20-R-UTILITY only after separateauthorization, noB21/live/frontend.
+--- a/implementation_status.md
++++ b/implementation_status.md
+@@ -598,3 +598,25 @@
+ 
+ ### B20 final retention evidence — 2026-10-18
+ Read-only auditPASS: all1534pre-B20 public files retained,1085earlier evidence files byte-identical,116accepted test files unchanged, allsix tracker histories append-only. Production logic/contracts/migrations/data unchanged; original city858nodes/1246relationships/fullcontenthash and42CANDIDATE drainage links intact, B01probe and original B12R2singleplan/quarantine + B19quarantines retained. Historical2paidrequests unchanged with no active sessions/holds. Finalpublicartifact/patchprivate-value scanPASS;9guardreports0external/0unexpected. Actual FalkorDBmodule60002(6.0.2); installed falkordb1.8.0,mcp2.3.0,langgraph1.2.16,langchain-falkordb0.2.0,fastapi0.143.3,pydantic2.14.1; no dependency changes. Exact inventory/patch use pre-B20 snapshot, excluding earlier accepted uncommitted Git work. No old failed graph repaired. B20acceptance remainsPARTIAL/BLOCKED; STOPforreview.
++
++
++## F00 frontend foundation — PASS, human review pending (2026-10-18)
++Parallel frontend explicitly authorized; previous frontend-unauthorized notes remain historical. Added isolated frontend/ folder, integration agreement/task sequence and executable read-only contract guard. 58operations/55paths/182schemas match current baseline; four offline guard tests PASS; both specification validators PASS in existing backend virtualenv. No UI/dev server/typed client/live HTTP/browser integration yet. Backend task status and ownership work remain independent; no backend-complete claim. Next frontend F01 local shell; backend next task unchanged by F00.
++
++
++## CURRENT B20-R-OWNERSHIP — technically passing; human review pending (2026-10-18)
++B20 evaluation accepted; full B20 remains PARTIAL/BLOCKED. Implemented only explicit synthetic verified-responsibility acquisition (DEC-067): department-scoped authenticated lead submission, distinct authenticated analyst review with CAS/explicit consent, immutable attributed Evidence plus sourced temporal VERIFIED MAINTAINED_BY, fixed API/CLI and safe status readback. Original candidate/source/submission bytes retained; no reset/planner promotion. Verified overlaps conflict; historical/future/adjacent intervals distinguished. Existing0005 fenced atomic source/relationship/audit/event/operation and HTTP UNKNOWN recovery reused, migration0001 unchanged.
++
++New plan proofs bind exact ownership evidence/edge hashes; operations compare original bindings before new authority. Same-department temporal successor cannot authorize work under old approval; historical draft/receipt/Saver hashes unchanged. Existing procedure/causal/safety guards still mandatory. Related Reads/Views select one current VERIFIED owner with source checks, retain candidate-only read context and fail closed on multiple verified assignments; no candidate mislabeled as owner. No MCP write tools/roles/storage subsystem introduced; ADMIN/APPROVER acquire no submission/review/execution bypass.
++
++Final101distinctPASS=29focused responsibilityunits+71direct graph/HTTP/CLI-mappingunits+1sharedrealB19/HTTP/CLI/FalkorDB/SDK/MCP/LangGraph/Saverjourney.0unresolvedFAIL/0SKIP. One historical unit-input failure (offset timestamp violated canonicalZ) and2fixture socket-timeoutERROR retained; no failed graph repaired. Final realPASS35.63s after test-only bounded socket10second override; ordinary broker/query budgets unchanged. Final bothSPECvalidatorsPASS after source changes;14interlockreports0external Gemini/countTokens/0unexpected. Scripted choices explicitly not genuine AI.
++
++Actual committed review + injected readback ValueError returns409RECOVERY_REQUIRED/UNKNOWN with original request/entity IDs; exact replay blocks without redispatch, one effect retained, rootintentDISPATCHING. Safe readback verifies provenance but does not clear intent/quarantine; operator must inspect original operation/native records and obtain supported reconciliation review. No automatic retry/delete/replacementkey/clearance. Durably discoverable responsibility events retained; no worker automatic execution.
++
++Review backend/RESPONSIBILITY.md and docs/evidence/B20R-OWNERSHIP-RESULTS.md/COMMANDS.md/FILES.md/changes.patch/real-proof.json/audit.json/WALKTHROUGH.md. BLOCK-B20-01 technically addressed pending human review; BLOCK-B20-02..05 (utility/capacity/route/dumping interventions and pickup/dumping chronology) remain OPEN. AllR01–R18binding; B10 genuine gate OPEN/PARTIAL. Proposed next: human review and separately authorize one remaining B20 corrective microtask; B21/frontend/live remain unauthorized. STOP.
++
++
++### B20-R-OWNERSHIP final preservation/security evidence
++Read-only auditPASS:1581pre-task public files retained,1129earlier evidence files byte-identical,119accepted test files unchanged; allsix tracker histories append-only. Original migrations0001–0005/schema registry/city/scenario/evaluator data/dependency files unchanged. B04fullcityhash/858nodes/1246edges/42candidate drainage links, B01probe, B12R2singleplan/quarantine and B19quarantines retained; original candidate/source/submission and draft/receipt/checkpoint hashes intact. Historical2paidrequests exactly unchanged;14guards0external/0unexpected; public-artifact/patchprivate-value scanPASS. ActualFalkorDB6.0.2/Redis8.10.2 and pinnedpackageversions recorded in audit; no dependency changes.
++
++Two audit utility bookkeeping stops retained separately (missing authorized CLI path in allowlist, then concurrentnewfrontend additions). Corrected the task allowlist/exclusion; no application/evidence/data repair. Seven concurrentfrontend files were not created/edited/executed by this task, preserved and excluded from ownership patch/inventory; hashes recorded separately. No frontend work performed here. Final task101distinctPASS100unit/1real,0unresolvedFAIL/0SKIP; full B20PARTIAL/BLOCKED, B10genuineOPEN/PARTIAL. STOPforhumanreview; proposed next B20-R-UTILITY only after separateauthorization, noB21/live/frontend.
+--- a/scripts/validate_api.py
++++ b/scripts/validate_api.py
+@@ -11,8 +11,8 @@
+ api=create_app().openapi();actual={(method.upper(),path) for path,row in api['paths'].items() for method in row}
+ expected={(method,'/api/v1'+path) for method,path,*_ in ROUTES}
+ assert actual==expected
+-core=[r for r in c['routes'] if r['milestone'] in {'B16','B17','B19'}];assert {(r['method'],r['path']) for r in core}==actual
+-assert len(actual)==55 and len(api['paths'])==52
++core=[r for r in c['routes'] if r['milestone'] in {'B16','B17','B19','B20-R-OWNERSHIP'}];assert {(r['method'],r['path']) for r in core}==actual
++assert len(actual)==58 and len(api['paths'])==55
+ for method,path,role,req,res,name in ROUTES:
+  row=next(r for r in core if (r['method'],r['path'])==(method,'/api/v1'+path));assert row['role']==role
+  for cls in [req,res]:
+@@ -39,4 +39,4 @@
+ assert 'review' not in models.ReportRequest.model_fields
+ assert 'review' not in models.WorkInspectionReport.model_fields
+ assert 'request_id' not in models.WorkInspectionReport.model_fields
+-print('PASS B16/B17/B19 STATIC:55 implemented operations/52paths, closed typed schemas/roles/idempotency, exact per-route query allowlists and SSE;3B19 operations implemented; no runtime/live claim')
++print('PASS B16/B17/B19/B20-R-OWNERSHIP STATIC:58 implemented operations/55paths, closed typed schemas/roles/idempotency, exact per-route query allowlists and SSE;3B19 operations implemented; no runtime/live claim')
+--- a/scripts/validate_blueprint.py
++++ b/scripts/validate_blueprint.py
+@@ -232,4 +232,6 @@
+     if result:raise SystemExit(result)
+     result=subprocess.call([sys.executable,str(ROOT/'scripts/validate_cli.py')])
+     if result:raise SystemExit(result)
++    result=subprocess.call([sys.executable,str(ROOT/'scripts/validate_responsibility.py')])
++    if result:raise SystemExit(result)
+     raise SystemExit(subprocess.call([sys.executable,str(ROOT/'scripts/validate_demo.py')]))
+--- a/scripts/validate_handoff.py
++++ b/scripts/validate_handoff.py
+@@ -137,4 +137,6 @@
+ if result:raise SystemExit(result)
+ result=subprocess.call([sys.executable,str(ROOT/'scripts/validate_cli.py')])
+ if result:raise SystemExit(result)
++result=subprocess.call([sys.executable,str(ROOT/'scripts/validate_responsibility.py')])
++if result:raise SystemExit(result)
+ raise SystemExit(subprocess.call([sys.executable,str(ROOT/'scripts/validate_demo.py')]))
+--- /dev/null
++++ b/scripts/validate_responsibility.py
+@@ -0,0 +1,12 @@
++"""Static responsibility contract parity; not authority/runtime evidence."""
++import sys,json
++from pathlib import Path
++ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT/'backend'))
++from app.services.responsibility.models import Submission,Review,ResponsibilityDTO,SubmissionRecord,ReviewRecord
++v=json.loads((ROOT/'contracts/responsibility.json').read_text())
++assert v['models']=={c.__name__:c.model_json_schema() for c in [Submission,Review,ResponsibilityDTO,SubmissionRecord,ReviewRecord]}
++assert not v['authority']['admin_bypass']
++assert set(Submission.model_fields)=={'asset_id','department_id','source_id','source_record_id','source_version','source_kind','observed_at','valid_from','valid_to'}
++assert set(Review.model_fields)=={'expected_hash','reviewed','reason'}
++assert 'ownership_cardinality' in json.loads((ROOT/'contracts/graph_access.json').read_text())
++print('PASS B20-R-OWNERSHIP STATIC: closed source/review/status contracts, operator-only independent review, compatible existing storage; not runtime authority proof')
+--- a/task_board.md
++++ b/task_board.md
+@@ -534,3 +534,28 @@
+ 
+ ### B20 final retention evidence — 2026-10-18
+ Read-only auditPASS: all1534pre-B20 public files retained,1085earlier evidence files byte-identical,116accepted test files unchanged, allsix tracker histories append-only. Production logic/contracts/migrations/data unchanged; original city858nodes/1246relationships/fullcontenthash and42CANDIDATE drainage links intact, B01probe and original B12R2singleplan/quarantine + B19quarantines retained. Historical2paidrequests unchanged with no active sessions/holds. Finalpublicartifact/patchprivate-value scanPASS;9guardreports0external/0unexpected. Actual FalkorDBmodule60002(6.0.2); installed falkordb1.8.0,mcp2.3.0,langgraph1.2.16,langchain-falkordb0.2.0,fastapi0.143.3,pydantic2.14.1; no dependency changes. Exact inventory/patch use pre-B20 snapshot, excluding earlier accepted uncommitted Git work. No old failed graph repaired. B20acceptance remainsPARTIAL/BLOCKED; STOPforreview.
++
++
++## Parallel frontend track — F00 (2026-10-18)
++Human explicitly authorized frontend/backend side by side without backend disruption. Frontend track lives in frontend/docs/tasks.md; does not accept or reorder backend tasks.
++- [x] F00 isolated workspace + compatibility foundation: static checks PASS; human review pending.
++- [ ] F01 local Next.js/React/TypeScript shell with five workspaces and unavailable states.
++Exact subsequent frontend tasks in frontend/docs/tasks.md. No backend task completed by this entry. STOP after F00 for review.
++
++
++## CURRENT B20-R-OWNERSHIP — technically passing; human review pending (2026-10-18)
++B20 evaluation accepted; full B20 remains PARTIAL/BLOCKED. Implemented only explicit synthetic verified-responsibility acquisition (DEC-067): department-scoped authenticated lead submission, distinct authenticated analyst review with CAS/explicit consent, immutable attributed Evidence plus sourced temporal VERIFIED MAINTAINED_BY, fixed API/CLI and safe status readback. Original candidate/source/submission bytes retained; no reset/planner promotion. Verified overlaps conflict; historical/future/adjacent intervals distinguished. Existing0005 fenced atomic source/relationship/audit/event/operation and HTTP UNKNOWN recovery reused, migration0001 unchanged.
++
++New plan proofs bind exact ownership evidence/edge hashes; operations compare original bindings before new authority. Same-department temporal successor cannot authorize work under old approval; historical draft/receipt/Saver hashes unchanged. Existing procedure/causal/safety guards still mandatory. Related Reads/Views select one current VERIFIED owner with source checks, retain candidate-only read context and fail closed on multiple verified assignments; no candidate mislabeled as owner. No MCP write tools/roles/storage subsystem introduced; ADMIN/APPROVER acquire no submission/review/execution bypass.
++
++Final101distinctPASS=29focused responsibilityunits+71direct graph/HTTP/CLI-mappingunits+1sharedrealB19/HTTP/CLI/FalkorDB/SDK/MCP/LangGraph/Saverjourney.0unresolvedFAIL/0SKIP. One historical unit-input failure (offset timestamp violated canonicalZ) and2fixture socket-timeoutERROR retained; no failed graph repaired. Final realPASS35.63s after test-only bounded socket10second override; ordinary broker/query budgets unchanged. Final bothSPECvalidatorsPASS after source changes;14interlockreports0external Gemini/countTokens/0unexpected. Scripted choices explicitly not genuine AI.
++
++Actual committed review + injected readback ValueError returns409RECOVERY_REQUIRED/UNKNOWN with original request/entity IDs; exact replay blocks without redispatch, one effect retained, rootintentDISPATCHING. Safe readback verifies provenance but does not clear intent/quarantine; operator must inspect original operation/native records and obtain supported reconciliation review. No automatic retry/delete/replacementkey/clearance. Durably discoverable responsibility events retained; no worker automatic execution.
++
++Review backend/RESPONSIBILITY.md and docs/evidence/B20R-OWNERSHIP-RESULTS.md/COMMANDS.md/FILES.md/changes.patch/real-proof.json/audit.json/WALKTHROUGH.md. BLOCK-B20-01 technically addressed pending human review; BLOCK-B20-02..05 (utility/capacity/route/dumping interventions and pickup/dumping chronology) remain OPEN. AllR01–R18binding; B10 genuine gate OPEN/PARTIAL. Proposed next: human review and separately authorize one remaining B20 corrective microtask; B21/frontend/live remain unauthorized. STOP.
++
++
++### B20-R-OWNERSHIP final preservation/security evidence
++Read-only auditPASS:1581pre-task public files retained,1129earlier evidence files byte-identical,119accepted test files unchanged; allsix tracker histories append-only. Original migrations0001–0005/schema registry/city/scenario/evaluator data/dependency files unchanged. B04fullcityhash/858nodes/1246edges/42candidate drainage links, B01probe, B12R2singleplan/quarantine and B19quarantines retained; original candidate/source/submission and draft/receipt/checkpoint hashes intact. Historical2paidrequests exactly unchanged;14guards0external/0unexpected; public-artifact/patchprivate-value scanPASS. ActualFalkorDB6.0.2/Redis8.10.2 and pinnedpackageversions recorded in audit; no dependency changes.
++
++Two audit utility bookkeeping stops retained separately (missing authorized CLI path in allowlist, then concurrentnewfrontend additions). Corrected the task allowlist/exclusion; no application/evidence/data repair. Seven concurrentfrontend files were not created/edited/executed by this task, preserved and excluded from ownership patch/inventory; hashes recorded separately. No frontend work performed here. Final task101distinctPASS100unit/1real,0unresolvedFAIL/0SKIP; full B20PARTIAL/BLOCKED, B10genuineOPEN/PARTIAL. STOPforhumanreview; proposed next B20-R-UTILITY only after separateauthorization, noB21/live/frontend.
+--- a/test_log.md
++++ b/test_log.md
+@@ -1136,3 +1136,31 @@
+ 
+ ### B20 final retention evidence — 2026-10-18
+ Read-only auditPASS: all1534pre-B20 public files retained,1085earlier evidence files byte-identical,116accepted test files unchanged, allsix tracker histories append-only. Production logic/contracts/migrations/data unchanged; original city858nodes/1246relationships/fullcontenthash and42CANDIDATE drainage links intact, B01probe and original B12R2singleplan/quarantine + B19quarantines retained. Historical2paidrequests unchanged with no active sessions/holds. Finalpublicartifact/patchprivate-value scanPASS;9guardreports0external/0unexpected. Actual FalkorDBmodule60002(6.0.2); installed falkordb1.8.0,mcp2.3.0,langgraph1.2.16,langchain-falkordb0.2.0,fastapi0.143.3,pydantic2.14.1; no dependency changes. Exact inventory/patch use pre-B20 snapshot, excluding earlier accepted uncommitted Git work. No old failed graph repaired. B20acceptance remainsPARTIAL/BLOCKED; STOPforreview.
++
++
++## F00 actual checks — 2026-10-18
++- python3 frontend/scripts/check_contracts.py --record: PASS; wrote frontend baseline only.
++- python3 frontend/scripts/check_contracts.py: PASS;58operations/55paths/182schemas.
++- PYTHONDONTWRITEBYTECODE=1 python3 frontend/scripts/test_contracts.py:4/4PASS offline tests (unchanged copy, drift, duplicate route, missing schema); disposable copies only.
++- Initial python3 scripts/validate_blueprint.py and python3 scripts/validate_handoff.py: FAIL under system Python due to missing jsonschema/pydantic. No package installation/change; corrected interpreter below.
++- backend/.venv/bin/python scripts/validate_blueprint.py: PASS static specification.
++- backend/.venv/bin/python scripts/validate_handoff.py: PASS static specification including current ownership contracts.
++Runtime DB/MCP/live-provider/browser/UI integration: NOT RUN, outside F00. No frontend service/process started or backend runtime mutation requested.
++
++
++## CURRENT B20-R-OWNERSHIP — technically passing; human review pending (2026-10-18)
++B20 evaluation accepted; full B20 remains PARTIAL/BLOCKED. Implemented only explicit synthetic verified-responsibility acquisition (DEC-067): department-scoped authenticated lead submission, distinct authenticated analyst review with CAS/explicit consent, immutable attributed Evidence plus sourced temporal VERIFIED MAINTAINED_BY, fixed API/CLI and safe status readback. Original candidate/source/submission bytes retained; no reset/planner promotion. Verified overlaps conflict; historical/future/adjacent intervals distinguished. Existing0005 fenced atomic source/relationship/audit/event/operation and HTTP UNKNOWN recovery reused, migration0001 unchanged.
++
++New plan proofs bind exact ownership evidence/edge hashes; operations compare original bindings before new authority. Same-department temporal successor cannot authorize work under old approval; historical draft/receipt/Saver hashes unchanged. Existing procedure/causal/safety guards still mandatory. Related Reads/Views select one current VERIFIED owner with source checks, retain candidate-only read context and fail closed on multiple verified assignments; no candidate mislabeled as owner. No MCP write tools/roles/storage subsystem introduced; ADMIN/APPROVER acquire no submission/review/execution bypass.
++
++Final101distinctPASS=29focused responsibilityunits+71direct graph/HTTP/CLI-mappingunits+1sharedrealB19/HTTP/CLI/FalkorDB/SDK/MCP/LangGraph/Saverjourney.0unresolvedFAIL/0SKIP. One historical unit-input failure (offset timestamp violated canonicalZ) and2fixture socket-timeoutERROR retained; no failed graph repaired. Final realPASS35.63s after test-only bounded socket10second override; ordinary broker/query budgets unchanged. Final bothSPECvalidatorsPASS after source changes;14interlockreports0external Gemini/countTokens/0unexpected. Scripted choices explicitly not genuine AI.
++
++Actual committed review + injected readback ValueError returns409RECOVERY_REQUIRED/UNKNOWN with original request/entity IDs; exact replay blocks without redispatch, one effect retained, rootintentDISPATCHING. Safe readback verifies provenance but does not clear intent/quarantine; operator must inspect original operation/native records and obtain supported reconciliation review. No automatic retry/delete/replacementkey/clearance. Durably discoverable responsibility events retained; no worker automatic execution.
++
++Review backend/RESPONSIBILITY.md and docs/evidence/B20R-OWNERSHIP-RESULTS.md/COMMANDS.md/FILES.md/changes.patch/real-proof.json/audit.json/WALKTHROUGH.md. BLOCK-B20-01 technically addressed pending human review; BLOCK-B20-02..05 (utility/capacity/route/dumping interventions and pickup/dumping chronology) remain OPEN. AllR01–R18binding; B10 genuine gate OPEN/PARTIAL. Proposed next: human review and separately authorize one remaining B20 corrective microtask; B21/frontend/live remain unauthorized. STOP.
++
++
++### B20-R-OWNERSHIP final preservation/security evidence
++Read-only auditPASS:1581pre-task public files retained,1129earlier evidence files byte-identical,119accepted test files unchanged; allsix tracker histories append-only. Original migrations0001–0005/schema registry/city/scenario/evaluator data/dependency files unchanged. B04fullcityhash/858nodes/1246edges/42candidate drainage links, B01probe, B12R2singleplan/quarantine and B19quarantines retained; original candidate/source/submission and draft/receipt/checkpoint hashes intact. Historical2paidrequests exactly unchanged;14guards0external/0unexpected; public-artifact/patchprivate-value scanPASS. ActualFalkorDB6.0.2/Redis8.10.2 and pinnedpackageversions recorded in audit; no dependency changes.
++
++Two audit utility bookkeeping stops retained separately (missing authorized CLI path in allowlist, then concurrentnewfrontend additions). Corrected the task allowlist/exclusion; no application/evidence/data repair. Seven concurrentfrontend files were not created/edited/executed by this task, preserved and excluded from ownership patch/inventory; hashes recorded separately. No frontend work performed here. Final task101distinctPASS100unit/1real,0unresolvedFAIL/0SKIP; full B20PARTIAL/BLOCKED, B10genuineOPEN/PARTIAL. STOPforhumanreview; proposed next B20-R-UTILITY only after separateauthorization, noB21/live/frontend.

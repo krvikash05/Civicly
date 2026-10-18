@@ -1,0 +1,86 @@
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+______ test_actual_approval_order_scope_idempotency_and_competing_updates ______
+
+db = <falkordb.falkordb.FalkorDB object at 0x118363a40>
+tmp_path = PosixPath('/private/var/folders/ng/nxnstkjs7tn9dbx9nhvtvmzw0000gn/T/pytest-of-vikashkumar/pytest-133/test_actual_approval_order_sco0')
+memory = <app.memory.service.Memory object at 0x11837e780>
+
+    def test_actual_approval_order_scope_idempotency_and_competing_updates(db,tmp_path,memory):
+>    p,r,clock,path,inv,draft,planning,auth,tokens,ops=setup(db,tmp_path,memory)
+                                                       ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+backend/tests/integration/test_operations_runtime.py:20: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+backend/tests/b13_fixtures.py:15: in setup
+    ops=Operations(planning,auth,clock=clock)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <app.services.operations.service.Operations object at 0x11819e900>
+planning = <app.services.planning.service.PlanningService object at 0x119772c00>
+auth = <app.services.operations.auth.Auth object at 0x119633c50>
+clock = <tests.b09_fixtures.Clock object at 0x119633f50>
+
+    def __init__(self,planning,auth,*,clock=utc_now):
+     self.planning,self.repo,self.auth,self.clock=planning,planning.repo,auth,clock;self.store=Storage(self.repo)
+     from app.active import is_shared_target
+>    if self.repo.graph.name!='civicly_knowledge' and not self.repo.graph.name.startswith('civicly_b13_test_') and not is_shared_target(self.repo.graph.name):raise PreconditionFailed('OPERATIONS_TARGET_NOT_AUTHORIZED')
+                                                                                                                                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E    app.graph.repository.PreconditionFailed: OPERATIONS_TARGET_NOT_AUTHORIZED
+
+backend/app/services/operations/service.py:27: PreconditionFailed
+_____________ test_actual_ack_loss_order_replay_without_duplicate ______________
+
+db = <falkordb.falkordb.FalkorDB object at 0x1197870e0>
+tmp_path = PosixPath('/private/var/folders/ng/nxnstkjs7tn9dbx9nhvtvmzw0000gn/T/pytest-of-vikashkumar/pytest-133/test_actual_ack_loss_order_rep0')
+memory = <app.memory.service.Memory object at 0x11981dee0>
+
+    def test_actual_ack_loss_order_replay_without_duplicate(db,tmp_path,memory):
+>    p,r,clock,path,inv,draft,planning,auth,tokens,ops=setup(db,tmp_path,memory)
+                                                       ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+backend/tests/integration/test_operations_runtime.py:99: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+backend/tests/b13_fixtures.py:15: in setup
+    ops=Operations(planning,auth,clock=clock)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <app.services.operations.service.Operations object at 0x10f29fbc0>
+planning = <app.services.planning.service.PlanningService object at 0x10ad28710>
+auth = <app.services.operations.auth.Auth object at 0x1197a92e0>
+clock = <tests.b09_fixtures.Clock object at 0x1192dc8f0>
+
+    def __init__(self,planning,auth,*,clock=utc_now):
+     self.planning,self.repo,self.auth,self.clock=planning,planning.repo,auth,clock;self.store=Storage(self.repo)
+     from app.active import is_shared_target
+>    if self.repo.graph.name!='civicly_knowledge' and not self.repo.graph.name.startswith('civicly_b13_test_') and not is_shared_target(self.repo.graph.name):raise PreconditionFailed('OPERATIONS_TARGET_NOT_AUTHORIZED')
+                                                                                                                                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E    app.graph.repository.PreconditionFailed: OPERATIONS_TARGET_NOT_AUTHORIZED
+
+backend/app/services/operations/service.py:27: PreconditionFailed
+=============================== warnings summary ===============================
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyPacked has no __module__ attribute
+
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyObject has no __module__ attribute
+
+backend/.venv/lib/python3.12/site-packages/graphrag_sdk/core/models.py:19
+  /Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/graphrag_sdk/core/models.py:19: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.14/migration/
+    class DataModel(BaseModel):
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+============================= slowest 5 durations ==============================
+6.42s call     tests/integration/test_operations_runtime.py::test_actual_ack_loss_order_replay_without_duplicate
+6.16s call     tests/integration/test_operations_runtime.py::test_actual_approval_order_scope_idempotency_and_competing_updates
+2.71s setup    tests/integration/test_operations_runtime.py::test_actual_approval_order_scope_idempotency_and_competing_updates
+2.37s setup    tests/integration/test_operations_runtime.py::test_actual_ack_loss_order_replay_without_duplicate
+
+(1 durations < 0.005s hidden.  Use -vv to show these durations.)
+=========================== short test summary info ============================
+FAILED backend/tests/integration/test_operations_runtime.py::test_actual_approval_order_scope_idempotency_and_competing_updates
+FAILED backend/tests/integration/test_operations_runtime.py::test_actual_ack_loss_order_replay_without_duplicate
+2 failed, 3 warnings in 19.05s
+sys:1: DeprecationWarning: builtin type swigvarlink has no __module__ attribute

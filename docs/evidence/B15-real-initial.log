@@ -1,0 +1,106 @@
+EE                                                                       [100%]
+==================================== ERRORS ====================================
+_ ERROR at setup of test_committed_monitor_claim_process_death_restart_public_cursor _
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1055: in connect_check_health
+    sock = self._connect()
+           ^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1617: in _connect
+    raise err
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1601: in _connect
+    sock.connect(socket_address)
+E   PermissionError: [Errno 1] Operation not permitted
+
+During handling of the above exception, another exception occurred:
+backend/tests/integration/conftest.py:19: in db
+    with connect(settings) as client:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+backend/app/graph/connection.py:15: in connect
+    client = FalkorDB(
+backend/.venv/lib/python3.12/site-packages/falkordb/falkordb.py:132: in __init__
+    if Is_Sentinel(conn):
+       ^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/falkordb/sentinel.py:6: in Is_Sentinel
+    info = conn.info(section="server")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/commands/core.py:1692: in info
+    return self.execute_command("INFO", section, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/client.py:867: in execute_command
+    return self._execute_command(*args, **options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/client.py:873: in _execute_command
+    conn = self.connection or pool.get_connection()
+                              ^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/utils.py:258: in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:3273: in get_connection
+    connection.connect()
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1028: in connect
+    self.retry.call_with_retry(
+backend/.venv/lib/python3.12/site-packages/redis/retry.py:132: in call_with_retry
+    raise error
+backend/.venv/lib/python3.12/site-packages/redis/retry.py:120: in call_with_retry
+    return do()
+           ^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1029: in <lambda>
+    lambda: self.connect_check_health(
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1077: in connect_check_health
+    raise e
+E   redis.exceptions.ConnectionError: Error 1 connecting to 127.0.0.1:6379. Operation not permitted.
+_ ERROR at setup of test_claim_case_fencing_retries_invalid_and_uncertain_dispatch _
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1055: in connect_check_health
+    sock = self._connect()
+           ^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1617: in _connect
+    raise err
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1601: in _connect
+    sock.connect(socket_address)
+E   PermissionError: [Errno 1] Operation not permitted
+
+During handling of the above exception, another exception occurred:
+backend/tests/integration/conftest.py:19: in db
+    with connect(settings) as client:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+backend/app/graph/connection.py:15: in connect
+    client = FalkorDB(
+backend/.venv/lib/python3.12/site-packages/falkordb/falkordb.py:132: in __init__
+    if Is_Sentinel(conn):
+       ^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/falkordb/sentinel.py:6: in Is_Sentinel
+    info = conn.info(section="server")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/commands/core.py:1692: in info
+    return self.execute_command("INFO", section, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/client.py:867: in execute_command
+    return self._execute_command(*args, **options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/client.py:873: in _execute_command
+    conn = self.connection or pool.get_connection()
+                              ^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/utils.py:258: in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:3273: in get_connection
+    connection.connect()
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1028: in connect
+    self.retry.call_with_retry(
+backend/.venv/lib/python3.12/site-packages/redis/retry.py:132: in call_with_retry
+    raise error
+backend/.venv/lib/python3.12/site-packages/redis/retry.py:120: in call_with_retry
+    return do()
+           ^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1029: in <lambda>
+    lambda: self.connect_check_health(
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1077: in connect_check_health
+    raise e
+E   redis.exceptions.ConnectionError: Error 1 connecting to 127.0.0.1:6379. Operation not permitted.
+=========================== short test summary info ============================
+ERROR backend/tests/integration/test_event_delivery.py::test_committed_monitor_claim_process_death_restart_public_cursor
+ERROR backend/tests/integration/test_event_delivery.py::test_claim_case_fencing_retries_invalid_and_uncertain_dispatch
+2 errors in 1.32s

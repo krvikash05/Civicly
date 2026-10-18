@@ -1,0 +1,19 @@
+................F...                                                     [100%]
+=================================== FAILURES ===================================
+_________________ test_framing_escape_and_total_event_mapping __________________
+
+    def test_framing_escape_and_total_event_mapping():
+     text=frame('case_updated',{'safe':'line\nline'},17)
+     assert text.count('\ndata: ')==1 and '\nid: ' not in text
+     assert text.startswith('id: 17\nevent: case_updated\n') and text.endswith('\n\n')
+>    assert set(EVENT_NAMES)==set(TYPES)
+E    AssertionError: assert {'AGENT_DECIS..._FAILED', ...} == {'AGENT_DECIS..._FAILED', ...}
+E      
+E      Extra items in the left set:
+E      'INSPECTION_REQUESTED'
+E      Use -v to get more diff
+
+backend/tests/unit/test_frontend_views.py:28: AssertionError
+=========================== short test summary info ============================
+FAILED backend/tests/unit/test_frontend_views.py::test_framing_escape_and_total_event_mapping
+1 failed, 19 passed in 0.81s

@@ -21,3 +21,6 @@ Use FalkorDB Browser at local port 3000 as developer inspector; future UI uses o
 
 ## Demo narrative fit
 One click should follow complaint → graph evidence → hypothesis → inspection → plan approval → work-order progress → outcome and recurrence memory, without tab-hunting. Light-first professional aesthetic and optional dark mode; design detail follows backend acceptance, not needed to implement runtime.
+
+## B17 exercised API foundation
+B17 exposes dashboard/map/asset/hypothesis/graph/trace and durable SSE over the accepted lifecycle. Actual journey, source bindings and selected paths: docs/evidence/B17-journey.json; route matrix: B17-COVERAGE.md. Use backend/API.md current B17 for closed filters, metric definitions, unavailable states, provenance and cursor/refetch rules. SSE browser transport is authenticated fetch; save data AND cursor-control event IDs, reauthenticate on expiry, refetch GET state after reconnect. No fake thinking or client database access. Plan draft receipt, audited plan lifecycle, actual ApprovalDTO.status, work completion and independent outcome verification are distinct. Condition can be null; no geometry is invented. Frontend is still unauthorized until B-END human approval.

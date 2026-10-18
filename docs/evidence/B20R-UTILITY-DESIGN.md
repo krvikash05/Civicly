@@ -1,0 +1,18 @@
+# B20-R-UTILITY — before implementation
+
+Only B20-R-UTILITY is authorized. R01–R18 remain binding; directly exercises R04/R05/R08/R09/R10/R11/R14/R15/R16/R17/R18 through evidence-grounded coordination, approval, independent verification, durable graph provenance and operator access; R06/R07/R13 agent/MCP/Saver behavior remains unchanged. No claim of full product acceptance.
+
+Smallest closed extension: UTILITY_ISOLATION and UTILITY_LEAK_REPAIR for ROAD_DAMAGE / UTILITY_LEAK / WaterPipe / DEPT-WATER. Keep reviewed causal and safety gates; add future ISOLATION_PROOF and UTILITY_VERIFICATION prerequisites bound to exact predecessor tasks. Conditions remain immutable in approved drafts. Dynamic fulfillment is checked from existing persisted completion/inspection/verification companions and validated evidence, never just DAG/status. Existing source-bound mutation commands, exact approvals, assignment and fenced storage are reused. Road SUBGRADE_REPAIR remains evidence-qualified separately; when tied to a utility intervention its verification dependency must be explicit. Utility verification is a component outcome, never case closure.
+
+Synthetic D022 guidance is new, honestly authored/self-reviewed, canonical PROPOSED, ingested by existing GraphRAG. New qualitative field codes assert only explicit synthetic observations, no invented physical measurements. Earlier policies, migration bytes and source records remain unchanged. Utility evaluation may run while a dependent road task remains pending, avoiding a monitoring/dependency deadlock.
+
+Expected touched paths: planning models/policy; operations service/execution plus narrow utility policy helper; resolution_planning, operations and generated API schemas; existing static schema validators; new D022 document/manifest; new utility units and shared S04 real integration; backend utility operator guide; six append-only trackers; B20R-UTILITY evidence/inventory/patch. No new routes, CLI commands, storage subsystem, migrations, provider or agent behavior.
+
+Risks: immutable hash compatibility; a completed task mistaken for isolation or resolution; future gates bypassed by fabricated MET; stale report/source/owner; road prerequisite deadlock; uncertain committed-write redispatch. Preserve existing failures and quarantines. Fail closed on missing/mismatched/changed persisted proofs.
+
+Exact planned verification (root; existing backend virtual environment):
+- CIVICLY_TEST_REQUEST_LOG=/tmp/B20R-UTILITY-units-provider.jsonl backend/.venv/bin/python -m pytest backend/tests/unit/test_utility_intervention.py -q
+- FALKORDB_SOCKET_TIMEOUT_SECONDS=10 CIVICLY_TEST_REQUEST_LOG=/tmp/B20R-UTILITY-real-provider.jsonl backend/.venv/bin/python -m pytest backend/tests/integration/test_utility_intervention_runtime.py -q
+- CIVICLY_TEST_NO_LIVE=1 CIVICLY_REQUEST_AUDIT_FILE=/tmp/B20R-UTILITY-spec-provider.jsonl PYTHONPATH=backend/test_guards:backend make test-spec
+
+Real integration: reuse one shared B19 setup with S04 PRIMARY and NEGATIVE targets; actual release and accepted ownership acquisition, explicit additional safety/road survey, sourced draft/exact approval, rejected premature repair/road orders, independently reviewed isolation completion, repair completion and independent utility follow-up, justified road gate, exact replay and committed-readback uncertainty with one durable effect. Exercise API and CLI service paths. No changed MCP/Saver/agent behavior, no scripted model or live requests needed. Human checks returned IDs/citations/departments, retained records, separate completion/component/case statuses and blocked uncertain replay. Do not rerun unrelated historical suites or lifecycle tests.

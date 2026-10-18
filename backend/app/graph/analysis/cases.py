@@ -82,5 +82,5 @@ def retrieve(r,q):
         -timestamp(row.factors['started_at']).timestamp(),row.id))
     if not rows:gaps.append('No historical candidates within time/evidence/budget filters; no history manufactured')
     gaps+=['Ranking is lexicographic over declared factors; similarity is not causal or resolution proof',
-           'Case memory/GraphRAG/recurrence classification are not implemented']
+           'Bounded case paths are historical context; recurrence classification and operational verification require their controlled domain services']
     return rows,gaps

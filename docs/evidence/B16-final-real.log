@@ -1,0 +1,31 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+____________ test_http_workflow_rbac_idempotency_worker_and_network ____________
+backend/tests/integration/test_api_runtime.py:73: in test_http_workflow_rbac_idempotency_worker_and_network
+    claim=asyncio.run(Worker(delivery,runtime,'B16-worker').once(discover=False));assert claim and delivery.store.get('delivery',pending[0]['id'])['status']=='DONE'
+                                                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AssertionError: assert ({'action': 'WAKE', 'case_id': 'INV-B09-1016f842ea7592ac271c2535ac0ddb39', 'case_key': 'INV-B09-1016f842ea7592ac271c2535ac0ddb39', 'ids': ['RESUME-B15-69418bffe15a2fb10713ae6f50d7a0cf'], ...} and 'RECOVERY_REQUIRED' == 'DONE'
+E     
+E     - DONE
+E     + RECOVERY_REQUIRED)
+------------------------------ Captured log call -------------------------------
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'text' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'name' is already indexed
+=============================== warnings summary ===============================
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyPacked has no __module__ attribute
+
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyObject has no __module__ attribute
+
+backend/.venv/lib/python3.12/site-packages/graphrag_sdk/core/models.py:19
+  /Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/graphrag_sdk/core/models.py:19: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.14/migration/
+    class DataModel(BaseModel):
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED backend/tests/integration/test_api_runtime.py::test_http_workflow_rbac_idempotency_worker_and_network
+1 failed, 3 warnings in 17.04s

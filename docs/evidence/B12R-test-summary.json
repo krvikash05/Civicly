@@ -1,0 +1,59 @@
+{
+  "final_status": "PASS_HUMAN_REVIEW_PENDING",
+  "distinct_unit_pass": 52,
+  "distinct_real_integration_pass": 9,
+  "distinct_total_pass": 61,
+  "final_unresolved_fail": 0,
+  "skipped": 0,
+  "batches": [
+    {
+      "name": "unit",
+      "passed": 29,
+      "failed": 0,
+      "seconds": 0.86
+    },
+    {
+      "name": "real",
+      "passed": 6,
+      "failed": 3,
+      "seconds": 68.73,
+      "historical_failures": "Water/waste source metadata omitted by reviewed-only B11 retrieval; road fixture missing explicit topology"
+    },
+    {
+      "name": "affected",
+      "passed": 34,
+      "failed": 0,
+      "seconds": 0.82
+    },
+    {
+      "name": "remediation",
+      "passed": 5,
+      "failed": 1,
+      "seconds": 49.0,
+      "historical_failures": "Road fixture topology; correction then only that case rerun"
+    },
+    {
+      "name": "recovery",
+      "passed": 3,
+      "failed": 0,
+      "seconds": 0.81
+    },
+    {
+      "name": "road",
+      "passed": 1,
+      "failed": 0,
+      "seconds": 7.11
+    }
+  ],
+  "overlap": "29 unit +34 unit -14 overlapping new contract/feedback cases +3 new recovery =52.9 initial distinct real cases;6 corrected cases overlap, road final overlaps. Never sum batch totals as distinct tests.",
+  "spec_validators": "both PASS once via make test-spec after final source/schema edits",
+  "provider": "0 external Gemini/countTokens across all ordinary pytest and inherited children; no unexpected attempts",
+  "model": "Scripted deterministic selections; real SDK/FalkorDB/MCP/LangGraph/Saver, no genuine autonomous model claim",
+  "not_run": [
+    "full770/313/B12 suites",
+    "paid live provider/smoke",
+    "container restart/recreation",
+    "canonical new-source import",
+    "B13 approvals/dispatch/execution/monitoring"
+  ]
+}

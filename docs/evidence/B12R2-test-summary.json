@@ -1,0 +1,41 @@
+{
+  "status": "TECHNICALLY_PASS_HUMAN_REVIEW_PENDING",
+  "distinct_unit_pass": 16,
+  "distinct_real_integration_pass": 2,
+  "distinct_total_pass": 18,
+  "final_unresolved_fail": 0,
+  "skipped": 0,
+  "batches": [
+    {
+      "name": "unit",
+      "passed": 16,
+      "failed": 0,
+      "seconds": 0.98
+    },
+    {
+      "name": "real",
+      "passed": 1,
+      "failed": 1,
+      "seconds": 20.21,
+      "historical_failure": "Test regex end anchor rejected LangGraph task note despite correct recovery exception; application unchanged"
+    },
+    {
+      "name": "mismatch",
+      "passed": 1,
+      "failed": 0,
+      "seconds": 12.21,
+      "scope": "Only failed assertion case, new isolated graph; no original wake retry/quarantine clearance"
+    }
+  ],
+  "spec_validators": "both PASS once after final source changes",
+  "provider": "0external Gemini/countTokens; ordinary pytest/children interlock, no unexpected attempts",
+  "models": "Scripted deterministic model; actual FalkorDB/B11/MCP/LangGraph/Saver. Unit faults clearly distinct.",
+  "not_run": [
+    "all B12/B12-R",
+    "remedial scenarios",
+    "full regressions",
+    "live/provider/smoke",
+    "container lifecycle",
+    "operator wake reconciliation/clearance"
+  ]
+}

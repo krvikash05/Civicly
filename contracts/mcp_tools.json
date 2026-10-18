@@ -2193,7 +2193,7 @@
       "requires_mcp_runtime_call": true,
       "side_effect": false,
       "result_semantics": "On non-SUCCESS status, return required envelope with null ID(s)/empty lists as applicable; include error; no claimed state change.",
-      "b07_runtime": "REGISTERED_READ_UNAVAILABLE_UNTIL_DESIGNATED_MILESTONE"
+      "b07_runtime": "IMPLEMENTED_B11_READ_MEMORY; absent source/capability is explicitly unavailable"
     },
     {
       "name": "get_organizational_procedures",
@@ -2284,6 +2284,115 @@
                 "rule_summary": {
                   "type": "string",
                   "minLength": 1
+                },
+                "citation": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "source_document_id": {
+                      "maxLength": 40,
+                      "minLength": 1,
+                      "title": "Source Document Id",
+                      "type": "string"
+                    },
+                    "source_version": {
+                      "minimum": 1,
+                      "title": "Source Version",
+                      "type": "integer"
+                    },
+                    "canonical_document_id": {
+                      "maxLength": 60,
+                      "minLength": 1,
+                      "title": "Canonical Document Id",
+                      "type": "string"
+                    },
+                    "owner_department_id": {
+                      "title": "Owner Department Id",
+                      "type": "string"
+                    },
+                    "source_uri": {
+                      "maxLength": 512,
+                      "title": "Source Uri",
+                      "type": "string"
+                    },
+                    "content_checksum": {
+                      "pattern": "^[0-9a-f]{64}$",
+                      "title": "Content Checksum",
+                      "type": "string"
+                    },
+                    "quote_excerpt": {
+                      "maxLength": 800,
+                      "minLength": 1,
+                      "title": "Quote Excerpt",
+                      "type": "string"
+                    },
+                    "passage_location": {
+                      "pattern": "^chunk:[0-9]+:[a-f0-9-]{36}$",
+                      "title": "Passage Location",
+                      "type": "string"
+                    },
+                    "chunk_sha256": {
+                      "pattern": "^[0-9a-f]{64}$",
+                      "title": "Chunk Sha256",
+                      "type": "string"
+                    },
+                    "confidence_label": {
+                      "enum": [
+                        "SOURCE_REVIEWED_SYNTHETIC",
+                        "PROPOSED",
+                        "DISPUTED"
+                      ],
+                      "title": "Confidence Label",
+                      "type": "string"
+                    },
+                    "assertion_status": {
+                      "const": "PROPOSED",
+                      "default": "PROPOSED",
+                      "title": "Assertion Status",
+                      "type": "string"
+                    },
+                    "retrieved_at": {
+                      "title": "Retrieved At",
+                      "type": "string"
+                    },
+                    "effective_from": {
+                      "title": "Effective From",
+                      "type": "string"
+                    },
+                    "derived_from": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "default": null,
+                      "title": "Derived From"
+                    },
+                    "trusted_as_instructions": {
+                      "const": false,
+                      "default": false,
+                      "title": "Trusted As Instructions",
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "source_document_id",
+                    "source_version",
+                    "canonical_document_id",
+                    "owner_department_id",
+                    "source_uri",
+                    "content_checksum",
+                    "quote_excerpt",
+                    "passage_location",
+                    "chunk_sha256",
+                    "confidence_label",
+                    "retrieved_at",
+                    "effective_from"
+                  ],
+                  "title": "Citation",
+                  "type": "object"
                 }
               }
             }
@@ -2606,7 +2715,7 @@
       "requires_mcp_runtime_call": true,
       "side_effect": false,
       "result_semantics": "On non-SUCCESS status, return required envelope with null ID(s)/empty lists as applicable; include error; no claimed state change.",
-      "b07_runtime": "REGISTERED_READ_UNAVAILABLE_UNTIL_DESIGNATED_MILESTONE"
+      "b07_runtime": "IMPLEMENTED_B11_READ_MEMORY; absent source/capability is explicitly unavailable"
     },
     {
       "name": "record_hypothesis_assessment",
@@ -6404,7 +6513,130 @@
             "additionalProperties": false
           },
           "document_excerpt": {
-            "type": "object"
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "citations": {
+                "type": "array",
+                "maxItems": 5,
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "source_document_id": {
+                      "maxLength": 40,
+                      "minLength": 1,
+                      "title": "Source Document Id",
+                      "type": "string"
+                    },
+                    "source_version": {
+                      "minimum": 1,
+                      "title": "Source Version",
+                      "type": "integer"
+                    },
+                    "canonical_document_id": {
+                      "maxLength": 60,
+                      "minLength": 1,
+                      "title": "Canonical Document Id",
+                      "type": "string"
+                    },
+                    "owner_department_id": {
+                      "title": "Owner Department Id",
+                      "type": "string"
+                    },
+                    "source_uri": {
+                      "maxLength": 512,
+                      "title": "Source Uri",
+                      "type": "string"
+                    },
+                    "content_checksum": {
+                      "pattern": "^[0-9a-f]{64}$",
+                      "title": "Content Checksum",
+                      "type": "string"
+                    },
+                    "quote_excerpt": {
+                      "maxLength": 800,
+                      "minLength": 1,
+                      "title": "Quote Excerpt",
+                      "type": "string"
+                    },
+                    "passage_location": {
+                      "pattern": "^chunk:[0-9]+:[a-f0-9-]{36}$",
+                      "title": "Passage Location",
+                      "type": "string"
+                    },
+                    "chunk_sha256": {
+                      "pattern": "^[0-9a-f]{64}$",
+                      "title": "Chunk Sha256",
+                      "type": "string"
+                    },
+                    "confidence_label": {
+                      "enum": [
+                        "SOURCE_REVIEWED_SYNTHETIC",
+                        "PROPOSED",
+                        "DISPUTED"
+                      ],
+                      "title": "Confidence Label",
+                      "type": "string"
+                    },
+                    "assertion_status": {
+                      "const": "PROPOSED",
+                      "default": "PROPOSED",
+                      "title": "Assertion Status",
+                      "type": "string"
+                    },
+                    "retrieved_at": {
+                      "title": "Retrieved At",
+                      "type": "string"
+                    },
+                    "effective_from": {
+                      "title": "Effective From",
+                      "type": "string"
+                    },
+                    "derived_from": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "default": null,
+                      "title": "Derived From"
+                    },
+                    "trusted_as_instructions": {
+                      "const": false,
+                      "default": false,
+                      "title": "Trusted As Instructions",
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "source_document_id",
+                    "source_version",
+                    "canonical_document_id",
+                    "owner_department_id",
+                    "source_uri",
+                    "content_checksum",
+                    "quote_excerpt",
+                    "passage_location",
+                    "chunk_sha256",
+                    "confidence_label",
+                    "retrieved_at",
+                    "effective_from"
+                  ],
+                  "title": "Citation",
+                  "type": "object"
+                }
+              },
+              "status": {
+                "enum": [
+                  "SUCCESS",
+                  "PARTIAL",
+                  "UNAVAILABLE"
+                ]
+              }
+            }
           },
           "context": {
             "additionalProperties": false,
@@ -6692,7 +6924,7 @@
       "result_semantics": "Never infer success from missing source; unavailable returns status UNAVAILABLE and empty data.",
       "side_effect": false,
       "requires_mcp_runtime_call": true,
-      "b07_runtime": "REGISTERED_READ_UNAVAILABLE_UNTIL_DESIGNATED_MILESTONE"
+      "b07_runtime": "IMPLEMENTED_B11_READ_MEMORY; absent source/capability is explicitly unavailable"
     },
     {
       "name": "get_monitoring_status",

@@ -1,0 +1,43 @@
+{
+  "id": "0005",
+  "version": 5,
+  "requires_0001_sha256": "94ab9fae6079fe7e87b41afd80701409db6bb51d529c2565dbd340896a5c923b",
+  "purpose": "B13 audited lifecycle/request/order companions, no event worker or execution",
+  "indexes": [
+    {
+      "entity": "NODE",
+      "label": "CivicOperationState",
+      "properties": [
+        "id"
+      ]
+    },
+    {
+      "entity": "NODE",
+      "label": "CivicOperationState",
+      "properties": [
+        "kind"
+      ]
+    }
+  ],
+  "constraints": [
+    {
+      "entity": "NODE",
+      "label": "CivicOperationState",
+      "type": "UNIQUE",
+      "properties": [
+        "id"
+      ]
+    },
+    {
+      "entity": "NODE",
+      "label": "CivicOperationState",
+      "type": "MANDATORY",
+      "properties": [
+        "id",
+        "kind",
+        "payload_json",
+        "payload_sha256"
+      ]
+    }
+  ]
+}

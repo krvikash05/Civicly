@@ -1,0 +1,136 @@
+E
+==================================== ERRORS ====================================
+_____ ERROR at setup of test_real_postcommit_release_failure_no_redispatch _____
+
+self = <redis._parsers.socket.SocketBuffer object at 0x113bea330>, length = None
+timeout = <object object at 0x1043f69c0>, raise_on_timeout = True
+
+    def _read_from_socket(
+        self,
+        length: Optional[int] = None,
+        timeout: Union[float, object] = SENTINEL,
+        raise_on_timeout: Optional[bool] = True,
+    ) -> bool:
+        sock = self._sock
+        socket_read_size = self.socket_read_size
+        marker = 0
+        custom_timeout = timeout is not SENTINEL
+    
+        buf = self._buffer
+        current_pos = buf.tell()
+        buf.seek(0, SEEK_END)
+        if custom_timeout:
+            sock.settimeout(timeout)
+        try:
+            while True:
+>               data = sock.recv(socket_read_size)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               TimeoutError: timed out
+
+backend/.venv/lib/python3.12/site-packages/redis/_parsers/socket.py:64: TimeoutError
+
+During handling of the above exception, another exception occurred:
+
+tmp_path_factory = TempPathFactory(_given_basetemp=None, _trace=<pluggy._tracing.TagTracerSub object at 0x1105d09b0>, _basetemp=None, _retention_count=3, _retention_policy='all')
+
+    @pytest.fixture(scope='module')
+    def shared(tmp_path_factory):
+     settings=Settings(_env_file='.env');parent=Path('.runtime/b19-review').resolve();parent.mkdir(mode=0o700,parents=True,exist_ok=True);directory=parent/uuid4().hex;directory.mkdir(mode=0o700)
+     with connect(settings) as db:
+>     gen=memory_fixture.__wrapped__(db,settings);memory=next(gen)
+                                                         ^^^^^^^^^
+
+backend/tests/integration/test_demo_runtime.py:25: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+backend/tests/integration/test_memory_graphrag.py:20: in memory
+    MigrationRunner(db,name).apply();r=GraphRepository(db,name)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/app/graph/migration.py:170: in apply
+    self._verify_history()  # Must happen before any mutation, even bootstrap.
+    ^^^^^^^^^^^^^^^^^^^^^^
+backend/app/graph/migration.py:108: in _verify_history
+    history = self._history()
+              ^^^^^^^^^^^^^^^
+backend/app/graph/migration.py:98: in _history
+    if self.graph.name not in self.client.list_graphs():
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/falkordb/falkordb.py:212: in list_graphs
+    return self.connection.execute_command(LIST_CMD)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/client.py:867: in execute_command
+    return self._execute_command(*args, **options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/client.py:889: in _execute_command
+    result = conn.retry.call_with_retry(
+backend/.venv/lib/python3.12/site-packages/redis/retry.py:132: in call_with_retry
+    raise error
+backend/.venv/lib/python3.12/site-packages/redis/retry.py:120: in call_with_retry
+    return do()
+           ^^^^
+backend/.venv/lib/python3.12/site-packages/redis/client.py:890: in <lambda>
+    lambda: self._send_command_parse_response(
+backend/.venv/lib/python3.12/site-packages/redis/client.py:819: in _send_command_parse_response
+    return self.parse_response(conn, command_name, **options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/client.py:935: in parse_response
+    response = connection.read_response()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1413: in read_response
+    response = self._parser.read_response(
+backend/.venv/lib/python3.12/site-packages/redis/_parsers/resp2.py:18: in read_response
+    result = self._read_response(
+backend/.venv/lib/python3.12/site-packages/redis/_parsers/resp2.py:32: in _read_response
+    raw = self._buffer.readline(timeout=timeout)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/_parsers/socket.py:117: in readline
+    self._read_from_socket(timeout=timeout)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <redis._parsers.socket.SocketBuffer object at 0x113bea330>, length = None
+timeout = <object object at 0x1043f69c0>, raise_on_timeout = True
+
+    def _read_from_socket(
+        self,
+        length: Optional[int] = None,
+        timeout: Union[float, object] = SENTINEL,
+        raise_on_timeout: Optional[bool] = True,
+    ) -> bool:
+        sock = self._sock
+        socket_read_size = self.socket_read_size
+        marker = 0
+        custom_timeout = timeout is not SENTINEL
+    
+        buf = self._buffer
+        current_pos = buf.tell()
+        buf.seek(0, SEEK_END)
+        if custom_timeout:
+            sock.settimeout(timeout)
+        try:
+            while True:
+                data = sock.recv(socket_read_size)
+                # an empty string indicates the server shutdown the socket
+                if isinstance(data, bytes) and len(data) == 0:
+                    raise ConnectionError(SERVER_CLOSED_CONNECTION_ERROR)
+                buf.write(data)
+                data_length = len(data)
+                marker += data_length
+    
+                if length is not None and length > marker:
+                    continue
+                return True
+        except socket.timeout:
+            if raise_on_timeout:
+>               raise TimeoutError("Timeout reading from socket")
+E               redis.exceptions.TimeoutError: Timeout reading from socket
+
+backend/.venv/lib/python3.12/site-packages/redis/_parsers/socket.py:77: TimeoutError
+=============================== warnings summary ===============================
+backend/.venv/lib/python3.12/site-packages/graphrag_sdk/core/models.py:19
+  /Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/graphrag_sdk/core/models.py:19: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.14/migration/
+    class DataModel(BaseModel):
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+ERROR backend/tests/integration/test_demo_runtime.py::test_real_postcommit_release_failure_no_redispatch
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 warning, 1 error in 4.40s

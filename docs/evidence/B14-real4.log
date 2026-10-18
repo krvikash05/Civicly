@@ -1,0 +1,42 @@
+.....F
+=================================== FAILURES ===================================
+________ test_actual_execution_denials_replay_and_uncertain_completion _________
+backend/tests/integration/test_execution_runtime.py:134: in test_actual_execution_denials_replay_and_uncertain_completion
+    asyncio.run(run())
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/base_events.py:684: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+backend/tests/integration/test_execution_runtime.py:115: in run
+    r.update_node(approval.id,{**props,'status':'REVOKED'},expected_hash=approval.content_hash)
+backend/app/graph/repository.py:238: in update_node
+    raise PreconditionFailed("Stable identity/origin cannot be changed")
+E   app.graph.repository.PreconditionFailed: Stable identity/origin cannot be changed
+------------------------------ Captured log call -------------------------------
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'text' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'name' is already indexed
+=============================== warnings summary ===============================
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyPacked has no __module__ attribute
+
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyObject has no __module__ attribute
+
+backend/.venv/lib/python3.12/site-packages/graphrag_sdk/core/models.py:19
+  /Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/graphrag_sdk/core/models.py:19: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.14/migration/
+    class DataModel(BaseModel):
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED backend/tests/integration/test_execution_runtime.py::test_actual_execution_denials_replay_and_uncertain_completion
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 5 passed, 3 warnings in 60.22s (0:01:00)
+sys:1: DeprecationWarning: builtin type swigvarlink has no __module__ attribute

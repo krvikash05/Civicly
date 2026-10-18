@@ -1,0 +1,339 @@
+--- a/backend/UTILITY.md
++++ b/backend/UTILITY.md
+@@ -15,3 +15,7 @@
+ Use existing `plan draft/submit`, `approval decide`, `work create/status/progress/inspect/evaluate/get` and `responsibility submit/review/get` commands with private payload/session files. API bodies use the existing typed routes. D022 is ingested via the existing authorized B11 Memory.ingest mechanism, its manifest checksum is checked, and canonical KnowledgeProcedure remains PROPOSED. Automated author self-review of invented guidance is disclosed; the citation supplies no execution authority.
+ 
+ Source-bound idempotency, exact hashes, fences, durable events, journal and companion integrity, and sanitized UNKNOWN recovery are unchanged. Never redispatch an uncertain key, substitute a new request, delete a record or clear quarantine to finish the workflow. Read the original transport intent/domain operation/journal and retained evidence; obtain supported human reconciliation before any retry. A safe status read does not clear that intent. See `docs/evidence/B20R-UTILITY-WALKTHROUGH.md` for focused reproduction and actual IDs.
++
++
++## B20-R-UTILITY-R single-predecessor limit
++A road task supports at most one relevant utility-repair task across all its targets. The existing bounded verified-only topology traversal discovers all such tasks; more than one fails closed with `UTILITY_MULTIPLE_REPAIR_PREDECESSORS`. A sole linked repair must be the exact UTILITY_VERIFICATION condition predecessor and depends_on binding, with topology covering every target. No linked repair retains ordinary independently qualified road behavior. Multiple linked repairs are an unsupported scope under the current one-predecessor contract: do not select one, omit a relevant repair or treat approvals as a workaround. A separately reviewed design/scope is required; no general multi-predecessor schema is introduced. Planning and existing Operations.validate recheck this policy using current topology before new authority. Historical drafts, approvals, hashes and receipts are never rewritten.
+--- a/backend/app/services/planning/utility.py
++++ b/backend/app/services/planning/utility.py
+@@ -15,11 +15,12 @@
+  conditions={c.kind:c for c in task.remediation.conditions}
+  dynamic=set(conditions)&DYNAMIC
+  tasks={t.id:t for t in draft.tasks}
+- expected=set()
++ expected=set();linked=[]
+  if task.action_type=='UTILITY_LEAK_REPAIR':expected={'ISOLATION_PROOF'}
+  if task.action_type=='SUBGRADE_REPAIR':
+   # Explicit reviewed topology determines whether this road shares the pipe.
+   linked=[t for t in draft.tasks if t.action_type=='UTILITY_LEAK_REPAIR' and any(set(task.target_ids)&underlies(reader,pipe) for pipe in t.target_ids)]
++  if len(linked)>1:reject('UTILITY_MULTIPLE_REPAIR_PREDECESSORS')
+   if linked:expected={'UTILITY_VERIFICATION'}
+  if dynamic!=expected:reject('UTILITY_DEPENDENCY_REQUIRED')
+  for kind in dynamic:
+@@ -27,6 +28,7 @@
+   action='UTILITY_ISOLATION' if kind=='ISOLATION_PROOF' else 'UTILITY_LEAK_REPAIR'
+   if c.status!='UNMET' or c.evidence_ids or not dep or dep.id not in task.depends_on or dep.action_type!=action:reject('UTILITY_DEPENDENCY_BINDING')
+   if kind=='ISOLATION_PROOF' and set(dep.target_ids)!=set(task.target_ids):reject('UTILITY_DEPENDENCY_TARGET')
++  if kind=='UTILITY_VERIFICATION' and dep.id!=linked[0].id:reject('UTILITY_DEPENDENCY_BINDING')
+   if kind=='UTILITY_VERIFICATION' and not all(any(target in underlies(reader,pipe) for pipe in dep.target_ids) for target in task.target_ids):reject('UTILITY_DEPENDENCY_TARGET')
+  if task.action_type in {'UTILITY_ISOLATION','UTILITY_LEAK_REPAIR'} or dynamic:
+   if any(conditions[k].status!='MET' for k in ['CAUSAL_INSPECTION','SAFETY_REVIEW']):reject('UTILITY_CURRENT_EVIDENCE_REQUIRED')
+--- a/backend/tests/integration/test_utility_intervention_runtime.py
++++ b/backend/tests/integration/test_utility_intervention_runtime.py
+@@ -97,6 +97,26 @@
+    alternative=ev.execute({'operation':'propose','request_id':'B20RU-alternative','investigation_id':case['investigation_id'],'incident_ids':[case['incident_id']],'asset_ids':['ROAD-100'],'cause_code':'SUBGRADE_FAILURE','statement':'Alternative extent of road damage remains uncertain','mechanism':'Possible independently unsupported extent; do not authorize extra work','confirming_codes':POLICIES['ROAD_DAMAGE']['SUBGRADE_FAILURE']['confirming'],'falsifying_codes':POLICIES['ROAD_DAMAGE']['SUBGRADE_FAILURE']['falsifying']},analyst).entity_id
+    alt=ev.execute({'operation':'assess','request_id':'B20RU-alternative-assessment','hypothesis_id':alternative,'expected_hash':r.get_node(alternative).content_hash,'evidence_ids':[],'as_of':clock()},analyst).assessment
+    value['basis'].append({'hypothesis_id':alt.hypothesis_id,'assessment_id':alt.id,'reason':'Retain assessed scope uncertainty without asserting new facts','addressed':False})
++   # Explicit new synthetic pipe survey in this fresh isolated graph only.
++   # B19 baseline/source records and all previously retained graphs stay intact.
++   original_pipe=r.get_node('PIPE-100','WaterPipe')
++   r.create_node('WaterPipe',{**original_pipe.properties,'id':'PIPE-B20R-UTILITY-R-2'})
++   source_id='EV-B20R-UTILITY-R-TOPOLOGY'
++   r.create_node('Evidence',{'id':source_id,'schema_version':3,'municipality_id':'demo-city','created_at':clock(),'updated_at':clock(),'evidence_type':'SYNTHETIC_TOPOLOGY_SURVEY','summary':'Explicit authorized synthetic survey: second test pipe underlies ROAD-100; no leak or intervention is inferred','reliability':'VERIFIED','recorded_at':clock(),'observed_at':clock(),'source_kind':'SYNTHETIC','source_record_id':'B20R-UTILITY-R:second-pipe-survey','basis':'OBSERVED'})
++   edge_id='REL-B20R-UTILITY-R-UNDERLIES'
++   r.create_relationship('UNDERLIES','PIPE-B20R-UTILITY-R-2','ROAD-100',{'id':edge_id,'municipality_id':'demo-city','created_at':clock(),'valid_from':clock(),'source_evidence_id':source_id,'association_status':'VERIFIED'})
++   ambiguous=copy.deepcopy(value);extra_isolate=copy.deepcopy(value['tasks'][0]);extra_isolate.update(id='isolate2',target_ids=['PIPE-B20R-UTILITY-R-2'])
++   extra_repair=copy.deepcopy(value['tasks'][1]);extra_repair.update(id='repair2',target_ids=['PIPE-B20R-UTILITY-R-2'],depends_on=['isolate2']);extra_repair['remediation']['conditions'][-1]['depends_on_task_id']='isolate2'
++   # Road is checked first: this schema-valid proposal omits its second relevant
++   # predecessor. Rejection precedes persistence and any later task qualification.
++   ambiguous['tasks']=[copy.deepcopy(value['tasks'][2]),*copy.deepcopy(value['tasks'][:2]),extra_isolate,extra_repair]
++   ambiguous_draft=PlanDraft.model_validate(ambiguous)
++   with pytest.raises(PlanningBlocked,match='^UTILITY_MULTIPLE_REPAIR_PREDECESSORS$'):
++    validate_remediation(ambiguous_draft.tasks[0],ambiguous_draft,Reader(r,clock()),assessments,PlanningBlocked)
++   rejected=await c.post('/api/v1/plans',json={'draft':ambiguous},headers=headers(shared,'OP-ANALYST','B20R-UTILITY-R-ambiguous-plan'))
++   assert rejected.status_code==409 and rejected.json()['error']['code']=='DEPENDENCY_BLOCKED',rejected.json()
++   assert r._read('MATCH (p:ResolutionPlan) RETURN count(p)')==[[0]] and r._read('MATCH (d:CivicPlanDraft) RETURN count(d)')==[[0]] and r._read('MATCH (w:WorkOrder) RETURN count(w)')==[[0]]
++   ambiguity_proof={'draft':ambiguous_draft.normalized(),'schema_valid':True,'blocker_code':'UTILITY_MULTIPLE_REPAIR_PREDECESSORS','http':rejected.json(),'source_evidence_id':source_id,'topology_relationship_id':edge_id,'plans_after_rejection':0,'drafts_after_rejection':0,'work_orders_after_rejection':0}
+    checked=PlanDraft.model_validate(value)
+    for task in checked.tasks:
+     validate_remediation(task,checked,Reader(r,clock()),assessments,PlanningBlocked)
+@@ -150,4 +170,4 @@
+    await runner.report('FOLLOWUP',lambda at:[runner.observation(code,at) for code in ['POST_REPAIR_PRESSURE_NORMAL','POST_REPAIR_LEAK_ABSENT']])
+    assert all(r.get_relationship(id).content_hash==hash for id,hash in frozen.items());assert all(r.get_node(id).content_hash==hash for id,hash in original_reports.items());assert s.ops.planning.store.get(pid)==saved
+    assert r._read('MATCH (w:WorkOrder) RETURN count(w)')==[[3]];assert r.get_node(pid).properties['status']=='MONITORING' and r.get_node(case['incident_id']).properties['status']!='ENDED'
+-   Path('docs/evidence/B20R-UTILITY-primary-proof.json').write_text(json.dumps({'mode':'REAL_FALKORDB_GRAPHRAG_HTTP_CLI_EXPLICIT_SYNTHETIC_OBSERVATIONS_NO_MODEL','source_graph':p.graph,'profile_reference':receipt['profile_reference'],'case':case,'released_ids':released,'additional_survey_ids':reports,'draft':saved['draft'],'plan_id':pid,'binding':b,'approval':decision.json()['data'],'premature_denials':blocked,'isolation_order':isolation_order,'isolation_report_id':isorep['entity_id'],'repair_order':repair_order,'repair_completion':repaircomp,'utility_verification':verified,'utility_followup_id':follow['entity_id'],'road_order':road_order,'road_completion':roadcompletion,'road_completion_report_id':roadreport['entity_id'],'road_status':r.get_node(road_order['id']).properties['status'],'plan_status':r.get_node(pid).properties['status'],'recovery':captured,'cli_verification':cliout['data'],'http_calls':runner.calls,'original_sources_retained':True,'provider_requests':0},indent=2)+'\n')
++   Path('docs/evidence/B20R-UTILITY-R-primary-proof.json').write_text(json.dumps({'mode':'REAL_FALKORDB_GRAPHRAG_HTTP_CLI_EXPLICIT_SYNTHETIC_OBSERVATIONS_NO_MODEL','ambiguous_plan_rejection':ambiguity_proof,'source_graph':p.graph,'profile_reference':receipt['profile_reference'],'case':case,'released_ids':released,'additional_survey_ids':reports,'draft':saved['draft'],'plan_id':pid,'binding':b,'approval':decision.json()['data'],'premature_denials':blocked,'isolation_order':isolation_order,'isolation_report_id':isorep['entity_id'],'repair_order':repair_order,'repair_completion':repaircomp,'utility_verification':verified,'utility_followup_id':follow['entity_id'],'road_order':road_order,'road_completion':roadcompletion,'road_completion_report_id':roadreport['entity_id'],'road_status':r.get_node(road_order['id']).properties['status'],'plan_status':r.get_node(pid).properties['status'],'recovery':captured,'cli_verification':cliout['data'],'http_calls':runner.calls,'original_sources_retained':True,'provider_requests':0},indent=2)+'\n')
+--- a/backend/tests/unit/test_utility_intervention.py
++++ b/backend/tests/unit/test_utility_intervention.py
+@@ -86,3 +86,47 @@
+  if damage in {'old','numeric'}:
+   with pytest.raises(PreconditionFailed):utility.evaluate(['P'],rows,T1,T2,T0,T2)
+  else:assert utility.evaluate(['P'],rows,T1,T2,T0,T2)[0]=='MONITORING'
++
++@pytest.mark.parametrize('case,expected',[
++ ('two_same_road','UTILITY_MULTIPLE_REPAIR_PREDECESSORS'),
++ ('two_road_targets','UTILITY_MULTIPLE_REPAIR_PREDECESSORS'),
++ ('fresh_second_link','UTILITY_MULTIPLE_REPAIR_PREDECESSORS'),
++ ('sole_substituted','UTILITY_DEPENDENCY_BINDING'),
++ ('sole_omitted','UTILITY_DEPENDENCY_REQUIRED'),
++ ('dependency_substituted','UTILITY_DEPENDENCY_BINDING'),
++ ('valid_single',None),('unlinked_other_repair',None),
++ ('missing_target','UTILITY_DEPENDENCY_TARGET'),
++ ('extra_dependency','UTILITY_DEPENDENCY_SCOPE'),
++ ('no_linked_repair',None),
++])
++def test_complete_road_binding(case,expected):
++ value=draft().model_dump(mode='json');isolate=deepcopy(value['tasks'][0]);isolate.update(id='isolate2',target_ids=['P2'])
++ repair=deepcopy(value['tasks'][1]);repair.update(id='repair2',target_ids=['P2'],depends_on=['isolate2']);repair['remediation']['conditions'][-1]['depends_on_task_id']='isolate2'
++ road=deepcopy(value['tasks'][0]);road.update(id='road',action_type='SUBGRADE_REPAIR',department_id='DEPT-ROAD',target_ids=['R'],depends_on=['repair']);road['remediation'].update(mode='CONDITIONAL');road['remediation']['conditions'].append({'kind':'UTILITY_VERIFICATION','status':'UNMET','depends_on_task_id':'repair'})
++ value['tasks'] += [isolate,repair,road];links={'P':{'R'},'P2':set()}
++ if case=='two_same_road':links['P2']={'R'}
++ if case=='two_road_targets':road['target_ids']=['R','R2'];links['P2']={'R2'}
++ if case=='sole_substituted':road['depends_on']=['repair2'];road['remediation']['conditions'][-1]['depends_on_task_id']='repair2'
++ if case in {'sole_omitted','no_linked_repair'}:road['depends_on']=[];road['remediation']['conditions'].pop();road['remediation']['mode']='SUPPORTED_NOW'
++ if case=='no_linked_repair':links['P']=set()
++ if case=='dependency_substituted':road['depends_on']=['repair2']
++ if case=='missing_target':road['target_ids']=['R','R2']
++ if case=='extra_dependency':road['depends_on'].append('repair2')
++ d=PlanDraft.model_validate(value) # All ten drafts are schema-valid.
++ def topology(q):
++  targets=sorted(links[q.source_id]);return NS(truncated=False,edges=[NS(id=t,kind='UNDERLIES') for t in targets],paths=[NS(node_ids=(q.source_id,t),edge_ids=(t,),directions=('OUTGOING',)) for t in targets])
++ reader=NS(topology=topology)
++ if case=='fresh_second_link':
++  validate_dependencies(d.tasks[-1],d,reader,reject)
++  links['P2']={'R'} # Same immutable draft, fresh topology before new authority.
++ if expected:
++  with pytest.raises(PreconditionFailed,match='^'+expected+'$'):validate_dependencies(d.tasks[-1],d,reader,reject)
++ else:validate_dependencies(d.tasks[-1],d,reader,reject)
++
++@pytest.mark.parametrize('duplicate',['condition','depends_on','task_id'])
++def test_road_duplicate_references_remain_schema_rejected(duplicate):
++ value=draft().model_dump(mode='json');t=value['tasks'][1]
++ if duplicate=='condition':t['remediation']['conditions'].append(deepcopy(t['remediation']['conditions'][-1]))
++ if duplicate=='depends_on':t['depends_on'].append(t['depends_on'][0])
++ if duplicate=='task_id':value['tasks'].append(deepcopy(t))
++ with pytest.raises(ValidationError):PlanDraft.model_validate(value)
+--- a/blockers.md
++++ b/blockers.md
+@@ -675,3 +675,17 @@
+ 
+ ### B20-R-UTILITY final read-only retention/security evidence
+ AuditPASS: all1642pre-task public files retained;1176earlier evidence files byte-identical;121accepted test files unchanged; allsix tracker histories append-only. Migrations0001–0005/schema registry/city/scenarios/dependencies unchanged. Original B04fullcityhash/858nodes/1246edges/42candidate drainage links and B01probe retained;12previous B20scenario checkpoints, B12R2singleplan/quarantine, B19quarantines, accepted OWNERSHIP sources/checkpoints and UNKNOWN intent retained. Utility graph retains3COMPLETEDorders, MONITORINGplan, UTILITY_VERIFIEDcomponent with case_closedfalse, one actual COMMITTEDreport and original UNKNOWNtransportintent. Historical2paidrequests unchanged/no active sessions or holds;11provider reports0external/0unexpected; publicartifact/patchprivate-value scanPASS. ActualFalkorDB6.0.2/Redis8.10.2, existing pinnedpackages recorded in audit; no dependency changes. FullB20PARTIAL/BLOCKED; STOPforhumanreview.
++
++
++## CURRENT B20-R-UTILITY-R — technically passing; human review pending (2026-10-18)
++Only the road/utility binding correction is implemented. AllR01–R18 remain binding; directly protects R04/R05/R09/R10/R11/R17/R18. planning/utility.py now rejects more than one utility-repair task linked through existing bounded verified-only UNDERLIES topology to any road-task target, with stable sanitized UTILITY_MULTIPLE_REPAIR_PREDECESSORS. With exactly one linked task, UTILITY_VERIFICATION and depends_on must identify that exact task, and all road targets must be covered. No linked repair preserves existing independently qualified road behavior. Duplicate references/unsupported shapes remain rejected. No prerequisite schema expansion, default/hash/migration/storage/approval/recovery change.
++
++Existing Operations.validate reuses this same remediation policy with current Reader/B05 topology before new order/assignment/START authority. Fresh topology cannot select one of several predecessors. Multiple relevant tasks are unsupported under the single-predecessor contract; do not omit repairs or treat approval as a workaround. Historical draft/receipt/approval bytes untouched; no graph repair/retry/quarantine clearance.
++
++Focused final53distinctPASS=52utilityunits(38accepted+14new)+1realS04PRIMARY;0unresolvedFAIL/0SKIP. Actual schema-valid two-distinct-pipe draft with sourced verified UNDERLIES→same road rejected by real planning/API before0plans/0draftcompanions/0workorders. Existing actual isolation→reviewedproof→repair→independentUTILITY_VERIFIED→justifiedroadcompletion and committed-readbackUNKNOWN/no-redispatch assertions retained/passed. Utility remains component-only; planMONITORING/caseopen. No unchangedNEGATIVE or35earliercompatibilityunits/broad/lifecycle/live rerun. No model solver/MCP/Saver changes or claim. Both final specification validatorsPASS;0externalGemini/countTokens in ordinarypytest/children. Review reproduction retained3FAIL/7PASS/41deselected before fix; one realfixtureFAIL missing mandatoryupdated_at retained/corrected in new fixture, failed graph not repaired; finalrealPASS29.47s.
++
++Allsix histories appended. New evidence docs/evidence/B20R-UTILITY-R-RESULTS.md, COMMANDS.md, FILES.md, changes.patch, primary-proof.json, review-repro.txt and retention.json; single-predecessor limit documented backend/UTILITY.md and contracts/resolution_planning.json. Earlier utility evidence/tests/assertions/data/accounting/quarantines preserved. FullB20 remainsPARTIAL/BLOCKED for remaining capacity/route/dumping/chronology corrections; B10genuineOPEN/PARTIAL. STOPforhumanreview; exact nexttask is reviewB20-R-UTILITY-R, then separately authorize further work. NoB21/frontend/otherB20/live authorization.
++
++
++### B20-R-UTILITY-R final retention evidence
++Read-only auditPASS: 1685pre-task public files retained;1212earlier evidence files byte-identical;121other accepted test files unchanged, only two authorized utility test extensions. Six histories append-only. Original migrations/schema/city858nodes1246edges42candidate drains, B01probe,12B20checkpoints, B12R2/B19quarantines, accepted ownership/utility records and UNKNOWNintents retained. Historical2paidrequests/no active sessions or holds unchanged. 7interlock reports0external/0unexpected; publicartifact/patchsecret scanPASS. ActualFalkorDB6.0.2/Redis8.10.2; no dependency changes. Final53distinctPASS52unit/1real,0unresolvedFAIL/0SKIP. STOPforreview; fullB20PARTIAL/BLOCKED/B10genuineOPEN/PARTIAL.
+--- a/contracts/resolution_planning.json
++++ b/contracts/resolution_planning.json
+@@ -776,6 +776,13 @@
+   "utility_dependencies": {
+     "ISOLATION_PROOF": "Immutable UNMET prerequisite bound to exact utility isolation predecessor; persisted independently reviewed completion required at order/assignment/start",
+     "UTILITY_VERIFICATION": "Immutable UNMET prerequisite bound to exact utility repair predecessor on reviewed UNDERLIES pipe/road topology; independently dated utility verification required at order/assignment/start",
+-    "authority": "Synthetic proposed guidance and DAG never authorize execution; current evidence, ownership, procedure, exact approval and assignee required"
++    "authority": "Synthetic proposed guidance and DAG never authorize execution; current evidence, ownership, procedure, exact approval and assignee required",
++    "single_predecessor_limit": {
++      "scope": "At most one UTILITY_LEAK_REPAIR task linked through bounded verified UNDERLIES topology to any target of one road task",
++      "blocker_code": "UTILITY_MULTIPLE_REPAIR_PREDECESSORS",
++      "exact_binding": "The sole linked repair must be both the UTILITY_VERIFICATION predecessor and exact depends_on task; each road target must be linked",
++      "revalidation": "The same policy is rerun with current topology before new authority; no historical draft/approval rewrite",
++      "unsupported": "Multiple relevant repair tasks fail closed; no selection, omission or general multi-predecessor schema"
++    }
+   }
+ }
+--- a/decision.md
++++ b/decision.md
+@@ -1617,3 +1617,20 @@
+ 
+ ### B20-R-UTILITY final read-only retention/security evidence
+ AuditPASS: all1642pre-task public files retained;1176earlier evidence files byte-identical;121accepted test files unchanged; allsix tracker histories append-only. Migrations0001–0005/schema registry/city/scenarios/dependencies unchanged. Original B04fullcityhash/858nodes/1246edges/42candidate drainage links and B01probe retained;12previous B20scenario checkpoints, B12R2singleplan/quarantine, B19quarantines, accepted OWNERSHIP sources/checkpoints and UNKNOWN intent retained. Utility graph retains3COMPLETEDorders, MONITORINGplan, UTILITY_VERIFIEDcomponent with case_closedfalse, one actual COMMITTEDreport and original UNKNOWNtransportintent. Historical2paidrequests unchanged/no active sessions or holds;11provider reports0external/0unexpected; publicartifact/patchprivate-value scanPASS. ActualFalkorDB6.0.2/Redis8.10.2, existing pinnedpackages recorded in audit; no dependency changes. FullB20PARTIAL/BLOCKED; STOPforhumanreview.
++
++
++## CURRENT B20-R-UTILITY-R — technically passing; human review pending (2026-10-18)
++Only the road/utility binding correction is implemented. AllR01–R18 remain binding; directly protects R04/R05/R09/R10/R11/R17/R18. planning/utility.py now rejects more than one utility-repair task linked through existing bounded verified-only UNDERLIES topology to any road-task target, with stable sanitized UTILITY_MULTIPLE_REPAIR_PREDECESSORS. With exactly one linked task, UTILITY_VERIFICATION and depends_on must identify that exact task, and all road targets must be covered. No linked repair preserves existing independently qualified road behavior. Duplicate references/unsupported shapes remain rejected. No prerequisite schema expansion, default/hash/migration/storage/approval/recovery change.
++
++Existing Operations.validate reuses this same remediation policy with current Reader/B05 topology before new order/assignment/START authority. Fresh topology cannot select one of several predecessors. Multiple relevant tasks are unsupported under the single-predecessor contract; do not omit repairs or treat approval as a workaround. Historical draft/receipt/approval bytes untouched; no graph repair/retry/quarantine clearance.
++
++Focused final53distinctPASS=52utilityunits(38accepted+14new)+1realS04PRIMARY;0unresolvedFAIL/0SKIP. Actual schema-valid two-distinct-pipe draft with sourced verified UNDERLIES→same road rejected by real planning/API before0plans/0draftcompanions/0workorders. Existing actual isolation→reviewedproof→repair→independentUTILITY_VERIFIED→justifiedroadcompletion and committed-readbackUNKNOWN/no-redispatch assertions retained/passed. Utility remains component-only; planMONITORING/caseopen. No unchangedNEGATIVE or35earliercompatibilityunits/broad/lifecycle/live rerun. No model solver/MCP/Saver changes or claim. Both final specification validatorsPASS;0externalGemini/countTokens in ordinarypytest/children. Review reproduction retained3FAIL/7PASS/41deselected before fix; one realfixtureFAIL missing mandatoryupdated_at retained/corrected in new fixture, failed graph not repaired; finalrealPASS29.47s.
++
++Allsix histories appended. New evidence docs/evidence/B20R-UTILITY-R-RESULTS.md, COMMANDS.md, FILES.md, changes.patch, primary-proof.json, review-repro.txt and retention.json; single-predecessor limit documented backend/UTILITY.md and contracts/resolution_planning.json. Earlier utility evidence/tests/assertions/data/accounting/quarantines preserved. FullB20 remainsPARTIAL/BLOCKED for remaining capacity/route/dumping/chronology corrections; B10genuineOPEN/PARTIAL. STOPforhumanreview; exact nexttask is reviewB20-R-UTILITY-R, then separately authorize further work. NoB21/frontend/otherB20/live authorization.
++
++### DEC-069 — fail closed on multiple road utility predecessors
++The existing condition holds one depends_on_task_id and duplicate kinds are forbidden. Selecting the first linked repair can omit required utility work. Reject multiple linked repair tasks across the union of road targets instead of expanding schemas or rewriting historical bindings. Exactly-one requires identity equality to the discovered task before target-coverage checks. Stable sanitized blocker UTILITY_MULTIPLE_REPAIR_PREDECESSORS is a domain PlanningBlocked code; the existing HTTP envelope remains sanitized409DEPENDENCY_BLOCKED, without exposing raw exceptions or topology contents. No route/error-schema expansion. Existing order/update/START source revalidation calls the corrected policy; frozen source/hash/owner/safety/independent-verification rules remain. No package/runtime versions changed.
++
++
++### B20-R-UTILITY-R final retention evidence
++Read-only auditPASS: 1685pre-task public files retained;1212earlier evidence files byte-identical;121other accepted test files unchanged, only two authorized utility test extensions. Six histories append-only. Original migrations/schema/city858nodes1246edges42candidate drains, B01probe,12B20checkpoints, B12R2/B19quarantines, accepted ownership/utility records and UNKNOWNintents retained. Historical2paidrequests/no active sessions or holds unchanged. 7interlock reports0external/0unexpected; publicartifact/patchsecret scanPASS. ActualFalkorDB6.0.2/Redis8.10.2; no dependency changes. Final53distinctPASS52unit/1real,0unresolvedFAIL/0SKIP. STOPforreview; fullB20PARTIAL/BLOCKED/B10genuineOPEN/PARTIAL.
+--- a/flow.md
++++ b/flow.md
+@@ -1068,3 +1068,20 @@
+ 
+ ### B20-R-UTILITY final read-only retention/security evidence
+ AuditPASS: all1642pre-task public files retained;1176earlier evidence files byte-identical;121accepted test files unchanged; allsix tracker histories append-only. Migrations0001–0005/schema registry/city/scenarios/dependencies unchanged. Original B04fullcityhash/858nodes/1246edges/42candidate drainage links and B01probe retained;12previous B20scenario checkpoints, B12R2singleplan/quarantine, B19quarantines, accepted OWNERSHIP sources/checkpoints and UNKNOWN intent retained. Utility graph retains3COMPLETEDorders, MONITORINGplan, UTILITY_VERIFIEDcomponent with case_closedfalse, one actual COMMITTEDreport and original UNKNOWNtransportintent. Historical2paidrequests unchanged/no active sessions or holds;11provider reports0external/0unexpected; publicartifact/patchprivate-value scanPASS. ActualFalkorDB6.0.2/Redis8.10.2, existing pinnedpackages recorded in audit; no dependency changes. FullB20PARTIAL/BLOCKED; STOPforhumanreview.
++
++
++## CURRENT B20-R-UTILITY-R — technically passing; human review pending (2026-10-18)
++Only the road/utility binding correction is implemented. AllR01–R18 remain binding; directly protects R04/R05/R09/R10/R11/R17/R18. planning/utility.py now rejects more than one utility-repair task linked through existing bounded verified-only UNDERLIES topology to any road-task target, with stable sanitized UTILITY_MULTIPLE_REPAIR_PREDECESSORS. With exactly one linked task, UTILITY_VERIFICATION and depends_on must identify that exact task, and all road targets must be covered. No linked repair preserves existing independently qualified road behavior. Duplicate references/unsupported shapes remain rejected. No prerequisite schema expansion, default/hash/migration/storage/approval/recovery change.
++
++Existing Operations.validate reuses this same remediation policy with current Reader/B05 topology before new order/assignment/START authority. Fresh topology cannot select one of several predecessors. Multiple relevant tasks are unsupported under the single-predecessor contract; do not omit repairs or treat approval as a workaround. Historical draft/receipt/approval bytes untouched; no graph repair/retry/quarantine clearance.
++
++Focused final53distinctPASS=52utilityunits(38accepted+14new)+1realS04PRIMARY;0unresolvedFAIL/0SKIP. Actual schema-valid two-distinct-pipe draft with sourced verified UNDERLIES→same road rejected by real planning/API before0plans/0draftcompanions/0workorders. Existing actual isolation→reviewedproof→repair→independentUTILITY_VERIFIED→justifiedroadcompletion and committed-readbackUNKNOWN/no-redispatch assertions retained/passed. Utility remains component-only; planMONITORING/caseopen. No unchangedNEGATIVE or35earliercompatibilityunits/broad/lifecycle/live rerun. No model solver/MCP/Saver changes or claim. Both final specification validatorsPASS;0externalGemini/countTokens in ordinarypytest/children. Review reproduction retained3FAIL/7PASS/41deselected before fix; one realfixtureFAIL missing mandatoryupdated_at retained/corrected in new fixture, failed graph not repaired; finalrealPASS29.47s.
++
++Allsix histories appended. New evidence docs/evidence/B20R-UTILITY-R-RESULTS.md, COMMANDS.md, FILES.md, changes.patch, primary-proof.json, review-repro.txt and retention.json; single-predecessor limit documented backend/UTILITY.md and contracts/resolution_planning.json. Earlier utility evidence/tests/assertions/data/accounting/quarantines preserved. FullB20 remainsPARTIAL/BLOCKED for remaining capacity/route/dumping/chronology corrections; B10genuineOPEN/PARTIAL. STOPforhumanreview; exact nexttask is reviewB20-R-UTILITY-R, then separately authorize further work. NoB21/frontend/otherB20/live authorization.
++
++### B20-R-UTILITY-R actual file/control flow
++PlanningService.create→planning/policy.validate_remediation→planning/utility.validate_dependencies→underlies→Reader.topology→bounded verified-only B05 GraphAnalysis/GRAPH.RO_QUERY. Collect linked UTILITY_LEAK_REPAIR tasks across every road target; count>1 rejects before draft commit. Count1 requires exact condition+depends_on identity, then existing all-target/scope checks. Operations.validate reaches the same policy from original immutable draft before new authority, using a fresh Reader. Existing completion/verification/recovery code is unchanged. Focused test adds explicit synthetic second-pipe survey/node/VERIFIED UNDERLIES in a fresh isolated PRIMARY graph; schema-valid ambiguous draft fails real API with no plan/order; valid original scope then runs all accepted assertions. No historical graph/checkpoint rewrite or general multi-predecessor system.
++
++
++### B20-R-UTILITY-R final retention evidence
++Read-only auditPASS: 1685pre-task public files retained;1212earlier evidence files byte-identical;121other accepted test files unchanged, only two authorized utility test extensions. Six histories append-only. Original migrations/schema/city858nodes1246edges42candidate drains, B01probe,12B20checkpoints, B12R2/B19quarantines, accepted ownership/utility records and UNKNOWNintents retained. Historical2paidrequests/no active sessions or holds unchanged. 7interlock reports0external/0unexpected; publicartifact/patchsecret scanPASS. ActualFalkorDB6.0.2/Redis8.10.2; no dependency changes. Final53distinctPASS52unit/1real,0unresolvedFAIL/0SKIP. STOPforreview; fullB20PARTIAL/BLOCKED/B10genuineOPEN/PARTIAL.
+--- a/implementation_status.md
++++ b/implementation_status.md
+@@ -636,3 +636,17 @@
+ 
+ ### B20-R-UTILITY final read-only retention/security evidence
+ AuditPASS: all1642pre-task public files retained;1176earlier evidence files byte-identical;121accepted test files unchanged; allsix tracker histories append-only. Migrations0001–0005/schema registry/city/scenarios/dependencies unchanged. Original B04fullcityhash/858nodes/1246edges/42candidate drainage links and B01probe retained;12previous B20scenario checkpoints, B12R2singleplan/quarantine, B19quarantines, accepted OWNERSHIP sources/checkpoints and UNKNOWN intent retained. Utility graph retains3COMPLETEDorders, MONITORINGplan, UTILITY_VERIFIEDcomponent with case_closedfalse, one actual COMMITTEDreport and original UNKNOWNtransportintent. Historical2paidrequests unchanged/no active sessions or holds;11provider reports0external/0unexpected; publicartifact/patchprivate-value scanPASS. ActualFalkorDB6.0.2/Redis8.10.2, existing pinnedpackages recorded in audit; no dependency changes. FullB20PARTIAL/BLOCKED; STOPforhumanreview.
++
++
++## CURRENT B20-R-UTILITY-R — technically passing; human review pending (2026-10-18)
++Only the road/utility binding correction is implemented. AllR01–R18 remain binding; directly protects R04/R05/R09/R10/R11/R17/R18. planning/utility.py now rejects more than one utility-repair task linked through existing bounded verified-only UNDERLIES topology to any road-task target, with stable sanitized UTILITY_MULTIPLE_REPAIR_PREDECESSORS. With exactly one linked task, UTILITY_VERIFICATION and depends_on must identify that exact task, and all road targets must be covered. No linked repair preserves existing independently qualified road behavior. Duplicate references/unsupported shapes remain rejected. No prerequisite schema expansion, default/hash/migration/storage/approval/recovery change.
++
++Existing Operations.validate reuses this same remediation policy with current Reader/B05 topology before new order/assignment/START authority. Fresh topology cannot select one of several predecessors. Multiple relevant tasks are unsupported under the single-predecessor contract; do not omit repairs or treat approval as a workaround. Historical draft/receipt/approval bytes untouched; no graph repair/retry/quarantine clearance.
++
++Focused final53distinctPASS=52utilityunits(38accepted+14new)+1realS04PRIMARY;0unresolvedFAIL/0SKIP. Actual schema-valid two-distinct-pipe draft with sourced verified UNDERLIES→same road rejected by real planning/API before0plans/0draftcompanions/0workorders. Existing actual isolation→reviewedproof→repair→independentUTILITY_VERIFIED→justifiedroadcompletion and committed-readbackUNKNOWN/no-redispatch assertions retained/passed. Utility remains component-only; planMONITORING/caseopen. No unchangedNEGATIVE or35earliercompatibilityunits/broad/lifecycle/live rerun. No model solver/MCP/Saver changes or claim. Both final specification validatorsPASS;0externalGemini/countTokens in ordinarypytest/children. Review reproduction retained3FAIL/7PASS/41deselected before fix; one realfixtureFAIL missing mandatoryupdated_at retained/corrected in new fixture, failed graph not repaired; finalrealPASS29.47s.
++
++Allsix histories appended. New evidence docs/evidence/B20R-UTILITY-R-RESULTS.md, COMMANDS.md, FILES.md, changes.patch, primary-proof.json, review-repro.txt and retention.json; single-predecessor limit documented backend/UTILITY.md and contracts/resolution_planning.json. Earlier utility evidence/tests/assertions/data/accounting/quarantines preserved. FullB20 remainsPARTIAL/BLOCKED for remaining capacity/route/dumping/chronology corrections; B10genuineOPEN/PARTIAL. STOPforhumanreview; exact nexttask is reviewB20-R-UTILITY-R, then separately authorize further work. NoB21/frontend/otherB20/live authorization.
++
++
++### B20-R-UTILITY-R final retention evidence
++Read-only auditPASS: 1685pre-task public files retained;1212earlier evidence files byte-identical;121other accepted test files unchanged, only two authorized utility test extensions. Six histories append-only. Original migrations/schema/city858nodes1246edges42candidate drains, B01probe,12B20checkpoints, B12R2/B19quarantines, accepted ownership/utility records and UNKNOWNintents retained. Historical2paidrequests/no active sessions or holds unchanged. 7interlock reports0external/0unexpected; publicartifact/patchsecret scanPASS. ActualFalkorDB6.0.2/Redis8.10.2; no dependency changes. Final53distinctPASS52unit/1real,0unresolvedFAIL/0SKIP. STOPforreview; fullB20PARTIAL/BLOCKED/B10genuineOPEN/PARTIAL.
+--- a/task_board.md
++++ b/task_board.md
+@@ -575,3 +575,17 @@
+ 
+ ### B20-R-UTILITY final read-only retention/security evidence
+ AuditPASS: all1642pre-task public files retained;1176earlier evidence files byte-identical;121accepted test files unchanged; allsix tracker histories append-only. Migrations0001–0005/schema registry/city/scenarios/dependencies unchanged. Original B04fullcityhash/858nodes/1246edges/42candidate drainage links and B01probe retained;12previous B20scenario checkpoints, B12R2singleplan/quarantine, B19quarantines, accepted OWNERSHIP sources/checkpoints and UNKNOWN intent retained. Utility graph retains3COMPLETEDorders, MONITORINGplan, UTILITY_VERIFIEDcomponent with case_closedfalse, one actual COMMITTEDreport and original UNKNOWNtransportintent. Historical2paidrequests unchanged/no active sessions or holds;11provider reports0external/0unexpected; publicartifact/patchprivate-value scanPASS. ActualFalkorDB6.0.2/Redis8.10.2, existing pinnedpackages recorded in audit; no dependency changes. FullB20PARTIAL/BLOCKED; STOPforhumanreview.
++
++
++## CURRENT B20-R-UTILITY-R — technically passing; human review pending (2026-10-18)
++Only the road/utility binding correction is implemented. AllR01–R18 remain binding; directly protects R04/R05/R09/R10/R11/R17/R18. planning/utility.py now rejects more than one utility-repair task linked through existing bounded verified-only UNDERLIES topology to any road-task target, with stable sanitized UTILITY_MULTIPLE_REPAIR_PREDECESSORS. With exactly one linked task, UTILITY_VERIFICATION and depends_on must identify that exact task, and all road targets must be covered. No linked repair preserves existing independently qualified road behavior. Duplicate references/unsupported shapes remain rejected. No prerequisite schema expansion, default/hash/migration/storage/approval/recovery change.
++
++Existing Operations.validate reuses this same remediation policy with current Reader/B05 topology before new order/assignment/START authority. Fresh topology cannot select one of several predecessors. Multiple relevant tasks are unsupported under the single-predecessor contract; do not omit repairs or treat approval as a workaround. Historical draft/receipt/approval bytes untouched; no graph repair/retry/quarantine clearance.
++
++Focused final53distinctPASS=52utilityunits(38accepted+14new)+1realS04PRIMARY;0unresolvedFAIL/0SKIP. Actual schema-valid two-distinct-pipe draft with sourced verified UNDERLIES→same road rejected by real planning/API before0plans/0draftcompanions/0workorders. Existing actual isolation→reviewedproof→repair→independentUTILITY_VERIFIED→justifiedroadcompletion and committed-readbackUNKNOWN/no-redispatch assertions retained/passed. Utility remains component-only; planMONITORING/caseopen. No unchangedNEGATIVE or35earliercompatibilityunits/broad/lifecycle/live rerun. No model solver/MCP/Saver changes or claim. Both final specification validatorsPASS;0externalGemini/countTokens in ordinarypytest/children. Review reproduction retained3FAIL/7PASS/41deselected before fix; one realfixtureFAIL missing mandatoryupdated_at retained/corrected in new fixture, failed graph not repaired; finalrealPASS29.47s.
++
++Allsix histories appended. New evidence docs/evidence/B20R-UTILITY-R-RESULTS.md, COMMANDS.md, FILES.md, changes.patch, primary-proof.json, review-repro.txt and retention.json; single-predecessor limit documented backend/UTILITY.md and contracts/resolution_planning.json. Earlier utility evidence/tests/assertions/data/accounting/quarantines preserved. FullB20 remainsPARTIAL/BLOCKED for remaining capacity/route/dumping/chronology corrections; B10genuineOPEN/PARTIAL. STOPforhumanreview; exact nexttask is reviewB20-R-UTILITY-R, then separately authorize further work. NoB21/frontend/otherB20/live authorization.
++
++
++### B20-R-UTILITY-R final retention evidence
++Read-only auditPASS: 1685pre-task public files retained;1212earlier evidence files byte-identical;121other accepted test files unchanged, only two authorized utility test extensions. Six histories append-only. Original migrations/schema/city858nodes1246edges42candidate drains, B01probe,12B20checkpoints, B12R2/B19quarantines, accepted ownership/utility records and UNKNOWNintents retained. Historical2paidrequests/no active sessions or holds unchanged. 7interlock reports0external/0unexpected; publicartifact/patchsecret scanPASS. ActualFalkorDB6.0.2/Redis8.10.2; no dependency changes. Final53distinctPASS52unit/1real,0unresolvedFAIL/0SKIP. STOPforreview; fullB20PARTIAL/BLOCKED/B10genuineOPEN/PARTIAL.
+--- a/test_log.md
++++ b/test_log.md
+@@ -1180,3 +1180,17 @@
+ 
+ ### B20-R-UTILITY final read-only retention/security evidence
+ AuditPASS: all1642pre-task public files retained;1176earlier evidence files byte-identical;121accepted test files unchanged; allsix tracker histories append-only. Migrations0001–0005/schema registry/city/scenarios/dependencies unchanged. Original B04fullcityhash/858nodes/1246edges/42candidate drainage links and B01probe retained;12previous B20scenario checkpoints, B12R2singleplan/quarantine, B19quarantines, accepted OWNERSHIP sources/checkpoints and UNKNOWN intent retained. Utility graph retains3COMPLETEDorders, MONITORINGplan, UTILITY_VERIFIEDcomponent with case_closedfalse, one actual COMMITTEDreport and original UNKNOWNtransportintent. Historical2paidrequests unchanged/no active sessions or holds;11provider reports0external/0unexpected; publicartifact/patchprivate-value scanPASS. ActualFalkorDB6.0.2/Redis8.10.2, existing pinnedpackages recorded in audit; no dependency changes. FullB20PARTIAL/BLOCKED; STOPforhumanreview.
++
++
++## CURRENT B20-R-UTILITY-R — technically passing; human review pending (2026-10-18)
++Only the road/utility binding correction is implemented. AllR01–R18 remain binding; directly protects R04/R05/R09/R10/R11/R17/R18. planning/utility.py now rejects more than one utility-repair task linked through existing bounded verified-only UNDERLIES topology to any road-task target, with stable sanitized UTILITY_MULTIPLE_REPAIR_PREDECESSORS. With exactly one linked task, UTILITY_VERIFICATION and depends_on must identify that exact task, and all road targets must be covered. No linked repair preserves existing independently qualified road behavior. Duplicate references/unsupported shapes remain rejected. No prerequisite schema expansion, default/hash/migration/storage/approval/recovery change.
++
++Existing Operations.validate reuses this same remediation policy with current Reader/B05 topology before new order/assignment/START authority. Fresh topology cannot select one of several predecessors. Multiple relevant tasks are unsupported under the single-predecessor contract; do not omit repairs or treat approval as a workaround. Historical draft/receipt/approval bytes untouched; no graph repair/retry/quarantine clearance.
++
++Focused final53distinctPASS=52utilityunits(38accepted+14new)+1realS04PRIMARY;0unresolvedFAIL/0SKIP. Actual schema-valid two-distinct-pipe draft with sourced verified UNDERLIES→same road rejected by real planning/API before0plans/0draftcompanions/0workorders. Existing actual isolation→reviewedproof→repair→independentUTILITY_VERIFIED→justifiedroadcompletion and committed-readbackUNKNOWN/no-redispatch assertions retained/passed. Utility remains component-only; planMONITORING/caseopen. No unchangedNEGATIVE or35earliercompatibilityunits/broad/lifecycle/live rerun. No model solver/MCP/Saver changes or claim. Both final specification validatorsPASS;0externalGemini/countTokens in ordinarypytest/children. Review reproduction retained3FAIL/7PASS/41deselected before fix; one realfixtureFAIL missing mandatoryupdated_at retained/corrected in new fixture, failed graph not repaired; finalrealPASS29.47s.
++
++Allsix histories appended. New evidence docs/evidence/B20R-UTILITY-R-RESULTS.md, COMMANDS.md, FILES.md, changes.patch, primary-proof.json, review-repro.txt and retention.json; single-predecessor limit documented backend/UTILITY.md and contracts/resolution_planning.json. Earlier utility evidence/tests/assertions/data/accounting/quarantines preserved. FullB20 remainsPARTIAL/BLOCKED for remaining capacity/route/dumping/chronology corrections; B10genuineOPEN/PARTIAL. STOPforhumanreview; exact nexttask is reviewB20-R-UTILITY-R, then separately authorize further work. NoB21/frontend/otherB20/live authorization.
++
++
++### B20-R-UTILITY-R final retention evidence
++Read-only auditPASS: 1685pre-task public files retained;1212earlier evidence files byte-identical;121other accepted test files unchanged, only two authorized utility test extensions. Six histories append-only. Original migrations/schema/city858nodes1246edges42candidate drains, B01probe,12B20checkpoints, B12R2/B19quarantines, accepted ownership/utility records and UNKNOWNintents retained. Historical2paidrequests/no active sessions or holds unchanged. 7interlock reports0external/0unexpected; publicartifact/patchsecret scanPASS. ActualFalkorDB6.0.2/Redis8.10.2; no dependency changes. Final53distinctPASS52unit/1real,0unresolvedFAIL/0SKIP. STOPforreview; fullB20PARTIAL/BLOCKED/B10genuineOPEN/PARTIAL.
+--- /dev/null
++++ b/docs/evidence/B20R-UTILITY-R-COMMANDS.md
+@@ -0,0 +1,19 @@
++# B20-R-UTILITY-R exact focused commands
++
++Working directory `/Users/vikashkumar/Desktop/Civicly`. Existing Python3.12 isolated environment. Ordinary pytest installs the Gemini/countTokens interlock for itself/children. Local DB invocations use the existing bounded socket10second override; query/broker budgets unchanged. No lifecycle, negative journey, broad historical regression or live/provider call.
++
++| Command | Evidence | Result |
++|---|---|---|
++| `CIVICLY_TEST_REQUEST_LOG=/tmp/B20R-UTILITY-R-repro-provider.jsonl backend/.venv/bin/python -m pytest backend/tests/unit/test_utility_intervention.py -k complete_road_binding -q` | review-repro.txt | Before correction:3FAIL/7PASS/41deselected. Two ambiguous drafts admitted; sole nonlinked substitution had TARGET instead of exact-binding rejection. Reproduction retained. |
++| `CIVICLY_TEST_REQUEST_LOG=/tmp/B20R-UTILITY-R-unit-provider.jsonl backend/.venv/bin/python -m pytest backend/tests/unit/test_utility_intervention.py -q` | units.txt |51PASS; no skips |
++| `CIVICLY_TEST_REQUEST_LOG=/tmp/B20R-UTILITY-R-unit-final-provider.jsonl backend/.venv/bin/python -m pytest backend/tests/unit/test_utility_intervention.py -q` | units-final.txt |52PASS in1.20s after adding same-draft/fresh-topology regression;38accepted+14new |
++| `FALKORDB_SOCKET_TIMEOUT_SECONDS=10 CIVICLY_TEST_REQUEST_LOG=/tmp/B20R-UTILITY-R-real-provider.jsonl backend/.venv/bin/python -m pytest backend/tests/integration/test_utility_intervention_runtime.py::test_s04_primary_utility_intervention_and_uncertainty -q` | real.txt |1FAIL in23.69s: new test survey omitted mandatory updated_at. Original source graph retained; no repair. |
++| `FALKORDB_SOCKET_TIMEOUT_SECONDS=10 CIVICLY_TEST_REQUEST_LOG=/tmp/B20R-UTILITY-R-real-final-provider.jsonl backend/.venv/bin/python -m pytest backend/tests/integration/test_utility_intervention_runtime.py::test_s04_primary_utility_intervention_and_uncertainty -q` | real-final.txt | Final corrected real PRIMARY result in log/results. |
++| `CIVICLY_TEST_NO_LIVE=1 CIVICLY_REQUEST_AUDIT_FILE=/tmp/B20R-UTILITY-R-spec-provider.jsonl PYTHONPATH=backend/test_guards:backend make test-spec` | spec.txt |Both validatorsPASS; followed by fixture-only updated_at correction, final validator rerun below. |
++| `CIVICLY_TEST_NO_LIVE=1 CIVICLY_REQUEST_AUDIT_FILE=/tmp/B20R-UTILITY-R-spec-final-provider.jsonl PYTHONPATH=backend/test_guards:backend make test-spec` | spec-final.txt |Both final validators; exact result in log/results. |
++
++Stdout/stderr redirected to `docs/evidence/B20R-UTILITY-R-<evidence> 2>&1`. Counts are distinct cases, not summed overlapping passes. Review-repro deselections are intentionally excluded by -k, not skipped. No unchanged NEGATIVE rerun. No MCP/Saver/model behavior changed; existing real PRIMARY uses DB/SDK GraphRAG/API/CLI with explicit authored synthetic observations and injected readback fault, no model solver.
++
++Final read-only preservation command (no mutation/tests):
++`FALKORDB_SOCKET_TIMEOUT_SECONDS=10 CIVICLY_TEST_NO_LIVE=1 CIVICLY_REQUEST_AUDIT_FILE=/tmp/B20R-UTILITY-R-retention-provider.jsonl PYTHONPATH=backend/test_guards:backend backend/.venv/bin/python docs/evidence/B20R-UTILITY-R-retention-script.py > docs/evidence/B20R-UTILITY-R-retention.txt 2>&1`
++Result:PASS; versions, historical accounting/checkpoints/quarantines/city and new graph proof in retention.json. Review patch inventory generated against /tmp/b20r-utility-r-baseline; no earlier uncommitted changes included.
+--- /dev/null
++++ b/docs/evidence/B20R-UTILITY-R-DESIGN.md
+@@ -0,0 +1,17 @@
++# B20-R-UTILITY-R before-edit record
++
++Only this corrective pass is authorized. All R01–R18 remain binding; directly protects R04/R05/R09/R10/R11/R17/R18 through bounded sourced topology, complete task dependency scope and safe authority. No agent/provider capability claim.
++
++Smallest correction: existing bounded verified-only topology discovers every utility repair touching any road-task target; reject more than one linked task with stable sanitized `UTILITY_MULTIPLE_REPAIR_PREDECESSORS`. Exactly one must be the precise UTILITY_VERIFICATION/depends_on predecessor. No linked repair retains existing no-utility behavior. No schema expansion, plan hash/default, migration, storage or recovery change. Existing operations.validate invokes the same remediation policy before new authority, so fresh topology is rechecked.
++
++Touched paths planned: backend/app/services/planning/utility.py; existing focused utility units and real PRIMARY fixture; backend/UTILITY.md; contracts/resolution_planning.json semantics; six append-only trackers; new B20R-UTILITY-R evidence/patch/inventory. Existing test assertions retained. PRIMARY writes only new R-prefixed evidence; unchanged NEGATIVE not rerun. Prior accepted evidence files and retained DB graphs remain intact.
++
++Risks: selecting one of several tasks or a non-linked substitute; multiple road targets hiding omitted predecessors; duplicate references; truncated/candidate topology; fresh topology changes after approval. Fail closed, no auto-repair/retry/clearance. No multi-predecessor workaround; operator must revise scope through a separately reviewed plan rather than bypass a necessary repair.
++
++Exact planned commands (root):
++1. CIVICLY_TEST_REQUEST_LOG=/tmp/B20R-UTILITY-R-repro-provider.jsonl backend/.venv/bin/python -m pytest backend/tests/unit/test_utility_intervention.py -k complete_road_binding -q (before fix; preserve review failure).
++2. CIVICLY_TEST_REQUEST_LOG=/tmp/B20R-UTILITY-R-unit-provider.jsonl backend/.venv/bin/python -m pytest backend/tests/unit/test_utility_intervention.py -q
++3. FALKORDB_SOCKET_TIMEOUT_SECONDS=10 CIVICLY_TEST_REQUEST_LOG=/tmp/B20R-UTILITY-R-real-provider.jsonl backend/.venv/bin/python -m pytest backend/tests/integration/test_utility_intervention_runtime.py::test_s04_primary_utility_intervention_and_uncertainty -q
++4. CIVICLY_TEST_NO_LIVE=1 CIVICLY_REQUEST_AUDIT_FILE=/tmp/B20R-UTILITY-R-spec-provider.jsonl PYTHONPATH=backend/test_guards:backend make test-spec
++
++Human verifies schema-valid ambiguous two-pipe plan rejected by real API before any plan/order exists, exact one-predecessor plan still completes accepted isolation→repair→verification→road/recovery journey, no old records altered, zero provider calls. No negative/broad/lifecycle/live suite. STOP for review; full B20 and B10 genuine acceptance remain open.
+--- /dev/null
++++ b/docs/evidence/B20R-UTILITY-R-RESULTS.md
+@@ -0,0 +1,32 @@
++# B20-R-UTILITY-R results
++
++Technically passing; human review pending. **53distinctPASS =52focusedunits+1realS04PRIMARY**,0unresolvedFAIL/0SKIP. All38prior utility units plus14new cases pass. Both specification validators pass after final fixture edits. Zero external Gemini/countTokens, including CLI children. No unchanged negative journey or broad historical/lifecycle/live suite ran. Earlier73unit/2real evidence is retained, not falsely counted as rerun.
++
++Root cause: discovery collected every linked repair but checked the selected condition only for action/target compatibility. It neither rejected multiple linked task identities nor required equality to the sole discovered identity. The smallest production change adds those two checks (and initializes the local linked list). No prerequisite schema, storage, migration, approved draft, hash or receipt changes.
++
++| Case | Expected | Observed |
++|---|---|---|
++| Two repairs, one road | Reject ambiguous one-predecessor scope | Stable UTILITY_MULTIPLE_REPAIR_PREDECESSORS; unit and real planning/API |
++| Repairs touch different targets in one road task | Reject across union of road targets | UnitPASS |
++| Sole predecessor omitted/substituted or dependency differs | Reject missing/exact binding | UnitPASS |
++| No linked repair / valid one / irrelevant other repair | Preserve supported scope | UnitPASS; valid original real journeyPASS |
++| Missing target / extra dependencies / duplicate refs | Existing fail-closed behavior | Unit/schemaPASS |
++| Same draft gains another linked repair in fresh topology | Reject before new authority | Focused fresh-reader policy unitPASS; existing Operations.validate calls this policy unchanged before authority |
++| Real schema-valid ambiguous proposal | No plan/draft/order persistence | HTTP409DEPENDENCY_BLOCKED; direct actual-topology policy exposes sanitized blocker;0/0/0 |
++| Existing utility/road/recovery journey | Preserve accepted behavior | RealDB/SDKGraphRAG/HTTP/CLI PASS; planMONITORING, roadCOMPLETED, utilityUTILITY_VERIFIED; caseclosedfalse; committedreport/UNKNOWN/no replay redispatch retained |
++
++Actual new graph `civicly_b10_test_1ec3e6828a754450a635da8df4b9259e`, successful plan `PLAN-B12-7340bab046063962c03cc73303784c38`. Ambiguous survey evidence `EV-B20R-UTILITY-R-TOPOLOGY` and relationship `REL-B20R-UTILITY-R-UNDERLIES` are explicit additional synthetic fixture observations, not modified B19 baseline claims. The ambiguous proposal is schema-valid and rejected at the first road policy check; later extra-task qualification is deliberately not represented as passing. It was never persisted. No arbitrary AI query or provider used.
++
++Retained expected pre-fix reproduction:3failed/7passed/41deselected. One real attempt failed because new survey evidence lacked mandatoryupdated_at; fixture corrected, failed graph retained, no source repair. Final52unitsPASS1.20s; finalrealPASS29.47s. Exact commands/logs in COMMANDS.md; unchanged NEGATIVE not rerun. Final specs rerun only because the subsequent fixture edit warranted it. Deprecation/SDK already-indexed logs retained.
++
++Changed production policy: backend/app/services/planning/utility.py. Contract semantics: contracts/resolution_planning.json. Guidance: backend/UTILITY.md. Tests: existing unit/test_utility_intervention.py and integration/test_utility_intervention_runtime.py, all old assertions preserved; PRIMARY output moved to new R-prefixed proof so earlier artifacts remain untouched. Allsix trackers append-only. Exact full inventory and baseline-relative patch provided separately.
++
++Limitation: one road task supports at most one relevant utility-repair task across all targets. Multiple linked tasks require separate reviewed scope/design; never select one or omit a necessary repair. No general multi-predecessor schema added. Existing fresh topology/source/ownership/safety/exact-approval/completion/independent verification guards remain. No historical draft/approval/receipt update, retry, rollback, replacement request, graph repair or quarantine clearance. Unknown utility report request `HTTP-B16-914a4d9aff1571aa0db8544699265572` remains retained for supported human reconciliation; safe reads do not clear intent.
++
++Human reproduction: run the final focused units and single PRIMARY command in COMMANDS.md. Inspect primary-proof.json → ambiguous_plan_rejection: schema_validtrue, stable blocker, HTTP409, plans/drafts/orders0; then successful exact plan/approval/dependency/citation and existing recovery proof. Share the new log/proof if it fails; preserve current artifacts before rerunning. Existing primary walkthrough/service commands remain in backend/UTILITY.md and prior WALKTHROUGH.md; use returned new R proof IDs for this graph.
++
++FullB20 remainsPARTIAL/BLOCKED for capacity/route/dumping/chronology; B10genuineOPEN/PARTIAL. STOP for review; no further phase authorized.
++
++
++### B20-R-UTILITY-R final retention evidence
++Read-only auditPASS: 1685pre-task public files retained;1212earlier evidence files byte-identical;121other accepted test files unchanged, only two authorized utility test extensions. Six histories append-only. Original migrations/schema/city858nodes1246edges42candidate drains, B01probe,12B20checkpoints, B12R2/B19quarantines, accepted ownership/utility records and UNKNOWNintents retained. Historical2paidrequests/no active sessions or holds unchanged. 7interlock reports0external/0unexpected; publicartifact/patchsecret scanPASS. ActualFalkorDB6.0.2/Redis8.10.2; no dependency changes. Final53distinctPASS52unit/1real,0unresolvedFAIL/0SKIP. STOPforreview; fullB20PARTIAL/BLOCKED/B10genuineOPEN/PARTIAL.

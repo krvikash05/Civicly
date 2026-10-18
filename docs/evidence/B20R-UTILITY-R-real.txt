@@ -1,0 +1,89 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+____________ test_s04_primary_utility_intervention_and_uncertainty _____________
+
+shared = namespace(db=<falkordb.falkordb.FalkorDB object at 0x10fd1ff20>, p=ActiveProfile(version=1, graph='civicly_b10_test_76...ew/7e8ff5d51d8a4fbb9acaa188810fa6cc/memory.json'), memory=<app.memory.service.Memory object at 0x10fb82660>, proofs=[])
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10ff3b290>
+
+    def test_s04_primary_utility_intervention_and_uncertainty(shared,monkeypatch):
+>    asyncio.run(journey(shared,'PRIMARY',monkeypatch))
+
+backend/tests/integration/test_utility_intervention_runtime.py:44: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/base_events.py:684: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+backend/tests/integration/test_utility_intervention_runtime.py:105: in journey
+    r.create_node('Evidence',{'id':source_id,'schema_version':3,'municipality_id':'demo-city','created_at':clock(),'evidence_type':'SYNTHETIC_TOPOLOGY_SURVEY','summary':'Explicit authorized synthetic survey: second test pipe underlies ROAD-100; no leak or intervention is inferred','reliability':'VERIFIED','recorded_at':clock(),'observed_at':clock(),'source_kind':'SYNTHETIC','source_record_id':'B20R-UTILITY-R:second-pipe-survey','basis':'OBSERVED'})
+backend/app/graph/repository.py:220: in create_node
+    statement = self.registry.node_statement(kind, properties)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/app/graph/schema.py:143: in node_statement
+    self.validate_node(label, props)
+backend/app/graph/schema.py:121: in validate_node
+    self._properties(self.shape(label), props)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <app.graph.schema.Registry object at 0x1186163c0>
+shape = {'properties': {'evidence_type': {'type': 'string'}, 'summary': {'type': 'string'}, 'reliability': {'type': 'string', ...-time'}, ...}, 'required': ['created_at', 'evidence_type', 'id', 'municipality_id', 'recorded_at', 'reliability', ...]}
+props = {'id': 'EV-B20R-UTILITY-R-TOPOLOGY', 'schema_version': 3, 'municipality_id': 'demo-city', 'created_at': '2026-10-19T12:00:00.000000Z', ...}
+
+    def _properties(self, shape: dict, props: dict) -> None:
+        if not isinstance(props, dict) or not all(isinstance(k, str) for k in props):
+            raise SchemaError("Properties must be a string-keyed object")
+        if set(props) - shape["properties"].keys():
+            raise SchemaError("Unknown properties")
+        if set(shape["required"]) - props.keys():
+>           raise SchemaError("Missing mandatory properties")
+E           app.graph.schema.SchemaError: Missing mandatory properties
+
+backend/app/graph/schema.py:78: SchemaError
+------------------------------ Captured log setup ------------------------------
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'text' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'name' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'text' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'name' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'text' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'name' is already indexed
+------------------------------ Captured log call -------------------------------
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'text' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'name' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'text' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'name' is already indexed
+=============================== warnings summary ===============================
+backend/.venv/lib/python3.12/site-packages/graphrag_sdk/core/models.py:19
+  /Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/graphrag_sdk/core/models.py:19: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.14/migration/
+    class DataModel(BaseModel):
+
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyPacked has no __module__ attribute
+
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyObject has no __module__ attribute
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED backend/tests/integration/test_utility_intervention_runtime.py::test_s04_primary_utility_intervention_and_uncertainty
+1 failed, 3 warnings in 23.69s
+sys:1: DeprecationWarning: builtin type swigvarlink has no __module__ attribute

@@ -1,0 +1,340 @@
+--- a/backend/PLANNING.md
++++ b/backend/PLANNING.md
+@@ -136,3 +136,10 @@
+ DAG/schema/action/prerequisite corrections request DRAFT_CLARIFICATION; missing evidence/ownership/source capability requests MISSING_EVIDENCE_OR_CAPABILITY. Pre-write migration/storage readiness failure pauses PLAN_OPERATOR_RECOVERY_REQUIRED, distinct from clarification. Unknown failures, uncertain writes and wake ownership failures raise sanitized RecoveryRequired into the existing quarantine. Checkpoint failures remain outside planner acknowledgment and also quarantine; no claim that feedback was persisted after a lost lease or failed checkpoint. Operator must inspect the last durable checkpoint and reconcile native request IDs. A committed draft with acknowledgment loss is never labeled definitely rejected; native Store replay remains authoritative.
+ 
+ Normalization omits remediation only when absent, preserving accepted B12 hash representation (including previous_plan_id=None). New conditions/evidence order normalize deterministically; old versions remain readable. 0001–0004 and dependency locks are unchanged. No B13 authority, dispatch, executor or monitor.
++
++## B12-R2 commit-boundary failure classification
++Pre-write model/domain validation remains actionable and uncommitted for that attempt. Once Store.commit is attempted, any commit-response or subsequent acknowledgment verification failure is PlanRecoveryRequired (existing OutcomeUnknown subtype), never an ordinary draft rejection. Missing/mismatched readback and Pydantic/storage readback errors return no receipt. Saved-request replay read/receipt verification failures also require recovery. Intentional after-commit acknowledgment-loss injection preserves its historical RuntimeError marker and healthy exact-request replay behavior.
++
++Recovery context retains only validated graph, exact request ID, investigation ID, plan ID, expected version/hash and a fixed stage; no raw exceptions/source/model text. Runtime propagates it on RecoveryRequired into the unchanged wake quarantine. Last durable checkpoint/decision and CivicPlanDraft request/payload provide reconciliation evidence; a failed node/checkpoint does not promise a new persisted feedback record. Legacy PlanningBlocked PLAN_READBACK is conservatively UNKNOWN/operator recovery. No response labels the plan safely usable before integrity/readback verification.
++
++For operator review: stop the old process and verify ownership; inspect the original request/decision, companion payload/hash, native plan and repository pending-write state using existing read/recovery facilities. Resolve actual integrity/ownership/checkpoint uncertainty through the established reviewed procedure before considering any later explicit resume. Do not create a new version or change request ID as a repair. B12-R2 leaves its isolated fault graph's quarantine in place, with one original plan/version and no automatic replay, retry, deletion or reset. The separate healthy replay test uses its original exact request and existing supported path. See docs/evidence/B12R2-RESULTS.md. No B13 or live calls.
+--- a/backend/app/agents/runtime.py
++++ b/backend/app/agents/runtime.py
+@@ -217,7 +217,10 @@
+                 # Unsafe writes/lease failures must reach the existing wake quarantine.
+                 # A failed/lost checkpoint cannot truthfully persist new feedback.
+                 if isinstance(error,(RecoveryRequired,OutcomeUnknown)) or detail['draft_committed']=='UNKNOWN':
+-                    raise RecoveryRequired('PLAN_OPERATOR_RECOVERY_REQUIRED') from None
++                    recovery=RecoveryRequired('PLAN_OPERATOR_RECOVERY_REQUIRED')
++                    from app.services.planning.service import PlanRecoveryRequired
++                    if isinstance(error,PlanRecoveryRequired):recovery.reconciliation=dict(error.reconciliation)
++                    raise recovery from None
+                 self.check()
+                 s.planning_feedback=feedback(error);s.observations.append({'operation':'PLAN_DRAFT_REJECTED','feedback':detail})
+                 s.errors.append('PLAN_DRAFT_REJECTED');s.pause_reason='PLAN_OPERATOR_RECOVERY_REQUIRED' if detail['resolution']=='OPERATOR_RECOVERY' else 'PLAN_CLARIFICATION_REQUIRED'
+--- a/backend/app/services/planning/feedback.py
++++ b/backend/app/services/planning/feedback.py
+@@ -30,7 +30,7 @@
+    if e['type']=='plan_dag':code,category,message='PLAN_DAG_INVALID','DAG','Correct cyclic or unknown task dependencies; retain inspection and evidence gates.'
+    elif e['type']=='plan_prerequisite':code,category,message='PLAN_PREREQUISITE_INVALID','PREREQUISITE','Represent causal inspection and safety gates explicitly; text cannot satisfy a missing gate.'
+    elif loc and loc[-1]=='action_type':code,category,message='PLAN_ACTION_UNSUPPORTED','ACTION','Select an admitted action or request an evidence-grounded inspection.'
+- elif isinstance(error,PlanningBlocked):
++ elif isinstance(error,PlanningBlocked) and error.code!='PLAN_READBACK':
+   committed='NO';resolution='MISSING_EVIDENCE_OR_CAPABILITY'
+   c=error.code
+   if c.startswith(('OWNERSHIP','ACCOUNTABLE_DEPARTMENT')):code,category,message='PLAN_OWNERSHIP_UNAVAILABLE','OWNERSHIP','Resolve verified accountable ownership before resubmitting this task.'
+--- a/backend/app/services/planning/service.py
++++ b/backend/app/services/planning/service.py
+@@ -4,12 +4,19 @@
+ from app.services.evidence.reader import Reader
+ from app.graph.schema import utc_now,timestamp
+ from app.graph.models import digest
+-from app.graph.repository import Conflict
++from app.graph.repository import Conflict,OutcomeUnknown
+ from app.memory.models import Citation
+ from .models import PlanDraft,PlanReceipt
+ from .storage import Store
+ class PlanningBlocked(ValueError):
+  def __init__(self,code,*,task_id=None):self.code=code;self.task_id=task_id;super().__init__(code)
++class PlanRecoveryRequired(OutcomeUnknown):
++ """No receipt: a commit attempt or persisted replay requires operator verification."""
++ def __init__(self,*,graph,request_id,investigation_id,plan_id,version,plan_hash,stage):
++  # Only validated domain/host identities; never copy the underlying exception.
++  super().__init__('INJECTED_ACK_LOSS' if stage=='INJECTED_ACK_LOSS' else 'PLAN_COMMIT_VERIFICATION_REQUIRED')
++  self.reconciliation={'graph':graph,'request_id':request_id,'investigation_id':investigation_id,
++   'plan_id':plan_id,'expected_version':version,'expected_plan_hash':plan_hash,'stage':stage}
+ class PlanningService:
+  def __init__(self,repo,memory=None,*,clock=utc_now):self.repo=repo;self.memory=memory;self.clock=clock;self.store=Store(repo)
+  async def resolve(self,task,reader,as_of):
+@@ -51,9 +58,12 @@
+   with self.repo._session() as session:
+    existing=self.repo._read('MATCH (d:CivicPlanDraft {request_id:$id}) RETURN d.id LIMIT 2',{'id':request_id})
+    if existing:
+-    saved=self.store.get(existing[0][0])
++    try:
++     saved=self.store.get(existing[0][0]);saved_receipt=PlanReceipt.model_validate(saved['receipt'])
++    except Exception:
++     raise PlanRecoveryRequired(graph=self.repo.graph.name,request_id=request_id,investigation_id=draft.investigation_id,plan_id=existing[0][0],version=draft.version,plan_hash=draft.content_hash,stage='REPLAY_VERIFICATION') from None
+     if saved['draft']!=draft.normalized():raise Conflict('PLAN_REQUEST_CONFLICT')
+-    return PlanReceipt.model_validate(saved['receipt'])
++    return saved_receipt
+    inv=reader.node(draft.investigation_id,'Investigation')
+    incidents=[reader.node(e.target,'Incident') for e in reader.edges('INVESTIGATES',source=inv.id) if self.repo.get_node(e.target).kind=='Incident']
+    if not incidents or {n.properties['issue_type'] for n in incidents}!={draft.issue}:raise PlanningBlocked('INVESTIGATION_ISSUE_BINDING')
+@@ -84,7 +94,14 @@
+    if self.memory and memory_revision!=self.memory.repo._read("MATCH (m:CivicSchemaMigration {id:'0001'}) RETURN m.repo_revision,m.repo_pending"):raise PlanningBlocked('PROCEDURE_REVISION_CHANGED')
+    proof['procedure_reference_revision']=memory_revision
+    receipt=PlanReceipt(id='PLAN-B12-'+digest([inv.id,draft.version])[:32],version=draft.version,plan_hash=draft.content_hash)
+-   self.store.commit(session,draft,receipt,request_id,proof,at)
+-   if interrupt=='after_commit':raise RuntimeError('INJECTED_ACK_LOSS')
+-   if self.store.get(receipt.id)['receipt']!=receipt.model_dump(mode='json'):raise PlanningBlocked('PLAN_READBACK')
++   stage='COMMIT_ATTEMPT'
++   try:
++    self.store.commit(session,draft,receipt,request_id,proof,at)
++    stage='INJECTED_ACK_LOSS' if interrupt=='after_commit' else 'ACKNOWLEDGMENT_VERIFICATION'
++    if interrupt=='after_commit':raise RuntimeError('INJECTED_ACK_LOSS')
++    if self.store.get(receipt.id)['receipt']!=receipt.model_dump(mode='json'):raise PlanningBlocked('PLAN_READBACK')
++   except Exception:
++    # Includes Pydantic/Migration/PlanningBlocked failures after the write boundary.
++    # A failed commit response can also have persisted: never claim rollback.
++    raise PlanRecoveryRequired(graph=self.repo.graph.name,request_id=request_id,investigation_id=inv.id,plan_id=receipt.id,version=receipt.version,plan_hash=receipt.plan_hash,stage=stage) from None
+    return receipt
+--- a/blockers.md
++++ b/blockers.md
+@@ -1,4 +1,6 @@
+ # blockers.md — Current blockers and verification spikes
++
++> **CURRENT B12-R2 — TECHNICALLY PASS, HUMAN REVIEW PENDING.** Post-commit and saved-replay verification faults now require operator recovery/UNKNOWN; exact reconciliation identities retained through existing quarantine.18distinctPASS(16unit/2real),0unresolvedFAIL/0SKIP; both SPEC validatorsPASS once;0external Gemini/countTokens. Actual mismatch leaves1original plan/version1, no false rejection/usable receipt, quarantine retained. No retry/reset/reconciliation wake/B13/live calls. B10 full live acceptance remains OPEN/PARTIAL. Supersedes historical status below; see docs/evidence/B12R2-RESULTS.md.
+ 
+ > **CURRENT B12-R — TECHNICALLY PASS, HUMAN REVIEW PENDING.** Bounded remedial drafts for all3issues, typed causal/safety gates and sanitized durable clarification/capability feedback implemented.61distinctPASS(52unit/9real),0unresolvedFAIL/0SKIP; both SPEC validatorsPASS once;0external Gemini/countTokens. Historical failed attempts retained. Actual SDK/MCP/LangGraph/Saver/fresh-process exercised with scripted model. Original migrations/data/evidence preserved; no B13/lifecycle/live provider. B10 full genuine acceptance remains OPEN/PARTIAL. This summary supersedes historical status below; see docs/evidence/B12R-RESULTS.md.
+ 
+@@ -524,3 +526,10 @@
+ No unresolved B12-R runtime failure in focused scope. Limits:3actions only; synthetic automated source self-review is not human/government authority; all procedures PROPOSED and drafts unapproved/non-executable. New sources ingested only isolated test graphs; retained canonical installation requires explicit trusted --manifest setup, not automatic import. Unknown write/lease/checkpoint faults require operator reconciliation; feedback cannot be newly durable after storage/ownership loss. B10 full genuine live acceptance OPEN/PARTIAL. All remaining DEC-004 later gates, B11 bounded/offline retrieval/manual repair and operational approval/event/auth/API/frontend requirements remain. Frozen55legacy defects retained (B04 canonical conversion unchanged); no B12-R fixture repair or dataset rewrite. B13 not authorized.
+ 
+ Review docs/evidence/B12R-RESULTS.md, B12R-COMMANDS.md, B12R-FILES.md and B12R-changes.patch. Human: inspect3category gates/citations, actual native receipt/hash/checkpoint, safe invalid/recovery feedback and zero operational deltas. STOP for review; exact next task B13 only after explicit authorization.
++
++
++## B12-R2 corrective review gate | 2026-10-18
++
++No unresolved B12-R2 implementation/test failure. Intentional operator action remains for isolated quarantined fault wakes: stop old process/confirm ownership, inspect exact original request/decision/native+companion/hash/pending write and reconcile last durable checkpoint under existing reviewed recovery procedure before any separately authorized resume. No quarantine cleared, failed wake retried, plan deleted or new version invented. Read-only integrity inspection passes; no safe runtime receipt emitted during failure. B10 full genuine acceptance OPEN/PARTIAL; B12-R action/source/safety and future DEC-004 gates unchanged. No new B13/live authorization.
++
++Review docs/evidence/B12R2-RESULTS.md, B12R2-COMMANDS.md, B12R2-postcommit-recovery.json, B12R2-FILES.md and B12R2-changes.patch. Human verification: inspect exact identities,1plan/version1, UNKNOWN/recovery diagnostic, last durable checkpoint with no false acknowledgment and retained quarantine. Reproduce only the isolated mismatch test; no reset/retry of stored fault wake. STOP for review; B13 requires explicit authorization.
+--- a/decision.md
++++ b/decision.md
+@@ -1353,3 +1353,17 @@
+ DEC-053 implementation verified: three specific remedial codes; latest addressed SUPPORTED/VERIFIED plus per-target reviewed physical support and current report/finding hashes; typed conditions, verified ownership, exact B11 source/version. No future dependencies for supported-now; conditional causal gap requires target inspection dependency. No approval/execution. Three new synthetic self-reviewed sources through real SDK, PROPOSED assertions retained. Feedback safely separates draft/evidence/capability from operator recovery, while uncertain writes/lease/checkpoint faults retain quarantine. Old normalized hashes unchanged.61distinct focusedPASS; both SPEC validatorsPASS once; six inherited zero-provider proofs. Initial source metadata and missing road fixture topology failures recorded; no application guard weakened. Alternative/final rationale, source inventory and actual narrow patch in B12R evidence. No migration/dependency/durability change; no lifecycle. Stop before B13.
+ 
+ Review docs/evidence/B12R-RESULTS.md, B12R-COMMANDS.md, B12R-FILES.md and B12R-changes.patch. Human: inspect3category gates/citations, actual native receipt/hash/checkpoint, safe invalid/recovery feedback and zero operational deltas. STOP for review; exact next task B13 only after explicit authorization.
++
++## DEC-054 — B12-R2 commit-boundary recovery (before implementation)
++Scope R09/R10/R13/R15; preserve all18 requirements and B12-R policies. A post-commit PLAN_READBACK mismatch was a PlanningBlocked and incorrectly yielded draft_committed NO. Saved-replay Pydantic/read failures can suffer the same mistake. Introduce a narrow PlanRecoveryRequired subclass of existing repository OutcomeUnknown, with static sanitized message and bounded graph/request/investigation/plan/version/hash/stage identifiers. Guard commit-attempt/readback and saved-replay verification separately from proven pre-write validation. No healthy receipt is returned until storage integrity/readback verifies. UNKNOWN means persisted/usable state requires reconciliation, never evidence of rollback. Existing intentional INJECTED_ACK_LOSS RuntimeError match and native exact-request healthy replay remain compatible.
++
++Runtime carries that typed recovery context into existing RecoveryRequired, which triggers unchanged wake quarantine; no false rejection observation, automatic redraft/version/retry, reset or quarantine clearance. Generic legacy PlanningBlocked PLAN_READBACK must also fail closed in feedback. Last durable checkpoint, native decision and saved companion retain reconciliation identities; no promise of a newly persisted feedback/checkpoint after failure. Operator reads exact original request and plan, verifies integrity and pending write/wake ownership, then follows existing reviewed recovery procedure. Test deliberately leaves quarantine set and performs read-only inspection only; no reconciliation repair is invented.
++
++Alternatives rejected: treating all PlanningBlocked as pre-write (original bug); returning an unverified receipt (unsafe); automatic replay/clearing quarantine (not authorized); new recovery storage/migration (unnecessary). Minimal tests: one actual isolated SDK/FalkorDB/MCP/LangGraph/Saver mismatch regression with one retained plan and quarantine, affected pure feedback/recovery unit branches including adjacent replay validation, one existing healthy ack-loss/idempotent replay case, both specification validators once final. No full suite, remedial scenarios, provider or lifecycle.
++
++
++## B12-R2 corrective review gate | 2026-10-18
++
++DEC-054 verified. Store.commit attempt/ACK verification and saved-replay read/receipt verification now raise narrow OutcomeUnknown-subtype PlanRecoveryRequired with bounded exact graph/request/investigation/plan/version/hash/stage context. Runtime carries it into existing RecoveryRequired/quarantine; no false rejection or unverified usable receipt. Legacy PLAN_READBACK feedback is UNKNOWN. Healthy INJECTED_ACK_LOSS RuntimeError matching/native same-request replay unchanged. No storage/schema/migration/policy/source redesign.16unit/2real distinctPASS, both SPEC validatorsPASS once,0provider. Initial new test matcher failed on LangGraph task note despite correct recovery; only matcher fixed and that isolated case rerun; first fault graph left untouched. B13 not authorized.
++
++Review docs/evidence/B12R2-RESULTS.md, B12R2-COMMANDS.md, B12R2-postcommit-recovery.json, B12R2-FILES.md and B12R2-changes.patch. Human verification: inspect exact identities,1plan/version1, UNKNOWN/recovery diagnostic, last durable checkpoint with no false acknowledgment and retained quarantine. Reproduce only the isolated mismatch test; no reset/retry of stored fault wake. STOP for review; B13 requires explicit authorization.
+--- a/flow.md
++++ b/flow.md
+@@ -825,3 +825,10 @@
+ Final runtime evidence:3category source/ownership/gate/provenance native draft records; actual scripted MCP/Saver remedial fresh-process/resume; bounded invalid-DAG and pre-write dependency feedback in state/observations. Unknown failures propagate to existing quarantine with no fabricated feedback persistence.61distinct focusedPASS, both SPEC validatorsPASS,0provider. File graph above and B12R-FILES.md identify actual changed sources. No retained canonical import or lifecycle.
+ 
+ Review docs/evidence/B12R-RESULTS.md, B12R-COMMANDS.md, B12R-FILES.md and B12R-changes.patch. Human: inspect3category gates/citations, actual native receipt/hash/checkpoint, safe invalid/recovery feedback and zero operational deltas. STOP for review; exact next task B13 only after explicit authorization.
++
++
++## B12-R2 corrective review gate | 2026-10-18
++
++Imports: planning.service adds existing graph.repository.OutcomeUnknown subtype PlanRecoveryRequired. Proven pre-write validation remains outside commit boundary. commit attempt -> ACK-only readback -> verified receipt OR sanitized recovery exception with exact original IDs. Existing persisted-request replay -> Store.get/receipt validation -> valid existing receipt OR same recovery type. feedback treats that subtype and legacy PLAN_READBACK as UNKNOWN. Runtime copies only typed reconciliation metadata to existing RecoveryRequired -> unchanged ownership exception path sets quarantine; no rejected/accepted acknowledgment output. Existing native companion/decision and last durable Saver checkpoint remain operator evidence. No new recovery store/checkpoint field or background worker. Actual fault proof shows retained original plan/hash and quarantine; no retry/deletion/clearance.
++
++Review docs/evidence/B12R2-RESULTS.md, B12R2-COMMANDS.md, B12R2-postcommit-recovery.json, B12R2-FILES.md and B12R2-changes.patch. Human verification: inspect exact identities,1plan/version1, UNKNOWN/recovery diagnostic, last durable checkpoint with no false acknowledgment and retained quarantine. Reproduce only the isolated mismatch test; no reset/retry of stored fault wake. STOP for review; B13 requires explicit authorization.
+--- a/implementation_status.md
++++ b/implementation_status.md
+@@ -1,4 +1,6 @@
+ # implementation_status.md — Current implementation truth
++
++> **CURRENT B12-R2 — TECHNICALLY PASS, HUMAN REVIEW PENDING.** Post-commit and saved-replay verification faults now require operator recovery/UNKNOWN; exact reconciliation identities retained through existing quarantine.18distinctPASS(16unit/2real),0unresolvedFAIL/0SKIP; both SPEC validatorsPASS once;0external Gemini/countTokens. Actual mismatch leaves1original plan/version1, no false rejection/usable receipt, quarantine retained. No retry/reset/reconciliation wake/B13/live calls. B10 full live acceptance remains OPEN/PARTIAL. Supersedes historical status below; see docs/evidence/B12R2-RESULTS.md.
+ 
+ > **CURRENT B12-R — TECHNICALLY PASS, HUMAN REVIEW PENDING.** Bounded remedial drafts for all3issues, typed causal/safety gates and sanitized durable clarification/capability feedback implemented.61distinctPASS(52unit/9real),0unresolvedFAIL/0SKIP; both SPEC validatorsPASS once;0external Gemini/countTokens. Historical failed attempts retained. Actual SDK/MCP/LangGraph/Saver/fresh-process exercised with scripted model. Original migrations/data/evidence preserved; no B13/lifecycle/live provider. B10 full genuine acceptance remains OPEN/PARTIAL. This summary supersedes historical status below; see docs/evidence/B12R-RESULTS.md.
+ 
+@@ -495,3 +497,10 @@
+ B12-R corrective scope technically complete, pending human review. DRAIN_BLOCKAGE_CLEARANCE/SUBGRADE_REPAIR/MISSED_PICKUP_RECOVERY support qualified SUPPORTED findings with typed causal/safety gates; conditional unmet inspection has native DAG dependency. No operational writes. Three newly authored synthetic source policies use actual B11 SDK; no original version replaced. Bounded feedback persists safe rejections/capability failures; unsafe writes/lease/checkpoint failures retain fail-closed recovery.61distinctPASS(52unit/9real),0final unresolvedFAIL/0SKIP; both SPEC validatorsPASS once. No full regression/live/lifecycle run. Old hashes/versions/evidence retained. B10 full live OPEN/PARTIAL; no B13/product-completion claim.
+ 
+ Review docs/evidence/B12R-RESULTS.md, B12R-COMMANDS.md, B12R-FILES.md and B12R-changes.patch. Human: inspect3category gates/citations, actual native receipt/hash/checkpoint, safe invalid/recovery feedback and zero operational deltas. STOP for review; exact next task B13 only after explicit authorization.
++
++
++## B12-R2 corrective review gate | 2026-10-18
++
++B12-R2 narrow correction technically complete, pending review. Reproduced real ACK mismatch now returns recovery-required and no draft_committed NO. One stored plan/version1 plus original request/companion retained, no new version/duplicate. Last durable checkpoint/decision preserved, no fabricated feedback persistence; quarantine deliberately retained.18distinctPASS(16unit/2real),0unresolvedFAIL/0SKIP, both SPEC validatorsPASS once,0external provider. Healthy ack-loss/native replay passed unchanged. Earlier B12/B12-R features, sources, migrations/data/assertions/evidence preserved. B10 genuine full live remains OPEN/PARTIAL; no B13 or product-completion claim.
++
++Review docs/evidence/B12R2-RESULTS.md, B12R2-COMMANDS.md, B12R2-postcommit-recovery.json, B12R2-FILES.md and B12R2-changes.patch. Human verification: inspect exact identities,1plan/version1, UNKNOWN/recovery diagnostic, last durable checkpoint with no false acknowledgment and retained quarantine. Reproduce only the isolated mismatch test; no reset/retry of stored fault wake. STOP for review; B13 requires explicit authorization.
+--- a/task_board.md
++++ b/task_board.md
+@@ -1,4 +1,6 @@
+ # task_board.md — Human-reviewed task queue
++
++> **CURRENT B12-R2 — TECHNICALLY PASS, HUMAN REVIEW PENDING.** Post-commit and saved-replay verification faults now require operator recovery/UNKNOWN; exact reconciliation identities retained through existing quarantine.18distinctPASS(16unit/2real),0unresolvedFAIL/0SKIP; both SPEC validatorsPASS once;0external Gemini/countTokens. Actual mismatch leaves1original plan/version1, no false rejection/usable receipt, quarantine retained. No retry/reset/reconciliation wake/B13/live calls. B10 full live acceptance remains OPEN/PARTIAL. Supersedes historical status below; see docs/evidence/B12R2-RESULTS.md.
+ 
+ > **CURRENT B12-R — TECHNICALLY PASS, HUMAN REVIEW PENDING.** Bounded remedial drafts for all3issues, typed causal/safety gates and sanitized durable clarification/capability feedback implemented.61distinctPASS(52unit/9real),0unresolvedFAIL/0SKIP; both SPEC validatorsPASS once;0external Gemini/countTokens. Historical failed attempts retained. Actual SDK/MCP/LangGraph/Saver/fresh-process exercised with scripted model. Original migrations/data/evidence preserved; no B13/lifecycle/live provider. B10 full genuine acceptance remains OPEN/PARTIAL. This summary supersedes historical status below; see docs/evidence/B12R-RESULTS.md.
+ 
+@@ -423,3 +425,10 @@
+ B12 accepted by user; B12-R now technically PASS and awaits review. Scope R01/R08–R10/R13–R15/R17: bounded remedial draft types, explicit guards/source provenance, actionable redacted feedback and existing persistence/runtime.61distinctPASS(52unit/9real), both validatorsPASS,0provider. Exact commands/failed attempts/inventory/patch in docs/evidence/B12R-*. Next proposed B13 requires explicit authorization; do not start approvals, dispatch, workers, API or frontend.
+ 
+ Review docs/evidence/B12R-RESULTS.md, B12R-COMMANDS.md, B12R-FILES.md and B12R-changes.patch. Human: inspect3category gates/citations, actual native receipt/hash/checkpoint, safe invalid/recovery feedback and zero operational deltas. STOP for review; exact next task B13 only after explicit authorization.
++
++
++## B12-R2 corrective review gate | 2026-10-18
++
++B12-R2 corrective gate technically PASS, waits human review. Original post-commit PLAN_READBACK misclassification and adjacent saved-replay validation addressed narrowly; fail-closed quarantine/identities preserved.18distinctPASS(16unit/2real),0unresolvedFAIL/0SKIP, both SPEC validatorsPASS once,0provider. Existing healthy ack-loss replay case retained and passing; original fault plan/version retained without duplicate. No automatic reconciliation or further milestones. Proposed next B13 only after explicit authorization.
++
++Review docs/evidence/B12R2-RESULTS.md, B12R2-COMMANDS.md, B12R2-postcommit-recovery.json, B12R2-FILES.md and B12R2-changes.patch. Human verification: inspect exact identities,1plan/version1, UNKNOWN/recovery diagnostic, last durable checkpoint with no false acknowledgment and retained quarantine. Reproduce only the isolated mismatch test; no reset/retry of stored fault wake. STOP for review; B13 requires explicit authorization.
+--- a/test_log.md
++++ b/test_log.md
+@@ -1,4 +1,6 @@
+ # test_log.md — Append-only verification record
++
++> **CURRENT B12-R2 — TECHNICALLY PASS, HUMAN REVIEW PENDING.** Post-commit and saved-replay verification faults now require operator recovery/UNKNOWN; exact reconciliation identities retained through existing quarantine.18distinctPASS(16unit/2real),0unresolvedFAIL/0SKIP; both SPEC validatorsPASS once;0external Gemini/countTokens. Actual mismatch leaves1original plan/version1, no false rejection/usable receipt, quarantine retained. No retry/reset/reconciliation wake/B13/live calls. B10 full live acceptance remains OPEN/PARTIAL. Supersedes historical status below; see docs/evidence/B12R2-RESULTS.md.
+ 
+ > **CURRENT B12-R — TECHNICALLY PASS, HUMAN REVIEW PENDING.** Bounded remedial drafts for all3issues, typed causal/safety gates and sanitized durable clarification/capability feedback implemented.61distinctPASS(52unit/9real),0unresolvedFAIL/0SKIP; both SPEC validatorsPASS once;0external Gemini/countTokens. Historical failed attempts retained. Actual SDK/MCP/LangGraph/Saver/fresh-process exercised with scripted model. Original migrations/data/evidence preserved; no B13/lifecycle/live provider. B10 full genuine acceptance remains OPEN/PARTIAL. This summary supersedes historical status below; see docs/evidence/B12R-RESULTS.md.
+ 
+@@ -1017,3 +1019,10 @@
+ Final61distinctPASS/0unresolvedFAIL/0SKIP:52unit =29first +34affected -14overlap +3unsafe-recovery;9real distinct =4remediation/insufficient +3MCP(runtime valid,invalid,prewrite dependency) +2existing owner/source/version/replay cases. Initial real6PASS/3FAIL68.73s; corrected real5PASS/1road-fixtureFAIL49.00s; final road1PASS7.11s. Unit29PASS0.86s,34PASS0.82s,3PASS0.81s. Historical failures retained; source metadata refined truthfully and explicit road fixture topology added, no guard weakening. Both SPEC validatorsPASS once via make test-spec after final source/schema edits. Six provider interlock proofs0external/0unexpected. Scripted model and injected errors clearly distinguished from real SDK/FalkorDB/MCP/LangGraph/Saver. No full suites, paid smoke, container lifecycle or retained canonical source setup. Exact commands/raw outputs/deduplicated summary: docs/evidence/B12R-COMMANDS.md/B12R-test-summary.json.
+ 
+ Review docs/evidence/B12R-RESULTS.md, B12R-COMMANDS.md, B12R-FILES.md and B12R-changes.patch. Human: inspect3category gates/citations, actual native receipt/hash/checkpoint, safe invalid/recovery feedback and zero operational deltas. STOP for review; exact next task B13 only after explicit authorization.
++
++
++## B12-R2 corrective review gate | 2026-10-18
++
++Exact minimal run: unit16PASS0.98s (6new commit/replay/feedback branches +10existing affected recovery cases). Initial actual mismatch+one existing healthy ack-loss replay:1PASS/1newtest-assertionFAIL20.21s,0SKIP. Actual recovery occurred; end-anchored pytest regex failed on LangGraph task note. Only test matcher corrected, then only mismatch case in a fresh isolated graph1PASS12.21s. No retry/reset/clearance of earlier fault graph. Final18distinctPASS/0unresolvedFAIL/0SKIP. Both validatorsPASS once via make test-spec after final source edits. Three inherited pytest/child provider guard proofs0external Gemini/countTokens/0unexpected. No full/remedial/live/lifecycle runs. Scripted model and injected ACK mismatch clearly distinguished from actual SDK/DB/MCP/LangGraph/Saver/native write/quarantine. Exact commands/raw logs: docs/evidence/B12R2-COMMANDS.md.
++
++Review docs/evidence/B12R2-RESULTS.md, B12R2-COMMANDS.md, B12R2-postcommit-recovery.json, B12R2-FILES.md and B12R2-changes.patch. Human verification: inspect exact identities,1plan/version1, UNKNOWN/recovery diagnostic, last durable checkpoint with no false acknowledgment and retained quarantine. Reproduce only the isolated mismatch test; no reset/retry of stored fault wake. STOP for review; B13 requires explicit authorization.
+--- /dev/null
++++ b/backend/tests/integration/test_planning_postcommit_recovery.py
+@@ -0,0 +1,72 @@
++"""B12-R2 actual commit/MCP/Saver/quarantine, with an injected ACK-only mismatch."""
++import asyncio,copy,json
++from pathlib import Path
++from uuid import uuid4
++import pytest
++from app.active import active_scope
++from app.agents.mcp import brokers
++from app.agents.runtime import InvestigationAgent
++from app.agents.models import InvestigationState
++from app.agents.checkpoints import saver,RecoveryRequired
++from app.agents.control import identity
++from app.graph.models import digest
++from app.services.evidence.reader import Reader
++from app.services.planning.feedback import feedback
++from tests.b10_fixtures import ScriptedModel,choose
++from tests.b12_fixtures import prepared
++from tests.integration.test_memory_graphrag import memory
++pytestmark=pytest.mark.integration
++
++def test_actual_postcommit_mismatch_retains_plan_and_quarantines(db,tmp_path,memory,monkeypatch):
++ p,r,clock,path,inv,draft,service=prepared(db,tmp_path,memory,'WATERLOGGING')
++ original_get=service.store.get;readbacks=[]
++ def mismatch(id):
++  saved=original_get(id);readbacks.append(id)
++  damaged_ack=copy.deepcopy(saved);damaged_ack['receipt']['plan_hash']='0'*64
++  return damaged_ack  # Only the acknowledgment is altered; actual stored data stays intact.
++ monkeypatch.setattr(service.store,'get',mismatch)
++ async def run():
++  with active_scope(p):
++   async with brokers(p,path,timeout=10) as tools:
++    bound=Reader(r,clock()).edges('INVESTIGATES',source=inv)
++    incidents=[e.target for e in bound if r.get_node(e.target).kind=='Incident']
++    cluster=next(e.target for e in bound if r.get_node(e.target).kind=='ProblemCluster')
++    thread=uuid4().hex;request=identity('PLANREQ',thread,2,0)
++    state=InvestigationState(graph=p.graph,investigation_id=inv,thread_id=thread,problem_cluster_id=cluster,discovered_tool_names=[t['name'] for t in tools.catalog()],incident_ids=incidents,asset_ids=['D1'],issue='WATERLOGGING',graph_revision=r._read("MATCH (g:CivicSchemaMigration {id:'0001'}) RETURN g.repo_revision")[0][0],inventory_hash=tools.inventory_hash,as_of=clock(),hypotheses=[b.hypothesis_id for b in draft.basis])
++    actions=[choose('READ',{'template':'node','id':'D1'},'official::query_graph_readonly'),choose('RECOMMEND',{'plan_draft':draft.model_dump(mode='json')},summary='Authored deterministic B12R2 commit verification regression')]
++    agent=InvestigationAgent(p,r,tools,ScriptedModel(actions),saver(p),clock=clock,planning_service=service)
++    with pytest.raises(RecoveryRequired,match='^PLAN_OPERATOR_RECOVERY_REQUIRED') as caught:await agent.run(state,thread_id=thread)
++    assert str(caught.value)=='PLAN_OPERATOR_RECOVERY_REQUIRED'
++    context=caught.value.reconciliation
++    assert context=={'graph':p.graph,'request_id':request,'investigation_id':inv,'plan_id':readbacks[0],'expected_version':1,'expected_plan_hash':draft.content_hash,'stage':'ACKNOWLEDGMENT_VERIFICATION'}
++    assert len(readbacks)==1
++    assert r._read('MATCH (p:ResolutionPlan) RETURN p.id,p.version,p.plan_hash')==[[context['plan_id'],1,draft.content_hash]]
++    assert r._read('MATCH (d:CivicPlanDraft) RETURN d.id,d.request_id,d.investigation_id,d.version')==[[context['plan_id'],request,inv,1]]
++    # Read-only supported integrity inspection; never call create/replay/resume or clear quarantine.
++    saved=original_get(context['plan_id']);assert saved['receipt']['plan_hash']==draft.content_hash and saved['request_id']==request
++    before_hash=digest(saved)
++    checkpoint=saver(p).get_tuple({'configurable':{'thread_id':thread}})
++    durable=checkpoint.checkpoint['channel_values']['data']
++    assert durable['selection']['action']=='RECOMMEND' and durable['iterations']==2 and durable['wakes']==0
++    assert durable['current_plan_id'] is None and durable['planning_feedback'] is None
++    assert durable['pause_reason']!='PLAN_CLARIFICATION_REQUIRED'
++    assert all(o.get('operation') not in {'PLAN_DRAFT_REJECTED','PLAN_DRAFTED'} for o in durable['observations'])
++    assert 'PLAN_DRAFT_REJECTED' not in durable['errors']
++    selected=agent.control.selected(identity('DEC',thread,2,0))[0]
++    assert selected.arguments['plan_draft']==draft.model_dump(mode='json')
++    key='civicly:b10:'+p.graph+':'+digest(thread)+':quarantine'
++    assert db.connection.get(key)
++    diagnostic=feedback(caught.value).model_dump(mode='json')
++    assert diagnostic['draft_committed']=='UNKNOWN' and diagnostic['resolution']=='OPERATOR_RECOVERY'
++    assert digest(original_get(context['plan_id']))==before_hash
++    assert r._read('MATCH (p:ResolutionPlan) RETURN count(p),max(p.version)')==[[1,1]]
++    assert db.connection.get(key)  # Deliberately retained for explicit operator reconciliation.
++    proof={'mode':'SCRIPTED_MODEL_REAL_FALKORDB_B11_MCP_LANGGRAPH_SAVER','fault':'ACK-only mismatched plan hash after real commit; stored payload never corrupted',
++     'runtime_error':str(caught.value),'reconciliation':context,'thread_id':thread,'last_durable_checkpoint_id':checkpoint.config['configurable']['checkpoint_id'],
++     'last_durable_current_plan_id':durable['current_plan_id'],'last_durable_planning_feedback':durable['planning_feedback'],
++     'false_rejection_emitted':False,'safe_receipt_emitted':False,'operator_diagnostic_not_checkpoint_ack':diagnostic,
++     'stored_receipt_read_only_verified':saved['receipt'],'stored_request_id':saved['request_id'],'stored_payload_unchanged_sha256':before_hash,
++     'plan_count':1,'maximum_version':1,'quarantine_retained':True,'wake_retry_or_replay_performed':False,'provider_calls':0,
++     'remaining_operator_steps':'Stop old process/confirm ownership; inspect original request, decision, companion/hash/native plan and pending write; reconcile last checkpoint via existing reviewed recovery procedure. No automatic reset or quarantine clearance.'}
++    Path('docs/evidence/B12R2-postcommit-recovery.json').write_text(json.dumps(proof,indent=2)+'\n')
++ asyncio.run(run())
+--- /dev/null
++++ b/backend/tests/unit/test_planning_commit_recovery.py
+@@ -0,0 +1,55 @@
++"""B12-R2 pure fault classification; no database success claimed by these tests."""
++import asyncio,json
++from types import SimpleNamespace
++import pytest
++from pydantic import ValidationError
++from app.services.planning.service import PlanRecoveryRequired,PlanningBlocked,PlanningService
++from app.services.planning.feedback import feedback
++from app.services.planning.models import PlanDraft,PlanReceipt
++from app.services.evidence.models import Actor
++from app.agents.checkpoints import RecoveryRequired
++from app.agents.models import InvestigationState,Selection
++from app.agents.runtime import InvestigationAgent
++from tests.b12_fixtures import sample
++
++def failure(stage='ACKNOWLEDGMENT_VERIFICATION'):
++ return PlanRecoveryRequired(graph='civicly_b10_test_'+'a'*32,request_id='request-original',investigation_id='INV',plan_id='PLAN-original',version=1,plan_hash='a'*64,stage=stage)
++
++@pytest.mark.parametrize('error',[failure(),PlanningBlocked('PLAN_READBACK')])
++def test_commit_verification_never_reports_uncommitted(error):
++ f=feedback(error)
++ assert f.draft_committed=='UNKNOWN' and f.resolution=='OPERATOR_RECOVERY' and f.category=='RECOVERY'
++ assert not f.task_ids and not f.field_paths
++
++def test_prewrite_validation_stays_actionable_and_uncommitted():
++ f=feedback(PlanningBlocked('OWNERSHIP_UNKNOWN_OR_CONFLICTING',task_id='inspect'))
++ assert f.draft_committed=='NO' and f.category=='OWNERSHIP' and f.task_ids==['inspect']
++ v=sample();v['tasks'][0]['action_type']='PASSWORD=DO_NOT_ECHO'
++ with pytest.raises(ValidationError) as caught:PlanDraft.model_validate(v)
++ f=feedback(caught.value)
++ assert f.draft_committed=='NO' and f.code=='PLAN_ACTION_UNSUPPORTED' and 'PASSWORD' not in f.model_dump_json()
++
++def test_runtime_preserves_reconciliation_identity_without_rejection():
++ error=failure()
++ class FailedService:
++  async def create(self,*args,**kwargs):raise error
++ state=InvestigationState(graph='g',investigation_id='INV',thread_id='T',problem_cluster_id='PC',incident_ids=['I'],asset_ids=['D1'],issue='WATERLOGGING',graph_revision=0,inventory_hash='h',as_of='2026-10-18T00:00:00Z',selection=Selection(action='RECOMMEND',summary='Authored test proposal',tool_name='',arguments_json=json.dumps({'plan_draft':sample()}),pause_reason='NONE'))
++ agent=object.__new__(InvestigationAgent);agent.decode=lambda channel:state;agent.planning_service=FailedService();agent.check=lambda:None
++ with pytest.raises(RecoveryRequired,match='^PLAN_OPERATOR_RECOVERY_REQUIRED$') as caught:asyncio.run(agent.planner({}))
++ assert caught.value.reconciliation==error.reconciliation
++ assert state.current_plan_id is None and not state.observations and state.planning_feedback is None
++
++@pytest.mark.parametrize('shape',['pydantic','missing'])
++def test_saved_replay_verification_fault_is_recovery(shape):
++ """Stub only the existing-row read to test adjacent pre-return classification."""
++ from contextlib import nullcontext
++ v=sample();draft=PlanDraft.model_validate(v)
++ class BrokenStore:
++  def get(self,id):
++   if shape=='missing':return None
++   # Represents storage corruption/validation, not an invalid incoming model draft.
++   return {'receipt':{'credential':'DO_NOT_ECHO'}}
++ service=object.__new__(PlanningService);service.repo=SimpleNamespace(graph=SimpleNamespace(name='civicly_b10_test_'+'a'*32),_session=lambda:nullcontext(None),_read=lambda *args:[['PLAN-original']]);service.store=BrokenStore();service.clock=lambda:'2026-10-18T12:00:00Z'
++ with pytest.raises(PlanRecoveryRequired) as caught:asyncio.run(service.create(draft,request_id='request-original',actor=Actor(id='analyst',role='ANALYST')))
++ assert caught.value.reconciliation['plan_id']=='PLAN-original' and caught.value.reconciliation['stage']=='REPLAY_VERIFICATION'
++ assert 'DO_NOT_ECHO' not in str(caught.value) and feedback(caught.value).draft_committed=='UNKNOWN'

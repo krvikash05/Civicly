@@ -1,0 +1,65 @@
+# B20-R-UTILITY changed-file inventory
+
+Baseline is the pre-UTILITY snapshot of1642 public files, including previously accepted uncommitted work; patch excludes that earlier Git diff. No Git commit/push performed. No frontend edits or execution.
+
+- `backend/OPERATIONS.md` — modified; closed policy, schema, procedure, operator guidance or focused test.
+- `backend/PLANNING.md` — modified; closed policy, schema, procedure, operator guidance or focused test.
+- `backend/UTILITY.md` — created; closed policy, schema, procedure, operator guidance or focused test.
+- `backend/app/services/operations/execution.py` — modified; closed policy, schema, procedure, operator guidance or focused test.
+- `backend/app/services/operations/service.py` — modified; closed policy, schema, procedure, operator guidance or focused test.
+- `backend/app/services/operations/utility.py` — created; closed policy, schema, procedure, operator guidance or focused test.
+- `backend/app/services/planning/models.py` — modified; closed policy, schema, procedure, operator guidance or focused test.
+- `backend/app/services/planning/policy.py` — modified; closed policy, schema, procedure, operator guidance or focused test.
+- `backend/app/services/planning/utility.py` — created; closed policy, schema, procedure, operator guidance or focused test.
+- `backend/tests/integration/test_utility_intervention_runtime.py` — created; closed policy, schema, procedure, operator guidance or focused test.
+- `backend/tests/unit/test_utility_intervention.py` — created; closed policy, schema, procedure, operator guidance or focused test.
+- `blockers.md` — modified; append-only engineering audit/status.
+- `contracts/api_models.json` — modified; closed policy, schema, procedure, operator guidance or focused test.
+- `contracts/operations.json` — modified; closed policy, schema, procedure, operator guidance or focused test.
+- `contracts/resolution_planning.json` — modified; closed policy, schema, procedure, operator guidance or focused test.
+- `data/documents/b20r_utility/D022_utility_isolation_repair.md` — created; closed policy, schema, procedure, operator guidance or focused test.
+- `data/documents/b20r_utility/manifest.json` — created; closed policy, schema, procedure, operator guidance or focused test.
+- `decision.md` — modified; append-only engineering audit/status.
+- `docs/evidence/B20R-UTILITY-COMMANDS.md` — created; sanitized review evidence.
+- `docs/evidence/B20R-UTILITY-DESIGN.md` — created; sanitized review evidence.
+- `docs/evidence/B20R-UTILITY-RESULTS.md` — created; sanitized review evidence.
+- `docs/evidence/B20R-UTILITY-WALKTHROUGH.md` — created; sanitized review evidence.
+- `docs/evidence/B20R-UTILITY-audit-final.txt` — created; sanitized review evidence.
+- `docs/evidence/B20R-UTILITY-audit-script.py` — created; sanitized review evidence.
+- `docs/evidence/B20R-UTILITY-audit-zero-live.json` — created; sanitized review evidence.
+- `docs/evidence/B20R-UTILITY-audit.json` — created; sanitized review evidence.
+- `docs/evidence/B20R-UTILITY-audit.txt` — created; sanitized review evidence.
+- `docs/evidence/B20R-UTILITY-changes.patch` — created; sanitized review evidence.
+- `docs/evidence/B20R-UTILITY-final-units-zero-live.json` — created; sanitized review evidence.
+- `docs/evidence/B20R-UTILITY-final-units.txt` — created; sanitized review evidence.
+- `docs/evidence/B20R-UTILITY-focused-compat-zero-live.json` — created; sanitized review evidence.
+- `docs/evidence/B20R-UTILITY-focused-compat.txt` — created; sanitized review evidence.
+- `docs/evidence/B20R-UTILITY-negative-proof.json` — created; sanitized review evidence.
+- `docs/evidence/B20R-UTILITY-primary-first-passing-proof.json` — created; sanitized review evidence.
+- `docs/evidence/B20R-UTILITY-primary-proof.json` — created; sanitized review evidence.
+- `docs/evidence/B20R-UTILITY-real-final-zero-live.json` — created; sanitized review evidence.
+- `docs/evidence/B20R-UTILITY-real-final.txt` — created; sanitized review evidence.
+- `docs/evidence/B20R-UTILITY-real-fourth-zero-live.json` — created; sanitized review evidence.
+- `docs/evidence/B20R-UTILITY-real-fourth.txt` — created; sanitized review evidence.
+- `docs/evidence/B20R-UTILITY-real-initial-zero-live.json` — created; sanitized review evidence.
+- `docs/evidence/B20R-UTILITY-real-initial.txt` — created; sanitized review evidence.
+- `docs/evidence/B20R-UTILITY-real-second-zero-live.json` — created; sanitized review evidence.
+- `docs/evidence/B20R-UTILITY-real-second.txt` — created; sanitized review evidence.
+- `docs/evidence/B20R-UTILITY-real-third-zero-live.json` — created; sanitized review evidence.
+- `docs/evidence/B20R-UTILITY-real-third.txt` — created; sanitized review evidence.
+- `docs/evidence/B20R-UTILITY-spec-zero-live.json` — created; sanitized review evidence.
+- `docs/evidence/B20R-UTILITY-spec.txt` — created; sanitized review evidence.
+- `docs/evidence/B20R-UTILITY-units-initial-zero-live.json` — created; sanitized review evidence.
+- `docs/evidence/B20R-UTILITY-units-initial.txt` — created; sanitized review evidence.
+- `docs/evidence/B20R-UTILITY-units-second-zero-live.json` — created; sanitized review evidence.
+- `docs/evidence/B20R-UTILITY-units-second.txt` — created; sanitized review evidence.
+- `docs/evidence/B20R-UTILITY-units-third-zero-live.json` — created; sanitized review evidence.
+- `docs/evidence/B20R-UTILITY-units-third.txt` — created; sanitized review evidence.
+- `flow.md` — modified; append-only engineering audit/status.
+- `implementation_status.md` — modified; append-only engineering audit/status.
+- `scripts/validate_operations.py` — modified; closed policy, schema, procedure, operator guidance or focused test.
+- `scripts/validate_planning.py` — modified; closed policy, schema, procedure, operator guidance or focused test.
+- `task_board.md` — modified; append-only engineering audit/status.
+- `test_log.md` — modified; append-only engineering audit/status.
+
+Patch includes code/contracts/guidance/trackers and main evidence Markdown; raw runtime JSON/logs/provider proofs are separate artifacts and listed above. Historical source files, tests, migrations and evidence remain unchanged. Dependencies excluded: existing backend/.venv, Docker images/database volumes, .env, private runtime profiles/auth/session stores and retained DB contents. No dependency versions changed.

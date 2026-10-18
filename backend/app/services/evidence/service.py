@@ -299,7 +299,7 @@ class EvidenceService:
         if final != 'UNDER_REVIEW':
             sequence.append(transition('Hypothesis', 'UNDER_REVIEW', final))
         id = stable('ASSESS', q.hypothesis_id, q.request_id)
-        return Assessment(format_version=2, rule_version=2, classification=classification, id=id, hypothesis_id=h.id, previous_assessment_id=history[-1].id if history else None,
+        return Assessment(format_version=2, rule_version=3 if __import__('app.services.service_evidence',fromlist=['policy_required']).policy_required(self.repo,definition.investigation_id) and issue=='WASTE_ACCUMULATION' and definition.cause_code in {'MISSED_PICKUP','ILLEGAL_DUMPING'} else 2, classification=classification, id=id, hypothesis_id=h.id, previous_assessment_id=history[-1].id if history else None,
             assessment=label, cause_code=definition.cause_code, mechanism=definition.mechanism,
             confirming_codes=definition.confirming_codes, falsifying_codes=definition.falsifying_codes,
             supporting_evidence_ids=support, contradicting_evidence_ids=contradiction, evidence_references=refs,
@@ -307,7 +307,7 @@ class EvidenceService:
             source_graph_revision=revision, graph_revision=revision+1, as_of=q.as_of, assessed_at=now,
             paths=paths, path_ids=pathids, truncated=truncated, state_transitions=sequence,
             reservations=['Observed findings and connectivity are distinct from causal criteria.',
-                'Verification uses explicit reviewed synthetic-domain rulev2 with per-occurrence coverage; not hydraulic prediction or resolution verification.',
+                'Verification uses versioned reviewed synthetic-domain criteria with per-occurrence coverage; rule3 service/ordering requires bound dated execution. Not prediction or resolution verification.',
                 'Attribution-based independence is a conservative demo rule, not proof against colluding sources.',
                 'Current versions only; future-updated evidence excluded, historical source versions not reconstructed.'])
 

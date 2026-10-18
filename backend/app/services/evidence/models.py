@@ -232,7 +232,7 @@ class Assessment(Model):
     hypothesis_id: ID
     previous_assessment_id: ID | None
     assessment: Literal['POSSIBLE', 'SUPPORTED', 'CONTRADICTED', 'VERIFIED', 'INCONCLUSIVE']
-    rule_version: Literal[1, 2] = 1
+    rule_version: Literal[1, 2, 3] = 1
     classification: EvidenceClassification | None = Field(default=None, exclude_if=lambda value: value is None)
     cause_code: ID
     mechanism: Text
@@ -258,8 +258,10 @@ class Assessment(Model):
 
     @model_validator(mode='after')
     def semantic_version(self):
-        if self.rule_version != self.format_version or (self.format_version == 2) != (self.classification is not None):
+        if (self.rule_version not in ({2,3} if self.format_version==2 else {1})) or (self.format_version == 2) != (self.classification is not None):
             raise ValueError('Assessment semantic version mismatch')
+        if self.rule_version==3 and self.cause_code not in {'MISSED_PICKUP','ILLEGAL_DUMPING'}:
+            raise ValueError('Service rule3 cause scope mismatch')
         if self.classification and (self.supporting_evidence_ids != self.classification.reviewed_support_ids
                 or self.contradicting_evidence_ids != self.classification.reviewed_contradiction_ids
                 or self.excluded_evidence_ids != self.classification.excluded_evidence_ids):

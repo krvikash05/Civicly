@@ -1,0 +1,182 @@
+[
+  {
+    "path": "/api/v1/dashboard/summary",
+    "status": 200,
+    "data": {
+      "active_incidents": 5,
+      "active_clusters": 5,
+      "pending_approvals": 0,
+      "completed_work_orders": 0,
+      "verified_work_orders": 0,
+      "issue_counts": {
+        "WATERLOGGING": 1,
+        "ROAD_DAMAGE": 2,
+        "WASTE_ACCUMULATION": 2
+      },
+      "graph_revision": 263,
+      "as_of": "2026-10-18T15:10:01.235Z",
+      "definitions": [
+        "Active incidents exclude ENDED; active clusters exclude CONTROLLED",
+        "Active investigations exclude COMPLETED and CANCELLED; recurrence counts are recorded RECURRENT clusters per issue, including history",
+        "open_clusters aliases active_clusters; neither counts CONTROLLED clusters",
+        "Pending approvals have native PENDING status",
+        "Completed work is independent of latest evidence-backed RESOLUTION_VERIFIED outcome"
+      ],
+      "limitations": [
+        "Current projection, not a historical snapshot; intervening writes can change later pages",
+        "Bounded search; no result does not establish global absence"
+      ],
+      "open_clusters": 5,
+      "active_investigations": 5,
+      "recurrence_counts": {
+        "WATERLOGGING": 0,
+        "ROAD_DAMAGE": 0,
+        "WASTE_ACCUMULATION": 0
+      },
+      "simulation_mode": true
+    }
+  },
+  {
+    "path": "/api/v1/investigations?issue=WATERLOGGING",
+    "status": 200,
+    "data": {
+      "items": [
+        {
+          "id": "INV-B09-8b006fb97aa2b908fc69addcf7ecd037",
+          "expected_hash": "db67d2b5ac0c2453d3b4b7ef0f9d0fb2217fc491f23df740a606bc39a79a8071",
+          "simulated": true,
+          "status": "OPEN",
+          "incident_ids": [
+            "INC-B08-deb500b2c98d7efee3c755ea6a317589"
+          ],
+          "historical_incident_ids": [],
+          "problem_cluster_id": "PC-B08-e05a65f1899a2b545765090629fe1a61",
+          "current_agent_role": null,
+          "active_hypothesis_ids": [
+            "HYP-B09-67069586a2c59c991ee97a506c861caf",
+            "HYP-B09-e816856dd2ff1f7f817e573fe26215a6"
+          ],
+          "pending_inspection_ids": [],
+          "current_plan_id": "PLAN-B12-da6d426cc7a42982a3dac6c8a76af2a6",
+          "next_action": "DURABLE_WORKER_OR_HUMAN_REVIEW",
+          "graph_revision": 263,
+          "runtime_status": "DETERMINISTIC_DEVELOPMENT_ONLY_NO_LIVE_AUTHORIZATION"
+        }
+      ],
+      "next_cursor": null,
+      "total_count": 1,
+      "limitations": [
+        "Current projection, not a historical snapshot; intervening writes can change later pages",
+        "Bounded search; no result does not establish global absence"
+      ],
+      "truncated": false
+    }
+  },
+  {
+    "path": "/api/v1/investigations?issue=ROAD_DAMAGE",
+    "status": 200,
+    "data": {
+      "items": [
+        {
+          "id": "INV-B09-9d231c8718136a90974e19c6c9a77c47",
+          "expected_hash": "f91ec43af294a8f82df799f7efdf158d3e288709c2872fe76ce98f7f94b6aed1",
+          "simulated": true,
+          "status": "OPEN",
+          "incident_ids": [
+            "INC-B08-fe8695bcfe14451423ab395c971c684c"
+          ],
+          "historical_incident_ids": [],
+          "problem_cluster_id": "PC-B08-03e311359fa9a2c374203e4131b82aa0",
+          "current_agent_role": null,
+          "active_hypothesis_ids": [],
+          "pending_inspection_ids": [],
+          "current_plan_id": null,
+          "next_action": "DURABLE_WORKER_OR_HUMAN_REVIEW",
+          "graph_revision": 263,
+          "runtime_status": "DETERMINISTIC_DEVELOPMENT_ONLY_NO_LIVE_AUTHORIZATION"
+        },
+        {
+          "id": "INV-B09-b9d4d66e130ed348c4f6a50e9d66a891",
+          "expected_hash": "3fec1465c51a5dc5c6333d0ff25b88525c61724727c646d21136ef0928631247",
+          "simulated": true,
+          "status": "OPEN",
+          "incident_ids": [
+            "INC-B08-27a2cb5d89ae9ab9d86f999cf7b50472"
+          ],
+          "historical_incident_ids": [],
+          "problem_cluster_id": "PC-B08-4b88ee3a9bbca9d7acbde27e150f7e55",
+          "current_agent_role": null,
+          "active_hypothesis_ids": [
+            "HYP-B09-a15ee19ac01f02a6b6a3622d8f08df5d",
+            "HYP-B09-141618e9674e96533d1d680ab206832c"
+          ],
+          "pending_inspection_ids": [
+            "INS-B09-8462294209d208a3c7434406e1aa5c3f"
+          ],
+          "current_plan_id": null,
+          "next_action": "DURABLE_WORKER_OR_HUMAN_REVIEW",
+          "graph_revision": 263,
+          "runtime_status": "DETERMINISTIC_DEVELOPMENT_ONLY_NO_LIVE_AUTHORIZATION"
+        }
+      ],
+      "next_cursor": null,
+      "total_count": 2,
+      "limitations": [
+        "Current projection, not a historical snapshot; intervening writes can change later pages",
+        "Bounded search; no result does not establish global absence"
+      ],
+      "truncated": false
+    }
+  },
+  {
+    "path": "/api/v1/investigations?issue=WASTE_ACCUMULATION",
+    "status": 200,
+    "data": {
+      "items": [
+        {
+          "id": "INV-B09-917765cbf8fef632bd0459640c64f26f",
+          "expected_hash": "1e5f937b16e6a6da14ade409e527cac851f45ef7aca16ce32929143163e5e27b",
+          "simulated": true,
+          "status": "OPEN",
+          "incident_ids": [
+            "INC-B08-15be20bb22891a2b4177fee41f67c08f"
+          ],
+          "historical_incident_ids": [],
+          "problem_cluster_id": "PC-B08-47923a05dcb1434c75d61d8dd424a0b8",
+          "current_agent_role": null,
+          "active_hypothesis_ids": [],
+          "pending_inspection_ids": [],
+          "current_plan_id": null,
+          "next_action": "DURABLE_WORKER_OR_HUMAN_REVIEW",
+          "graph_revision": 263,
+          "runtime_status": "DETERMINISTIC_DEVELOPMENT_ONLY_NO_LIVE_AUTHORIZATION"
+        },
+        {
+          "id": "INV-B09-a2fe3dbdecd03984033026c4d0856295",
+          "expected_hash": "2fc39773b45f8f6cf131e34b9b9709608721e2021afb8f5c534c723f795f1b0e",
+          "simulated": true,
+          "status": "OPEN",
+          "incident_ids": [
+            "INC-B08-45b09d54102af55ba6787b8ba199f8d2"
+          ],
+          "historical_incident_ids": [],
+          "problem_cluster_id": "PC-B08-99089bf66c040924e06ad0504a3782a9",
+          "current_agent_role": null,
+          "active_hypothesis_ids": [],
+          "pending_inspection_ids": [],
+          "current_plan_id": null,
+          "next_action": "DURABLE_WORKER_OR_HUMAN_REVIEW",
+          "graph_revision": 263,
+          "runtime_status": "DETERMINISTIC_DEVELOPMENT_ONLY_NO_LIVE_AUTHORIZATION"
+        }
+      ],
+      "next_cursor": null,
+      "total_count": 2,
+      "limitations": [
+        "Current projection, not a historical snapshot; intervening writes can change later pages",
+        "Bounded search; no result does not establish global absence"
+      ],
+      "truncated": false
+    }
+  }
+]

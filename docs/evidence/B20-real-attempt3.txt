@@ -1,0 +1,81 @@
+............F
+=================================== FAILURES ===================================
+____________ test_supported_action_and_stale_citation_real_boundary ____________
+
+shared = namespace(db=<falkordb.falkordb.FalkorDB object at 0x10a2e3890>, p=ActiveProfile(version=1, graph='civicly_b10_test_c7...ew/b0228905ff6f4ef0ba04da460d3fcbaa/memory.json'), memory=<app.memory.service.Memory object at 0x10b23c8c0>, proofs=[])
+
+    def test_supported_action_and_stale_citation_real_boundary(shared):
+     """Separate authored verified-owner control, not a promoted B19 scenario owner."""
+     from tests.b12_fixtures import prepared
+     directory=shared.directory/'positive-policy-control';directory.mkdir(mode=0o700)
+     p,r,clock,path,inv,draft,service=prepared(shared.db,directory,shared.memory,'WATERLOGGING',remedial=True)
+     async def run():
+      with active_scope(p):
+       invalid=draft.model_dump(mode='json');invalid['tasks'][0]['procedure_citation']['quote_excerpt']+=' B20 stale citation mismatch'
+       with pytest.raises(PlanningBlocked,match='PROCEDURE_STALE_REVOKED_OR_UNAVAILABLE'):await service.create(invalid,request_id='B20-stale-citation-control',actor=ANALYST)
+       assert r._read('MATCH (p:ResolutionPlan) RETURN count(p)')==[[0]]
+       receipt=await service.create(draft.model_dump(mode='json'),request_id='B20-valid-sourced-control',actor=ANALYST)
+       saved=service.store.get(receipt.id);proof=saved['proof']['tasks']['remedy']
+       assert proof['owners'][0]['department_id']=='DEPT-DRAIN' and proof['procedure_status']=='PROPOSED'
+       assert proof['remediation']['unmet_guards']==[] and not proof['remediation']['execution_authority']
+       again=await service.create(draft.model_dump(mode='json'),request_id='B20-valid-sourced-control',actor=ANALYST)
+       assert again==receipt and r._read('MATCH (p:ResolutionPlan) RETURN count(p)')==[[1]]
+       Path('docs/evidence/B20-planning-control.json').write_text(json.dumps({'mode':'REAL_DOMAIN_DB_SDK_AUTHORED_VERIFIED_OWNER_CONTROL_NOT_B19_SCENARIO_READINESS','graph':p.graph,'stale_citation_rejected_before_plan':True,'receipt':receipt.model_dump(mode='json'),'saved':saved,'idempotent_single_plan':True,'provider_requests':0},indent=2)+'\n')
+>    asyncio.run(run())
+
+backend/tests/integration/test_scenario_behavior.py:172: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/base_events.py:684: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+backend/tests/integration/test_scenario_behavior.py:163: in run
+    with pytest.raises(PlanningBlocked,match='PROCEDURE_STALE_REVOKED_OR_UNAVAILABLE'):await service.create(invalid,request_id='B20-stale-citation-control',actor=ANALYST)
+                                                                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <app.services.planning.service.PlanningService object at 0x10d060230>
+value = {'investigation_id': 'INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f', 'issue': 'WATERLOGGING', 'version': 1, 'previous_plan_id': None, ...}
+request_id = 'B20-stale-citation-control'
+actor = Actor(id='B20-explicit-evaluator', role='ANALYST', department_id=None)
+interrupt = None
+
+    async def create(self,value,*,request_id,actor,interrupt=None):
+     if not isinstance(actor,Actor) or actor.role not in {'ANALYST','ADMIN'}:raise PlanningBlocked('DRAFT_ROLE_DENIED')
+     if not isinstance(request_id,str) or not 1<=len(request_id)<=200:raise ValueError('REQUEST_ID')
+>    draft=PlanDraft.model_validate(value);at=self.clock();reader=Reader(self.repo,at)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E    pydantic_core._pydantic_core.ValidationError: 1 validation error for PlanDraft
+E    tasks.0.procedure_citation.quote_excerpt
+E      String should have at most 800 characters [type=string_too_long]
+E        For further information visit https://errors.pydantic.dev/2.14/v/string_too_long
+
+backend/app/services/planning/service.py:56: ValidationError
+------------------------------ Captured log call -------------------------------
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'text' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'name' is already indexed
+=============================== warnings summary ===============================
+backend/.venv/lib/python3.12/site-packages/graphrag_sdk/core/models.py:19
+  /Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/graphrag_sdk/core/models.py:19: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.14/migration/
+    class DataModel(BaseModel):
+
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyPacked has no __module__ attribute
+
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyObject has no __module__ attribute
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED backend/tests/integration/test_scenario_behavior.py::test_supported_action_and_stale_citation_real_boundary
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 12 passed, 3 warnings in 264.76s (0:04:24)
+sys:1: DeprecationWarning: builtin type swigvarlink has no __module__ attribute

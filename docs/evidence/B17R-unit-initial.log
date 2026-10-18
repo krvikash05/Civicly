@@ -1,0 +1,30 @@
+.....................................F.....................              [100%]
+=================================== FAILURES ===================================
+_ test_supported_queries_reach_projection_with_existing_types[list:Approval-query10-expected10] _
+
+transport = (<starlette.testclient.TestClient object at 0x108240f80>, [])
+name = 'list:Approval'
+query = {'limit': '2', 'status': 'OPEN', 'issue': 'WATERLOGGING', 'department_id': 'DEP', ...}
+expected = {'limit': 2, 'status': 'OPEN', 'issue': 'WATERLOGGING', 'department_id': 'DEP', ...}
+
+    @pytest.mark.parametrize('name,query,expected',[
+     ('hypotheses',{'limit':'1','cursor':'H1','status':'SUPPORTED'},{'limit':1,'cursor':'H1','status':'SUPPORTED'}),
+     ('dashboard',{'issue':'WATERLOGGING','status':'COMPLETED','department_id':'DEP','after':'2020-01-01T00:00:00Z','before':'2026-01-01T00:00:00Z'},{'issue':'WATERLOGGING','status':'COMPLETED','department_id':'DEP'}),
+     ('trace',{'limit':'1','status':'SUCCESS','after':'2020-01-01T00:00:00Z','before':'2026-01-01T00:00:00Z'},{'limit':1,'status':'SUCCESS','after':'2020-01-01T00:00:00Z','before':'2026-01-01T00:00:00Z'}),
+     ('map',{'limit':'2','cursor':'L1','investigation_id':'INV','issue':'WATERLOGGING'},{'limit':2,'cursor':'L1','investigation_id':'INV','issue':'WATERLOGGING'}),
+     ('graph',{'depth':'4','include_candidates':'true'},{'depth':4,'include_candidates':True}),
+     ('neighbors',{'depth':'1','include_candidates':'false'},{'depth':1,'include_candidates':False}),
+     ('asset',{},{}),
+     *[(name,{'limit':'2','status':'OPEN','issue':'WATERLOGGING','department_id':'DEP','after':'2020-01-01T00:00:00Z'},{'limit':2,'status':'OPEN','issue':'WATERLOGGING','department_id':'DEP','after':'2020-01-01T00:00:00Z'}) for name in VIEW_QUERY_FIELDS if name.startswith('list:')],
+    ])
+    def test_supported_queries_reach_projection_with_existing_types(transport,name,query,expected):
+     client,calls=transport
+     response=client.get('/api/v1'+PATHS[name].replace('{id}','INV'),params=query,headers={'Authorization':'Bearer unit-token'})
+>    assert response.status_code==409 and response.json()['error']['code']=='READ_CAPACITY'
+E    assert (403 == 409)
+E     +  where 403 = <Response [403 Forbidden]>.status_code
+
+backend/tests/unit/test_http_query_parameters.py:56: AssertionError
+=========================== short test summary info ============================
+FAILED backend/tests/unit/test_http_query_parameters.py::test_supported_queries_reach_projection_with_existing_types[list:Approval-query10-expected10]
+1 failed, 58 passed in 8.20s

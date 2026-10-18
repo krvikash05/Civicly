@@ -1,0 +1,451 @@
+{
+  "mode": "ANALYST_ASSISTED_DRAFT_AFTER_REAL_GEMINI_ASSESSMENT",
+  "case": "INV-B09-b9d4d66e130ed348c4f6a50e9d66a891",
+  "incident": "INC-B08-27a2cb5d89ae9ab9d86f999cf7b50472",
+  "plan": {
+    "task_bindings": [
+      {
+        "local_task_id": "isolate",
+        "task_id": "TASK-B12-8a158819baf845e296daf7a45a4e4065",
+        "action_type": "UTILITY_ISOLATION",
+        "target_ids": [
+          "PIPE-100"
+        ],
+        "department_id": "DEPT-WATER",
+        "depends_on_task_ids": [],
+        "status": "PROPOSED",
+        "expected_hash": "24ddaf4c8c831e09ddb55b178ec26173e09156143eb6eee02e58e3e98ea86e6a",
+        "eligible_assignee_ids": [
+          "OP-WATER-LEAD"
+        ]
+      },
+      {
+        "local_task_id": "repair",
+        "task_id": "TASK-B12-8b0208f48c4de3b290ac7a8a36e45040",
+        "action_type": "UTILITY_LEAK_REPAIR",
+        "target_ids": [
+          "PIPE-100"
+        ],
+        "department_id": "DEPT-WATER",
+        "depends_on_task_ids": [
+          "TASK-B12-8a158819baf845e296daf7a45a4e4065"
+        ],
+        "status": "PROPOSED",
+        "expected_hash": "e76f3da6521c74f6397138d4cc460830f3f639bf00ce0142277ab58f03400c19",
+        "eligible_assignee_ids": [
+          "OP-WATER-LEAD"
+        ]
+      },
+      {
+        "local_task_id": "road",
+        "task_id": "TASK-B12-cc5b217112ba51340a062ca9fb55853b",
+        "action_type": "SUBGRADE_REPAIR",
+        "target_ids": [
+          "ROAD-100"
+        ],
+        "department_id": "DEPT-ROAD",
+        "depends_on_task_ids": [
+          "TASK-B12-8b0208f48c4de3b290ac7a8a36e45040"
+        ],
+        "status": "PROPOSED",
+        "expected_hash": "be56ecb726e29706124360f340eebbe0b3457f24f4f1a78e9e4ddcc3fbb12355",
+        "eligible_assignee_ids": [
+          "OP-ROAD-LEAD"
+        ]
+      }
+    ],
+    "plan_id": "PLAN-B12-11e6b8d220e7923a715f5cc0a371b993",
+    "investigation_id": "INV-B09-b9d4d66e130ed348c4f6a50e9d66a891",
+    "version": 1,
+    "content_hash": "b0a730059b2339f87b24fa8434fe5f3706f9686d524ba47e746ee0c1f1c78c57",
+    "draft": {
+      "investigation_id": "INV-B09-b9d4d66e130ed348c4f6a50e9d66a891",
+      "issue": "ROAD_DAMAGE",
+      "version": 1,
+      "previous_plan_id": null,
+      "simulation_mode": "SIMULATED",
+      "basis": [
+        {
+          "hypothesis_id": "HYP-B09-141618e9674e96533d1d680ab206832c",
+          "assessment_id": "ASSESS-B09-6853d09ba8944a070b9436da50e3be5e",
+          "reason": "Reviewed bounded mechanism supports conditional simulated remedy",
+          "addressed": true
+        },
+        {
+          "hypothesis_id": "HYP-B09-a15ee19ac01f02a6b6a3622d8f08df5d",
+          "assessment_id": "ASSESS-B09-4f39568080e4693b9a4b905669e12e24",
+          "reason": "Reviewed bounded mechanism supports conditional simulated remedy",
+          "addressed": true
+        },
+        {
+          "hypothesis_id": "HYP-B09-f72432e37a00fd69fea67e309580dee3",
+          "assessment_id": "ASSESS-B09-d524946c92197691e8e834c72c1e377e",
+          "reason": "Retained uncertain extent does not authorize additional work",
+          "addressed": false
+        }
+      ],
+      "evidence_ids": [
+        "EV-REPORT-B09-35cf02584d74af6e00b814328db794da",
+        "EV-REPORT-B09-80a23b69f5d039c76abebaea7d31c8a6"
+      ],
+      "tasks": [
+        {
+          "id": "isolate",
+          "action_type": "UTILITY_ISOLATION",
+          "remediation": {
+            "mode": "SUPPORTED_NOW",
+            "conditions": [
+              {
+                "kind": "CAUSAL_INSPECTION",
+                "status": "MET",
+                "evidence_ids": [
+                  "EV-REPORT-B09-80a23b69f5d039c76abebaea7d31c8a6"
+                ],
+                "depends_on_task_id": null
+              },
+              {
+                "kind": "SAFETY_REVIEW",
+                "status": "MET",
+                "evidence_ids": [
+                  "EV-REPORT-B09-80a23b69f5d039c76abebaea7d31c8a6"
+                ],
+                "depends_on_task_id": null
+              }
+            ]
+          },
+          "target_ids": [
+            "PIPE-100"
+          ],
+          "department_id": "DEPT-WATER",
+          "priority": "HIGH",
+          "prerequisites": [
+            "Exact human approval and independently reviewed synthetic field evidence required"
+          ],
+          "depends_on": [],
+          "evidence_ids": [
+            "EV-REPORT-B09-80a23b69f5d039c76abebaea7d31c8a6"
+          ],
+          "assessment_ids": [
+            "ASSESS-B09-6853d09ba8944a070b9436da50e3be5e"
+          ],
+          "procedure_citation": {
+            "source_document_id": "D022",
+            "source_version": 1,
+            "canonical_document_id": "ORG:D022:1",
+            "owner_department_id": "DEPT-WATER",
+            "source_uri": "data/documents/b20r_utility/D022_utility_isolation_repair.md",
+            "content_checksum": "8a3cdb1a535051c9d5ebe8a295144b5c15599c4fb592ee2bfbb4b394aed8edb7",
+            "quote_excerpt": "# Synthetic utility isolation and leak repair proposal \u2014 D022 v1\n\nAuthor: Codex, B20-R-UTILITY synthetic demonstration author.\nReview: automated author self-review; not an independent engineering review.\nOwner: Water Utilities / DEPT-WATER. Canonical authority: PROPOSED.\nThis invented demo guidance is not a field operating procedure or permission to manipulate real water infrastructure.\n\nUTILITY_ISOLATION and UTILITY_LEAK_REPAIR are limited to the exact WaterPipe target. Reviewed pipe-targeted LEAK_DETECTED and INFILTRATION_AT_DAMAGE evidence and UTILITY_SAFETY_REVIEWED are required. Normal pressure/contradiction or proximity alone cannot justify either action. Acquire current VERIFIED responsibility with a separately authenticated analyst review. Exact plan approval, assigned departmental",
+            "passage_location": "chunk:0:3b4d8fc9-c459-438b-92b4-9af8be5bbd8f",
+            "chunk_sha256": "a5a0846a9b65127f5f90aa1b572d54c3087d4b20e9c2f38549401f007fd1248a",
+            "confidence_label": "SOURCE_REVIEWED_SYNTHETIC",
+            "assertion_status": "PROPOSED",
+            "retrieved_at": "2026-10-18T16:42:49.161Z",
+            "effective_from": "2026-10-18T00:00:00Z",
+            "derived_from": null,
+            "trusted_as_instructions": false
+          },
+          "expected_outcome": "Bounded simulated UTILITY_ISOLATION; completion alone does not establish case resolution",
+          "verification_criteria": "Independent reviewed post-work evidence and all typed dependency gates",
+          "risks": [
+            "Synthetic proposed procedure; unknown extent outside inspected footprint"
+          ]
+        },
+        {
+          "id": "repair",
+          "action_type": "UTILITY_LEAK_REPAIR",
+          "remediation": {
+            "mode": "CONDITIONAL",
+            "conditions": [
+              {
+                "kind": "CAUSAL_INSPECTION",
+                "status": "MET",
+                "evidence_ids": [
+                  "EV-REPORT-B09-80a23b69f5d039c76abebaea7d31c8a6"
+                ],
+                "depends_on_task_id": null
+              },
+              {
+                "kind": "ISOLATION_PROOF",
+                "status": "UNMET",
+                "evidence_ids": [],
+                "depends_on_task_id": "isolate"
+              },
+              {
+                "kind": "SAFETY_REVIEW",
+                "status": "MET",
+                "evidence_ids": [
+                  "EV-REPORT-B09-80a23b69f5d039c76abebaea7d31c8a6"
+                ],
+                "depends_on_task_id": null
+              }
+            ]
+          },
+          "target_ids": [
+            "PIPE-100"
+          ],
+          "department_id": "DEPT-WATER",
+          "priority": "HIGH",
+          "prerequisites": [
+            "Exact human approval and independently reviewed synthetic field evidence required"
+          ],
+          "depends_on": [
+            "isolate"
+          ],
+          "evidence_ids": [
+            "EV-REPORT-B09-80a23b69f5d039c76abebaea7d31c8a6"
+          ],
+          "assessment_ids": [
+            "ASSESS-B09-6853d09ba8944a070b9436da50e3be5e"
+          ],
+          "procedure_citation": {
+            "source_document_id": "D022",
+            "source_version": 1,
+            "canonical_document_id": "ORG:D022:1",
+            "owner_department_id": "DEPT-WATER",
+            "source_uri": "data/documents/b20r_utility/D022_utility_isolation_repair.md",
+            "content_checksum": "8a3cdb1a535051c9d5ebe8a295144b5c15599c4fb592ee2bfbb4b394aed8edb7",
+            "quote_excerpt": "# Synthetic utility isolation and leak repair proposal \u2014 D022 v1\n\nAuthor: Codex, B20-R-UTILITY synthetic demonstration author.\nReview: automated author self-review; not an independent engineering review.\nOwner: Water Utilities / DEPT-WATER. Canonical authority: PROPOSED.\nThis invented demo guidance is not a field operating procedure or permission to manipulate real water infrastructure.\n\nUTILITY_ISOLATION and UTILITY_LEAK_REPAIR are limited to the exact WaterPipe target. Reviewed pipe-targeted LEAK_DETECTED and INFILTRATION_AT_DAMAGE evidence and UTILITY_SAFETY_REVIEWED are required. Normal pressure/contradiction or proximity alone cannot justify either action. Acquire current VERIFIED responsibility with a separately authenticated analyst review. Exact plan approval, assigned departmental",
+            "passage_location": "chunk:0:3b4d8fc9-c459-438b-92b4-9af8be5bbd8f",
+            "chunk_sha256": "a5a0846a9b65127f5f90aa1b572d54c3087d4b20e9c2f38549401f007fd1248a",
+            "confidence_label": "SOURCE_REVIEWED_SYNTHETIC",
+            "assertion_status": "PROPOSED",
+            "retrieved_at": "2026-10-18T16:42:49.161Z",
+            "effective_from": "2026-10-18T00:00:00Z",
+            "derived_from": null,
+            "trusted_as_instructions": false
+          },
+          "expected_outcome": "Bounded simulated UTILITY_LEAK_REPAIR; completion alone does not establish case resolution",
+          "verification_criteria": "Independent reviewed post-work evidence and all typed dependency gates",
+          "risks": [
+            "Synthetic proposed procedure; unknown extent outside inspected footprint"
+          ]
+        },
+        {
+          "id": "road",
+          "action_type": "SUBGRADE_REPAIR",
+          "remediation": {
+            "mode": "CONDITIONAL",
+            "conditions": [
+              {
+                "kind": "CAUSAL_INSPECTION",
+                "status": "MET",
+                "evidence_ids": [
+                  "EV-REPORT-B09-35cf02584d74af6e00b814328db794da"
+                ],
+                "depends_on_task_id": null
+              },
+              {
+                "kind": "SAFETY_REVIEW",
+                "status": "MET",
+                "evidence_ids": [
+                  "EV-REPORT-B09-35cf02584d74af6e00b814328db794da"
+                ],
+                "depends_on_task_id": null
+              },
+              {
+                "kind": "UTILITY_VERIFICATION",
+                "status": "UNMET",
+                "evidence_ids": [],
+                "depends_on_task_id": "repair"
+              }
+            ]
+          },
+          "target_ids": [
+            "ROAD-100"
+          ],
+          "department_id": "DEPT-ROAD",
+          "priority": "HIGH",
+          "prerequisites": [
+            "Exact human approval and independently reviewed synthetic field evidence required"
+          ],
+          "depends_on": [
+            "repair"
+          ],
+          "evidence_ids": [
+            "EV-REPORT-B09-35cf02584d74af6e00b814328db794da"
+          ],
+          "assessment_ids": [
+            "ASSESS-B09-4f39568080e4693b9a4b905669e12e24"
+          ],
+          "procedure_citation": {
+            "source_document_id": "D020",
+            "source_version": 1,
+            "canonical_document_id": "ORG:D020:1",
+            "owner_department_id": "DEPT-ROAD",
+            "source_uri": "data/documents/b12r/D020_subgrade_repair.md",
+            "content_checksum": "71e327f8cebb886a6abf7cd21ccfbb0d7b341e8c453db914f1a7414b6d560de3",
+            "quote_excerpt": "# Synthetic demonstration subgrade repair proposal policy\n\nID: D020; version: 1; municipality: demo-city.\nAuthor: Codex B12-R AI-assisted synthetic policy author (newly authored demonstration).\nOwner: Road Maintenance (DEPT-ROAD). Effective: 2026-10-18T00:00:00Z.\nReview: automated author self-review for consistency of these demo guards only.\nReviewer: Codex B12-R automated self-review; no independent human review, government approval or recovered history.\nProcedure/assertion status: PROPOSED; source curation is not approved policy.\nAction applicability: SUBGRADE_REPAIR; target: road segment; cause: SUBGRADE_FAILURE.\n\nA latest addressed SUPPORTED or VERIFIED B09 assessment with reviewed physical supporting observations on each target may justify a qualified proposal. Reports, competing expl",
+            "passage_location": "chunk:0:4b748686-6b6f-4deb-bad9-d8d5f76c9b3f",
+            "chunk_sha256": "6c8afbfd152f39d2ffaaa6686748e06402d8112f7ba28502075713c9e6917c64",
+            "confidence_label": "SOURCE_REVIEWED_SYNTHETIC",
+            "assertion_status": "PROPOSED",
+            "retrieved_at": "2026-10-18T16:42:48.932Z",
+            "effective_from": "2026-10-18T00:00:00Z",
+            "derived_from": null,
+            "trusted_as_instructions": false
+          },
+          "expected_outcome": "Bounded simulated SUBGRADE_REPAIR; completion alone does not establish case resolution",
+          "verification_criteria": "Independent reviewed post-work evidence and all typed dependency gates",
+          "risks": [
+            "Synthetic proposed procedure; unknown extent outside inspected footprint"
+          ]
+        }
+      ],
+      "expected_outcomes": [
+        "Stop verified utility infiltration before repairing the inspected road footprint"
+      ],
+      "risks": [
+        "This is an explicitly synthetic demo, not actual field execution"
+      ],
+      "uncertainties": [
+        "Both causal assessments remain SUPPORTED, not independently VERIFIED; additional extent remains unresolved",
+        "Gemini reached its existing token budget; this draft is analyst-assisted, not an autonomous model recommendation"
+      ],
+      "monitoring": {
+        "issue": "ROAD_DAMAGE",
+        "required_evidence": [
+          "WEAR_EXPOSURE",
+          "FOLLOWUP_PAVEMENT"
+        ],
+        "observation_opportunity": "Explicit simulated wear exposure and independently reviewed pavement follow-up after completed work",
+        "verification_criteria": "Utility repair independently verified first; no adverse pavement finding following synthetic wear; all work completed; absent opportunity remains unresolved",
+        "missing_opportunity": "UNRESOLVED",
+        "completion_implies_resolution": false
+      }
+    },
+    "draft_receipt": {
+      "id": "PLAN-B12-11e6b8d220e7923a715f5cc0a371b993",
+      "version": 1,
+      "plan_hash": "b0a730059b2339f87b24fa8434fe5f3706f9686d524ba47e746ee0c1f1c78c57",
+      "status": "DRAFT",
+      "simulation_mode": "SIMULATED",
+      "approved": false,
+      "executable": false
+    },
+    "status": "DRAFT",
+    "expected_hash": "193eeb9d37768d3201a370689c17ac70804c8012fe9704937185ed0049cdc435",
+    "approval_status": null,
+    "execution_gates_verified": false,
+    "simulated": true,
+    "limitations": [
+      "Immutable draft receipt is not current execution authority",
+      "Approval does not prove all execution gates are satisfied",
+      "approval_status preserves the legacy plan lifecycle state; use ApprovalDTO.status for the approval decision"
+    ]
+  },
+  "binding": {
+    "plan_id": "PLAN-B12-11e6b8d220e7923a715f5cc0a371b993",
+    "plan_version": 1,
+    "plan_hash": "b0a730059b2339f87b24fa8434fe5f3706f9686d524ba47e746ee0c1f1c78c57",
+    "assignments": [
+      {
+        "task_id": "TASK-B12-8a158819baf845e296daf7a45a4e4065",
+        "action_type": "UTILITY_ISOLATION",
+        "target_ids": [
+          "PIPE-100"
+        ],
+        "department_id": "DEPT-WATER",
+        "assignee_id": "OP-WATER-LEAD"
+      },
+      {
+        "task_id": "TASK-B12-8b0208f48c4de3b290ac7a8a36e45040",
+        "action_type": "UTILITY_LEAK_REPAIR",
+        "target_ids": [
+          "PIPE-100"
+        ],
+        "department_id": "DEPT-WATER",
+        "assignee_id": "OP-WATER-LEAD"
+      },
+      {
+        "task_id": "TASK-B12-cc5b217112ba51340a062ca9fb55853b",
+        "action_type": "SUBGRADE_REPAIR",
+        "target_ids": [
+          "ROAD-100"
+        ],
+        "department_id": "DEPT-ROAD",
+        "assignee_id": "OP-ROAD-LEAD"
+      }
+    ]
+  },
+  "approval": {
+    "id": "APPROVAL-B13-12accc6ffea93c45460383ab00e4e7c1",
+    "expected_hash": "11c707392f228bf1306da9c60065cd010a7e7183546257621023d65cad92a753",
+    "simulated": true,
+    "plan_id": "PLAN-B12-11e6b8d220e7923a715f5cc0a371b993",
+    "plan_version": 1,
+    "plan_hash": "b0a730059b2339f87b24fa8434fe5f3706f9686d524ba47e746ee0c1f1c78c57",
+    "assignments": [
+      {
+        "task_id": "TASK-B12-8a158819baf845e296daf7a45a4e4065",
+        "action_type": "UTILITY_ISOLATION",
+        "target_ids": [
+          "PIPE-100"
+        ],
+        "department_id": "DEPT-WATER",
+        "assignee_id": "OP-WATER-LEAD"
+      },
+      {
+        "task_id": "TASK-B12-8b0208f48c4de3b290ac7a8a36e45040",
+        "action_type": "UTILITY_LEAK_REPAIR",
+        "target_ids": [
+          "PIPE-100"
+        ],
+        "department_id": "DEPT-WATER",
+        "assignee_id": "OP-WATER-LEAD"
+      },
+      {
+        "task_id": "TASK-B12-cc5b217112ba51340a062ca9fb55853b",
+        "action_type": "SUBGRADE_REPAIR",
+        "target_ids": [
+          "ROAD-100"
+        ],
+        "department_id": "DEPT-ROAD",
+        "assignee_id": "OP-ROAD-LEAD"
+      }
+    ],
+    "status": "PENDING",
+    "approved_by": null,
+    "requested_at": "2026-10-18T16:42:50.253Z",
+    "scope_hash": "5fff51af0138fcfa9c31e8a7bcea1b2c5b57379c6cd94e5716d4ca0e77e61071"
+  },
+  "calls": [
+    {
+      "method": "POST",
+      "path": "/investigations/INV-B09-b9d4d66e130ed348c4f6a50e9d66a891/hypotheses",
+      "operator": "OP-ANALYST",
+      "key": "retained-extent-alternative",
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/hypotheses/HYP-B09-f72432e37a00fd69fea67e309580dee3",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/investigations/INV-B09-b9d4d66e130ed348c4f6a50e9d66a891/hypotheses",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "POST",
+      "path": "/plans",
+      "operator": "OP-ANALYST",
+      "key": "draft-v1",
+      "http": 200
+    },
+    {
+      "method": "POST",
+      "path": "/plans/PLAN-B12-11e6b8d220e7923a715f5cc0a371b993/submit-approval",
+      "operator": "OP-ANALYST",
+      "key": "submit-v1",
+      "http": 200
+    }
+  ],
+  "human_approval_obtained": false,
+  "work_execution_performed": false
+}

@@ -1,0 +1,136 @@
+F.                                                                       [100%]
+=================================== FAILURES ===================================
+____________ test_s04_primary_utility_intervention_and_uncertainty _____________
+
+shared = namespace(db=<falkordb.falkordb.FalkorDB object at 0x11adb3dd0>, p=ActiveProfile(version=1, graph='civicly_b10_test_bc...ew/5152b0942d854ce09c2b7a195622c438/memory.json'), memory=<app.memory.service.Memory object at 0x11ae045c0>, proofs=[])
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x11b2612b0>
+
+    def test_s04_primary_utility_intervention_and_uncertainty(shared,monkeypatch):
+>    asyncio.run(journey(shared,'PRIMARY',monkeypatch))
+
+backend/tests/integration/test_utility_intervention_runtime.py:44: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/base_events.py:684: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+shared = namespace(db=<falkordb.falkordb.FalkorDB object at 0x11adb3dd0>, p=ActiveProfile(version=1, graph='civicly_b10_test_bc...ew/5152b0942d854ce09c2b7a195622c438/memory.json'), memory=<app.memory.service.Memory object at 0x11ae045c0>, proofs=[])
+variant = 'PRIMARY'
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x11b2612b0>
+
+    async def journey(shared,variant,monkeypatch):
+     receipt=await fresh(shared,'S04',variant,'B20RU-'+variant+'-setup');path=shared.path.parent/receipt['profile_reference']/'profile.json';p=load(path);case=receipt['scenario']['cases'][0]
+     async def release(c,s):
+      view,lead=await inspection(shared,c,case,'B20RU-'+variant+'-release')
+      response=await c.post('/api/v1/demo/scenarios/S04/advance',json={'expected_current_stage':'BASELINE_VISIBLE','stage':'EVIDENCE_REVEALED','investigation_id':case['investigation_id'],'inspection_id':view['id'],'expected_hash':view['expected_hash']},headers=headers(shared,key='B20RU-'+variant+'-release',field=lead,reviewer='OP-ANALYST'));assert response.status_code==200,response.json();return response.json()['data']['released_evidence_ids']
+     released=await client_run(shared,path,release)
+     clock=Clock();clock.value=datetime.fromisoformat(T0.replace('Z','+00:00'))
+     with active_scope(p):
+      r=GraphRepository(shared.db,p.graph);ev=EvidenceService(r,clock=clock);analyst=shared.auth.resolve(shared.tokens['OP-ANALYST']);lead=shared.auth.resolve(shared.tokens['OP-WATER-LEAD']);hyp={}
+      frozen={e.id:e.content_hash for e in r._edges('MAINTAINED_BY')};original_reports={id:r.get_node(id).content_hash for id in released}
+      for cause,target in [('UTILITY_LEAK','PIPE-100'),('SUBGRADE_FAILURE','ROAD-100')]:
+       rule=POLICIES['ROAD_DAMAGE'][cause]
+       q={'operation':'propose','request_id':'B20RU-'+variant+'-'+cause,'investigation_id':case['investigation_id'],'incident_ids':[case['incident_id']],'asset_ids':[target],'cause_code':cause,'statement':'Explicit synthetic competing mechanism '+cause,'mechanism':'Independently inspect the concerned asset; topology alone is not proof','confirming_codes':rule['confirming'],'falsifying_codes':rule['falsifying']}
+       if cause=='UTILITY_LEAK':q['topology']={'source_id':'PIPE-100','target_id':'ROAD-100','operation':'dependencies','max_hops':3}
+       hyp[cause]=ev.execute(q,analyst).entity_id
+      if variant=='NEGATIVE':
+       assessed=ev.execute({'operation':'assess','request_id':'B20RU-negative-assess','hypothesis_id':hyp['UTILITY_LEAK'],'expected_hash':r.get_node(hyp['UTILITY_LEAK']).content_hash,'evidence_ids':released,'as_of':clock()},analyst).assessment
+       assert assessed.assessment=='CONTRADICTED',assessed
+       from tests.unit.test_utility_intervention import draft
+       d=draft();t=d.tasks[0].model_copy(update={'assessment_ids':[assessed.id]});d=d.model_copy(update={'basis':[d.basis[0].model_copy(update={'assessment_id':assessed.id}),d.basis[1]]})
+       with pytest.raises(PlanningBlocked,match='REMEDIAL_EVIDENCE_INSUFFICIENT'):validate_remediation(t,d,Reader(r,clock()),[assessed],PlanningBlocked)
+       assert r._read('MATCH (w:WorkOrder) RETURN count(w)')==[[0]] and r._read('MATCH (p:ResolutionPlan) RETURN count(p)')==[[0]]
+       Path('docs/evidence/B20R-UTILITY-negative-proof.json').write_text(json.dumps({'source_graph':p.graph,'case':case,'released_ids':released,'assessment':assessed.model_dump(mode='json'),'utility_actions_blocked':True,'work_orders':0,'provider_requests':0},indent=2)+'\n');return
+      # Additional explicitly authorized attributed survey, separate from B19 reveal.
+      reports=[];assessments=[]
+      for cause,target,dept,who,codes in [('UTILITY_LEAK','PIPE-100','DEPT-WATER','OP-WATER-LEAD',['LEAK_DETECTED','INFILTRATION_AT_DAMAGE','UTILITY_SAFETY_REVIEWED']),('SUBGRADE_FAILURE','ROAD-100','DEPT-ROAD','OP-ROAD-LEAD',['SUBGRADE_FAILURE_OBSERVED','STRUCTURAL_TEST_FAILED','SUBGRADE_REPAIR_SAFETY_REVIEWED'])]:
+       actor=shared.auth.resolve(shared.tokens[who]);iid=ev.execute({'operation':'request_inspection','request_id':'B20RU-'+cause+'-survey','investigation_id':case['investigation_id'],'asset_ids':[target],'department_id':dept,'inspection_type':'EXPLICIT_SYNTHETIC_CAUSAL_SAFETY_SURVEY'},analyst).entity_id
+       for status in ['REQUESTED','SCHEDULED','IN_PROGRESS']:
+        ev.execute({'operation':'transition_inspection','request_id':'B20RU-'+cause+'-'+status,'inspection_id':iid,'expected_hash':r.get_node(iid).content_hash,'status':status,**({'scheduled_at':clock()} if status=='SCHEDULED' else {})},actor)
+       rid=ev.execute({'operation':'report_inspection','request_id':'B20RU-'+cause+'-report','inspection_id':iid,'expected_hash':r.get_node(iid).content_hash,'source_id':'B20RU-explicit-synthetic-survey','record_id':cause,'observations':[{'asset_id':target,'code':code,'statement':'Explicit authorized synthetic observation '+code,'method':'DIRECT_SYNTHETIC_FIELD_TEST','observed_at':clock()} for code in codes],'review':{'reviewer_id':analyst.id,'role':analyst.role,'reviewed':True,'reason':'Independent review of explicit synthetic causal and safety survey'},'attribution':{'incident_ids':[case['incident_id']],'rationale':'Explicit current episode target observation'}},actor).entity_id;reports.append(rid)
+       a=ev.execute({'operation':'assess','request_id':'B20RU-'+cause+'-assessment','hypothesis_id':hyp[cause],'expected_hash':r.get_node(hyp[cause]).content_hash,'evidence_ids':[rid]+(released if cause=='UTILITY_LEAK' else []),'as_of':clock()},analyst).assessment;assert a.assessment=='SUPPORTED',a;assessments.append(a)
+      citations={}
+      for manifest in ['data/documents/b20r_utility/manifest.json','data/documents/b12r/manifest.json']:
+       source=next(s for s in sources(Path(manifest)) if s.document_id in {'D022','D020'});await shared.memory.ingest(source);citations[source.owner_department_id]=(await shared.memory.retrieve(as_of=clock(),document_id=source.document_id))['citations'][0]
+      app=configured_app(path,shared.auth.path,path.parent/'memory.json',T0)
+      async with app.router.lifespan_context(app),httpx.AsyncClient(transport=httpx.ASGITransport(app=app,raise_app_exceptions=False),base_url='http://local') as c:
+       s=app.state.services;s.clock=clock;s.ops.clock=clock;s.ops.planning.clock=clock;s.delivery.clock=clock;s.reads.clock=clock
+       for target,dept,who in [('PIPE-100','DEPT-WATER','OP-WATER-LEAD'),('ROAD-100','DEPT-ROAD','OP-ROAD-LEAD')]:
+        sub=await c.post('/api/v1/responsibilities',json={'asset_id':target,'department_id':dept,'source_id':'B20RU-synthetic-inventory','source_record_id':target,'source_kind':'SYNTHETIC','observed_at':AT,'valid_from':T0},headers=headers(shared,who,'B20RU-own-'+target));assert sub.status_code==200,sub.json();v=sub.json()['data']
+        reviewed=await c.post('/api/v1/responsibilities/'+v['id']+'/review',json={'expected_hash':v['expected_hash'],'reviewed':True,'reason':'Independent review of explicit synthetic responsibility record'},headers=headers(shared,'OP-ANALYST','B20RU-own-review-'+target));assert reviewed.status_code==200,reviewed.json()
+       value=sample();value.update(investigation_id=case['investigation_id'],issue='ROAD_DAMAGE',basis=[{'hypothesis_id':a.hypothesis_id,'assessment_id':a.id,'reason':'Reviewed distinct causal mechanism; retain alternative','addressed':True} for a in assessments],evidence_ids=reports+released)
+       # Plan requires a retained alternative; only the relevant cause is addressed per task,
+       # while both currently supported mechanisms may justify independent intervention.
+       # Add a third qualified competing hypothesis is forbidden by ontology; retain subgrade
+       # as alternative and explicitly address it for the road task via its own assessment.
+       value['basis'][1]['addressed']=False
+       value['monitoring'].update(issue='ROAD_DAMAGE',required_evidence=['WEAR_EXPOSURE','FOLLOWUP_PAVEMENT'])
+       base=value['tasks'][0];base.update(evidence_ids=reports,assessment_ids=[a.id for a in assessments])
+       value['tasks']=[]
+       for id,action,target,dept,index,dependency,guard in [('isolate','UTILITY_ISOLATION','PIPE-100','DEPT-WATER',0,None,None),('repair','UTILITY_LEAK_REPAIR','PIPE-100','DEPT-WATER',0,'isolate','ISOLATION_PROOF'),('road','SUBGRADE_REPAIR','ROAD-100','DEPT-ROAD',1,'repair','UTILITY_VERIFICATION')]:
+        t=copy.deepcopy(base);t.update(id=id,action_type=action,target_ids=[target],department_id=dept,assessment_ids=[assessments[index].id],procedure_citation=citations[dept],depends_on=[dependency] if dependency else [],remediation={'mode':'CONDITIONAL' if guard else 'SUPPORTED_NOW','conditions':[{'kind':k,'status':'MET','evidence_ids':[reports[index]]} for k in ['CAUSAL_INSPECTION','SAFETY_REVIEW']]})
+        if guard:t['remediation']['conditions'].append({'kind':guard,'status':'UNMET','depends_on_task_id':dependency})
+        value['tasks'].append(t)
+       # Both addressed plus an alternative are structurally required. A separate
+       # assessment-backed alternative can be retained by recording a competing leak
+       # hypothesis scoped to the same pipe, with a distinct explicit definition.
+       alternative=ev.execute({'operation':'propose','request_id':'B20RU-alternative','investigation_id':case['investigation_id'],'incident_ids':[case['incident_id']],'asset_ids':['ROAD-100'],'cause_code':'SUBGRADE_FAILURE','statement':'Alternative extent of road damage remains uncertain','mechanism':'Possible independently unsupported extent; do not authorize extra work','confirming_codes':POLICIES['ROAD_DAMAGE']['SUBGRADE_FAILURE']['confirming'],'falsifying_codes':POLICIES['ROAD_DAMAGE']['SUBGRADE_FAILURE']['falsifying']},analyst).entity_id
+       alt=ev.execute({'operation':'assess','request_id':'B20RU-alternative-assessment','hypothesis_id':alternative,'expected_hash':r.get_node(alternative).content_hash,'evidence_ids':[],'as_of':clock()},analyst).assessment
+       value['basis'][1]['addressed']=True;value['basis'].append({'hypothesis_id':alt.hypothesis_id,'assessment_id':alt.id,'reason':'Retain assessed scope uncertainty without asserting new facts','addressed':False})
+>      made=await c.post('/api/v1/plans',json={'draft':value},headers=headers(shared,'OP-ANALYST','B20RU-plan'));assert made.status_code==200,made.json();pid=made.json()['data']['plan_id'];saved=s.ops.planning.store.get(pid);b=binding(saved)
+                                                                                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E      AssertionError: {'error': {'code': 'DEPENDENCY_BLOCKED', 'message': 'Required evidence, approval or dependency is not satisfied', 'det...ne, 'commitment': None, 'entity_id': None, ...}, 'retryable': False}, 'request_id': 'b7f9a4eddf064719907ee906b2784b90'}
+E      assert 409 == 200
+E       +  where 409 = <Response [409 Conflict]>.status_code
+
+backend/tests/integration/test_utility_intervention_runtime.py:106: AssertionError
+------------------------------ Captured log setup ------------------------------
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'text' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'name' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'text' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'name' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'text' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'name' is already indexed
+------------------------------ Captured log call -------------------------------
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'text' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'name' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'text' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'name' is already indexed
+=============================== warnings summary ===============================
+backend/.venv/lib/python3.12/site-packages/graphrag_sdk/core/models.py:19
+  /Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/graphrag_sdk/core/models.py:19: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.14/migration/
+    class DataModel(BaseModel):
+
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyPacked has no __module__ attribute
+
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyObject has no __module__ attribute
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED backend/tests/integration/test_utility_intervention_runtime.py::test_s04_primary_utility_intervention_and_uncertainty
+1 failed, 1 passed, 3 warnings in 23.70s
+sys:1: DeprecationWarning: builtin type swigvarlink has no __module__ attribute

@@ -1,0 +1,60 @@
+{
+  "id": "0004",
+  "version": 4,
+  "requires_0001_sha256": "94ab9fae6079fe7e87b41afd80701409db6bb51d529c2565dbd340896a5c923b",
+  "purpose": "B12 immutable draft companion, source pointers and request-safe complete graph commit; no approval/execution",
+  "indexes": [
+    {
+      "entity": "NODE",
+      "label": "CivicPlanDraft",
+      "properties": [
+        "id"
+      ]
+    },
+    {
+      "entity": "NODE",
+      "label": "CivicPlanDraft",
+      "properties": [
+        "investigation_id"
+      ]
+    },
+    {
+      "entity": "NODE",
+      "label": "CivicPlanDraft",
+      "properties": [
+        "request_id"
+      ]
+    }
+  ],
+  "constraints": [
+    {
+      "entity": "NODE",
+      "label": "CivicPlanDraft",
+      "type": "UNIQUE",
+      "properties": [
+        "id"
+      ]
+    },
+    {
+      "entity": "NODE",
+      "label": "CivicPlanDraft",
+      "type": "UNIQUE",
+      "properties": [
+        "request_id"
+      ]
+    },
+    {
+      "entity": "NODE",
+      "label": "CivicPlanDraft",
+      "type": "MANDATORY",
+      "properties": [
+        "id",
+        "payload_json",
+        "payload_sha256",
+        "state",
+        "version",
+        "investigation_id"
+      ]
+    }
+  ]
+}

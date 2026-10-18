@@ -1,0 +1,1531 @@
+--- a/README.md
++++ b/README.md
+@@ -1,4 +1,6 @@
+ # Civicly — Backend-First Codex Build System (v2.0)
++
++> **CURRENT B13 — TECHNICALLY PASS, HUMAN REVIEW PENDING.** Demo authentication, exact-scope approvals and authorized work-order foundations; no B14 execution, API/frontend or live provider. Accepted B12/B12-R/B12-R2 preserved. See backend/OPERATIONS.md and six tracking files for current evidence; B10 full genuine acceptance remains OPEN/PARTIAL.
+ 
+ > **CURRENT B12 — PASS, HUMAN REVIEW PENDING.** Typed persistent DRAFT plans/PROPOSED tasks, verified responsibility + B11 citations, bounded DAG/version/hash/monitoring criteria and compatible planner/Saver path exercised.49distinct focused casesPASS(42unit/7real),0finalFAIL/0SKIP; both finalSPECvalidatorsPASS;0externalGemini/countTokens. Additive0004 tested isolated;0001–0003/retained city/checkpoints/evidence preserved. No approval/WorkOrder/monitoringexecution/API/frontend. B10 full live acceptance OPEN/PARTIAL. B13 not authorized; see docs/evidence/B12-RESULTS.md.
+ 
+--- a/backend/PLANNING.md
++++ b/backend/PLANNING.md
+@@ -143,3 +143,6 @@
+ Recovery context retains only validated graph, exact request ID, investigation ID, plan ID, expected version/hash and a fixed stage; no raw exceptions/source/model text. Runtime propagates it on RecoveryRequired into the unchanged wake quarantine. Last durable checkpoint/decision and CivicPlanDraft request/payload provide reconciliation evidence; a failed node/checkpoint does not promise a new persisted feedback record. Legacy PlanningBlocked PLAN_READBACK is conservatively UNKNOWN/operator recovery. No response labels the plan safely usable before integrity/readback verification.
+ 
+ For operator review: stop the old process and verify ownership; inspect the original request/decision, companion payload/hash, native plan and repository pending-write state using existing read/recovery facilities. Resolve actual integrity/ownership/checkpoint uncertainty through the established reviewed procedure before considering any later explicit resume. Do not create a new version or change request ID as a repair. B12-R2 leaves its isolated fault graph's quarantine in place, with one original plan/version and no automatic replay, retry, deletion or reset. The separate healthy replay test uses its original exact request and existing supported path. See docs/evidence/B12R2-RESULTS.md. No B13 or live calls.
++
++## B13 compatible native lifecycle
++B13 operations are authenticated through the separate Operations gateway. Native plans may legitimately become PENDING_APPROVAL/APPROVED/REJECTED/SUPERSEDED; immutable B12 draft payload/receipt/hash are retained. Store.get requires a matching B13 hashed lifecycle and operation attestation for these states, and checks an existing attestation even if native state is improperly rolled back to DRAFT. Historical PlanReceipt remains DRAFT/unapproved; it is not a current authorization. Actual saved checkpoint decoding after approval verified under the existing ownership lease. New current-head versions invalidate old approval usability; assignees bind in exact B13 approval scope. See backend/OPERATIONS.md; no B14 execution or live call authorized.
+--- a/backend/app/services/planning/storage.py
++++ b/backend/app/services/planning/storage.py
+@@ -46,7 +46,11 @@
+   if len(rows)!=1:raise ValueError('PLAN_IDENTITY')
+   props,raw,sha=rows[0];self.repo.registry.validate_node('ResolutionPlan',props);payload=json.loads(raw)
+   draft=PlanDraft.model_validate(payload['draft']);receipt=PlanReceipt.model_validate(payload['receipt'])
+-  if digest(payload)!=sha or draft.content_hash!=receipt.plan_hash or props['plan_hash']!=receipt.plan_hash or props['version']!=receipt.version or props['status']!='DRAFT':raise ValueError('PLAN_INTEGRITY')
++  if digest(payload)!=sha or draft.content_hash!=receipt.plan_hash or props['plan_hash']!=receipt.plan_hash or props['version']!=receipt.version :raise ValueError('PLAN_INTEGRITY')
++  lifecycle=self.repo._read('MATCH (s:CivicOperationState {id:$id,kind:$kind}) RETURN s.id LIMIT 2',{'id':'plan:'+id,'kind':'plan'})
++  if props['status']!='DRAFT' or lifecycle:
++   from app.services.operations.storage import verify_plan_lifecycle
++   verify_plan_lifecycle(self.repo,props,receipt)
+   return payload
+  def commit(self,session,draft,receipt,request_id,proof,at):
+   common=lambda id:{'id':id,'municipality_id':'demo-city','created_at':at}
+--- a/backend/tests/integration/test_planning_postcommit_recovery.py
++++ b/backend/tests/integration/test_planning_postcommit_recovery.py
+@@ -1,5 +1,5 @@
+ """B12-R2 actual commit/MCP/Saver/quarantine, with an injected ACK-only mismatch."""
+-import asyncio,copy,json
++import asyncio,copy,json,os
+ from pathlib import Path
+ from uuid import uuid4
+ import pytest
+@@ -68,5 +68,5 @@
+      'stored_receipt_read_only_verified':saved['receipt'],'stored_request_id':saved['request_id'],'stored_payload_unchanged_sha256':before_hash,
+      'plan_count':1,'maximum_version':1,'quarantine_retained':True,'wake_retry_or_replay_performed':False,'provider_calls':0,
+      'remaining_operator_steps':'Stop old process/confirm ownership; inspect original request, decision, companion/hash/native plan and pending write; reconcile last checkpoint via existing reviewed recovery procedure. No automatic reset or quarantine clearance.'}
+-    Path('docs/evidence/B12R2-postcommit-recovery.json').write_text(json.dumps(proof,indent=2)+'\n')
++    Path('docs/evidence/'+os.environ.get('CIVICLY_PLANNING_EVIDENCE_PREFIX','B12R2')+'-postcommit-recovery.json').write_text(json.dumps(proof,indent=2)+'\n')
+  asyncio.run(run())
+--- a/blockers.md
++++ b/blockers.md
+@@ -1,4 +1,6 @@
+ # blockers.md — Current blockers and verification spikes
++
++> **CURRENT B13 — TECHNICALLY PASS, HUMAN REVIEW PENDING.** Private demo auth/RBAC, exact full-scope approval/rejection and idempotent AUTHORIZED work orders exercised.25distinctPASS(18unit/7real),0unresolvedFAIL/0SKIP; final both SPEC validatorsPASS (one corrected hook error documented);0external Gemini/countTokens.7synthetic auth accounts/fourroles preserve5source accounts plus admin/water-lead gap. Actual audit/events/CAS/ACKloss/fresh-process auth/order and B12checkpoint/B12R2quarantine compatibilityPASS. No B14execution/B15delivery/API/frontend/live; B10 full genuine acceptance OPEN/PARTIAL. Supersedes history; docs/evidence/B13-RESULTS.md.
+ 
+ > **CURRENT B12-R2 — TECHNICALLY PASS, HUMAN REVIEW PENDING.** Post-commit and saved-replay verification faults now require operator recovery/UNKNOWN; exact reconciliation identities retained through existing quarantine.18distinctPASS(16unit/2real),0unresolvedFAIL/0SKIP; both SPEC validatorsPASS once;0external Gemini/countTokens. Actual mismatch leaves1original plan/version1, no false rejection/usable receipt, quarantine retained. No retry/reset/reconciliation wake/B13/live calls. B10 full live acceptance remains OPEN/PARTIAL. Supersedes historical status below; see docs/evidence/B12R2-RESULTS.md.
+ 
+@@ -533,3 +535,10 @@
+ No unresolved B12-R2 implementation/test failure. Intentional operator action remains for isolated quarantined fault wakes: stop old process/confirm ownership, inspect exact original request/decision/native+companion/hash/pending write and reconcile last durable checkpoint under existing reviewed recovery procedure before any separately authorized resume. No quarantine cleared, failed wake retried, plan deleted or new version invented. Read-only integrity inspection passes; no safe runtime receipt emitted during failure. B10 full genuine acceptance OPEN/PARTIAL; B12-R action/source/safety and future DEC-004 gates unchanged. No new B13/live authorization.
+ 
+ Review docs/evidence/B12R2-RESULTS.md, B12R2-COMMANDS.md, B12R2-postcommit-recovery.json, B12R2-FILES.md and B12R2-changes.patch. Human verification: inspect exact identities,1plan/version1, UNKNOWN/recovery diagnostic, last durable checkpoint with no false acknowledgment and retained quarantine. Reproduce only the isolated mismatch test; no reset/retry of stored fault wake. STOP for review; B13 requires explicit authorization.
++
++
++## B13 review gate | 2026-10-18
++
++No unresolved B13focusedruntimefailure. Demo auth only, private localhost capability/no public API/rate limiting/enterpriseIAM; direct internal repository/B09/B12remaintrustedhost not public identity endpoints.7authaccounts/fourroles reflect5source identities +privateadmin/utilitylead, no canonical data rewrite. Approval never satisfiesUNMETgates; execution/completion/evidence/outcomeverification deferredB14. Native events+auditPENDINGdurable; delivery/worker/replayconsumer infrastructure B15notstarted. No cross-graph atomicity/exactly-once claim. B10fullgenuineGeminiacceptanceOPEN/PARTIAL, original quarantined testwakesrequirehumanreview/notcleared. B11syntheticPROPOSED/retrievallimits and DEC-004latergatespersist. B14requiresnewauthorization.
++
++Review backend/OPERATIONS.md, docs/evidence/B13-RESULTS.md/B13-COMMANDS.md/B13-FILES.md/B13-changes.patch. Human inspect B13-flow.json exact binding+audit/order, denials/conditional/checkpoint proof, run only isolated flowtest for reproduction. STOP for human review; exact next B14 simulated execution and independent outcome verification only after explicit authorization.
+--- a/decision.md
++++ b/decision.md
+@@ -1367,3 +1367,23 @@
+ DEC-054 verified. Store.commit attempt/ACK verification and saved-replay read/receipt verification now raise narrow OutcomeUnknown-subtype PlanRecoveryRequired with bounded exact graph/request/investigation/plan/version/hash/stage context. Runtime carries it into existing RecoveryRequired/quarantine; no false rejection or unverified usable receipt. Legacy PLAN_READBACK feedback is UNKNOWN. Healthy INJECTED_ACK_LOSS RuntimeError matching/native same-request replay unchanged. No storage/schema/migration/policy/source redesign.16unit/2real distinctPASS, both SPEC validatorsPASS once,0provider. Initial new test matcher failed on LangGraph task note despite correct recovery; only matcher fixed and that isolated case rerun; first fault graph left untouched. B13 not authorized.
+ 
+ Review docs/evidence/B12R2-RESULTS.md, B12R2-COMMANDS.md, B12R2-postcommit-recovery.json, B12R2-FILES.md and B12R2-changes.patch. Human verification: inspect exact identities,1plan/version1, UNKNOWN/recovery diagnostic, last durable checkpoint with no false acknowledgment and retained quarantine. Reproduce only the isolated mismatch test; no reset/retry of stored fault wake. STOP for review; B13 requires explicit authorization.
++
++## DEC-055 — B13 authentication, approval and order foundations (before code)
++R09/R10/R11/R13/R15/R17; all18 remain mandatory. Accepted canonical source has5operators (analyst/approver/three department leads), although prose says4role seats. Preserve all5/source bytes and add OP-ADMIN only to private authentication registry;6small demo accounts cover four roles and all three categories. No public signup or enterprise tenancy. Passwords/signed30minute sessions/revocation in owner-only local SQLite; PBKDF2-HMAC-SHA256600000 with random16byte salt, constant-time comparison, random session nonce/HMAC, server-resolved role/department only. Stdlib API verified against Python3.12 hashlib docs and OWASP password-storage guidance (no dependency added). Private setup never prints passwords/tokens; no credential in graph/audit. ANALYST draft/submit; APPROVER decide/create approved scoped orders; department leads read/update only own assigned work; ADMIN read and audited session revocation only, no safety bypass. Existing internal planner actor remains a trusted host capability, never a human approver; authenticated draft gateway resolves identities.
++
++Approval covers every immutable plan task/native ID/action/targets/department/assignee, plan/version/hash, submitter/approver/time, current proof/evidence references. Caller scope must match full plan exactly. Current assessments, B11 citation version/revocation, owner/evidence and remedial policy revalidated at submit/approval/order/update. Plan must be current head; stale/superseded never newly authorized. Rejection retains reason/history; revisions require new approval. Native lifecycle plus compatible005 companion state attestations, never rewrite immutable B12 payload/receipt. Store.get validates legitimate native lifecycle changes through audited lifecycle ledger while preserving old DRAFT receipts and checkpoint binding.
++
++Conditional approval is proposal approval only: unmet causal/safety gates retained; any UNMET gate or unsatisfied dependency blocks order creation. No waivers synthesized. B13 work-order operation initial AUTHORIZED, exact approved assignment, deterministic plan/task identity plus request hash ledger. Native Approval/WorkOrder/StatusEvent/DomainEvent and required IMPLEMENTS/AUTHORIZED_BY/HAS_EVENT/EMITTED_EVENT links committed with immutable request/audit/event companion in one existing fenced mutation. Event envelopes meet current contracts; delivery remains B15. Monotonic CAS and normative state machines; assignment/cancellation only in B13, execution/completion deferred B14. ADMIN cannot bypass guards.
++
++Additive0005 solely companion/index/unique/readiness metadata;0001–0004 unchanged. Post-write/readback uncertainty raises existing OutcomeUnknown-style bounded identity recovery, never false rejection/automatic retry/reset. Canonical memory graph revision checked around revalidation, no cross-graph transaction claim. Focused tests unit auth/gates/state/scope + shared real flow/denials/replay/staleness, competing CAS, ACK loss, affected B12 saved-checkpoint and B12-R2 recovery; both validators once final. Lifecycle only if demonstrated durability change warrants it; one-statement protocol reused, fresh-process persistence will verify native order/audit without automatic container restart. No live provider/B14/B15/API/frontend.
++
++B13 rejection refinement: approving/creating/updating work revalidates current causal/source/ownership proof. A REJECTED decision still requires authenticated approver, exact immutable current plan/scope/hash, native projection and CAS binding, but does not require a revoked procedure or stale cause to become valid first. Its audit explicitly records binding-only rejection validation; it cannot authorize work. This permits attributable rejection of unsafe proposals without weakening approval guards.
++
++B13 seed compatibility correction before finalization: accepted B12 ROAD_DAMAGE draft has a WaterPipe inspection owned by DEPT-WATER. The5source operators lack a water-utility lead; six-account initial auth choice would block that accepted cross-department scope. Add exactly OP-WATER-LEAD to private auth metadata alongside OP-ADMIN:7small synthetic accounts across4roles, all5original source records untouched. This is a required assignee gap, not enterprise identity expansion. Preserve existing private credentials/sessions while adding only the missing seeded operator through trusted host bootstrap. Run one targeted accepted road inspection DAG approval/dependency case (not all remedial scenarios). New auth setup/private audit and contract reflect7 rather than claiming4or6. Four describes role classes; original source itself already has5identities.
++
++
++## B13 review gate | 2026-10-18
++
++DEC-055 implemented and runtime verified. Final7private demo identities cover4roles; source5accounts untouched, private admin/read+revoke only and utility lead required accepted road DAG. Exact binding/current source validation/rejection reason, conditional approval vs execution gates, one fenced native+audit+event mutation, deterministic orders/request replay/CAS and UNKNOWNpostcommit recovery implemented. Existing B12payload/receipt/hash immutable; lifecycle0005attested; actual checkpoint and B12R2recoveryPASS.25distinctPASS(18unit/7real); no provider/lifecycle/full suites. Initial lease/outside-active-scope harness errors corrected without weakening guards; handoff hook indentation fixed, only affected validator rerun. Seven-account rationale supersedes initial six-account design; no canonical seed mutation.
++
++Review backend/OPERATIONS.md, docs/evidence/B13-RESULTS.md/B13-COMMANDS.md/B13-FILES.md/B13-changes.patch. Human inspect B13-flow.json exact binding+audit/order, denials/conditional/checkpoint proof, run only isolated flowtest for reproduction. STOP for human review; exact next B14 simulated execution and independent outcome verification only after explicit authorization.
+--- a/flow.md
++++ b/flow.md
+@@ -832,3 +832,10 @@
+ Imports: planning.service adds existing graph.repository.OutcomeUnknown subtype PlanRecoveryRequired. Proven pre-write validation remains outside commit boundary. commit attempt -> ACK-only readback -> verified receipt OR sanitized recovery exception with exact original IDs. Existing persisted-request replay -> Store.get/receipt validation -> valid existing receipt OR same recovery type. feedback treats that subtype and legacy PLAN_READBACK as UNKNOWN. Runtime copies only typed reconciliation metadata to existing RecoveryRequired -> unchanged ownership exception path sets quarantine; no rejected/accepted acknowledgment output. Existing native companion/decision and last durable Saver checkpoint remain operator evidence. No new recovery store/checkpoint field or background worker. Actual fault proof shows retained original plan/hash and quarantine; no retry/deletion/clearance.
+ 
+ Review docs/evidence/B12R2-RESULTS.md, B12R2-COMMANDS.md, B12R2-postcommit-recovery.json, B12R2-FILES.md and B12R2-changes.patch. Human verification: inspect exact identities,1plan/version1, UNKNOWN/recovery diagnostic, last durable checkpoint with no false acknowledgment and retained quarantine. Reproduce only the isolated mismatch test; no reset/retry of stored fault wake. STOP for review; B13 requires explicit authorization.
++
++
++## B13 review gate | 2026-10-18
++
++File/control graph: operations/auth.py private SQLite signed sessions -> server Actor; models.py closed command/full assignment binding -> Operations.service requires permission and graph active scope -> existing repository._session fence -> Storage operation replay hash OR current planning Store.get/head/native projections -> B09Reader latest assessments/report+finding hashes -> PlanningService.resolve B11cite/current ownership + remedial policy -> submit/decision/order/update normative guards -> operations/storage.py fixed registry compiler -> one repository._commit creates/updates native plan/task/approval/order/status/domain event plus CivicOperationState lifecycle/request/approval/order proof. operations/migration.py +0005checksummed indexes/constraints READY/OPERATIONAL. plan Store.get imports verify_plan_lifecycle only when state differs fromDRAFT or attestation exists; immutable B12 JSON/receipt unchanged. Agent decode/currentplanhash unchanged and actual Saver checkpoint valid under ownership. Commit/readback -> OpsRecovery(OutcomeUnknown) bounded IDs/UNKNOWN, explicit original-request reconciliation; no false rejection/auto retry. Native DomainEvent payload_ref -> immutable operation envelope/actor/proof; PENDINGdelivery no worker. Auth material absent graph/events. __main__ bootstrap private auth, b13_worker actual fresh-process auth and graph read. No API/agent approval tool or field execution.
++
++Review backend/OPERATIONS.md, docs/evidence/B13-RESULTS.md/B13-COMMANDS.md/B13-FILES.md/B13-changes.patch. Human inspect B13-flow.json exact binding+audit/order, denials/conditional/checkpoint proof, run only isolated flowtest for reproduction. STOP for human review; exact next B14 simulated execution and independent outcome verification only after explicit authorization.
+--- a/implementation_status.md
++++ b/implementation_status.md
+@@ -1,4 +1,6 @@
+ # implementation_status.md — Current implementation truth
++
++> **CURRENT B13 — TECHNICALLY PASS, HUMAN REVIEW PENDING.** Private demo auth/RBAC, exact full-scope approval/rejection and idempotent AUTHORIZED work orders exercised.25distinctPASS(18unit/7real),0unresolvedFAIL/0SKIP; final both SPEC validatorsPASS (one corrected hook error documented);0external Gemini/countTokens.7synthetic auth accounts/fourroles preserve5source accounts plus admin/water-lead gap. Actual audit/events/CAS/ACKloss/fresh-process auth/order and B12checkpoint/B12R2quarantine compatibilityPASS. No B14execution/B15delivery/API/frontend/live; B10 full genuine acceptance OPEN/PARTIAL. Supersedes history; docs/evidence/B13-RESULTS.md.
+ 
+ > **CURRENT B12-R2 — TECHNICALLY PASS, HUMAN REVIEW PENDING.** Post-commit and saved-replay verification faults now require operator recovery/UNKNOWN; exact reconciliation identities retained through existing quarantine.18distinctPASS(16unit/2real),0unresolvedFAIL/0SKIP; both SPEC validatorsPASS once;0external Gemini/countTokens. Actual mismatch leaves1original plan/version1, no false rejection/usable receipt, quarantine retained. No retry/reset/reconciliation wake/B13/live calls. B10 full live acceptance remains OPEN/PARTIAL. Supersedes historical status below; see docs/evidence/B12R2-RESULTS.md.
+ 
+@@ -504,3 +506,10 @@
+ B12-R2 narrow correction technically complete, pending review. Reproduced real ACK mismatch now returns recovery-required and no draft_committed NO. One stored plan/version1 plus original request/companion retained, no new version/duplicate. Last durable checkpoint/decision preserved, no fabricated feedback persistence; quarantine deliberately retained.18distinctPASS(16unit/2real),0unresolvedFAIL/0SKIP, both SPEC validatorsPASS once,0external provider. Healthy ack-loss/native replay passed unchanged. Earlier B12/B12-R features, sources, migrations/data/assertions/evidence preserved. B10 genuine full live remains OPEN/PARTIAL; no B13 or product-completion claim.
+ 
+ Review docs/evidence/B12R2-RESULTS.md, B12R2-COMMANDS.md, B12R2-postcommit-recovery.json, B12R2-FILES.md and B12R2-changes.patch. Human verification: inspect exact identities,1plan/version1, UNKNOWN/recovery diagnostic, last durable checkpoint with no false acknowledgment and retained quarantine. Reproduce only the isolated mismatch test; no reset/retry of stored fault wake. STOP for review; B13 requires explicit authorization.
++
++
++## B13 review gate | 2026-10-18
++
++B13technicallyPASSawaitsreview:25distinctPASS(18unit/7real),0unresolvedFAIL/0SKIP; both final validatorsPASS;10pytestchildinterlocks0provider. Native approval→AUTHORIZED order, deterministic same-task dedup/request hash, stale concurrency one succeeds, auditable assignment/status/event/proof, exact same-request ACKloss recovery and fresh-process auth/order verified. Human conditional approval retainsUNMETgates/noorder; road→waterDAGassignees/dependency preserved. Previous plan receipts/payload/hash/versions and savedcheckpoint compatibility verified, accepted B12R2quarantine regression passes. Private7accounts/fourroles; no credential evidence.0005additive/0001–0004andcanonicalcitypreserved. No B14fieldwork/B15delivery/API/frontend/live or backend completion claim.
++
++Review backend/OPERATIONS.md, docs/evidence/B13-RESULTS.md/B13-COMMANDS.md/B13-FILES.md/B13-changes.patch. Human inspect B13-flow.json exact binding+audit/order, denials/conditional/checkpoint proof, run only isolated flowtest for reproduction. STOP for human review; exact next B14 simulated execution and independent outcome verification only after explicit authorization.
+--- a/scripts/validate_blueprint.py
++++ b/scripts/validate_blueprint.py
+@@ -222,4 +222,6 @@
+     if result:raise SystemExit(result)
+     result=subprocess.call([sys.executable,str(ROOT/'scripts/validate_memory.py')])
+     if result:raise SystemExit(result)
+-    raise SystemExit(subprocess.call([sys.executable,str(ROOT/'scripts/validate_planning.py')]))
++    result=subprocess.call([sys.executable,str(ROOT/'scripts/validate_planning.py')])
++    if result:raise SystemExit(result)
++    raise SystemExit(subprocess.call([sys.executable,str(ROOT/'scripts/validate_operations.py')]))
+--- a/scripts/validate_handoff.py
++++ b/scripts/validate_handoff.py
+@@ -127,4 +127,6 @@
+ if result:raise SystemExit(result)
+ result=subprocess.call([sys.executable,str(ROOT/'scripts/validate_memory.py')])
+ if result:raise SystemExit(result)
+-raise SystemExit(subprocess.call([sys.executable,str(ROOT/'scripts/validate_planning.py')]))
++result=subprocess.call([sys.executable,str(ROOT/'scripts/validate_planning.py')])
++if result:raise SystemExit(result)
++raise SystemExit(subprocess.call([sys.executable,str(ROOT/'scripts/validate_operations.py')]))
+--- a/task_board.md
++++ b/task_board.md
+@@ -1,4 +1,6 @@
+ # task_board.md — Human-reviewed task queue
++
++> **CURRENT B13 — TECHNICALLY PASS, HUMAN REVIEW PENDING.** Private demo auth/RBAC, exact full-scope approval/rejection and idempotent AUTHORIZED work orders exercised.25distinctPASS(18unit/7real),0unresolvedFAIL/0SKIP; final both SPEC validatorsPASS (one corrected hook error documented);0external Gemini/countTokens.7synthetic auth accounts/fourroles preserve5source accounts plus admin/water-lead gap. Actual audit/events/CAS/ACKloss/fresh-process auth/order and B12checkpoint/B12R2quarantine compatibilityPASS. No B14execution/B15delivery/API/frontend/live; B10 full genuine acceptance OPEN/PARTIAL. Supersedes history; docs/evidence/B13-RESULTS.md.
+ 
+ > **CURRENT B12-R2 — TECHNICALLY PASS, HUMAN REVIEW PENDING.** Post-commit and saved-replay verification faults now require operator recovery/UNKNOWN; exact reconciliation identities retained through existing quarantine.18distinctPASS(16unit/2real),0unresolvedFAIL/0SKIP; both SPEC validatorsPASS once;0external Gemini/countTokens. Actual mismatch leaves1original plan/version1, no false rejection/usable receipt, quarantine retained. No retry/reset/reconciliation wake/B13/live calls. B10 full live acceptance remains OPEN/PARTIAL. Supersedes historical status below; see docs/evidence/B12R2-RESULTS.md.
+ 
+@@ -432,3 +434,10 @@
+ B12-R2 corrective gate technically PASS, waits human review. Original post-commit PLAN_READBACK misclassification and adjacent saved-replay validation addressed narrowly; fail-closed quarantine/identities preserved.18distinctPASS(16unit/2real),0unresolvedFAIL/0SKIP, both SPEC validatorsPASS once,0provider. Existing healthy ack-loss replay case retained and passing; original fault plan/version retained without duplicate. No automatic reconciliation or further milestones. Proposed next B13 only after explicit authorization.
+ 
+ Review docs/evidence/B12R2-RESULTS.md, B12R2-COMMANDS.md, B12R2-postcommit-recovery.json, B12R2-FILES.md and B12R2-changes.patch. Human verification: inspect exact identities,1plan/version1, UNKNOWN/recovery diagnostic, last durable checkpoint with no false acknowledgment and retained quarantine. Reproduce only the isolated mismatch test; no reset/retry of stored fault wake. STOP for review; B13 requires explicit authorization.
++
++
++## B13 review gate | 2026-10-18
++
++B12/B12R/B12R2accepted by user; B13nowtechnicallyPASShumanreviewpending. Scope R09/R10/R11/R13/R15/R17: authenticated exact approvals/scoped assignee orders, native state/CAS/audit/replay/recovery.25distinctPASS(18unit/7real), both final validatorsPASS,0provider. Exact failure history/commands/inventory/patch under B13.7small private operators/fourroles; all5canonical sourceaccountsretained, utilityleadaddedforacceptedDAG. B14notauthorized; no automatic continuation.
++
++Review backend/OPERATIONS.md, docs/evidence/B13-RESULTS.md/B13-COMMANDS.md/B13-FILES.md/B13-changes.patch. Human inspect B13-flow.json exact binding+audit/order, denials/conditional/checkpoint proof, run only isolated flowtest for reproduction. STOP for human review; exact next B14 simulated execution and independent outcome verification only after explicit authorization.
+--- a/test_log.md
++++ b/test_log.md
+@@ -1,4 +1,6 @@
+ # test_log.md — Append-only verification record
++
++> **CURRENT B13 — TECHNICALLY PASS, HUMAN REVIEW PENDING.** Private demo auth/RBAC, exact full-scope approval/rejection and idempotent AUTHORIZED work orders exercised.25distinctPASS(18unit/7real),0unresolvedFAIL/0SKIP; final both SPEC validatorsPASS (one corrected hook error documented);0external Gemini/countTokens.7synthetic auth accounts/fourroles preserve5source accounts plus admin/water-lead gap. Actual audit/events/CAS/ACKloss/fresh-process auth/order and B12checkpoint/B12R2quarantine compatibilityPASS. No B14execution/B15delivery/API/frontend/live; B10 full genuine acceptance OPEN/PARTIAL. Supersedes history; docs/evidence/B13-RESULTS.md.
+ 
+ > **CURRENT B12-R2 — TECHNICALLY PASS, HUMAN REVIEW PENDING.** Post-commit and saved-replay verification faults now require operator recovery/UNKNOWN; exact reconciliation identities retained through existing quarantine.18distinctPASS(16unit/2real),0unresolvedFAIL/0SKIP; both SPEC validatorsPASS once;0external Gemini/countTokens. Actual mismatch leaves1original plan/version1, no false rejection/usable receipt, quarantine retained. No retry/reset/reconciliation wake/B13/live calls. B10 full live acceptance remains OPEN/PARTIAL. Supersedes historical status below; see docs/evidence/B12R2-RESULTS.md.
+ 
+@@ -1026,3 +1028,10 @@
+ Exact minimal run: unit16PASS0.98s (6new commit/replay/feedback branches +10existing affected recovery cases). Initial actual mismatch+one existing healthy ack-loss replay:1PASS/1newtest-assertionFAIL20.21s,0SKIP. Actual recovery occurred; end-anchored pytest regex failed on LangGraph task note. Only test matcher corrected, then only mismatch case in a fresh isolated graph1PASS12.21s. No retry/reset/clearance of earlier fault graph. Final18distinctPASS/0unresolvedFAIL/0SKIP. Both validatorsPASS once via make test-spec after final source edits. Three inherited pytest/child provider guard proofs0external Gemini/countTokens/0unexpected. No full/remedial/live/lifecycle runs. Scripted model and injected ACK mismatch clearly distinguished from actual SDK/DB/MCP/LangGraph/Saver/native write/quarantine. Exact commands/raw logs: docs/evidence/B12R2-COMMANDS.md.
+ 
+ Review docs/evidence/B12R2-RESULTS.md, B12R2-COMMANDS.md, B12R2-postcommit-recovery.json, B12R2-FILES.md and B12R2-changes.patch. Human verification: inspect exact identities,1plan/version1, UNKNOWN/recovery diagnostic, last durable checkpoint with no false acknowledgment and retained quarantine. Reproduce only the isolated mismatch test; no reset/retry of stored fault wake. STOP for review; B13 requires explicit authorization.
++
++
++## B13 review gate | 2026-10-18
++
++Focused final25distinctPASS/0unresolvedFAIL/0SKIP:12newB13unit+6affectedB12R2unit,6B13real+1acceptedB12R2real. Unit11PASS9.05s; initial real3PASS27.75s; gates8PASS/1leaseharnessFAIL21.10s; affected2PASS22.69s; auth5PASS9.04s; checkpoint1scopeFAIL10.92s; finalwrite2scopeFAIL19.05s; finalB13runtime5PASS51.17s; stronger flow1PASS11.04s; targeted road/auth2PASS11.70s. Overlaps not extra tests. Failures: decode after lease released, constructor scope check before active_scope; fixed test ownership and dispatch-time scope guard. BlueprintPASS once inclB13static, handoffnewhookIndentationError then correctedhandoffalonePASS; no redundant allsuite.10ordinarypytestchildguards0external/0unexpected. Actual providers0; scripted PAUSE only where checkpoint orchestration, genuine DB/SDK/MCP/Saver/freshprocess. No full770/313/B12/allremedial/lifecycle/live run. Exact commands/rawoutputs B13-COMMANDS.md/B13-test-summary.json.
++
++Review backend/OPERATIONS.md, docs/evidence/B13-RESULTS.md/B13-COMMANDS.md/B13-FILES.md/B13-changes.patch. Human inspect B13-flow.json exact binding+audit/order, denials/conditional/checkpoint proof, run only isolated flowtest for reproduction. STOP for human review; exact next B14 simulated execution and independent outcome verification only after explicit authorization.
+--- /dev/null
++++ b/backend/OPERATIONS.md
+@@ -0,0 +1,56 @@
++# B13 demo authentication, approvals and authorized orders
++
++B13 implements service foundations only: no API routes, field execution/completion, B15 delivery/worker, frontend or live provider. All18 product requirements remain binding; B10 genuine full acceptance OPEN/PARTIAL.
++
++## Accounts and authentication
++The accepted city corpus has5synthetic accounts (analyst, approver, drain/road/waste leads), not4, and no admin or utility lead. Preserve every original record. Private auth adds OP-ADMIN and OP-WATER-LEAD, the latter required by the accepted B12 road→WaterPipe inspection DAG.7small identities cover4role classes; no enterprise identity or public signup.
++
++|Identity|Role|Scope|
++|---|---|---|
++|OP-ANALYST|ANALYST|Authenticated draft and submit; read|
++|OP-APPROVER|APPROVER|Exact-scope approve/reject and authorize order; read|
++|OP-DRAIN-LEAD|DEPARTMENT_LEAD|Own assigned Drainage work only|
++|OP-ROAD-LEAD|DEPARTMENT_LEAD|Own assigned Road work only|
++|OP-WASTE-LEAD|DEPARTMENT_LEAD|Own assigned Sanitation work only|
++|OP-WATER-LEAD|DEPARTMENT_LEAD|Own assigned Water Utilities work only|
++|OP-ADMIN|ADMIN|Read and audited session revocation only; no approval/work bypass|
++
++Auth.provision uses PBKDF2-HMAC-SHA256600000 with random16byte salts, constant-time password/MAC comparisons, random256bit session nonce plus HMAC signature,30minute server-side expiry, logout/admin revocation and enabled-account checks on every call. Fixed server-owned role/department map, no caller identity claims. Local private SQLite stores credential hashes/signing key/sessions/auth audit; owner-only DB and credentials files0600, runtime directory0700. Passwords/tokens never enter graph, trace or public proof. Future API transport must supply the authenticated token, never Actor/role fields; no API endpoints implemented. Internal B09/B12 services/repositories remain trusted host capabilities behind this gateway, not public caller authentication endpoints.
++
++Verified references: [Python3.12 hashlib](https://docs.python.org/3.12/library/hashlib.html#hashlib.pbkdf2_hmac), [OWASP password storage](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html). No dependency changes or production-auth claim.
++
++Trusted fresh setup:
++```sh
++PYTHONPATH=backend backend/.venv/bin/python -m app.services.operations configure
++```
++Actual workspace already configured; command refuses to overwrite credentials/signing key/sessions. Initial6account local setup was extended additively for missing utility lead; old passwords/key/revocation audit retained. Credentials stay in ignored `.runtime/auth/`; do not share/archive that directory. Actual sanitized login/denial/logout proof: docs/evidence/B13-auth-runtime.json.
++
++## Services and exact binding
++Operations(planning,auth) requires explicit additive OperationsMigration0005 readiness. Only canonical graph, a validated disposable B13 graph, or trusted active B10 profile can dispatch operations; graph-name pattern alone never grants active B10 access. Graph scope checked at dispatch/read/replay. Inputs are closed Submit/Decide/Order/Update models in contracts/operations.json, scoped to demo-city. Authenticated draft gateway resolves ANALYST identity internally; agent cannot impersonate an approving human or call an approval MCP tool.
++
++Binding covers plan ID/version/content SHA plus the full native task IDs/action types/targets/accountable departments/assignees. Canonicalized set ordering and scope hash. Submission creates Approval PENDING and plan PENDING_APPROVAL. Decision CAS binds exact pending Approval and current plan, actor/time/reason/proof; approve changes native plan/tasks to APPROVED. Rejection records reason/history and REJECTED state; it checks exact current immutable binding/native projection/CAS without requiring revoked sources to become valid first. Audit says binding-only rejection, never authority for work.
++
++Approve/order/update recheck current plan head, latest investigated assessments, source report/finding hashes, applicable B11 version/revocation and proposed status, verified ownership, exact native task/DAG/target/department projection and current enabled assignee identity. Evidence and documentary guidance remain separate. B11 procedures stay PROPOSED. Memory revision checked around source validation; no cross-graph transaction claim.
++
++New version requires separate submission/approval. Current-head check immediately makes old approval unusable; submitting a revision also transitions old native plan SUPERSEDED with audited lifecycle attestation. Old Approval decisions/reasons remain historical records, not current authority. No approval reuse or reassignment shortcut.
++
++Conditional human approval never changes immutable UNMET causal/safety conditions. Any UNMET typed gate or dependency task not COMPLETED blocks creation and progression. No waivers or findings synthesized. Existing accepted road→water inspection DAG verified; water order remains blocked while road task is only APPROVED. Later evidence-based change to immutable gates requires a revised plan/hash/approval; B14 not implemented.
++
++## Work orders, CAS and audit
++Only APPROVER can create after valid exact approval; native WorkOrder starts AUTHORIZED/SIMULATED. One deterministic ID per plan/native task prevents duplicate orders even across request keys. Exact key+actor+payload replay returns persisted historical result; changed reuse conflicts. Another key for same unchanged approved task records an audit alias without another WORK_ORDER_CREATED event. Historical replay receipt is never current authorization; new writes revalidate current proof, status and assignment.
++
++Department lead can read/update only own exact approved assignee binding. B13 allows AUTHORIZED→ASSIGNED/CANCELLED and ASSIGNED→CANCELLED through normative state machine and expected native hash. IN_PROGRESS/COMPLETED and field/outcome evidence remain B14. Concurrent stale updates cannot both commit. Updated timestamps cannot move backward. Completion never implies civic resolution.
++
++Native Approval/WorkOrder/StatusEvent/DomainEvent and IMPLEMENTS/AUTHORIZED_BY/HAS_EVENT/EMITTED_EVENT links plus request/audit/lifecycle companion are coupled in one existing fenced, parameterized graph statement. Registry0001–0004 unchanged.0005 adds unique/index/mandatory constraints for CivicOperationState and READY checksum ledger; real constraints/indexes checked OPERATIONAL. DomainEvent envelope in immutable operation payload has required contract fields, actor and result; native event.payload_ref points to it. PENDING delivery remains pending; no claim of event publication, worker, exactly-once or cross-graph ACID.
++
++Commit/readback uncertainty is OpsRecovery (existing OutcomeUnknown subtype), carrying bounded graph/request/entity/operation/plan/approval identities and UNKNOWN commitment. No false rejection/automatic retry/delete/reset. Existing repository pending-write recovery retained; direct human service has no agent wake lease to clear. A future wake wrapper must retain its existing quarantine. Same-request explicit acknowledgment-loss replay tested without duplicates; native order/event/audit and private auth session verified in fresh Python process. No container lifecycle needed: new records reuse existing persistence protocol, no new DB engine or worker.
++
++## B12 compatibility
++CivicPlanDraft payload, SHA and receipt bytes remain immutable. B12 Store.get accepts legitimate B13 native lifecycle only when hashed lifecycle companion and immutable operation attestation match exact native properties/plan/version/hash. A raw rollback to DRAFT cannot bypass that check when an attestation exists. Original B12 receipt remains historical DRAFT/unapproved/non-executable; read audited native lifecycle for current status. Exact saved current_plan_id/version/hash checkpoints remain valid after legitimate approval; unchanged actual Saver checkpoint decoded under existing wake ownership. No lease check weakened. B12-R2 real post-commit mismatch still quarantines/retains one original plan and no false acknowledgment.
++
++## Reproduction/review
++See docs/evidence/B13-COMMANDS.md for exact executed commands and historical failures, B13-RESULTS.md for real scoped IDs, B13-FILES.md/B13-changes.patch for changes. Minimal convenient human command:
++```sh
++CIVICLY_TEST_REQUEST_LOG=/tmp/b13-human-provider.jsonl backend/.venv/bin/python -m pytest backend/tests/integration/test_operations_runtime.py::test_actual_approval_order_scope_idempotency_and_competing_updates -q
++```
++Creates a new isolated graph, never resets accepted data. Expect exact approval→AUTHORIZED order, attributable audit/events, same-request and same-task duplicate prevention, wrong-role/scope/department denials, one competing update, fresh-process auth/order proof. Ordinary pytest and children block external Gemini/countTokens. Inspect B13-flow.json without running anything for no-write review. APIs/DTO transport projection remain B16; contract service schemas are not a claim API routes exist.
+--- /dev/null
++++ b/backend/app/graph/migrations/0005_operations.json
+@@ -0,0 +1,43 @@
++{
++  "id": "0005",
++  "version": 5,
++  "requires_0001_sha256": "94ab9fae6079fe7e87b41afd80701409db6bb51d529c2565dbd340896a5c923b",
++  "purpose": "B13 audited lifecycle/request/order companions, no event worker or execution",
++  "indexes": [
++    {
++      "entity": "NODE",
++      "label": "CivicOperationState",
++      "properties": [
++        "id"
++      ]
++    },
++    {
++      "entity": "NODE",
++      "label": "CivicOperationState",
++      "properties": [
++        "kind"
++      ]
++    }
++  ],
++  "constraints": [
++    {
++      "entity": "NODE",
++      "label": "CivicOperationState",
++      "type": "UNIQUE",
++      "properties": [
++        "id"
++      ]
++    },
++    {
++      "entity": "NODE",
++      "label": "CivicOperationState",
++      "type": "MANDATORY",
++      "properties": [
++        "id",
++        "kind",
++        "payload_json",
++        "payload_sha256"
++      ]
++    }
++  ]
++}
+--- /dev/null
++++ b/backend/app/services/operations/__init__.py
+@@ -0,0 +1 @@
++"""Authenticated operational foundations; B14 execution and B15 delivery absent."""
+--- /dev/null
++++ b/backend/app/services/operations/__main__.py
+@@ -0,0 +1,16 @@
++"""Trusted local operator credential bootstrap; never an agent/MCP tool."""
++import argparse,json,os,secrets
++from pathlib import Path
++from .auth import Auth,OPERATORS
++
++def main():
++ p=argparse.ArgumentParser();p.add_argument('operation',choices=['configure']);p.add_argument('--directory',type=Path,default=Path('.runtime/auth'));a=p.parse_args()
++ a.directory.mkdir(parents=True,exist_ok=True);a.directory.chmod(0o700)
++ passwords={id:secrets.token_urlsafe(32) for id in OPERATORS}
++ db=a.directory/'auth.sqlite3';credentials=a.directory/'credentials.json'
++ if db.exists() or credentials.exists():raise SystemExit('Existing auth files retained; explicit operator review required')
++ Auth.provision(db,passwords)
++ fd=os.open(credentials,os.O_CREAT|os.O_EXCL|os.O_WRONLY,0o600)
++ with os.fdopen(fd,'w') as out:json.dump(passwords,out)
++ print('Configured private demo authentication; credentials remain in the owner-only runtime directory. No values displayed.')
++if __name__=='__main__':main()
+--- /dev/null
++++ b/backend/app/services/operations/auth.py
+@@ -0,0 +1,70 @@
++"""Local demo identities and signed revocable sessions; no caller roles trusted."""
++import hashlib,hmac,json,os,secrets,sqlite3,time,re
++from contextlib import contextmanager
++from pathlib import Path
++from app.services.evidence.models import Actor
++class Denied(ValueError):pass
++OPERATORS={
++ 'OP-ANALYST':('ANALYST','DEPT-COORD'), 'OP-APPROVER':('APPROVER','DEPT-COORD'),
++ 'OP-DRAIN-LEAD':('DEPARTMENT_LEAD','DEPT-DRAIN'), 'OP-ROAD-LEAD':('DEPARTMENT_LEAD','DEPT-ROAD'),
++ 'OP-WASTE-LEAD':('DEPARTMENT_LEAD','DEPT-SAN'), 'OP-WATER-LEAD':('DEPARTMENT_LEAD','DEPT-WATER'), 'OP-ADMIN':('ADMIN','DEPT-COORD')}
++PERMISSIONS={'draft':{'ANALYST'},'submit':{'ANALYST'},'decide':{'APPROVER'},'order':{'APPROVER'},'update':{'DEPARTMENT_LEAD'},'read':{'ANALYST','APPROVER','DEPARTMENT_LEAD','ADMIN'},'revoke_session':{'ADMIN'}}
++class Auth:
++ def __init__(self,path,*,clock=time.time):
++  self.path=Path(path);self.clock=clock
++  if self.path.is_symlink() or not self.path.is_file() or self.path.stat().st_mode&0o077:raise Denied('PRIVATE_AUTH_STORE_REQUIRED')
++ @contextmanager
++ def db(self):
++  if self.path.is_symlink() or self.path.stat().st_mode&0o077:raise Denied('PRIVATE_AUTH_STORE_REQUIRED')
++  db=sqlite3.connect(self.path);db.row_factory=sqlite3.Row
++  try:
++   with db:yield db
++  finally:db.close()
++ @classmethod
++ def provision(cls,path,passwords,*,clock=time.time):
++  path=Path(path)
++  if set(passwords)!=set(OPERATORS) or any(not isinstance(v,str) or not 16<=len(v)<=256 for v in passwords.values()):raise Denied('SEED_CREDENTIALS_INVALID')
++  path.parent.mkdir(parents=True,exist_ok=True)
++  fd=os.open(path,os.O_CREAT|os.O_EXCL|os.O_WRONLY,0o600);os.close(fd)
++  with sqlite3.connect(path) as db:
++   db.executescript('CREATE TABLE operator(id TEXT PRIMARY KEY,role TEXT,department TEXT,salt BLOB,password BLOB,enabled INTEGER); CREATE TABLE session(id TEXT PRIMARY KEY,operator TEXT,expires REAL,revoked INTEGER); CREATE TABLE meta(secret BLOB); CREATE TABLE audit(actor TEXT,action TEXT,subject TEXT,at REAL);')
++   db.execute('INSERT INTO meta VALUES (?)',(secrets.token_bytes(32),))
++   for id,(role,dept) in OPERATORS.items():
++    salt=secrets.token_bytes(16);pw=hashlib.pbkdf2_hmac('sha256',passwords[id].encode(),salt,600000)
++    db.execute('INSERT INTO operator VALUES (?,?,?,?,?,1)',(id,role,dept,salt,pw))
++  return cls(path,clock=clock)
++ def operator(self,id):
++  with self.db() as db:row=db.execute('SELECT * FROM operator WHERE id=?',(id,)).fetchone()
++  if not row or not row['enabled'] or (row['role'],row['department'])!=OPERATORS.get(id):raise Denied('AUTHENTICATION_REQUIRED')
++  return Actor(id=id,role=row['role'],department_id=row['department'])
++ def login(self,id,password):
++  if not isinstance(id,str) or id not in OPERATORS or not isinstance(password,str) or not 1<=len(password)<=256:raise Denied('AUTHENTICATION_REQUIRED')
++  with self.db() as db:
++   row=db.execute('SELECT * FROM operator WHERE id=?',(id,)).fetchone()
++   salt=row['salt'] if row else b'\0'*16
++   actual=hashlib.pbkdf2_hmac('sha256',password.encode(),salt,600000)
++   if not row or not hmac.compare_digest(actual,row['password']):raise Denied('AUTHENTICATION_REQUIRED')
++   self.operator(id);nonce=secrets.token_urlsafe(32);mac=hmac.new(db.execute('SELECT secret FROM meta').fetchone()[0],nonce.encode(),'sha256').hexdigest()
++   token=nonce+'.'+mac;key=hashlib.sha256(token.encode()).hexdigest()
++   db.execute('INSERT INTO session VALUES (?,?,?,0)',(key,id,self.clock()+1800));db.execute('INSERT INTO audit VALUES (?,?,?,?)',(id,'LOGIN',key,self.clock()))
++  return token
++ def resolve(self,token):
++  if not isinstance(token,str) or not re.fullmatch(r'[A-Za-z0-9_-]{43}\.[0-9a-f]{64}',token):raise Denied('AUTHENTICATION_REQUIRED')
++  pieces=token.split('.')
++  if len(pieces)!=2:raise Denied('AUTHENTICATION_REQUIRED')
++  with self.db() as db:
++   mac=hmac.new(db.execute('SELECT secret FROM meta').fetchone()[0],pieces[0].encode(),'sha256').hexdigest()
++   if not hmac.compare_digest(mac,pieces[1]):raise Denied('AUTHENTICATION_REQUIRED')
++   row=db.execute('SELECT * FROM session WHERE id=?',(hashlib.sha256(token.encode()).hexdigest(),)).fetchone()
++  if not row or row['revoked'] or row['expires']<=self.clock():raise Denied('AUTHENTICATION_REQUIRED')
++  return self.operator(row['operator'])
++ def require(self,token,operation):
++  actor=self.resolve(token)
++  if actor.role not in PERMISSIONS.get(operation,set()):raise Denied('ROLE_DENIED')
++  return actor
++ def logout(self,token):
++  actor=self.resolve(token);key=hashlib.sha256(token.encode()).hexdigest()
++  with self.db() as db:db.execute('UPDATE session SET revoked=1 WHERE id=?',(key,));db.execute('INSERT INTO audit VALUES (?,?,?,?)',(actor.id,'LOGOUT',key,self.clock()))
++ def revoke_session(self,admin_token,token):
++  actor=self.require(admin_token,'revoke_session');key=hashlib.sha256(token.encode()).hexdigest()
++  with self.db() as db:db.execute('UPDATE session SET revoked=1 WHERE id=?',(key,));db.execute('INSERT INTO audit VALUES (?,?,?,?)',(actor.id,'REVOKE_SESSION',key,self.clock()))
+--- /dev/null
++++ b/backend/app/services/operations/migration.py
+@@ -0,0 +1,34 @@
++"""Additive operational companion indexes, reusing supported migration readiness."""
++import json,hashlib
++from pathlib import Path
++from app.graph.migration import MigrationRunner,MigrationError
++from app.graph.schema import utc_now
++from app.services.planning.storage import PlanMigration
++PLAN=Path(__file__).resolve().parents[2]/'graph/migrations/0005_operations.json'
++class OperationsMigration:
++ def __init__(self,client,name):
++  self.base=MigrationRunner(client,name);self.graph=self.base.graph;self.client=client
++  self.plan=json.loads(PLAN.read_text());self.checksum=hashlib.sha256(PLAN.read_bytes()).hexdigest()
++  if self.base.checksum!=self.plan['requires_0001_sha256']:raise MigrationError('0001 mismatch')
++ def status(self):
++  rows=self.graph.ro_query('MATCH (m:CivicOperationsMigration {id:$id}) RETURN m.checksum,m.state LIMIT 2',params={'id':'0005'}).result_set
++  if len(rows)>1 or rows and (rows[0][0]!=self.checksum or rows[0][1] not in {'APPLYING','FAILED','READY'}):raise MigrationError('0005 checksum mismatch')
++  ready=bool(rows and rows[0][1]=='READY')
++  if ready:
++   for key in ['indexes','constraints']:
++    for spec in self.plan[key]:self.base._wait(key,spec,.1)
++  return {'id':'0005','ready':ready,'checksum':self.checksum}
++ def apply(self,retry_failed=False):
++  if not PlanMigration(self.client,self.graph.name).status()['ready']:raise MigrationError('0004 not READY')
++  if not self.base.status()['ready']:raise MigrationError('0001 not READY')
++  lock=self.client.connection.lock('civicly:operations-migration:'+self.graph.name,timeout=30,blocking_timeout=1)
++  if not lock.acquire():raise MigrationError('Migration busy')
++  def state(value):self.graph.query('MERGE (m:CivicOperationsMigration {id:$id}) SET m.checksum=$sha,m.state=$state,m.updated_at=$at',params={'id':'0005','sha':self.checksum,'state':value,'at':utc_now()})
++  try:
++   if self.status()['ready']:return self.status()
++   state('APPLYING')
++   for spec in self.plan['indexes']:self.base._ensure_index(spec)
++   for spec in self.plan['constraints']:self.base._ensure_constraint(spec,retry_failed)
++   state('READY');return self.status()
++  except Exception:state('FAILED');raise
++  finally:lock.release()
+--- /dev/null
++++ b/backend/app/services/operations/models.py
+@@ -0,0 +1,49 @@
++"""Closed B13 service commands, separate from future API transport."""
++from typing import Literal
++from app.graph.repository import OutcomeUnknown
++from pydantic import Field,model_validator
++from app.services.evidence.models import Model,ID,Text,Hash
++class Assignment(Model):
++ task_id:ID
++ action_type:ID
++ target_ids:list[ID]=Field(min_length=1,max_length=5)
++ department_id:ID
++ assignee_id:ID
++class Binding(Model):
++ plan_id:ID
++ plan_version:int=Field(ge=1,le=100)
++ plan_hash:Hash
++ assignments:list[Assignment]=Field(min_length=1,max_length=12)
++ @model_validator(mode='after')
++ def distinct(self):
++  if len({a.task_id for a in self.assignments})!=len(self.assignments) or any(len(set(a.target_ids))!=len(a.target_ids) for a in self.assignments):raise ValueError('DUPLICATE_SCOPE')
++  return self
++ def normalized(self):
++  v=self.model_dump(mode='json');v['assignments'].sort(key=lambda a:a['task_id'])
++  for a in v['assignments']:a['target_ids'].sort()
++  return v
++class Submit(Binding):
++ operation:Literal['submit']='submit'
++ request_id:ID
++class Decide(Binding):
++ operation:Literal['decide']='decide'
++ request_id:ID
++ approval_id:ID
++ expected_hash:Hash
++ decision:Literal['APPROVED','REJECTED']
++ reason:Text
++class Order(Binding):
++ operation:Literal['order']='order'
++ request_id:ID
++ approval_id:ID
++ task_id:ID
++class Update(Model):
++ operation:Literal['update']='update'
++ request_id:ID
++ work_order_id:ID
++ expected_hash:Hash
++ new_status:Literal['ASSIGNED','CANCELLED']
++ reason:Text
++class OpsRecovery(OutcomeUnknown):
++ def __init__(self,graph,request_id,entity_id,*,operation=None,plan_id=None,approval_id=None):
++  super().__init__('OPERATIONS_RECOVERY_REQUIRED');self.reconciliation={'graph':graph,'request_id':request_id,'entity_id':entity_id,'commitment':'UNKNOWN','operation':operation,'plan_id':plan_id,'approval_id':approval_id}
+--- /dev/null
++++ b/backend/app/services/operations/service.py
+@@ -0,0 +1,187 @@
++"""Authenticated exact-plan approval/order services; no field execution or worker."""
++import json
++from app.graph.models import digest
++from app.graph.repository import Conflict,PreconditionFailed
++from app.graph.schema import utc_now
++from app.services.evidence.service import transition
++from app.services.evidence.reader import Reader
++from app.services.planning.models import PlanDraft
++from app.services.planning.policy import validate_remediation
++from app.services.planning.service import PlanningBlocked
++from .auth import Denied
++from .models import Submit,Decide,Order,Update,Binding,OpsRecovery
++from .storage import Storage
++from .migration import OperationsMigration
++
++def stable(prefix,*parts):return prefix+'-B13-'+digest(parts)[:32]
++def common(id,at):return {'id':id,'schema_version':3,'municipality_id':'demo-city','created_at':at,'updated_at':at}
++def native_hash(kind,props):return digest({'kind':kind,'properties':props})
++def scope(command):return Binding.model_validate(command.model_dump(include={'plan_id','plan_version','plan_hash','assignments'})).normalized()
++def execution_gates(task,dependency_statuses):
++ if task.remediation and any(c.status!='MET' for c in task.remediation.conditions):raise PreconditionFailed('UNMET_EXECUTION_GATES')
++ if any(status!='COMPLETED' for status in dependency_statuses):raise PreconditionFailed('UNMET_TASK_DEPENDENCIES')
++class Operations:
++ def __init__(self,planning,auth,*,clock=utc_now):
++  self.planning,self.repo,self.auth,self.clock=planning,planning.repo,auth,clock;self.store=Storage(self.repo)
++  if not OperationsMigration(self.repo.client,self.repo.graph.name).status()['ready']:raise PreconditionFailed('OPERATIONS_MIGRATION_REQUIRED')
++ def target(self):
++  from app.active import is_shared_target
++  if self.repo.graph.name!='civicly_knowledge' and not self.repo.graph.name.startswith('civicly_b13_test_') and not is_shared_target(self.repo.graph.name):raise PreconditionFailed('OPERATIONS_TARGET_NOT_AUTHORIZED')
++ async def draft(self,value,*,request_id,token):
++  self.target();actor=self.auth.require(token,'draft');return await self.planning.create(value,request_id=request_id,actor=actor)
++ def projection(self,kind,source):
++  if kind not in {'HAS_TASK','ASSIGNED_TO','TARGETS','DEPENDS_ON'}:raise PreconditionFailed('PROJECTION_FAMILY')
++  rows=self.repo._read(f'MATCH (:CivicEntity {{id:$id}})-[r:{kind}]->(n:CivicEntity) RETURN r.id,n.id LIMIT 101',{'id':source})
++  if len(rows)>100:raise PreconditionFailed('PROJECTION_LIMIT')
++  reader=Reader(self.repo,self.clock())
++  return [id for edge,id in rows if reader.visible(self.repo.get_relationship(edge).properties)]
++ async def validate(self,binding,at,*,review_sources=True):
++  Reader(self.repo,at).node(binding['plan_id'],'ResolutionPlan')
++  saved=self.planning.store.get(binding['plan_id'])
++  if not saved:raise PreconditionFailed('PLAN_UNAVAILABLE')
++  draft=PlanDraft.model_validate(saved['draft']);receipt=saved['receipt']
++  if (binding['plan_version'],binding['plan_hash'])!=(receipt['version'],receipt['plan_hash']):raise PreconditionFailed('PLAN_BINDING_CHANGED')
++  head=max(self.planning.store.rows(draft.investigation_id),key=lambda row:row[1])
++  if head[0]!=binding['plan_id']:raise PreconditionFailed('PLAN_SUPERSEDED')
++  tasks={saved['task_ids'][t.id]:t for t in draft.tasks}
++  if {a['task_id'] for a in binding['assignments']}!=set(tasks):raise PreconditionFailed('TASK_SCOPE_CHANGED')
++  if sorted(self.projection('HAS_TASK',binding['plan_id']))!=sorted(tasks):raise PreconditionFailed('NATIVE_TASK_SCOPE_CHANGED')
++  for a in binding['assignments']:
++   t=tasks[a['task_id']];assignee=self.auth.operator(a['assignee_id'])
++   if a['action_type']!=t.action_type or sorted(a['target_ids'])!=sorted(t.target_ids) or a['department_id']!=t.department_id:raise PreconditionFailed('APPROVAL_SCOPE_CHANGED')
++   if assignee.role!='DEPARTMENT_LEAD' or assignee.department_id!=t.department_id:raise Denied('ASSIGNEE_SCOPE_DENIED')
++   native=self.repo.get_node(a['task_id'],'ActionTask')
++   if native.properties['action_type']!=t.action_type or native.properties['priority']!=t.priority:raise PreconditionFailed('NATIVE_TASK_CHANGED')
++   if self.projection('ASSIGNED_TO',native.id)!=[t.department_id] or sorted(self.projection('TARGETS',native.id))!=sorted(t.target_ids) or sorted(self.projection('DEPENDS_ON',native.id))!=sorted(saved['task_ids'][id] for id in t.depends_on):raise PreconditionFailed('NATIVE_TASK_BINDING_CHANGED')
++  if not review_sources:return saved,draft,tasks,{'validated_at':at,'validation_scope':'IMMUTABLE_BINDING_ONLY_REJECTION','causal_validation':'Not authority for work; rejected proposal may have invalid current sources'}
++  reader=Reader(self.repo,at);reader.node(draft.investigation_id,'Investigation');assessments=[]
++  proposed={e.target for e in reader.edges('PROPOSES',source=draft.investigation_id)}
++  for b in draft.basis:
++   history=reader.histories(b.hypothesis_id)
++   if b.hypothesis_id not in proposed or not history or history[-1].id!=b.assessment_id:raise PreconditionFailed('ASSESSMENT_STALE')
++   a=history[-1];assessments.append(a)
++   for ref in a.evidence_references:
++    if ref.id in draft.evidence_ids:
++     current=reader.evidence(ref.id)
++     if current.content_hash!=ref.content_hash or current.finding_hashes!=ref.finding_hashes:raise PreconditionFailed('ASSESSMENT_SOURCE_CHANGED')
++  memory=self.planning.memory
++  before=memory.repo._read("MATCH (m:CivicSchemaMigration {id:'0001'}) RETURN m.repo_revision,m.repo_pending") if memory else None
++  proofs={}
++  for t in draft.tasks:
++   proofs[t.id]={'resolution':await self.planning.resolve(t,reader,at),'remediation':validate_remediation(t,draft,reader,assessments,PlanningBlocked)}
++  if memory and before!=memory.repo._read("MATCH (m:CivicSchemaMigration {id:'0001'}) RETURN m.repo_revision,m.repo_pending"):raise PreconditionFailed('SOURCE_REVISION_CHANGED')
++  return saved,draft,tasks,{'validated_at':at,'tasks':proofs,'memory_revision':before}
++ def approval(self,id,binding):
++  a=self.repo.get_node(id,'Approval');v=self.store.get('approval',id)
++  op=self.store.get('operation',v['last_operation']) if v else None
++  if not v or v['binding']!=binding or not op or op['native_hashes'].get(id)!=digest(a.properties):raise PreconditionFailed('APPROVAL_INTEGRITY_OR_SCOPE')
++  if (a.properties['plan_version'],a.properties['plan_hash'])!=(binding['plan_version'],binding['plan_hash']):raise PreconditionFailed('APPROVAL_NATIVE_BINDING')
++  return a,v
++ def verified_order(self,id):
++  v=self.store.get('order',id);w=self.repo.get_node(id,'WorkOrder')
++  op=self.store.get('operation',v['last_operation']) if v else None
++  if not v or not op or op['native_hashes'].get(id)!=digest(w.properties):raise PreconditionFailed('ORDER_INTEGRITY')
++  return w,v
++ def read_work_order(self,id,*,token):
++  self.target();actor=self.auth.require(token,'read');w,v=self.verified_order(id)
++  if not v:raise PreconditionFailed('ORDER_UNAVAILABLE')
++  a=v['assignment']
++  if actor.role=='DEPARTMENT_LEAD' and (a['department_id']!=actor.department_id or a['assignee_id']!=actor.id):raise Denied('DEPARTMENT_SCOPE_DENIED')
++  return {**v,'native':self.repo.get_node(id,'WorkOrder').properties}
++ async def execute(self,command,*,token,interrupt=None):
++  self.target()
++  if isinstance(command,dict):
++   cls={'submit':Submit,'decide':Decide,'order':Order,'update':Update}.get(command.get('operation'))
++   if cls is None:raise PreconditionFailed('OPERATION_UNAVAILABLE')
++   command=cls.model_validate(command)
++  if type(command) not in {Submit,Decide,Order,Update}:raise PreconditionFailed('CLOSED_COMMAND_REQUIRED')
++  q=command;actor=self.auth.require(token,q.operation);at=self.clock()
++  value=q.model_dump(mode='json')
++  if isinstance(q,Binding):value={**value,**scope(q)}
++  request_hash=digest({'actor':actor.model_dump(mode='json'),'command':value});opid=stable('OP',q.request_id)
++  with self.repo._session() as session:
++   try:old=self.store.get('operation',opid)
++   except Exception:raise OpsRecovery(self.repo.graph.name,q.request_id,opid,operation=q.operation,plan_id=getattr(q,'plan_id',None),approval_id=getattr(q,'approval_id',None)) from None
++   if old:
++    if old['request_hash']!=request_hash:raise Conflict('IDEMPOTENCY_CONFLICT')
++    return old['receipt'] # Historical acknowledgment; never authority for a new write.
++   nodes=[];updates=[];edges=[];states=[];native_hashes={};events=[]
++   def node(kind,props):nodes.append((kind,props));native_hashes[props['id']]=digest(props);return props
++   def changed(old,status,**extra):
++    transition(old.kind,old.properties['status'],status)
++    props={**old.properties,'status':status,'updated_at':at,**extra};updates.append((old,props));native_hashes[old.id]=digest(props);return props
++   def edge(kind,a,b):edges.append((kind,a,b,{'id':stable('REL',opid,kind,a,b),'municipality_id':'demo-city','created_at':at}))
++   def attest(plan,binding,state):states.append(('plan',plan['id'],{'binding':binding,'state':state,'native_hash':digest(plan),'last_operation':opid}))
++   binding=scope(q) if isinstance(q,Binding) else None
++   proof={}
++   if binding:
++    saved,draft,tasks,proof=await self.validate(binding,at,review_sources=not(isinstance(q,Decide) and q.decision=='REJECTED'));plan=self.repo.get_node(q.plan_id,'ResolutionPlan');inv=draft.investigation_id
++   if isinstance(q,Submit):
++    if plan.properties['status']!='DRAFT':raise PreconditionFailed('PLAN_NOT_DRAFT')
++    aid=stable('APPROVAL',q.plan_id)
++    approval=node('Approval',{**common(aid,at),'status':'PENDING','requested_at':at,'requested_by':actor.id,'plan_version':q.plan_version,'plan_hash':q.plan_hash})
++    p=changed(plan,'PENDING_APPROVAL',graph_revision=session.revision+1);attest(p,binding,'PENDING_APPROVAL')
++    states.append(('approval',aid,{'binding':binding,'submitted_by':actor.id,'proof':proof,'last_operation':opid}))
++    if draft.previous_plan_id:
++     previous=self.repo.get_node(draft.previous_plan_id,'ResolutionPlan')
++     if previous.properties['status']!='SUPERSEDED':
++      previous_props=changed(previous,'SUPERSEDED',graph_revision=session.revision+1)
++      prior=self.store.get('plan',previous.id);oldbinding=prior['binding'] if prior else {'plan_id':previous.id,'plan_version':previous.properties['version'],'plan_hash':previous.properties['plan_hash']}
++      attest(previous_props,oldbinding,'SUPERSEDED')
++    result={'id':aid,'plan_id':q.plan_id,'plan_version':q.plan_version,'plan_hash':q.plan_hash,'status':'PENDING','expected_hash':native_hash('Approval',approval),'scope_hash':digest(binding)};subject=aid;event_type='PLAN_SUBMITTED';event_subject=q.plan_id;emitter=inv
++   elif isinstance(q,Decide):
++    a,v=self.approval(q.approval_id,binding)
++    if not v or v['binding']!=binding or actor.id==v['submitted_by']:raise Denied('APPROVAL_BINDING_OR_SELF_APPROVAL')
++    if a.content_hash!=q.expected_hash:raise Conflict('STALE_APPROVAL_REVISION')
++    if plan.properties['status']!='PENDING_APPROVAL':raise PreconditionFailed('PLAN_NOT_PENDING')
++    updated=changed(a,q.decision,decided_at=at,decided_by=actor.id);p=changed(plan,q.decision,graph_revision=session.revision+1);attest(p,binding,q.decision)
++    if q.decision=='APPROVED':
++     for id in tasks:changed(self.repo.get_node(id,'ActionTask'),'APPROVED')
++    states.append(('approval',a.id,{**v,'decided_by':actor.id,'decided_at':at,'decision':q.decision,'reason':q.reason,'proof':proof,'last_operation':opid}))
++    result={'id':a.id,'plan_id':q.plan_id,'plan_version':q.plan_version,'plan_hash':q.plan_hash,'status':q.decision,'expected_hash':native_hash('Approval',updated),'scope_hash':digest(binding)};subject=a.id;event_type='PLAN_APPROVED' if q.decision=='APPROVED' else 'PLAN_REJECTED';event_subject=q.plan_id;emitter=inv
++   elif isinstance(q,Order):
++    a,v=self.approval(q.approval_id,binding)
++    if not v or v['binding']!=binding or a.properties['status']!='APPROVED' or v.get('decision')!='APPROVED' or v.get('decided_by')!=a.properties.get('decided_by') or plan.properties['status']!='APPROVED':raise PreconditionFailed('VALID_EXACT_APPROVAL_REQUIRED')
++    task=tasks.get(q.task_id)
++    if not task:raise PreconditionFailed('TASK_OUTSIDE_APPROVAL')
++    execution_gates(task,[self.repo.get_node(saved['task_ids'][id],'ActionTask').properties['status'] for id in task.depends_on])
++    if self.repo.get_node(q.task_id,'ActionTask').properties['status']!='APPROVED':raise PreconditionFailed('TASK_NOT_APPROVED')
++    assignment=next(a for a in binding['assignments'] if a['task_id']==q.task_id);wid=stable('WO',q.plan_id,q.task_id);prior=self.store.get('order',wid)
++    expected={'binding':binding,'approval_id':q.approval_id,'assignment':assignment}
++    if prior:
++     self.verified_order(wid)
++     if any(prior[k]!=v for k,v in expected.items()):raise Conflict('TASK_ORDER_SCOPE_CONFLICT')
++     result=prior['creation_receipt'];subject=wid;event_type=None;emitter=wid
++    else:
++     w=node('WorkOrder',{**common(wid,at),'status':'AUTHORIZED','execution_mode':'SIMULATED','plan_version':q.plan_version,'idempotency_key':q.request_id})
++     result={'id':wid,'status':'AUTHORIZED','expected_hash':native_hash('WorkOrder',w),'approval_id':q.approval_id,'task_id':q.task_id,'plan_id':q.plan_id,'department_id':assignment['department_id'],'assignee_id':assignment['assignee_id'],'execution_mode':'SIMULATED'}
++     states.append(('order',wid,{**expected,'creation_receipt':result,'proof':proof,'originating_request':q.request_id,'authorized_by':actor.id,'last_operation':opid}))
++     edge('IMPLEMENTS',wid,q.task_id);edge('AUTHORIZED_BY',wid,q.approval_id);subject=wid;event_type='WORK_ORDER_CREATED';event_subject=wid;emitter=wid
++   else:
++    w,v=self.verified_order(q.work_order_id)
++    if not v:raise PreconditionFailed('B13_ORDER_REQUIRED')
++    assignment=v['assignment']
++    if actor.department_id!=assignment['department_id'] or actor.id!=assignment['assignee_id']:raise Denied('DEPARTMENT_SCOPE_DENIED')
++    if q.expected_hash!=w.content_hash:raise Conflict('STALE_ORDER_REVISION')
++    saved,draft,tasks,proof=await self.validate(v['binding'],at);plan=self.repo.get_node(v['binding']['plan_id'],'ResolutionPlan');a,approval_state=self.approval(v['approval_id'],v['binding'])
++    if plan.properties['status']!='APPROVED' or a.properties['status']!='APPROVED':raise PreconditionFailed('APPROVAL_NO_LONGER_VALID')
++    task=tasks[assignment['task_id']]
++    execution_gates(task,[self.repo.get_node(saved['task_ids'][id],'ActionTask').properties['status'] for id in task.depends_on])
++    if self.repo.get_node(assignment['task_id'],'ActionTask').properties['status']!='APPROVED':raise PreconditionFailed('TASK_NO_LONGER_APPROVED')
++    if q.new_status not in {'ASSIGNED','CANCELLED'}:raise PreconditionFailed('B14_EXECUTION_NOT_AVAILABLE')
++    updated=changed(w,q.new_status);states.append(('order',w.id,{**v,'last_operation':opid}))
++    se=node('StatusEvent',{'id':stable('STATUS',opid),'municipality_id':'demo-city','schema_version':3,'created_at':at,'entity_id':w.id,'from_status':w.properties['status'],'to_status':q.new_status,'occurred_at':at,'actor_type':'HUMAN','actor_id':actor.id,'reason':q.reason})
++    edge('HAS_EVENT',w.id,se['id']);subject=w.id;event_type='WORK_ORDER_STATUS_CHANGED';event_subject=w.id;emitter=w.id
++    result={'id':w.id,'status':q.new_status,'expected_hash':native_hash('WorkOrder',updated),'status_event_id':se['id']}
++   if event_type:
++    event={'id':stable('EVENT',opid),'type':event_type,'entity_id':event_subject,'aggregate_revision':session.revision+1,'occurred_at':at,'payload_schema_version':1,'source_kind':'SYNTHETIC','idempotency_key':q.request_id,'actor_id':actor.id,'actor_role':actor.role,'payload':result}
++    node('DomainEvent',{**common(event['id'],at),'event_type':event_type,'subject_id':event_subject,'occurred_at':at,'delivery_status':'PENDING','idempotency_key':q.request_id,'payload_ref':'operation:'+opid});edge('EMITTED_EVENT',emitter,event['id']);events=[event]
++   operation={'request_id':q.request_id,'request_hash':request_hash,'actor':actor.model_dump(mode='json'),'command':value,'receipt':result,'occurred_at':at,'native_hashes':native_hashes,'events':events,'proof':proof}
++   states.append(('operation',opid,operation))
++   self.auth.require(token,q.operation) # Revoked/expired sessions fail before dispatch.
++   try:
++    self.store.commit(session,subject,nodes,updates,edges,states)
++    if interrupt=='after_commit':raise RuntimeError('INJECTED_ACK_LOSS')
++    if self.store.get('operation',opid)!=operation:raise RuntimeError('READBACK_MISMATCH')
++   except Exception:raise OpsRecovery(self.repo.graph.name,q.request_id,subject,operation=q.operation,plan_id=binding['plan_id'] if binding else v['binding']['plan_id'],approval_id=getattr(q,'approval_id',None) or (v.get('approval_id') if q.operation=='update' else result.get('id'))) from None
++   return result
+--- /dev/null
++++ b/backend/app/services/operations/storage.py
+@@ -0,0 +1,64 @@
++"""Fixed B13 batch compiler and hashed companion reads; existing writer fence."""
++import json
++from app.graph.models import digest
++from app.graph.schema import timestamp
++from app.graph.repository import Conflict,PreconditionFailed
++from .models import OpsRecovery
++NODES={'Approval','WorkOrder','DomainEvent','StatusEvent'}
++UPDATES={'ResolutionPlan','ActionTask','Approval','WorkOrder'}
++EDGES={'IMPLEMENTS','AUTHORIZED_BY','HAS_EVENT','EMITTED_EVENT'}
++class Storage:
++ def __init__(self,repo):self.repo=repo
++ def get(self,kind,id):
++  rows=self.repo._read('MATCH (s:CivicOperationState {id:$id,kind:$kind}) RETURN s.payload_json,s.payload_sha256 LIMIT 2',{'id':kind+':'+id,'kind':kind})
++  if not rows:return None
++  if len(rows)!=1:raise PreconditionFailed('OPERATIONS_IDENTITY')
++  v=json.loads(rows[0][0])
++  if digest(v)!=rows[0][1]:raise PreconditionFailed('OPERATIONS_INTEGRITY')
++  return v
++ def commit(self,session,subject,nodes,updates,edges,states):
++  if len(nodes)>45 or len(updates)>30 or len(edges)>60 or len(states)>10:raise PreconditionFailed('OPERATIONS_BATCH_LIMIT')
++  records={};fresh={id for kind,props in nodes for id in [props['id']]}
++  for kind,props in nodes:
++   if kind not in NODES or props['id'] in records or self.repo._node_optional(props['id']) or self.repo._edge_optional(props['id']):raise Conflict('OPERATIONS_COLLISION')
++   self.repo.registry.validate_node(kind,props);records[props['id']]=(kind,props)
++  for old,props in updates:
++   if old.kind not in UPDATES or props['id']!=old.id:raise PreconditionFailed('OPERATIONS_UPDATE_SCOPE')
++   allowed={'status','updated_at','graph_revision','decided_at','decided_by'}
++   if any(props.get(k)!=v for k,v in old.properties.items() if k not in allowed) or set(props)-set(old.properties)-allowed:raise PreconditionFailed('OPERATIONS_IMMUTABLE_FIELDS')
++   if timestamp(props['updated_at'])<timestamp(old.properties['updated_at']):raise PreconditionFailed('OPERATIONS_TIME_ROLLBACK')
++   self.repo.registry.validate_node(old.kind,props);records[old.id]=(old.kind,props)
++  for kind,a,b,props in edges:
++   if kind not in EDGES:raise PreconditionFailed('OPERATIONS_EDGE_SCOPE')
++   for id in [a,b]:
++    if id not in records:
++     n=self.repo.get_node(id);records[id]=(n.kind,n.properties)
++   self.repo._relationship_policies(kind,self.repo.decode_node(self.repo.registry.labels(records[a][0]),records[a][1]),self.repo.decode_node(self.repo.registry.labels(records[b][0]),records[b][1]),props)
++   if self.repo._edge_optional(props['id']):raise Conflict('OPERATIONS_EDGE_COLLISION')
++  if subject not in records:
++   n=self.repo.get_node(subject);records[subject]=(n.kind,n.properties)
++  aliases={id:'n'+str(i) for i,id in enumerate(sorted(records))};params={'scope':'demo-city'};parts=[]
++  for id in sorted(set(records)-fresh):
++   alias=aliases[id];parts.append(f'MATCH ({alias}:CivicEntity {{id:${alias}_id,municipality_id:$scope}}) ');params[alias+'_id']=id
++  for kind,props in nodes:
++   alias=aliases[props['id']];parts.append(f'CREATE ({alias}:'+':'.join(self.repo.registry.labels(kind))+f') SET {alias}=${alias}_props ');params[alias+'_props']=props
++  for i,(old,props) in enumerate(updates):parts.append(f'SET {aliases[old.id]}=$update{i} ');params['update'+str(i)]=props
++  for i,(kind,a,b,props) in enumerate(edges):parts.append(f'CREATE ({aliases[a]})-[e{i}:{kind}]->({aliases[b]}) SET e{i}=$edge{i} ');params['edge'+str(i)]=props
++  for i,(kind,id,value) in enumerate(states):
++   raw=json.dumps(value,sort_keys=True,separators=(',',':'))
++   if len(raw.encode())>150000:raise PreconditionFailed('OPERATIONS_PAYLOAD_LIMIT')
++   # All keys generated internally and protected by0005 unique constraint.
++   parts.append(f'MERGE (s{i}:CivicOperationState {{id:$stateid{i}}}) SET s{i}.kind=$kind{i},s{i}.payload_json=$raw{i},s{i}.payload_sha256=$sha{i} ')
++   params.update({f'stateid{i}':kind+':'+id,f'kind{i}':kind,f'raw{i}':raw,f'sha{i}':digest(value)})
++  before=self.repo._node_optional(subject)
++  self.repo._commit(session,'node',subject,before.content_hash if before else '', ''.join(parts),params,aliases[subject])
++
++def verify_plan_lifecycle(repo,props,receipt):
++ """Historical B12 bytes stay immutable; independently attest current native state."""
++ store=Storage(repo);v=store.get('plan',props['id'])
++ if not v or v['state']!=props['status'] or v['native_hash']!=digest(props):raise PreconditionFailed('PLAN_LIFECYCLE_INTEGRITY')
++ binding=v['binding']
++ if binding['plan_id']!=props['id'] or binding['plan_version']!=receipt.version or binding['plan_hash']!=receipt.plan_hash:raise PreconditionFailed('PLAN_LIFECYCLE_BINDING')
++ op=store.get('operation',v['last_operation'])
++ if not op or op['native_hashes'].get(props['id'])!=digest(props):raise PreconditionFailed('PLAN_LIFECYCLE_AUDIT')
++ if props['status'] not in {'PENDING_APPROVAL','APPROVED','REJECTED','SUPERSEDED'}:raise PreconditionFailed('PLAN_LIFECYCLE_UNSUPPORTED')
+--- /dev/null
++++ b/backend/tests/b13_fixtures.py
+@@ -0,0 +1,20 @@
++"""B13 authored authenticated operators; real isolated prior planning fixture."""
++import secrets
++from app.services.operations.auth import Auth,OPERATORS
++from app.services.operations.migration import OperationsMigration
++from app.services.operations.service import Operations
++from tests.b12_fixtures import prepared
++
++def auth_setup(path):
++ passwords={id:secrets.token_urlsafe(24) for id in OPERATORS};auth=Auth.provision(path,passwords)
++ tokens={id:auth.login(id,pw) for id,pw in passwords.items()};return auth,tokens
++
++def setup(db,tmp_path,memory):
++ p,r,clock,path,inv,draft,planning=prepared(db,tmp_path,memory,'WATERLOGGING')
++ auth,tokens=auth_setup(tmp_path/'auth.sqlite3');OperationsMigration(db,p.graph).apply()
++ ops=Operations(planning,auth,clock=clock)
++ return p,r,clock,path,inv,draft,planning,auth,tokens,ops
++
++def binding(saved):
++ return {'plan_id':saved['receipt']['id'],'plan_version':saved['receipt']['version'],'plan_hash':saved['receipt']['plan_hash'],
++ 'assignments':[{'task_id':saved['task_ids'][t['id']],'action_type':t['action_type'],'target_ids':t['target_ids'],'department_id':t['department_id'],'assignee_id':{'DEPT-DRAIN':'OP-DRAIN-LEAD','DEPT-ROAD':'OP-ROAD-LEAD','DEPT-WATER':'OP-WATER-LEAD','DEPT-SAN':'OP-WASTE-LEAD'}[t['department_id']]} for t in saved['draft']['tasks']]}
+--- /dev/null
++++ b/backend/tests/b13_worker.py
+@@ -0,0 +1,15 @@
++"""Fresh process actual native order/audit read; no mutation/provider."""
++import json,sys
++from pathlib import Path
++from app.active import load,active_scope
++from app.config import Settings
++from app.graph.connection import connect
++from app.graph.repository import GraphRepository
++from app.services.operations.storage import Storage
++from app.services.operations.auth import Auth
++private=json.loads(sys.stdin.read());actor=Auth(private['auth_path']).resolve(private['token'])
++p=load(sys.argv[1]);id=sys.argv[2]
++with connect(Settings(_env_file='.env')) as db,active_scope(p):
++ repo=GraphRepository(db,p.graph);store=Storage(repo);v=store.get('order',id);op=store.get('operation',v['last_operation'])
++ events=repo._read('MATCH (:WorkOrder {id:$id})-[:EMITTED_EVENT]->(e:DomainEvent) RETURN properties(e) LIMIT 20',{'id':id})
++ Path(sys.argv[3]).write_text(json.dumps({'authenticated_operator':actor.model_dump(mode='json'),'order':{**v,'native':repo.get_node(id,'WorkOrder').properties},'operation':op,'events':events},indent=2)+'\n')
+--- /dev/null
++++ b/backend/tests/integration/test_operations_runtime.py
+@@ -0,0 +1,189 @@
++"""B13 real isolated DB/B11/native lifecycle/audit; no providers or field execution."""
++import asyncio,copy,json,os,subprocess
++from pathlib import Path
++import pytest
++from app.active import active_scope
++from app.graph.repository import Conflict,PreconditionFailed
++from app.services.operations.auth import Denied
++from app.services.operations.models import OpsRecovery
++from app.services.planning.service import PlanningBlocked
++from tests.b13_fixtures import setup,binding
++from tests.integration.test_memory_graphrag import memory
++pytestmark=pytest.mark.integration
++async def approved(ops,planning,draft,tokens,tag='base'):
++ receipt=await ops.draft(draft,request_id=tag+'-draft',token=tokens['OP-ANALYST']);saved=planning.store.get(receipt.id);b=binding(saved)
++ pending=await ops.execute({**b,'operation':'submit','request_id':tag+'-submit'},token=tokens['OP-ANALYST'])
++ approved=await ops.execute({**b,'operation':'decide','request_id':tag+'-approve','approval_id':pending['id'],'expected_hash':pending['expected_hash'],'decision':'APPROVED','reason':'Synthetic human review of exact scope, guards and source reservations'},token=tokens['OP-APPROVER'])
++ return b,saved,pending,approved
++
++def test_actual_approval_order_scope_idempotency_and_competing_updates(db,tmp_path,memory):
++ p,r,clock,path,inv,draft,planning,auth,tokens,ops=setup(db,tmp_path,memory)
++ async def run():
++  with active_scope(p):
++   original_orders=r._read('MATCH (w:WorkOrder) RETURN count(w)')[0][0]
++   b,saved,pending,decision=await approved(ops,planning,draft,tokens)
++   assert planning.store.get(b['plan_id'])==saved # Historical draft receipt/bytes remain unchanged.
++   assert r.get_node(b['plan_id']).properties['status']=='APPROVED'
++   command={**b,'operation':'order','request_id':'order-original','approval_id':decision['id'],'task_id':b['assignments'][0]['task_id']}
++   for operator in ['OP-ANALYST','OP-DRAIN-LEAD','OP-ADMIN']:
++    with pytest.raises(Denied):await ops.execute(command,token=tokens[operator])
++   with pytest.raises(Denied):await ops.execute(command,token={'role':'APPROVER'})
++   wrong=copy.deepcopy(command);wrong['assignments'][0]['assignee_id']='OP-ROAD-LEAD'
++   with pytest.raises(Denied):await ops.execute(wrong,token=tokens['OP-APPROVER'])
++   wrong=copy.deepcopy(command);wrong['assignments'][0]['target_ids']=['D2']
++   with pytest.raises(PreconditionFailed):await ops.execute(wrong,token=tokens['OP-APPROVER'])
++   order=await ops.execute(command,token=tokens['OP-APPROVER']);assert order['status']=='AUTHORIZED'
++   assert await ops.execute(command,token=tokens['OP-APPROVER'])==order
++   assert await ops.execute({**command,'request_id':'same-task-other-request'},token=tokens['OP-APPROVER'])==order
++   changed=copy.deepcopy(command);changed['plan_hash']='0'*64
++   with pytest.raises(Conflict):await ops.execute(changed,token=tokens['OP-APPROVER'])
++   with pytest.raises(Denied):ops.read_work_order(order['id'],token=tokens['OP-ROAD-LEAD'])
++   assert ops.read_work_order(order['id'],token=tokens['OP-DRAIN-LEAD'])['native']['status']=='AUTHORIZED'
++   bad_update={'operation':'update','request_id':'wrong-department-update','work_order_id':order['id'],'expected_hash':order['expected_hash'],'new_status':'ASSIGNED','reason':'Must reject wrong department'}
++   with pytest.raises(Denied):await ops.execute(bad_update,token=tokens['OP-ROAD-LEAD'])
++   async def update(key):
++    try:return await asyncio.to_thread(lambda:asyncio.run(ops.execute({'operation':'update','request_id':key,'work_order_id':order['id'],'expected_hash':order['expected_hash'],'new_status':'ASSIGNED','reason':'Authenticated synthetic assignment only; no execution'},token=tokens['OP-DRAIN-LEAD'])))
++    except Conflict:return 'STALE'
++   race=await asyncio.gather(update('race-left'),update('race-right'))
++   assert sum(v=='STALE' for v in race)==1 and sum(isinstance(v,dict) for v in race)==1
++   assert r._read('MATCH (w:WorkOrder) RETURN count(w)')==[[original_orders+1]]
++   assert r._read('MATCH (:WorkOrder {id:$id})-[:AUTHORIZED_BY]->(:Approval) RETURN count(*)',{'id':order['id']})==[[1]]
++   assert r._read('MATCH (:WorkOrder {id:$id})-[:HAS_EVENT]->(:StatusEvent) RETURN count(*)',{'id':order['id']})==[[1]]
++   out=tmp_path/'fresh.json'
++   process=subprocess.run([str(Path('backend/.venv/bin/python').absolute()),'-m','tests.b13_worker',str(path),order['id'],str(out)],env={**os.environ,'PYTHONPATH':str(Path('backend').absolute())},input=json.dumps({'auth_path':str(auth.path),'token':tokens['OP-DRAIN-LEAD']}).encode(),capture_output=True,timeout=30)
++   assert process.returncode==0,process.stderr.decode()[-500:]
++   fresh=json.loads(out.read_text());assert fresh['order']['native']['status']=='ASSIGNED' and fresh['events']
++   assert fresh['authenticated_operator']['id']=='OP-DRAIN-LEAD'
++   Path('docs/evidence/B13-flow.json').write_text(json.dumps({'graph':p.graph,'binding':b,'pending':pending,'decision':decision,'order':order,'competing_updates':race,'fresh_process':fresh,'provider_calls':0,'no_execution':True},indent=2)+'\n')
++ asyncio.run(run())
++
++def test_actual_stale_sources_assessments_owners_supersession_and_rejection(db,tmp_path,memory):
++ p,r,clock,path,inv,draft,planning,auth,tokens,ops=setup(db,tmp_path,memory)
++ async def run():
++  with active_scope(p):
++   receipt=await ops.draft(draft,request_id='draft',token=tokens['OP-ANALYST']);saved=planning.store.get(receipt.id);b=binding(saved)
++   pending=await ops.execute({**b,'operation':'submit','request_id':'submit'},token=tokens['OP-ANALYST'])
++   cmd={**b,'operation':'decide','request_id':'decide','approval_id':pending['id'],'expected_hash':pending['expected_hash'],'decision':'APPROVED','reason':'Synthetic review'}
++   for operator in ['OP-ANALYST','OP-DRAIN-LEAD','OP-ADMIN']:
++    with pytest.raises(Denied):await ops.execute(cmd,token=tokens[operator])
++   owner=r.get_relationship('B12-OWNER-D1');r.update_relationship(owner.id,{'association_status':'CANDIDATE'},expected_hash=owner.content_hash)
++   with pytest.raises(PlanningBlocked,match='OWNERSHIP'):await ops.execute(cmd,token=tokens['OP-APPROVER'])
++   owner=r.get_relationship(owner.id);r.update_relationship(owner.id,{'association_status':'VERIFIED'},expected_hash=owner.content_hash)
++   from tests.b09_fixtures import Fixture,assess
++   f=Fixture(r,clock,{},p.graph,{})
++   assess(f,draft.basis[0].hypothesis_id,ref='B13-new-current-assessment')
++   with pytest.raises(PreconditionFailed,match='ASSESSMENT_STALE'):await ops.execute(cmd,token=tokens['OP-APPROVER'])
++   from app.services.evidence.reader import Reader
++   updated=draft.model_dump(mode='json');updated.update(version=2,previous_plan_id=receipt.id)
++   updated['basis'][0]['assessment_id']=Reader(r,clock()).histories(draft.basis[0].hypothesis_id)[-1].id
++   updated['tasks'][0]['assessment_ids']=[b['assessment_id'] for b in updated['basis']]
++   # Current version still cites original source: revoke it, and approval must fail closed.
++   source=memory.store.get(draft.tasks[0].procedure_citation.canonical_document_id)[0]
++   memory.store.revoke(source.id,operator='synthetic-source-curator',reason='B13 scoped revocation test')
++   with pytest.raises(PlanningBlocked,match='PROCEDURE_STALE'):await ops.draft(updated,request_id='revoked-draft',token=tokens['OP-ANALYST'])
++   from app.memory.models import Source
++   newsource=Source.model_validate({**source.model_dump(),'version':2,'supersedes':1,'status':'ACTIVE','effective_from':'2026-10-18T00:00:00Z'})
++   await memory.ingest(newsource);updated['tasks'][0]['procedure_citation']=(await memory.retrieve(as_of=clock(),document_id=source.document_id))['citations'][0]
++   second=await ops.draft(updated,request_id='new-version',token=tokens['OP-ANALYST']);second_saved=planning.store.get(second.id);b2=binding(second_saved)
++   second_pending=await ops.execute({**b2,'operation':'submit','request_id':'submit2'},token=tokens['OP-ANALYST'])
++   assert r.get_node(receipt.id).properties['status']=='SUPERSEDED' and planning.store.get(receipt.id)==saved
++   with pytest.raises(PreconditionFailed,match='PLAN_SUPERSEDED'):await ops.execute(cmd,token=tokens['OP-APPROVER'])
++   current_source=memory.store.get(newsource.id)[0]
++   memory.store.revoke(current_source.id,operator='synthetic-source-curator',reason='B13 revoke pending approval source')
++   approve2={**b2,'operation':'decide','request_id':'invalid-source-approve2','approval_id':second_pending['id'],'expected_hash':second_pending['expected_hash'],'decision':'APPROVED','reason':'Must be denied on revoked source'}
++   with pytest.raises(PlanningBlocked,match='PROCEDURE_STALE'):await ops.execute(approve2,token=tokens['OP-APPROVER'])
++   rejected=await ops.execute({**b2,'operation':'decide','request_id':'reject2','approval_id':second_pending['id'],'expected_hash':second_pending['expected_hash'],'decision':'REJECTED','reason':'Synthetic approver rejects proposal scope; retain reason'},token=tokens['OP-APPROVER'])
++   assert rejected['status']=='REJECTED' and ops.store.get('approval',rejected['id'])['reason'].startswith('Synthetic approver rejects')
++   assert planning.store.get(second.id)==second_saved
++   Path('docs/evidence/B13-denials.json').write_text(json.dumps({'graph':p.graph,'unauthorized_roles_denied':True,'candidate_owner_denied':True,'stale_assessment_denied':True,'revoked_source_denied':True,'superseded_plan_denied':True,'rejection':rejected,'old_receipt_immutable':True,'procedure_status':memory.repo.get_node(newsource.id.replace('ORG:','ORGPROC:'),'KnowledgeProcedure').properties['status']},indent=2)+'\n')
++ asyncio.run(run())
++
++def test_actual_ack_loss_order_replay_without_duplicate(db,tmp_path,memory):
++ p,r,clock,path,inv,draft,planning,auth,tokens,ops=setup(db,tmp_path,memory)
++ async def run():
++  with active_scope(p):
++   b,saved,pending,decision=await approved(ops,planning,draft,tokens,'ack')
++   cmd={**b,'operation':'order','request_id':'ack-original','approval_id':decision['id'],'task_id':b['assignments'][0]['task_id']}
++   with pytest.raises(OpsRecovery) as caught:await ops.execute(cmd,token=tokens['OP-APPROVER'],interrupt='after_commit')
++   identity=caught.value.reconciliation
++   assert identity['request_id']=='ack-original' and identity['commitment']=='UNKNOWN'
++   assert r._read('MATCH (:WorkOrder)-[:AUTHORIZED_BY]->(:Approval {id:$id}) RETURN count(*)',{'id':decision['id']})==[[1]]
++   result=await ops.execute(cmd,token=tokens['OP-APPROVER']);assert result['id']==identity['entity_id']
++   assert await ops.execute(cmd,token=tokens['OP-APPROVER'])==result
++   assert r._read('MATCH (:WorkOrder)-[:AUTHORIZED_BY]->(:Approval {id:$id}) RETURN count(*)',{'id':decision['id']})==[[1]]
++   Path('docs/evidence/B13-ack-recovery.json').write_text(json.dumps({'graph':p.graph,'recovery':identity,'same_request_replayed':True,'receipt':result,'order_count_for_approval':1,'automatic_retry':False,'false_rejection':False,'provider_calls':0},indent=2)+'\n')
++ asyncio.run(run())
++
++def test_actual_conditional_approval_retains_unmet_gate_no_order(db,tmp_path,memory):
++ from tests.b12_fixtures import prepared
++ from tests.b13_fixtures import auth_setup
++ from app.services.operations.migration import OperationsMigration
++ from app.services.operations.service import Operations
++ p,r,clock,path,inv,draft,planning=prepared(db,tmp_path,memory,'WATERLOGGING',remedial=True)
++ auth,tokens=auth_setup(tmp_path/'auth.sqlite3');OperationsMigration(db,p.graph).apply();ops=Operations(planning,auth,clock=clock)
++ value=draft.model_dump(mode='json');value['tasks'][0]['remediation']['mode']='CONDITIONAL'
++ value['tasks'][0]['remediation']['conditions'][1].update(status='UNMET',evidence_ids=[])
++ async def run():
++  with active_scope(p):
++   before=r._read('MATCH (w:WorkOrder) RETURN count(w)')[0][0]
++   b,saved,pending,decision=await approved(ops,planning,value,tokens,'conditional')
++   cmd={**b,'operation':'order','request_id':'conditional-block','approval_id':decision['id'],'task_id':b['assignments'][0]['task_id']}
++   with pytest.raises(PreconditionFailed,match='UNMET_EXECUTION_GATES'):await ops.execute(cmd,token=tokens['OP-APPROVER'])
++   assert planning.store.get(b['plan_id'])==saved and saved['draft']['tasks'][0]['remediation']['conditions'][1]['status']=='UNMET'
++   assert r._read('MATCH (w:WorkOrder) RETURN count(w)')==[[before]]
++   Path('docs/evidence/B13-conditional.json').write_text(json.dumps({'graph':p.graph,'binding':b,'decision':decision,'unmet_conditions_preserved':True,'order_creation_denied':True,'work_order_delta':0,'no_field_execution':True,'provider_calls':0},indent=2)+'\n')
++ asyncio.run(run())
++
++def test_actual_b12_checkpoint_survives_approval_and_rejects_native_rollback(db,tmp_path,memory):
++ from uuid import uuid4
++ from app.agents.models import InvestigationState
++ from app.agents.mcp import brokers
++ from app.agents.runtime import InvestigationAgent
++ from app.agents.checkpoints import saver
++ from app.services.evidence.reader import Reader
++ from tests.b10_fixtures import ScriptedModel,choose
++ p,r,clock,path,inv,draft,planning,auth,tokens,ops=setup(db,tmp_path,memory)
++ async def run():
++  with active_scope(p):
++   receipt=await ops.draft(draft,request_id='checkpoint-draft',token=tokens['OP-ANALYST']);saved=planning.store.get(receipt.id);b=binding(saved)
++   async with brokers(p,path,timeout=10) as tools:
++    bound=Reader(r,clock()).edges('INVESTIGATES',source=inv);thread=uuid4().hex
++    state=InvestigationState(graph=p.graph,investigation_id=inv,thread_id=thread,problem_cluster_id=next(e.target for e in bound if r.get_node(e.target).kind=='ProblemCluster'),incident_ids=[e.target for e in bound if r.get_node(e.target).kind=='Incident'],asset_ids=['D1'],issue='WATERLOGGING',graph_revision=0,inventory_hash=tools.inventory_hash,as_of=clock(),hypotheses=[v.hypothesis_id for v in draft.basis],current_plan_id=receipt.id,current_plan_version=receipt.version,current_plan_hash=receipt.plan_hash)
++    agent=InvestigationAgent(p,r,tools,ScriptedModel([choose()]),saver(p),clock=clock,planning_service=planning)
++    result=await agent.run(state,thread_id=thread);assert result['__interrupt__']
++    before=await agent.graph.aget_state({'configurable':{'thread_id':thread}})
++    pending=await ops.execute({**b,'operation':'submit','request_id':'checkpoint-submit'},token=tokens['OP-ANALYST'])
++    decision=await ops.execute({**b,'operation':'decide','request_id':'checkpoint-approve','approval_id':pending['id'],'expected_hash':pending['expected_hash'],'decision':'APPROVED','reason':'Synthetic exact-plan review'},token=tokens['OP-APPROVER'])
++    after=await agent.graph.aget_state({'configurable':{'thread_id':thread}})
++    assert before.config==after.config and before.values==after.values
++    from app.agents.checkpoints import ownership
++    async with ownership(db,p,thread) as check:
++     agent.check=check
++     assert agent.decode(after.values).current_plan_hash==receipt.plan_hash and planning.store.get(receipt.id)==saved
++    native=r.get_node(receipt.id);r.update_node(native.id,{'status':'DRAFT'},expected_hash=native.content_hash)
++    with pytest.raises(PreconditionFailed,match='LIFECYCLE_INTEGRITY'):planning.store.get(native.id)
++    native=r.get_node(native.id);r.update_node(native.id,{'status':'APPROVED'},expected_hash=native.content_hash)
++    async with ownership(db,p,thread) as check:
++     agent.check=check
++     assert agent.decode(after.values).current_plan_id==receipt.id
++    Path('docs/evidence/B13-checkpoint-compatibility.json').write_text(json.dumps({'graph':p.graph,'thread_id':thread,'checkpoint_id':after.config['configurable']['checkpoint_id'],'historical_receipt':receipt.model_dump(mode='json'),'current_decision':decision,'saved_checkpoint_unchanged':True,'native_rollback_rejected':True,'model':'SCRIPTED_PAUSE_REAL_MCP_SAVER','provider_calls':0},indent=2)+'\n')
++ asyncio.run(run())
++
++def test_accepted_road_water_dag_approval_and_dependency_boundary(db,tmp_path,memory):
++ from tests.b12_fixtures import prepared
++ from tests.b13_fixtures import auth_setup
++ from app.services.operations.migration import OperationsMigration
++ from app.services.operations.service import Operations
++ p,r,clock,path,inv,draft,planning=prepared(db,tmp_path,memory,'ROAD_DAMAGE')
++ auth,tokens=auth_setup(tmp_path/'auth.sqlite3');OperationsMigration(db,p.graph).apply();ops=Operations(planning,auth,clock=clock)
++ async def run():
++  with active_scope(p):
++   b,saved,pending,decision=await approved(ops,planning,draft,tokens,'road-water')
++   assert {a['assignee_id'] for a in b['assignments']}=={'OP-ROAD-LEAD','OP-WATER-LEAD'}
++   first=next(a for a in b['assignments'] if a['department_id']=='DEPT-ROAD');second=next(a for a in b['assignments'] if a['department_id']=='DEPT-WATER')
++   order=await ops.execute({**b,'operation':'order','request_id':'road-inspection-order','approval_id':decision['id'],'task_id':first['task_id']},token=tokens['OP-APPROVER'])
++   with pytest.raises(PreconditionFailed,match='UNMET_TASK_DEPENDENCIES'):await ops.execute({**b,'operation':'order','request_id':'blocked-water-order','approval_id':decision['id'],'task_id':second['task_id']},token=tokens['OP-APPROVER'])
++   with pytest.raises(Denied):ops.read_work_order(order['id'],token=tokens['OP-WATER-LEAD'])
++   assert planning.store.get(b['plan_id'])==saved
++   Path('docs/evidence/B13-road-water.json').write_text(json.dumps({'graph':p.graph,'binding':b,'decision':decision,'road_order':order,'water_dependency_blocked':True,'cross_department_access_denied':True,'b12_dag_unchanged':True,'provider_calls':0},indent=2)+'\n')
++ asyncio.run(run())
+--- /dev/null
++++ b/backend/tests/unit/test_operations.py
+@@ -0,0 +1,54 @@
++"""Authentication/gate/state contract tests; no mocked database success."""
++import pytest
++from app.services.operations.auth import Auth,Denied,PERMISSIONS
++from app.services.operations.models import Binding,Update
++from app.services.evidence.service import transition
++from app.graph.repository import PreconditionFailed
++from tests.b13_fixtures import auth_setup
++from pydantic import ValidationError
++@pytest.fixture
++def identities(tmp_path):return auth_setup(tmp_path/'auth.sqlite3')
++def test_signed_sessions_expiry_logout_revocation_and_forgery(identities):
++ auth,t=identities
++ assert auth.resolve(t['OP-ANALYST']).role=='ANALYST'
++ for forged in [t['OP-ANALYST']+'x',{'role':'APPROVER'},'OP-APPROVER',None,'A'*43+'.'+'é'*64]:
++  with pytest.raises(Denied):auth.resolve(forged)
++ with pytest.raises(Denied):auth.login('OP-APPROVER','incorrect')
++ auth.logout(t['OP-ANALYST'])
++ with pytest.raises(Denied):auth.resolve(t['OP-ANALYST'])
++ auth.revoke_session(t['OP-ADMIN'],t['OP-ROAD-LEAD'])
++ with pytest.raises(Denied):auth.resolve(t['OP-ROAD-LEAD'])
++ auth.clock=lambda:10**12
++ with pytest.raises(Denied):auth.resolve(t['OP-APPROVER'])
++@pytest.mark.parametrize('operator,allowed',[('OP-ANALYST',{'draft','submit','read'}),('OP-APPROVER',{'decide','order','read'}),('OP-DRAIN-LEAD',{'read','update'}),('OP-ADMIN',{'read','revoke_session'})])
++def test_no_implicit_role_bypass(identities,operator,allowed):
++ auth,t=identities
++ for operation in PERMISSIONS:
++  if operation in allowed:assert auth.require(t[operator],operation).id==operator
++  else:
++   with pytest.raises(Denied):auth.require(t[operator],operation)
++def test_exact_scope_closed_and_canonical():
++ b={'plan_id':'P','plan_version':1,'plan_hash':'a'*64,'assignments':[{'task_id':'T','action_type':'INSPECTION','target_ids':['B','A'],'department_id':'DEPT-DRAIN','assignee_id':'OP-DRAIN-LEAD'}]}
++ first=Binding.model_validate(b).normalized();b['assignments'][0]['target_ids'].reverse()
++ assert Binding.model_validate(b).normalized()==first
++ for key,value in [('role','APPROVER'),('approved',True)]:
++  with pytest.raises(ValidationError):Binding.model_validate({**b,key:value})
++ b['assignments'].append(b['assignments'][0])
++ with pytest.raises(ValidationError):Binding.model_validate(b)
++@pytest.mark.parametrize('old,new,valid',[('AUTHORIZED','ASSIGNED',True),('AUTHORIZED','CANCELLED',True),('AUTHORIZED','COMPLETED',False),('ASSIGNED','AUTHORIZED',False),('CANCELLED','ASSIGNED',False)])
++def test_work_order_state_guard_and_b14_boundary(old,new,valid):
++ if valid:assert transition('WorkOrder',old,new)==new
++ else:
++  with pytest.raises(PreconditionFailed):transition('WorkOrder',old,new)
++ with pytest.raises(ValidationError):Update(request_id='r',work_order_id='w',expected_hash='a'*64,new_status='IN_PROGRESS',reason='B14 not authorized')
++
++def test_conditional_approval_is_not_execution_clearance():
++ from app.services.planning.models import TaskDraft
++ from app.services.operations.service import execution_gates
++ from tests.b12_fixtures import sample
++ v=sample()['tasks'][0];v.update(action_type='DRAIN_BLOCKAGE_CLEARANCE',remediation={'mode':'CONDITIONAL','conditions':[{'kind':'CAUSAL_INSPECTION','status':'MET','evidence_ids':['EV']},{'kind':'SAFETY_REVIEW','status':'UNMET','evidence_ids':[]}]})
++ task=TaskDraft.model_validate(v)
++ with pytest.raises(PreconditionFailed,match='UNMET_EXECUTION_GATES'):execution_gates(task,[])
++ v['action_type']='INSPECTION';v['remediation']=None;task=TaskDraft.model_validate(v)
++ with pytest.raises(PreconditionFailed,match='UNMET_TASK_DEPENDENCIES'):execution_gates(task,['APPROVED'])
++ execution_gates(task,['COMPLETED'])
+--- /dev/null
++++ b/contracts/operations.json
+@@ -0,0 +1,484 @@
++{
++  "version": "B13-1",
++  "municipality_id": "demo-city",
++  "operators": {
++    "OP-ANALYST": {
++      "role": "ANALYST",
++      "department_id": "DEPT-COORD"
++    },
++    "OP-APPROVER": {
++      "role": "APPROVER",
++      "department_id": "DEPT-COORD"
++    },
++    "OP-DRAIN-LEAD": {
++      "role": "DEPARTMENT_LEAD",
++      "department_id": "DEPT-DRAIN"
++    },
++    "OP-ROAD-LEAD": {
++      "role": "DEPARTMENT_LEAD",
++      "department_id": "DEPT-ROAD"
++    },
++    "OP-WASTE-LEAD": {
++      "role": "DEPARTMENT_LEAD",
++      "department_id": "DEPT-SAN"
++    },
++    "OP-WATER-LEAD": {
++      "role": "DEPARTMENT_LEAD",
++      "department_id": "DEPT-WATER"
++    },
++    "OP-ADMIN": {
++      "role": "ADMIN",
++      "department_id": "DEPT-COORD"
++    }
++  },
++  "permissions": {
++    "draft": [
++      "ANALYST"
++    ],
++    "submit": [
++      "ANALYST"
++    ],
++    "decide": [
++      "APPROVER"
++    ],
++    "order": [
++      "APPROVER"
++    ],
++    "update": [
++      "DEPARTMENT_LEAD"
++    ],
++    "read": [
++      "ADMIN",
++      "ANALYST",
++      "APPROVER",
++      "DEPARTMENT_LEAD"
++    ],
++    "revoke_session": [
++      "ADMIN"
++    ]
++  },
++  "commands": {
++    "Submit": {
++      "$defs": {
++        "Assignment": {
++          "additionalProperties": false,
++          "properties": {
++            "task_id": {
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Task Id",
++              "type": "string"
++            },
++            "action_type": {
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Action Type",
++              "type": "string"
++            },
++            "target_ids": {
++              "items": {
++                "maxLength": 200,
++                "minLength": 1,
++                "type": "string"
++              },
++              "maxItems": 5,
++              "minItems": 1,
++              "title": "Target Ids",
++              "type": "array"
++            },
++            "department_id": {
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Department Id",
++              "type": "string"
++            },
++            "assignee_id": {
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Assignee Id",
++              "type": "string"
++            }
++          },
++          "required": [
++            "task_id",
++            "action_type",
++            "target_ids",
++            "department_id",
++            "assignee_id"
++          ],
++          "title": "Assignment",
++          "type": "object"
++        }
++      },
++      "additionalProperties": false,
++      "properties": {
++        "plan_id": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Plan Id",
++          "type": "string"
++        },
++        "plan_version": {
++          "maximum": 100,
++          "minimum": 1,
++          "title": "Plan Version",
++          "type": "integer"
++        },
++        "plan_hash": {
++          "pattern": "^[0-9a-f]{64}$",
++          "title": "Plan Hash",
++          "type": "string"
++        },
++        "assignments": {
++          "items": {
++            "$ref": "#/$defs/Assignment"
++          },
++          "maxItems": 12,
++          "minItems": 1,
++          "title": "Assignments",
++          "type": "array"
++        },
++        "operation": {
++          "const": "submit",
++          "default": "submit",
++          "title": "Operation",
++          "type": "string"
++        },
++        "request_id": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Request Id",
++          "type": "string"
++        }
++      },
++      "required": [
++        "plan_id",
++        "plan_version",
++        "plan_hash",
++        "assignments",
++        "request_id"
++      ],
++      "title": "Submit",
++      "type": "object"
++    },
++    "Decide": {
++      "$defs": {
++        "Assignment": {
++          "additionalProperties": false,
++          "properties": {
++            "task_id": {
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Task Id",
++              "type": "string"
++            },
++            "action_type": {
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Action Type",
++              "type": "string"
++            },
++            "target_ids": {
++              "items": {
++                "maxLength": 200,
++                "minLength": 1,
++                "type": "string"
++              },
++              "maxItems": 5,
++              "minItems": 1,
++              "title": "Target Ids",
++              "type": "array"
++            },
++            "department_id": {
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Department Id",
++              "type": "string"
++            },
++            "assignee_id": {
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Assignee Id",
++              "type": "string"
++            }
++          },
++          "required": [
++            "task_id",
++            "action_type",
++            "target_ids",
++            "department_id",
++            "assignee_id"
++          ],
++          "title": "Assignment",
++          "type": "object"
++        }
++      },
++      "additionalProperties": false,
++      "properties": {
++        "plan_id": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Plan Id",
++          "type": "string"
++        },
++        "plan_version": {
++          "maximum": 100,
++          "minimum": 1,
++          "title": "Plan Version",
++          "type": "integer"
++        },
++        "plan_hash": {
++          "pattern": "^[0-9a-f]{64}$",
++          "title": "Plan Hash",
++          "type": "string"
++        },
++        "assignments": {
++          "items": {
++            "$ref": "#/$defs/Assignment"
++          },
++          "maxItems": 12,
++          "minItems": 1,
++          "title": "Assignments",
++          "type": "array"
++        },
++        "operation": {
++          "const": "decide",
++          "default": "decide",
++          "title": "Operation",
++          "type": "string"
++        },
++        "request_id": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Request Id",
++          "type": "string"
++        },
++        "approval_id": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Approval Id",
++          "type": "string"
++        },
++        "expected_hash": {
++          "pattern": "^[0-9a-f]{64}$",
++          "title": "Expected Hash",
++          "type": "string"
++        },
++        "decision": {
++          "enum": [
++            "APPROVED",
++            "REJECTED"
++          ],
++          "title": "Decision",
++          "type": "string"
++        },
++        "reason": {
++          "maxLength": 2000,
++          "minLength": 1,
++          "title": "Reason",
++          "type": "string"
++        }
++      },
++      "required": [
++        "plan_id",
++        "plan_version",
++        "plan_hash",
++        "assignments",
++        "request_id",
++        "approval_id",
++        "expected_hash",
++        "decision",
++        "reason"
++      ],
++      "title": "Decide",
++      "type": "object"
++    },
++    "Order": {
++      "$defs": {
++        "Assignment": {
++          "additionalProperties": false,
++          "properties": {
++            "task_id": {
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Task Id",
++              "type": "string"
++            },
++            "action_type": {
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Action Type",
++              "type": "string"
++            },
++            "target_ids": {
++              "items": {
++                "maxLength": 200,
++                "minLength": 1,
++                "type": "string"
++              },
++              "maxItems": 5,
++              "minItems": 1,
++              "title": "Target Ids",
++              "type": "array"
++            },
++            "department_id": {
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Department Id",
++              "type": "string"
++            },
++            "assignee_id": {
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Assignee Id",
++              "type": "string"
++            }
++          },
++          "required": [
++            "task_id",
++            "action_type",
++            "target_ids",
++            "department_id",
++            "assignee_id"
++          ],
++          "title": "Assignment",
++          "type": "object"
++        }
++      },
++      "additionalProperties": false,
++      "properties": {
++        "plan_id": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Plan Id",
++          "type": "string"
++        },
++        "plan_version": {
++          "maximum": 100,
++          "minimum": 1,
++          "title": "Plan Version",
++          "type": "integer"
++        },
++        "plan_hash": {
++          "pattern": "^[0-9a-f]{64}$",
++          "title": "Plan Hash",
++          "type": "string"
++        },
++        "assignments": {
++          "items": {
++            "$ref": "#/$defs/Assignment"
++          },
++          "maxItems": 12,
++          "minItems": 1,
++          "title": "Assignments",
++          "type": "array"
++        },
++        "operation": {
++          "const": "order",
++          "default": "order",
++          "title": "Operation",
++          "type": "string"
++        },
++        "request_id": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Request Id",
++          "type": "string"
++        },
++        "approval_id": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Approval Id",
++          "type": "string"
++        },
++        "task_id": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Task Id",
++          "type": "string"
++        }
++      },
++      "required": [
++        "plan_id",
++        "plan_version",
++        "plan_hash",
++        "assignments",
++        "request_id",
++        "approval_id",
++        "task_id"
++      ],
++      "title": "Order",
++      "type": "object"
++    },
++    "Update": {
++      "additionalProperties": false,
++      "properties": {
++        "operation": {
++          "const": "update",
++          "default": "update",
++          "title": "Operation",
++          "type": "string"
++        },
++        "request_id": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Request Id",
++          "type": "string"
++        },
++        "work_order_id": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Work Order Id",
++          "type": "string"
++        },
++        "expected_hash": {
++          "pattern": "^[0-9a-f]{64}$",
++          "title": "Expected Hash",
++          "type": "string"
++        },
++        "new_status": {
++          "enum": [
++            "ASSIGNED",
++            "CANCELLED"
++          ],
++          "title": "New Status",
++          "type": "string"
++        },
++        "reason": {
++          "maxLength": 2000,
++          "minLength": 1,
++          "title": "Reason",
++          "type": "string"
++        }
++      },
++      "required": [
++        "request_id",
++        "work_order_id",
++        "expected_hash",
++        "new_status",
++        "reason"
++      ],
++      "title": "Update",
++      "type": "object"
++    }
++  },
++  "binding": "Full exact task/action/target/department/assignee scope, current plan/version/hash, authenticated decision and current proof. B12 draft immutable; native lifecycle independently audited.",
++  "conditional": "Human may approve CONDITIONAL proposal; UNMET causal/safety or non-COMPLETED dependencies block work-order creation. No waiver/fabricated finding.",
++  "rejection": "Exact immutable current scope and CAS still required; current causal/source validity need not be repaired to reject. Binding-only validation recorded explicitly.",
++  "auth": "Private SQLite PBKDF2-HMAC-SHA256600000/random16byte salts, signed30minute revocable sessions; caller roles never trusted. Existing5source operators plus private-admin and water-utility lead metadata, four roles.",
++  "storage": "Compatible additive0005 companion indexes; one existing fenced mutation couples native Approval/WorkOrder/StatusEvent/DomainEvent/audit/request ledger. No cross-graph transaction claim.",
++  "b13_transitions": [
++    "AUTHORIZED->ASSIGNED",
++    "AUTHORIZED->CANCELLED",
++    "ASSIGNED->CANCELLED"
++  ],
++  "excluded": [
++    "execution",
++    "completion",
++    "outcome evaluation",
++    "event delivery/worker",
++    "API",
++    "frontend",
++    "live provider"
++  ]
++}
+--- /dev/null
++++ b/scripts/validate_operations.py
+@@ -0,0 +1,16 @@
++"""B13 static schema/policy/migration parity; not runtime/auth proof."""
++import json,sys,hashlib
++from pathlib import Path
++ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT/'backend'))
++from app.services.operations.auth import OPERATORS,PERMISSIONS
++from app.services.operations.models import Submit,Decide,Order,Update
++c=json.loads((ROOT/'contracts/operations.json').read_text())
++assert c['commands']=={v.__name__:v.model_json_schema() for v in [Submit,Decide,Order,Update]}
++assert c['operators']=={k:{'role':v[0],'department_id':v[1]} for k,v in OPERATORS.items()}
++assert c['permissions']=={k:sorted(v) for k,v in PERMISSIONS.items()}
++p=json.loads((ROOT/'backend/app/graph/migrations/0005_operations.json').read_text())
++assert p['requires_0001_sha256']==hashlib.sha256((ROOT/'backend/app/graph/migrations/0001.json').read_bytes()).hexdigest()
++s=json.loads((ROOT/'contracts/state_machines.json').read_text())
++assert s['machines']['WorkOrder']['initial']=='AUTHORIZED'
++assert c['permissions']['decide']==['APPROVER'] and 'ADMIN' not in c['permissions']['order']
++print('PASS B13 STATIC: closed commands, exact seven-account/four-role demo permissions, AUTHORIZED initial state and compatible0005; not execution/provider/runtime proof')

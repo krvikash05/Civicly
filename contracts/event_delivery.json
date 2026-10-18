@@ -1,0 +1,411 @@
+{
+  "schema_version": 2,
+  "microtask": "B15",
+  "municipality_scope": {
+    "field": "municipality_id",
+    "value": "demo-city"
+  },
+  "delivery_semantics": "AT_LEAST_ONCE_IDEMPOTENT_CONSUMERS_NO_CROSS_GRAPH_ACID",
+  "source_authorization": "Exact private ActiveProfile plus explicit source-graph activation; no graph enumeration",
+  "cutover": "Current source revision with optional at-most20 explicitly selected original event IDs; no automatic old proof graph admission",
+  "event_schema": {
+    "additionalProperties": false,
+    "properties": {
+      "id": {
+        "maxLength": 200,
+        "minLength": 1,
+        "title": "Id",
+        "type": "string"
+      },
+      "type": {
+        "maxLength": 200,
+        "minLength": 1,
+        "title": "Type",
+        "type": "string"
+      },
+      "entity_id": {
+        "maxLength": 200,
+        "minLength": 1,
+        "title": "Entity Id",
+        "type": "string"
+      },
+      "aggregate_revision": {
+        "minimum": 0,
+        "title": "Aggregate Revision",
+        "type": "integer"
+      },
+      "occurred_at": {
+        "title": "Occurred At",
+        "type": "string"
+      },
+      "payload_schema_version": {
+        "const": 1,
+        "title": "Payload Schema Version",
+        "type": "integer"
+      },
+      "source_kind": {
+        "enum": [
+          "SYNTHETIC",
+          "PUBLIC",
+          "MUNICIPAL",
+          "USER",
+          "AGENT"
+        ],
+        "title": "Source Kind",
+        "type": "string"
+      },
+      "idempotency_key": {
+        "maxLength": 200,
+        "minLength": 1,
+        "title": "Idempotency Key",
+        "type": "string"
+      },
+      "actor_id": {
+        "anyOf": [
+          {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Actor Id"
+      },
+      "actor_role": {
+        "anyOf": [
+          {
+            "enum": [
+              "ANALYST",
+              "DEPARTMENT_LEAD",
+              "APPROVER",
+              "ADMIN",
+              "SYSTEM"
+            ],
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Actor Role"
+      },
+      "payload": {
+        "additionalProperties": true,
+        "title": "Payload",
+        "type": "object"
+      }
+    },
+    "required": [
+      "id",
+      "type",
+      "entity_id",
+      "aggregate_revision",
+      "occurred_at",
+      "payload_schema_version",
+      "source_kind",
+      "idempotency_key"
+    ],
+    "title": "Event",
+    "type": "object"
+  },
+  "routing_defaults": {
+    "COMPLAINT_ACCEPTED": {
+      "bound_case": [
+        "WAKE",
+        "BOUNDED_INVESTIGATION_WAKE"
+      ],
+      "unbound_case": [
+        "INFO",
+        "EXPLICIT_CASE_BINDING_REQUIRED"
+      ]
+    },
+    "INCIDENT_LINKED": {
+      "bound_case": [
+        "WAKE",
+        "BOUNDED_INVESTIGATION_WAKE"
+      ],
+      "unbound_case": [
+        "INFO",
+        "EXPLICIT_CASE_BINDING_REQUIRED"
+      ]
+    },
+    "CASE_OPENED": {
+      "bound_case": [
+        "WAKE",
+        "BOUNDED_INVESTIGATION_WAKE"
+      ],
+      "unbound_case": [
+        "INFO",
+        "EXPLICIT_CASE_BINDING_REQUIRED"
+      ]
+    },
+    "GRAPH_EVIDENCE_CHANGED": {
+      "bound_case": [
+        "WAKE",
+        "BOUNDED_INVESTIGATION_WAKE"
+      ],
+      "unbound_case": [
+        "INFO",
+        "EXPLICIT_CASE_BINDING_REQUIRED"
+      ]
+    },
+    "INSPECTION_RESULT_RECORDED": {
+      "bound_case": [
+        "WAKE",
+        "BOUNDED_INVESTIGATION_WAKE"
+      ],
+      "unbound_case": [
+        "INFO",
+        "EXPLICIT_CASE_BINDING_REQUIRED"
+      ]
+    },
+    "HYPOTHESIS_ASSESSED": {
+      "bound_case": [
+        "INFO",
+        "HUMAN_OR_INFORMATIONAL_ONLY"
+      ],
+      "unbound_case": [
+        "INFO",
+        "HUMAN_OR_INFORMATIONAL_ONLY"
+      ]
+    },
+    "AGENT_TOOL_EXECUTED": {
+      "bound_case": [
+        "INFO",
+        "HUMAN_OR_INFORMATIONAL_ONLY"
+      ],
+      "unbound_case": [
+        "INFO",
+        "HUMAN_OR_INFORMATIONAL_ONLY"
+      ]
+    },
+    "AGENT_DECISION_RECORDED": {
+      "bound_case": [
+        "INFO",
+        "HUMAN_OR_INFORMATIONAL_ONLY"
+      ],
+      "unbound_case": [
+        "INFO",
+        "HUMAN_OR_INFORMATIONAL_ONLY"
+      ]
+    },
+    "PLAN_DRAFTED": {
+      "bound_case": [
+        "INFO",
+        "HUMAN_OR_INFORMATIONAL_ONLY"
+      ],
+      "unbound_case": [
+        "INFO",
+        "HUMAN_OR_INFORMATIONAL_ONLY"
+      ]
+    },
+    "PLAN_SUBMITTED": {
+      "bound_case": [
+        "INFO",
+        "HUMAN_OR_INFORMATIONAL_ONLY"
+      ],
+      "unbound_case": [
+        "INFO",
+        "HUMAN_OR_INFORMATIONAL_ONLY"
+      ]
+    },
+    "PLAN_APPROVED": {
+      "bound_case": [
+        "WAKE",
+        "BOUNDED_INVESTIGATION_WAKE"
+      ],
+      "unbound_case": [
+        "INFO",
+        "EXPLICIT_CASE_BINDING_REQUIRED"
+      ]
+    },
+    "PLAN_REJECTED": {
+      "bound_case": [
+        "WAKE",
+        "BOUNDED_INVESTIGATION_WAKE"
+      ],
+      "unbound_case": [
+        "INFO",
+        "EXPLICIT_CASE_BINDING_REQUIRED"
+      ]
+    },
+    "WORK_ORDER_CREATED": {
+      "bound_case": [
+        "INFO",
+        "HUMAN_OR_INFORMATIONAL_ONLY"
+      ],
+      "unbound_case": [
+        "INFO",
+        "HUMAN_OR_INFORMATIONAL_ONLY"
+      ]
+    },
+    "WORK_ORDER_STATUS_CHANGED": {
+      "bound_case": [
+        "INFO",
+        "HUMAN_OR_INFORMATIONAL_ONLY"
+      ],
+      "unbound_case": [
+        "INFO",
+        "HUMAN_OR_INFORMATIONAL_ONLY"
+      ]
+    },
+    "INTERVENTION_OUTCOME_RECORDED": {
+      "bound_case": [
+        "WAKE",
+        "BOUNDED_INVESTIGATION_WAKE"
+      ],
+      "unbound_case": [
+        "INFO",
+        "EXPLICIT_CASE_BINDING_REQUIRED"
+      ]
+    },
+    "MONITORING_DUE": {
+      "bound_case": [
+        "MONITOR",
+        "FOLLOWUP_REQUESTED_NO_OBSERVATION_INVENTED"
+      ],
+      "unbound_case": [
+        "MONITOR",
+        "FOLLOWUP_REQUESTED_NO_OBSERVATION_INVENTED"
+      ]
+    },
+    "RECURRENCE_DETECTED": {
+      "bound_case": [
+        "WAKE",
+        "BOUNDED_INVESTIGATION_WAKE"
+      ],
+      "unbound_case": [
+        "INFO",
+        "EXPLICIT_CASE_BINDING_REQUIRED"
+      ]
+    },
+    "AGENT_RESUME_REQUESTED": {
+      "bound_case": [
+        "WAKE",
+        "BOUNDED_INVESTIGATION_WAKE"
+      ],
+      "unbound_case": [
+        "INFO",
+        "EXPLICIT_CASE_BINDING_REQUIRED"
+      ]
+    },
+    "SOURCE_DOCUMENT_UPDATED": {
+      "bound_case": [
+        "INFO",
+        "HUMAN_OR_INFORMATIONAL_ONLY"
+      ],
+      "unbound_case": [
+        "INFO",
+        "HUMAN_OR_INFORMATIONAL_ONLY"
+      ]
+    },
+    "EVENT_DELIVERY_FAILED": {
+      "bound_case": [
+        "INFO",
+        "HUMAN_OR_INFORMATIONAL_ONLY"
+      ],
+      "unbound_case": [
+        "INFO",
+        "HUMAN_OR_INFORMATIONAL_ONLY"
+      ]
+    }
+  },
+  "overrides": {
+    "agent_origin": "INFO SELF_GENERATED_ANALYTICAL",
+    "draft_propose_pending_inspection_transition_regroup": "INFO DRAFT_OR_PENDING_INSPECTION_OR_REBIND_REQUIRED"
+  },
+  "bounds": {
+    "batch": 4,
+    "default_attempt_ceiling": 3,
+    "maximum_attempt_ceiling": 8,
+    "lease_seconds": 60,
+    "renew_seconds": 10,
+    "worker_batches": 100,
+    "public_limit": 100,
+    "delivery_scan": 500,
+    "native_source_scan": 500,
+    "legacy_source_scan": 500,
+    "draft_scan": 100,
+    "monitor_scan": 100
+  },
+  "states": [
+    "PENDING",
+    "CLAIMED",
+    "RUNNING",
+    "RETRY",
+    "DONE",
+    "FAILED",
+    "RECOVERY_REQUIRED"
+  ],
+  "retry": "Known pre-dispatch only; attempts never reset; unknown dispatch requires reconciliation",
+  "completion": "Durable validated receipt or exact batch marker in non-recovery public Saver checkpoint under existing ownership; no redispatch to recover",
+  "public_projection": [
+    "cursor",
+    "id",
+    "event_type",
+    "entity_id",
+    "investigation_id",
+    "revision",
+    "occurred_at",
+    "source_kind",
+    "simulation_mode",
+    "payload_schema_version",
+    "payload",
+    "source_ref"
+  ],
+  "public_payload_allowlist": [
+    "plan_id",
+    "plan_version",
+    "approval_id",
+    "task_id",
+    "new_incident_id",
+    "cluster_id",
+    "prior_outcome_id",
+    "investigates_relationship_id",
+    "execution_id",
+    "decision_id",
+    "operation"
+  ],
+  "public_cursor": "Source-local monotonic registration sequence, independent of event ID, occurred_at and attempt number",
+  "storage": "Existing immutable0005 CivicOperationState plus immutable B15_DELIVERY_AUDIT intent subject; DomainEvent status mirror",
+  "no_live_provider": true,
+  "no_http_sse": false,
+  "no_automatic_quarantine_clearance": true,
+  "b15_service_has_no_http_transport": true,
+  "b17_transport": {
+    "event_names": {
+      "COMPLAINT_ACCEPTED": "case_updated",
+      "INCIDENT_LINKED": "case_updated",
+      "CASE_OPENED": "case_updated",
+      "GRAPH_EVIDENCE_CHANGED": "case_updated",
+      "INSPECTION_RESULT_RECORDED": "inspection_recorded",
+      "HYPOTHESIS_ASSESSED": "case_updated",
+      "AGENT_TOOL_EXECUTED": "case_tool_called",
+      "AGENT_DECISION_RECORDED": "decision_recorded",
+      "PLAN_DRAFTED": "case_updated",
+      "PLAN_SUBMITTED": "approval_needed",
+      "PLAN_APPROVED": "case_updated",
+      "PLAN_REJECTED": "case_updated",
+      "WORK_ORDER_CREATED": "work_order_updated",
+      "WORK_ORDER_STATUS_CHANGED": "work_order_updated",
+      "INTERVENTION_OUTCOME_RECORDED": "case_updated",
+      "MONITORING_DUE": "case_updated",
+      "RECURRENCE_DETECTED": "case_reopened",
+      "AGENT_RESUME_REQUESTED": "case_updated",
+      "SOURCE_DOCUMENT_UPDATED": "case_updated",
+      "EVENT_DELIVERY_FAILED": "error"
+    },
+    "inspection_requested": "GRAPH_EVIDENCE_CHANGED with operation=request_inspection; domain request intent, not approval/field execution",
+    "cursor_control": "event:cursor id:last inspected registration; data:{cursor}; no unauthorized source data",
+    "auth": "Bearer header, revalidate session and resource scope each poll/emit",
+    "replay": "Contiguous registered sequence; source occurred_at/revision do not order registrations",
+    "retention": "No deletion/expiration policy; any missing registration returns CURSOR_EXPIRED before headers, STREAM_UNAVAILABLE if detected later",
+    "safety": "Read-only polling, no discovery/ack/worker/checkpoint writes; disconnect cancellation releases generator",
+    "activity_adapter": "Committed source-bound AgentDecision selections and validated BROKER trace facts through existing INFO registrations; originals/attempt histories unchanged; use configured delivery clock cutoff",
+    "capacity": "100 bound investigations,500 decisions/500 activity facts,160 trace rows per thread; overflow fails closed"
+  }
+}

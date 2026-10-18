@@ -1,0 +1,19 @@
+....................F................................................... [ 77%]
+.....................                                                    [100%]
+=================================== FAILURES ===================================
+____________ test_valid_authority_and_stable_scoped_source_identity ____________
+
+    def test_valid_authority_and_stable_scoped_source_identity():
+     authorization(Actor(id='LEAD',role='DEPARTMENT_LEAD',department_id='DEPT-DRAIN'),'submit','DEPT-DRAIN')
+     authorization(Actor(id='ANALYST',role='ANALYST'),'review',submitted_by='LEAD')
+>    a=Submission.model_validate(BASE);b=Submission.model_validate({**BASE,'observed_at':'2026-10-18T15:30:00+05:30'})
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E    pydantic_core._pydantic_core.ValidationError: 1 validation error for ResponsibilitySubmission
+E    observed_at
+E      Value error, Timestamp must be ISO 8601 UTC with Z suffix [type=value_error]
+E        For further information visit https://errors.pydantic.dev/2.14/v/value_error
+
+backend/tests/unit/test_responsibility.py:21: ValidationError
+=========================== short test summary info ============================
+FAILED backend/tests/unit/test_responsibility.py::test_valid_authority_and_stable_scoped_source_identity
+1 failed, 92 passed in 1.10s

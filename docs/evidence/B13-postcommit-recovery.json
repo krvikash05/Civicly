@@ -1,0 +1,46 @@
+{
+  "mode": "SCRIPTED_MODEL_REAL_FALKORDB_B11_MCP_LANGGRAPH_SAVER",
+  "fault": "ACK-only mismatched plan hash after real commit; stored payload never corrupted",
+  "runtime_error": "PLAN_OPERATOR_RECOVERY_REQUIRED",
+  "reconciliation": {
+    "graph": "civicly_b10_test_87a493ab77fd4207aa566c1fc907799c",
+    "request_id": "PLANREQ-B10-836067cf10e8cc88a026e1593601ac05",
+    "investigation_id": "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+    "plan_id": "PLAN-B12-0cceb341285ac43da7c23f9295ca3ba2",
+    "expected_version": 1,
+    "expected_plan_hash": "af62459f62770c4077ba65b35456156ccb60c2e26fb00a4e3251dc6e3069c002",
+    "stage": "ACKNOWLEDGMENT_VERIFICATION"
+  },
+  "thread_id": "af29d09309f14da2b90d16035e445d23",
+  "last_durable_checkpoint_id": "1f1cac64-45b0-604a-8003-0d0f52ff9e8a",
+  "last_durable_current_plan_id": null,
+  "last_durable_planning_feedback": null,
+  "false_rejection_emitted": false,
+  "safe_receipt_emitted": false,
+  "operator_diagnostic_not_checkpoint_ack": {
+    "code": "PLAN_OPERATOR_RECOVERY",
+    "category": "RECOVERY",
+    "resolution": "OPERATOR_RECOVERY",
+    "task_ids": [],
+    "field_paths": [],
+    "explanation": "Stop and reconcile storage, ownership and the last durable checkpoint before retrying.",
+    "draft_committed": "UNKNOWN"
+  },
+  "stored_receipt_read_only_verified": {
+    "approved": false,
+    "executable": false,
+    "id": "PLAN-B12-0cceb341285ac43da7c23f9295ca3ba2",
+    "plan_hash": "af62459f62770c4077ba65b35456156ccb60c2e26fb00a4e3251dc6e3069c002",
+    "simulation_mode": "SIMULATED",
+    "status": "DRAFT",
+    "version": 1
+  },
+  "stored_request_id": "PLANREQ-B10-836067cf10e8cc88a026e1593601ac05",
+  "stored_payload_unchanged_sha256": "d7667794097cfc81cad01a0b837cfb530ef57170d9bfbe407f43b111f4cc21b2",
+  "plan_count": 1,
+  "maximum_version": 1,
+  "quarantine_retained": true,
+  "wake_retry_or_replay_performed": false,
+  "provider_calls": 0,
+  "remaining_operator_steps": "Stop old process/confirm ownership; inspect original request, decision, companion/hash/native plan and pending write; reconcile last checkpoint via existing reviewed recovery procedure. No automatic reset or quarantine clearance."
+}

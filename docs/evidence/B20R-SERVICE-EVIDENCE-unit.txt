@@ -1,0 +1,21 @@
+........................F....                                            [100%]
+=================================== FAILURES ===================================
+________ test_source_labels_and_identity_do_not_confer_authority[body] _________
+
+damage = 'body'
+
+    @pytest.mark.parametrize('damage',['label','identity','source','date','body'])
+    def test_source_labels_and_identity_do_not_confer_authority(damage):
+     props=source_properties(record())
+     if damage=='label':props['reliability']='UNVERIFIED'
+     if damage=='identity':props['id']='OTHER'
+     if damage=='source':props['source_record_id']='wrong-source'
+     if damage=='date':props['observed_at']=T2
+     if damage=='body':props['summary']=record(target_id='OTHER').model_dump_json()
+>    with pytest.raises(PreconditionFailed):parse_source(props)
+E    Failed: DID NOT RAISE PreconditionFailed
+
+backend/tests/unit/test_service_evidence.py:36: Failed
+=========================== short test summary info ============================
+FAILED backend/tests/unit/test_service_evidence.py::test_source_labels_and_identity_do_not_confer_authority[body]
+1 failed, 28 passed in 0.20s

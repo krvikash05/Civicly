@@ -1,0 +1,160 @@
+{
+  "version": "B20-SERVICE-1",
+  "schema": {
+    "additionalProperties": false,
+    "properties": {
+      "version": {
+        "const": "B20-SERVICE-1",
+        "default": "B20-SERVICE-1",
+        "title": "Version",
+        "type": "string"
+      },
+      "id": {
+        "maxLength": 200,
+        "minLength": 1,
+        "title": "Id",
+        "type": "string"
+      },
+      "pickup_id": {
+        "anyOf": [
+          {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Pickup Id"
+      },
+      "report_evidence_id": {
+        "maxLength": 200,
+        "minLength": 1,
+        "title": "Report Evidence Id",
+        "type": "string"
+      },
+      "investigation_id": {
+        "maxLength": 200,
+        "minLength": 1,
+        "title": "Investigation Id",
+        "type": "string"
+      },
+      "incident_id": {
+        "maxLength": 200,
+        "minLength": 1,
+        "title": "Incident Id",
+        "type": "string"
+      },
+      "target_id": {
+        "maxLength": 200,
+        "minLength": 1,
+        "title": "Target Id",
+        "type": "string"
+      },
+      "route_id": {
+        "maxLength": 200,
+        "minLength": 1,
+        "title": "Route Id",
+        "type": "string"
+      },
+      "scheduled_at": {
+        "title": "Scheduled At",
+        "type": "string"
+      },
+      "checked_at": {
+        "title": "Checked At",
+        "type": "string"
+      },
+      "actual_at": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Actual At"
+      },
+      "recorded_at": {
+        "title": "Recorded At",
+        "type": "string"
+      },
+      "status": {
+        "enum": [
+          "COMPLETED",
+          "MISSED",
+          "UNKNOWN"
+        ],
+        "title": "Status",
+        "type": "string"
+      },
+      "source_kind": {
+        "const": "SYNTHETIC",
+        "default": "SYNTHETIC",
+        "title": "Source Kind",
+        "type": "string"
+      },
+      "source_id": {
+        "const": "B20-synthetic-service-log",
+        "default": "B20-synthetic-service-log",
+        "title": "Source Id",
+        "type": "string"
+      },
+      "record_id": {
+        "maxLength": 200,
+        "minLength": 1,
+        "title": "Record Id",
+        "type": "string"
+      },
+      "department_id": {
+        "const": "DEPT-SAN",
+        "default": "DEPT-SAN",
+        "title": "Department Id",
+        "type": "string"
+      },
+      "observed_by": {
+        "maxLength": 200,
+        "minLength": 1,
+        "title": "Observed By",
+        "type": "string"
+      },
+      "reviewed_by": {
+        "maxLength": 200,
+        "minLength": 1,
+        "title": "Reviewed By",
+        "type": "string"
+      }
+    },
+    "required": [
+      "id",
+      "pickup_id",
+      "report_evidence_id",
+      "investigation_id",
+      "incident_id",
+      "target_id",
+      "route_id",
+      "scheduled_at",
+      "checked_at",
+      "actual_at",
+      "recorded_at",
+      "status",
+      "record_id",
+      "observed_by",
+      "reviewed_by"
+    ],
+    "title": "ServiceRecord",
+    "type": "object"
+  },
+  "canonical_model": "PickupExecution / PICKUP_FOR; original registry and migrations unchanged",
+  "write_surface": "Authenticated controller-only S05/S06 release; existing B19 source-bound HTTP/API/CLI request, fenced0005 Storage + durable native event; no generic event/ledger endpoint",
+  "scope": "demo-city, WasteCollectionPoint WASTE-100, CollectionRoute ROUTE-C03, DEPT-SAN; target/route/source/review bound and validated",
+  "source": "Explicit bounded synthetic one-occurrence scheduled-service/log observation; separate B09 reviewed deposit/field inspection. Runtime cannot read unreleased controller profiles",
+  "time": "scheduled_at <= actual_at (COMPLETED) <= checked_at <= recorded_at. MISSED has explicit observed log result and no actual_at. UNKNOWN creates no PickupExecution. Deposit strictly later than actual_at, within real inspection lifecycle. Equal/reversed/unknown cannot establish sequence",
+  "authority": "Authenticated department plus distinct authenticated analyst review; caller labels cannot confer VERIFIED; reviewed source and hashed canonical/journal/companion identities revalidated",
+  "qualifications": "Candidate schedule != verified schedule; schedule != execution; no record != MISSED; completed != resolved; later waste != illegal dumping. Rule3 requires approved discriminating observation codes plus source/target/time scope; single log/report remains qualified, not independent cause verification",
+  "recovery": "Original source-bound HTTP request remains RECOVERY_REQUIRED/UNKNOWN and blocks redispatch on committed-readback uncertainty. No replacement key/repair/rollback/clearance",
+  "monitoring": "B14-2 outcome policy unchanged; evidence does not create plans/approvals/resolution",
+  "assessment_rule_scope": "Rule3 applies to MISSED_PICKUP/ILLEGAL_DUMPING in controller-bound S05/S06 demo/current investigations; existing generic rule2 qualitative observations remain compatible and do not establish pickup-before-deposit service history"
+}

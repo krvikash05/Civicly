@@ -1,0 +1,226 @@
+FFFF                                                                     [100%]
+=================================== FAILURES ===================================
+___________________ test_dated_service_evidence[S05-PRIMARY] ___________________
+
+shared = namespace(db=<falkordb.falkordb.FalkorDB object at 0x10988e4b0>, p=ActiveProfile(version=1, graph='civicly_b10_test_67...ew/563bafd57f5d4f9e83d65b43dad45fbf/memory.json'), memory=<app.memory.service.Memory object at 0x10b117470>, proofs=[])
+scenario = 'S05', variant = 'PRIMARY'
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10d147b60>
+
+    @pytest.mark.parametrize('scenario,variant',[('S05','PRIMARY'),('S05','NEGATIVE'),('S06','PRIMARY'),('S06','NEGATIVE')])
+    def test_dated_service_evidence(shared,scenario,variant,monkeypatch):
+>    asyncio.run(journey(shared,scenario,variant,monkeypatch))
+
+backend/tests/integration/test_service_evidence_runtime.py:22: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/base_events.py:684: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+shared = namespace(db=<falkordb.falkordb.FalkorDB object at 0x10988e4b0>, p=ActiveProfile(version=1, graph='civicly_b10_test_67...ew/563bafd57f5d4f9e83d65b43dad45fbf/memory.json'), memory=<app.memory.service.Memory object at 0x10b117470>, proofs=[])
+scenario = 'S05', variant = 'PRIMARY'
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10d147b60>
+
+    async def journey(shared,scenario,variant,monkeypatch):
+     tag='B20RSE-'+scenario+'-'+variant;receipt=await fresh(shared,scenario,variant,tag+'-reset');path=shared.path.parent/receipt['profile_reference']/'profile.json';p=load(path);case=receipt['scenario']['cases'][0]
+     with active_scope(p):
+      r=GraphRepository(shared.db,p.graph);ev=EvidenceService(r,clock=lambda:AT);analyst=shared.auth.resolve(shared.tokens['OP-ANALYST']);hyp={};old={}
+      candidates={e.id:e.content_hash for kind in ['HAS_SCHEDULE','COLLECTED_BY','MAINTAINED_BY'] for e in r._edges(kind)}
+      for cause in ['MISSED_PICKUP','CAPACITY_SHORTFALL','ILLEGAL_DUMPING']:
+       rule=POLICIES['WASTE_ACCUMULATION'][cause]
+       hid=ev.execute({'operation':'propose','request_id':tag+'-hyp-'+cause,'investigation_id':case['investigation_id'],'incident_ids':[case['incident_id']],'asset_ids':[case['asset_id']],'cause_code':cause,'statement':'Explicit test competing '+cause,'mechanism':'Synthetic evidence must establish scoped dated mechanism','confirming_codes':rule['confirming'],'falsifying_codes':rule['falsifying']},analyst).entity_id;hyp[cause]=hid
+       a=ev.execute({'operation':'assess','request_id':tag+'-baseline-'+cause,'hypothesis_id':hid,'expected_hash':r.get_node(hid).content_hash,'evidence_ids':[],'as_of':AT},analyst).assessment;old[a.id]=r.get_node(a.id).content_hash
+      async def mcp_read():
+       async with brokers(p,path,timeout=10,memory_path=path.parent/'memory.json') as tools:
+        assert any(t['name']=='civicly::get_pickup_execution_history' for t in tools.catalog())
+        c=Context(trace_id=uuid4().hex,execution_id=uuid4().hex,source_graph=p.graph,investigation_id=case['investigation_id'])
+        return await tools.call('civicly::get_pickup_execution_history',{'collection_point_id':case['asset_id'],'days':1,'as_of':AT},c,'Read actual dated service execution; absence is not missed pickup',cutoff=AT)
+>     before=await mcp_read();assert before['status']=='SUCCESS' and not before['pickup_executions'];assert r._read('MATCH (n:PickupExecution) RETURN count(n)')==[[0]]
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E     AssertionError: assert ('PARTIAL' == 'SUCCESS'
+E       
+E       - SUCCESS
+E       + PARTIAL)
+
+backend/tests/integration/test_service_evidence_runtime.py:38: AssertionError
+------------------------------ Captured log setup ------------------------------
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'text' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'name' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'text' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'name' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'text' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'name' is already indexed
+__________________ test_dated_service_evidence[S05-NEGATIVE] ___________________
+
+shared = namespace(db=<falkordb.falkordb.FalkorDB object at 0x10988e4b0>, p=ActiveProfile(version=1, graph='civicly_b10_test_67...ew/563bafd57f5d4f9e83d65b43dad45fbf/memory.json'), memory=<app.memory.service.Memory object at 0x10b117470>, proofs=[])
+scenario = 'S05', variant = 'NEGATIVE'
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10cfafbc0>
+
+    @pytest.mark.parametrize('scenario,variant',[('S05','PRIMARY'),('S05','NEGATIVE'),('S06','PRIMARY'),('S06','NEGATIVE')])
+    def test_dated_service_evidence(shared,scenario,variant,monkeypatch):
+>    asyncio.run(journey(shared,scenario,variant,monkeypatch))
+
+backend/tests/integration/test_service_evidence_runtime.py:22: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/base_events.py:684: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+shared = namespace(db=<falkordb.falkordb.FalkorDB object at 0x10988e4b0>, p=ActiveProfile(version=1, graph='civicly_b10_test_67...ew/563bafd57f5d4f9e83d65b43dad45fbf/memory.json'), memory=<app.memory.service.Memory object at 0x10b117470>, proofs=[])
+scenario = 'S05', variant = 'NEGATIVE'
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10cfafbc0>
+
+    async def journey(shared,scenario,variant,monkeypatch):
+     tag='B20RSE-'+scenario+'-'+variant;receipt=await fresh(shared,scenario,variant,tag+'-reset');path=shared.path.parent/receipt['profile_reference']/'profile.json';p=load(path);case=receipt['scenario']['cases'][0]
+     with active_scope(p):
+      r=GraphRepository(shared.db,p.graph);ev=EvidenceService(r,clock=lambda:AT);analyst=shared.auth.resolve(shared.tokens['OP-ANALYST']);hyp={};old={}
+      candidates={e.id:e.content_hash for kind in ['HAS_SCHEDULE','COLLECTED_BY','MAINTAINED_BY'] for e in r._edges(kind)}
+      for cause in ['MISSED_PICKUP','CAPACITY_SHORTFALL','ILLEGAL_DUMPING']:
+       rule=POLICIES['WASTE_ACCUMULATION'][cause]
+       hid=ev.execute({'operation':'propose','request_id':tag+'-hyp-'+cause,'investigation_id':case['investigation_id'],'incident_ids':[case['incident_id']],'asset_ids':[case['asset_id']],'cause_code':cause,'statement':'Explicit test competing '+cause,'mechanism':'Synthetic evidence must establish scoped dated mechanism','confirming_codes':rule['confirming'],'falsifying_codes':rule['falsifying']},analyst).entity_id;hyp[cause]=hid
+       a=ev.execute({'operation':'assess','request_id':tag+'-baseline-'+cause,'hypothesis_id':hid,'expected_hash':r.get_node(hid).content_hash,'evidence_ids':[],'as_of':AT},analyst).assessment;old[a.id]=r.get_node(a.id).content_hash
+      async def mcp_read():
+       async with brokers(p,path,timeout=10,memory_path=path.parent/'memory.json') as tools:
+        assert any(t['name']=='civicly::get_pickup_execution_history' for t in tools.catalog())
+        c=Context(trace_id=uuid4().hex,execution_id=uuid4().hex,source_graph=p.graph,investigation_id=case['investigation_id'])
+        return await tools.call('civicly::get_pickup_execution_history',{'collection_point_id':case['asset_id'],'days':1,'as_of':AT},c,'Read actual dated service execution; absence is not missed pickup',cutoff=AT)
+>     before=await mcp_read();assert before['status']=='SUCCESS' and not before['pickup_executions'];assert r._read('MATCH (n:PickupExecution) RETURN count(n)')==[[0]]
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E     AssertionError: assert ('PARTIAL' == 'SUCCESS'
+E       
+E       - SUCCESS
+E       + PARTIAL)
+
+backend/tests/integration/test_service_evidence_runtime.py:38: AssertionError
+___________________ test_dated_service_evidence[S06-PRIMARY] ___________________
+
+shared = namespace(db=<falkordb.falkordb.FalkorDB object at 0x10988e4b0>, p=ActiveProfile(version=1, graph='civicly_b10_test_67...ew/563bafd57f5d4f9e83d65b43dad45fbf/memory.json'), memory=<app.memory.service.Memory object at 0x10b117470>, proofs=[])
+scenario = 'S06', variant = 'PRIMARY'
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10e1596d0>
+
+    @pytest.mark.parametrize('scenario,variant',[('S05','PRIMARY'),('S05','NEGATIVE'),('S06','PRIMARY'),('S06','NEGATIVE')])
+    def test_dated_service_evidence(shared,scenario,variant,monkeypatch):
+>    asyncio.run(journey(shared,scenario,variant,monkeypatch))
+
+backend/tests/integration/test_service_evidence_runtime.py:22: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/base_events.py:684: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+shared = namespace(db=<falkordb.falkordb.FalkorDB object at 0x10988e4b0>, p=ActiveProfile(version=1, graph='civicly_b10_test_67...ew/563bafd57f5d4f9e83d65b43dad45fbf/memory.json'), memory=<app.memory.service.Memory object at 0x10b117470>, proofs=[])
+scenario = 'S06', variant = 'PRIMARY'
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10e1596d0>
+
+    async def journey(shared,scenario,variant,monkeypatch):
+     tag='B20RSE-'+scenario+'-'+variant;receipt=await fresh(shared,scenario,variant,tag+'-reset');path=shared.path.parent/receipt['profile_reference']/'profile.json';p=load(path);case=receipt['scenario']['cases'][0]
+     with active_scope(p):
+      r=GraphRepository(shared.db,p.graph);ev=EvidenceService(r,clock=lambda:AT);analyst=shared.auth.resolve(shared.tokens['OP-ANALYST']);hyp={};old={}
+      candidates={e.id:e.content_hash for kind in ['HAS_SCHEDULE','COLLECTED_BY','MAINTAINED_BY'] for e in r._edges(kind)}
+      for cause in ['MISSED_PICKUP','CAPACITY_SHORTFALL','ILLEGAL_DUMPING']:
+       rule=POLICIES['WASTE_ACCUMULATION'][cause]
+       hid=ev.execute({'operation':'propose','request_id':tag+'-hyp-'+cause,'investigation_id':case['investigation_id'],'incident_ids':[case['incident_id']],'asset_ids':[case['asset_id']],'cause_code':cause,'statement':'Explicit test competing '+cause,'mechanism':'Synthetic evidence must establish scoped dated mechanism','confirming_codes':rule['confirming'],'falsifying_codes':rule['falsifying']},analyst).entity_id;hyp[cause]=hid
+       a=ev.execute({'operation':'assess','request_id':tag+'-baseline-'+cause,'hypothesis_id':hid,'expected_hash':r.get_node(hid).content_hash,'evidence_ids':[],'as_of':AT},analyst).assessment;old[a.id]=r.get_node(a.id).content_hash
+      async def mcp_read():
+       async with brokers(p,path,timeout=10,memory_path=path.parent/'memory.json') as tools:
+        assert any(t['name']=='civicly::get_pickup_execution_history' for t in tools.catalog())
+        c=Context(trace_id=uuid4().hex,execution_id=uuid4().hex,source_graph=p.graph,investigation_id=case['investigation_id'])
+        return await tools.call('civicly::get_pickup_execution_history',{'collection_point_id':case['asset_id'],'days':1,'as_of':AT},c,'Read actual dated service execution; absence is not missed pickup',cutoff=AT)
+>     before=await mcp_read();assert before['status']=='SUCCESS' and not before['pickup_executions'];assert r._read('MATCH (n:PickupExecution) RETURN count(n)')==[[0]]
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E     AssertionError: assert ('PARTIAL' == 'SUCCESS'
+E       
+E       - SUCCESS
+E       + PARTIAL)
+
+backend/tests/integration/test_service_evidence_runtime.py:38: AssertionError
+__________________ test_dated_service_evidence[S06-NEGATIVE] ___________________
+
+shared = namespace(db=<falkordb.falkordb.FalkorDB object at 0x10988e4b0>, p=ActiveProfile(version=1, graph='civicly_b10_test_67...ew/563bafd57f5d4f9e83d65b43dad45fbf/memory.json'), memory=<app.memory.service.Memory object at 0x10b117470>, proofs=[])
+scenario = 'S06', variant = 'NEGATIVE'
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10e1b7c50>
+
+    @pytest.mark.parametrize('scenario,variant',[('S05','PRIMARY'),('S05','NEGATIVE'),('S06','PRIMARY'),('S06','NEGATIVE')])
+    def test_dated_service_evidence(shared,scenario,variant,monkeypatch):
+>    asyncio.run(journey(shared,scenario,variant,monkeypatch))
+
+backend/tests/integration/test_service_evidence_runtime.py:22: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/base_events.py:684: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+shared = namespace(db=<falkordb.falkordb.FalkorDB object at 0x10988e4b0>, p=ActiveProfile(version=1, graph='civicly_b10_test_67...ew/563bafd57f5d4f9e83d65b43dad45fbf/memory.json'), memory=<app.memory.service.Memory object at 0x10b117470>, proofs=[])
+scenario = 'S06', variant = 'NEGATIVE'
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10e1b7c50>
+
+    async def journey(shared,scenario,variant,monkeypatch):
+     tag='B20RSE-'+scenario+'-'+variant;receipt=await fresh(shared,scenario,variant,tag+'-reset');path=shared.path.parent/receipt['profile_reference']/'profile.json';p=load(path);case=receipt['scenario']['cases'][0]
+     with active_scope(p):
+      r=GraphRepository(shared.db,p.graph);ev=EvidenceService(r,clock=lambda:AT);analyst=shared.auth.resolve(shared.tokens['OP-ANALYST']);hyp={};old={}
+      candidates={e.id:e.content_hash for kind in ['HAS_SCHEDULE','COLLECTED_BY','MAINTAINED_BY'] for e in r._edges(kind)}
+      for cause in ['MISSED_PICKUP','CAPACITY_SHORTFALL','ILLEGAL_DUMPING']:
+       rule=POLICIES['WASTE_ACCUMULATION'][cause]
+       hid=ev.execute({'operation':'propose','request_id':tag+'-hyp-'+cause,'investigation_id':case['investigation_id'],'incident_ids':[case['incident_id']],'asset_ids':[case['asset_id']],'cause_code':cause,'statement':'Explicit test competing '+cause,'mechanism':'Synthetic evidence must establish scoped dated mechanism','confirming_codes':rule['confirming'],'falsifying_codes':rule['falsifying']},analyst).entity_id;hyp[cause]=hid
+       a=ev.execute({'operation':'assess','request_id':tag+'-baseline-'+cause,'hypothesis_id':hid,'expected_hash':r.get_node(hid).content_hash,'evidence_ids':[],'as_of':AT},analyst).assessment;old[a.id]=r.get_node(a.id).content_hash
+      async def mcp_read():
+       async with brokers(p,path,timeout=10,memory_path=path.parent/'memory.json') as tools:
+        assert any(t['name']=='civicly::get_pickup_execution_history' for t in tools.catalog())
+        c=Context(trace_id=uuid4().hex,execution_id=uuid4().hex,source_graph=p.graph,investigation_id=case['investigation_id'])
+        return await tools.call('civicly::get_pickup_execution_history',{'collection_point_id':case['asset_id'],'days':1,'as_of':AT},c,'Read actual dated service execution; absence is not missed pickup',cutoff=AT)
+>     before=await mcp_read();assert before['status']=='SUCCESS' and not before['pickup_executions'];assert r._read('MATCH (n:PickupExecution) RETURN count(n)')==[[0]]
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E     AssertionError: assert ('PARTIAL' == 'SUCCESS'
+E       
+E       - SUCCESS
+E       + PARTIAL)
+
+backend/tests/integration/test_service_evidence_runtime.py:38: AssertionError
+=============================== warnings summary ===============================
+backend/.venv/lib/python3.12/site-packages/graphrag_sdk/core/models.py:19
+  /Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/graphrag_sdk/core/models.py:19: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.14/migration/
+    class DataModel(BaseModel):
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED backend/tests/integration/test_service_evidence_runtime.py::test_dated_service_evidence[S05-PRIMARY]
+FAILED backend/tests/integration/test_service_evidence_runtime.py::test_dated_service_evidence[S05-NEGATIVE]
+FAILED backend/tests/integration/test_service_evidence_runtime.py::test_dated_service_evidence[S06-PRIMARY]
+FAILED backend/tests/integration/test_service_evidence_runtime.py::test_dated_service_evidence[S06-NEGATIVE]
+4 failed, 1 warning in 49.14s

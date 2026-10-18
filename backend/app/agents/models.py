@@ -2,6 +2,7 @@
 import json
 from typing import Literal
 from pydantic import BaseModel,ConfigDict,Field,model_validator
+from app.services.planning.feedback import Feedback
 from .limits import DEFAULT_CUMULATIVE_TOKENS,MAX_CUMULATIVE_TOKENS,MAX_CHECKPOINT_TOKENS
 
 class Model(BaseModel):
@@ -39,7 +40,10 @@ class InvestigationState(Model):
     problem_cluster_id: str=Field(min_length=1,max_length=200)
     discovered_tool_names: list[str]=Field(default_factory=list,max_length=30)
     missing_evidence: list[str]=Field(default_factory=list,max_length=100)
-    current_plan_id: None=None
+    planning_feedback:Feedback|None=None
+    current_plan_id: str | None=None
+    current_plan_version: int | None=None
+    current_plan_hash: str | None=None
     incident_ids: list[str]=Field(min_length=1,max_length=3)
     asset_ids: list[str]=Field(min_length=1,max_length=10)
     issue: Literal['WATERLOGGING','ROAD_DAMAGE','WASTE_ACCUMULATION']

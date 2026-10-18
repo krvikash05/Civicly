@@ -1,0 +1,198 @@
+--- a/backend/app/agents/recurrence.py
++++ b/backend/app/agents/recurrence.py
+@@ -11,7 +11,31 @@
+  reader=Reader(repo,state.as_of)
+  links=reader.edges('INVESTIGATES',source=state.investigation_id)
+  incidents={e.target:reader.node(e.target) for e in links if reader.node(e.target).kind=='Incident'}
+- additions=set(incidents)-set(state.incident_ids)
++ # Reuse persisted validation proofs, not an ENDED-status exemption. History
++ # remains graph-bound even when active state advances to another episode.
++ historical=set()
++ for audit in getattr(state,'observations',[]):
++  if audit.get('operation')!='RECURRENCE_SCOPE_REFRESH' or audit.get('host_generated') is not True or audit.get('investigation_id')!=state.investigation_id:continue
++  try:
++   prior=set(audit['historical_incident_ids'])
++   if not prior<=set(audit['previous_incident_ids'])|historical:raise ValueError()
++   related=set();adopted=[]
++   for proof in audit['scope_proofs']:
++    edge=next(e for e in links if e.id==proof['investigates_relationship_id'] and e.target==proof['incident_id'])
++    jid=proof['journal_id'];native=reader.node(jid,'Evidence')
++    if edge.properties.get('source_evidence_id')!=jid or getattr(state,'evidence',{}).get(jid)!=native.content_hash:raise ValueError()
++    journal=Journal.model_validate_json(native.properties['summary']);_,norm=normalize(journal.original)
++    service=ComplaintService(repo);_,stored=service.load(jid,norm.request_hash);receipt=service.receipt(stored)
++    if receipt.classification!='AFTER_RECORDED_END' or receipt.incident_id!=edge.target or receipt.cluster_id!=state.problem_cluster_id or receipt.graph!=state.graph or digest(receipt.model_dump(mode='json'))!=proof['receipt_hash']:raise ValueError()
++    related.update(receipt.related_incident_ids);adopted.append(incidents[edge.target])
++   if not adopted or {n.id for n in adopted}!=set(audit['active_incident_ids']):raise ValueError()
++   for id in prior:
++    n=incidents[id]
++    if id not in related or n.properties['status']!='ENDED' or n.properties['issue_type']!=state.issue or {e.target for e in reader.edges('PART_OF',source=id)}!={state.problem_cluster_id} or not n.properties.get('ended_at') or not all(timestamp(n.properties['ended_at'])<timestamp(a.properties['started_at']) for a in adopted):raise ValueError()
++   historical.update(prior)
++  except (ValueError,KeyError,TypeError,StopIteration):raise RecoveryRequired('RECURRENCE_HISTORY_PROOF_INVALID') from None
++ additions=set(incidents)-set(state.incident_ids)-historical
++ if len(incidents)>3:raise RecoveryRequired('RECURRENCE_SCOPE_NOT_REFRESHABLE')
+  if not additions:
+   if reader.node(state.investigation_id,'Investigation').properties['status']=='REOPENED' and not any(n.properties['status'] in {'REPORTED','ACTIVE','MITIGATED'} for n in incidents.values()):raise RecoveryRequired('RECURRENCE_SCOPE_MISSING_ACTIVE_EPISODE')
+   return state
+@@ -21,7 +45,9 @@
+   incident=incidents[id];edge=next(e for e in links if e.target==id)
+   journal_id=edge.properties.get('source_evidence_id')
+   if not journal_id:raise RecoveryRequired('RECURRENCE_SCOPE_PROVENANCE')
+-  native=reader.node(journal_id,'Evidence');journal=Journal.model_validate_json(native.properties['summary'])
++  native=reader.node(journal_id,'Evidence')
++  try:journal=Journal.model_validate_json(native.properties['summary'])
++  except ValueError:raise RecoveryRequired('RECURRENCE_SCOPE_PROVENANCE') from None
+   q,norm=normalize(journal.original)
+   intake=ComplaintService(repo)
+   _,stored=intake.load(journal_id,norm.request_hash)
+--- a/backend/tests/b14r_runtime.py
++++ b/backend/tests/b14r_runtime.py
+@@ -43,4 +43,24 @@
+   # Public SDK reads an old checkpoint by ID, proving it was retained byte-for-byte.
+   old=await agent.graph.aget_state(before['config']);assert old.values==before['values']
+   latest=await agent.graph.aget_state(config)
+-  return {'mode':'SCRIPTED_MODEL_REAL_FALKORDB_MCP_SAVER','thread_id':thread,'old_checkpoint_id':before['config']['configurable']['checkpoint_id'],'new_checkpoint_id':latest.config['configurable']['checkpoint_id'],'old_checkpoint_unchanged':True,'explicit_resume_only':True,'active_incident_ids':state['incident_ids'],'recurrence_evidence_id':report['entity_id'],'refresh_audit':refresh,'fresh_mcp_executions':state['executions'],'unvalidated_binding_rejected':True,'provider_calls':0}
++  # A second legitimate wake must not reinterpret the retained ENDED episode.
++  first_checkpoint=copy.deepcopy(latest.values);first_config=copy.deepcopy(latest.config)
++  scope_query='MATCH (i:Investigation {id:$id})-[e:INVESTIGATES]->(n:Incident) RETURN n.id,e.id,n.status ORDER BY n.id'
++  scope_before=r._read(scope_query,{'id':inv});events_before=r._read('MATCH (e:DomainEvent) RETURN count(e)')
++  clock.advance();update_id='EV-B14R2-SOURCE-UPDATE'
++  r.create_node('Evidence',{'id':update_id,'municipality_id':'demo-city','schema_version':3,'created_at':clock(),'updated_at':clock(),'recorded_at':clock(),'source_kind':'SYNTHETIC','source_record_id':'B14R2:explicit-source-update','evidence_type':'CONTEXT','summary':'Authored additional context; no causal assertion','reliability':'UNVERIFIED'})
++  next_model=ScriptedModel([choose('READ',{'template':'node','id':update_id},'official::query_graph_readonly'),choose()])
++  again=InvestigationAgent(p,r,tools,next_model,saver(p),clock=clock,planning_service=planning)
++  second=await again.run(thread_id=thread,resume=True);second_state=second['data']
++  assert second_state['incident_ids']==state['incident_ids'] and second_state['wakes']==2
++  assert second_state['tool_calls']==3 and not second_state['refresh_required']
++  assert next_model.contexts[0]['state']['refresh_required'] is True
++  assert next_model.contexts[0]['state']['incident_ids']==[reopened['new_incident_id']]
++  assert any(row.get('rows') and row['rows'][0]['properties']['id']==update_id for row in second_state['observations'])
++  assert len([x for x in second_state['observations'] if x.get('operation')=='RECURRENCE_SCOPE_REFRESH'])==1
++  assert (await again.graph.aget_state(before['config'])).values==before['values']
++  assert (await again.graph.aget_state(first_config)).values==first_checkpoint
++  assert r._read(scope_query,{'id':inv})==scope_before and r._read('MATCH (e:DomainEvent) RETURN count(e)')==events_before
++  second_latest=await again.graph.aget_state(config)
++  second_proof={'wakes':second_state['wakes'],'active_incident_ids':second_state['incident_ids'],'source_update_id':update_id,'checkpoint_id':second_latest.config['configurable']['checkpoint_id'],'first_resume_checkpoint_unchanged':True,'original_checkpoint_unchanged':True,'scope_links_and_domain_events_unchanged':True,'scope_refresh_count':1,'fresh_mcp_executions':second_state['executions'],'fresh_read_required_then_satisfied':True}
++  return {'mode':'SCRIPTED_MODEL_REAL_FALKORDB_MCP_SAVER','thread_id':thread,'old_checkpoint_id':before['config']['configurable']['checkpoint_id'],'new_checkpoint_id':latest.config['configurable']['checkpoint_id'],'old_checkpoint_unchanged':True,'explicit_resume_only':True,'active_incident_ids':state['incident_ids'],'recurrence_evidence_id':report['entity_id'],'refresh_audit':refresh,'fresh_mcp_executions':state['executions'],'unvalidated_binding_rejected':True,'second_resume':second_proof,'provider_calls':0}
+--- a/backend/tests/unit/test_recurrence_scope.py
++++ b/backend/tests/unit/test_recurrence_scope.py
+@@ -15,3 +15,46 @@
+  if blocked:
+   with pytest.raises(RecoveryRequired,match='MISSING_ACTIVE_EPISODE'):recurrence.refresh(None,state)
+  else:assert recurrence.refresh(None,state) is state
++
++@pytest.fixture
++def validated_history(monkeypatch):
++ from app.graph.models import digest
++ receipt={'incident_id':'NEW','classification':'AFTER_RECORDED_END','cluster_id':'PC','graph':'G','related_incident_ids':['OLD']}
++ nodes={'INV':SimpleNamespace(properties={'status':'REOPENED'}),
++  'OLD':SimpleNamespace(id='OLD',kind='Incident',properties={'status':'ENDED','issue_type':'WATERLOGGING','ended_at':'2026-10-18T01:00:00Z'}),
++  'NEW':SimpleNamespace(id='NEW',kind='Incident',properties={'status':'REPORTED','issue_type':'WATERLOGGING','started_at':'2026-10-18T02:00:00Z'}),
++  'J':SimpleNamespace(kind='Evidence',content_hash='H',properties={'summary':'journal'})}
++ links=[SimpleNamespace(id='L0',target='OLD',properties={}),SimpleNamespace(id='L1',target='NEW',properties={'source_evidence_id':'J'})]
++ class Read:
++  def __init__(self,*a):pass
++  def node(self,id,*a):return nodes[id]
++  def edges(self,kind,**kw):return links if kind=='INVESTIGATES' else [SimpleNamespace(target='PC')]
++ class Intake:
++  def __init__(self,*a):pass
++  def load(self,*a):return None,None
++  def receipt(self,*a):return SimpleNamespace(**receipt,model_dump=lambda **kw:receipt)
++ monkeypatch.setattr(recurrence,'Reader',Read);monkeypatch.setattr(recurrence,'ComplaintService',Intake)
++ monkeypatch.setattr(recurrence,'Journal',SimpleNamespace(model_validate_json=lambda raw:SimpleNamespace(original={})))
++ monkeypatch.setattr(recurrence,'normalize',lambda raw:(None,SimpleNamespace(request_hash='hash')))
++ audit={'operation':'RECURRENCE_SCOPE_REFRESH','host_generated':True,'investigation_id':'INV','previous_incident_ids':['OLD'],'active_incident_ids':['NEW'],'historical_incident_ids':['OLD'],'scope_proofs':[{'incident_id':'NEW','investigates_relationship_id':'L1','journal_id':'J','receipt_hash':digest(receipt)}]}
++ state=SimpleNamespace(as_of='2026-10-18T03:00:00Z',investigation_id='INV',incident_ids=['NEW'],observations=[audit],evidence={'J':'H'},problem_cluster_id='PC',issue='WATERLOGGING',graph='G')
++ return state,nodes,links
++
++def test_repeat_refresh_recognizes_proven_historical_episode(validated_history):
++ state,_,_=validated_history
++ assert recurrence.refresh(None,state) is state
++ assert recurrence.refresh(None,state) is state
++
++@pytest.mark.parametrize('status',['ENDED','ACTIVE'])
++def test_unknown_addition_not_ignored_by_status(validated_history,status):
++ state,nodes,links=validated_history
++ nodes['BAD']=SimpleNamespace(id='BAD',kind='Incident',properties={'status':status})
++ links.append(SimpleNamespace(id='BAD-LINK',target='BAD',properties={}))
++ with pytest.raises(RecoveryRequired,match='SCOPE_PROVENANCE'):recurrence.refresh(None,state)
++
++@pytest.mark.parametrize('damage',['journal_hash','historical_issue'])
++def test_historical_proof_is_revalidated(validated_history,damage):
++ state,nodes,_=validated_history
++ if damage=='journal_hash':state.evidence['J']='CHANGED'
++ else:nodes['OLD'].properties['issue_type']='ROAD_DAMAGE'
++ with pytest.raises(RecoveryRequired,match='HISTORY_PROOF_INVALID'):recurrence.refresh(None,state)
+--- a/blockers.md
++++ b/blockers.md
+@@ -560,3 +560,9 @@
+ No unresolved focused B14-R failure. Historical pre-correction outcomes/scopes are not rewritten: B14-1 records retain old semantics, ended-only REOPENED scope fails closed until operator reconciles original recurrence journal/link and checkpoint under existing recovery procedure. No automatic repair/reset/quarantine clearance. Existing3incident bound, synthetic aggregate pickup policy, B11 PROPOSED/bounded-memory limits, prior quarantines and remaining DEC-004 future gates persist. B10 full genuine acceptance OPEN/PARTIAL; B15 not authorized.
+ 
+ Review docs/evidence/B14R-RESULTS.md, B14R-COMMANDS.md, B14R-FILES.md, B14R-changes.patch and B14R-audit.json. Human inspect waste timestamps/versions and sourced new investigation link/checkpoint refresh; optional two-case isolated reproduction. STOP for human review before B15.
++
++## B14-R2 — 2026-10-18 | human review pending
++
++CURRENT B14-R2 focused correction technicallyPASS; no unresolved failure. Invalid proof/new scope still fails closed through existing recovery/quarantine; previously failed graphs/quarantines not repaired or cleared. Three-incident bound and B14-R policy/provenance limits unchanged. B10 full genuine acceptance OPEN/PARTIAL; B15 unauthorized. No new live calls, storage, event delivery or backend-complete claim.
++
++Review docs/evidence/B14R2-RESULTS.md, B14R2-COMMANDS.md, B14R2-FILES.md and B14R2-changes.patch. STOP for review.
+--- a/decision.md
++++ b/decision.md
+@@ -1432,3 +1432,12 @@
+ DEC-057 implemented/exercised. Latest actual pickup timestamp conservatively anchors repeated aggregate observations; insufficient duration cannot verify despite declared window/evaluation start. B14-1 retained exactly with historical contract/provenance. Original investigation gains new sourced temporal incident link in same fence. Explicit resume validates B08 receipt and reviewed source evidence before model-validating new active scope; mandatory MCP read remains. Successor investigation/telemetry/new delivery machinery rejected as unnecessary.14distinctPASS, both validatorsPASS once,0provider.
+ 
+ Review docs/evidence/B14R-RESULTS.md, B14R-COMMANDS.md, B14R-FILES.md, B14R-changes.patch and B14R-audit.json. Human inspect waste timestamps/versions and sourced new investigation link/checkpoint refresh; optional two-case isolated reproduction. STOP for human review before B15.
++
++## DEC-058 — B14-R2 repeat-safe recurrence refresh (before code)
++R03/R09/R13/R15; all18 preserved. Scope subtraction wrongly treated retained ENDED history as a new episode after first adoption. Use existing persisted host RECURRENCE_SCOPE_REFRESH proof and B08 receipt/link/journal hash to recognize previously validated historical IDs. Validate historical issue/cluster/end-before-adopted-episode and receipt relation; do not blanket-ignore unknown/ENDED records. Genuinely new additions retain original full validation, finite bound, fresh-read barrier and fail-closed recovery. No storage/state-schema/worker changes, old checkpoint edits, retained graph repairs or quarantine clearance. Files: agents/recurrence.py, tests/b14r_runtime.py, tests/unit/test_recurrence_scope.py, six trackers and new B14R2 evidence only. Tests: focused recurrence unit file, one existing real recurrence/MCP/Saver flow extended through source update + second explicit resume, both validators once final. No waste/full suites/live/lifecycle/B15.
++
++## B14-R2 — 2026-10-18 | human review pending
++
++DEC-058 implemented: recognize history only through retained host refresh proof, live scoped link/journal hash/B08 receipt hash+related IDs, issue/cluster and ended-before-adopted temporal checks. Subtract proven history from genuinely new additions; original new-episode validation retained. Unknown/ENDED additions not exempt. No state/storage/contract expansion. Real two-resume path and malformed/history-proof units PASS.
++
++Review docs/evidence/B14R2-RESULTS.md, B14R2-COMMANDS.md, B14R2-FILES.md and B14R2-changes.patch. STOP for review.
+--- a/flow.md
++++ b/flow.md
+@@ -937,3 +937,9 @@
+ File/control flow above exercised with real B09/B08/FalkorDB/MCP/LangGraph/Saver. Original checkpoint remains immutable; refreshed state and two actual new-episode/report reads persisted only after explicit owned resume. No automatic event delivery or new storage schema.
+ 
+ Review docs/evidence/B14R-RESULTS.md, B14R-COMMANDS.md, B14R-FILES.md, B14R-changes.patch and B14R-audit.json. Human inspect waste timestamps/versions and sourced new investigation link/checkpoint refresh; optional two-case isolated reproduction. STOP for human review before B15.
++
++## B14-R2 — 2026-10-18 | human review pending
++
++Actual flow: AwaitDependency detects source revision change → recurrence.refresh revalidates persisted RECURRENCE_SCOPE_REFRESH against current INVESTIGATES/source journal/B08 receipt → validated historical set excluded from additions → existing strict validator handles only genuinely new episodes. Repeat refresh returns existing active state; caller retains mandatory MCP READ. Same thread creates new checkpoint; original and first-adoption checkpoints remain unchanged. Files: agents/recurrence.py + two existing test files; no new subsystem.
++
++Review docs/evidence/B14R2-RESULTS.md, B14R2-COMMANDS.md, B14R2-FILES.md and B14R2-changes.patch. STOP for review.
+--- a/implementation_status.md
++++ b/implementation_status.md
+@@ -531,3 +531,9 @@
+ R03/R09/R12/R13/R15/R17 corrective coverage; all18 mandatory. Actual waste premature monitoring/later verification, recurring incident active investigation scope and historical memory, duplicate-free replay, ID-specific old checkpoint preservation, validated refresh + actual two MCP reads, ordinary resume compatibility PASS.14distinct(11unit/3real), both static validatorsPASS once, no genuine model/new delivery claim.
+ 
+ Review docs/evidence/B14R-RESULTS.md, B14R-COMMANDS.md, B14R-FILES.md, B14R-changes.patch and B14R-audit.json. Human inspect waste timestamps/versions and sourced new investigation link/checkpoint refresh; optional two-case isolated reproduction. STOP for human review before B15.
++
++## B14-R2 — 2026-10-18 | human review pending
++
++CURRENT B14-R2 technicallyPASS, human review pending; this latest entry supersedes historical status headers.8distinctPASS(7unit/1real),0FAIL/0SKIP, both SPEC validatorsPASS once. Real first adoption→source update→second explicit same-thread resume/fresh MCP READ; both earlier checkpoints/history/links retained, no duplicate recurrence effects. Scripted model distinct from real DB/MCP/Saver. B10 full genuine acceptance OPEN/PARTIAL; all18 binding; B15 not authorized.
++
++Review docs/evidence/B14R2-RESULTS.md, B14R2-COMMANDS.md, B14R2-FILES.md and B14R2-changes.patch. STOP for review.
+--- a/task_board.md
++++ b/task_board.md
+@@ -463,3 +463,9 @@
+ Only B14-R completed technically; human review pending.14focused casesPASS/both validatorsPASS/0provider. B15 remains proposed next only after explicit authorization; do not automatically continue.
+ 
+ Review docs/evidence/B14R-RESULTS.md, B14R-COMMANDS.md, B14R-FILES.md, B14R-changes.patch and B14R-audit.json. Human inspect waste timestamps/versions and sourced new investigation link/checkpoint refresh; optional two-case isolated reproduction. STOP for human review before B15.
++
++## B14-R2 — 2026-10-18 | human review pending
++
++CURRENT B14-R2 completed technically, waits human review; latest entry takes precedence over historical headers.8focusedPASS/both validatorsPASS/0provider. Only repeat-safe recurrence refresh implemented. Proposed next B15 remains unauthorized; STOP after B14-R2.
++
++Review docs/evidence/B14R2-RESULTS.md, B14R2-COMMANDS.md, B14R2-FILES.md and B14R2-changes.patch. STOP for review.
+--- a/test_log.md
++++ b/test_log.md
+@@ -1053,3 +1053,9 @@
+ Focused unit9PASS0.12s/14deselected plus2MOCK bindingPASS0.38s. Initial real1PASS/1test-only row-shapeFAIL31.51s; correct properties.id assertion, recurrence alone1PASS26.13s. One accepted ordinary source-refresh MCP/Saver case1PASS8.22s. Final14distinctPASS/0unresolvedFAIL/0SKIP; overlaps not added. Both validatorsPASS once after final edits;5inherited pytest/child guards0external/0unexpected. No full suites/live/lifecycle. Exact commands/raw logs B14R-COMMANDS.md.
+ 
+ Review docs/evidence/B14R-RESULTS.md, B14R-COMMANDS.md, B14R-FILES.md, B14R-changes.patch and B14R-audit.json. Human inspect waste timestamps/versions and sourced new investigation link/checkpoint refresh; optional two-case isolated reproduction. STOP for human review before B15.
++
++## B14-R2 — 2026-10-18 | human review pending
++
++Exact focused unit command (B14R2-COMMANDS.md): recurrence_scope.py7PASS0.44s (5new repeat/malformed/proof branches+2retained mock cases). One real existing recurrence/MCP/Saver case extended to two resumes1PASS21.52s. Both specification validatorsPASS once after final code/test change. Final8PASS/0FAIL/0SKIP;2pytest/child guards0external Gemini/countTokens/0unexpected. No waste/remedial/full-suite/live/lifecycle reruns. Evidence B14R2-outcome-WATERLOGGING.json includes second_resume proof.
++
++Review docs/evidence/B14R2-RESULTS.md, B14R2-COMMANDS.md, B14R2-FILES.md and B14R2-changes.patch. STOP for review.

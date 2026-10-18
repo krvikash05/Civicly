@@ -142,3 +142,6 @@ registryv3/migration0001 unchanged. Domain rulev1 uses reviewed independent find
 and actual verified-only B05 topology, never candidate/proximity/count/model claims.
 Corrections append history; no dispatch/work orders/outbox/agent/API implementation.
 Active graph stays explicit; no seed promotion. See backend/EVIDENCE.md.
+
+## B20-R-OWNERSHIP — reviewed responsibility versus inventory claims (DEC-067)
+`MAINTAINED_BY` CANDIDATE/REPORTED inventory claims remain immutable and cannot authorize planning. Explicit department-lead submission and independent analyst review add a distinct synthetic reviewed Evidence source and VERIFIED responsibility interval. Claims and accepted responsibility occupy separate temporal cardinality tiers; existing unverified exclusivity is retained, and overlapping VERIFIED assignments reject regardless of department or timestamp recency. No candidate is promoted, automatically closed or deleted. Half-open intervals permit historical/future succession without overlap; knowledge time still bounds visibility. New plan proofs bind reviewed evidence and relationship identities/hashes; changed active ownership requires revised plan/approval before new work. See contracts/responsibility.json and backend/RESPONSIBILITY.md. Migration0001 and canonical property names unchanged.

@@ -13,8 +13,8 @@ from .policy import LiveDenied
 from .spending import Ledger,Pricing,SpendError
 from .limits import INPUT_LIMIT,OUTPUT_LIMIT,MAX_COUNT_RESPONSE,MAX_RECEIPT_TOKENS,MAX_CUMULATIVE_TOKENS,CountBillingPolicy
 
-PROMPT_VERSION='B10-3'
-PROMPT=(Path(__file__).parent/'prompts/B10-3.txt').read_text()
+PROMPT_VERSION='DEMO-3'
+PROMPT=(Path(__file__).parent/'prompts/DEMO-3.txt').read_text()
 
 class ProviderSettings(BaseSettings):
     model_config=SettingsConfigDict(extra='ignore',hide_input_in_errors=True)
@@ -28,6 +28,7 @@ class ProviderSettings(BaseSettings):
     project_limit:str|None=Field(default=None,validation_alias='CIVICLY_AI_PROJECT_LIMIT_USD')
     max_input_tokens:int=Field(default=INPUT_LIMIT,ge=1024,le=INPUT_LIMIT,validation_alias='CIVICLY_LLM_MAX_INPUT_TOKENS')
     max_output_tokens:int=Field(default=4096,ge=256,le=OUTPUT_LIMIT,validation_alias='CIVICLY_LLM_MAX_OUTPUT_TOKENS')
+    context_wire:bool=Field(default=False,validation_alias='CIVICLY_LLM_CONTEXT_WIRE')
 
 class ProviderError(RuntimeError):
     def __init__(self,code,category=None):self.code=code;self.category=category or code;super().__init__(code)
@@ -129,7 +130,13 @@ class Gemini:
         if type(base)is not int or not 0<=base<=MAX_CUMULATIVE_TOKENS:raise ProviderError('INVALID_TOKEN_BASELINE')
         if base+remaining_tokens>MAX_CUMULATIVE_TOKENS:raise ProviderError('INVALID_TOKEN_ALLOWANCE')
         ceiling=base+remaining_tokens;used_total=0;waited=0.;attempts=[];counts={}
-        text=PROMPT+'\nCONTEXT_JSON:\n'+json.dumps(context,sort_keys=True,separators=(',',':'),allow_nan=False)
+        from .wire_context import pack,raw
+        # Live reference comprehension is a separate gate; preserve plain requests by default.
+        wire=pack(context) if self.settings.context_wire else context
+        wire_metadata={'version':wire.get('wire_version','PLAIN'),'original_sha256':digest(context),'wire_sha256':digest(wire),
+                       'original_json_bytes':len(raw(context).encode()),'wire_json_bytes':len(raw(wire).encode()),
+                       'lossless_roundtrip_checked':wire.get('wire_version')=='CONTEXT-WIRE-1'}
+        text=PROMPT+'\nCONTEXT_JSON:\n'+raw(wire)
         group=digest([self.permit.thread_id,state.get('iterations'),state.get('wakes'),'provider-decision'])
         def exposure():return max(base,self.ledger.thread_tokens(self.permit.thread_id))
         def metadata():
@@ -137,7 +144,7 @@ class Gemini:
                 'provider':self.settings.provider,'model':self.settings.model,'model_version':self.last_usage.get('model_version','UNAVAILABLE'),
                 'investigation_token_ceiling':ceiling,'provider_input_limit':INPUT_LIMIT,'provider_output_limit':OUTPUT_LIMIT,
                 'configured_input_limit':self.settings.max_input_tokens,'configured_output_allowance':self.settings.max_output_tokens,
-                'prompt_version':PROMPT_VERSION,'pricing_version':self.pricing.version,'attempts':self.requests_sent,'requests':attempts,'spending':self.spending()}
+                'prompt_version':PROMPT_VERSION,'context_encoding':wire_metadata,'pricing_version':self.pricing.version,'attempts':self.requests_sent,'requests':attempts,'spending':self.spending()}
         async with httpx.AsyncClient(timeout=self.settings.timeout,follow_redirects=False,transport=self.transport) as client:
             async with asyncio.timeout(2*self.settings.timeout+self.settings.retry_wait_budget):
                 try:
@@ -212,11 +219,18 @@ class Gemini:
                         if used is None or used==0:raise ProviderError('PROVIDER_USAGE_MISSING')
                         try:
                             raw=''.join(p.get('text','') for p in value['candidates'][0]['content']['parts'] if not p.get('thought'))
-                            selection=Selection.model_validate_json(raw);self.last_failure=None
+                            selection=Selection.model_validate_json(raw)
+                            from .selection_validation import validate_read
+                            validate_read(selection,context)
+                            self.last_failure=None
                             return selection,self.last_usage['accounted_tokens']
-                        except Exception:
+                        except Exception as invalid:
+                            from .selection_validation import SelectionInputError
+                            entry['selection_validation']='INVALID_READ_INPUT' if isinstance(invalid,SelectionInputError) else 'INVALID_SELECTION_SCHEMA'
+                            metadata()
                             if repair:raise ProviderError('INVALID_MODEL_OUTPUT','INVALID_STRUCTURED_OUTPUT') from None
                             text+='\nPrevious output failed strict validation. Return exactly the supplied schema; no additional fields.'
+                            if isinstance(invalid,SelectionInputError):text+='\n'+str(invalid)
                 except SpendError as e:
                     category='SPENDING_CONTROL' if str(e)!='TOKEN_BUDGET' else 'TOKEN_BUDGET';self.last_failure={'category':category,'code':str(e)}
                     raise ProviderError(str(e),category) from None

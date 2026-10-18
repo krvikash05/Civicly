@@ -34,3 +34,34 @@ Single worker processes persisted outbox with claim/lease, retry budget, backoff
 
 ## Simulator safety
 Only the simulator test controller may access scenario-specific hidden causes. Its event injection APIs accept selected scenario ID and stage, materialize pre-authored inspection/pickup/rainfall evidence into canonical graph, with `source_kind=SYNTHETIC`, and emit wakeup. It does not write agent hypotheses, plans or expected answers. All simulated physical completion occurs via department actor/work-order route, never an AI declaration.
+
+## B12 implemented draft boundary
+
+`contracts/resolution_planning.json` and `backend/PLANNING.md` define actual closed
+DRAFT/PROPOSED planning, bounded DAG and monitoring criteria. Canonical registry
+v3 remains unchanged; additive0004 companion retains full plan/provenance/source
+pointers. Responsibility resolves from verified dated MAINTAINED_BY evidence,
+separate from B11 document authorship/PROPOSED guidance. No approval, WorkOrder,
+execution, monitoring worker or event platform is implemented by this foundation.
+
+B12-R adds only the three bounded remedial proposal policies and typed causal/safety conditions in contracts/resolution_planning.json. Latest reviewed causal support and actual B11 citations are independent guards. Conditional proposals expose unmet gates; supported-now still never grants execution authority. Sanitized clarification/capability feedback is durable when checkpoint ownership is safe; uncertain writes/lease/checkpoint failures retain operator quarantine. See backend/PLANNING.md. B13–B15 remain unimplemented.
+
+## B14 implemented explicit execution/verification boundary
+
+Current contract: contracts/operations.json B14-1 and backend/OPERATIONS.md supersede
+historical B12/B13-only boundary paragraphs above. Authenticated explicit execution,
+actual B09 inspection journals, deterministic sourced condition follow-up, B08
+recurrence and existing case-memory paths implemented; native events PENDING only.
+WorkOrder failure maps BLOCKED + task FAILED + retained INCONCLUSIVE outcome.
+Synthetic24hour waste-window rule and qualitative comparable-rain/wear observations
+are disclosed demonstration policy. No numeric physical standard inferred. Exact
+approval/procedure/target/gates, independent authenticated analyst review, all-task
+completion/verification and temporal guards required. No worker/scheduler/API or
+live provider authorization. See DEC-056 and B14 evidence for actual test results.
+
+B14-R corrects fresh verification to B14-2: waste elapsed interval anchored to latest
+actual pickup observation per target, retaining synthetic24hours and B14-1 historical
+provenance. Recurrence atomically links the new incident to the original reopened
+investigation; explicit validated same-thread resume refreshes active episode and
+source refs while preserving historical checkpoints and fresh-MCP-read guard.
+See DEC-057, contracts/operations.json and backend/AGENTS_RUNTIME.md. No B15 wakeup.

@@ -1,0 +1,463 @@
+diff --git a/backend/app/services/http/service.py b/backend/app/services/http/service.py
+--- a/backend/app/services/http/service.py
++++ b/backend/app/services/http/service.py
+@@ -8,11 +8,36 @@
+ from app.services.evidence.models import Actor
+ from app.services.evidence.service import EvidenceService
+ from app.services.complaints.service import ComplaintService
++from app.services.planning.service import PlanningBlocked
+ from .reads import Reads
+ def request_identity(source,actor,key):return 'HTTP-B16-'+digest([source,actor,key])[:32]
+ 
+ class Recovery(OutcomeUnknown):
+- def __init__(self,id,entity=None):self.correlation_id=id;self.entity_id=entity;super().__init__('API_RECONCILIATION_REQUIRED')
++ def __init__(self,id,entity=None,identities=None):
++  self.correlation_id=id;self.entity_id=entity;self.reconciliation={'request_id':id,**(identities or {}),**({'entity_id':entity} if entity else {})};super().__init__('API_RECONCILIATION_REQUIRED')
++class Boundary:
++ """Request-local outcome evidence, never a second persisted recovery mechanism."""
++ def __init__(self,request,entity):
++  self.phase='PRE_WRITE';self.before=None;self.journal_id=None
++  self.identities={'request_id':request,**({'entity_id':entity} if entity else {})}
++ async def invoke(self,repo,call):
++  self.phase='CHECKING'
++  self.before=repo._read("MATCH (m:CivicSchemaMigration {id:'0001'}) RETURN m.repo_revision,coalesce(m.repo_pending,'')")
++  if not self.before or self.before[0][1]:raise OutcomeUnknown('SOURCE_WRITE_UNCERTAIN')
++  self.phase='DISPATCHED'
++  result=call()
++  if inspect.isawaitable(result):result=await result
++  self.phase='RETURNED'
++  entity=getattr(result,'entity_id',None) or getattr(result,'id',None) or getattr(result,'complaint_id',None)
++  if isinstance(result,dict):entity=result.get('entity_id') or result.get('id') or entity
++  if entity:self.identities['entity_id']=__import__('pydantic').TypeAdapter(m.ID).validate_python(entity)
++  return result
++ def no_write(self,repo):
++  # An existing request journal may already contain a committed historical receipt.
++  # No new revision alone cannot establish non-commit for that request.
++  if self.journal_id and repo._node_optional(self.journal_id) is not None:return False
++  return bool(self.before and not self.before[0][1] and self.before==repo._read("MATCH (m:CivicSchemaMigration {id:'0001'}) RETURN m.repo_revision,coalesce(m.repo_pending,'')"))
++
+ class Services:
+  def __init__(self,profile,profile_path,repo,auth,ops,delivery,clock,*,memory=None):
+   if repo.graph.name!=profile.graph or ops.repo is not repo or delivery.repo is not repo:raise ValueError('EXACT_SERVICE_SOURCE_REQUIRED')
+@@ -57,43 +82,85 @@
+    prior=store.get('api_request',request)
+    if prior:
+     if prior['hash']!=sha:raise Conflict('IDEMPOTENCY_CONFLICT')
+-    if prior['status']=='DONE':return model.model_validate(prior['response']).model_dump(mode='json')
+-    if prior['status']!='REJECTED':raise Recovery(request,prior.get('entity_id'))
++    if prior['status']=='DONE':
++     try:return model.model_validate(prior['response']).model_dump(mode='json')
++     except Exception:raise Recovery(request,prior.get('entity_id'),prior.get('recovery',{}).get('identities')) from None
++    if prior['status']!='REJECTED':raise Recovery(request,prior.get('entity_id'),prior.get('recovery',{}).get('identities'))
+    row={'id':request,'hash':sha,'actor_id':actor.id,'status':'DISPATCHING','path':path,'entity_id':id}
+    store.write(session,[('api_request',request,row)])
++  boundary=Boundary(request,id)
++  for key in ['investigation_id','plan_id']:
++   identity=value.get(key) or value.get('draft',{}).get(key)
++   if identity:boundary.identities[key]=__import__('pydantic').TypeAdapter(m.ID).validate_python(identity)
+   try:
+    self.auth.resolve(token)
+-   result=await self.dispatch(name,id,value,actor,token,request,reviewer_token)
+-  except OutcomeUnknown:raise Recovery(request,id) from None
+-  except (Conflict,PreconditionFailed,Denied,ValueError) as error:
+-   # Known service validation/authorization rejection is actionable. B09 readback
+-   # errors may follow commit: preserve uncertain intent rather than reject/retry.
+-   if name in {'open','propose','assess','request_inspection','transition_inspection','report_inspection','intake'} and not isinstance(error,(Conflict,Denied,ValueError)):
+-    raise Recovery(request,id) from None
+-   with self.repo._session() as session:store.write(session,[('api_request',request,{**row,'status':'REJECTED'})])
+-   raise
+-  except Exception:raise Recovery(request,id) from None
++   result=await self.dispatch(name,id,value,actor,token,request,reviewer_token,boundary)
++  except Exception as error:
++   # Exception classes are never proof of non-commit after an invocation. Only
++   # explicit pre-write phase, or known rejection + unchanged audited source, is.
++   rejected=boundary.phase=='PRE_WRITE' and isinstance(error,(Conflict,PreconditionFailed,Denied,ValueError)) and not isinstance(error,OutcomeUnknown)
++   if boundary.phase=='DISPATCHED' and isinstance(error,(Conflict,PreconditionFailed,Denied,PlanningBlocked)):
++    try:rejected=boundary.no_write(self.repo)
++    except Exception:rejected=False
++   if rejected:
++    with self.repo._session() as session:store.write(session,[('api_request',request,{**row,'status':'REJECTED'})])
++    raise
++   raise self.recovery(request,row,boundary,error) from None
+   # Projection/schema/receipt persistence is post-dispatch: never claim rejection.
+   try:
+    result=model.model_validate(result).model_dump(mode='json')
+    with self.repo._session() as session:store.write(session,[('api_request',request,{**row,'status':'DONE','response':result})])
+    return result
+-  except Exception:raise Recovery(request,id) from None
+- async def dispatch(self,name,id,v,actor,token,request,reviewer_token):
++  except Exception as error:raise self.recovery(request,row,boundary,error) from None
++ def recovery(self,request,row,boundary,error):
++  identities=dict(boundary.identities)
++  for key in ['entity_id','investigation_id','plan_id']:
++   value=getattr(error,'reconciliation',{}).get(key)
++   if value is not None:
++    try:identities[key]=__import__('pydantic').TypeAdapter(m.ID).validate_python(value)
++    except Exception:pass
++  if boundary.journal_id:
++   try:
++    from app.services.evidence.models import Journal
++    journal=Journal.model_validate_json(self.repo.get_node(boundary.journal_id,'Evidence').properties['summary'])
++    if journal.state=='COMMITTED' and journal.command['request_id']==request and journal.actor.id==row['actor_id'] and journal.receipt.graph==self.repo.graph.name:
++     identities['entity_id']=journal.receipt.entity_id
++     if journal.command['operation']=='open':identities['investigation_id']=journal.receipt.entity_id
++     elif journal.command.get('investigation_id'):identities['investigation_id']=journal.command['investigation_id']
++   except Exception:pass # Unreadable/missing evidence is uncertainty, not absence.
++  detail={'phase':boundary.phase,'identities':identities,**({'journal_id':boundary.journal_id} if boundary.journal_id else {})}
++  try:
++   state=self.repo._read("MATCH (m:CivicSchemaMigration {id:'0001'}) RETURN coalesce(m.repo_pending,'')")
++   if not state or state[0][0]:return Recovery(request,identities=identities)
++   with self.repo._session() as session:self.delivery.store.write(session,[('api_request',request,{**row,'recovery':detail})])
++  except Exception:pass # Last durable DISPATCHING intent remains; no feedback guarantee.
++  return Recovery(request,identities=identities)
++ async def dispatch(self,name,id,v,actor,token,request,reviewer_token,boundary):
+   reads=self.reads;ev=EvidenceService(self.repo,clock=self.clock)
+   if name=='intake':
+-   result=ComplaintService(self.repo,clock=self.clock).intake(v['complaint']);return reads.get(result.complaint_id,'Complaint',actor,token)
++   from app.services.complaints.models import normalize
++   from app.services.complaints.service import stable
++   q,_=normalize(v['complaint']) # Pure validation, before any invocation.
++   boundary.journal_id=stable('EV-B08',q.source_kind,q.source_id,q.external_record_id)
++   result=await boundary.invoke(self.repo,lambda:ComplaintService(self.repo,clock=self.clock).intake(v['complaint']));return reads.get(result.complaint_id,'Complaint',actor,token)
+   if name=='open':
+    self.delivery.active() # Must be set up explicitly before mutation.
+-   result=ev.execute({**v,'operation':'open','request_id':request},actor)
++   q={**v,'operation':'open','request_id':request}
++   from app.services.evidence.models import parse_command
++   from app.services.evidence.writer import stable
++   q=parse_command(q);ev.authorize(q,actor);boundary.journal_id=stable('EV-JOURNAL',actor.id,request)
++   if hasattr(q,'expected_hash'):
++    target=getattr(q,'inspection_id',None) or q.hypothesis_id
++    if self.repo.get_node(target).content_hash!=q.expected_hash:raise Conflict('STALE_DOMAIN_REVISION')
++   result=await boundary.invoke(self.repo,lambda:ev.execute(q.model_dump(mode='json'),actor))
+    self.delivery.request_resume(result.entity_id,request,operator=actor.id,reason='Authenticated API case creation',authorize=True)
+    return reads.get(result.entity_id,'Investigation',actor,token)
+   if name=='resume':
+    reads.node(id,'Investigation',actor,token)
+-   row=self.delivery.request_resume(id,request,operator=actor.id,reason=v['reason'],authorize=True)
++   row=await boundary.invoke(self.repo,lambda:self.delivery.request_resume(id,request,operator=actor.id,reason=v['reason'],authorize=True))
+    return {'investigation_id':id,'accepted':True,'event_id':row['id'],'status':row['status']}
+   if name=='draft':
+-   result=await self.ops.draft(v['draft'],request_id=request,token=token);return reads.get(result.id,'ResolutionPlan',actor,token)
++   result=await boundary.invoke(self.repo,lambda:self.ops.draft(v['draft'],request_id=request,token=token));return reads.get(result.id,'ResolutionPlan',actor,token)
+   if name in {'propose','assess','request_inspection','transition_inspection','report_inspection'}:
+    q={**v,'operation':name,'request_id':request}
+    if name=='propose':q['investigation_id']=id
+@@ -103,7 +170,13 @@
+     if name=='transition_inspection' and v['status']!='REQUESTED' and actor.role!='DEPARTMENT_LEAD':raise Denied('FIELD_TRANSITION_REQUIRES_ASSIGNED_DEPARTMENT')
+    # B09 standalone reports are unreviewed. Reviewed operational reports must use
+    # the existing B14 inspect command with independent authenticated header.
+-   result=ev.execute(q,actor)
++   from app.services.evidence.models import parse_command
++   from app.services.evidence.writer import stable
++   q=parse_command(q);ev.authorize(q,actor);boundary.journal_id=stable('EV-JOURNAL',actor.id,request)
++   if hasattr(q,'expected_hash'):
++    target=getattr(q,'inspection_id',None) or q.hypothesis_id
++    if self.repo.get_node(target).content_hash!=q.expected_hash:raise Conflict('STALE_DOMAIN_REVISION')
++   result=await boundary.invoke(self.repo,lambda:ev.execute(q.model_dump(mode='json'),actor))
+    if name in {'propose','assess'}:return {'status':result.entity_id}
+    return reads.get(result.entity_id,'Evidence' if name=='report_inspection' else 'Inspection',actor,token)
+   if name in {'submit','decide','order','update','progress','inspect','evaluate','recur'}:
+@@ -112,7 +185,11 @@
+    elif name=='decide':q['approval_id']=id
+    elif name!='order':q['work_order_id']=id
+    if name=='inspect':q['command']={**q['command'],'request_id':request}
+-   result=await self.ops.execute(q,token=token,reviewer_token=reviewer_token)
++   from app.services.operations.models import Submit,Decide,Order,Update
++   from app.services.operations.execution_models import COMMANDS
++   cls={'submit':Submit,'decide':Decide,'order':Order,'update':Update,**COMMANDS}[name]
++   q=cls.model_validate(q).model_dump(mode='json')
++   result=await boundary.invoke(self.repo,lambda:self.ops.execute(q,token=token,reviewer_token=reviewer_token))
+    if name=='inspect':return {'status':result['entity_id']}
+    if name in {'evaluate','recur'}:return reads.outcome(result)
+    kind='Approval' if name in {'submit','decide'} else 'WorkOrder'
+diff --git a/backend/tests/integration/test_http_recovery.py b/backend/tests/integration/test_http_recovery.py
+new file mode 100644
+--- /dev/null
++++ b/backend/tests/integration/test_http_recovery.py
+@@ -0,0 +1,69 @@
++"""B16-R injected ACK/projection faults, actual HTTP/B09/FalkorDB persistence."""
++import json,secrets
++from pathlib import Path
++from types import SimpleNamespace
++import pytest
++from fastapi.testclient import TestClient
++from app.active import active_scope
++from app.api.application import create_app
++from app.services.http.service import Services,request_identity
++from app.services.evidence.service import EvidenceService
++from app.services.evidence.writer import stable
++from app.services.evidence.models import Journal
++from app.services.operations.auth import Auth,OPERATORS
++from app.services.operations.service import Operations
++from app.services.planning.service import PlanningService
++from app.events.service import Delivery
++from tests.integration.test_event_delivery import setup
++pytestmark=pytest.mark.integration
++
++def test_committed_readback_and_projection_faults_preserve_records_and_block_replay(db,tmp_path,monkeypatch):
++ p,r,clock,path,inv=setup(db,tmp_path)
++ passwords={i:secrets.token_urlsafe(24) for i in OPERATORS};auth=Auth.provision(tmp_path/'auth.sqlite3',passwords)
++ token=auth.login('OP-ANALYST',passwords['OP-ANALYST'])
++ with active_scope(p):
++  delivery=Delivery(r,clock);delivery.activate(operator='B16R-proof',reason='Explicit isolated corrective test only',authorize=True)
++  s=Services(p,path,r,auth,Operations(PlanningService(r,clock=clock),auth,clock=clock),delivery,clock)
++ c=TestClient(create_app(s),raise_server_exceptions=False);body={'investigation_id':inv,'asset_ids':['D1'],'department_id':'DEP','inspection_type':'B16R_AUTHORED_SYNTHETIC'}
++ original_readback=EvidenceService.readback;original_get=s.reads.get;original_execute=EvidenceService.execute
++ calls=[]
++ def counted(self,payload,actor):calls.append(payload['request_id']);return original_execute(self,payload,actor)
++ monkeypatch.setattr(EvidenceService,'execute',counted)
++ proofs=[]
++ for fault in ['readback','projection']:
++  key='B16R-'+fault;request=request_identity(p.graph,'OP-ANALYST',key);journal_id=stable('EV-JOURNAL','OP-ANALYST',request)
++  with active_scope(p):before=r._read('MATCH (n:Inspection) RETURN count(n)')[0][0]
++  def broken_readback(self,receipt,replayed=False):
++   # This is called after real B09 atomic mutation+journal commit, not a mock DB.
++   if receipt.operation=='request_inspection':raise ValueError('PRIVATE_SOURCE_OR_CREDENTIAL_SENTINEL')
++   return original_readback(self,receipt,replayed)
++  def broken_projection(id,kind,actor,session):
++   if kind=='Inspection':raise ValueError('PRIVATE_SOURCE_OR_CREDENTIAL_SENTINEL')
++   return original_get(id,kind,actor,session)
++  monkeypatch.setattr(EvidenceService,'readback',broken_readback if fault=='readback' else original_readback)
++  monkeypatch.setattr(s.reads,'get',broken_projection if fault=='projection' else original_get)
++  h={'Authorization':'Bearer '+token,'Idempotency-Key':key}
++  res=c.post('/api/v1/inspections',json=body,headers=h)
++  assert res.status_code==409,res.text
++  error=res.json()['error'];assert error['code']=='RECOVERY_REQUIRED' and error['details']['commitment']=='UNKNOWN'
++  assert error['details']['correlation_id']==error['details']['request_id']==request
++  assert 'PRIVATE_SOURCE_OR_CREDENTIAL_SENTINEL' not in res.text and p.graph not in res.text
++  with active_scope(p):
++   journal=Journal.model_validate_json(r.get_node(journal_id,'Evidence').properties['summary'])
++   assert journal.state=='COMMITTED' and journal.command['request_id']==request
++   entity=journal.receipt.entity_id;assert r.get_node(entity,'Inspection')
++   assert error['details']['entity_id']==entity and error['details']['investigation_id']==inv
++   assert r._read('MATCH (n:Inspection) RETURN count(n)')==[[before+1]]
++   row=delivery.store.get('api_request',request);assert row['status']=='DISPATCHING' and row['status']!='REJECTED'
++   assert row['recovery']['journal_id']==journal_id and row['recovery']['identities']['entity_id']==entity
++   phase=row['recovery']['phase'];assert phase==('DISPATCHED' if fault=='readback' else 'RETURNED')
++  prior_calls=len(calls)
++  monkeypatch.setattr(EvidenceService,'readback',original_readback);monkeypatch.setattr(s.reads,'get',original_get)
++  replay=c.post('/api/v1/inspections',json=body,headers=h)
++  assert replay.status_code==409 and replay.json()['error']['code']=='RECOVERY_REQUIRED'
++  assert replay.json()['error']['details']['entity_id']==entity and len(calls)==prior_calls
++  with active_scope(p):
++   assert r._read('MATCH (n:Inspection) RETURN count(n)')==[[before+1]]
++   assert Journal.model_validate_json(r.get_node(journal_id).properties['summary']).state=='COMMITTED'
++  proofs.append({'fault':fault,'http_status':res.status_code,'response':res.json(),'journal_id':journal_id,'journal_state':'COMMITTED','inspection_id':entity,'new_inspections':1,'phase':phase,'intent_status':row['status'],'replay_service_invocations':0,'no_duplicate_effects':True})
++ Path('docs/evidence/B16R-real-proof.json').write_text(json.dumps({'mode':'ACTUAL_ASGI_HTTP_B09_FALKORDB_WITH_INJECTED_FAILURES_NO_MODEL','graph':p.graph,'investigation_id':inv,'cases':proofs,'total_inspections':2,'provider_calls':0,'operator_reconciliation_required':True},indent=2)+'\n')
+diff --git a/backend/tests/unit/test_http_boundary.py b/backend/tests/unit/test_http_boundary.py
+new file mode 100644
+--- /dev/null
++++ b/backend/tests/unit/test_http_boundary.py
+@@ -0,0 +1,128 @@
++"""B16-R request-local phase/replay guards, mocked persistence only."""
++import asyncio,copy
++from contextlib import contextmanager
++from types import SimpleNamespace
++import pytest
++from app.api import models as m
++from app.services.http.service import Services,Boundary,Recovery,request_identity
++from app.services.operations.auth import Denied
++from app.graph.repository import Conflict,PreconditionFailed
++from app.services.planning.service import PlanningBlocked
++
++class Store:
++ def __init__(self):self.values={};self.fail=False
++ def get(self,kind,id):return copy.deepcopy(self.values.get(id))
++ def write(self,session,rows):
++  if self.fail:raise RuntimeError('PRIVATE_SENTINEL')
++  for _,id,row in rows:self.values[id]=copy.deepcopy(row)
++class Repo:
++ def __init__(self):self.revision=1;self.pending=''
++ @contextmanager
++ def _session(self):yield None
++ def _read(self,query):return [[self.pending]] if 'RETURN coalesce' in query else [[self.revision,self.pending]]
++@pytest.fixture
++def adapter():
++ s=object.__new__(Services);s.profile=SimpleNamespace(graph='SOURCE');s.repo=Repo();s.delivery=SimpleNamespace(store=Store());s.auth=SimpleNamespace(resolve=lambda token:SimpleNamespace(id='OP',role='ANALYST'))
++ s.reads=SimpleNamespace();s.calls=0
++ async def dispatch(name,id,value,actor,token,request,reviewer,boundary):
++  s.calls+=1
++  def effect():s.repo.revision+=1;return {'id':'ENTITY'}
++  await boundary.invoke(s.repo,effect)
++  return {'status':'OK'}
++ s.dispatch=dispatch
++ return s
++
++def run(s,key='KEY',reason='Bounded request'):
++ return asyncio.run(s.command('resume','/test',None,m.ResumeRequest(reason=reason),SimpleNamespace(id='OP',role='ANALYST'),'token',key,m.Ack))
++
++@pytest.mark.parametrize('error',[ValueError('PRIVATE_SENTINEL'),Denied('PRIVATE_SENTINEL'),Conflict('PRIVATE_SENTINEL')])
++def test_proven_prewrite_rejection_stays_actionable(adapter,error):
++ s=adapter
++ async def reject(*args):raise error
++ s.dispatch=reject
++ with pytest.raises(type(error)):run(s)
++ assert s.delivery.store.get('api_request',request_identity('SOURCE','OP','KEY'))['status']=='REJECTED'
++
++@pytest.mark.parametrize('error',[Denied('scope'),Conflict('stale'),PreconditionFailed('gate'),PlanningBlocked('KNOWN_PREWRITE_GATE')])
++def test_known_no_write_service_rejection_requires_unchanged_audit(adapter,error):
++ s=adapter
++ async def reject(name,id,value,actor,token,request,reviewer,boundary):
++  def action():raise error
++  await boundary.invoke(s.repo,action)
++ s.dispatch=reject
++ with pytest.raises(type(error)):run(s)
++ assert s.delivery.store.get('api_request',request_identity('SOURCE','OP','KEY'))['status']=='REJECTED'
++
++def test_value_error_after_invocation_is_unknown_even_without_observed_write(adapter):
++ s=adapter
++ async def reject(name,id,value,actor,token,request,reviewer,boundary):
++  def action():raise ValueError('PRIVATE_SENTINEL')
++  await boundary.invoke(s.repo,action)
++ s.dispatch=reject
++ with pytest.raises(Recovery):run(s)
++ assert s.delivery.store.get('api_request',request_identity('SOURCE','OP','KEY'))['status']=='DISPATCHING'
++
++def test_done_replay_and_conflicting_key_never_redispatch(adapter):
++ s=adapter;first=run(s);assert run(s)==first and s.calls==1
++ with pytest.raises(Conflict):run(s,reason='Changed request')
++ assert s.calls==1
++ row=s.delivery.store.values[request_identity('SOURCE','OP','KEY')];row['response']={'unexpected':'PRIVATE_SENTINEL'}
++ with pytest.raises(Recovery):run(s)
++ assert row['status']=='DONE' and s.calls==1
++
++def test_recovery_write_failure_preserves_last_durable_intent(adapter):
++ s=adapter
++ async def reject(name,id,value,actor,token,request,reviewer,boundary):
++  await boundary.invoke(s.repo,lambda:{'id':'ENTITY'})
++  s.delivery.store.fail=True
++  raise ValueError('PRIVATE_SENTINEL')
++ s.dispatch=reject
++ with pytest.raises(Recovery) as caught:run(s)
++ assert caught.value.reconciliation['entity_id']=='ENTITY'
++ row=s.delivery.store.get('api_request',request_identity('SOURCE','OP','KEY'))
++ assert row['status']=='DISPATCHING' and 'recovery' not in row
++
++@pytest.mark.parametrize('error',[Conflict('stale after commit'),PreconditionFailed('readback'),Denied('projection')])
++def test_known_exception_after_audited_mutation_is_not_a_rejection(adapter,error):
++ s=adapter
++ async def reject(name,id,value,actor,token,request,reviewer,boundary):
++  def action():s.repo.revision+=1;raise error
++  await boundary.invoke(s.repo,action)
++ s.dispatch=reject
++ with pytest.raises(Recovery):run(s)
++ assert s.delivery.store.get('api_request',request_identity('SOURCE','OP','KEY'))['status']=='DISPATCHING'
++
++@pytest.mark.parametrize('case,status',[('malformed',422),('forbidden',403),('stale',409),('healthy',200)])
++def test_focused_http_prewrite_codes_and_successful_replay(adapter,case,status):
++ from fastapi.testclient import TestClient
++ from app.api.application import create_app
++ from app.active import new_profile
++ s=adapter;s.profile=new_profile();actor=SimpleNamespace(id='OP',role='APPROVER' if case=='forbidden' else 'ANALYST',department_id='DEPT-COORD')
++ s.auth.resolve=lambda token:actor
++ async def dispatch(name,id,value,actor,token,request,reviewer,boundary):
++  s.calls+=1
++  def action():
++   if case=='stale':raise Conflict('PRIVATE_SENTINEL')
++   return {'id':id}
++  await boundary.invoke(s.repo,action)
++  return {'investigation_id':id,'accepted':True,'event_id':'EVENT','status':'PENDING'}
++ s.dispatch=dispatch;c=TestClient(create_app(s),raise_server_exceptions=False)
++ body={'reason':'Explicit'} if case!='malformed' else {'reason':'Explicit','role':'ADMIN'}
++ h={'Authorization':'Bearer test-only-stub','Idempotency-Key':'HTTP-KEY'}
++ res=c.post('/api/v1/investigations/INV/resume',json=body,headers=h)
++ assert res.status_code==status,res.text
++ assert 'PRIVATE_SENTINEL' not in res.text
++ if case in {'malformed','forbidden'}:assert s.calls==0
++ if case=='healthy':
++  assert c.post('/api/v1/investigations/INV/resume',json=body,headers=h).json()['data']==res.json()['data'] and s.calls==1
++  assert c.post('/api/v1/investigations/INV/resume',json={'reason':'Changed'},headers=h).status_code==409 and s.calls==1
++
++def test_retained_request_journal_prevents_false_rejection_without_new_revision(adapter):
++ s=adapter;s.repo._node_optional=lambda id:SimpleNamespace(id=id)
++ async def reject(name,id,value,actor,token,request,reviewer,boundary):
++  boundary.journal_id='EXISTING-JOURNAL'
++  def action():raise Conflict('Readback of prior committed receipt')
++  await boundary.invoke(s.repo,action)
++ s.dispatch=reject
++ with pytest.raises(Recovery):run(s)
++ assert s.delivery.store.get('api_request',request_identity('SOURCE','OP','KEY'))['status']=='DISPATCHING'
+diff --git a/blockers.md b/blockers.md
+--- a/blockers.md
++++ b/blockers.md
+@@ -584,3 +584,9 @@
+ No unresolved failure in focused exercised B16paths; human review pending. Two B16fault fixtures remainRECOVERY_REQUIRED/quarantined after genuine shared trace collision; never cleared/retried/repaired. New source-bound HTTPrequest identities prevent new cross-profile collision; existing uncertain requests require operator reconciliation under original IDs. API has no automatic repair/reset/budget/liveactivation endpoint. DISPATCHING/no saved response conservatively unknown, even if the crash occurred before the actual domain call. Post-commit projection/ack failures remainunknown; no promise of new feedback after failed checkpoint.
+ 
+ B17dashboard/map/graph/trace/hypothesisstudio/SSE/richpagination andB19scenario3routes remain explicitly deferred, no501stubs. B16basic bounded lists scope before counts/pages; finite500candidate/100relationship/50page bounds fail visible; existing audit/B15limits unchanged. Sourceprofile/Memory capability/0005/auth/explicitdeliveryactivation must exist before startup; no implicit canonicalpromotion or allproofgraph processing. Lead mixed/unowned scope denied conservatively; no enterprise tenancy/collaborative policy claim. Historical/current reads are bounded, no crossgraph snapshot guarantee. Missing observation opportunity remains unresolved. Defaultworker deterministic, not genuineautonomy; B10full genuine GeminiOPEN/PARTIAL. All18/remainingDEC004futurefindings preserved; acceptedB04conversion/frozen55legacydefects untouched. No B17/frontend/live authorized; STOP for B16review.
++
++## CURRENT B16-R limitations and operator action — 2026-10-18
++
++Corrected paths technicallyPASS/reviewpending; no unresolved focusedfailure. IntentionalB16Rfaultrecords retain COMMITTEDinspection/journal and DISPATCHING transportintent, safe409UNKNOWN. Operator must reconcile original sourceboundHTTPrequest with recordedjournal/entity/investigation/receipt under existingprocedure; no automaticretry/replacementrequest/rollback/delete/quarantineclearance/receiptfabrication. Metadatawrite mayfail; lastdurableintent and immediate sanitizedcorrelation evidence remain, no guaranteeofnewfeedback. Knownprewriteerrors requirephase/evidence; concurrent sourcechange or retainedjournal makesclassificationconservative, not assumedrejection.
++
++No source/schema/storage/migration redesign; acceptedB10genuineGeminiOPEN/PARTIAL, all18/remainingarchitecturegates preserved. Olderfailedrecords/quarantines not repaired. B17/SSE/frontend/live/fullbackendcompletion remainunauthorized. ReviewB16R-RESULTS.md; STOPafterB16-R.
+diff --git a/decision.md b/decision.md
+--- a/decision.md
++++ b/decision.md
+@@ -1476,3 +1476,16 @@
+ 44actual typed FastAPI operations/42paths, no stubs. Normative inventory55operations assigns8B17/3B19 deferred; compatible API model corrections preserve accepted strict service semantics. Full exact binding/CAS/idempotency, independent reviewer header, server roles/department source/history filtering, immutable draft/current lifecycle, actual assessment history and recorded outcome vs completion. Source+actor+key opaque request ID prevents cross-profile shared trace collisions without changing existing B15/MCP/Saver. Known pre-write rejection actionable; post-dispatch uncertainty409UNKNOWN/manual reconciliation, no implicit replay. Host-only private service config/startup, no migrations/seed/activation/worker/live.
+ 
+ FastAPI0.143.3/Pydantic2.14.1/Uvicorn0.54.0 from existing lock, actual ASGI and TCP localhost tests.63distinctPASS(62unit incl3accepted direct regressions/1real end-to-end fixture), final both validatorsPASS. First real workflow passed; two independent repeats exposed same-source-unbound request collision with shared old trace; retained errors/quarantines/read-only diagnostic, fixed B16 identity only. Corrected realpath1PASS30.32s and finalroutecheck1PASS29.64s; final outcome projection3unitPASS+actual retainedDB/auth readPASS.12ordinary guard proofs0provider, historical paid requests/data/oldtests/migrations/evidence retained. No B17/fullsuite/lifecycle/live. Exact files/patch/commands/limits in B16evidence and backend/API.md. STOP for review.
++
++## DEC-061 — B16-R post-dispatch classification (before code)
++R09/R11/R12/R13/R15/R16; all18 preserved. Only HTTP adapter boundary correction. B09 couples domain mutation+COMMITTED journal, then readback can raise ValueError; B08 similarly verifies receipt after commit. B12 wraps commit/replay verification as OutcomeUnknown, B13/B14 wrap commit/readback as OpsRecovery; HTTP projections occur after those calls return. Current ValueError→REJECTED is invalid across every dispatch branch.
++
++Use explicit request-local PRE_WRITE/DISPATCHED/RETURNED phase around each existing domain invocation, with source revision/pending-state evidence for known no-write service rejections. Pure accepted command validation occurs before invocation; malformed transport/key/authorization/conflicting identity stay actionable. After invocation, ValueError/Pydantic alone never proves no commit. Returned-service projection/receipt failures always recovery-required. Known conflict/authorization/gate failures from an invocation are actionable only when unchanged audited source+no pending write establishes no domain mutation; otherwise recovery. Preserve B09 deterministic journal ID and validated committed receipt/entity IDs, existing source-bound HTTP correlation and underlying recovery identities. Best-effort sanitized metadata in existing api_request; if it cannot persist, retain last durable state, no claim of new feedback. DONE replay validation fault is also recovery; healthy DONE and conflicting-key behavior unchanged. No new storage/recovery subsystem, rollback, retry, graph repair or clearance.
++
++Touched source: backend/app/services/http/service.py only; new focused backend/tests/unit/test_http_recovery.py and backend/tests/integration/test_http_recovery.py, six append-only tracker entries, B16R evidence/patch. No model/contract/migration/domain/runtime changes intended. Exact tests: pytest those two new files only (unit mocked boundary/store, real isolated HTTP/FalkorDB B10/B09 fixture+0004/0005, readback fault and post-service projection fault in one setup; replay/no duplication, pre-write422/403/stale409/DONE/conflicting key). Both spec validators once after final edits. No full API units/workflow/network/lifecycle/earlier suites/live calls. Human inspect COMMITTED journal/one inspection per request, 409UNKNOWN original correlation, preserved intent and zero redispatch, then STOP before B17.
++
++## B16-R — DEC-061 exercised correction, 2026-10-18
++
++CURRENT B16-R technicallyPASS, human review pending; supersedes earlier B16classification claims without removing history. HTTP ValueError/Pydantic classification was phase-blind: B09COMMITTED readback and in-dispatch DTOprojection could become422/REJECTED. Request-local CHECKING/DISPATCHED/RETURNED boundary now surrounds each accepted mutation; pure B08/B09/B13/B14command validation occurs before invocation. Any ValueError after invocation, every returned-service projection/receipt fault and invalidDONE replay is recovery-required. Known typed conflict/auth/gate (including accepted B12PlanningBlocked) remains actionable only with explicit pre-write phase or unchanged auditedsource/no pendingwrite/no existingrequestjournal; unprovable outcomes stayunknown. B09CAS precheck keeps established stalehash409 before journal creation; authoritative domain guard remains.
++
++Existing source-bound HTTPidentity retained; B09request/journal/entity/investigation plus available plan/domain recovery IDs preserved as bounded metadata in existing api_request and existing sanitized envelope. Metadata persistence best effort, pending source left untouched; lastdurable intent remains if writefails. Exact uncertain replay blocked/no redispatch, healthyDONE/conflicting-key unchanged. No domain/API schema/migration/runtime/storage redesign.19distinctPASS(18mockboundary/Auth-transport units/1real combinedHTTP-B09-FalkorDBtest),0unresolvedFAIL/SKIP; finalbothvalidatorsPASS. One newtestbasename collectionerror retained/corrected, no DBfailure. Seven ordinarypytest/child guardproofs0provider. Only adapter/newfocusedtests/sixappendonlytrackers/B16Revidence changed. STOP before B17.
+diff --git a/flow.md b/flow.md
+--- a/flow.md
++++ b/flow.md
+@@ -959,3 +959,9 @@
+ HTTP → server request correlation → real B13session/RBAC → strict JSON+Idempotency-Key+optional independently authenticated reviewer header → source-bound hashed api_request companion under B15fence/audit → accepted domain service/requestidentity → typed projected saved acknowledgment → envelope. Unknown post-dispatch or no durable response remains409RECOVERY_REQUIRED/UNKNOWN, no automatic redispatch. GET revalidates scope/current audited lifecycle; authorize before count/cursor, never raw journal/exception/graph/profile/credentials. Work projection orders actual recorded outcomes by parsed evaluated_at+ID; completed vs verified/recurrence remains distinct.
+ 
+ B09case creation→persistB15intent→HTTP returns before any model → separate deterministic B15worker→actual official/domain MCP discovery/call→LangGraph/Saver paused checkpoint→durable acknowledgment. Explicit HTTPresume→same durable case/thread→new checkpoint, original unchanged. Actual TCP Uvicorn uses same private config, public health/readiness andOpenAPI/docs + authenticated me exercised; readiness probes graph/MCP/Saver/delivery/auth/memory, not model. Secure startup/stop and43originalroute reconciliation now44core+11deferred in backend/API.md/B16-COVERAGE.md. No HTTP SSE/API backgroundworker. STOP before B17.
++
++## B16-R actual corrective flow — 2026-10-18
++
++CURRENT B16-R technicallyPASS/reviewpending. Only backend/app/services/http/service.py source changed: Services.command creates request-local Boundary; dispatch performs accepted pure validation → Boundary.invoke snapshots existing source audit/pending state → DISPATCHED → original B08/B09/B12/B13/B14/B15service → RETURNED → projection → final typed response and persistedDONE. API routes/models/business services unchanged. Generic ValueError/Pydantic across DISPATCHED/RETURNED cannot writeREJECTED; known no-write rejection requires explicit phase/evidence. Existing journal defeats inference from unchanged revision. Existing body validation/role gates/staleCAS/identityconflict stay actionable.
++
++Fault→best-effort validated B09COMMITTED receipt lookup→retain original sourceboundHTTPrequest, journal hint, inspection and investigation/plan IDs→existing sanitized409RECOVERY_REQUIRED/UNKNOWN→existingDISPATCHING intent with bounded recovery metadata if available. Pending source/failedmetadatawrite preserves lastdurablestate, no feedback guarantee. Exact replay checks intent and returns recovery without service invocation; invalidDONE read also fails safe. Real twofaultloop retains1inspection/COMMITTEDjournal perrequest,2total; readbackphaseDISPATCHED and postserviceprojectionphaseRETURNED, bothreplays0calls/0duplicates. No worker/wake/quarantine/migration/repair. See B16R-real-proof.json and B16R-RESULTS.md; STOP before B17.
+diff --git a/implementation_status.md b/implementation_status.md
+--- a/implementation_status.md
++++ b/implementation_status.md
+@@ -553,3 +553,7 @@
+ B15 human accepted. B16technicallypassing, waits review:44typed implemented operations/42paths;55normative operations with8B17+3B19planned-only.63distinct focusedPASS(59new B16unit+3existing gate/auth units+1real integrated fixture),0unresolvedFAIL/0SKIP; actual final DTO additionally verified against retainedDB with fresh real private session. Final bothSPECvalidatorsPASS after last source/schema change (earlier pre-final pass retained).12pytest/child proofs0provider; paid ledger unchanged. No schema/migration/dependency/data/accepted service/MCP/runtime/test/assertion changes. Only new API facade/projections and explicit contract corrections/hook/docs/trackers.
+ 
+ Real fixture covers HTTPlogin/intake/case/draft/approval/order, independent actual inspection/completion/monitoring, source-scoped lists/detail/history, stale/conflicting/revoked/reviewer denial, real post-commit error/replay blocked. OutsideHTTP B15workerinitialrun+same-threadresume actualMCP/Saver; actual TCPhealth/ready/OpenAPI/docs/me. Deterministic scripted choices are not genuine Gemini. Prior two MCPconflict failures retained and corrected by B16source-bound request hash; no failedgraph/quarantine repair. Review B16-RESULTS/COVERAGE/COMMANDS/FILES/patch and backend/API.md. No B17/SSE/frontend/live/fullbackend claim.
++
++## CURRENT B16-R — technically PASS, human review pending (2026-10-18)
++
++19distinct focusedPASS(18unit mockedboundary/storage and HTTPerror/replay guards +1actualisolatedHTTP/B09/FalkorDBtest combining committedreadback and postserviceprojection faults),0unresolvedFAIL/0SKIP. Both finalspecvalidatorsPASS once after final application/test edits; earlierpre-finalstaticpass retained. One collectorbasenamecollision corrected by uniqueunitfilename, no application/DBtestfailure. Seven retainedpytest/childinterlocks0externalGemini/countTokens. ActualCOMMITTEDjournals/oneinspectionperrequest retained,409UNKNOWN originalrequest/entity/investigation returned, intentDISPATCHING notREJECTED; exactclientreplay0redispatch/0duplicates. Sourcechange confined toHTTPadapter, no acceptedservices/contracts/migrations/data/runtime/oldtests/evidence edits. Exactpathinventory/commands/patch inB16R-FILES/COMMANDS/changes.patch. B10fullgenuineacceptanceOPEN/PARTIAL; all18requirementsbinding. STOP afterB16-R; B17/liveunauthorized.
+diff --git a/task_board.md b/task_board.md
+--- a/task_board.md
++++ b/task_board.md
+@@ -487,3 +487,9 @@
+ B15human accepted. Only B16implemented:44typedauthenticated serviceoperations/42paths, explicit55-operation phase matrix, realAuth/RBAC, durable request/worker boundary, no directrouteCypher.63distinctfocusedPASS(62unit/1real), both finalSPECvalidatorsPASS,0provider. ActualHTTP→service→DBoperations+independentreview; same-thread realMCP/Saver outsideHTTP; actuallocalhost docs/OpenAPI/auth/health proof. Source-bound requestcorrection preserves retained failedgraphs/quarantines; oldtests/evidence/migrations/data untouched. Current summary supersedes historical B16unauthorized text without deleting audit history.
+ 
+ Review backend/API.md and docs/evidence/B16-RESULTS.md/B16-COVERAGE.md/B16-COMMANDS.md/B16-FILES.md/B16-changes.patch/B16-audit.json. Reproduce focused unit/oneisolatedrealcase, inspect actual docs on explicit private setup. Exact proposed nextB17 frontend-ready dashboard/map/graph/traceDTOs, richfilters anddurableauthorizedSSEreconnect only after separate approval. Nofrontend/live/fullbackendcompletion. STOP after B16.
++
++## CURRENT B16-R — technically complete, human review pending (2026-10-18)
++
++OnlyHTTPpostdispatchclassification corrected (DEC-061): explicitinvoke/resultphase, noValueError→uncommittedinference, provenno-writeerrorsactionable, originalIDs/COMMITTEDjournalproof retained, uncertainreplayblocked.19focusedPASS(18unit/1real),0unresolvedFAIL/SKIP, final2SPECvalidatorsPASS,7guards0provider. One collectorfilenameerror corrected without oldtest edits; no broadworkflow/network/lifecycle/live. Latestentrysupersedes earlierB16classificationstatus; allpreviousentries retained.
++
++Review docs/evidence/B16R-RESULTS.md/B16R-COMMANDS.md/B16R-FILES.md/B16R-changes.patch and B16R-real-proof.json. Human rerun only2newfocusedfiles, expect19PASS and actual2retainedinspection/journalpairs with409UNKNOWN/no clientredispatch. ExactproposednextB17 remainsunauthorized until separatehumanreview; STOPafterB16-R.
+diff --git a/test_log.md b/test_log.md
+--- a/test_log.md
++++ b/test_log.md
+@@ -1079,3 +1079,9 @@
+ Final63distinctPASS:59new B16unit (route/schema/public/protected/session/closed-command/error/source-identity/latest-assessment projections),3direct accepted auth/scope/execution-gate units,1real ASGI/services/FalkorDB/B15worker/MCP/LangGraph/Saver/TCP fixture. No unresolvedFAIL/SKIP; broad suites/scenario catalogs/lifecycle/paid smoke deliberately NOT RUN, not counted as skipped. Exact commands/durations/failed attempts: docs/evidence/B16-COMMANDS.md. Initialunit47PASS/1method-vs-path fixtureFAIL; correctedunit48PASS, laterexpanded53PASS/56PASS. Two actual repeated fixtures failed safe on retained shared-trace identityCONFLICT; no ack/blind retry/clearance. Read-only diagnostic proved earlier trace belonged to another source. Source-bound APIrequest digest corrected; real1PASS30.32s/final1PASS29.64s. Finalunit59PASS5.87s includes3accepted regressions; finalnewprojection3PASS0.25s plus actualDB/auth projectionPASS. Repeated case counts not added.
+ 
+ Both final spec validatorsPASS once after last source/model/contract change, earlier pre-final pass retained separately.12pytest/child interlock files0external Gemini/countTokens/0unexpected; historical paid2requests unchanged. Actual localhost Uvicorn verified200health/live+all6readydependencies+docs/OpenAPI42paths+authenticatedme, logs exclude token/password. Real response exposesMONITORING afterCOMPLETED, no verifiedresolution invention. B16-http-runtime/network/final-projection andretained audit contain proofs, no credentials. STOP after B16.
++
++## CURRENT B16-R focused verification — 2026-10-18
++
++Final19PASS5.56s:18directboundary/error/replayunits +1realisolatedHTTP/FalkorDBtest exercising actualB09commits with injectedreadbackValueError and projectionValueError.0unresolvedFAIL/SKIP. Initial9unitPASS0.17s/1realPASS6.19s; expanded16unitPASS0.54s; combinedcollection1ERROR0.32s due same newtestbasename, fixedunitfilename; corrected17PASS12.79s, existingjournalguard18PASS6.92s, finalaccepted19PASS5.56s. Repeatedcasecountsnotadded. ActualCOMMITTEDjournal+1inspectionperrequest/2total, existingintentnotREJECTED, sanitized409UNKNOWN exactcorrelation/entity/investigation, no replayservicecall/duplicates. Injectedexceptions distinct from actualDBpersistence; no live/model/MCP/networkserverclaim.
++
++BothspecvalidatorsPASS once afterfinaledits (priorpre-finalpass beforecollectorrename/finalguards retained separately);7pytest/childguardproofs0provider/0unexpected. FullAPIworkflow/network/all59APIunits/earlierphases/lifecycle/livesmoke NOT RUN, not countedasskips. Focusedcommands/logs/proofs B16R-COMMANDS.md/B16R-real-proof.json. Earlierassertions/evidence retained. STOP beforeB17.

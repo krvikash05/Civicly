@@ -1,0 +1,249 @@
+{
+  "schema_version": 1,
+  "microtask": "B18",
+  "decision": "DEC-064",
+  "entrypoint": "cli.main:main",
+  "legacy_commands": [
+    "health",
+    "migrate",
+    "schema-status"
+  ],
+  "host_configuration": [
+    "profile",
+    "auth-store",
+    "memory-profile",
+    "session",
+    "at"
+  ],
+  "secret_transport": "Owner-only regular JSON credentials/session files; no plaintext password/token CLI arguments or output; sessions bound to exact source/auth-store",
+  "mutations": "Explicit key plus accepted API payload/binding/CAS; same configured API/Services path, no duplicate business rules",
+  "advance": "Authenticated ADMIN/ANALYST explicit keyed discover or1..4offline worker batches; existing companion/fence stores DISPATCHING then DONE; unknown intent blocks replay; no auto discovery during run and no provider",
+  "reset": "Authenticated ADMIN explicit key, new exclusive private output directory, generated fresh ActiveProfile/source/Saver; strict existing B04bundle subset4nodes/2edges, exact hash readback; retain CANDIDATE ownership; existing migrations onlynewgraph; prior source/history untouched; STARTED blocks uncertain replay, DONE returns historicalreceipt; source/operator/key companion binds destination hash, changed destination conflicts, uncertain companion blocks even if private manifest was written",
+  "reset_fixture": {
+    "asset_id": "DRAIN-100",
+    "location_id": "LOC-005",
+    "node_count": 4,
+    "edge_count": 2,
+    "new_operational_records": 0
+  },
+  "test": "Actual bounded dependency readiness through existing Services.health; no arbitrary shell/pytest/suite/container/live execution",
+  "exit_codes": {
+    "success": 0,
+    "validation": 2,
+    "authorization": 3,
+    "conflict_or_missing": 4,
+    "dependency": 5,
+    "recovery_required_unknown": 6
+  },
+  "output": "SIMULATED JSON by default; optional readable text label + same data; concise safe errors/reconciliation IDs, no raw journals/credentials/provider/private reasoning",
+  "asynchronous_semantics": [
+    "queued resume is not completed investigation",
+    "discovery is not delivery",
+    "work completion is not verified resolution",
+    "explicit bounded worker is deterministic offline, not genuine autonomy"
+  ],
+  "no_live_provider": true,
+  "no_destructive_reset": true,
+  "no_automatic_recovery_clearance": true,
+  "deferred": [
+    "B19twelve-scenario generator",
+    "frontend",
+    "genuineB10fullacceptanceOPEN/PARTIAL"
+  ],
+  "commands": {
+    "responsibility": {
+      "submit": {
+        "method": "POST",
+        "path": "/api/v1/responsibilities"
+      },
+      "review": {
+        "method": "POST",
+        "path": "/api/v1/responsibilities/{id}/review"
+      },
+      "get": {
+        "method": "GET",
+        "path": "/api/v1/responsibilities/{id}"
+      }
+    },
+    "demo": {
+      "scenarios": {
+        "method": "GET",
+        "path": "/api/v1/demo/scenarios"
+      },
+      "reset": {
+        "method": "POST",
+        "path": "/api/v1/demo/reset"
+      },
+      "advance": {
+        "method": "POST",
+        "path": "/api/v1/demo/scenarios/{id}/advance"
+      }
+    },
+    "complaint": {
+      "create": {
+        "method": "POST",
+        "path": "/api/v1/complaints"
+      },
+      "get": {
+        "method": "GET",
+        "path": "/api/v1/complaints/{id}"
+      },
+      "list": {
+        "method": "GET",
+        "path": "/api/v1/complaints"
+      }
+    },
+    "investigate": {
+      "open": {
+        "method": "POST",
+        "path": "/api/v1/investigations"
+      },
+      "get": {
+        "method": "GET",
+        "path": "/api/v1/investigations/{id}"
+      },
+      "resume": {
+        "method": "POST",
+        "path": "/api/v1/investigations/{id}/resume"
+      },
+      "trace": {
+        "method": "GET",
+        "path": "/api/v1/investigations/{id}/trace"
+      },
+      "hypotheses": {
+        "method": "GET",
+        "path": "/api/v1/investigations/{id}/hypotheses"
+      },
+      "list": {
+        "method": "GET",
+        "path": "/api/v1/investigations"
+      }
+    },
+    "hypothesis": {
+      "propose": {
+        "method": "POST",
+        "path": "/api/v1/investigations/{id}/hypotheses"
+      },
+      "assess": {
+        "method": "POST",
+        "path": "/api/v1/hypotheses/{id}/assessments"
+      },
+      "get": {
+        "method": "GET",
+        "path": "/api/v1/hypotheses/{id}"
+      }
+    },
+    "evidence": {
+      "get": {
+        "method": "GET",
+        "path": "/api/v1/evidence/{id}"
+      }
+    },
+    "inspect": {
+      "request": {
+        "method": "POST",
+        "path": "/api/v1/inspections"
+      },
+      "transition": {
+        "method": "POST",
+        "path": "/api/v1/inspections/{id}/transitions"
+      },
+      "report": {
+        "method": "POST",
+        "path": "/api/v1/inspections/{id}/observations"
+      },
+      "get": {
+        "method": "GET",
+        "path": "/api/v1/inspections/{id}"
+      }
+    },
+    "plan": {
+      "create": {
+        "method": "POST",
+        "path": "/api/v1/plans"
+      },
+      "get": {
+        "method": "GET",
+        "path": "/api/v1/plans/{id}"
+      },
+      "list": {
+        "method": "GET",
+        "path": "/api/v1/investigations/{id}/plans"
+      },
+      "submit": {
+        "method": "POST",
+        "path": "/api/v1/plans/{id}/submit-approval"
+      }
+    },
+    "approve": {
+      "decide": {
+        "method": "POST",
+        "path": "/api/v1/approvals/{id}/decision"
+      },
+      "get": {
+        "method": "GET",
+        "path": "/api/v1/approvals/{id}"
+      },
+      "list": {
+        "method": "GET",
+        "path": "/api/v1/approvals"
+      }
+    },
+    "work": {
+      "create": {
+        "method": "POST",
+        "path": "/api/v1/work-orders"
+      },
+      "get": {
+        "method": "GET",
+        "path": "/api/v1/work-orders/{id}"
+      },
+      "list": {
+        "method": "GET",
+        "path": "/api/v1/work-orders"
+      },
+      "status": {
+        "method": "POST",
+        "path": "/api/v1/work-orders/{id}/status"
+      },
+      "progress": {
+        "method": "POST",
+        "path": "/api/v1/work-orders/{id}/progress"
+      },
+      "inspect": {
+        "method": "POST",
+        "path": "/api/v1/work-orders/{id}/inspections"
+      },
+      "evaluate": {
+        "method": "POST",
+        "path": "/api/v1/work-orders/{id}/outcomes"
+      }
+    },
+    "graph": {
+      "explain": {
+        "method": "GET",
+        "path": "/api/v1/investigations/{id}/graph"
+      },
+      "neighbors": {
+        "method": "GET",
+        "path": "/api/v1/assets/{id}/neighbors"
+      },
+      "asset": {
+        "method": "GET",
+        "path": "/api/v1/assets/{id}"
+      }
+    },
+    "source": {
+      "document": {
+        "method": "GET",
+        "path": "/api/v1/documents/{id}"
+      },
+      "procedures": {
+        "method": "GET",
+        "path": "/api/v1/procedures"
+      }
+    }
+  },
+  "graph_explain": "B17 authorized neighborhood plus existing bounded B03hypothesis_evidence paths at same revision, filtered to authorized endpoint/edge/evidence IDs, qualified as analysis not model-selected",
+  "b19": "demo scenarios/reset/advance reuse accepted typed endpoints; ADMIN coordinator with private field/reviewer files, no arbitrary selectors or provider"
+}

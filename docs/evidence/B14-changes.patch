@@ -1,0 +1,1956 @@
+--- a/backend/OPERATIONS.md
++++ b/backend/OPERATIONS.md
+@@ -54,3 +54,90 @@
+ CIVICLY_TEST_REQUEST_LOG=/tmp/b13-human-provider.jsonl backend/.venv/bin/python -m pytest backend/tests/integration/test_operations_runtime.py::test_actual_approval_order_scope_idempotency_and_competing_updates -q
+ ```
+ Creates a new isolated graph, never resets accepted data. Expect exact approval→AUTHORIZED order, attributable audit/events, same-request and same-task duplicate prevention, wrong-role/scope/department denials, one competing update, fresh-process auth/order proof. Ordinary pytest and children block external Gemini/countTokens. Inspect B13-flow.json without running anything for no-write review. APIs/DTO transport projection remain B16; contract service schemas are not a claim API routes exist.
++
++## B14 current implementation (supersedes the historical B13-only boundary)
++
++B13 is human accepted. B14 adds explicit handlers, not automatic dispatch/delivery.
++`Operations.execute` dispatches closed Progress/Inspect/Evaluate/Recur commands from
++`execution_models.py` to `execution.py`. All18 requirements binding; genuine B10
++full acceptance remains OPEN/PARTIAL. No new dependencies or graph migration.
++
++Assigned authenticated departmental lead first assigns through B13 Update, then
++STARTs. WorkOrder ASSIGNED→IN_PROGRESS, ActionTask APPROVED→QUEUED→IN_PROGRESS,
++ResolutionPlan APPROVED→IN_EXECUTION. BLOCK retains reason; ordinary BLOCKED task
++can explicitly resume. FAIL requires ACTION_FAILED report, retains WorkOrder BLOCKED,
++ActionTask FAILED and INCONCLUSIVE/INTERVENTION_FAILED immutable outcome. No automatic
++failed-task retry. COMPLETE requires reviewed attributable ACTION_COMPLETED report
++for every target after work start; tasks/order become COMPLETED. All tasks complete
++moves native plan/investigation/cluster to MONITORING. Historical B12 draft bytes,
++SHA, receipt and checkpoint references do not change;0005 lifecycle/operation
++attestations independently validate legitimate current states.
++
++Every fresh action validates current exact plan head/version/hash/full task scope,
++assignee/department, current Approval and CAS; ownership and source procedure remain
++current. START/order retain causal and safety/dependency gates. Unchanged assessed
++meaning may advance to a new assessment ID only with original reviewed support
++retained and identical contradictions. Changed meaning rejects further execution:
++explicitly draft version+1 with previous_plan_id, submit its full binding and obtain
++fresh human approval. Approved content/gates never rewritten. Recording actual
++inspection/terminal results can truthfully finish already-started work after
++contradiction; that does not grant authority for new work or verified resolution.
++Dependent order creation/assignment works while native plan IN_EXECUTION.
++
++Inspect wraps actual B09 RequestInspection/TransitionInspection/ReportInspection/
++Assess models. Reuses EvidenceService.authorize/plan, native B09 Receipt/Journal and
++Reader.evidence/report provenance validation. Compiler couples COMMITTED B09 journal,
++report/findings/inspection update, operation/audit and PENDING event in one existing
++fenced mutation. Planned journal references validated narrowly in operations storage;
++B03 persisted-source validation unchanged. B08 recurrence planner accepts an optional
++strictly bound planned intake journal for the same atomic batch, with ordinary B08
++calls unchanged. No second report or dedup algorithm. Request IDs bind inner/outer
++commands; unknown fields/target/type/method/unit/time rejected. Reports must be
++SYNTHETIC; inspector is resolved assignee. Pass a separate authenticated ANALYST
++`reviewer_token` and bounded review_reason: supplied Review is rejected, identity is
++server-derived. Review is synthetic demonstration review, not government authority.
++
++Verification uses `verification.py` / contracts.operations verification B14-1:
++
++| Issue | Qualifying follow-up |
++|---|---|
++| WATERLOGGING | Explicit comparable-rainfall observation, then binary FOLLOWUP_WATERLOGGING (0 absent/1 present) |
++| ROAD_DAMAGE | Explicit WEAR_EXPOSURE, then binary FOLLOWUP_PAVEMENT damage (0 absent/1 present) |
++| WASTE_ACCUMULATION | Scheduled/actual matching integral pickups >=1, followed by >=24 actually elapsed hours and binary WASTE_REACCUMULATION |
++
++24hours is a synthetic demo observation minimum, not a real municipal standard.
++Rain comparability/wear is explicit authored sourced observation, not derived weather
++or fabricated numeric engineering threshold. Measurement units closed: boolean,
++pickups, hours; exposure/completion codes are qualitative without values/units.
++Completion < window start <= all observations <= window end <= controlled clock.
++Final finding follows exposure/window; all targets covered. UNKNOWN/missing leaves
++MONITORING; conflicting values INCONCLUSIVE; adverse observation PROBLEM_PERSISTS.
++No policy value lets operator/model submit a resolution label. Independent follow-up
++uses separate reviewed post-completion report/source; same department may collect
++observations, while a different authenticated analyst reviews and deterministic
++policy decides. No claim of physically independent municipal inspectors.
++
++Verified outcome references work/plan/approval, policy version, full evidence hashes,
++source/finding provenance and window. Native outcome MITIGATION_VERIFIED with
++assessment_status RESOLUTION_VERIFIED; never implies verified root cause. Each task
++needs its own follow-up; all tasks/dependencies/gates and latest addressed assessment
++checked before case closure. Success completes plan/investigation, records incident
++ENDED time and cluster CONTROLLED. Recur requires new adverse qualifying window after
++previous verified outcome, a new B08 occurrence AFTER_RECORDED_END in original cluster,
++then REOPENED cluster/investigation + new immutable outcome. Original completed plan,
++approval/repair/outcomes/assessments remain; existing B05 case paths retrieve them.
++No recurrence cause inferred.
++
++Exact requests replay historical receipts. Equivalent evaluation evidence/window
++also deduplicates outcomes. Source-record uniqueness/B09 report journal and native
++state guards prevent duplicate report/completion effects. UNKNOWN commit/readback
++propagates OpsRecovery with graph/request/work/plan/approval, never false rejection,
++automatic redraft/retry/delete or quarantine reset. Explicit same-request ACK-loss
++replay is tested; changed post-write state requires operator reconciliation under
++existing repository pending-write protocol. No agent wake/quarantine is introduced
++for these direct authenticated handlers. Native events remain PENDING for B15.
++
++Focused reproduction and retained graph IDs: docs/evidence/B14-COMMANDS.md and
++B14-RESULTS.md. Tests use real local FalkorDB6.0.2, actual B09/B08/B11 services;
++provider guard blocks Gemini/countTokens in pytest and inherited children. No live
++provider, lifecycle, full regression or scenario-catalog run is claimed.
+--- a/backend/app/graph/analysis/cases.py
++++ b/backend/app/graph/analysis/cases.py
+@@ -82,5 +82,5 @@
+         -timestamp(row.factors['started_at']).timestamp(),row.id))
+     if not rows:gaps.append('No historical candidates within time/evidence/budget filters; no history manufactured')
+     gaps+=['Ranking is lexicographic over declared factors; similarity is not causal or resolution proof',
+-           'Case memory/GraphRAG/recurrence classification are not implemented']
++           'Bounded case paths are historical context; recurrence classification and operational verification require their controlled domain services']
+     return rows,gaps
+--- a/backend/app/services/complaints/service.py
++++ b/backend/app/services/complaints/service.py
+@@ -98,7 +98,7 @@
+         _,actual=self.load(jid,norm.request_hash)
+         if actual.state!='COMMITTED':raise PreconditionFailed('Intake commit did not persist receipt')
+         return self.receipt(actual)
+-    def plan(self,q,norm,now,revision,preview=False):
++    def plan(self,q,norm,now,revision,preview=False,*,planned_journal=None):
+         reader=Reader(self.repo,now);reader.references(q);contexts=reader.candidates(q);assessment=reader.assessment(q)
+         same=[c for c in contexts.values() if same_event(q,c)]
+         uncertainty=['Reported associations and grouping are context, not verified causes or resolution.',
+@@ -161,8 +161,12 @@
+         context_paths=list(unique_paths.values())[:90]
+         source_ids=set(assessment.source_evidence_ids)|{id for p in context_paths for id in p.evidence_ids}|(set(chain_evidence) if not preview else set())
+         references=[]
++        if planned_journal is not None:
++            self.repo.registry.validate_node('Evidence',planned_journal)
++            expected=Journal(operation='INTAKE',original=norm.original,canonical=norm.canonical,request_hash=norm.request_hash)
++            if planned_journal['id']!=jid or planned_journal['evidence_type']!='COMPLAINT_INTAKE' or planned_journal['summary']!=expected.serialized() or planned_journal['reliability']!='UNVERIFIED' or planned_journal['source_kind']!=q.source_kind or planned_journal['source_record_id']!=q.source_id+':'+q.external_record_id or planned_journal['recorded_at']!=now:raise PreconditionFailed('Planned intake journal binding mismatch')
+         for id in sorted(source_ids):
+-            ev=reader.node(id,'Evidence').properties
++            ev=planned_journal if id==jid and planned_journal is not None else reader.node(id,'Evidence').properties
+             references.append(EvidenceRef(id=id,recorded_at=ev['recorded_at'],observed_at=ev.get('observed_at'),source_kind=ev['source_kind'],reliability=ev['reliability']))
+         explanations=['Same-event start gap is at most24 hours unless source+event reference matches; declared intervals must overlap.',
+             'Matched by explicit issue/subtype/location/assets and occurrence intervals, never report count or spatial proximity.',
+--- a/backend/app/services/operations/auth.py
++++ b/backend/app/services/operations/auth.py
+@@ -9,6 +9,7 @@
+  'OP-DRAIN-LEAD':('DEPARTMENT_LEAD','DEPT-DRAIN'), 'OP-ROAD-LEAD':('DEPARTMENT_LEAD','DEPT-ROAD'),
+  'OP-WASTE-LEAD':('DEPARTMENT_LEAD','DEPT-SAN'), 'OP-WATER-LEAD':('DEPARTMENT_LEAD','DEPT-WATER'), 'OP-ADMIN':('ADMIN','DEPT-COORD')}
+ PERMISSIONS={'draft':{'ANALYST'},'submit':{'ANALYST'},'decide':{'APPROVER'},'order':{'APPROVER'},'update':{'DEPARTMENT_LEAD'},'read':{'ANALYST','APPROVER','DEPARTMENT_LEAD','ADMIN'},'revoke_session':{'ADMIN'}}
++PERMISSIONS.update(progress={'DEPARTMENT_LEAD'},inspect={'DEPARTMENT_LEAD','ANALYST'},evaluate={'ANALYST'},recur={'ANALYST'})
+ class Auth:
+  def __init__(self,path,*,clock=time.time):
+   self.path=Path(path);self.clock=clock
+--- a/backend/app/services/operations/service.py
++++ b/backend/app/services/operations/service.py
+@@ -35,7 +35,7 @@
+   if len(rows)>100:raise PreconditionFailed('PROJECTION_LIMIT')
+   reader=Reader(self.repo,self.clock())
+   return [id for edge,id in rows if reader.visible(self.repo.get_relationship(edge).properties)]
+- async def validate(self,binding,at,*,review_sources=True):
++ async def validate(self,binding,at,*,review_sources=True,progress=False):
+   Reader(self.repo,at).node(binding['plan_id'],'ResolutionPlan')
+   saved=self.planning.store.get(binding['plan_id'])
+   if not saved:raise PreconditionFailed('PLAN_UNAVAILABLE')
+@@ -58,8 +58,13 @@
+   proposed={e.target for e in reader.edges('PROPOSES',source=draft.investigation_id)}
+   for b in draft.basis:
+    history=reader.histories(b.hypothesis_id)
+-   if b.hypothesis_id not in proposed or not history or history[-1].id!=b.assessment_id:raise PreconditionFailed('ASSESSMENT_STALE')
+-   a=history[-1];assessments.append(a)
++   if b.hypothesis_id not in proposed or not history:raise PreconditionFailed('ASSESSMENT_STALE')
++   if history[-1].id!=b.assessment_id:
++    original=next((a for a in history if a.id==b.assessment_id),None);latest=history[-1]
++    if not progress or not original or latest.cause_code!=original.cause_code or latest.assessment!=original.assessment or latest.contradicting_evidence_ids!=original.contradicting_evidence_ids or not set(original.supporting_evidence_ids)<=set(latest.supporting_evidence_ids):raise PreconditionFailed('ASSESSMENT_STALE_REVISED_PLAN_REQUIRED')
++   # Immutable plan gates remain bound to their original assessment IDs after
++   # the latest assessment has passed the unchanged-meaning check above.
++   a=original if progress and history[-1].id!=b.assessment_id else history[-1];assessments.append(a)
+    for ref in a.evidence_references:
+     if ref.id in draft.evidence_ids:
+      current=reader.evidence(ref.id)
+@@ -88,7 +93,11 @@
+   a=v['assignment']
+   if actor.role=='DEPARTMENT_LEAD' and (a['department_id']!=actor.department_id or a['assignee_id']!=actor.id):raise Denied('DEPARTMENT_SCOPE_DENIED')
+   return {**v,'native':self.repo.get_node(id,'WorkOrder').properties}
+- async def execute(self,command,*,token,interrupt=None):
++ async def execute(self,command,*,token,interrupt=None,reviewer_token=None):
++  from .execution_models import COMMANDS
++  if (isinstance(command,dict) and command.get("operation") in COMMANDS) or type(command) in set(COMMANDS.values()):
++   from .execution import Execution
++   return await Execution(self).execute(command,token=token,interrupt=interrupt,reviewer_token=reviewer_token)
+   self.target()
+   if isinstance(command,dict):
+    cls={'submit':Submit,'decide':Decide,'order':Order,'update':Update}.get(command.get('operation'))
+@@ -115,7 +124,7 @@
+    binding=scope(q) if isinstance(q,Binding) else None
+    proof={}
+    if binding:
+-    saved,draft,tasks,proof=await self.validate(binding,at,review_sources=not(isinstance(q,Decide) and q.decision=='REJECTED'));plan=self.repo.get_node(q.plan_id,'ResolutionPlan');inv=draft.investigation_id
++    saved,draft,tasks,proof=await self.validate(binding,at,review_sources=not(isinstance(q,Decide) and q.decision=='REJECTED'),progress=isinstance(q,Order));plan=self.repo.get_node(q.plan_id,'ResolutionPlan');inv=draft.investigation_id
+    if isinstance(q,Submit):
+     if plan.properties['status']!='DRAFT':raise PreconditionFailed('PLAN_NOT_DRAFT')
+     aid=stable('APPROVAL',q.plan_id)
+@@ -141,7 +150,7 @@
+     result={'id':a.id,'plan_id':q.plan_id,'plan_version':q.plan_version,'plan_hash':q.plan_hash,'status':q.decision,'expected_hash':native_hash('Approval',updated),'scope_hash':digest(binding)};subject=a.id;event_type='PLAN_APPROVED' if q.decision=='APPROVED' else 'PLAN_REJECTED';event_subject=q.plan_id;emitter=inv
+    elif isinstance(q,Order):
+     a,v=self.approval(q.approval_id,binding)
+-    if not v or v['binding']!=binding or a.properties['status']!='APPROVED' or v.get('decision')!='APPROVED' or v.get('decided_by')!=a.properties.get('decided_by') or plan.properties['status']!='APPROVED':raise PreconditionFailed('VALID_EXACT_APPROVAL_REQUIRED')
++    if not v or v['binding']!=binding or a.properties['status']!='APPROVED' or v.get('decision')!='APPROVED' or v.get('decided_by')!=a.properties.get('decided_by') or plan.properties['status'] not in {'APPROVED','IN_EXECUTION'}:raise PreconditionFailed('VALID_EXACT_APPROVAL_REQUIRED')
+     task=tasks.get(q.task_id)
+     if not task:raise PreconditionFailed('TASK_OUTSIDE_APPROVAL')
+     execution_gates(task,[self.repo.get_node(saved['task_ids'][id],'ActionTask').properties['status'] for id in task.depends_on])
+@@ -163,8 +172,8 @@
+     assignment=v['assignment']
+     if actor.department_id!=assignment['department_id'] or actor.id!=assignment['assignee_id']:raise Denied('DEPARTMENT_SCOPE_DENIED')
+     if q.expected_hash!=w.content_hash:raise Conflict('STALE_ORDER_REVISION')
+-    saved,draft,tasks,proof=await self.validate(v['binding'],at);plan=self.repo.get_node(v['binding']['plan_id'],'ResolutionPlan');a,approval_state=self.approval(v['approval_id'],v['binding'])
+-    if plan.properties['status']!='APPROVED' or a.properties['status']!='APPROVED':raise PreconditionFailed('APPROVAL_NO_LONGER_VALID')
++    saved,draft,tasks,proof=await self.validate(v['binding'],at,progress=True);plan=self.repo.get_node(v['binding']['plan_id'],'ResolutionPlan');a,approval_state=self.approval(v['approval_id'],v['binding'])
++    if plan.properties['status'] not in {'APPROVED','IN_EXECUTION'} or a.properties['status']!='APPROVED':raise PreconditionFailed('APPROVAL_NO_LONGER_VALID')
+     task=tasks[assignment['task_id']]
+     execution_gates(task,[self.repo.get_node(saved['task_ids'][id],'ActionTask').properties['status'] for id in task.depends_on])
+     if self.repo.get_node(assignment['task_id'],'ActionTask').properties['status']!='APPROVED':raise PreconditionFailed('TASK_NO_LONGER_APPROVED')
+--- a/backend/app/services/operations/storage.py
++++ b/backend/app/services/operations/storage.py
+@@ -4,9 +4,9 @@
+ from app.graph.schema import timestamp
+ from app.graph.repository import Conflict,PreconditionFailed
+ from .models import OpsRecovery
+-NODES={'Approval','WorkOrder','DomainEvent','StatusEvent'}
+-UPDATES={'ResolutionPlan','ActionTask','Approval','WorkOrder'}
+-EDGES={'IMPLEMENTS','AUTHORIZED_BY','HAS_EVENT','EMITTED_EVENT'}
++NODES={'Approval','WorkOrder','DomainEvent','StatusEvent','InterventionOutcome','Evidence','Finding','Inspection','HypothesisAssessment','Complaint','Incident','ProblemCluster'}
++UPDATES={'ResolutionPlan','ActionTask','Approval','WorkOrder','Inspection','Hypothesis','Incident','Investigation','ProblemCluster'}
++EDGES={'IMPLEMENTS','AUTHORIZED_BY','HAS_EVENT','EMITTED_EVENT','RESULTED_IN','INSPECTS','PRODUCED','ESTABLISHES','HAS_ASSESSMENT','SUPPORTED_BY','CONTRADICTED_BY','REPORTS','OCCURRED_AT','AFFECTS','PART_OF'}
+ class Storage:
+  def __init__(self,repo):self.repo=repo
+  def get(self,kind,id):
+@@ -25,6 +25,7 @@
+   for old,props in updates:
+    if old.kind not in UPDATES or props['id']!=old.id:raise PreconditionFailed('OPERATIONS_UPDATE_SCOPE')
+    allowed={'status','updated_at','graph_revision','decided_at','decided_by'}
++   allowed |= {'scheduled_at','completed_at'} if old.kind=='Inspection' else {'ended_at'} if old.kind=='Incident' else {'pattern_type','first_seen_at'} if old.kind=='ProblemCluster' else set()
+    if any(props.get(k)!=v for k,v in old.properties.items() if k not in allowed) or set(props)-set(old.properties)-allowed:raise PreconditionFailed('OPERATIONS_IMMUTABLE_FIELDS')
+    if timestamp(props['updated_at'])<timestamp(old.properties['updated_at']):raise PreconditionFailed('OPERATIONS_TIME_ROLLBACK')
+    self.repo.registry.validate_node(old.kind,props);records[old.id]=(old.kind,props)
+@@ -33,8 +34,23 @@
+    for id in [a,b]:
+     if id not in records:
+      n=self.repo.get_node(id);records[id]=(n.kind,n.properties)
+-   self.repo._relationship_policies(kind,self.repo.decode_node(self.repo.registry.labels(records[a][0]),records[a][1]),self.repo.decode_node(self.repo.registry.labels(records[b][0]),records[b][1]),props)
++   source=self.repo.decode_node(self.repo.registry.labels(records[a][0]),records[a][1]);target=self.repo.decode_node(self.repo.registry.labels(records[b][0]),records[b][1])
++   self.repo.registry.validate_edge(kind,source.kind,source.properties,target.kind,target.properties,props)
++   policy_props=props
++   evidence=props.get('source_evidence_id')
++   if evidence in fresh:
++    # B09/B08 command journal is created atomically with its links. Validate that
++    # narrow planned source rather than weakening B03's persisted-source checks.
++    ek,ep=records[evidence]
++    if ek!='Evidence' or ep['evidence_type'] not in {'B09_OPERATION','COMPLAINT_INTAKE'} or ep['reliability']!='UNVERIFIED' or props.get('association_status')=='VERIFIED':raise PreconditionFailed('PLANNED_OPERATION_EVIDENCE_SCOPE')
++    if timestamp(ep['recorded_at'])>timestamp(props['created_at']):raise PreconditionFailed('PLANNED_OPERATION_EVIDENCE_TIME')
++    policy_props={k:v for k,v in props.items() if k!='source_evidence_id'}
++   self.repo._relationship_policies(kind,source,target,policy_props)
+    if self.repo._edge_optional(props['id']):raise Conflict('OPERATIONS_EDGE_COLLISION')
++  from app.graph.repository import interval,intersection
++  for i,(kind,a,b,props) in enumerate(edges):
++   for other,c,d,previous in edges[:i]:
++    if kind==other and a==c and intersection(interval(props),interval(previous)) is not None and (b==d or kind in self.repo.policy['singleton_outgoing']):raise Conflict('OPERATIONS_BATCH_CARDINALITY')
+   if subject not in records:
+    n=self.repo.get_node(subject);records[subject]=(n.kind,n.properties)
+   aliases={id:'n'+str(i) for i,id in enumerate(sorted(records))};params={'scope':'demo-city'};parts=[]
+@@ -61,4 +77,4 @@
+  if binding['plan_id']!=props['id'] or binding['plan_version']!=receipt.version or binding['plan_hash']!=receipt.plan_hash:raise PreconditionFailed('PLAN_LIFECYCLE_BINDING')
+  op=store.get('operation',v['last_operation'])
+  if not op or op['native_hashes'].get(props['id'])!=digest(props):raise PreconditionFailed('PLAN_LIFECYCLE_AUDIT')
+- if props['status'] not in {'PENDING_APPROVAL','APPROVED','REJECTED','SUPERSEDED'}:raise PreconditionFailed('PLAN_LIFECYCLE_UNSUPPORTED')
++ if props['status'] not in {'PENDING_APPROVAL','APPROVED','REJECTED','SUPERSEDED','IN_EXECUTION','MONITORING','COMPLETED'}:raise PreconditionFailed('PLAN_LIFECYCLE_UNSUPPORTED')
+--- a/backend/tests/unit/test_operations.py
++++ b/backend/tests/unit/test_operations.py
+@@ -20,7 +20,7 @@
+  with pytest.raises(Denied):auth.resolve(t['OP-ROAD-LEAD'])
+  auth.clock=lambda:10**12
+  with pytest.raises(Denied):auth.resolve(t['OP-APPROVER'])
+-@pytest.mark.parametrize('operator,allowed',[('OP-ANALYST',{'draft','submit','read'}),('OP-APPROVER',{'decide','order','read'}),('OP-DRAIN-LEAD',{'read','update'}),('OP-ADMIN',{'read','revoke_session'})])
++@pytest.mark.parametrize('operator,allowed',[('OP-ANALYST',{'draft','submit','read','inspect','evaluate','recur'}),('OP-APPROVER',{'decide','order','read'}),('OP-DRAIN-LEAD',{'read','update','progress','inspect'}),('OP-ADMIN',{'read','revoke_session'})])
+ def test_no_implicit_role_bypass(identities,operator,allowed):
+  auth,t=identities
+  for operation in PERMISSIONS:
+@@ -40,7 +40,7 @@
+  if valid:assert transition('WorkOrder',old,new)==new
+  else:
+   with pytest.raises(PreconditionFailed):transition('WorkOrder',old,new)
+- with pytest.raises(ValidationError):Update(request_id='r',work_order_id='w',expected_hash='a'*64,new_status='IN_PROGRESS',reason='B14 not authorized')
++ with pytest.raises(ValidationError):Update(request_id='r',work_order_id='w',expected_hash='a'*64,new_status='IN_PROGRESS',reason='B13 Update remains closed; B14 uses separate Progress command')
+ 
+ def test_conditional_approval_is_not_execution_clearance():
+  from app.services.planning.models import TaskDraft
+--- a/blockers.md
++++ b/blockers.md
+@@ -1,4 +1,7 @@
+ # blockers.md — Current blockers and verification spikes
++
++> **CURRENT B14 — TECHNICALLY PASS, HUMAN REVIEW PENDING.** B13 accepted.41distinct focusedPASS(30unit/11real),0unresolvedFAIL/0SKIP; both final SPEC validatorsPASS. Authenticated simulated execution, actual B09 evidence/assessment history, independent3issue follow-up, failure/recurrence and existing memory verified.12pytest/child interlocks0external Gemini/countTokens; B10 full genuine acceptance OPEN/PARTIAL. Earlier data/migrations/history/quarantines preserved. No B15delivery/worker/API/frontend/live or full-backend completion. All18requirements binding. This current summary supersedes historical headers; docs/evidence/B14-RESULTS.md.
++
+ 
+ > **CURRENT B13 — TECHNICALLY PASS, HUMAN REVIEW PENDING.** Private demo auth/RBAC, exact full-scope approval/rejection and idempotent AUTHORIZED work orders exercised.25distinctPASS(18unit/7real),0unresolvedFAIL/0SKIP; final both SPEC validatorsPASS (one corrected hook error documented);0external Gemini/countTokens.7synthetic auth accounts/fourroles preserve5source accounts plus admin/water-lead gap. Actual audit/events/CAS/ACKloss/fresh-process auth/order and B12checkpoint/B12R2quarantine compatibilityPASS. No B14execution/B15delivery/API/frontend/live; B10 full genuine acceptance OPEN/PARTIAL. Supersedes history; docs/evidence/B13-RESULTS.md.
+ 
+@@ -542,3 +545,9 @@
+ No unresolved B13focusedruntimefailure. Demo auth only, private localhost capability/no public API/rate limiting/enterpriseIAM; direct internal repository/B09/B12remaintrustedhost not public identity endpoints.7authaccounts/fourroles reflect5source identities +privateadmin/utilitylead, no canonical data rewrite. Approval never satisfiesUNMETgates; execution/completion/evidence/outcomeverification deferredB14. Native events+auditPENDINGdurable; delivery/worker/replayconsumer infrastructure B15notstarted. No cross-graph atomicity/exactly-once claim. B10fullgenuineGeminiacceptanceOPEN/PARTIAL, original quarantined testwakesrequirehumanreview/notcleared. B11syntheticPROPOSED/retrievallimits and DEC-004latergatespersist. B14requiresnewauthorization.
+ 
+ Review backend/OPERATIONS.md, docs/evidence/B13-RESULTS.md/B13-COMMANDS.md/B13-FILES.md/B13-changes.patch. Human inspect B13-flow.json exact binding+audit/order, denials/conditional/checkpoint proof, run only isolated flowtest for reproduction. STOP for human review; exact next B14 simulated execution and independent outcome verification only after explicit authorization.
++
++## B14 review gate — 2026-10-18
++
++No unresolved focused B14 failure. Demonstration policy, binary condition observations and report-level pickup totals, synthetic PROPOSED procedures and bounded history limits remain; no claim of actual municipal dispatch, hydraulic/structural prediction or independent physical inspector organizations. Independent authenticated analyst review and deterministic verification are real. PENDING events await B15 delivery/worker; no new delivery/restart claim. Original B12R2 quarantines untouched and require operator reconciliation before separately authorized resume. B10 full genuine acceptance OPEN/PARTIAL. Frozen55legacy Observation defects retained; canonical B04 artifact unchanged. Remaining DEC-004 future gates remain at designated milestones. B15 not authorized.
++
++Review backend/OPERATIONS.md and docs/evidence/B14-RESULTS.md, B14-COMMANDS.md, B14-FILES.md, B14-changes.patch. Human inspect retained3issue outcomes, contradiction/failure/recurrence-memory and ACK-loss proof; optional single isolated water test. STOP after B14 for review.
+--- a/contracts/operations.json
++++ b/contracts/operations.json
+@@ -1,5 +1,5 @@
+ {
+-  "version": "B13-1",
++  "version": "B14-1",
+   "municipality_id": "demo-city",
+   "operators": {
+     "OP-ANALYST": {
+@@ -55,6 +55,19 @@
+     ],
+     "revoke_session": [
+       "ADMIN"
++    ],
++    "progress": [
++      "DEPARTMENT_LEAD"
++    ],
++    "inspect": [
++      "ANALYST",
++      "DEPARTMENT_LEAD"
++    ],
++    "evaluate": [
++      "ANALYST"
++    ],
++    "recur": [
++      "ANALYST"
+     ]
+   },
+   "commands": {
+@@ -473,12 +486,761 @@
+     "ASSIGNED->CANCELLED"
+   ],
+   "excluded": [
+-    "execution",
+-    "completion",
+-    "outcome evaluation",
+     "event delivery/worker",
+     "API",
+     "frontend",
+     "live provider"
+-  ]
++  ],
++  "execution_commands": {
++    "Progress": {
++      "additionalProperties": false,
++      "properties": {
++        "request_id": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Request Id",
++          "type": "string"
++        },
++        "work_order_id": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Work Order Id",
++          "type": "string"
++        },
++        "expected_hash": {
++          "pattern": "^[0-9a-f]{64}$",
++          "title": "Expected Hash",
++          "type": "string"
++        },
++        "operation": {
++          "const": "progress",
++          "default": "progress",
++          "title": "Operation",
++          "type": "string"
++        },
++        "action": {
++          "enum": [
++            "START",
++            "BLOCK",
++            "FAIL",
++            "COMPLETE"
++          ],
++          "title": "Action",
++          "type": "string"
++        },
++        "reason": {
++          "maxLength": 2000,
++          "minLength": 1,
++          "title": "Reason",
++          "type": "string"
++        },
++        "evidence_ids": {
++          "items": {
++            "maxLength": 200,
++            "minLength": 1,
++            "type": "string"
++          },
++          "maxItems": 10,
++          "title": "Evidence Ids",
++          "type": "array"
++        }
++      },
++      "required": [
++        "request_id",
++        "work_order_id",
++        "expected_hash",
++        "action",
++        "reason"
++      ],
++      "title": "Progress",
++      "type": "object"
++    },
++    "Inspect": {
++      "$defs": {
++        "Assess": {
++          "additionalProperties": false,
++          "properties": {
++            "request_id": {
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Request Id",
++              "type": "string"
++            },
++            "operation": {
++              "const": "assess",
++              "default": "assess",
++              "title": "Operation",
++              "type": "string"
++            },
++            "hypothesis_id": {
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Hypothesis Id",
++              "type": "string"
++            },
++            "expected_hash": {
++              "pattern": "^[0-9a-f]{64}$",
++              "title": "Expected Hash",
++              "type": "string"
++            },
++            "evidence_ids": {
++              "items": {
++                "maxLength": 200,
++                "minLength": 1,
++                "type": "string"
++              },
++              "maxItems": 20,
++              "title": "Evidence Ids",
++              "type": "array"
++            },
++            "as_of": {
++              "title": "As Of",
++              "type": "string"
++            }
++          },
++          "required": [
++            "request_id",
++            "hypothesis_id",
++            "expected_hash",
++            "as_of"
++          ],
++          "title": "Assess",
++          "type": "object"
++        },
++        "IncidentAttribution": {
++          "additionalProperties": false,
++          "description": "Optional explicit occurrence binding; retrospective claims require prior source basis.",
++          "properties": {
++            "incident_ids": {
++              "items": {
++                "maxLength": 200,
++                "minLength": 1,
++                "type": "string"
++              },
++              "maxItems": 3,
++              "minItems": 1,
++              "title": "Incident Ids",
++              "type": "array"
++            },
++            "mode": {
++              "default": "OCCURRENCE",
++              "enum": [
++                "OCCURRENCE",
++                "RETROSPECTIVE"
++              ],
++              "title": "Mode",
++              "type": "string"
++            },
++            "rationale": {
++              "maxLength": 2000,
++              "minLength": 1,
++              "title": "Rationale",
++              "type": "string"
++            },
++            "basis_evidence_ids": {
++              "items": {
++                "maxLength": 200,
++                "minLength": 1,
++                "type": "string"
++              },
++              "maxItems": 5,
++              "title": "Basis Evidence Ids",
++              "type": "array"
++            }
++          },
++          "required": [
++            "incident_ids",
++            "rationale"
++          ],
++          "title": "IncidentAttribution",
++          "type": "object"
++        },
++        "Observation": {
++          "additionalProperties": false,
++          "properties": {
++            "asset_id": {
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Asset Id",
++              "type": "string"
++            },
++            "code": {
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Code",
++              "type": "string"
++            },
++            "statement": {
++              "maxLength": 2000,
++              "minLength": 1,
++              "title": "Statement",
++              "type": "string"
++            },
++            "method": {
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Method",
++              "type": "string"
++            },
++            "observed_at": {
++              "title": "Observed At",
++              "type": "string"
++            },
++            "result": {
++              "default": "OBSERVED",
++              "enum": [
++                "OBSERVED",
++                "UNKNOWN"
++              ],
++              "title": "Result",
++              "type": "string"
++            },
++            "value": {
++              "anyOf": [
++                {
++                  "type": "number"
++                },
++                {
++                  "type": "null"
++                }
++              ],
++              "default": null,
++              "title": "Value"
++            },
++            "unit": {
++              "anyOf": [
++                {
++                  "maxLength": 200,
++                  "minLength": 1,
++                  "type": "string"
++                },
++                {
++                  "type": "null"
++                }
++              ],
++              "default": null,
++              "title": "Unit"
++            }
++          },
++          "required": [
++            "asset_id",
++            "code",
++            "statement",
++            "method",
++            "observed_at"
++          ],
++          "title": "Observation",
++          "type": "object"
++        },
++        "ReportInspection": {
++          "additionalProperties": false,
++          "properties": {
++            "request_id": {
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Request Id",
++              "type": "string"
++            },
++            "operation": {
++              "const": "report_inspection",
++              "default": "report_inspection",
++              "title": "Operation",
++              "type": "string"
++            },
++            "inspection_id": {
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Inspection Id",
++              "type": "string"
++            },
++            "expected_hash": {
++              "pattern": "^[0-9a-f]{64}$",
++              "title": "Expected Hash",
++              "type": "string"
++            },
++            "source_id": {
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Source Id",
++              "type": "string"
++            },
++            "record_id": {
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Record Id",
++              "type": "string"
++            },
++            "source_kind": {
++              "default": "SYNTHETIC",
++              "enum": [
++                "SYNTHETIC",
++                "MUNICIPAL",
++                "PUBLIC"
++              ],
++              "title": "Source Kind",
++              "type": "string"
++            },
++            "observations": {
++              "items": {
++                "$ref": "#/$defs/Observation"
++              },
++              "maxItems": 10,
++              "minItems": 1,
++              "title": "Observations",
++              "type": "array"
++            },
++            "review": {
++              "anyOf": [
++                {
++                  "$ref": "#/$defs/Review"
++                },
++                {
++                  "type": "null"
++                }
++              ],
++              "default": null
++            },
++            "attribution": {
++              "anyOf": [
++                {
++                  "$ref": "#/$defs/IncidentAttribution"
++                },
++                {
++                  "type": "null"
++                }
++              ],
++              "default": null
++            }
++          },
++          "required": [
++            "request_id",
++            "inspection_id",
++            "expected_hash",
++            "source_id",
++            "record_id",
++            "observations"
++          ],
++          "title": "ReportInspection",
++          "type": "object"
++        },
++        "RequestInspection": {
++          "additionalProperties": false,
++          "properties": {
++            "request_id": {
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Request Id",
++              "type": "string"
++            },
++            "operation": {
++              "const": "request_inspection",
++              "default": "request_inspection",
++              "title": "Operation",
++              "type": "string"
++            },
++            "investigation_id": {
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Investigation Id",
++              "type": "string"
++            },
++            "asset_ids": {
++              "items": {
++                "maxLength": 200,
++                "minLength": 1,
++                "type": "string"
++              },
++              "maxItems": 3,
++              "minItems": 1,
++              "title": "Asset Ids",
++              "type": "array"
++            },
++            "department_id": {
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Department Id",
++              "type": "string"
++            },
++            "inspection_type": {
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Inspection Type",
++              "type": "string"
++            }
++          },
++          "required": [
++            "request_id",
++            "investigation_id",
++            "asset_ids",
++            "department_id",
++            "inspection_type"
++          ],
++          "title": "RequestInspection",
++          "type": "object"
++        },
++        "Review": {
++          "additionalProperties": false,
++          "properties": {
++            "reviewer_id": {
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Reviewer Id",
++              "type": "string"
++            },
++            "role": {
++              "enum": [
++                "ANALYST",
++                "ADMIN"
++              ],
++              "title": "Role",
++              "type": "string"
++            },
++            "reviewed": {
++              "const": true,
++              "title": "Reviewed",
++              "type": "boolean"
++            },
++            "reason": {
++              "maxLength": 2000,
++              "minLength": 1,
++              "title": "Reason",
++              "type": "string"
++            }
++          },
++          "required": [
++            "reviewer_id",
++            "role",
++            "reviewed",
++            "reason"
++          ],
++          "title": "Review",
++          "type": "object"
++        },
++        "TransitionInspection": {
++          "additionalProperties": false,
++          "properties": {
++            "request_id": {
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Request Id",
++              "type": "string"
++            },
++            "operation": {
++              "const": "transition_inspection",
++              "default": "transition_inspection",
++              "title": "Operation",
++              "type": "string"
++            },
++            "inspection_id": {
++              "maxLength": 200,
++              "minLength": 1,
++              "title": "Inspection Id",
++              "type": "string"
++            },
++            "expected_hash": {
++              "pattern": "^[0-9a-f]{64}$",
++              "title": "Expected Hash",
++              "type": "string"
++            },
++            "status": {
++              "enum": [
++                "REQUESTED",
++                "SCHEDULED",
++                "IN_PROGRESS",
++                "FAILED",
++                "CANCELLED"
++              ],
++              "title": "Status",
++              "type": "string"
++            },
++            "scheduled_at": {
++              "anyOf": [
++                {
++                  "type": "string"
++                },
++                {
++                  "type": "null"
++                }
++              ],
++              "default": null,
++              "title": "Scheduled At"
++            }
++          },
++          "required": [
++            "request_id",
++            "inspection_id",
++            "expected_hash",
++            "status"
++          ],
++          "title": "TransitionInspection",
++          "type": "object"
++        }
++      },
++      "additionalProperties": false,
++      "properties": {
++        "request_id": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Request Id",
++          "type": "string"
++        },
++        "work_order_id": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Work Order Id",
++          "type": "string"
++        },
++        "expected_hash": {
++          "pattern": "^[0-9a-f]{64}$",
++          "title": "Expected Hash",
++          "type": "string"
++        },
++        "operation": {
++          "const": "inspect",
++          "default": "inspect",
++          "title": "Operation",
++          "type": "string"
++        },
++        "purpose": {
++          "enum": [
++            "COMPLETION",
++            "FOLLOWUP",
++            "ASSESSMENT"
++          ],
++          "title": "Purpose",
++          "type": "string"
++        },
++        "command": {
++          "discriminator": {
++            "mapping": {
++              "assess": "#/$defs/Assess",
++              "report_inspection": "#/$defs/ReportInspection",
++              "request_inspection": "#/$defs/RequestInspection",
++              "transition_inspection": "#/$defs/TransitionInspection"
++            },
++            "propertyName": "operation"
++          },
++          "oneOf": [
++            {
++              "$ref": "#/$defs/RequestInspection"
++            },
++            {
++              "$ref": "#/$defs/TransitionInspection"
++            },
++            {
++              "$ref": "#/$defs/ReportInspection"
++            },
++            {
++              "$ref": "#/$defs/Assess"
++            }
++          ],
++          "title": "Command"
++        },
++        "review_reason": {
++          "anyOf": [
++            {
++              "maxLength": 2000,
++              "minLength": 1,
++              "type": "string"
++            },
++            {
++              "type": "null"
++            }
++          ],
++          "default": null,
++          "title": "Review Reason"
++        }
++      },
++      "required": [
++        "request_id",
++        "work_order_id",
++        "expected_hash",
++        "purpose",
++        "command"
++      ],
++      "title": "Inspect",
++      "type": "object"
++    },
++    "Evaluate": {
++      "additionalProperties": false,
++      "properties": {
++        "request_id": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Request Id",
++          "type": "string"
++        },
++        "work_order_id": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Work Order Id",
++          "type": "string"
++        },
++        "expected_hash": {
++          "pattern": "^[0-9a-f]{64}$",
++          "title": "Expected Hash",
++          "type": "string"
++        },
++        "operation": {
++          "const": "evaluate",
++          "default": "evaluate",
++          "title": "Operation",
++          "type": "string"
++        },
++        "evidence_ids": {
++          "items": {
++            "maxLength": 200,
++            "minLength": 1,
++            "type": "string"
++          },
++          "maxItems": 10,
++          "title": "Evidence Ids",
++          "type": "array"
++        },
++        "window_start": {
++          "title": "Window Start",
++          "type": "string"
++        },
++        "window_end": {
++          "title": "Window End",
++          "type": "string"
++        }
++      },
++      "required": [
++        "request_id",
++        "work_order_id",
++        "expected_hash",
++        "window_start",
++        "window_end"
++      ],
++      "title": "Evaluate",
++      "type": "object"
++    },
++    "Recur": {
++      "additionalProperties": false,
++      "properties": {
++        "request_id": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Request Id",
++          "type": "string"
++        },
++        "work_order_id": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Work Order Id",
++          "type": "string"
++        },
++        "expected_hash": {
++          "pattern": "^[0-9a-f]{64}$",
++          "title": "Expected Hash",
++          "type": "string"
++        },
++        "operation": {
++          "const": "recur",
++          "default": "recur",
++          "title": "Operation",
++          "type": "string"
++        },
++        "evidence_ids": {
++          "items": {
++            "maxLength": 200,
++            "minLength": 1,
++            "type": "string"
++          },
++          "maxItems": 10,
++          "title": "Evidence Ids",
++          "type": "array"
++        },
++        "window_start": {
++          "title": "Window Start",
++          "type": "string"
++        },
++        "window_end": {
++          "title": "Window End",
++          "type": "string"
++        },
++        "verified_outcome_id": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Verified Outcome Id",
++          "type": "string"
++        },
++        "complaint": {
++          "additionalProperties": true,
++          "title": "Complaint",
++          "type": "object"
++        }
++      },
++      "required": [
++        "request_id",
++        "work_order_id",
++        "expected_hash",
++        "window_start",
++        "window_end",
++        "verified_outcome_id",
++        "complaint"
++      ],
++      "title": "Recur",
++      "type": "object"
++    }
++  },
++  "verification": {
++    "version": "B14-1",
++    "required_codes": {
++      "WATERLOGGING": [
++        "COMPARABLE_FOLLOWUP_RAINFALL",
++        "FOLLOWUP_WATERLOGGING"
++      ],
++      "ROAD_DAMAGE": [
++        "WEAR_EXPOSURE",
++        "FOLLOWUP_PAVEMENT"
++      ],
++      "WASTE_ACCUMULATION": [
++        "SCHEDULED_PICKUPS",
++        "ACTUAL_PICKUPS",
++        "REACCUMULATION_WINDOW",
++        "WASTE_REACCUMULATION"
++      ]
++    },
++    "units": {
++      "ACTION_COMPLETED": null,
++      "ACTION_FAILED": null,
++      "COMPARABLE_FOLLOWUP_RAINFALL": null,
++      "FOLLOWUP_WATERLOGGING": "boolean",
++      "WEAR_EXPOSURE": null,
++      "FOLLOWUP_PAVEMENT": "boolean",
++      "SCHEDULED_PICKUPS": "pickups",
++      "ACTUAL_PICKUPS": "pickups",
++      "REACCUMULATION_WINDOW": "hours",
++      "WASTE_REACCUMULATION": "boolean"
++    },
++    "synthetic_waste_minimum_hours": 24,
++    "origin": "SYNTHETIC demo policy, not a municipal standard",
++    "water_road_opportunity": "Explicit authored comparability/wear observation precedes final binary adverse-condition observation; no meteorological/engineering threshold inferred",
++    "waste_window": "Scheduled/actual matching integer pickup counts >=1, pickups precede window observation, window hours>=24 and actually elapsed since start; reaccumulation finding at/after window",
++    "all_targets": true,
++    "independent_review": "Server resolves ANALYST reviewer token; department operator cannot self-review or supply Review",
++    "ordering": "completion < window_start <= observations <= window_end <= controlled service clock; final finding after exposure/window",
++    "classification": [
++      "MONITORING",
++      "INCONCLUSIVE",
++      "PROBLEM_PERSISTS",
++      "RESOLUTION_VERIFIED",
++      "RECURRENCE_DETECTED",
++      "INTERVENTION_FAILED"
++    ],
++    "native_result": "ACTION_COMPLETED only on work completion; INCONCLUSIVE for missing/contradictory/failure/recurrence; MITIGATION_VERIFIED for independent successful verification; never infer ROOT_CAUSE_ADDRESSED",
++    "case_completion": "All approved tasks/dependencies/gates complete plus each work order independently verified; latest addressed contradiction/inconclusive blocks closure",
++    "replay": "Exact authenticated request returns historical receipt; equivalent evaluation window/evidence deduplicates. Fresh side effects always revalidate scope. Historical result never new authority."
++  },
++  "execution_lifecycle": {
++    "START": "ASSIGNED\u2192IN_PROGRESS; ActionTask APPROVED\u2192QUEUED\u2192IN_PROGRESS; plan APPROVED\u2192IN_EXECUTION",
++    "BLOCK": "WorkOrder/ActionTask IN_PROGRESS\u2192BLOCKED; explicit START can resume ordinary BLOCKED task via ASSIGNED/QUEUED",
++    "FAIL": "WorkOrder IN_PROGRESS\u2192BLOCKED, ActionTask IN_PROGRESS\u2192FAILED, immutable failed InterventionOutcome; no automatic failed-task retry",
++    "COMPLETE": "Attributable reviewed ACTION_COMPLETED report per target; WorkOrder/ActionTask COMPLETED. All tasks completed\u2192plan/investigation MONITORING; no automatic resolution",
++    "VERIFY": "All task follow-ups pass\u2192plan/investigation COMPLETED, incidents ENDED with time, cluster CONTROLLED",
++    "RECUR": "B08 AFTER_RECORDED_END new incident in original cluster; cluster/investigation REOPENED; immutable prior completed plan/outcome retained"
++  },
++  "revised_authorization": "Changed finding meaning/immutable gate/scope requires existing PlanningService.create version+1 with previous_plan_id, Operations.submit and fresh decide. Same-label assessment with original support retained and identical contradiction set can advance legitimate progress; terminal result recording is not authority for further work."
+ }
+--- a/contracts/state_machines.json
++++ b/contracts/state_machines.json
+@@ -250,7 +250,9 @@
+     "case_completion": "Cannot complete solely on WorkOrder COMPLETED; requires verification policy outcome and no open blocking tasks.",
+     "hypothesis_verified": "Requires attributable physical/operational evidence and human-reviewed or explicit rule-based causality criterion.",
+     "reopen": "Retain all old assessments, tasks, findings and outcomes.",
+-    "work_order_creation": "Must validate approval bound to exact immutable plan id/version/hash, task and actor before creating AUTHORIZED WorkOrder; retry idempotent."
++    "work_order_creation": "Must validate approval bound to exact immutable plan id/version/hash, task and actor before creating AUTHORIZED WorkOrder; retry idempotent.",
++    "b14_execution": "Authenticated exact assignee, current approved binding/CAS, typed gates/dependencies. Failed attempt is WorkOrder BLOCKED + ActionTask FAILED, never invented WorkOrder FAILED.",
++    "b14_completion": "Completion needs reviewed attributable result report; plan enters MONITORING only once all tasks complete. Independent B14-1 policy plus all-task follow-ups and no contradictory addressed assessment required for case closure."
+   },
+   "municipality_scope": {
+     "field": "municipality_id",
+--- a/decision.md
++++ b/decision.md
+@@ -1,4 +1,7 @@
+ # decision.md — Append-only engineering decision log
++
++> **CURRENT B14 — TECHNICALLY PASS, HUMAN REVIEW PENDING.** B13 accepted.41distinct focusedPASS(30unit/11real),0unresolvedFAIL/0SKIP; both final SPEC validatorsPASS. Authenticated simulated execution, actual B09 evidence/assessment history, independent3issue follow-up, failure/recurrence and existing memory verified.12pytest/child interlocks0external Gemini/countTokens; B10 full genuine acceptance OPEN/PARTIAL. Earlier data/migrations/history/quarantines preserved. No B15delivery/worker/API/frontend/live or full-backend completion. All18requirements binding. This current summary supersedes historical headers; docs/evidence/B14-RESULTS.md.
++
+ 
+ > **CURRENT B12 — PASS, HUMAN REVIEW PENDING.** Typed persistent DRAFT plans/PROPOSED tasks, verified responsibility + B11 citations, bounded DAG/version/hash/monitoring criteria and compatible planner/Saver path exercised.49distinct focused casesPASS(42unit/7real),0finalFAIL/0SKIP; both finalSPECvalidatorsPASS;0externalGemini/countTokens. Additive0004 tested isolated;0001–0003/retained city/checkpoints/evidence preserved. No approval/WorkOrder/monitoringexecution/API/frontend. B10 full live acceptance OPEN/PARTIAL. B13 not authorized; see docs/evidence/B12-RESULTS.md.
+ 
+@@ -1387,3 +1390,29 @@
+ DEC-055 implemented and runtime verified. Final7private demo identities cover4roles; source5accounts untouched, private admin/read+revoke only and utility lead required accepted road DAG. Exact binding/current source validation/rejection reason, conditional approval vs execution gates, one fenced native+audit+event mutation, deterministic orders/request replay/CAS and UNKNOWNpostcommit recovery implemented. Existing B12payload/receipt/hash immutable; lifecycle0005attested; actual checkpoint and B12R2recoveryPASS.25distinctPASS(18unit/7real); no provider/lifecycle/full suites. Initial lease/outside-active-scope harness errors corrected without weakening guards; handoff hook indentation fixed, only affected validator rerun. Seven-account rationale supersedes initial six-account design; no canonical seed mutation.
+ 
+ Review backend/OPERATIONS.md, docs/evidence/B13-RESULTS.md/B13-COMMANDS.md/B13-FILES.md/B13-changes.patch. Human inspect B13-flow.json exact binding+audit/order, denials/conditional/checkpoint proof, run only isolated flowtest for reproduction. STOP for human review; exact next B14 simulated execution and independent outcome verification only after explicit authorization.
++
++## DEC-056 — B14 explicit simulated execution and independent verification (before code)
++Scope R01/R03/R08–R13/R15/R17; all18 binding. B13 accepted. Reuse0005 hashed companion and existing fenced mutation; do not modify registryv3 or immutable migrations. Extend native lifecycle attestations through IN_EXECUTION/MONITORING/COMPLETED. WorkOrder has no FAILED: unsuccessful attempt maps IN_PROGRESS→BLOCKED, ActionTask→FAILED and immutable InterventionOutcome INCONCLUSIVE/assessment_status INTERVENTION_FAILED. Work completion is ACTION_COMPLETED, never root cause addressed. Independent deterministic monitor writes MITIGATION_VERIFIED + assessment_status RESOLUTION_VERIFIED only after every relevant task/dependency/gate and observation policy passes. Insufficient/no opportunity persists INCONCLUSIVE with explicit MONITORING/INCONCLUSIVE reason. No new ontology labels/enums; bounded metadata in0005 companion.
++
++Synthetic demo policy B14-1: water requires a reviewed COMPARABLE_FOLLOWUP_RAINFALL observation (explicit authored comparability, not inferred meteorology) followed by FOLLOWUP_WATERLOGGING measured0/1 in unit boolean; road reviewed WEAR_EXPOSURE then FOLLOWUP_PAVEMENT0/1 damage in boolean; waste reviewed matching SCHEDULED_PICKUPS and ACTUAL_PICKUPS integer counts in unit pickups, at least one scheduled pickup, followed by REACCUMULATION_WINDOW in hours >=24 and WASTE_REACCUMULATION0/1 boolean at/after that window.24hours is a labeled synthetic demonstration minimum, not municipal/physical standard. Rain/wear opportunity is binary authored observation without fabricated physical thresholds. Each target requires complete coverage, completion precedes window, opportunity precedes final finding. Mixed positive/negative observations are contradictory, not averaged. Independent authenticated analyst review and separate post-completion report/source required; operator cannot submit a resolution label. Outcome includes policy, evidence, observation window and intervention. No root-cause verification inferred.
++
++B09 planner/authorization/receipt/report integrity reused inside one operation compiler, with actual authenticated reviewer identity (caller-supplied Review forbidden). Command-bound request journal and native evidence/event/audit coupled, no duplicate inspection logic. Allowed explicit codes/units/time and exact work target/procedure checked. New report may be explicitly reassessed by authenticated analyst through same B09 planner; immutable old assessments retained. START/new orders require current causal proof; evidence recording/terminal result may truthfully finish an already-started intervention after contrary observations, but cannot authorize further remedial work. Same-label latest assessment with unchanged original support and contradictions may advance through legitimate progress; changed meaning requires existing revised PlanDraft version→new submission→fresh approval, never mutate approved gates.
++
++Verified closure ends active incidents, controls cluster and completes monitoring plan/investigation using normative transitions. Recurrence requires qualifying new adverse follow-up after prior verified window, uses B08 normalization/plan/pattern with a distinct occurrence after recorded end; new incident joins original cluster, cluster/investigation REOPENED, old immutable outcome stays. Existing B05 maintenance/case memory traverses native plan/task/order/outcome paths. Explicit handlers only; no B15 delivery/worker, scheduler, generic hidden scenario engine, API or live call. UNKNOWN writes preserve existing pending/recovery identities; no automatic reset/retry/clearance.
++
++Alternatives rejected: WorkOrder FAILED/new ontology or overwriting outcome (unnecessary); completion=resolution (false); whole graph revision freeze (rejects legitimate updates); relaxed causal gates or new autonomous repair (unsafe); parallel inspection service (duplicate provenance logic). Focused tests per authorization, both validators once final; no lifecycle as storage protocol unchanged.
++
++B14 final review refinement: a latest same-meaning assessment can have a new ID,
++while immutable remedial gates still cite the original assessment. After validating
++latest status/cause, retained original reviewed support and unchanged contradictions,
++validate original immutable gate references against current report/finding hashes.
++Never substitute IDs in approved content. Added actual BLOCK→same-meaning reassess→
++START regression. Evidence/result/monitor proof explicitly says immutable-binding
++recording, not the inherited B13 rejection label. Preliminary validators retained;
++final validators repeated once after this necessary final source correction.
++
++## B14 review gate — 2026-10-18
++
++DEC-056 implemented and exercised, including current same-meaning assessment guard with immutable original remediation references, truthful evidence-only audit proof, narrow planned journal sources and retained original B03 semantics. Native FAILED WorkOrder rejected as nonexistent; failed task/blocked work/immutable inconclusive outcome used. No root-cause verification inferred.41distinctPASS/both final validatorsPASS/0provider. Review source inventory, exact narrow patch and sanitized runtime evidence under B14.
++
++Review backend/OPERATIONS.md and docs/evidence/B14-RESULTS.md, B14-COMMANDS.md, B14-FILES.md, B14-changes.patch. Human inspect retained3issue outcomes, contradiction/failure/recurrence-memory and ACK-loss proof; optional single isolated water test. STOP after B14 for review.
+--- a/docs/backend/07_operations.md
++++ b/docs/backend/07_operations.md
+@@ -45,3 +45,16 @@
+ execution, monitoring worker or event platform is implemented by this foundation.
+ 
+ B12-R adds only the three bounded remedial proposal policies and typed causal/safety conditions in contracts/resolution_planning.json. Latest reviewed causal support and actual B11 citations are independent guards. Conditional proposals expose unmet gates; supported-now still never grants execution authority. Sanitized clarification/capability feedback is durable when checkpoint ownership is safe; uncertain writes/lease/checkpoint failures retain operator quarantine. See backend/PLANNING.md. B13–B15 remain unimplemented.
++
++## B14 implemented explicit execution/verification boundary
++
++Current contract: contracts/operations.json B14-1 and backend/OPERATIONS.md supersede
++historical B12/B13-only boundary paragraphs above. Authenticated explicit execution,
++actual B09 inspection journals, deterministic sourced condition follow-up, B08
++recurrence and existing case-memory paths implemented; native events PENDING only.
++WorkOrder failure maps BLOCKED + task FAILED + retained INCONCLUSIVE outcome.
++Synthetic24hour waste-window rule and qualitative comparable-rain/wear observations
++are disclosed demonstration policy. No numeric physical standard inferred. Exact
++approval/procedure/target/gates, independent authenticated analyst review, all-task
++completion/verification and temporal guards required. No worker/scheduler/API or
++live provider authorization. See DEC-056 and B14 evidence for actual test results.
+--- a/docs/evidence/B13-FILES.md
++++ b/docs/evidence/B13-FILES.md
+@@ -76,4 +76,4 @@
+ - `docs/evidence/B13-unit-zero-live.json`
+ - `docs/evidence/B13-unit.txt`
+ 
+-Only prior test change adds configurable B13 evidence prefix; all old assertions intact. Existing0001–0004/schema/source fixtures/dependency locks/evidence unchanged. Storage/recovery infrastructure unchanged. Three-source remedial policies unchanged. No B13 code.
++Only prior test change adds configurable B13 evidence prefix; all old assertions intact. Existing0001–0004/schema/source fixtures/dependency locks/evidence unchanged. Storage/recovery infrastructure unchanged. Three-source remedial policies unchanged. B14 documentation-only correction: the earlier “No B13 code” sentence was erroneous. B13 source code is included in this inventory and its patch; the recorded historical tests are unchanged.
+--- a/flow.md
++++ b/flow.md
+@@ -1,4 +1,7 @@
+ # flow.md — Repository map and runtime data/control flow (update after every microtask)
++
++> **CURRENT B14 — TECHNICALLY PASS, HUMAN REVIEW PENDING.** B13 accepted.41distinct focusedPASS(30unit/11real),0unresolvedFAIL/0SKIP; both final SPEC validatorsPASS. Authenticated simulated execution, actual B09 evidence/assessment history, independent3issue follow-up, failure/recurrence and existing memory verified.12pytest/child interlocks0external Gemini/countTokens; B10 full genuine acceptance OPEN/PARTIAL. Earlier data/migrations/history/quarantines preserved. No B15delivery/worker/API/frontend/live or full-backend completion. All18requirements binding. This current summary supersedes historical headers; docs/evidence/B14-RESULTS.md.
++
+ 
+ > **CURRENT B12 — PASS, HUMAN REVIEW PENDING.** Typed persistent DRAFT plans/PROPOSED tasks, verified responsibility + B11 citations, bounded DAG/version/hash/monitoring criteria and compatible planner/Saver path exercised.49distinct focused casesPASS(42unit/7real),0finalFAIL/0SKIP; both finalSPECvalidatorsPASS;0externalGemini/countTokens. Additive0004 tested isolated;0001–0003/retained city/checkpoints/evidence preserved. No approval/WorkOrder/monitoringexecution/API/frontend. B10 full live acceptance OPEN/PARTIAL. B13 not authorized; see docs/evidence/B12-RESULTS.md.
+ 
+@@ -839,3 +842,62 @@
+ File/control graph: operations/auth.py private SQLite signed sessions -> server Actor; models.py closed command/full assignment binding -> Operations.service requires permission and graph active scope -> existing repository._session fence -> Storage operation replay hash OR current planning Store.get/head/native projections -> B09Reader latest assessments/report+finding hashes -> PlanningService.resolve B11cite/current ownership + remedial policy -> submit/decision/order/update normative guards -> operations/storage.py fixed registry compiler -> one repository._commit creates/updates native plan/task/approval/order/status/domain event plus CivicOperationState lifecycle/request/approval/order proof. operations/migration.py +0005checksummed indexes/constraints READY/OPERATIONAL. plan Store.get imports verify_plan_lifecycle only when state differs fromDRAFT or attestation exists; immutable B12 JSON/receipt unchanged. Agent decode/currentplanhash unchanged and actual Saver checkpoint valid under ownership. Commit/readback -> OpsRecovery(OutcomeUnknown) bounded IDs/UNKNOWN, explicit original-request reconciliation; no false rejection/auto retry. Native DomainEvent payload_ref -> immutable operation envelope/actor/proof; PENDINGdelivery no worker. Auth material absent graph/events. __main__ bootstrap private auth, b13_worker actual fresh-process auth and graph read. No API/agent approval tool or field execution.
+ 
+ Review backend/OPERATIONS.md, docs/evidence/B13-RESULTS.md/B13-COMMANDS.md/B13-FILES.md/B13-changes.patch. Human inspect B13-flow.json exact binding+audit/order, denials/conditional/checkpoint proof, run only isolated flowtest for reproduction. STOP for human review; exact next B14 simulated execution and independent outcome verification only after explicit authorization.
++
++## B14 implemented file/data/control flow
++
++```
++backend/app/services/operations/
++  service.py -> dispatch Progress/Inspect/Evaluate/Recur -> execution.py
++  execution_models.py -> strict B09 command union + B14 work/window commands
++  execution.py -> existing auth.py / PlanningService / Storage
++               -> EvidenceService.authorize/plan (actual B09 models/Receipt/Journal)
++               -> Reader.evidence/history (actual report/finding/source proof)
++               -> verification.py (B14-1 explicit synthetic condition policy)
++               -> ComplaintService.plan(normalize, optional strictly bound journal)
++  storage.py -> registry / unchanged B03 relationship checks + planned journal check
++             -> one existing fenced repository _commit
++             -> native entities/edges +0005 operation/lifecycle/proof + PENDING event
++contracts/operations.json -> execution schemas, units/policies/lifecycle
++contracts/state_machines.json -> unchanged transition enums, explicit cross-entity guards
++backend/tests/b14_fixtures.py -> authored observations/controlled clock/real services
++backend/tests/{unit/test_execution_policy,integration/test_execution_runtime}.py
++scripts/validate_operations.py -> B13+B14 schema/permission/policy parity in both validators
++```
++
++Token resolves current server-owned actor; exact work binding/CAS, current approval,
++plan head/task projection and owner/procedure guards precede dispatch. START/neworder
++also validates current causal assessment/gates/dependencies. Native progress changes
++attested plan state; immutable B12 payload/receipt/checkpoint refs stay unchanged.
++Current same-meaning assessment may advance without freezing graph revision; changed
++meaning requires explicit next PlanDraft version, submit and new approval. Reports
++and terminal outcomes record actual started work even after contradiction, without
++authorizing more work. Separate analyst token supplies independent report review.
++B09 planner returns native report/findings/updated inspection/assessment; B14 compiles
++it with COMMITTED B09 journal, audit/event and0005 request receipt in same fence.
++B03 unchanged; compiler validates planned unverified operation journal before source
++checks on remaining properties, and checks within-batch cardinality. B08 optional
++planned journal is exact original/canonical/hash/source/time bound for atomic recurrence.
++
++COMPLETE→ACTION_COMPLETED; all tasks→MONITORING. Evaluate validates post-completion
++window/report provenance/units/all targets, applies explicit rain/wear/pickup policy;
++missing→MONITORING, contradictory→INCONCLUSIVE, adverse→PROBLEM_PERSISTS. Each task
++needs verified follow-up; no open task/gate/dependency or current addressed causal
++contradiction at closure. Verified→MITIGATION_VERIFIED/RESOLUTION_VERIFIED, native
++plan/investigation COMPLETED, incidents ENDED/time, cluster CONTROLLED. Recur reuses
++B08 AFTER_RECORDED_END, creates new incident linked original cluster, retains old
++plan/outcome/approval/evidence and REOPENED investigation/cluster. Existing B05 case
++paths retrieve old orders/outcomes; no new memory implementation.
++
++All values parameterized; read paths through existing GRAPH.RO_QUERY. Controlled
++clock only, no hidden scenario reader or provider. Native event payload_ref points
++immutable operation envelope; delivery PENDING until B15. Storage/recovery protocol
++unchanged: post-commit uncertainty→OpsRecovery UNKNOWN identities, no auto retry,
++redraft/delete/reset/quarantine clearance. Focused ACK-loss exact replay retains one
++outcome/completion; no lifecycle operation justified. Real B12 checkpoint read under
++lease preserved. Existing city,0001–0005, sources/evidence/ledger remain untouched.
++
++## B14 review gate — 2026-10-18
++
++Implemented B14 file/control/data graph above exercised. Exact native lifecycle and0005 attestations retain B12 payload/checkpoint hashes; new report/result/monitor operations reuse B09/B08 planners and existing fence. Final41distinct cases total(30unit/11real), both validatorsPASS; no new persistence/worker machinery. See B14-RESULTS/B14-FILES/B14-changes.patch.
++
++Review backend/OPERATIONS.md and docs/evidence/B14-RESULTS.md, B14-COMMANDS.md, B14-FILES.md, B14-changes.patch. Human inspect retained3issue outcomes, contradiction/failure/recurrence-memory and ACK-loss proof; optional single isolated water test. STOP after B14 for review.
+--- a/implementation_status.md
++++ b/implementation_status.md
+@@ -1,4 +1,7 @@
+ # implementation_status.md — Current implementation truth
++
++> **CURRENT B14 — TECHNICALLY PASS, HUMAN REVIEW PENDING.** B13 accepted.41distinct focusedPASS(30unit/11real),0unresolvedFAIL/0SKIP; both final SPEC validatorsPASS. Authenticated simulated execution, actual B09 evidence/assessment history, independent3issue follow-up, failure/recurrence and existing memory verified.12pytest/child interlocks0external Gemini/countTokens; B10 full genuine acceptance OPEN/PARTIAL. Earlier data/migrations/history/quarantines preserved. No B15delivery/worker/API/frontend/live or full-backend completion. All18requirements binding. This current summary supersedes historical headers; docs/evidence/B14-RESULTS.md.
++
+ 
+ > **CURRENT B13 — TECHNICALLY PASS, HUMAN REVIEW PENDING.** Private demo auth/RBAC, exact full-scope approval/rejection and idempotent AUTHORIZED work orders exercised.25distinctPASS(18unit/7real),0unresolvedFAIL/0SKIP; final both SPEC validatorsPASS (one corrected hook error documented);0external Gemini/countTokens.7synthetic auth accounts/fourroles preserve5source accounts plus admin/water-lead gap. Actual audit/events/CAS/ACKloss/fresh-process auth/order and B12checkpoint/B12R2quarantine compatibilityPASS. No B14execution/B15delivery/API/frontend/live; B10 full genuine acceptance OPEN/PARTIAL. Supersedes history; docs/evidence/B13-RESULTS.md.
+ 
+@@ -513,3 +516,9 @@
+ B13technicallyPASSawaitsreview:25distinctPASS(18unit/7real),0unresolvedFAIL/0SKIP; both final validatorsPASS;10pytestchildinterlocks0provider. Native approval→AUTHORIZED order, deterministic same-task dedup/request hash, stale concurrency one succeeds, auditable assignment/status/event/proof, exact same-request ACKloss recovery and fresh-process auth/order verified. Human conditional approval retainsUNMETgates/noorder; road→waterDAGassignees/dependency preserved. Previous plan receipts/payload/hash/versions and savedcheckpoint compatibility verified, accepted B12R2quarantine regression passes. Private7accounts/fourroles; no credential evidence.0005additive/0001–0004andcanonicalcitypreserved. No B14fieldwork/B15delivery/API/frontend/live or backend completion claim.
+ 
+ Review backend/OPERATIONS.md, docs/evidence/B13-RESULTS.md/B13-COMMANDS.md/B13-FILES.md/B13-changes.patch. Human inspect B13-flow.json exact binding+audit/order, denials/conditional/checkpoint proof, run only isolated flowtest for reproduction. STOP for human review; exact next B14 simulated execution and independent outcome verification only after explicit authorization.
++
++## B14 review gate — 2026-10-18
++
++B14 progresses R01/R03/R08–R13/R15/R17, all18 binding. Exact authorization/execution, actual inspection/report/assessment provenance, completed-but-monitoring, condition-specific independent verification, failed/persistent attempts, recurrence/new incident/reopen and existing memory paths exercised. Immutable migrations0001–0005/registry/city/history retained.41distinctPASS/both finalSPECvalidatorsPASS/0provider; no capability-complete/live intelligence/backend-complete claim.
++
++Review backend/OPERATIONS.md and docs/evidence/B14-RESULTS.md, B14-COMMANDS.md, B14-FILES.md, B14-changes.patch. Human inspect retained3issue outcomes, contradiction/failure/recurrence-memory and ACK-loss proof; optional single isolated water test. STOP after B14 for review.
+--- a/scripts/validate_operations.py
++++ b/scripts/validate_operations.py
+@@ -13,4 +13,10 @@
+ s=json.loads((ROOT/'contracts/state_machines.json').read_text())
+ assert s['machines']['WorkOrder']['initial']=='AUTHORIZED'
+ assert c['permissions']['decide']==['APPROVER'] and 'ADMIN' not in c['permissions']['order']
+-print('PASS B13 STATIC: closed commands, exact seven-account/four-role demo permissions, AUTHORIZED initial state and compatible0005; not execution/provider/runtime proof')
++from app.services.operations.execution_models import COMMANDS
++from app.services.operations.verification import VERSION,CODES,REQUIRED
++assert c['execution_commands']=={v.__name__:v.model_json_schema() for v in COMMANDS.values()}
++assert c['verification']['version']==VERSION and c['verification']['units']==CODES
++assert c['verification']['required_codes']=={k:list(v) for k,v in REQUIRED.items()}
++assert c['verification']['synthetic_waste_minimum_hours']==24
++print('PASS B14 STATIC: execution schemas/policy parity; B13 STATIC: closed commands, exact seven-account/four-role demo permissions, AUTHORIZED initial state and compatible0005; not execution/provider/runtime proof')
+--- a/task_board.md
++++ b/task_board.md
+@@ -1,4 +1,7 @@
+ # task_board.md — Human-reviewed task queue
++
++> **CURRENT B14 — TECHNICALLY PASS, HUMAN REVIEW PENDING.** B13 accepted.41distinct focusedPASS(30unit/11real),0unresolvedFAIL/0SKIP; both final SPEC validatorsPASS. Authenticated simulated execution, actual B09 evidence/assessment history, independent3issue follow-up, failure/recurrence and existing memory verified.12pytest/child interlocks0external Gemini/countTokens; B10 full genuine acceptance OPEN/PARTIAL. Earlier data/migrations/history/quarantines preserved. No B15delivery/worker/API/frontend/live or full-backend completion. All18requirements binding. This current summary supersedes historical headers; docs/evidence/B14-RESULTS.md.
++
+ 
+ > **CURRENT B13 — TECHNICALLY PASS, HUMAN REVIEW PENDING.** Private demo auth/RBAC, exact full-scope approval/rejection and idempotent AUTHORIZED work orders exercised.25distinctPASS(18unit/7real),0unresolvedFAIL/0SKIP; final both SPEC validatorsPASS (one corrected hook error documented);0external Gemini/countTokens.7synthetic auth accounts/fourroles preserve5source accounts plus admin/water-lead gap. Actual audit/events/CAS/ACKloss/fresh-process auth/order and B12checkpoint/B12R2quarantine compatibilityPASS. No B14execution/B15delivery/API/frontend/live; B10 full genuine acceptance OPEN/PARTIAL. Supersedes history; docs/evidence/B13-RESULTS.md.
+ 
+@@ -441,3 +444,13 @@
+ B12/B12R/B12R2accepted by user; B13nowtechnicallyPASShumanreviewpending. Scope R09/R10/R11/R13/R15/R17: authenticated exact approvals/scoped assignee orders, native state/CAS/audit/replay/recovery.25distinctPASS(18unit/7real), both final validatorsPASS,0provider. Exact failure history/commands/inventory/patch under B13.7small private operators/fourroles; all5canonical sourceaccountsretained, utilityleadaddedforacceptedDAG. B14notauthorized; no automatic continuation.
+ 
+ Review backend/OPERATIONS.md, docs/evidence/B13-RESULTS.md/B13-COMMANDS.md/B13-FILES.md/B13-changes.patch. Human inspect B13-flow.json exact binding+audit/order, denials/conditional/checkpoint proof, run only isolated flowtest for reproduction. STOP for human review; exact next B14 simulated execution and independent outcome verification only after explicit authorization.
++
++## B14 review gate — 2026-10-18
++
++B13 human accepted. B14 implemented and exercised; final SPEC/audit pending. Only B14 authorized. Exact next B15 durable event delivery/worker after separate human approval; no automatic continuation. Current summary above takes precedence over historical unimplemented/unauthorized statements.
++
++## B14 review gate — 2026-10-18
++
++B13 human accepted; B14 technicallyPASS with41distinct cases and both final validatorsPASS. Human review pending; exact proposed next B15 durable event delivery/single worker/resume/reconciliation only after separate authorization. No automatic continuation.
++
++Review backend/OPERATIONS.md and docs/evidence/B14-RESULTS.md, B14-COMMANDS.md, B14-FILES.md, B14-changes.patch. Human inspect retained3issue outcomes, contradiction/failure/recurrence-memory and ACK-loss proof; optional single isolated water test. STOP after B14 for review.
+--- a/test_log.md
++++ b/test_log.md
+@@ -1,4 +1,7 @@
+ # test_log.md — Append-only verification record
++
++> **CURRENT B14 — TECHNICALLY PASS, HUMAN REVIEW PENDING.** B13 accepted.41distinct focusedPASS(30unit/11real),0unresolvedFAIL/0SKIP; both final SPEC validatorsPASS. Authenticated simulated execution, actual B09 evidence/assessment history, independent3issue follow-up, failure/recurrence and existing memory verified.12pytest/child interlocks0external Gemini/countTokens; B10 full genuine acceptance OPEN/PARTIAL. Earlier data/migrations/history/quarantines preserved. No B15delivery/worker/API/frontend/live or full-backend completion. All18requirements binding. This current summary supersedes historical headers; docs/evidence/B14-RESULTS.md.
++
+ 
+ > **CURRENT B13 — TECHNICALLY PASS, HUMAN REVIEW PENDING.** Private demo auth/RBAC, exact full-scope approval/rejection and idempotent AUTHORIZED work orders exercised.25distinctPASS(18unit/7real),0unresolvedFAIL/0SKIP; final both SPEC validatorsPASS (one corrected hook error documented);0external Gemini/countTokens.7synthetic auth accounts/fourroles preserve5source accounts plus admin/water-lead gap. Actual audit/events/CAS/ACKloss/fresh-process auth/order and B12checkpoint/B12R2quarantine compatibilityPASS. No B14execution/B15delivery/API/frontend/live; B10 full genuine acceptance OPEN/PARTIAL. Supersedes history; docs/evidence/B13-RESULTS.md.
+ 
+@@ -1035,3 +1038,9 @@
+ Focused final25distinctPASS/0unresolvedFAIL/0SKIP:12newB13unit+6affectedB12R2unit,6B13real+1acceptedB12R2real. Unit11PASS9.05s; initial real3PASS27.75s; gates8PASS/1leaseharnessFAIL21.10s; affected2PASS22.69s; auth5PASS9.04s; checkpoint1scopeFAIL10.92s; finalwrite2scopeFAIL19.05s; finalB13runtime5PASS51.17s; stronger flow1PASS11.04s; targeted road/auth2PASS11.70s. Overlaps not extra tests. Failures: decode after lease released, constructor scope check before active_scope; fixed test ownership and dispatch-time scope guard. BlueprintPASS once inclB13static, handoffnewhookIndentationError then correctedhandoffalonePASS; no redundant allsuite.10ordinarypytestchildguards0external/0unexpected. Actual providers0; scripted PAUSE only where checkpoint orchestration, genuine DB/SDK/MCP/Saver/freshprocess. No full770/313/B12/allremedial/lifecycle/live run. Exact commands/rawoutputs B13-COMMANDS.md/B13-test-summary.json.
+ 
+ Review backend/OPERATIONS.md, docs/evidence/B13-RESULTS.md/B13-COMMANDS.md/B13-FILES.md/B13-changes.patch. Human inspect B13-flow.json exact binding+audit/order, denials/conditional/checkpoint proof, run only isolated flowtest for reproduction. STOP for human review; exact next B14 simulated execution and independent outcome verification only after explicit authorization.
++
++## B14 review gate — 2026-10-18
++
++Final41distinctPASS:18new policy+12affected auth unit,7new B14 real+4accepted B13/B12 real. Final unit30PASS11.45s; real4 initial5PASS/1fixtureFAIL60.22s, focused6PASS65.38s, final recurrence1PASS10.96s; strengthened progress initial1CAS-fixtureFAIL10.97s then1PASS11.63s. Earlier socket/planned-journal/auth-matrix failures retained in B14-COMMANDS/raw logs. Both final validatorsPASS once each; preliminary pass before final same-meaning assessment/gate correction retained honestly.12ordinarypytest/childguards0external/0unexpected; no paid/model/lifecycle/full-suite run. Scripted checkpoint distinct from real DB/SDK/MCP/Saver/fresh-process. Exact commands/count dedup in B14-test-summary.json.
++
++Review backend/OPERATIONS.md and docs/evidence/B14-RESULTS.md, B14-COMMANDS.md, B14-FILES.md, B14-changes.patch. Human inspect retained3issue outcomes, contradiction/failure/recurrence-memory and ACK-loss proof; optional single isolated water test. STOP after B14 for review.
+--- /dev/null
++++ b/backend/app/services/operations/execution.py
+@@ -0,0 +1,235 @@
++"""B14 explicit domain handlers; reuse B09/B08 planners and existing fenced storage."""
++import json
++from app.graph.models import digest
++from app.graph.repository import PreconditionFailed, Conflict
++from app.graph.schema import timestamp
++from app.services.evidence.service import EvidenceService, transition
++from app.services.evidence.reader import Reader
++from app.services.evidence.models import (RequestInspection, TransitionInspection, ReportInspection,
++    Assess, Review, Journal, Receipt)
++from app.services.evidence.writer import stable as evidence_id, common as evidence_common
++from .models import OpsRecovery
++from .auth import Denied
++from .service import stable, common, native_hash, execution_gates
++from .execution_models import COMMANDS, Progress, Inspect, Evaluate, Recur
++from .verification import VERSION, REQUIRED, CODES, validate_observation, evaluate
++
++class Execution:
++ def __init__(self,ops):self.ops=ops;self.repo=ops.repo;self.store=ops.store
++ async def execute(self,payload,*,token,interrupt=None,reviewer_token=None):
++  self.ops.target()
++  q=COMMANDS[payload['operation']].model_validate(payload) if isinstance(payload,dict) else payload
++  if type(q) not in set(COMMANDS.values()):raise PreconditionFailed('CLOSED_COMMAND_REQUIRED')
++  actor=self.ops.auth.require(token,q.operation);reviewer=None
++  if reviewer_token is not None:
++   reviewer=self.ops.auth.require(reviewer_token,'draft')
++   if reviewer.id==actor.id:raise Denied('INDEPENDENT_REVIEW_REQUIRED')
++  at=self.ops.clock();timestamp(at)
++  value=q.model_dump(mode='json')
++  if len(json.dumps(value).encode())>32768:raise PreconditionFailed('EXECUTION_REQUEST_LIMIT')
++  request_hash=digest({'actor':actor.model_dump(mode='json'),'command':value,'reviewer':reviewer.id if reviewer else None})
++  opid=stable('OP',q.request_id)
++  with self.repo._session() as session:
++   try:old=self.store.get('operation',opid)
++   except Exception:raise OpsRecovery(self.repo.graph.name,q.request_id,q.work_order_id,operation=q.operation) from None
++   if old:
++    if old['request_hash']!=request_hash:raise Conflict('IDEMPOTENCY_CONFLICT')
++    return old['receipt']
++   w,v=self.ops.verified_order(q.work_order_id)
++   if w.content_hash!=q.expected_hash:raise Conflict('STALE_ORDER_REVISION')
++   binding=v['binding'];assignment=v['assignment']
++   is_assessment=isinstance(q,Inspect) and isinstance(q.command,Assess)
++   if isinstance(q,Progress) or (isinstance(q,Inspect) and not is_assessment):
++    if actor.id!=assignment['assignee_id'] or actor.department_id!=assignment['department_id']:raise Denied('DEPARTMENT_SCOPE_DENIED')
++   elif actor.role!='ANALYST':raise Denied('INDEPENDENT_ANALYST_REQUIRED')
++   saved,draft,tasks,proof=await self.ops.validate(binding,at,review_sources=isinstance(q,Progress) and q.action=='START',progress=True)
++   if not (isinstance(q,Progress) and q.action=='START'):
++    proof={'validated_at':at,'validation_scope':'IMMUTABLE_BINDING_RECORD_EXISTING_WORK_OR_MONITOR','causal_validation':'Not authority to start further work; ownership and procedure separately rechecked'}
++   approval,av=self.ops.approval(v['approval_id'],binding)
++   plan=self.repo.get_node(binding['plan_id'],'ResolutionPlan')
++   if approval.properties['status']!='APPROVED' or av.get('decision')!='APPROVED' or av.get('decided_by')!=approval.properties.get('decided_by') or plan.properties['status'] not in {'APPROVED','IN_EXECUTION','MONITORING','COMPLETED'}:raise PreconditionFailed('APPROVAL_NO_LONGER_VALID')
++   task=tasks[assignment['task_id']];task_node=self.repo.get_node(assignment['task_id'],'ActionTask')
++   reader=Reader(self.repo,at);inv=reader.node(draft.investigation_id,'Investigation')
++   # Binding-only evidence/result recording still verifies current ownership/procedure.
++   await self.ops.planning.resolve(task,reader,at)
++   nodes=[];updates={};edges=[];states=[];hashes={};transitions=[]
++   def node(kind,props):nodes.append((kind,props));hashes[props['id']]=digest(props);return props
++   def changed(old,sequence,**extra):
++    seq=[sequence] if isinstance(sequence,str) else sequence
++    state=old.properties['status']
++    for new in seq:transition(old.kind,state,new);transitions.append([old.id,state,new]);state=new
++    props={**old.properties,'status':state,'updated_at':at,**extra};updates[old.id]=(old,props);hashes[old.id]=digest(props)
++    if old.kind=='ResolutionPlan':states.append(('plan',old.id,{'binding':binding,'state':state,'native_hash':digest(props),'last_operation':opid}))
++    return props
++   def edge(kind,a,b,source=None):
++    props={'id':stable('REL',opid,kind,a,b),'municipality_id':'demo-city','created_at':at,'valid_from':at}
++    if source:props['source_evidence_id']=source
++    edges.append((kind,a,b,props))
++   def state_event(old,status,reason):
++    props={'id':stable('STATUS',opid,old.id),'schema_version':3,'municipality_id':'demo-city','created_at':at,'entity_id':old.id,'from_status':old.properties['status'],'to_status':status,'occurred_at':at,'actor_type':'HUMAN','actor_id':actor.id,'reason':reason}
++    node('StatusEvent',props);edge('HAS_EVENT',old.id,props['id'])
++   def reports(ids,purpose):
++    if len(ids)!=len(set(ids)):raise PreconditionFailed('DUPLICATE_EVIDENCE')
++    refs=[]
++    for id in ids:
++     ref=reader.evidence(id);report=ref.report
++     auth=self.store.get('inspection',report.inspection_id) if report else None
++     if not report or not report.review or report.source_kind!='SYNTHETIC' or report.inspector_id!=assignment['assignee_id'] or not auth or auth['work_order_id']!=w.id or auth['purpose']!=purpose or auth['procedure']!=task.procedure_citation.model_dump(mode='json'):raise PreconditionFailed('ATTRIBUTABLE_WORK_REPORT_REQUIRED')
++     refs.append(ref)
++    return refs
++   def outcome(status,result,refs,window=None,gaps=None):
++    id=stable('OUTCOME',opid)
++    node('InterventionOutcome',{'id':id,'municipality_id':'demo-city','schema_version':3,'created_at':at,'evaluated_at':at,'result':result,'assessment_status':status})
++    edge('RESULTED_IN',w.id,id,refs[0].id if refs else None)
++    metadata={'id':id,'work_order_id':w.id,'plan_id':plan.id,'approval_id':approval.id,'policy_version':VERSION,'assessment_status':status,'result':result,'evidence_references':[r.model_dump(mode='json') for r in refs],'window':window,'gaps':gaps or [],'actor_id':actor.id,'evaluated_at':at,'execution_mode':'SIMULATED','last_operation':opid}
++    states.append(('outcome',id,metadata));return metadata
++   event_type='WORK_ORDER_STATUS_CHANGED';event_subject=w.id;emitter=w.id
++   if isinstance(q,Progress):
++    if plan.properties['status'] not in {'APPROVED','IN_EXECUTION'}:raise PreconditionFailed('PLAN_NOT_EXECUTABLE')
++    if q.action=='START':
++     execution_gates(task,[self.repo.get_node(saved['task_ids'][id],'ActionTask').properties['status'] for id in task.depends_on])
++     if q.evidence_ids:raise PreconditionFailed('START_HAS_NO_RESULT')
++     tseq=['QUEUED','IN_PROGRESS'] if task_node.properties['status'] in {'APPROVED','BLOCKED'} else []
++     if not tseq:raise PreconditionFailed('TASK_NOT_STARTABLE')
++     wseq=['ASSIGNED','IN_PROGRESS'] if w.properties['status']=='BLOCKED' and task_node.properties['status']=='BLOCKED' else ['IN_PROGRESS']
++     changed(task_node,tseq);updated=changed(w,wseq)
++     if plan.properties['status']=='APPROVED':changed(plan,'IN_EXECUTION',graph_revision=session.revision+1)
++    else:
++     if w.properties['status']!='IN_PROGRESS' or task_node.properties['status']!='IN_PROGRESS':raise PreconditionFailed('WORK_NOT_IN_PROGRESS')
++     if q.action in {'COMPLETE','FAIL'}:
++      refs=reports(q.evidence_ids,'COMPLETION');code='ACTION_COMPLETED' if q.action=='COMPLETE' else 'ACTION_FAILED'
++      covered=set()
++      for ref in refs:
++       for ob in ref.report.observations:
++        if ob.code==code and ob.result=='OBSERVED' and timestamp(ob.observed_at)>=timestamp(w.properties['updated_at']):covered.add(ob.asset_id)
++      if covered!=set(task.target_ids):raise PreconditionFailed('RESULT_EVIDENCE_TARGET_COVERAGE')
++      states.append(('completion',w.id,{'at':at,'evidence_ids':q.evidence_ids,'source_records':[ref.source_record_id for ref in refs],'last_operation':opid,'action':q.action}))
++      if q.action=='FAIL':
++       result=outcome('INTERVENTION_FAILED','INCONCLUSIVE',refs,gaps=[q.reason]);event_type='INTERVENTION_OUTCOME_RECORDED'
++      changed(task_node,'COMPLETED' if q.action=='COMPLETE' else 'FAILED');updated=changed(w,'COMPLETED' if q.action=='COMPLETE' else 'BLOCKED')
++      if q.action=='COMPLETE':
++       result=outcome('MONITORING','ACTION_COMPLETED',refs,gaps=['Work completed; independent follow-up required']);event_type='INTERVENTION_OUTCOME_RECORDED'
++       if all(id==task_node.id or self.repo.get_node(id,'ActionTask').properties['status']=='COMPLETED' for id in tasks):
++        changed(plan,'MONITORING',graph_revision=session.revision+1)
++        state=inv.properties['status']
++        if state!='MONITORING':changed(inv,['INVESTIGATING','MONITORING'] if state=='OPEN' else ['MONITORING'])
++        for e in reader.edges('INVESTIGATES',source=inv.id):
++         target=reader.node(e.target)
++         if target.kind=='ProblemCluster' and target.properties['status'] in {'OPEN','REOPENED'}:changed(target,'MONITORING')
++     else:changed(task_node,'BLOCKED');updated=changed(w,'BLOCKED')
++    state_event(w,updated['status'],q.reason)
++    result={**(result if q.action in {'COMPLETE','FAIL'} else {}),'id':w.id,'status':updated['status'],'expected_hash':native_hash('WorkOrder',updated),'task_status':updates[task_node.id][1]['status'],'reason':q.reason,'simulation_mode':True}
++   elif isinstance(q,Inspect):
++    c=q.command;ev=EvidenceService(self.repo,clock=self.ops.clock);ev.authorize(c,actor)
++    if c.request_id!=q.request_id:raise PreconditionFailed('NESTED_REQUEST_ID_MISMATCH')
++    if isinstance(c,Assess):
++     if q.purpose!='ASSESSMENT' or actor.role!='ANALYST' or c.hypothesis_id not in {b.hypothesis_id for b in draft.basis}:raise Denied('ASSESSMENT_SCOPE')
++    else:
++     if q.purpose=='ASSESSMENT':raise PreconditionFailed('INSPECTION_PURPOSE')
++     if (q.purpose=='COMPLETION' and w.properties['status']!='IN_PROGRESS') or (q.purpose=='FOLLOWUP' and w.properties['status']!='COMPLETED'):raise PreconditionFailed('INSPECTION_WORK_STATE')
++     if isinstance(c,RequestInspection):
++      if set(c.asset_ids)!=set(task.target_ids) or c.department_id!=task.department_id or c.investigation_id!=draft.investigation_id or c.inspection_type!=('B14_FOLLOWUP' if q.purpose=='FOLLOWUP' else task.action_type):raise PreconditionFailed('INSPECTION_EXACT_TASK_PROCEDURE')
++     else:
++      bound=self.store.get('inspection',c.inspection_id)
++      if not bound or bound['work_order_id']!=w.id or bound['purpose']!=q.purpose or bound['procedure']!=task.procedure_citation.model_dump(mode='json'):raise PreconditionFailed('INSPECTION_WORK_BINDING')
++     if isinstance(c,ReportInspection):
++      if c.review is not None or not reviewer or not q.review_reason or c.source_kind!='SYNTHETIC':raise Denied('AUTHENTICATED_INDEPENDENT_REVIEW_REQUIRED')
++      from app.services.evidence.policies import POLICIES
++      from app.services.planning.policy import ACTIONS
++      allowed=set(REQUIRED[draft.issue]) if q.purpose=='FOLLOWUP' else {'ACTION_COMPLETED','ACTION_FAILED'}|{code for p in POLICIES[draft.issue].values() for key in ['confirming','falsifying'] for code in p[key]}|{p['safety_code'] for p in ACTIONS.values() if p['issue']==draft.issue}
++      for ob in c.observations:validate_observation(ob,allowed)
++      c=c.model_copy(update={'review':Review(reviewer_id=reviewer.id,role='ANALYST',reviewed=True,reason=q.review_reason)})
++    jid=evidence_id('EV-JOURNAL',actor.id,c.request_id)
++    if self.repo._node_optional(jid):raise Conflict('INSPECTION_REQUEST_ALREADY_REPRESENTED')
++    entity,new,changed_nodes,links,assessment=ev.plan(c,actor,reader,jid,at,session.revision)
++    receipt=Receipt(operation=c.operation,journal_id=jid,entity_id=entity,graph=self.repo.graph.name,graph_revision=session.revision+1,recorded_at=at,created_ids=[n.id for n in new],relationship_ids=[e.id for e in links],updated_ids=[n.id for n in changed_nodes],assessment=assessment)
++    journal=Journal(state='COMMITTED',request_hash=digest({'actor':actor.model_dump(mode='json'),'command':c.model_dump(mode='json')}),actor=actor,command=c.model_dump(mode='json'),receipt=receipt)
++    node('Evidence',{**evidence_common(jid,at),'evidence_type':'B09_OPERATION','summary':journal.serialized(),'reliability':'UNVERIFIED','recorded_at':at,'source_kind':'USER','source_record_id':actor.id+':'+c.request_id})
++    for n in new:node(n.kind,n.properties)
++    for n in changed_nodes:
++     old=self.repo.get_node(n.id);updates[n.id]=(old,n.properties);hashes[n.id]=digest(n.properties)
++    edges.extend((e.kind,e.source,e.target,e.properties) for e in links)
++    if isinstance(c,RequestInspection):states.append(('inspection',entity,{'work_order_id':w.id,'purpose':q.purpose,'procedure':task.procedure_citation.model_dump(mode='json'),'last_operation':opid}))
++    result=receipt.model_dump(mode='json');event_type='INSPECTION_RESULT_RECORDED' if isinstance(c,ReportInspection) else 'HYPOTHESIS_ASSESSED' if isinstance(c,Assess) else 'GRAPH_EVIDENCE_CHANGED'
++   else:
++    if w.properties['status']!='COMPLETED':raise PreconditionFailed('COMPLETED_INTERVENTION_REQUIRED')
++    completion=self.store.get('completion',w.id)
++    if not completion or completion['action']!='COMPLETE':raise PreconditionFailed('COMPLETION_ATTESTATION_REQUIRED')
++    refs=reports(q.evidence_ids,'FOLLOWUP');observations=[]
++    for ref in refs:
++     if ref.source_record_id in completion['source_records']:raise PreconditionFailed('INDEPENDENT_FOLLOWUP_SOURCE_REQUIRED')
++     observations.extend(ref.report.observations)
++    status,gaps=evaluate(draft.issue,task.target_ids,observations,q.window_start,q.window_end,completion['at'],at)
++    if isinstance(q,Recur):
++     prior=self.store.get('outcome',q.verified_outcome_id)
++     if not prior or prior['work_order_id']!=w.id or prior['assessment_status']!='RESOLUTION_VERIFIED' or plan.properties['status']!='COMPLETED':raise PreconditionFailed('PRIOR_VERIFIED_OUTCOME_REQUIRED')
++     if status!='PROBLEM_PERSISTS' or timestamp(q.window_start)<=timestamp(prior['evaluated_at']):raise PreconditionFailed('QUALIFYING_LATER_RECURRENCE_REQUIRED')
++     from app.services.complaints.models import normalize,Journal as IntakeJournal
++     from app.services.complaints.service import ComplaintService,stable as intake_id
++     intake=ComplaintService(self.repo,clock=self.ops.clock);iq,norm=normalize(q.complaint)
++     old_incidents=[reader.node(e.target) for e in reader.edges('INVESTIGATES',source=inv.id) if reader.node(e.target).kind=='Incident']
++     if not old_incidents or any(n.properties['status']!='ENDED' for n in old_incidents):raise PreconditionFailed('RECURRENCE_REQUIRES_RECORDED_END')
++     locations={e.target for n in old_incidents for e in self.repo._edges('OCCURRED_AT') if e.source==n.id}
++     if iq.source_kind!='SYNTHETIC' or iq.issue_type!=draft.issue or set(iq.asset_ids)!=set(task.target_ids) or iq.location_id not in locations or not timestamp(q.window_start)<=timestamp(iq.occurred_at)<=timestamp(q.window_end) or set(iq.evidence_ids)!=set(q.evidence_ids) or timestamp(iq.reported_at)>timestamp(at):raise PreconditionFailed('RECURRENCE_OCCURRENCE_SCOPE')
++     jid=intake_id('EV-B08',iq.source_kind,iq.source_id,iq.external_record_id)
++     if self.repo._node_optional(jid):raise Conflict('RECURRENCE_SOURCE_ALREADY_REPRESENTED')
++     prepared=IntakeJournal(operation='INTAKE',original=norm.original,canonical=norm.canonical,request_hash=norm.request_hash)
++     planned_journal={**common(jid,at),'evidence_type':'COMPLAINT_INTAKE','summary':prepared.serialized(),'reliability':'UNVERIFIED','recorded_at':at,'source_kind':'SYNTHETIC','source_record_id':iq.source_id+':'+iq.external_record_id}
++     intake_result,new,changes,links=intake.plan(iq,norm,at,session.revision+1,planned_journal=planned_journal)
++     clusters={e.target for e in reader.edges('INVESTIGATES',source=inv.id) if reader.node(e.target).kind=='ProblemCluster'}
++     if intake_result.classification!='AFTER_RECORDED_END' or not intake_result.created_incident or intake_result.cluster_id not in clusters:raise PreconditionFailed('RECURRENCE_CLASSIFICATION')
++     j=IntakeJournal(operation='INTAKE',original=norm.original,canonical=norm.canonical,request_hash=norm.request_hash,state='COMMITTED',receipt=intake_result.model_dump(mode='json'))
++     node('Evidence',{**common(jid,at),'evidence_type':'COMPLAINT_INTAKE','summary':j.serialized(),'reliability':'UNVERIFIED','recorded_at':at,'source_kind':'SYNTHETIC','source_record_id':iq.source_id+':'+iq.external_record_id})
++     for n in new:node(n.kind,n.properties)
++     for n in changes:
++      old=self.repo.get_node(n.id)
++      if old.kind=='ProblemCluster':
++       transition(old.kind,old.properties['status'],'REOPENED');n=n.model_copy(update={'properties':{**n.properties,'status':'REOPENED'}})
++      updates[n.id]=(old,n.properties);hashes[n.id]=digest(n.properties)
++     edges.extend((e.kind,e.source,e.target,e.properties) for e in links)
++     changed(inv,'REOPENED');status='RECURRENCE_DETECTED';event_type='RECURRENCE_DETECTED'
++     result=outcome(status,'INCONCLUSIVE',refs,{'start':q.window_start,'end':q.window_end},gaps)
++     result.update(prior_outcome_id=prior['id'],new_incident_id=intake_result.incident_id,cluster_id=intake_result.cluster_id,classification=intake_result.classification)
++     states[-1]=('outcome',result['id'],result)
++    else:
++     if plan.properties['status']!='MONITORING':raise PreconditionFailed('PLAN_NOT_MONITORING')
++     signature=digest({'work_order_id':w.id,'policy':VERSION,'evidence':sorted(q.evidence_ids),'start':q.window_start,'end':q.window_end})
++     existing=self.store.get('evaluation',signature)
++     if existing:return existing['receipt']
++     if status=='RESOLUTION_VERIFIED':
++      for id,t in tasks.items():
++       if self.repo.get_node(id,'ActionTask').properties['status']!='COMPLETED':raise PreconditionFailed('OPEN_BLOCKING_TASK')
++       execution_gates(t,[self.repo.get_node(saved['task_ids'][d],'ActionTask').properties['status'] for d in t.depends_on])
++      for basis in draft.basis:
++       history=reader.histories(basis.hypothesis_id)
++       if basis.addressed and history and history[-1].assessment in {'CONTRADICTED','INCONCLUSIVE'}:status='INCONCLUSIVE';gaps.append('Latest addressed causal assessment requires revised plan/investigation')
++     case_ready=status=='RESOLUTION_VERIFIED'
++     if case_ready:
++      for id in tasks:
++       if id==task_node.id:continue
++       other=self.store.get('verification',stable('WO',plan.id,id))
++       if not other or other['assessment_status']!='RESOLUTION_VERIFIED':case_ready=False;gaps.append('Other task follow-up not yet verified: '+id)
++     if case_ready:
++      changed(plan,'COMPLETED',graph_revision=session.revision+1);changed(inv,'COMPLETED')
++      for e in reader.edges('INVESTIGATES',source=inv.id):
++       n=reader.node(e.target)
++       if n.kind=='Incident':
++        sequence=['ACTIVE','ENDED'] if n.properties['status']=='REPORTED' else ['ENDED'];changed(n,sequence,ended_at=at)
++       elif n.kind=='ProblemCluster':changed(n,'CONTROLLED')
++     result=outcome(status,'MITIGATION_VERIFIED' if status=='RESOLUTION_VERIFIED' else 'INCONCLUSIVE',refs,{'start':q.window_start,'end':q.window_end},gaps);event_type='INTERVENTION_OUTCOME_RECORDED'
++     result['case_closed']=case_ready
++     states[-1]=('outcome',result['id'],result)
++     states.append(('evaluation',signature,{'receipt':result}))
++     states.append(('verification',w.id,{'assessment_status':status,'outcome_id':result['id']}))
++   if w.id in updates:states.append(('order',w.id,{**v,'last_operation':opid}))
++   event={'id':stable('EVENT',opid),'type':event_type,'entity_id':event_subject,'aggregate_revision':session.revision+1,'occurred_at':at,'payload_schema_version':1,'source_kind':'SYNTHETIC','idempotency_key':q.request_id,'actor_id':actor.id,'actor_role':actor.role,'payload':result}
++   node('DomainEvent',{**common(event['id'],at),'event_type':event_type,'subject_id':event_subject,'occurred_at':at,'delivery_status':'PENDING','idempotency_key':q.request_id,'payload_ref':'operation:'+opid});edge('EMITTED_EVENT',emitter,event['id'])
++   operation={'request_id':q.request_id,'request_hash':request_hash,'actor':actor.model_dump(mode='json'),'command':value,'receipt':result,'occurred_at':at,'native_hashes':hashes,'events':[event],'proof':proof,'state_transitions':transitions,'reviewer_id':reviewer.id if reviewer else None}
++   states.append(('operation',opid,operation));self.ops.auth.require(token,q.operation)
++   if reviewer:self.ops.auth.require(reviewer_token,'draft')
++   try:
++    self.store.commit(session,w.id,nodes,list(updates.values()),edges,states)
++    if interrupt=='after_commit':raise RuntimeError('INJECTED_ACK_LOSS')
++    if self.store.get('operation',opid)!=operation:raise RuntimeError('READBACK_MISMATCH')
++   except Exception:raise OpsRecovery(self.repo.graph.name,q.request_id,w.id,operation=q.operation,plan_id=plan.id,approval_id=approval.id) from None
++   return result
+--- /dev/null
++++ b/backend/app/services/operations/execution_models.py
+@@ -0,0 +1,37 @@
++"""B14 closed commands. Observations are data, never supplied outcome decisions."""
++from typing import Annotated, Literal
++from pydantic import Field
++from app.services.evidence.models import (Model, ID, Hash, Text, Time, RequestInspection,
++    TransitionInspection, ReportInspection, Assess)
++
++class WorkCommand(Model):
++    request_id: ID
++    work_order_id: ID
++    expected_hash: Hash
++
++class Progress(WorkCommand):
++    operation: Literal['progress'] = 'progress'
++    action: Literal['START', 'BLOCK', 'FAIL', 'COMPLETE']
++    reason: Text
++    evidence_ids: list[ID] = Field(default_factory=list, max_length=10)
++
++class Inspect(WorkCommand):
++    operation: Literal['inspect'] = 'inspect'
++    purpose: Literal['COMPLETION', 'FOLLOWUP', 'ASSESSMENT']
++    command: Annotated[RequestInspection | TransitionInspection | ReportInspection | Assess,
++                       Field(discriminator='operation')]
++    review_reason: Text | None = None
++
++class Evaluate(WorkCommand):
++    operation: Literal['evaluate'] = 'evaluate'
++    evidence_ids: list[ID] = Field(default_factory=list, max_length=10)
++    window_start: Time
++    window_end: Time
++
++class Recur(Evaluate):
++    operation: Literal['recur'] = 'recur'
++    verified_outcome_id: ID
++    # Closed B08 input is validated by its canonical normalizer before any write.
++    complaint: dict
++
++COMMANDS = {c.model_fields['operation'].default:c for c in [Progress, Inspect, Evaluate, Recur]}
+--- /dev/null
++++ b/backend/app/services/operations/verification.py
+@@ -0,0 +1,69 @@
++"""B14-1 synthetic demo observation policy; no hidden truth or provider access."""
++from app.graph.schema import timestamp
++from app.graph.repository import PreconditionFailed
++
++VERSION = 'B14-1'
++CODES = {
++ 'ACTION_COMPLETED':None, 'ACTION_FAILED':None,
++ 'COMPARABLE_FOLLOWUP_RAINFALL':None, 'FOLLOWUP_WATERLOGGING':'boolean',
++ 'WEAR_EXPOSURE':None, 'FOLLOWUP_PAVEMENT':'boolean',
++ 'SCHEDULED_PICKUPS':'pickups', 'ACTUAL_PICKUPS':'pickups',
++ 'REACCUMULATION_WINDOW':'hours', 'WASTE_REACCUMULATION':'boolean',
++}
++REQUIRED = {
++ 'WATERLOGGING':('COMPARABLE_FOLLOWUP_RAINFALL','FOLLOWUP_WATERLOGGING'),
++ 'ROAD_DAMAGE':('WEAR_EXPOSURE','FOLLOWUP_PAVEMENT'),
++ 'WASTE_ACCUMULATION':('SCHEDULED_PICKUPS','ACTUAL_PICKUPS','REACCUMULATION_WINDOW','WASTE_REACCUMULATION'),
++}
++
++def validate_observation(ob, allowed):
++ if ob.code not in allowed or ob.method != 'DIRECT_SYNTHETIC_FIELD_TEST':
++  raise PreconditionFailed('OBSERVATION_CODE_OR_METHOD')
++ if ob.result=='UNKNOWN' and ob.value is None and ob.unit is None:return
++ if ob.code in CODES:
++  unit=CODES[ob.code]
++  if ob.unit!=unit or (unit is None and ob.value is not None):raise PreconditionFailed('OBSERVATION_UNIT')
++  if unit=='boolean' and ob.value not in (0.0,1.0):raise PreconditionFailed('OBSERVATION_BOOLEAN')
++  if unit in {'hours','pickups'} and (ob.value is None or ob.value<0 or (unit=='pickups' and ob.value!=int(ob.value))):raise PreconditionFailed('OBSERVATION_QUANTITY')
++ elif ob.value is not None or ob.unit is not None:raise PreconditionFailed('UNSPECIFIED_MEASUREMENT_UNIT')
++
++def evaluate(issue, targets, observations, start, end, completed_at, now):
++ """Return classification and gaps; all targets must qualify, never choose one row."""
++ lo,hi,done,at=map(timestamp,[start,end,completed_at,now])
++ if not done<lo<=hi<=at:raise PreconditionFailed('OUTCOME_WINDOW_ORDER')
++ gaps=[];adverse=False;contradictory=False;opportunity=True
++ for target in targets:
++  rows={code:[] for code in REQUIRED[issue]}
++  for ob in observations:
++   if ob.asset_id!=target:continue
++   validate_observation(ob,set(REQUIRED[issue]))
++   when=timestamp(ob.observed_at)
++   if not lo<=when<=hi:raise PreconditionFailed('OUTCOME_EVIDENCE_OUTSIDE_WINDOW')
++   if ob.result=='OBSERVED':rows[ob.code].append(ob)
++   else:gaps.append(target+': unknown '+ob.code);opportunity=False
++  missing=[code for code,values in rows.items() if not values]
++  if missing:
++   gaps.append(target+': missing '+','.join(missing));opportunity=False;continue
++  final=rows[REQUIRED[issue][-1]]
++  values={ob.value for ob in final}
++  contradictory |= len(values)>1
++  adverse |= 1.0 in values
++  if issue in {'WATERLOGGING','ROAD_DAMAGE'}:
++   exposure=rows[REQUIRED[issue][0]]
++   if min(timestamp(x.observed_at) for x in final)<max(timestamp(x.observed_at) for x in exposure):
++    gaps.append(target+': final finding precedes exposure');opportunity=False
++  else:
++   scheduled={x.value for x in rows['SCHEDULED_PICKUPS']};actual={x.value for x in rows['ACTUAL_PICKUPS']}
++   if len(scheduled)!=1 or len(actual)!=1:contradictory=True
++   elif min(scheduled)<1 or scheduled!=actual:
++    gaps.append(target+': scheduled/actual pickup coverage insufficient');opportunity=False
++   windows=rows['REACCUMULATION_WINDOW']
++   if any(x.value<24 or (timestamp(x.observed_at)-lo).total_seconds()<x.value*3600 for x in windows):
++    gaps.append(target+': synthetic24hour observation window not established');opportunity=False
++   if min(timestamp(x.observed_at) for x in final)<max(timestamp(x.observed_at) for x in windows):
++    gaps.append(target+': reaccumulation finding precedes window');opportunity=False
++   if any(timestamp(x.observed_at)>min(timestamp(v.observed_at) for v in windows) for code in ['SCHEDULED_PICKUPS','ACTUAL_PICKUPS'] for x in rows[code]):
++    gaps.append(target+': pickups follow observation window');opportunity=False
++ if contradictory:return 'INCONCLUSIVE',gaps+['Contradictory observations retained; no source arbitration']
++ if not opportunity:return 'MONITORING',gaps
++ return ('PROBLEM_PERSISTS' if adverse else 'RESOLUTION_VERIFIED'),gaps
+--- /dev/null
++++ b/backend/tests/b14_fixtures.py
+@@ -0,0 +1,67 @@
++"""Authored simulated observations through real authenticated B09/B13 services."""
++from app.active import active_scope
++from app.services.operations.service import Operations
++from app.services.operations.migration import OperationsMigration
++from app.services.operations.verification import REQUIRED
++from tests.b12_fixtures import prepared
++from tests.b13_fixtures import auth_setup
++from tests.integration.test_operations_runtime import approved
++
++def prepare(db,tmp_path,memory,issue):
++ p,r,clock,path,inv,draft,planning=prepared(db,tmp_path,memory,issue,remedial=True)
++ auth,tokens=auth_setup(tmp_path/'auth.sqlite3');OperationsMigration(db,p.graph).apply()
++ ops=Operations(planning,auth,clock=clock)
++ return p,r,clock,path,inv,draft,planning,auth,tokens,ops
++
++class Run:
++ def __init__(self,r,clock,ops,tokens,issue):
++  self.r,self.clock,self.ops,self.tokens,self.issue=r,clock,ops,tokens,issue;self.n=0;self.assignment_index=0
++  self.lead={'WATERLOGGING':'OP-DRAIN-LEAD','ROAD_DAMAGE':'OP-ROAD-LEAD','WASTE_ACCUMULATION':'OP-WASTE-LEAD'}[issue]
++ def key(self):self.n+=1;return 'B14-command-'+str(self.n)
++ async def call(self,command,operator=None,**kw):
++  return await self.ops.execute(command,token=self.tokens[operator or self.lead],**kw)
++ async def begin(self,planning,draft):
++  b,saved,pending,decision=await approved(self.ops,planning,draft,self.tokens,'B14')
++  self.b,self.saved=b,saved
++  self.w=await self.call({**b,'operation':'order','request_id':self.key(),'approval_id':decision['id'],'task_id':b['assignments'][0]['task_id']},'OP-APPROVER')
++  await self.call({'operation':'update','request_id':self.key(),'work_order_id':self.w['id'],'expected_hash':self.hash(),'new_status':'ASSIGNED','reason':'Assigned simulated departmental actor'})
++  await self.progress('START')
++  return self.w
++ def hash(self):return self.r.get_node(self.w['id'],'WorkOrder').content_hash
++ async def progress(self,action,evidence_ids=None,**kw):
++  q={'operation':'progress','request_id':self.key(),'work_order_id':self.w['id'],'expected_hash':self.hash(),'action':action,'reason':'Authored simulated '+action,'evidence_ids':evidence_ids or []}
++  return q,await self.call(q,**kw)
++ async def report(self,purpose,observations):
++  a=self.b['assignments'][self.assignment_index];key=self.key()
++  async def command(c,review=False):
++   key=self.key();c['request_id']=key
++   q={'operation':'inspect','request_id':key,'work_order_id':self.w['id'],'expected_hash':self.hash(),'purpose':purpose,'command':c}
++   if review:q['review_reason']='Independent authenticated review of authored synthetic measurements'
++   out=await self.call(q,reviewer_token=self.tokens['OP-ANALYST'] if review else None)
++   return q,out
++  _,created=await command({'operation':'request_inspection','investigation_id':self.saved['draft']['investigation_id'],'asset_ids':a['target_ids'],'department_id':a['department_id'],'inspection_type':'B14_FOLLOWUP' if purpose=='FOLLOWUP' else a['action_type']})
++  id=created['entity_id']
++  for status in ['REQUESTED','SCHEDULED','IN_PROGRESS']:
++   self.clock.advance();c={'operation':'transition_inspection','inspection_id':id,'expected_hash':self.r.get_node(id).content_hash,'status':status}
++   if status=='SCHEDULED':c['scheduled_at']=self.clock()
++   await command(c)
++  self.clock.advance()
++  obs=observations(self.clock())
++  q,out=await command({'operation':'report_inspection','inspection_id':id,'expected_hash':self.r.get_node(id).content_hash,'source_id':'B14-field-'+key,'record_id':key,'source_kind':'SYNTHETIC','observations':obs},True)
++  return q,out
++ def observation(self,code,at,value=None,unit=None):
++  return {'asset_id':self.b['assignments'][self.assignment_index]['target_ids'][0],'code':code,'statement':'Authored synthetic '+code,'method':'DIRECT_SYNTHETIC_FIELD_TEST','observed_at':at,'result':'OBSERVED','value':value,'unit':unit}
++ async def complete(self,fail=False):
++  q,report=await self.report('COMPLETION',lambda at:[self.observation('ACTION_FAILED' if fail else 'ACTION_COMPLETED',at)])
++  pq,result=await self.progress('FAIL' if fail else 'COMPLETE',[report['entity_id']]);return q,report,pq,result
++ async def followup(self,adverse=0.0):
++  self.clock.advance();start=self.clock()
++  # Request/start inspection before authoring later controlled-time observations.
++  def observations(at):
++   if self.issue=='WASTE_ACCUMULATION':
++    from datetime import timedelta
++    pickup=at;self.clock.advance(25*3600);end=self.clock()
++    return [self.observation('SCHEDULED_PICKUPS',pickup,1.0,'pickups'),self.observation('ACTUAL_PICKUPS',pickup,1.0,'pickups'),self.observation('REACCUMULATION_WINDOW',end,24.0,'hours'),self.observation('WASTE_REACCUMULATION',end,adverse,'boolean')]
++   first=at;self.clock.advance();return [self.observation(REQUIRED[self.issue][0],first),self.observation(REQUIRED[self.issue][1],self.clock(),adverse,'boolean')]
++  q,rep=await self.report('FOLLOWUP',observations);self.clock.advance()
++  return {'operation':'evaluate','request_id':self.key(),'work_order_id':self.w['id'],'expected_hash':self.hash(),'evidence_ids':[rep['entity_id']],'window_start':start,'window_end':self.clock()},rep
+--- /dev/null
++++ b/backend/tests/integration/test_execution_runtime.py
+@@ -0,0 +1,168 @@
++"""B14 real FalkorDB/SDK/native B09 journals and B08 recurrence, zero providers."""
++import asyncio,json,copy
++from pathlib import Path
++import pytest
++from app.active import active_scope
++from app.graph.repository import PreconditionFailed,Conflict
++from app.services.operations.auth import Denied
++from app.services.operations.models import OpsRecovery
++from app.services.operations.service import stable
++from app.services.evidence.reader import Reader
++from app.services.evidence.models import Receipt
++from app.services.evidence.service import EvidenceService
++from app.graph.analysis.engine import GraphAnalysis
++from app.graph.analysis.models import CaseRequest
++from tests.b14_fixtures import prepare,Run
++from tests.integration.test_memory_graphrag import memory
++pytestmark=pytest.mark.integration
++
++def save(name,value):Path('docs/evidence/B14-'+name+'.json').write_text(json.dumps(value,indent=2)+'\n')
++
++@pytest.mark.parametrize('issue',['WATERLOGGING','ROAD_DAMAGE','WASTE_ACCUMULATION'])
++def test_actual_three_issue_completion_verification_and_water_recurrence(db,tmp_path,memory,issue):
++ p,r,clock,path,inv,draft,planning,auth,tokens,ops=prepare(db,tmp_path,memory,issue)
++ async def run():
++  with active_scope(p):
++   f=Run(r,clock,ops,tokens,issue);await f.begin(planning,draft)
++   draft_saved=copy.deepcopy(f.saved)
++   report_cmd,report,completion_cmd,completed=await f.complete()
++   assert completed['status']=='COMPLETED' and completed['result']=='ACTION_COMPLETED'
++   assert r.get_node(f.b['plan_id']).properties['status']=='MONITORING'
++   assert r.get_node(inv).properties['status']=='MONITORING'
++   assert planning.store.get(f.b['plan_id'])==draft_saved
++   assert (await f.call(completion_cmd))==completed
++   assert await f.call(report_cmd,reviewer_token=tokens['OP-ANALYST'])==report
++   EvidenceService(r,clock=clock).readback(Receipt.model_validate(report))
++   # Independent monitor has no opportunity yet; complete work does not close case.
++   clock.advance();start=clock();clock.advance()
++   empty={'operation':'evaluate','request_id':f.key(),'work_order_id':f.w['id'],'expected_hash':f.hash(),'evidence_ids':[],'window_start':start,'window_end':clock()}
++   awaiting=await f.call(empty,'OP-ANALYST');assert awaiting['assessment_status']=='MONITORING' and not awaiting['case_closed']
++   query,followup=await f.followup()
++   verified=await f.call(query,'OP-ANALYST')
++   assert verified['assessment_status']=='RESOLUTION_VERIFIED' and verified['case_closed']
++   assert verified['policy_version']=='B14-1' and verified['evidence_references'][0]['id']==followup['entity_id']
++   assert r.get_node(f.b['plan_id']).properties['status']=='COMPLETED' and r.get_node(inv).properties['status']=='COMPLETED'
++   assert planning.store.get(f.b['plan_id'])==draft_saved
++   assert await f.call(query,'OP-ANALYST')==verified
++   assert r._read('MATCH (w:WorkOrder {id:$id})-[:RESULTED_IN]->(o:InterventionOutcome) RETURN count(o)',{'id':f.w['id']})==[[3]]
++   proof={'graph':p.graph,'binding':f.b,'completion':completed,'no_opportunity':awaiting,'verified':verified,'report':report,'followup':followup,'provider_calls':0}
++   if issue=='WATERLOGGING':
++    recurrence,rep=await f.followup(1.0)
++    incident=Reader(r,clock()).edges('INVESTIGATES',source=inv)
++    old=next(r.get_node(e.target) for e in incident if r.get_node(e.target).kind=='Incident')
++    loc=next(e.target for e in r._edges('OCCURRED_AT') if e.source==old.id)
++    recurrence.update(operation='recur',verified_outcome_id=verified['id'],complaint={'description':'Synthetic observed return after independently verified outcome','source_id':'B14-recurrence','external_record_id':'distinct-later-occurrence','source_channel':'SIMULATOR','source_kind':'SYNTHETIC','issue_type':issue,'subtype':old.properties['subtype'],'reported_at':clock(),'occurred_at':recurrence['window_start'],'location_id':loc,'asset_ids':draft.tasks[0].target_ids,'evidence_ids':[rep['entity_id']]})
++    reopened=await f.call(recurrence,'OP-ANALYST')
++    assert reopened['assessment_status']=='RECURRENCE_DETECTED' and reopened['classification']=='AFTER_RECORDED_END'
++    assert r.get_node(reopened['cluster_id']).properties['status']=='REOPENED' and r.get_node(inv).properties['status']=='REOPENED'
++    assert reopened['new_incident_id']!=old.id and r.get_node(old.id).properties['status']=='ENDED'
++    assert ops.store.get('outcome',verified['id'])==verified
++    assert await f.call(recurrence,'OP-ANALYST')==reopened
++    # Existing B05 case-memory retrieval, rather than a B14 fake history.
++    memory_result=GraphAnalysis(r).cases(CaseRequest(seed_incident_id=reopened['new_incident_id'],as_of=clock(),limit=40,max_hops=4,include_candidates=True))
++    assert verified['id'] in {n.id for n in memory_result.nodes}
++    assert f.w['id'] in {n.id for n in memory_result.nodes}
++    proof.update(recurrence=reopened,memory=memory_result.model_dump(mode='json'))
++   save('outcome-'+issue,proof)
++ asyncio.run(run())
++
++def test_actual_contradiction_preserves_assessments_and_prevents_closure(db,tmp_path,memory):
++ p,r,clock,path,inv,draft,planning,auth,tokens,ops=prepare(db,tmp_path,memory,'WATERLOGGING')
++ async def run():
++  with active_scope(p):
++   f=Run(r,clock,ops,tokens,'WATERLOGGING');await f.begin(planning,draft)
++   basis=next(b for b in draft.basis if b.addressed);old=Reader(r,clock()).histories(basis.hypothesis_id)
++   report_cmd,report=await f.report('COMPLETION',lambda at:[f.observation('ACTION_COMPLETED',at),f.observation('DRAIN_CLEAR',at)])
++   clock.advance();key=f.key()
++   c={'operation':'inspect','request_id':key,'work_order_id':f.w['id'],'expected_hash':f.hash(),'purpose':'ASSESSMENT','command':{'operation':'assess','request_id':key,'hypothesis_id':basis.hypothesis_id,'expected_hash':r.get_node(basis.hypothesis_id).content_hash,'evidence_ids':[report['entity_id']],'as_of':clock()}}
++   revised=await f.call(c,'OP-ANALYST');history=Reader(r,clock()).histories(basis.hypothesis_id)
++   assert history[:-1]==old and history[-1].assessment in {'CONTRADICTED','INCONCLUSIVE'}
++   assert report['entity_id'] in history[-1].contradicting_evidence_ids
++   _,done=await f.progress('COMPLETE',[report['entity_id']]);assert done['result']=='ACTION_COMPLETED'
++   query,_=await f.followup();result=await f.call(query,'OP-ANALYST')
++   assert result['assessment_status']=='INCONCLUSIVE' and not result['case_closed']
++   assert r.get_node(f.b['plan_id']).properties['status']=='MONITORING'
++   save('contradiction',{'graph':p.graph,'old_assessment_ids':[a.id for a in old],'new_assessment':history[-1].model_dump(mode='json'),'result':result,'completion':done})
++ asyncio.run(run())
++
++def test_actual_failed_attempt_and_persistent_problem_are_retained(db,tmp_path,memory):
++ p,r,clock,path,inv,draft,planning,auth,tokens,ops=prepare(db,tmp_path,memory,'WATERLOGGING')
++ async def run():
++  with active_scope(p):
++   f=Run(r,clock,ops,tokens,'WATERLOGGING');await f.begin(planning,draft)
++   _,report,cmd,result=await f.complete(fail=True)
++   assert result['status']=='BLOCKED' and result['task_status']=='FAILED' and result['assessment_status']=='INTERVENTION_FAILED'
++   assert await f.call(cmd)==result
++   assert r.get_node(report['entity_id'],'Evidence') and r.get_node(result['id'],'WorkOrder')
++   assert r._read('MATCH (:WorkOrder {id:$id})-[:RESULTED_IN]->(o:InterventionOutcome) RETURN o.result,o.assessment_status',{'id':f.w['id']})==[['INCONCLUSIVE','INTERVENTION_FAILED']]
++   with pytest.raises(PreconditionFailed):await f.progress('START')
++   save('failure',{'graph':p.graph,'work_order_id':f.w['id'],'report':report,'result':result})
++ asyncio.run(run())
++
++def test_actual_execution_denials_replay_and_uncertain_completion(db,tmp_path,memory):
++ p,r,clock,path,inv,draft,planning,auth,tokens,ops=prepare(db,tmp_path,memory,'WATERLOGGING')
++ async def run():
++  with active_scope(p):
++   f=Run(r,clock,ops,tokens,'WATERLOGGING');await f.begin(planning,draft)
++   bad={'operation':'progress','request_id':f.key(),'work_order_id':f.w['id'],'expected_hash':f.hash(),'action':'COMPLETE','reason':'Cannot claim completion without evidence'}
++   for operator in ['OP-ANALYST','OP-ADMIN','OP-ROAD-LEAD']:
++    with pytest.raises(Denied):await f.call(bad,operator)
++   with pytest.raises(PreconditionFailed):await f.call(bad)
++   with pytest.raises(Conflict):await f.call({**bad,'request_id':f.key(),'expected_hash':'0'*64})
++   with pytest.raises(PreconditionFailed):await f.progress('START')
++   # Explicit blocked-progress/unchanged assessment must not invalidate immutable gates.
++   await f.progress('BLOCK')
++   basis=next(b for b in draft.basis if b.addressed);old_assessment=Reader(r,clock()).histories(basis.hypothesis_id)[-1]
++   clock.advance();key=f.key()
++   reassess={'operation':'inspect','request_id':key,'work_order_id':f.w['id'],'expected_hash':f.hash(),'purpose':'ASSESSMENT','command':{'operation':'assess','request_id':key,'hypothesis_id':basis.hypothesis_id,'expected_hash':r.get_node(basis.hypothesis_id).content_hash,'evidence_ids':[],'as_of':clock()}}
++   await f.call(reassess,'OP-ANALYST');latest=Reader(r,clock()).histories(basis.hypothesis_id)[-1]
++   assert latest.id!=old_assessment.id and latest.assessment==old_assessment.assessment
++   await f.progress('START');bad['expected_hash']=f.hash()
++   # Native approval tamper must not become execution authority; restore exact bytes only in isolated fault fixture.
++   approval=r.get_node(ops.store.get('order',f.w['id'])['approval_id']);props=approval.properties
++   r.update_node(approval.id,{'status':'REVOKED'},expected_hash=approval.content_hash)
++   with pytest.raises(PreconditionFailed):await f.call(bad)
++   altered=r.get_node(approval.id);r.update_node(approval.id,{'status':props['status']},expected_hash=altered.content_hash)
++   _,report=await f.report('COMPLETION',lambda at:[f.observation('ACTION_COMPLETED',at)])
++   command={**bad,'request_id':f.key(),'expected_hash':f.hash(),'evidence_ids':[report['entity_id']]}
++   with pytest.raises(OpsRecovery) as caught:await f.call(command,interrupt='after_commit')
++   assert caught.value.reconciliation['commitment']=='UNKNOWN'
++   assert r.get_node(f.w['id']).properties['status']=='COMPLETED'
++   receipt=await f.call(command)
++   assert await f.call(command)==receipt
++   op=ops.store.get('operation',stable('OP',command['request_id']))
++   assert op['proof']['validation_scope']=='IMMUTABLE_BINDING_RECORD_EXISTING_WORK_OR_MONITOR'
++   assert r._read('MATCH (:WorkOrder {id:$id})-[:RESULTED_IN]->(o:InterventionOutcome) RETURN count(o)',{'id':f.w['id']})==[[1]]
++   assert r.get_node(f.b['plan_id']).properties['status']=='MONITORING'
++   # Persistent observation after technically completed repair remains unresolved.
++   query,_=await f.followup(1.0);persistent=await f.call(query,'OP-ANALYST')
++   assert persistent['assessment_status']=='PROBLEM_PERSISTS' and not persistent['case_closed']
++   before=r._read('MATCH (o:InterventionOutcome) RETURN count(o)')
++   assert await f.call({**query,'request_id':f.key()},'OP-ANALYST')==persistent
++   assert r._read('MATCH (o:InterventionOutcome) RETURN count(o)')==before
++   save('recovery-denials',{'graph':p.graph,'recovery':caught.value.reconciliation,'retained_completion':receipt,'persistent':persistent,'outcome_count':before,'provider_calls':0})
++ asyncio.run(run())
++
++def test_actual_road_water_dependency_progress_and_native_lifecycle(db,tmp_path,memory):
++ from tests.b12_fixtures import prepared
++ from tests.b13_fixtures import auth_setup
++ from app.services.operations.migration import OperationsMigration
++ from app.services.operations.service import Operations
++ p,r,clock,path,inv,draft,planning=prepared(db,tmp_path,memory,'ROAD_DAMAGE')
++ auth,tokens=auth_setup(tmp_path/'auth.sqlite3');OperationsMigration(db,p.graph).apply();ops=Operations(planning,auth,clock=clock)
++ async def run():
++  with active_scope(p):
++   f=Run(r,clock,ops,tokens,'ROAD_DAMAGE');await f.begin(planning,draft)
++   b=f.b;approval=ops.store.get('order',f.w['id'])['approval_id'];second=b['assignments'][1]
++   command={**b,'operation':'order','request_id':f.key(),'approval_id':approval,'task_id':second['task_id']}
++   with pytest.raises(PreconditionFailed):await f.call(command,'OP-APPROVER')
++   _,_,_,first=await f.complete();assert r.get_node(b['plan_id']).properties['status']=='IN_EXECUTION'
++   # Completed predecessor and legitimate graph revisions now permit dependent order.
++   command['request_id']=f.key();f.w=await f.call(command,'OP-APPROVER');f.assignment_index=1;f.lead='OP-WATER-LEAD'
++   await f.call({'operation':'update','request_id':f.key(),'work_order_id':f.w['id'],'expected_hash':f.hash(),'new_status':'ASSIGNED','reason':'Approved dependent utility inspection after predecessor completion'})
++   await f.progress('START');_,_,_,second_done=await f.complete()
++   assert r.get_node(b['plan_id']).properties['status']=='MONITORING'
++   assert all(r.get_node(a['task_id']).properties['status']=='COMPLETED' for a in b['assignments'])
++   assert planning.store.get(b['plan_id'])==f.saved
++   save('dependency',{'graph':p.graph,'binding':b,'predecessor':first,'dependent':second_done,'plan_state':'MONITORING','historical_draft_unchanged':True})
++ asyncio.run(run())
+--- /dev/null
++++ b/backend/tests/unit/test_execution_policy.py
+@@ -0,0 +1,36 @@
++from datetime import datetime,timedelta,timezone
++import pytest
++from app.graph.repository import PreconditionFailed
++from app.services.evidence.models import Observation
++from app.services.operations.verification import evaluate,validate_observation,REQUIRED
++
++def time(hours):return (datetime(2026,10,18,tzinfo=timezone.utc)+timedelta(hours=hours)).isoformat().replace('+00:00','Z')
++def ob(code,hour=2,value=None,unit=None,**extra):return Observation(asset_id='A',code=code,statement='Authored synthetic observation',method='DIRECT_SYNTHETIC_FIELD_TEST',observed_at=time(hour),value=value,unit=unit,**extra)
++def rows(issue,adverse=0.0):
++ if issue=='WASTE_ACCUMULATION':return [ob('SCHEDULED_PICKUPS',2,1.0,'pickups'),ob('ACTUAL_PICKUPS',3,1.0,'pickups'),ob('REACCUMULATION_WINDOW',26,24.0,'hours'),ob('WASTE_REACCUMULATION',26,adverse,'boolean')]
++ return [ob(REQUIRED[issue][0],2),ob(REQUIRED[issue][1],3,adverse,'boolean')]
++@pytest.mark.parametrize('issue',list(REQUIRED))
++@pytest.mark.parametrize('adverse,expected',[(0.0,'RESOLUTION_VERIFIED'),(1.0,'PROBLEM_PERSISTS')])
++def test_policy_qualifying_and_adverse(issue,adverse,expected):assert evaluate(issue,['A'],rows(issue,adverse),time(1),time(27),time(0),time(28))[0]==expected
++@pytest.mark.parametrize('issue',list(REQUIRED))
++def test_missing_opportunity_and_conflicting_observations(issue):
++ assert evaluate(issue,['A'],[],time(1),time(27),time(0),time(28))[0]=='MONITORING'
++ data=rows(issue)+[ob(REQUIRED[issue][-1],26,1.0,'boolean')]
++ assert evaluate(issue,['A'],data,time(1),time(27),time(0),time(28))[0]=='INCONCLUSIVE'
++@pytest.mark.parametrize('start,end,now',[(0,27,28),(2,1,28),(1,27,26)])
++def test_invalid_temporal_boundaries(start,end,now):
++ with pytest.raises(PreconditionFailed):evaluate('ROAD_DAMAGE',['A'],rows('ROAD_DAMAGE'),time(start),time(end),time(0),time(now))
++def test_temporal_target_and_waste_adequacy():
++ unknown=rows('ROAD_DAMAGE')+[ob('FOLLOWUP_PAVEMENT',3,None,None,result='UNKNOWN')]
++ # UNKNOWN may omit a measurement, and never supplies positive evidence.
++ assert evaluate('ROAD_DAMAGE',['A'],unknown,time(1),time(27),time(0),time(28))[0]=='MONITORING'
++ assert evaluate('ROAD_DAMAGE',['A','B'],rows('ROAD_DAMAGE'),time(1),time(27),time(0),time(28))[0]=='MONITORING'
++ assert evaluate('ROAD_DAMAGE',['A'],[ob('WEAR_EXPOSURE',4),ob('FOLLOWUP_PAVEMENT',3,0.0,'boolean')],time(1),time(27),time(0),time(28))[0]=='MONITORING'
++ data=rows('WASTE_ACCUMULATION');data[2]=ob('REACCUMULATION_WINDOW',10,8.0,'hours')
++ assert evaluate('WASTE_ACCUMULATION',['A'],data,time(1),time(27),time(0),time(28))[0]=='MONITORING'
++ data=rows('WASTE_ACCUMULATION');data[1]=ob('ACTUAL_PICKUPS',3,0.0,'pickups')
++ assert evaluate('WASTE_ACCUMULATION',['A'],data,time(1),time(27),time(0),time(28))[0]=='MONITORING'
++ with pytest.raises(PreconditionFailed):evaluate('ROAD_DAMAGE',['A'],rows('ROAD_DAMAGE'),time(4),time(27),time(0),time(28))
++@pytest.mark.parametrize('code,value,unit',[('UNKNOWN',None,None),('FOLLOWUP_PAVEMENT',2.0,'boolean'),('ACTUAL_PICKUPS',1.5,'pickups'),('REACCUMULATION_WINDOW',-1.0,'hours'),('WEAR_EXPOSURE',1.0,'hours')])
++def test_invalid_observation_units_and_codes(code,value,unit):
++ with pytest.raises(PreconditionFailed):validate_observation(ob(code,2,value,unit),set(REQUIRED['ROAD_DAMAGE'])|set(REQUIRED['WASTE_ACCUMULATION']))

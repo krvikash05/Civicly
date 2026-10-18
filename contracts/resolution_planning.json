@@ -1,0 +1,788 @@
+{
+  "version": "B12R-1",
+  "municipality_id": "demo-city",
+  "execution_authority": false,
+  "draft_schema": {
+    "$defs": {
+      "Basis": {
+        "additionalProperties": false,
+        "properties": {
+          "hypothesis_id": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Hypothesis Id",
+            "type": "string"
+          },
+          "assessment_id": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Assessment Id",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          },
+          "addressed": {
+            "title": "Addressed",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "hypothesis_id",
+          "assessment_id",
+          "reason",
+          "addressed"
+        ],
+        "title": "Basis",
+        "type": "object"
+      },
+      "Citation": {
+        "additionalProperties": false,
+        "properties": {
+          "source_document_id": {
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Source Document Id",
+            "type": "string"
+          },
+          "source_version": {
+            "minimum": 1,
+            "title": "Source Version",
+            "type": "integer"
+          },
+          "canonical_document_id": {
+            "maxLength": 60,
+            "minLength": 1,
+            "title": "Canonical Document Id",
+            "type": "string"
+          },
+          "owner_department_id": {
+            "title": "Owner Department Id",
+            "type": "string"
+          },
+          "source_uri": {
+            "maxLength": 512,
+            "title": "Source Uri",
+            "type": "string"
+          },
+          "content_checksum": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Content Checksum",
+            "type": "string"
+          },
+          "quote_excerpt": {
+            "maxLength": 800,
+            "minLength": 1,
+            "title": "Quote Excerpt",
+            "type": "string"
+          },
+          "passage_location": {
+            "pattern": "^chunk:[0-9]+:[a-f0-9-]{36}$",
+            "title": "Passage Location",
+            "type": "string"
+          },
+          "chunk_sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Chunk Sha256",
+            "type": "string"
+          },
+          "confidence_label": {
+            "enum": [
+              "SOURCE_REVIEWED_SYNTHETIC",
+              "PROPOSED",
+              "DISPUTED"
+            ],
+            "title": "Confidence Label",
+            "type": "string"
+          },
+          "assertion_status": {
+            "const": "PROPOSED",
+            "default": "PROPOSED",
+            "title": "Assertion Status",
+            "type": "string"
+          },
+          "retrieved_at": {
+            "title": "Retrieved At",
+            "type": "string"
+          },
+          "effective_from": {
+            "title": "Effective From",
+            "type": "string"
+          },
+          "derived_from": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Derived From"
+          },
+          "trusted_as_instructions": {
+            "const": false,
+            "default": false,
+            "title": "Trusted As Instructions",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "source_document_id",
+          "source_version",
+          "canonical_document_id",
+          "owner_department_id",
+          "source_uri",
+          "content_checksum",
+          "quote_excerpt",
+          "passage_location",
+          "chunk_sha256",
+          "confidence_label",
+          "retrieved_at",
+          "effective_from"
+        ],
+        "title": "Citation",
+        "type": "object"
+      },
+      "Monitoring": {
+        "additionalProperties": false,
+        "properties": {
+          "issue": {
+            "enum": [
+              "WATERLOGGING",
+              "ROAD_DAMAGE",
+              "WASTE_ACCUMULATION"
+            ],
+            "title": "Issue",
+            "type": "string"
+          },
+          "required_evidence": {
+            "items": {
+              "enum": [
+                "COMPARABLE_FOLLOWUP_RAINFALL",
+                "FOLLOWUP_WATERLOGGING",
+                "FOLLOWUP_PAVEMENT",
+                "WEAR_EXPOSURE",
+                "SCHEDULED_PICKUPS",
+                "ACTUAL_PICKUPS",
+                "REACCUMULATION_WINDOW"
+              ],
+              "type": "string"
+            },
+            "maxItems": 7,
+            "minItems": 2,
+            "title": "Required Evidence",
+            "type": "array"
+          },
+          "observation_opportunity": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Observation Opportunity",
+            "type": "string"
+          },
+          "verification_criteria": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Verification Criteria",
+            "type": "string"
+          },
+          "missing_opportunity": {
+            "const": "UNRESOLVED",
+            "default": "UNRESOLVED",
+            "title": "Missing Opportunity",
+            "type": "string"
+          },
+          "completion_implies_resolution": {
+            "const": false,
+            "default": false,
+            "title": "Completion Implies Resolution",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "issue",
+          "required_evidence",
+          "observation_opportunity",
+          "verification_criteria"
+        ],
+        "title": "Monitoring",
+        "type": "object"
+      },
+      "Prerequisite": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "enum": [
+              "CAUSAL_INSPECTION",
+              "SAFETY_REVIEW",
+              "ISOLATION_PROOF",
+              "UTILITY_VERIFICATION"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "MET",
+              "UNMET"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "evidence_ids": {
+            "items": {
+              "maxLength": 200,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 12,
+            "title": "Evidence Ids",
+            "type": "array"
+          },
+          "depends_on_task_id": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Depends On Task Id"
+          }
+        },
+        "required": [
+          "kind",
+          "status"
+        ],
+        "title": "Prerequisite",
+        "type": "object"
+      },
+      "Remediation": {
+        "additionalProperties": false,
+        "properties": {
+          "mode": {
+            "enum": [
+              "SUPPORTED_NOW",
+              "CONDITIONAL"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "conditions": {
+            "items": {
+              "$ref": "#/$defs/Prerequisite"
+            },
+            "maxItems": 4,
+            "minItems": 2,
+            "title": "Conditions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "mode",
+          "conditions"
+        ],
+        "title": "Remediation",
+        "type": "object"
+      },
+      "TaskDraft": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Id",
+            "type": "string"
+          },
+          "action_type": {
+            "enum": [
+              "INSPECTION",
+              "DRAIN_BLOCKAGE_CLEARANCE",
+              "SUBGRADE_REPAIR",
+              "MISSED_PICKUP_RECOVERY",
+              "UTILITY_ISOLATION",
+              "UTILITY_LEAK_REPAIR"
+            ],
+            "title": "Action Type",
+            "type": "string"
+          },
+          "remediation": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/Remediation"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "target_ids": {
+            "items": {
+              "maxLength": 200,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 5,
+            "minItems": 1,
+            "title": "Target Ids",
+            "type": "array"
+          },
+          "department_id": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Department Id",
+            "type": "string"
+          },
+          "priority": {
+            "enum": [
+              "LOW",
+              "MODERATE",
+              "HIGH",
+              "CRITICAL"
+            ],
+            "title": "Priority",
+            "type": "string"
+          },
+          "prerequisites": {
+            "items": {
+              "maxLength": 2000,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 8,
+            "minItems": 1,
+            "title": "Prerequisites",
+            "type": "array"
+          },
+          "depends_on": {
+            "items": {
+              "maxLength": 200,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 12,
+            "title": "Depends On",
+            "type": "array"
+          },
+          "evidence_ids": {
+            "items": {
+              "maxLength": 200,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 12,
+            "minItems": 1,
+            "title": "Evidence Ids",
+            "type": "array"
+          },
+          "assessment_ids": {
+            "items": {
+              "maxLength": 200,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 10,
+            "minItems": 1,
+            "title": "Assessment Ids",
+            "type": "array"
+          },
+          "procedure_citation": {
+            "$ref": "#/$defs/Citation"
+          },
+          "expected_outcome": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Expected Outcome",
+            "type": "string"
+          },
+          "verification_criteria": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Verification Criteria",
+            "type": "string"
+          },
+          "risks": {
+            "items": {
+              "maxLength": 2000,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 8,
+            "minItems": 1,
+            "title": "Risks",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "action_type",
+          "target_ids",
+          "department_id",
+          "priority",
+          "prerequisites",
+          "evidence_ids",
+          "assessment_ids",
+          "procedure_citation",
+          "expected_outcome",
+          "verification_criteria",
+          "risks"
+        ],
+        "title": "TaskDraft",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "properties": {
+      "investigation_id": {
+        "maxLength": 200,
+        "minLength": 1,
+        "title": "Investigation Id",
+        "type": "string"
+      },
+      "issue": {
+        "enum": [
+          "WATERLOGGING",
+          "ROAD_DAMAGE",
+          "WASTE_ACCUMULATION"
+        ],
+        "title": "Issue",
+        "type": "string"
+      },
+      "version": {
+        "maximum": 100,
+        "minimum": 1,
+        "title": "Version",
+        "type": "integer"
+      },
+      "previous_plan_id": {
+        "anyOf": [
+          {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Previous Plan Id"
+      },
+      "simulation_mode": {
+        "const": "SIMULATED",
+        "default": "SIMULATED",
+        "title": "Simulation Mode",
+        "type": "string"
+      },
+      "basis": {
+        "items": {
+          "$ref": "#/$defs/Basis"
+        },
+        "maxItems": 10,
+        "minItems": 2,
+        "title": "Basis",
+        "type": "array"
+      },
+      "evidence_ids": {
+        "items": {
+          "maxLength": 200,
+          "minLength": 1,
+          "type": "string"
+        },
+        "maxItems": 30,
+        "minItems": 1,
+        "title": "Evidence Ids",
+        "type": "array"
+      },
+      "tasks": {
+        "items": {
+          "$ref": "#/$defs/TaskDraft"
+        },
+        "maxItems": 12,
+        "minItems": 1,
+        "title": "Tasks",
+        "type": "array"
+      },
+      "expected_outcomes": {
+        "items": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "type": "string"
+        },
+        "maxItems": 8,
+        "minItems": 1,
+        "title": "Expected Outcomes",
+        "type": "array"
+      },
+      "risks": {
+        "items": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "type": "string"
+        },
+        "maxItems": 8,
+        "minItems": 1,
+        "title": "Risks",
+        "type": "array"
+      },
+      "uncertainties": {
+        "items": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "type": "string"
+        },
+        "maxItems": 12,
+        "minItems": 1,
+        "title": "Uncertainties",
+        "type": "array"
+      },
+      "monitoring": {
+        "$ref": "#/$defs/Monitoring"
+      }
+    },
+    "required": [
+      "investigation_id",
+      "issue",
+      "version",
+      "basis",
+      "evidence_ids",
+      "tasks",
+      "expected_outcomes",
+      "risks",
+      "uncertainties",
+      "monitoring"
+    ],
+    "title": "PlanDraft",
+    "type": "object"
+  },
+  "receipt_schema": {
+    "additionalProperties": false,
+    "properties": {
+      "id": {
+        "maxLength": 200,
+        "minLength": 1,
+        "title": "Id",
+        "type": "string"
+      },
+      "version": {
+        "title": "Version",
+        "type": "integer"
+      },
+      "plan_hash": {
+        "pattern": "^[0-9a-f]{64}$",
+        "title": "Plan Hash",
+        "type": "string"
+      },
+      "status": {
+        "const": "DRAFT",
+        "default": "DRAFT",
+        "title": "Status",
+        "type": "string"
+      },
+      "simulation_mode": {
+        "const": "SIMULATED",
+        "default": "SIMULATED",
+        "title": "Simulation Mode",
+        "type": "string"
+      },
+      "approved": {
+        "const": false,
+        "default": false,
+        "title": "Approved",
+        "type": "boolean"
+      },
+      "executable": {
+        "const": false,
+        "default": false,
+        "title": "Executable",
+        "type": "boolean"
+      }
+    },
+    "required": [
+      "id",
+      "version",
+      "plan_hash"
+    ],
+    "title": "PlanReceipt",
+    "type": "object"
+  },
+  "reference_rules": "latest immutable assessments from investigated hypotheses, attributed evidence membership, temporally visible investigation assets/hypothesis concern targets, verified single MAINTAINED_BY; unknown/conflict blocks",
+  "procedure_rules": "Exact B11 canonical graph/Document/KnowledgeProcedure/version/chunk/source hash pointer; source-reviewed PROPOSED never verified policy; document owner is not execution assignment; revoked/superseded blocks",
+  "storage": "registryv3/0001\u20130003 unchanged; additive0004 companion plus actual ResolutionPlan/ActionTask/native DAG/assignment/target edges in one fenced repository commit. Immutable versions, request hash replay, no partial acknowledgment",
+  "runtime": "RECOMMEND {plan_draft}; bounded sanitized feedback persisted for safe rejected drafts/pre-write dependency errors. Unsafe ownership/uncertain writes propagate to wake quarantine; no fabricated rejection acknowledgment. Historical B12 hashes and absent feedback decode retained.",
+  "monitoring": "Draft criteria only; comparable rainfall, pavement/wear, scheduled+actual pickup/reaccumulation window required by issue. Missing opportunity unresolved; completion never resolution",
+  "limits": {
+    "tasks": 12,
+    "targets_per_task": 5,
+    "history_versions": 100,
+    "payload_bytes": 90000
+  },
+  "excluded": [
+    "approvals",
+    "WorkOrder creation",
+    "execution",
+    "monitoring evaluation/workers",
+    "events/outbox",
+    "API/SSE/frontend"
+  ],
+  "feedback_schema": {
+    "additionalProperties": false,
+    "properties": {
+      "code": {
+        "enum": [
+          "PLAN_DAG_INVALID",
+          "PLAN_SCHEMA_INVALID",
+          "PLAN_ACTION_UNSUPPORTED",
+          "PLAN_PREREQUISITE_INVALID",
+          "PLAN_EVIDENCE_INSUFFICIENT",
+          "PLAN_OWNERSHIP_UNAVAILABLE",
+          "PLAN_SOURCE_UNAVAILABLE",
+          "PLAN_DEPENDENCY_UNAVAILABLE",
+          "PLAN_OPERATOR_RECOVERY",
+          "PLAN_REFERENCE_INVALID"
+        ],
+        "title": "Code",
+        "type": "string"
+      },
+      "category": {
+        "enum": [
+          "DAG",
+          "SCHEMA",
+          "ACTION",
+          "PREREQUISITE",
+          "EVIDENCE",
+          "OWNERSHIP",
+          "SOURCE",
+          "DEPENDENCY",
+          "RECOVERY",
+          "REFERENCE"
+        ],
+        "title": "Category",
+        "type": "string"
+      },
+      "resolution": {
+        "enum": [
+          "DRAFT_CLARIFICATION",
+          "MISSING_EVIDENCE_OR_CAPABILITY",
+          "OPERATOR_RECOVERY"
+        ],
+        "title": "Resolution",
+        "type": "string"
+      },
+      "task_ids": {
+        "items": {
+          "maxLength": 64,
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$",
+          "type": "string"
+        },
+        "maxItems": 8,
+        "title": "Task Ids",
+        "type": "array"
+      },
+      "field_paths": {
+        "items": {
+          "maxLength": 160,
+          "type": "string"
+        },
+        "maxItems": 8,
+        "title": "Field Paths",
+        "type": "array"
+      },
+      "explanation": {
+        "maxLength": 240,
+        "title": "Explanation",
+        "type": "string"
+      },
+      "draft_committed": {
+        "default": "NO",
+        "enum": [
+          "NO",
+          "UNKNOWN"
+        ],
+        "title": "Draft Committed",
+        "type": "string"
+      }
+    },
+    "required": [
+      "code",
+      "category",
+      "resolution",
+      "explanation"
+    ],
+    "title": "Feedback",
+    "type": "object"
+  },
+  "action_policies": {
+    "DRAIN_BLOCKAGE_CLEARANCE": {
+      "issue": "WATERLOGGING",
+      "cause": "BLOCKAGE",
+      "labels": [
+        "DrainInlet",
+        "DrainSegment"
+      ],
+      "department": "DEPT-DRAIN",
+      "safety_code": "DRAIN_CLEARANCE_SAFETY_REVIEWED"
+    },
+    "SUBGRADE_REPAIR": {
+      "issue": "ROAD_DAMAGE",
+      "cause": "SUBGRADE_FAILURE",
+      "labels": [
+        "RoadSegment"
+      ],
+      "department": "DEPT-ROAD",
+      "safety_code": "SUBGRADE_REPAIR_SAFETY_REVIEWED"
+    },
+    "MISSED_PICKUP_RECOVERY": {
+      "issue": "WASTE_ACCUMULATION",
+      "cause": "MISSED_PICKUP",
+      "labels": [
+        "WasteCollectionPoint"
+      ],
+      "department": "DEPT-SAN",
+      "safety_code": "PICKUP_RECOVERY_SAFETY_REVIEWED"
+    },
+    "UTILITY_ISOLATION": {
+      "issue": "ROAD_DAMAGE",
+      "cause": "UTILITY_LEAK",
+      "labels": [
+        "WaterPipe"
+      ],
+      "department": "DEPT-WATER",
+      "safety_code": "UTILITY_SAFETY_REVIEWED"
+    },
+    "UTILITY_LEAK_REPAIR": {
+      "issue": "ROAD_DAMAGE",
+      "cause": "UTILITY_LEAK",
+      "labels": [
+        "WaterPipe"
+      ],
+      "department": "DEPT-WATER",
+      "safety_code": "UTILITY_SAFETY_REVIEWED"
+    }
+  },
+  "remediation_rules": "Latest addressed SUPPORTED/VERIFIED with reviewed target-specific causal support, no contradictions. Supported-now requires typed MET full causal confirmation and action-specific safety observations through validated B09 reports. Conditional causal gap requires explicit UNMET and inspection DAG dependency; unmet safety remains unresolved. Procedure source is documentary, PROPOSED, not physical causal evidence. No execution authority.",
+  "hash_compatibility": "Absent remediation omitted from normalized old inspection drafts; existing B12 accepted hashes unchanged. Conditions and their evidence normalize deterministically.",
+  "source_manifest": "data/documents/b12r/manifest.json; three version1 synthetic policies with explicit automated author self-review only; B11 KnowledgeProcedure stays PROPOSED",
+  "responsibility_acquisition": "Explicit independently reviewed synthetic inventory via contracts/responsibility.json; candidate remains immutable; new drafts bind relationship/evidence hashes, operations reject changed ownership bindings; source/procedure/safety remain independent",
+  "utility_dependencies": {
+    "ISOLATION_PROOF": "Immutable UNMET prerequisite bound to exact utility isolation predecessor; persisted independently reviewed completion required at order/assignment/start",
+    "UTILITY_VERIFICATION": "Immutable UNMET prerequisite bound to exact utility repair predecessor on reviewed UNDERLIES pipe/road topology; independently dated utility verification required at order/assignment/start",
+    "authority": "Synthetic proposed guidance and DAG never authorize execution; current evidence, ownership, procedure, exact approval and assignee required",
+    "single_predecessor_limit": {
+      "scope": "At most one UTILITY_LEAK_REPAIR task linked through bounded verified UNDERLIES topology to any target of one road task",
+      "blocker_code": "UTILITY_MULTIPLE_REPAIR_PREDECESSORS",
+      "exact_binding": "The sole linked repair must be both the UTILITY_VERIFICATION predecessor and exact depends_on task; each road target must be linked",
+      "revalidation": "The same policy is rerun with current topology before new authority; no historical draft/approval rewrite",
+      "unsupported": "Multiple relevant repair tasks fail closed; no selection, omission or general multi-predecessor schema"
+    }
+  }
+}

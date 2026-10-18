@@ -68,7 +68,8 @@ def build(service,store,*,expected_graph=None):
 
 async def main():
     with connections() as (reader,writer,name):
-        server=build(CivicReadService(reader),TraceStore(writer,name),expected_graph=CivicReadService(reader).repo.graph.name)
+        from app.memory.runtime import configured
+        server=build(CivicReadService(reader,memory_profile=configured(CivicReadService(reader).repo.graph.name)),TraceStore(writer,name),expected_graph=CivicReadService(reader).repo.graph.name)
         async with stdio_server() as streams:
             await server.run(*streams,server.create_initialization_options())
 

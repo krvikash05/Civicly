@@ -1,0 +1,81 @@
+...F
+=================================== FAILURES ===================================
+_______ test_all_scenario_setup_release_and_retained_reset[PRIMARY-S04] ________
+
+shared = namespace(db=<falkordb.falkordb.FalkorDB object at 0x112953fb0>, p=ActiveProfile(version=1, graph='civicly_b10_test_4c...vikashkumar/pytest-211/b19-private0/memory.json'), memory=<app.memory.service.Memory object at 0x111c16000>, proofs=[])
+id = 'S04', variant = 'PRIMARY'
+
+    @pytest.mark.parametrize('id',list(ISSUES))
+    @pytest.mark.parametrize('variant',['PRIMARY','NEGATIVE'])
+    def test_all_scenario_setup_release_and_retained_reset(shared,id,variant):
+     async def run():
+      first=await fresh(shared,id,variant,id+variant+'-first');second=await fresh(shared,id,variant,id+variant+'-second')
+      assert first['source_graph']!=second['source_graph'] and first['baseline_content_hash']==second['baseline_content_hash']
+      path=shared.path.parent/first['profile_reference']/'profile.json';p=load(path)
+      async def progress(c,s):
+       catalog=(await c.get('/api/v1/demo/scenarios',headers=headers(shared))).json()['data'];assert len(catalog['items'])==12
+       assert all(x['title']=='Demonstration '+x['id'] for x in catalog['items'])
+       assert 'underlying_cause' not in json.dumps(catalog) and 'expected_safe_next_actions' not in json.dumps(catalog)
+       assert s.repo._read("MATCH (e:Evidence {evidence_type:'INSPECTION_REPORT'}) RETURN count(e)")==[[0]]
+       # Out-of-order and missing actual inspection fail before mutation, with safe blockers.
+       bad=await c.post('/api/v1/demo/scenarios/'+id+'/advance',json={'expected_stage':'BASELINE_VISIBLE','stage':'FOLLOW_UP'},headers=headers(shared,key='wrong-order'));assert bad.status_code==409 and bad.json()['error']['details']['blocker_code']=='DEMO_STAGE_ORDER'
+       denied=await c.post('/api/v1/demo/scenarios/'+id+'/advance',json={'expected_stage':'BASELINE_VISIBLE','stage':'EVIDENCE_REVEALED'},headers=headers(shared,'OP-ANALYST','wrong-role'));assert denied.status_code==403
+       timings=[];released=[]
+       for i,case in enumerate(first['scenario']['cases']):
+        view,lead=await inspection(shared,c,case,'case-'+str(i))
+        body={'expected_stage':'BASELINE_VISIBLE','stage':'EVIDENCE_REVEALED','investigation_id':case['investigation_id'],'inspection_id':view['id'],'expected_hash':view['expected_hash']}
+        h=headers(shared,key='release-'+str(i),field=lead,reviewer='OP-ANALYST');t=time.perf_counter();response=await c.post('/api/v1/demo/scenarios/'+id+'/advance',json=body,headers=h);assert response.status_code==200,response.json();timings.append(round(time.perf_counter()-t,4));out=response.json()['data'];released+=out['released_evidence_ids']
+        replay=await c.post('/api/v1/demo/scenarios/'+id+'/advance',json=body,headers=h);assert replay.status_code==200 and replay.json()['data']==out
+        evidence=await c.get('/api/v1/evidence/'+released[-1],headers=headers(shared));assert evidence.status_code==200 and evidence.json()['data']['reviewed']
+        report=s.repo.get_node(released[-1],'Evidence');codes={o['code'] for o in json.loads(report.properties['summary'])['observations']};packet=worlds()[id];expected=packet.release if variant=='PRIMARY' else packet.negative;assert codes=={x.code for x in expected[case['issue_type']]}
+       assert out['scenario']['current_stage']=='EVIDENCE_REVEALED'
+       blocked=await c.post('/api/v1/demo/scenarios/'+id+'/advance',json={'expected_stage':'EVIDENCE_REVEALED','stage':'PLAN_AND_APPROVAL'},headers=headers(shared,key='no-plan'));assert blocked.status_code==409 and blocked.json()['error']['details']['blocker_code']=='DEMO_APPROVED_PLAN_REQUIRED'
+       assert s.repo._read('MATCH (p:ResolutionPlan) RETURN count(p)')==[[0]] and s.repo._read('MATCH (w:WorkOrder) RETURN count(w)')==[[0]]
+       assert s.repo._read("MATCH ()-[r:MAINTAINED_BY]->() WHERE r.association_status<>'CANDIDATE' RETURN count(r)")==[[0]]
+       return {'id':id,'variant':variant,'source_graph':p.graph,'retained_second_source':second['source_graph'],'baseline_content_hash':first['baseline_content_hash'],'cases':out['scenario']['cases'],'released_evidence_ids':released,'setup_seconds':[first['setup_seconds'],second['setup_seconds']],'release_seconds':timings,'stage':'EVIDENCE_REVEALED','no_plan_or_work_fabricated':True}
+      result=await client_run(shared,path,progress);shared_proofs.append(result)
+>    asyncio.run(run())
+
+backend/tests/integration/test_demo_runtime.py:105: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/base_events.py:684: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+backend/tests/integration/test_demo_runtime.py:80: in run
+    first=await fresh(shared,id,variant,id+variant+'-first');second=await fresh(shared,id,variant,id+variant+'-second')
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/tests/integration/test_demo_runtime.py:66: in fresh
+    return await client_run(shared,fn=run)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/tests/integration/test_demo_runtime.py:53: in client_run
+    return await fn(c,app.state.services)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+c = <httpx.AsyncClient object at 0x1164dfbf0>
+s = <app.services.http.service.Services object at 0x114a2bec0>
+
+    async def run(c,s):
+>    start=time.perf_counter();response=await c.post('/api/v1/demo/reset',json={'scenario_id':id,'variant':variant},headers=headers(shared,key=key));assert response.status_code==200,response.json()
+                                                                                                                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E    AssertionError: {'error': {'code': 'RECOVERY_REQUIRED', 'message': 'Outcome requires operator reconciliation; do not automatically ret...commitment': 'UNKNOWN', 'entity_id': None, ...}, 'retryable': False}, 'request_id': 'dc4d5271ead545b7925fedb37f5f5037'}
+E    assert 409 == 200
+E     +  where 409 = <Response [409 Conflict]>.status_code
+
+backend/tests/integration/test_demo_runtime.py:62: AssertionError
+=============================== warnings summary ===============================
+backend/.venv/lib/python3.12/site-packages/graphrag_sdk/core/models.py:19
+  /Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/graphrag_sdk/core/models.py:19: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.14/migration/
+    class DataModel(BaseModel):
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED backend/tests/integration/test_demo_runtime.py::test_all_scenario_setup_release_and_retained_reset[PRIMARY-S04]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 3 passed, 1 warning in 35.00s

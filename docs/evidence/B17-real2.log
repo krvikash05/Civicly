@@ -1,0 +1,93 @@
+F
+=================================== FAILURES ===================================
+_______________ test_frontend_readiness_real_journey_and_tcp_sse _______________
+
+db = <falkordb.falkordb.FalkorDB object at 0x108696480>
+tmp_path = PosixPath('/private/var/folders/ng/nxnstkjs7tn9dbx9nhvtvmzw0000gn/T/pytest-of-vikashkumar/pytest-182/test_frontend_readiness_real_j0')
+memory = <app.memory.service.Memory object at 0x10edd81d0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10eddba70>
+
+    def test_frontend_readiness_real_journey_and_tcp_sse(db,tmp_path,memory,monkeypatch):
+     p,r,clock,path,inv,draft,planning,auth,tokens,ops=prepare(db,tmp_path,memory,'WATERLOGGING')
+     with active_scope(p):
+      delivery=Delivery(r,clock);delivery.activate(operator='B17-proof',reason='Fresh isolated source before actual activity and work',authorize=True)
+      services=Services(p,path,r,auth,ops,delivery,clock,memory=memory)
+     c=TestClient(create_app(services),raise_server_exceptions=False)
+     def get(url,who='OP-ANALYST',expect=200):
+      response=c.get('/api/v1'+url,headers={'Authorization':'Bearer '+tokens[who]})
+      assert response.status_code==expect,(url,response.status_code,response.text)
+      return response.json()['data'] if expect==200 else response.json()
+     # Actual accepted services produce one plan/approval/work/outcome on same case.
+     run=Run(r,clock,ops,tokens,'WATERLOGGING')
+     with active_scope(p):
+      asyncio.run(run.begin(planning,draft));_,report,_,_=asyncio.run(run.complete())
+      q,followup=asyncio.run(run.followup())
+      outcome=asyncio.run(run.call(q,'OP-ANALYST'))
+      assert outcome['assessment_status']=='RESOLUTION_VERIFIED'
+      # Actual broker discovery/call, StateGraph and persisted SDK checkpoint; model
+      # choices explicitly scripted, never represented as genuine provider behavior.
+      from app.agents.mcp import brokers
+      from app.agents.runtime import InvestigationAgent
+      from app.agents.checkpoints import saver
+      from app.agents.models import InvestigationState
+      from app.graph.queries import GraphQueries
+      from tests.b10_fixtures import ScriptedModel,choose
+      incidents=services.reads.targets('INVESTIGATES',inv)
+      incident=next(i for i in incidents if r.get_node(i).kind=='Incident')
+      cluster=next(i for i in incidents if r.get_node(i).kind=='ProblemCluster')
+      thread='B17-'+uuid4().hex
+      async def actual_agent():
+       async with brokers(p,path,memory_path=None) as tools:
+        model=ScriptedModel([choose('READ',{'template':'node','id':incident},'official::query_graph_readonly'),choose()])
+        state=InvestigationState(graph=p.graph,investigation_id=inv,thread_id=thread,problem_cluster_id=cluster,incident_ids=[incident],asset_ids=['D1'],issue='WATERLOGGING',graph_revision=GraphQueries(r)._state(),discovered_tool_names=[v['name'] for v in tools.catalog()],inventory_hash=tools.inventory_hash,as_of=clock())
+        agent=InvestigationAgent(p,r,tools,model,saver(p),clock=clock)
+        return await agent.run(state,thread_id=thread)
+      result=asyncio.run(actual_agent())
+      saved=saver(p).get_tuple({'configurable':{'thread_id':thread}});assert saved
+      original_checkpoint=saved.checkpoint
+      delivery.discover()
+     # Journey 1: overview/map/counts scoped before pages, actual coordinates only.
+     dashboard=get('/dashboard/summary');assert dashboard['completed_work_orders']==1 and dashboard['verified_work_orders']==1
+     assert get('/dashboard/summary','OP-ROAD-LEAD')['completed_work_orders']==0
+     assert get('/work-orders?department_id=DEPT-DRAIN&status=COMPLETED&issue=WATERLOGGING')['total_count']==1
+     assert get('/work-orders?department_id=DEPT-DRAIN','OP-ROAD-LEAD')['total_count']==0
+     assert get('/work-orders?status=ASSIGNED')['total_count']==0
+     assert get('/incidents?issue=ROAD_DAMAGE')['total_count']==0
+>    page=get('/incidents?limit=1');assert len(page['items'])<=1
+          ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+backend/tests/integration/test_frontend_runtime.py:61: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+url = '/incidents?limit=1', who = 'OP-ANALYST', expect = 200
+
+    def get(url,who='OP-ANALYST',expect=200):
+     response=c.get('/api/v1'+url,headers={'Authorization':'Bearer '+tokens[who]})
+>    assert response.status_code==expect,(url,response.status_code,response.text)
+E    AssertionError: ('/incidents?limit=1', 422, '{"error":{"code":"VALIDATION_ERROR","message":"Request does not match the closed contract...gation_id":null,"plan_id":null,"request_id":null},"retryable":false},"request_id":"68d5b20e0a0549f8addfe0d61d8e507a"}')
+E    assert 422 == 200
+E     +  where 422 = <Response [422 Unprocessable Content]>.status_code
+
+backend/tests/integration/test_frontend_runtime.py:23: AssertionError
+------------------------------ Captured log call -------------------------------
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'text' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'name' is already indexed
+=============================== warnings summary ===============================
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyPacked has no __module__ attribute
+
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyObject has no __module__ attribute
+
+backend/.venv/lib/python3.12/site-packages/graphrag_sdk/core/models.py:19
+  /Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/graphrag_sdk/core/models.py:19: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.14/migration/
+    class DataModel(BaseModel):
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED backend/tests/integration/test_frontend_runtime.py::test_frontend_readiness_real_journey_and_tcp_sse
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 3 warnings in 15.76s

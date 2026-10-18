@@ -1,0 +1,18 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.1, pytest-9.1.1, pluggy-1.7.0 -- /Users/vikashkumar/Desktop/Civicly/backend/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/vikashkumar/Desktop/Civicly/backend
+configfile: pyproject.toml
+plugins: langsmith-0.14.11, anyio-4.15.1
+collecting ... collected 1 item
+
+backend/tests/integration/test_persistence.py::test_graph_survives_restart_and_recreation before restart: graph=civicly_b01_test_f4f91b6e82f742718d9ec9380ddc75a2; node=PERSISTENCE; fresh MATCH PASS; Browser HTTP 200; Browser volume PASS
+after restart (same container): graph=civicly_b01_test_f4f91b6e82f742718d9ec9380ddc75a2; node=PERSISTENCE; fresh MATCH PASS; Browser HTTP 200; Browser volume PASS
+after recreation (different container, retained volume): graph=civicly_b01_test_f4f91b6e82f742718d9ec9380ddc75a2; node=PERSISTENCE; fresh MATCH PASS; Browser HTTP 200; Browser volume PASS
+PASSED
+
+============================= slowest 10 durations =============================
+15.21s call     tests/integration/test_persistence.py::test_graph_survives_restart_and_recreation
+0.02s setup    tests/integration/test_persistence.py::test_graph_survives_restart_and_recreation
+0.01s teardown tests/integration/test_persistence.py::test_graph_survives_restart_and_recreation
+============================== 1 passed in 15.25s ==============================

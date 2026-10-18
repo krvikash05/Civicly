@@ -1,0 +1,1268 @@
+--- a/backend/app/api/models.py
++++ b/backend/app/api/models.py
+@@ -108,7 +108,9 @@
+  event_id:ID
+  status:ID
+ from .view_models import FindingDTO,ObservationSource
++from app.services.service_evidence import ServiceRecord
+ class EvidenceDTO(Resource):
++ service_record:ServiceRecord|None=Field(default=None,exclude_if=lambda value:value is None)
+  findings:list[FindingDTO]=Field(default_factory=list,max_length=10)
+  observation_source:ObservationSource|None=None
+  limitations:list[Text]=Field(default_factory=list,max_length=10)
+--- a/backend/app/mcp/civicly/service.py
++++ b/backend/app/mcp/civicly/service.py
+@@ -146,6 +146,11 @@
+                 if visible(props,as_of) and visible(ep,as_of) and visible(ap,as_of) and after<=timestamp(date)<=timestamp(as_of):
+                     evidence_ids=sorted({v for v in (ep.get('source_evidence_id'),props.get('evidence_id')) if v})
+                     evidence=[self.repo.get_node(id,'Evidence') for id in evidence_ids]
++                    for source in evidence:
++                        if source.properties.get('evidence_type')=='SERVICE_EXECUTION_SOURCE':
++                            from app.services.service_evidence import parse_source,validate as service_validate
++                            origin=parse_source(source.properties);record=service_validate(self.repo,origin.report_evidence_id,as_of)
++                            if not record or record.pickup_id!=n.id:raise ValueError('Service provenance invalid')
+                     if any(not visible(v.properties,as_of) for v in evidence):raise ValueError('Future evidence excluded')
+                     existing={v['id'] for v in r['data']['nodes']}
+                     if len(existing|{v.id for v in [n,a,*evidence]})>120 or len(r['data']['edges'])>=200:
+--- a/backend/app/services/demo/service.py
++++ b/backend/app/services/demo/service.py
+@@ -165,6 +165,10 @@
+    world=load()[id];samples=(world.release if private['variant']=='PRIMARY' else world.negative)[case['issue_type']]
+    observations=[{'asset_id':case['asset_id'],'method':'SYNTHETIC_FIELD_SURVEY','observed_at':self.s.clock(),**x.model_dump(mode='json')} for x in samples]
+    report=EvidenceService(self.s.repo,clock=self.s.clock).execute({'operation':'report_inspection','request_id':request,'inspection_id':v['inspection_id'],'expected_hash':v['expected_hash'],'source_id':'B19-field','record_id':id+':'+case['investigation_id'],'source_kind':'SYNTHETIC','observations':observations,'review':Review(reviewer_id=reviewer.id,role='ANALYST',reviewed=True,reason='Independent authenticated review of controlled synthetic world observations').model_dump(mode='json'),'attribution':{'incident_ids':[case['incident_id']],'mode':'OCCURRENCE','rationale':'Direct synthetic field observation for this active episode','basis_evidence_ids':[]}},field)
++   service_source=None
++   if id in {'S05','S06'}:
++    from .service_history import release
++    service_source=release(self.s,id,private['variant'],case,report.entity_id,field,reviewer,request)
+    journal=self.s.repo.get_node(report.journal_id,'Evidence')
+    events=list(self.s.delivery.sources.events('journal',journal.id,journal.properties))
+    if len(events)!=1:raise Recovery(request)
+@@ -172,11 +176,11 @@
+    self.s.delivery.register(events[0],'journal:'+journal.id)
+    with self.s.repo._session() as session:
+     current=store.get('demo','current')
+-    target=next(c for c in current['cases'] if c['investigation_id']==case['investigation_id']);target['evidence_ids']=[report.entity_id]
++    target=next(c for c in current['cases'] if c['investigation_id']==case['investigation_id']);target['evidence_ids']=[report.entity_id]+([service_source['id']] if service_source else [])
+     advanced=all(c['evidence_ids'] for c in current['cases'])
+     if advanced:current['stage']='EVIDENCE_REVEALED'
+     store.write(session,[('demo','current',current),('demo_release',reservation,{'request_id':request,'status':'DONE','evidence_id':report.entity_id})])
+-   return {'scenario_id':id,'stage':current['stage'],'event_id':event_id,'revealed_evidence_ids':[report.entity_id],'scenario':self.summary(current),'released_evidence_ids':[report.entity_id],'stage_advanced':advanced,'simulated':True}
++   return {'scenario_id':id,'stage':current['stage'],'event_id':event_id,'revealed_evidence_ids':target['evidence_ids'],'scenario':self.summary(current),'released_evidence_ids':target['evidence_ids'],'stage_advanced':advanced,'simulated':True}
+   with self.s.repo._session() as session:
+    current=store.get('demo','current')
+    target=next(c for c in current['cases'] if c['investigation_id']==case['investigation_id'])
+--- a/backend/app/services/evidence/classification.py
++++ b/backend/app/services/evidence/classification.py
+@@ -45,6 +45,8 @@
+             inspection_report_ids.update(produced)
+     if len(known) > 20:
+         raise PreconditionFailed('B09 evidence union exceeds20; incomplete evidence cannot verify')
++    from app.services.service_evidence import policy_required
++    strict_service=policy_required(repo,definition.investigation_id)
+     coverage = {i.id: {'codes': set(), 'sources': {}} for i in incidents}
+     for evidence_id in sorted(known):
+         ev = repo.get_node(evidence_id, 'Evidence')
+@@ -63,6 +65,11 @@
+         if report.attribution:
+             for basis_id in report.attribution.basis_evidence_ids:
+                 refs[basis_id] = reader.evidence(basis_id)
++        service_record=None
++        if definition.cause_code in {'MISSED_PICKUP','ILLEGAL_DUMPING'}:
++            from app.services.service_evidence import validate as validate_service
++            service_record=validate_service(repo,evidence_id,reader.as_of)
++            if service_record:refs[service_record.id]=reader.evidence(service_record.id)
+         for index, ob in enumerate(report.observations):
+             incident_ids, reason, basis_ids = attribute(reader, report, ob, incidents, definition, affected)
+             if not incident_ids:
+@@ -70,6 +77,9 @@
+                 gaps.append(reason + ': ' + evidence_id)
+             elif rule and not set(reader.node(ob.asset_id).labels) & set(rule['asset_labels']):
+                 category, reason = 'CONTEXT', 'Observation lacks the domain criterion asset subtype'
++            elif strict_service and definition.cause_code in {'MISSED_PICKUP','ILLEGAL_DUMPING'} and ob.code in set(definition.confirming_codes+definition.falsifying_codes) and not __import__('app.services.service_evidence',fromlist=['qualify']).qualify(service_record,target=ob.asset_id,report_source=report.source_id,observed_at=ob.observed_at,code=ob.code,cause=definition.cause_code)[0]:
++                category,reason='CONTEXT','Rule3 requires bound dated reviewed service execution and applicable target/source/strict chronology'
++                gaps.append(reason+': '+evidence_id)
+             elif ob.code in definition.confirming_codes:
+                 category = 'REVIEWED_SUPPORT' if report.review else 'UNREVIEWED_SUPPORT'
+                 if report.review:
+--- a/backend/app/services/evidence/models.py
++++ b/backend/app/services/evidence/models.py
+@@ -232,7 +232,7 @@
+     hypothesis_id: ID
+     previous_assessment_id: ID | None
+     assessment: Literal['POSSIBLE', 'SUPPORTED', 'CONTRADICTED', 'VERIFIED', 'INCONCLUSIVE']
+-    rule_version: Literal[1, 2] = 1
++    rule_version: Literal[1, 2, 3] = 1
+     classification: EvidenceClassification | None = Field(default=None, exclude_if=lambda value: value is None)
+     cause_code: ID
+     mechanism: Text
+@@ -258,8 +258,10 @@
+ 
+     @model_validator(mode='after')
+     def semantic_version(self):
+-        if self.rule_version != self.format_version or (self.format_version == 2) != (self.classification is not None):
++        if (self.rule_version not in ({2,3} if self.format_version==2 else {1})) or (self.format_version == 2) != (self.classification is not None):
+             raise ValueError('Assessment semantic version mismatch')
++        if self.rule_version==3 and self.cause_code not in {'MISSED_PICKUP','ILLEGAL_DUMPING'}:
++            raise ValueError('Service rule3 cause scope mismatch')
+         if self.classification and (self.supporting_evidence_ids != self.classification.reviewed_support_ids
+                 or self.contradicting_evidence_ids != self.classification.reviewed_contradiction_ids
+                 or self.excluded_evidence_ids != self.classification.excluded_evidence_ids):
+--- a/backend/app/services/evidence/service.py
++++ b/backend/app/services/evidence/service.py
+@@ -299,7 +299,7 @@
+         if final != 'UNDER_REVIEW':
+             sequence.append(transition('Hypothesis', 'UNDER_REVIEW', final))
+         id = stable('ASSESS', q.hypothesis_id, q.request_id)
+-        return Assessment(format_version=2, rule_version=2, classification=classification, id=id, hypothesis_id=h.id, previous_assessment_id=history[-1].id if history else None,
++        return Assessment(format_version=2, rule_version=3 if __import__('app.services.service_evidence',fromlist=['policy_required']).policy_required(self.repo,definition.investigation_id) and issue=='WASTE_ACCUMULATION' and definition.cause_code in {'MISSED_PICKUP','ILLEGAL_DUMPING'} else 2, classification=classification, id=id, hypothesis_id=h.id, previous_assessment_id=history[-1].id if history else None,
+             assessment=label, cause_code=definition.cause_code, mechanism=definition.mechanism,
+             confirming_codes=definition.confirming_codes, falsifying_codes=definition.falsifying_codes,
+             supporting_evidence_ids=support, contradicting_evidence_ids=contradiction, evidence_references=refs,
+@@ -307,7 +307,7 @@
+             source_graph_revision=revision, graph_revision=revision+1, as_of=q.as_of, assessed_at=now,
+             paths=paths, path_ids=pathids, truncated=truncated, state_transitions=sequence,
+             reservations=['Observed findings and connectivity are distinct from causal criteria.',
+-                'Verification uses explicit reviewed synthetic-domain rulev2 with per-occurrence coverage; not hydraulic prediction or resolution verification.',
++                'Verification uses versioned reviewed synthetic-domain criteria with per-occurrence coverage; rule3 service/ordering requires bound dated execution. Not prediction or resolution verification.',
+                 'Attribution-based independence is a conservative demo rule, not proof against colluding sources.',
+                 'Current versions only; future-updated evidence excluded, historical source versions not reconstructed.'])
+ 
+--- a/backend/app/services/http/reads.py
++++ b/backend/app/services/http/reads.py
+@@ -51,6 +51,10 @@
+    scope,_=EvidenceService(self.repo,clock=self.clock).inspection_source(Reader(self.repo,self.clock()),n.id)
+    return scope['department_id']==actor.department_id
+   if k=='Evidence':
++   if p['evidence_type']=='SERVICE_EXECUTION_SOURCE':
++    from app.services.service_evidence import parse_source,validate
++    origin=parse_source(p);record=validate(self.repo,origin.report_evidence_id,self.clock())
++    return bool(record and record.department_id==actor.department_id and self.allowed(self.repo.get_node(record.report_evidence_id,'Evidence'),actor,token))
+    inspections=self.sources('PRODUCED',n.id)
+    return bool(inspections) and all(self.allowed(self.repo.get_node(i,'Inspection'),actor,token) for i in inspections)
+   if k=='Complaint':
+@@ -117,6 +121,11 @@
+    if ref and ref.report:
+     report=ref.report
+     details={'findings':[{'id':fid,'evidence_id':id,'observation':ob.model_dump(mode='json'),'verification_status':self.repo.get_node(fid,'Finding').properties['verification_status']} for fid,ob in zip(report.finding_ids,report.observations,strict=True)],'observation_source':{'inspection_id':report.inspection_id,'inspector_id':report.inspector_id,'department_id':report.department_id,'source_id':report.source_id,'record_id':report.record_id,'observed_at':report.observed_at,'recorded_at':report.recorded_at,'reviewed':reviewed,'reviewer_id':report.review.reviewer_id if report.review else None,'attribution':report.attribution.model_dump(mode='json') if report.attribution else None}}
++   if p['evidence_type']=='SERVICE_EXECUTION_SOURCE':
++    from app.services.service_evidence import parse_source,validate
++    origin=parse_source(p);record=validate(self.repo,origin.report_evidence_id,self.clock())
++    if not record or record.id!=id:raise PreconditionFailed('SERVICE_PROJECTION_SOURCE')
++    reviewed=True;details={'service_record':record.model_dump(mode='json')}
+    return {**base,'evidence_type':p['evidence_type'],'summary':'Internal provenance record; raw journal is not a public source' if internal else 'Attributed source evidence; findings are referenced separately','source_kind':p['source_kind'],'source_record_id':p.get('source_record_id'),'reliability':p['reliability'],'observed_at':p.get('observed_at'),'recorded_at':p['recorded_at'],'document_id':None,'finding_ids':findings,'reviewed':reviewed,**details,'limitations':[] if details else ['No validated typed inspection observations available; raw source journals withheld']}
+   if k=='Inspection':
+    view=EvidenceService(self.repo,clock=self.clock).inspection(id,self.clock());scope,_=EvidenceService(self.repo,clock=self.clock).inspection_source(Reader(self.repo,self.clock()),id)
+--- a/backend/app/services/operations/storage.py
++++ b/backend/app/services/operations/storage.py
+@@ -4,9 +4,9 @@
+ from app.graph.schema import timestamp
+ from app.graph.repository import Conflict,PreconditionFailed
+ from .models import OpsRecovery
+-NODES={'Approval','WorkOrder','DomainEvent','StatusEvent','InterventionOutcome','Evidence','Finding','Inspection','HypothesisAssessment','Complaint','Incident','ProblemCluster'}
++NODES={'PickupExecution','Approval','WorkOrder','DomainEvent','StatusEvent','InterventionOutcome','Evidence','Finding','Inspection','HypothesisAssessment','Complaint','Incident','ProblemCluster'}
+ UPDATES={'DomainEvent','ResolutionPlan','ActionTask','Approval','WorkOrder','Inspection','Hypothesis','Incident','Investigation','ProblemCluster'}
+-EDGES={'MAINTAINED_BY','INVESTIGATES','IMPLEMENTS','AUTHORIZED_BY','HAS_EVENT','EMITTED_EVENT','RESULTED_IN','INSPECTS','PRODUCED','ESTABLISHES','HAS_ASSESSMENT','SUPPORTED_BY','CONTRADICTED_BY','REPORTS','OCCURRED_AT','AFFECTS','PART_OF'}
++EDGES={'PICKUP_FOR','MAINTAINED_BY','INVESTIGATES','IMPLEMENTS','AUTHORIZED_BY','HAS_EVENT','EMITTED_EVENT','RESULTED_IN','INSPECTS','PRODUCED','ESTABLISHES','HAS_ASSESSMENT','SUPPORTED_BY','CONTRADICTED_BY','REPORTS','OCCURRED_AT','AFFECTS','PART_OF'}
+ class Storage:
+  def __init__(self,repo):self.repo=repo
+  def get(self,kind,id):
+@@ -46,6 +46,12 @@
+     review,assertion=validate_review_evidence(self.repo,ep)
+     if (a,b,props.get('valid_from'),props.get('valid_to'))!=(assertion.command.asset_id,assertion.command.department_id,assertion.command.valid_from,assertion.command.valid_to):raise PreconditionFailed('PLANNED_RESPONSIBILITY_SCOPE')
+     planned=self.repo.decode_node(self.repo.registry.labels('Evidence'),ep)
++   elif evidence in fresh and kind=='PICKUP_FOR':
++    from app.services.service_evidence import parse_source
++    ek,ep=records[evidence];record=parse_source(ep)
++    if ek!='Evidence' or (a,b)!=(record.pickup_id,record.target_id) or records[a][0]!='PickupExecution' or records[a][1].get('route_id')!=record.route_id:raise PreconditionFailed('PLANNED_SERVICE_SOURCE_SCOPE')
++    self.repo._check_evidence(props,planned=self.repo.decode_node(self.repo.registry.labels('Evidence'),ep))
++    policy_props={k:v for k,v in props.items() if k!='source_evidence_id'}
+    elif evidence in fresh:
+     # B09/B08 command journal is created atomically with its links. Validate that
+     # narrow planned source rather than weakening B03's persisted-source checks.
+--- a/blockers.md
++++ b/blockers.md
+@@ -693,3 +693,27 @@
+ 
+ ## F01 — frontend review/limits (2026-10-18)
+ No unresolved shell/build/type failure. UI has no authenticated session/data transport yet; dashes/unavailable panels are intentional, no real agent/graph rendering claim. F02 must generate types and verify against isolated authorized API instance; contract fingerprints alone cannot prove compatibility. F04 must exercise official Canvas (docs reviewed per human). Backend safety/ownership/live/scenario blockers remain independent; F01 neither clears them nor changes backend processes/config/graphs. F01results/files/screenshots in frontend/docs/evidence. Stop for review; exact next frontendF02.
++
++
++## CURRENT B20-R-SERVICE-EVIDENCE — technically passing; human review pending (2026-10-18)
++Ownership and utility/dependency correction are human accepted. Implemented only dated S05/S06 controller evidence: canonical PickupExecution/PICKUP_FOR, specific synthetic service-log due/actual/checked/recorded times, attributed reviewed source and actual route/point references; separate lifecycle-valid field/deposit report. Candidate recurring schedules/routes/owners and original runtime-v1 definitions remain unchanged. UNKNOWN service creates no execution; explicit MISSED has no actual_at. No quantities invented. No capacity/route/dumping intervention, plan, approval or resolution manufactured.
++
++Controller-only writes reuse existing0005 fenced Storage, hashed provenance/receipt, durable native event and source-bound HTTP recovery; no generic ledger/endpoint/migration/role/dependency. Rule3 is scoped by hashed demo/current S05/S06 investigation binding for new missed-pickup/dumping assessments. It validates source/target/route/report/journal/native hashes and strict pickup-before-deposit timing, not labels, codes, record counts or equal dates. Generic rule2 semantics and old rule1/2 assessment bytes retained; rule2 is not service chronology. B14-2 monitoring unchanged. Validated source DTO adds optional service_record to existing evidence API/CLI; actual MCP pickup history retains PARTIAL/gaps and current provenance checks. Runtime/agent reads cannot access the new controller packet.
++
++Final43distinctPASS=37newfocusedunits+2directAPI/CLI-schema compatibilityunits+4realS05/S06PRIMARY/NEGATIVE.0unresolvedFAIL/0SKIP. Final focused39PASS3.62s; shared four-realPASS99.74s; only affected uncertain S06NEGATIVE recheckedPASS26.76s after removing unnecessary duplicate-source probe from uncertain path. Both finalSPECvalidatorsPASS once. Historical9failedtestexecutions retained:1unit expectation about parse-only body vs bound state,4real exact version2 coupling,4real incorrect SUCCESS-only assumption for actual PARTIAL history. Failed graphs never repaired. Explicit authored synthetic facts, actual FalkorDB/SDK/HTTP ASGI/CLI/runtime MCP; no model solver or live provider.
++
++S05PRIMARY actual MISSED→qualified MISSED_PICKUP SUPPORTED; capacity observation remains separate SUPPORTED, no capacity intervention. S05NEGATIVE UNKNOWN/no execution→INCONCLUSIVE. S06PRIMARY actual pickup11:59Z→separate deposit12:00Z→ILLEGAL_DUMPING SUPPORTED/MISSED_PICKUP CONTRADICTED. S06NEGATIVE completion only→dumpingINCONCLUSIVE. No independently VERIFIED root cause or resolution asserted. Actual service-commit+injected readback ValueError returns409RECOVERY_REQUIRED/UNKNOWN; one execution/source retained, exact original HTTP replay no redispatch, intent/demo reservation remainDISPATCHING. No retry/replacementkey/delete/rollback/clearance; original IDs and committed report/source/event support human reconciliation only.
++
++Evidence/guidance: backend/SERVICE_EVIDENCE.md; docs/evidence/B20R-SERVICE-EVIDENCE-RESULTS.md/COMMANDS.md/FILES.md/changes.patch/WALKTHROUGH.md and fourdated proofs/retention.json. Allsix logs append-only; earlier artifacts/data/approvals/accounting/quarantines retained; ordinarypytest/children0externalGemini/countTokens. BLOCK-B20-05 technically addressed pending human review, fullB20PARTIAL/BLOCKED for capacity/route/dumping interventions; B10genuineOPEN/PARTIAL. NoB21/frontend/live authorization. Exactnext: human reviewB20-R-SERVICE-EVIDENCE, then separately authorize further work. STOP.
++
++
++### B20-R-SERVICE-EVIDENCE final compatibility verification
++CURRENT final45distinctPASS=39newunit+2directcompatibilityunit+4real,0unresolvedFAIL/0SKIP. Two final unit cases ensure optionalservice_record is omitted when absent, preserving legacy EvidenceDTO/DONE replay response shape; populated sources unchanged from actual runtime proof. Focused final41PASS; actual duration in focused-final.txt. Both finalSPEC validatorsPASS after finalsource edit. Earlier43-case summary is superseded by this45-case total, not additional runtime journeys. Duplicate generated static-check blocks removed and JSON formatting minimized; no behavior/schema-name change. No real journeys repeated for documentation/legacy-null serialization-only edits. All earlier evidence preserved; fullB20/B10 genuine gates remain open.
++
++
++## F02 — frontend limits and presenter setup (2026-10-18)
++No unresolvedF02transport/sessionfailure. Judges have no sign-in; presenter must configure existingauthorizedisolatedAPI+OP-ANALYSTprivatepassword once via ignoredfrontend/.env.local per frontend/docs/API_CONNECTION.md. Persistent3100preview has no testcredential/configauto-install and therefore correctlyshowsunavailable until configured. Temporary QA servers stopped; originalbackendprocesses untouched. Tokenmemoryonly; publichostingpolicy/fullreadiness outsideF02. Higherauthority independentapproval/fieldactors not auto-granted. Missing cases/dataF03/CanvasF04/SSEF05/actionformsF06 remain explicit. Currentbackendfeature/live/BENDgates remain independently binding; this auth/transportproof does not close them. NextfrontendF03; stopforreview.
++
++
++### B20-R-SERVICE-EVIDENCE final read-only preservation
++AuditPASS: all1728pre-task public files retained;1236earlier evidence files byte-identical;123accepted test files unchanged. Allsix histories append-only. Original registries/migrations0001–0005/city858nodes1246edges42candidate drains, runtime-v1 definitions, B01probe,12previousB20checkpoints, B12R2/B19quarantines and accepted ownership/utility records/UNKNOWNintents retained. Newfourvariant service source/report/native/candidate/oldassessment integrityPASS; uncertain intent+release reservationDISPATCHING retained. Historical2paidrequests/noactive sessions or holds unchanged. 12interlockreports0external/0unexpected; final publicartifact/patchprivate-value scanPASS. ActualFalkorDB6.0.2/Redis8.10.2 and pinnedpackages recorded, no version changes. Final45distinctPASS41unit/4real;0unresolvedFAIL/0SKIP. FullB20PARTIAL/BLOCKED/B10genuineOPEN/PARTIAL; STOPforhumanreview.
+--- a/contracts/api_models.json
++++ b/contracts/api_models.json
+@@ -690,6 +690,17 @@
+           "default": true,
+           "title": "Simulated",
+           "type": "boolean"
++        },
++        "service_record": {
++          "anyOf": [
++            {
++              "$ref": "#/$defs/ServiceRecord"
++            },
++            {
++              "type": "null"
++            }
++          ],
++          "default": null
+         },
+         "findings": {
+           "items": {
+@@ -9907,6 +9918,153 @@
+       ],
+       "title": "ResponsibilityDTO",
+       "type": "object"
++    },
++    "ServiceRecord": {
++      "additionalProperties": false,
++      "properties": {
++        "version": {
++          "const": "B20-SERVICE-1",
++          "default": "B20-SERVICE-1",
++          "title": "Version",
++          "type": "string"
++        },
++        "id": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Id",
++          "type": "string"
++        },
++        "pickup_id": {
++          "anyOf": [
++            {
++              "maxLength": 200,
++              "minLength": 1,
++              "type": "string"
++            },
++            {
++              "type": "null"
++            }
++          ],
++          "title": "Pickup Id"
++        },
++        "report_evidence_id": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Report Evidence Id",
++          "type": "string"
++        },
++        "investigation_id": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Investigation Id",
++          "type": "string"
++        },
++        "incident_id": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Incident Id",
++          "type": "string"
++        },
++        "target_id": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Target Id",
++          "type": "string"
++        },
++        "route_id": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Route Id",
++          "type": "string"
++        },
++        "scheduled_at": {
++          "title": "Scheduled At",
++          "type": "string"
++        },
++        "checked_at": {
++          "title": "Checked At",
++          "type": "string"
++        },
++        "actual_at": {
++          "anyOf": [
++            {
++              "type": "string"
++            },
++            {
++              "type": "null"
++            }
++          ],
++          "title": "Actual At"
++        },
++        "recorded_at": {
++          "title": "Recorded At",
++          "type": "string"
++        },
++        "status": {
++          "enum": [
++            "COMPLETED",
++            "MISSED",
++            "UNKNOWN"
++          ],
++          "title": "Status",
++          "type": "string"
++        },
++        "source_kind": {
++          "const": "SYNTHETIC",
++          "default": "SYNTHETIC",
++          "title": "Source Kind",
++          "type": "string"
++        },
++        "source_id": {
++          "const": "B20-synthetic-service-log",
++          "default": "B20-synthetic-service-log",
++          "title": "Source Id",
++          "type": "string"
++        },
++        "record_id": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Record Id",
++          "type": "string"
++        },
++        "department_id": {
++          "const": "DEPT-SAN",
++          "default": "DEPT-SAN",
++          "title": "Department Id",
++          "type": "string"
++        },
++        "observed_by": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Observed By",
++          "type": "string"
++        },
++        "reviewed_by": {
++          "maxLength": 200,
++          "minLength": 1,
++          "title": "Reviewed By",
++          "type": "string"
++        }
++      },
++      "required": [
++        "id",
++        "pickup_id",
++        "report_evidence_id",
++        "investigation_id",
++        "incident_id",
++        "target_id",
++        "route_id",
++        "scheduled_at",
++        "checked_at",
++        "actual_at",
++        "recorded_at",
++        "status",
++        "record_id",
++        "observed_by",
++        "reviewed_by"
++      ],
++      "title": "ServiceRecord",
++      "type": "object"
+     }
+   },
+   "error_envelope": {
+--- a/contracts/evidence_hypotheses.json
++++ b/contracts/evidence_hypotheses.json
+@@ -798,7 +798,8 @@
+               "default": 1,
+               "enum": [
+                 1,
+-                2
++                2,
++                3
+               ],
+               "title": "Rule Version",
+               "type": "integer"
+@@ -2304,7 +2305,8 @@
+           "default": 1,
+           "enum": [
+             1,
+-            2
++            2,
++            3
+           ],
+           "title": "Rule Version",
+           "type": "integer"
+@@ -3307,7 +3309,8 @@
+     "assessment_v1": "Read unchanged historical meaning; no new classification field emitted or historical rewrite",
+     "assessment_v2": "rule_version2, explicit classification/uses and matching causal-edge lists",
+     "report_v1": "No explicit attribution field; preserve original report/command/journal hash shape",
+-    "report_v2": "Explicit typed occurrence or retrospective attribution; absent new optional fields excluded from old serialized models"
++    "report_v2": "Explicit typed occurrence or retrospective attribution; absent new optional fields excluded from old serialized models",
++    "assessment_v3": "Compatible format2 classification envelope; rule3 for new MISSED_PICKUP/ILLEGAL_DUMPING in controller-bound S05/S06, requiring actual dated typed service provenance. Generic rule2 and stored rule1/2 histories preserved; no rule2 pickup-before-deposit inference."
+   },
+   "occurrence_attribution": {
+     "bindings": "Actual EXPLAINS/CONCERNS must match original proposal; INSPECTS request journal -> Investigation INVESTIGATES Incident binds reports",
+@@ -3315,5 +3318,6 @@
+     "retrospective": "Independent review, rationale, explicit target IDs within request investigation and 1..5 earlier reviewed direct inspection records with matching asset/code/dated occurrence binding. No recursive retrospective basis. Derivative source cannot create independence.",
+     "cutoff": "All source/current-version visibility, report recording and observation chronology preserved. Future records excluded; no mutable historical state reconstruction.",
+     "storage": "Typed metadata in existing immutable attributed report/journal JSON; no new schema property, state, relationship or migration"
+-  }
++  },
++  "service_evidence_contract": "contracts/service_evidence.json"
+ }
+--- a/contracts/scenarios/runtime.json
++++ b/contracts/scenarios/runtime.json
+@@ -16,5 +16,6 @@
+   "supported_remedial_actions": ["DRAIN_BLOCKAGE_CLEARANCE", "SUBGRADE_REPAIR", "MISSED_PICKUP_RECOVERY"],
+   "limits": "12 strict definitions,2 variants each,1..3 case scopes,1..10 observations per packet; no arbitrary graph/file/tool/shell/clock/provider selector",
+   "provider_policy": "No provider construction or call; optional explicit B18 worker remains labelled deterministic development ReadPause",
+-  "verification_boundary": "B19 proves mechanics/isolation; B20–B22 prove decisions/ablation/history/restarts; B23 requires separate genuine-provider authorization"
++  "verification_boundary": "B19 proves mechanics/isolation; B20–B22 prove decisions/ablation/history/restarts; B23 requires separate genuine-provider authorization",
++  "service_evidence": "S05/S06 fresh releases additionally record controller-only typed service provenance and canonical execution where observed. Existing data/scenarios/runtime-v1.json codes unchanged; independent log occurrence precedes current lifecycle-valid inspection/deposit. See contracts/service_evidence.json; prior graphs/definitions/evidence retained."
+ }
+--- a/decision.md
++++ b/decision.md
+@@ -1638,3 +1638,36 @@
+ 
+ ## F01 — frontend shell and agreed essential scope (2026-10-18)
+ Human accepted a clean application rather than a judge-guided presentation. Choose two main destinations (Overview/Investigations) and in-case report/investigation/evidence/plan/work/monitoring-memory sections; standalone explorer/library/analytics deferred. Preserve all18requirements. Frontend-only Next16.4.2/React19.3.1/TypeScript7.0.2 exact pins + own lockfile after actual production/type smoke PASS, Node24.21.0/npm12.2.0. Alternative custom graph implementation deferred in favour of official Canvas evaluation at F04 per human direction; https://docs.falkordb.com/browser/canvas reviewed, no package/runtime compatibility claim yet. F01 deliberately implements no API client. Current api_models drift reviewed (current ownership schema and route identities; no consumers exist in shell);58operations/55paths/182schemas baseline explicitly refreshed without backend edits. Planned client-only graph mapping must preserve provenance, candidate/verified styles, actual recorded paths and accessible evidence narrative. Dependency/network failures corrected with approved frontend-only install; no backend lifecycle change.
++
++### B20-R-SERVICE-EVIDENCE pre-edit compatibility refinement
++Inspecting accepted B12/B14 fixtures shows generic reviewed field evidence uses rule2 without a canonical service-log writer. This correction is specifically S05/S06 controller service chronology, so rule3 is selected by the existing hashed demo/current investigation binding (S05/S06), not by caller labels or generic cause alone. Other investigations retain rule2 and its qualified observation semantics; rule2 does not establish pickup-before-later-deposit history. Stored rule1/2 histories are not rewritten. This avoids redesigning every historical evidence/execution path while requiring actual service provenance for the authorized S05/S06 correction. Missing service records in that controlled scope remain insufficient. Existing B14 monitoring stays unchanged. Initial real failures exposed an exact semantic-version2 coupling and a test assumption that an empty bounded MCP history returns SUCCESS; actual PARTIAL-with-gaps is retained, never replaced with fake success.
++
++
++## CURRENT B20-R-SERVICE-EVIDENCE — technically passing; human review pending (2026-10-18)
++Ownership and utility/dependency correction are human accepted. Implemented only dated S05/S06 controller evidence: canonical PickupExecution/PICKUP_FOR, specific synthetic service-log due/actual/checked/recorded times, attributed reviewed source and actual route/point references; separate lifecycle-valid field/deposit report. Candidate recurring schedules/routes/owners and original runtime-v1 definitions remain unchanged. UNKNOWN service creates no execution; explicit MISSED has no actual_at. No quantities invented. No capacity/route/dumping intervention, plan, approval or resolution manufactured.
++
++Controller-only writes reuse existing0005 fenced Storage, hashed provenance/receipt, durable native event and source-bound HTTP recovery; no generic ledger/endpoint/migration/role/dependency. Rule3 is scoped by hashed demo/current S05/S06 investigation binding for new missed-pickup/dumping assessments. It validates source/target/route/report/journal/native hashes and strict pickup-before-deposit timing, not labels, codes, record counts or equal dates. Generic rule2 semantics and old rule1/2 assessment bytes retained; rule2 is not service chronology. B14-2 monitoring unchanged. Validated source DTO adds optional service_record to existing evidence API/CLI; actual MCP pickup history retains PARTIAL/gaps and current provenance checks. Runtime/agent reads cannot access the new controller packet.
++
++Final43distinctPASS=37newfocusedunits+2directAPI/CLI-schema compatibilityunits+4realS05/S06PRIMARY/NEGATIVE.0unresolvedFAIL/0SKIP. Final focused39PASS3.62s; shared four-realPASS99.74s; only affected uncertain S06NEGATIVE recheckedPASS26.76s after removing unnecessary duplicate-source probe from uncertain path. Both finalSPECvalidatorsPASS once. Historical9failedtestexecutions retained:1unit expectation about parse-only body vs bound state,4real exact version2 coupling,4real incorrect SUCCESS-only assumption for actual PARTIAL history. Failed graphs never repaired. Explicit authored synthetic facts, actual FalkorDB/SDK/HTTP ASGI/CLI/runtime MCP; no model solver or live provider.
++
++S05PRIMARY actual MISSED→qualified MISSED_PICKUP SUPPORTED; capacity observation remains separate SUPPORTED, no capacity intervention. S05NEGATIVE UNKNOWN/no execution→INCONCLUSIVE. S06PRIMARY actual pickup11:59Z→separate deposit12:00Z→ILLEGAL_DUMPING SUPPORTED/MISSED_PICKUP CONTRADICTED. S06NEGATIVE completion only→dumpingINCONCLUSIVE. No independently VERIFIED root cause or resolution asserted. Actual service-commit+injected readback ValueError returns409RECOVERY_REQUIRED/UNKNOWN; one execution/source retained, exact original HTTP replay no redispatch, intent/demo reservation remainDISPATCHING. No retry/replacementkey/delete/rollback/clearance; original IDs and committed report/source/event support human reconciliation only.
++
++Evidence/guidance: backend/SERVICE_EVIDENCE.md; docs/evidence/B20R-SERVICE-EVIDENCE-RESULTS.md/COMMANDS.md/FILES.md/changes.patch/WALKTHROUGH.md and fourdated proofs/retention.json. Allsix logs append-only; earlier artifacts/data/approvals/accounting/quarantines retained; ordinarypytest/children0externalGemini/countTokens. BLOCK-B20-05 technically addressed pending human review, fullB20PARTIAL/BLOCKED for capacity/route/dumping interventions; B10genuineOPEN/PARTIAL. NoB21/frontend/live authorization. Exactnext: human reviewB20-R-SERVICE-EVIDENCE, then separately authorize further work. STOP.
++
++### DEC-070 — specific service occurrence, compatible rule3 and controller-only write
++Reuse canonical PickupExecution rather than narrative completion or a parallel ledger. No existing runtime execution writer existed. Narrow S05/S06 release compiles typed SERVICE_EXECUTION_SOURCE + optional canonical execution/PICKUP_FOR + hashed source/report/native/receipt companion + native event under existing0005 fence. The staged source exception in Storage is restricted to PICKUP_FOR and validates typed source/pickup/target/route before preserving original B03 policy checks; no arbitrary write Cypher or general staged verified-source relaxation. Report commits through original B09 before the service batch; later uncertainty is not rollback and retains original intent/reservation/records. Readback/recovery failures remain UNKNOWN through existing HTTP boundary.
++
++Explicit synthetic log occurrence is earlier than recording, separate from the current inspection; no inspection is backdated. Specific due occurrence attestation is not promotion of a candidate recurring schedule. UNKNOWN cannot produce a canonical execution; MISSED requires explicit reviewed result and has no actual_at. Qualitative capacity remains separate, no invented quantities. Source/reviewer authority derives from authenticated B19 field/analyst plus validated B09 journal and hashed state; caller labels cannot grant it. Safe readers revalidate source/native/relationship/report scope. Format2 accepts rule3 only for admitted service causes; existing rule1/2 retained. Controller scope selects rule3, generic workflows retain rule2 without service-order inference. A single log/report is qualified support, never sufficient independent cause verification or resolution. No migration/package/role/route/CLI-command changes; compatible optional typed evidence.service_record requires future client type regeneration, no frontend work here.
++
++
++### B20-R-SERVICE-EVIDENCE final compatibility verification
++CURRENT final45distinctPASS=39newunit+2directcompatibilityunit+4real,0unresolvedFAIL/0SKIP. Two final unit cases ensure optionalservice_record is omitted when absent, preserving legacy EvidenceDTO/DONE replay response shape; populated sources unchanged from actual runtime proof. Focused final41PASS; actual duration in focused-final.txt. Both finalSPEC validatorsPASS after finalsource edit. Earlier43-case summary is superseded by this45-case total, not additional runtime journeys. Duplicate generated static-check blocks removed and JSON formatting minimized; no behavior/schema-name change. No real journeys repeated for documentation/legacy-null serialization-only edits. All earlier evidence preserved; fullB20/B10 genuine gates remain open.
++
++
++## F02 — automatic judge entry with authenticated typed transport (2026-10-18)
++F01 accepted; human explicitly rejected a sign-in panel. Implement server-only presenter-configured existing OP-ANALYST login, temporary browser-memory token, authenticated /auth/me identity check, expiry/logout/reconnect; no ADMIN/APPROVER default or bypass. Alternatives public unauthenticated backend or browser-embedded password rejected because existing auth/state machines remain binding. No human approval/work/agent execution occurs on entry. F02 planning/scope correction recorded before auth implementation in frontend/docs/evidence/F02-plan.md.
++Generate183models/58routes from current machinecontracts using pinned json-schema-to-typescript16.0.0; validate requests/query/response via ajv8.20.0 (no coercion/default insertion/field removal). Existing Next16.4.2/React19.3.1/TS7.0.2 unchanged. Exact pins+frontend lockfile after actual build/type/runtime smoke. Contract drift183vs182 reviewed/generated/runtimeconsumedparity, frontend baseline only updated. Local loopbackproxy allowlist; originalHost vs Next internal localhost normalization fixed with regression, forwardedHost ignored; no redirect/cookies/caller-origin selector. Wrap global browser fetch rather than invoking native fetch with a class receiver. Late responses/logout cannot erase replacement sessions; uncertain writes preserve original key and never retry automatically. No domain/schema/backend edits. Detailed failures/alternatives/commands and current limits in frontend/docs/evidence/F02-results.md; next F03 only after review.
++
++
++### B20-R-SERVICE-EVIDENCE final read-only preservation
++AuditPASS: all1728pre-task public files retained;1236earlier evidence files byte-identical;123accepted test files unchanged. Allsix histories append-only. Original registries/migrations0001–0005/city858nodes1246edges42candidate drains, runtime-v1 definitions, B01probe,12previousB20checkpoints, B12R2/B19quarantines and accepted ownership/utility records/UNKNOWNintents retained. Newfourvariant service source/report/native/candidate/oldassessment integrityPASS; uncertain intent+release reservationDISPATCHING retained. Historical2paidrequests/noactive sessions or holds unchanged. 12interlockreports0external/0unexpected; final publicartifact/patchprivate-value scanPASS. ActualFalkorDB6.0.2/Redis8.10.2 and pinnedpackages recorded, no version changes. Final45distinctPASS41unit/4real;0unresolvedFAIL/0SKIP. FullB20PARTIAL/BLOCKED/B10genuineOPEN/PARTIAL; STOPforhumanreview.
+--- a/flow.md
++++ b/flow.md
+@@ -1089,3 +1089,33 @@
+ 
+ ## F01 — frontend routes and interaction flow (2026-10-18)
+ frontend/app/layout.tsx → components/shell.tsx + app/globals.css; Overview app/page.tsx → issue links → /investigations?issue=canonical_issue. Investigation route → components/investigation-workspace.tsx → local issue/stage state → descriptions and reserved graph-evidence panel. Selected section does not change backend state. Expandable graph explanation describes question→returned evidence→recorded decision; no graph paths drawn. components/unavailable.tsx displays explicit data absence. components/icons.tsx contains SVG interface icons, no evidence graph. No backend request/tool/database dependency. frontend own package/lock/config → next build → localhost3100 preview, sampled desktop/mobile browser QA → saved screenshots/results in frontend/docs/evidence. Preview stopped after checks; backend processes unaffected. Six root logs append only.
++
++
++## CURRENT B20-R-SERVICE-EVIDENCE — technically passing; human review pending (2026-10-18)
++Ownership and utility/dependency correction are human accepted. Implemented only dated S05/S06 controller evidence: canonical PickupExecution/PICKUP_FOR, specific synthetic service-log due/actual/checked/recorded times, attributed reviewed source and actual route/point references; separate lifecycle-valid field/deposit report. Candidate recurring schedules/routes/owners and original runtime-v1 definitions remain unchanged. UNKNOWN service creates no execution; explicit MISSED has no actual_at. No quantities invented. No capacity/route/dumping intervention, plan, approval or resolution manufactured.
++
++Controller-only writes reuse existing0005 fenced Storage, hashed provenance/receipt, durable native event and source-bound HTTP recovery; no generic ledger/endpoint/migration/role/dependency. Rule3 is scoped by hashed demo/current S05/S06 investigation binding for new missed-pickup/dumping assessments. It validates source/target/route/report/journal/native hashes and strict pickup-before-deposit timing, not labels, codes, record counts or equal dates. Generic rule2 semantics and old rule1/2 assessment bytes retained; rule2 is not service chronology. B14-2 monitoring unchanged. Validated source DTO adds optional service_record to existing evidence API/CLI; actual MCP pickup history retains PARTIAL/gaps and current provenance checks. Runtime/agent reads cannot access the new controller packet.
++
++Final43distinctPASS=37newfocusedunits+2directAPI/CLI-schema compatibilityunits+4realS05/S06PRIMARY/NEGATIVE.0unresolvedFAIL/0SKIP. Final focused39PASS3.62s; shared four-realPASS99.74s; only affected uncertain S06NEGATIVE recheckedPASS26.76s after removing unnecessary duplicate-source probe from uncertain path. Both finalSPECvalidatorsPASS once. Historical9failedtestexecutions retained:1unit expectation about parse-only body vs bound state,4real exact version2 coupling,4real incorrect SUCCESS-only assumption for actual PARTIAL history. Failed graphs never repaired. Explicit authored synthetic facts, actual FalkorDB/SDK/HTTP ASGI/CLI/runtime MCP; no model solver or live provider.
++
++S05PRIMARY actual MISSED→qualified MISSED_PICKUP SUPPORTED; capacity observation remains separate SUPPORTED, no capacity intervention. S05NEGATIVE UNKNOWN/no execution→INCONCLUSIVE. S06PRIMARY actual pickup11:59Z→separate deposit12:00Z→ILLEGAL_DUMPING SUPPORTED/MISSED_PICKUP CONTRADICTED. S06NEGATIVE completion only→dumpingINCONCLUSIVE. No independently VERIFIED root cause or resolution asserted. Actual service-commit+injected readback ValueError returns409RECOVERY_REQUIRED/UNKNOWN; one execution/source retained, exact original HTTP replay no redispatch, intent/demo reservation remainDISPATCHING. No retry/replacementkey/delete/rollback/clearance; original IDs and committed report/source/event support human reconciliation only.
++
++Evidence/guidance: backend/SERVICE_EVIDENCE.md; docs/evidence/B20R-SERVICE-EVIDENCE-RESULTS.md/COMMANDS.md/FILES.md/changes.patch/WALKTHROUGH.md and fourdated proofs/retention.json. Allsix logs append-only; earlier artifacts/data/approvals/accounting/quarantines retained; ordinarypytest/children0externalGemini/countTokens. BLOCK-B20-05 technically addressed pending human review, fullB20PARTIAL/BLOCKED for capacity/route/dumping interventions; B10genuineOPEN/PARTIAL. NoB21/frontend/live authorization. Exactnext: human reviewB20-R-SERVICE-EVIDENCE, then separately authorize further work. STOP.
++
++### B20-R-SERVICE-EVIDENCE implemented file/control graph
++Existing API/CLI→Services.command source-bound intent→Demo.prepare_advance validates ADMIN+fieldDEPT-SAN+distinctANALYST and actual IN_PROGRESS inspection→Demo.advance reserves release, EvidenceService.execute commits reviewed B09 report→demo/service_history.release reads host-only service-evidence-v1.json→services/service_evidence.ServiceRecord→ServiceEvidence.record uses existing Storage(0005) to atomically create source/optionalPickupExecution/PICKUP_FOR/nativeevent/hashedreceipt→ServiceEvidence.readback validates actual journal/report/source/native/route/target hashes→existing B19 report event registration and stage update. Failure after any mutation→existing sanitized HTTP UNKNOWN; no redispatch. Service native event remains durably discoverable even if stage/ack fails.
++
++EvidenceService.evaluate→classify_evidence uses hashed demo scope to select rule3 for S05/S06 service causes→service_evidence.validate/qualify→current typed source, original B09 inspection/journal, canonical PickupExecution/PICKUP_FOR and hashed audit. Source stays contextual citation; report codes gain qualified causal meaning only with actual scoped result/chronology. Other assessments remain rule2; old snapshots untouched. Existing runtime MCP history fixed RO template filters/sorts/looks ahead, then validates new service provenance. Existing Reads evidence projection validates and supplies optional closed ServiceRecord; matching department scope follows original report/inspection. Agent file guard already blocks entire data/scenarios, including new packet. No worker/model/operational intervention added. New unit tests label fake scopes explicitly; four fresh real tests use actual B19/FalkorDB/GraphRAG SDK/HTTP ASGI/CLI/MCP, authored observations and one deliberate postcommit fault.
++
++
++### B20-R-SERVICE-EVIDENCE final compatibility verification
++CURRENT final45distinctPASS=39newunit+2directcompatibilityunit+4real,0unresolvedFAIL/0SKIP. Two final unit cases ensure optionalservice_record is omitted when absent, preserving legacy EvidenceDTO/DONE replay response shape; populated sources unchanged from actual runtime proof. Focused final41PASS; actual duration in focused-final.txt. Both finalSPEC validatorsPASS after finalsource edit. Earlier43-case summary is superseded by this45-case total, not additional runtime journeys. Duplicate generated static-check blocks removed and JSON formatting minimized; no behavior/schema-name change. No real journeys repeated for documentation/legacy-null serialization-only edits. All earlier evidence preserved; fullB20/B10 genuine gates remain open.
++
++
++## F02 — frontend session/API file and control flow (2026-10-18)
++contracts/api_models+api_endpoints → frontend/scripts/generate-api.mjs → lib/generated/{models.ts,routes.ts,schemas.json} → lib/api/{validation,client,errors}.ts. Build precheck ensures generated data and reviewed hashes current. Browser layout→DemoProvider→DemoConnection.open()→POST frontend/api/demo-session (no browser credential/body/role)→server-only host credentials→existing backend auth/demo-login→memory-only token→relative auth/me→frontend allowlisted proxy→actualbackendServices/Auth→validated identity→DemoConnected. Disconnected/unconfigured→sanitized unavailable; no fallback fake session. End→backendlogout+localclear, expiry401→clear, reconnect→explicit new session. No automatic domain command.
++Generic REST call→closed request/query/path/idempotency checks→relative API→fixedloopbackproxy→actualtypedbackend→validated envelope/schema+requestID.401 invalidates session,403retains; old generation responses discarded. Recovery/uncertain write no automatic retry/new key. frontend/scripts/verify_integration.py creates only fresh random exact ActiveProfile/migrations/privateauth/syntheticDepartment, starts temporary API/Next→integration_probe.ts exercises actualclient/proxy/auth/DB→retentionhash/providerinterlockproof→stops owned servers. Browser QA independently verifies automatic connection/end/reconnect. Existing3100devpreview retained. No MCP/worker/provider/Canvas/SSE or original graph mutation by F02.
++
++
++### B20-R-SERVICE-EVIDENCE final read-only preservation
++AuditPASS: all1728pre-task public files retained;1236earlier evidence files byte-identical;123accepted test files unchanged. Allsix histories append-only. Original registries/migrations0001–0005/city858nodes1246edges42candidate drains, runtime-v1 definitions, B01probe,12previousB20checkpoints, B12R2/B19quarantines and accepted ownership/utility records/UNKNOWNintents retained. Newfourvariant service source/report/native/candidate/oldassessment integrityPASS; uncertain intent+release reservationDISPATCHING retained. Historical2paidrequests/noactive sessions or holds unchanged. 12interlockreports0external/0unexpected; final publicartifact/patchprivate-value scanPASS. ActualFalkorDB6.0.2/Redis8.10.2 and pinnedpackages recorded, no version changes. Final45distinctPASS41unit/4real;0unresolvedFAIL/0SKIP. FullB20PARTIAL/BLOCKED/B10genuineOPEN/PARTIAL; STOPforhumanreview.
+--- a/implementation_status.md
++++ b/implementation_status.md
+@@ -654,3 +654,27 @@
+ 
+ ## F01 — frontend shell PASS, human review pending (2026-10-18)
+ Overview/Investigations navigation, three category links, six case sections, graph evidence explanation and responsive unavailable states implemented in frontend only. Actual build/typecheck/offline4guard tests/contract baseline/bothSPEC validatorsPASS; real browser navigation/filter/section/disclosure and390x844samplePASS, no document overflow, no logged browser warnings/errors. No auth/API data/Canvas/SSE/investigation runtime connected. Exact files and checks: frontend/docs/evidence/F01-files.txt/F01-results.md. Backend state/acceptance unchanged. Next F02 typed client/auth only after review; optional features deferred per updated frontend/docs/tasks.md.
++
++
++## CURRENT B20-R-SERVICE-EVIDENCE — technically passing; human review pending (2026-10-18)
++Ownership and utility/dependency correction are human accepted. Implemented only dated S05/S06 controller evidence: canonical PickupExecution/PICKUP_FOR, specific synthetic service-log due/actual/checked/recorded times, attributed reviewed source and actual route/point references; separate lifecycle-valid field/deposit report. Candidate recurring schedules/routes/owners and original runtime-v1 definitions remain unchanged. UNKNOWN service creates no execution; explicit MISSED has no actual_at. No quantities invented. No capacity/route/dumping intervention, plan, approval or resolution manufactured.
++
++Controller-only writes reuse existing0005 fenced Storage, hashed provenance/receipt, durable native event and source-bound HTTP recovery; no generic ledger/endpoint/migration/role/dependency. Rule3 is scoped by hashed demo/current S05/S06 investigation binding for new missed-pickup/dumping assessments. It validates source/target/route/report/journal/native hashes and strict pickup-before-deposit timing, not labels, codes, record counts or equal dates. Generic rule2 semantics and old rule1/2 assessment bytes retained; rule2 is not service chronology. B14-2 monitoring unchanged. Validated source DTO adds optional service_record to existing evidence API/CLI; actual MCP pickup history retains PARTIAL/gaps and current provenance checks. Runtime/agent reads cannot access the new controller packet.
++
++Final43distinctPASS=37newfocusedunits+2directAPI/CLI-schema compatibilityunits+4realS05/S06PRIMARY/NEGATIVE.0unresolvedFAIL/0SKIP. Final focused39PASS3.62s; shared four-realPASS99.74s; only affected uncertain S06NEGATIVE recheckedPASS26.76s after removing unnecessary duplicate-source probe from uncertain path. Both finalSPECvalidatorsPASS once. Historical9failedtestexecutions retained:1unit expectation about parse-only body vs bound state,4real exact version2 coupling,4real incorrect SUCCESS-only assumption for actual PARTIAL history. Failed graphs never repaired. Explicit authored synthetic facts, actual FalkorDB/SDK/HTTP ASGI/CLI/runtime MCP; no model solver or live provider.
++
++S05PRIMARY actual MISSED→qualified MISSED_PICKUP SUPPORTED; capacity observation remains separate SUPPORTED, no capacity intervention. S05NEGATIVE UNKNOWN/no execution→INCONCLUSIVE. S06PRIMARY actual pickup11:59Z→separate deposit12:00Z→ILLEGAL_DUMPING SUPPORTED/MISSED_PICKUP CONTRADICTED. S06NEGATIVE completion only→dumpingINCONCLUSIVE. No independently VERIFIED root cause or resolution asserted. Actual service-commit+injected readback ValueError returns409RECOVERY_REQUIRED/UNKNOWN; one execution/source retained, exact original HTTP replay no redispatch, intent/demo reservation remainDISPATCHING. No retry/replacementkey/delete/rollback/clearance; original IDs and committed report/source/event support human reconciliation only.
++
++Evidence/guidance: backend/SERVICE_EVIDENCE.md; docs/evidence/B20R-SERVICE-EVIDENCE-RESULTS.md/COMMANDS.md/FILES.md/changes.patch/WALKTHROUGH.md and fourdated proofs/retention.json. Allsix logs append-only; earlier artifacts/data/approvals/accounting/quarantines retained; ordinarypytest/children0externalGemini/countTokens. BLOCK-B20-05 technically addressed pending human review, fullB20PARTIAL/BLOCKED for capacity/route/dumping interventions; B10genuineOPEN/PARTIAL. NoB21/frontend/live authorization. Exactnext: human reviewB20-R-SERVICE-EVIDENCE, then separately authorize further work. STOP.
++
++
++### B20-R-SERVICE-EVIDENCE final compatibility verification
++CURRENT final45distinctPASS=39newunit+2directcompatibilityunit+4real,0unresolvedFAIL/0SKIP. Two final unit cases ensure optionalservice_record is omitted when absent, preserving legacy EvidenceDTO/DONE replay response shape; populated sources unchanged from actual runtime proof. Focused final41PASS; actual duration in focused-final.txt. Both finalSPEC validatorsPASS after finalsource edit. Earlier43-case summary is superseded by this45-case total, not additional runtime journeys. Duplicate generated static-check blocks removed and JSON formatting minimized; no behavior/schema-name change. No real journeys repeated for documentation/legacy-null serialization-only edits. All earlier evidence preserved; fullB20/B10 genuine gates remain open.
++
++
++## F02 — frontend typed transport/demo session PASS, review pending (2026-10-18)
++No judge sign-in form, per explicit human correction. Automatic host-configured analystsession + validatedme + memory-only token/logout/expiry/reconnect implemented; generated183models/58routes/55paths and boundedlocalproxy.30offline transporttests+4existing guardtestsPASS; build/typecheck/generated+baseline/bothSPECvalidatorsPASS. ActualisolatedNextHTTP→FastAPI/Services/Auth/FalkorDB session/me/department/401/403/422/logoutPASS; browserautomaticconnection/end/reconnectPASS. Current results/exactfiles/screenshot/proof under frontend/docs/evidence/F02-*. Backendcode/contracts retentionhashPASS during real checks, no existing source targeted/no provider/model. Persistent3100preview needs presenter config; no temporary credsinstalled. Caselist/dataF03, CanvasF04, SSEF05/actionsF06 not claimed. Stopforreview; nextfrontendF03, backendacceptance unchanged.
++
++
++### B20-R-SERVICE-EVIDENCE final read-only preservation
++AuditPASS: all1728pre-task public files retained;1236earlier evidence files byte-identical;123accepted test files unchanged. Allsix histories append-only. Original registries/migrations0001–0005/city858nodes1246edges42candidate drains, runtime-v1 definitions, B01probe,12previousB20checkpoints, B12R2/B19quarantines and accepted ownership/utility records/UNKNOWNintents retained. Newfourvariant service source/report/native/candidate/oldassessment integrityPASS; uncertain intent+release reservationDISPATCHING retained. Historical2paidrequests/noactive sessions or holds unchanged. 12interlockreports0external/0unexpected; final publicartifact/patchprivate-value scanPASS. ActualFalkorDB6.0.2/Redis8.10.2 and pinnedpackages recorded, no version changes. Final45distinctPASS41unit/4real;0unresolvedFAIL/0SKIP. FullB20PARTIAL/BLOCKED/B10genuineOPEN/PARTIAL; STOPforhumanreview.
+--- a/scripts/validate_demo.py
++++ b/scripts/validate_demo.py
+@@ -15,4 +15,10 @@
+ for method,path in ACTIONS['demo'].values():assert any((r[0],r[1])==(method,path) for r in ROUTES)
+ policy=json.loads((ROOT/'contracts/scenarios/runtime.json').read_text());assert policy['reset_role']==policy['advance_role']=='ADMIN'
+ assert len(w)==12 and all(len(packet)<=10 for s in w.values() for p in [s.release,s.negative] for packet in p.values())
++from app.services.service_evidence import ServiceRecord,VERSION
++service=json.loads((ROOT/'contracts/service_evidence.json').read_text())
++assert service['version']==VERSION and service['schema']==ServiceRecord.model_json_schema()
++packet=json.loads((ROOT/'data/scenarios/service-evidence-v1.json').read_text())
++assert packet['version']==1 and set(packet['scenarios'])=={'S05','S06'}
++assert all(set(v)=={'PRIMARY','NEGATIVE'} for v in packet['scenarios'].values())
+ print('PASS B19 STATIC:12 definitions/24 variants, closed bounded source/stage contracts, actual CLI/API inventory; no behavioral/live claim')
+--- a/task_board.md
++++ b/task_board.md
+@@ -593,3 +593,27 @@
+ 
+ ## Parallel frontend F01 — technically PASS; review pending (2026-10-18)
+ F00accepted; user-approved essential scope now Overview+Investigations with in-case lifecycle/graph evidence. [x]F01frontend shell implemented, sampled real browser/build/type/staticchecksPASS; no backend/runtime data connection. Full exact frontend queue in frontend/docs/tasks.md. Next [ ]F02typedclient/auth/contractintegration. No backend task accepted/reordered by this note; STOPF01forhumanreview.
++
++
++## CURRENT B20-R-SERVICE-EVIDENCE — technically passing; human review pending (2026-10-18)
++Ownership and utility/dependency correction are human accepted. Implemented only dated S05/S06 controller evidence: canonical PickupExecution/PICKUP_FOR, specific synthetic service-log due/actual/checked/recorded times, attributed reviewed source and actual route/point references; separate lifecycle-valid field/deposit report. Candidate recurring schedules/routes/owners and original runtime-v1 definitions remain unchanged. UNKNOWN service creates no execution; explicit MISSED has no actual_at. No quantities invented. No capacity/route/dumping intervention, plan, approval or resolution manufactured.
++
++Controller-only writes reuse existing0005 fenced Storage, hashed provenance/receipt, durable native event and source-bound HTTP recovery; no generic ledger/endpoint/migration/role/dependency. Rule3 is scoped by hashed demo/current S05/S06 investigation binding for new missed-pickup/dumping assessments. It validates source/target/route/report/journal/native hashes and strict pickup-before-deposit timing, not labels, codes, record counts or equal dates. Generic rule2 semantics and old rule1/2 assessment bytes retained; rule2 is not service chronology. B14-2 monitoring unchanged. Validated source DTO adds optional service_record to existing evidence API/CLI; actual MCP pickup history retains PARTIAL/gaps and current provenance checks. Runtime/agent reads cannot access the new controller packet.
++
++Final43distinctPASS=37newfocusedunits+2directAPI/CLI-schema compatibilityunits+4realS05/S06PRIMARY/NEGATIVE.0unresolvedFAIL/0SKIP. Final focused39PASS3.62s; shared four-realPASS99.74s; only affected uncertain S06NEGATIVE recheckedPASS26.76s after removing unnecessary duplicate-source probe from uncertain path. Both finalSPECvalidatorsPASS once. Historical9failedtestexecutions retained:1unit expectation about parse-only body vs bound state,4real exact version2 coupling,4real incorrect SUCCESS-only assumption for actual PARTIAL history. Failed graphs never repaired. Explicit authored synthetic facts, actual FalkorDB/SDK/HTTP ASGI/CLI/runtime MCP; no model solver or live provider.
++
++S05PRIMARY actual MISSED→qualified MISSED_PICKUP SUPPORTED; capacity observation remains separate SUPPORTED, no capacity intervention. S05NEGATIVE UNKNOWN/no execution→INCONCLUSIVE. S06PRIMARY actual pickup11:59Z→separate deposit12:00Z→ILLEGAL_DUMPING SUPPORTED/MISSED_PICKUP CONTRADICTED. S06NEGATIVE completion only→dumpingINCONCLUSIVE. No independently VERIFIED root cause or resolution asserted. Actual service-commit+injected readback ValueError returns409RECOVERY_REQUIRED/UNKNOWN; one execution/source retained, exact original HTTP replay no redispatch, intent/demo reservation remainDISPATCHING. No retry/replacementkey/delete/rollback/clearance; original IDs and committed report/source/event support human reconciliation only.
++
++Evidence/guidance: backend/SERVICE_EVIDENCE.md; docs/evidence/B20R-SERVICE-EVIDENCE-RESULTS.md/COMMANDS.md/FILES.md/changes.patch/WALKTHROUGH.md and fourdated proofs/retention.json. Allsix logs append-only; earlier artifacts/data/approvals/accounting/quarantines retained; ordinarypytest/children0externalGemini/countTokens. BLOCK-B20-05 technically addressed pending human review, fullB20PARTIAL/BLOCKED for capacity/route/dumping interventions; B10genuineOPEN/PARTIAL. NoB21/frontend/live authorization. Exactnext: human reviewB20-R-SERVICE-EVIDENCE, then separately authorize further work. STOP.
++
++
++### B20-R-SERVICE-EVIDENCE final compatibility verification
++CURRENT final45distinctPASS=39newunit+2directcompatibilityunit+4real,0unresolvedFAIL/0SKIP. Two final unit cases ensure optionalservice_record is omitted when absent, preserving legacy EvidenceDTO/DONE replay response shape; populated sources unchanged from actual runtime proof. Focused final41PASS; actual duration in focused-final.txt. Both finalSPEC validatorsPASS after finalsource edit. Earlier43-case summary is superseded by this45-case total, not additional runtime journeys. Duplicate generated static-check blocks removed and JSON formatting minimized; no behavior/schema-name change. No real journeys repeated for documentation/legacy-null serialization-only edits. All earlier evidence preserved; fullB20/B10 genuine gates remain open.
++
++
++## Parallel frontend F02 — PASS, human review pending (2026-10-18)
++F01accepted. Human chose no judge sign-in form; [x]F02generatedtypedREST/schema validation/localproxy + automaticserver-configuredANALYSTsession, memorytoken/identity/expiry/logout/reconnect.30offline+4guardtests/build/type/specchecksPASS; actualisolatedHTTP/DB/auth+browserflowPASS, no backendcode/contractedits or existinggraph target. F02results/files/proof/screenshot under frontend/docs/evidence. Exactnext [ ]F03realoverview/caselisting/selection, onlyafterreview. Backendtasksequence/acceptanceunchanged; STOPF02.
++
++
++### B20-R-SERVICE-EVIDENCE final read-only preservation
++AuditPASS: all1728pre-task public files retained;1236earlier evidence files byte-identical;123accepted test files unchanged. Allsix histories append-only. Original registries/migrations0001–0005/city858nodes1246edges42candidate drains, runtime-v1 definitions, B01probe,12previousB20checkpoints, B12R2/B19quarantines and accepted ownership/utility records/UNKNOWNintents retained. Newfourvariant service source/report/native/candidate/oldassessment integrityPASS; uncertain intent+release reservationDISPATCHING retained. Historical2paidrequests/noactive sessions or holds unchanged. 12interlockreports0external/0unexpected; final publicartifact/patchprivate-value scanPASS. ActualFalkorDB6.0.2/Redis8.10.2 and pinnedpackages recorded, no version changes. Final45distinctPASS41unit/4real;0unresolvedFAIL/0SKIP. FullB20PARTIAL/BLOCKED/B10genuineOPEN/PARTIAL; STOPforhumanreview.
+--- a/test_log.md
++++ b/test_log.md
+@@ -1199,3 +1199,28 @@
+ ## F01 — actual frontend verification (2026-10-18)
+ `npm run build`PASS: Next16.4.2 optimized production compile/TypeScript/static routes; `npm run typecheck`PASS; `PYTHONDONTWRITEBYTECODE=1 python3 scripts/test_contracts.py`fromfrontend4PASS. Initial contracts guard detected api_models drift; reviewed current definitions (no shell consumers), explicit --record then final guardPASS58operations/55paths/182schemas. Both `backend/.venv/bin/python scripts/validate_blueprint.py` and `backend/.venv/bin/python scripts/validate_handoff.py`PASS static checks. No backend mutation/runtime integration tests requested.
+ Real production browser: Overview/category→Waterlogging filter, Plan section, graph disclosure, mobile RoadDamage selection URL and Overview navigationPASS. Sample390x844 override, document375client/375scrollnooverflow; override reset. Browser console inspection[]warnings/errors. Screenshots/results under frontend/docs/evidence. Initial npm lookup ENOTFOUND corrected approved install (audit0vulnerabilities); preview listenEPERM corrected approved127.0.0.1:3100start. One unmatched locator and one stale browser index corrected via actual fresh state/native accessible control. LiveAPI/auth/MCP/Canvas/SSE/provider/end-to-end lifecycle NOTRUN/NOTIMPLEMENTED. Preview process stopped after QA.
++
++
++## CURRENT B20-R-SERVICE-EVIDENCE — technically passing; human review pending (2026-10-18)
++Ownership and utility/dependency correction are human accepted. Implemented only dated S05/S06 controller evidence: canonical PickupExecution/PICKUP_FOR, specific synthetic service-log due/actual/checked/recorded times, attributed reviewed source and actual route/point references; separate lifecycle-valid field/deposit report. Candidate recurring schedules/routes/owners and original runtime-v1 definitions remain unchanged. UNKNOWN service creates no execution; explicit MISSED has no actual_at. No quantities invented. No capacity/route/dumping intervention, plan, approval or resolution manufactured.
++
++Controller-only writes reuse existing0005 fenced Storage, hashed provenance/receipt, durable native event and source-bound HTTP recovery; no generic ledger/endpoint/migration/role/dependency. Rule3 is scoped by hashed demo/current S05/S06 investigation binding for new missed-pickup/dumping assessments. It validates source/target/route/report/journal/native hashes and strict pickup-before-deposit timing, not labels, codes, record counts or equal dates. Generic rule2 semantics and old rule1/2 assessment bytes retained; rule2 is not service chronology. B14-2 monitoring unchanged. Validated source DTO adds optional service_record to existing evidence API/CLI; actual MCP pickup history retains PARTIAL/gaps and current provenance checks. Runtime/agent reads cannot access the new controller packet.
++
++Final43distinctPASS=37newfocusedunits+2directAPI/CLI-schema compatibilityunits+4realS05/S06PRIMARY/NEGATIVE.0unresolvedFAIL/0SKIP. Final focused39PASS3.62s; shared four-realPASS99.74s; only affected uncertain S06NEGATIVE recheckedPASS26.76s after removing unnecessary duplicate-source probe from uncertain path. Both finalSPECvalidatorsPASS once. Historical9failedtestexecutions retained:1unit expectation about parse-only body vs bound state,4real exact version2 coupling,4real incorrect SUCCESS-only assumption for actual PARTIAL history. Failed graphs never repaired. Explicit authored synthetic facts, actual FalkorDB/SDK/HTTP ASGI/CLI/runtime MCP; no model solver or live provider.
++
++S05PRIMARY actual MISSED→qualified MISSED_PICKUP SUPPORTED; capacity observation remains separate SUPPORTED, no capacity intervention. S05NEGATIVE UNKNOWN/no execution→INCONCLUSIVE. S06PRIMARY actual pickup11:59Z→separate deposit12:00Z→ILLEGAL_DUMPING SUPPORTED/MISSED_PICKUP CONTRADICTED. S06NEGATIVE completion only→dumpingINCONCLUSIVE. No independently VERIFIED root cause or resolution asserted. Actual service-commit+injected readback ValueError returns409RECOVERY_REQUIRED/UNKNOWN; one execution/source retained, exact original HTTP replay no redispatch, intent/demo reservation remainDISPATCHING. No retry/replacementkey/delete/rollback/clearance; original IDs and committed report/source/event support human reconciliation only.
++
++Evidence/guidance: backend/SERVICE_EVIDENCE.md; docs/evidence/B20R-SERVICE-EVIDENCE-RESULTS.md/COMMANDS.md/FILES.md/changes.patch/WALKTHROUGH.md and fourdated proofs/retention.json. Allsix logs append-only; earlier artifacts/data/approvals/accounting/quarantines retained; ordinarypytest/children0externalGemini/countTokens. BLOCK-B20-05 technically addressed pending human review, fullB20PARTIAL/BLOCKED for capacity/route/dumping interventions; B10genuineOPEN/PARTIAL. NoB21/frontend/live authorization. Exactnext: human reviewB20-R-SERVICE-EVIDENCE, then separately authorize further work. STOP.
++
++
++### B20-R-SERVICE-EVIDENCE final compatibility verification
++CURRENT final45distinctPASS=39newunit+2directcompatibilityunit+4real,0unresolvedFAIL/0SKIP. Two final unit cases ensure optionalservice_record is omitted when absent, preserving legacy EvidenceDTO/DONE replay response shape; populated sources unchanged from actual runtime proof. Focused final41PASS; actual duration in focused-final.txt. Both finalSPEC validatorsPASS after finalsource edit. Earlier43-case summary is superseded by this45-case total, not additional runtime journeys. Duplicate generated static-check blocks removed and JSON formatting minimized; no behavior/schema-name change. No real journeys repeated for documentation/legacy-null serialization-only edits. All earlier evidence preserved; fullB20/B10 genuine gates remain open.
++
++
++## F02 — actual final verification (2026-10-18)
++`npm test`fromfrontend30distinctofflinePASS0FAIL0SKIP (explicitfakefetch), `PYTHONDONTWRITEBYTECODE=1 python3 scripts/test_contracts.py`4PASS. `npm run typecheck`PASS. `npm run build`PASS incl prebuildcurrentgenerated183schemas/58routes+reviewedhashguard58operations55paths183schemas. Both backend/.venv/bin/python specificationvalidatorsPASS. `backend/.venv/bin/python frontend/scripts/verify_integration.py`finalPASS actualNextproxy/FastAPI/Services/Auth/freshFalkorDBsource: automaticANALYSTsession, me, realDepartmentread, query422, anonymous401, adminaction403, logoutrevocation401; runtime58routeparity+consumedmodelschema parity. Backend/app+tests/contracts contenthashes unchanged across successful run. Existingproviderinterlock0external/blocked attempts; no live model/MCP/worker/memory/readinessclaim. Final F02-integration.json retained.
++Actualbrowser separate configuredisolated instancePASS noform→DemoConnected→EndSession→SessionEnded→Reconnect→DemoConnected; browserwarning/errorlogs[]. ScreenshotF02-connected.png retained before final copy refinement. Existing3100unconfiguredstate tested; no testsecretinstalled. Failures retained: redundantliteraltypecomparison, wrongroot/relative testpaths (0testresultnotcounted), testrecordtyping; initialOpenAPIrefprefixcomparisonfailure normalized; browserHost/internalURLoriginregression+nativefetchreceiverbug corrected/regressiontested. Temporarysafehostdiagnosticsremoved. Originalfailedgraphs/private logs retained, no recovery/reset. Detailedcommands/limits in frontend/docs/evidence/F02-results.md. Final case/Canvas/SSE/operationalintegration NOTRUN and not implemented.
++
++
++### B20-R-SERVICE-EVIDENCE final read-only preservation
++AuditPASS: all1728pre-task public files retained;1236earlier evidence files byte-identical;123accepted test files unchanged. Allsix histories append-only. Original registries/migrations0001–0005/city858nodes1246edges42candidate drains, runtime-v1 definitions, B01probe,12previousB20checkpoints, B12R2/B19quarantines and accepted ownership/utility records/UNKNOWNintents retained. Newfourvariant service source/report/native/candidate/oldassessment integrityPASS; uncertain intent+release reservationDISPATCHING retained. Historical2paidrequests/noactive sessions or holds unchanged. 12interlockreports0external/0unexpected; final publicartifact/patchprivate-value scanPASS. ActualFalkorDB6.0.2/Redis8.10.2 and pinnedpackages recorded, no version changes. Final45distinctPASS41unit/4real;0unresolvedFAIL/0SKIP. FullB20PARTIAL/BLOCKED/B10genuineOPEN/PARTIAL; STOPforhumanreview.
+--- /dev/null
++++ b/backend/SERVICE_EVIDENCE.md
+@@ -0,0 +1,21 @@
++# B20-R-SERVICE-EVIDENCE — dated synthetic service history
++
++Only S05/S06 fresh controller releases are extended. Existing `runtime-v1.json`, imported candidate schedules/owners/routes and retained graphs are unchanged. The controller-only `data/scenarios/service-evidence-v1.json` explicitly authors one-occurrence service-log observations; it is not runtime tool input or real municipal history. Agent/MCP file isolation blocks this file and all unreleased scenario data.
++
++Canonical `PickupExecution` and `PICKUP_FOR` are reused. There was no existing runtime execution writer; a narrow controller call now compiles these records with a typed `SERVICE_EXECUTION_SOURCE`, hashed provenance/receipt companion and durable `GRAPH_EVIDENCE_CHANGED` native event through existing migration0005 Storage/fencing. No generic writer, ledger, endpoint, migration, role, operational intervention or package is added.
++
++Each source binds the actual collection point, route, investigation/incident, specific scheduled occurrence, checked/actual occurrence time, recording/review time, authenticated DEPT-SAN operator and distinct authenticated ANALYST reviewer. It validates against the actual B09 reviewed inspection report/journal, original request scope and canonical native/relationship hashes. Caller-supplied verified/reviewer/status fields are not accepted by B19 controls. Same-source identity cannot create a second execution. Routes are checked against actual inventory context, without promoting imported candidate recurring route/schedule assignments.
++
++For these explicitly synthetic fixtures the service due is120seconds before release, the separate service log is checked60seconds before release, and the later waste/deposit inspection observations occur at release. These offsets are authored fixture facts, not inferred travel times or a real lateness standard. The service log is not represented as an inspection performed before its lifecycle started: the inspection's own observations stay at/after its actual start. `scheduled_at` is a specifically attributed service-log due occurrence; candidate `HAS_SCHEDULE` remains CANDIDATE. No actual quantities are supplied or invented.
++
++S05 PRIMARY has an explicit reviewed MISSED log result (no actual_at); field evidence of persisted waste is separate from the unchanged qualitative capacity observation. S05 NEGATIVE has UNKNOWN service, no PickupExecution, and no invented missed event. S06 has separately sourced COMPLETED pickup/actual_at before the later field report; PRIMARY includes reviewed discriminating deposit/dumping observations, NEGATIVE includes completion only and supplies no dumping support. Equal/reversed/unknown timing, absent execution, wrong target/source/route or source mutation cannot qualify the chronology. Absence remains an evidence gap.
++
++New MISSED_PICKUP/ILLEGAL_DUMPING assessments in controller-bound S05/S06 investigations use rule3 (the compatible format2 classification envelope). This selection comes from the hashed demo/current investigation binding, not caller labels. It requires typed current service provenance before assigning causal service/sequence support or contradiction. Other investigations retain accepted rule2 qualitative-field semantics; rule2 is not proof of pickup-before-later-deposit history. Old rule1/2 assessments remain parseable/immutable. Source records remain context references, not causal support merely because they exist. The actual approved discriminating observations, occurrence scope and existing independence criteria still apply; one log/report does not establish independently VERIFIED cause or resolution.
++
++Existing `get_pickup_execution_history` MCP returns canonical executions and the source evidence, with normal cutoff/window/lookahead/RO protections and current service provenance validation. `PARTIAL` plus gaps when no history is available remains truthful. GET `/api/v1/evidence/{id}` and `evidence get --id` expose a closed optional `service_record` on validated service sources; raw private journals are withheld. Matching department readers remain scoped through the original inspected report. Other evidence DTOs keep the optional field empty. API consumers may regenerate types for this compatible optional field; no frontend work was performed.
++
++Collection complete does not imply waste resolved or illegal dumping. Existing B14-2 monitoring and independent post-service opportunity requirements are unchanged. No plan, approval, work order or outcome is fabricated by release. Capacity/route/dumping intervention gaps remain open.
++
++A report commit precedes the narrow service batch; the service source/execution/companion/event are atomic under the existing fence. A later readback or stage/transport failure can leave real committed evidence while the overall release is uncertain. Existing HTTP intent and demo reservation remain recovery-required; exact original-key replay blocks redispatch. Inspect the original request, report/B09 COMMITTED journal, typed service source/companion and native event. Successful reads do not clear the intent. Do not retry, replace keys, delete records, roll back or clear quarantine automatically. This change does not introduce a recovery subsystem.
++
++Focused reproduction, actual IDs/timestamps/provenance, zero-provider reports and known limitations are recorded under `docs/evidence/B20R-SERVICE-EVIDENCE-*`. Explicit synthetic operator commands and real DB/SDK/MCP/API/CLI are distinguished from genuine AI; no model solver or live provider was used. STOP for review; full B20 and B10 genuine acceptance remain open.
+--- /dev/null
++++ b/backend/app/services/demo/service_history.py
+@@ -0,0 +1,14 @@
++"""Controller-only authored service facts. Never imported by MCP/agents/read paths."""
++import json
++from datetime import timedelta
++from pathlib import Path
++from app.graph.schema import timestamp
++from app.services.service_evidence import ServiceRecord,ServiceEvidence
++from app.services.operations.service import stable
++
++def release(services,scenario,variant,case,report_id,field,reviewer,request):
++ packets=json.loads((Path(__file__).resolve().parents[4]/'data/scenarios/service-evidence-v1.json').read_text())
++ packet=packets['scenarios'][scenario][variant];at=services.clock()
++ def when(seconds):return (timestamp(at)-timedelta(seconds=seconds)).isoformat(timespec='microseconds').replace('+00:00','Z')
++ record=ServiceRecord(id=stable('SERVICE-SOURCE',request),pickup_id=stable('PICKUP',request) if packet['status']!='UNKNOWN' else None,report_evidence_id=report_id,investigation_id=case['investigation_id'],incident_id=case['incident_id'],target_id=case['asset_id'],route_id='ROUTE-C03',scheduled_at=when(120),checked_at=when(60),actual_at=when(60) if packet['status']=='COMPLETED' else None,recorded_at=at,status=packet['status'],record_id=scenario+':'+case['investigation_id']+':service-v1',observed_by=field.id,reviewed_by=reviewer.id)
++ return ServiceEvidence(services).record(record,request)
+--- /dev/null
++++ b/backend/app/services/service_evidence.py
+@@ -0,0 +1,126 @@
++"""Bounded synthetic service provenance; shared read validation, no public writer."""
++from typing import Literal
++import json
++from pydantic import model_validator
++from app.services.evidence.models import Model,ID,Time
++from app.graph.models import digest
++from app.graph.schema import timestamp
++from app.graph.repository import PreconditionFailed,Conflict
++from app.services.evidence.reader import Reader
++from app.services.operations.storage import Storage
++from app.services.operations.service import stable,common
++VERSION='B20-SERVICE-1'
++TYPE='SERVICE_EXECUTION_SOURCE'
++
++def policy_required(repo,investigation_id):
++ state=Storage(repo).get('demo','current')
++ return bool(state and state['id'] in {'S05','S06'} and any(c['investigation_id']==investigation_id for c in state['cases']))
++class ServiceRecord(Model):
++ version:Literal['B20-SERVICE-1']=VERSION
++ id:ID
++ pickup_id:ID|None
++ report_evidence_id:ID
++ investigation_id:ID
++ incident_id:ID
++ target_id:ID
++ route_id:ID
++ scheduled_at:Time
++ checked_at:Time
++ actual_at:Time|None
++ recorded_at:Time
++ status:Literal['COMPLETED','MISSED','UNKNOWN']
++ source_kind:Literal['SYNTHETIC']='SYNTHETIC'
++ source_id:Literal['B20-synthetic-service-log']='B20-synthetic-service-log'
++ record_id:ID
++ department_id:Literal['DEPT-SAN']='DEPT-SAN'
++ observed_by:ID
++ reviewed_by:ID
++ @model_validator(mode='after')
++ def chronology(self):
++  due,checked,recorded=map(timestamp,[self.scheduled_at,self.checked_at,self.recorded_at])
++  if not due<=checked<=recorded or self.observed_by==self.reviewed_by:raise ValueError('SERVICE_TIME_OR_REVIEW')
++  if self.status=='COMPLETED':
++   if self.actual_at is None or not due<=timestamp(self.actual_at)<=checked:raise ValueError('SERVICE_ACTUAL_REQUIRED')
++  elif self.actual_at is not None:raise ValueError('SERVICE_ACTUAL_NOT_ESTABLISHED')
++  if (self.pickup_id is None)!=(self.status=='UNKNOWN'):raise ValueError('SERVICE_EXECUTION_ID_REQUIRED')
++  return self
++
++def source_properties(record):
++ return {**common(record.id,record.recorded_at),'evidence_type':TYPE,'reliability':'VERIFIED','recorded_at':record.recorded_at,'observed_at':record.checked_at,'source_kind':'SYNTHETIC','source_record_id':record.source_id+':'+record.record_id,'basis':'OBSERVED','summary':record.model_dump_json()}
++def parse_source(props):
++ record=ServiceRecord.model_validate_json(props['summary'])
++ if props!=source_properties(record):raise PreconditionFailed('SERVICE_SOURCE_INTEGRITY')
++ return record
++
++def validate(repo,report_id,as_of):
++ """Validate current canonical hashes, actual B09 reviewed report/journal and scope."""
++ store=Storage(repo);state=store.get('service_evidence',report_id)
++ if not state:return None
++ record=ServiceRecord.model_validate(state['record']);reader=Reader(repo,as_of)
++ source=reader.node(record.id,'Evidence')
++ if parse_source(source.properties)!=record:raise PreconditionFailed('SERVICE_SOURCE_STATE_MISMATCH')
++ if source.content_hash!=state['source_hash'] or record.report_evidence_id!=report_id:raise PreconditionFailed('SERVICE_SOURCE_BINDING')
++ ref=reader.evidence(report_id);report=ref.report
++ if not report or not report.review or report.inspector_id!=record.observed_by or report.review.reviewer_id!=record.reviewed_by or report.department_id!=record.department_id or report.source_kind!='SYNTHETIC' or report.source_id==record.source_id or source.properties['source_record_id']==ref.source_record_id:raise PreconditionFailed('SERVICE_REVIEW_BINDING')
++ if ref.content_hash!=state['report_hash']:raise PreconditionFailed('SERVICE_REPORT_CHANGED')
++ from app.services.evidence.relevance import inspection_incidents
++ if record.incident_id not in inspection_incidents(reader,report):raise PreconditionFailed('SERVICE_INCIDENT_BINDING')
++ request,_=__import__('app.services.evidence.service',fromlist=['EvidenceService']).EvidenceService(repo).inspection_source(reader,report.inspection_id)
++ if request['investigation_id']!=record.investigation_id or request['asset_ids']!=[record.target_id]:raise PreconditionFailed('SERVICE_TARGET_BINDING')
++ reader.node(record.target_id,'WasteCollectionPoint');reader.node(record.route_id,'CollectionRoute')
++ if record.pickup_id:
++  n=reader.node(record.pickup_id,'PickupExecution');edge=repo.get_relationship(state['relationship_id'])
++  expected={**common(record.pickup_id,record.recorded_at),'route_id':record.route_id,'scheduled_at':record.scheduled_at,'status':record.status,'source_record_id':source.properties['source_record_id'],**({'actual_at':record.actual_at} if record.actual_at else {})}
++  if n.properties!=expected or n.content_hash!=state['pickup_hash'] or edge.content_hash!=state['relationship_hash'] or (edge.kind,edge.source,edge.target,edge.properties.get('source_evidence_id'))!=('PICKUP_FOR',n.id,record.target_id,source.id) or not reader.visible(edge.properties):raise PreconditionFailed('SERVICE_EXECUTION_BINDING')
++ operation=store.get('operation',state['operation_id'])
++ if not operation or operation.get('receipt')!=state['receipt'] or operation.get('record')!=state['record'] or operation.get('source_hash')!=state['source_hash']:raise PreconditionFailed('SERVICE_AUDIT_BINDING')
++ return record
++
++def qualify(record,*,target,report_source,observed_at,code,cause):
++ """No narrative/code/count alone proves service result or strictly later deposit."""
++ if record is None:return False,'Dated reviewed service execution unavailable; no missed service inferred'
++ if record.target_id!=target or record.source_id==report_source:return False,'Service target/source does not establish independent log provenance'
++ if observed_at is None:return False,'Deposit/field occurrence time is unknown'
++ try:at=timestamp(observed_at)
++ except (ValueError,TypeError):return False,'Deposit/field occurrence time is invalid'
++ if at>timestamp(record.recorded_at) or at<timestamp(record.checked_at):return False,'Service/field chronology is not established'
++ if cause=='MISSED_PICKUP':
++  if code=='PICKUP_COMPLETED_CONFIRMED':return record.status=='COMPLETED' and record.actual_at is not None,'Reviewed dated execution result required'
++  return record.status=='MISSED' and record.pickup_id is not None,'Explicit reviewed missed-service observation required; absence is not a miss'
++ if cause=='ILLEGAL_DUMPING':
++  return record.status=='COMPLETED' and record.actual_at is not None and timestamp(record.actual_at)<at,'Strict pickup-before-deposit timing required; later waste alone is not dumping proof'
++ return True,''
++
++class ServiceEvidence:
++ """Called only by authenticated B19 controller after an actual reviewed report."""
++ def __init__(self,services):self.s=services;self.repo=services.repo;self.store=services.ops.store
++ def readback(self,report_id):
++  record=validate(self.repo,report_id,self.s.clock())
++  if record is None:raise PreconditionFailed('SERVICE_SOURCE_UNAVAILABLE')
++  return self.store.get('service_evidence',report_id)['receipt']
++ def record(self,record,request):
++  r=self.repo;at=self.s.clock();reader=Reader(r,at);ref=reader.evidence(record.report_evidence_id);report=ref.report
++  if not report or not report.review or record.recorded_at!=at or report.inspector_id!=record.observed_by or report.review.reviewer_id!=record.reviewed_by or report.department_id!='DEPT-SAN':raise PreconditionFailed('SERVICE_AUTHENTICATED_REVIEW_REQUIRED')
++  field=self.s.auth.operator(record.observed_by);reviewer=self.s.auth.operator(record.reviewed_by)
++  if field.role!='DEPARTMENT_LEAD' or field.department_id!='DEPT-SAN' or reviewer.role!='ANALYST':raise PreconditionFailed('SERVICE_DEPARTMENT_OR_REVIEWER')
++  reader.node(record.route_id,'CollectionRoute');reader.node(record.target_id,'WasteCollectionPoint')
++  rows=r._read('MATCH (:WasteCollectionPoint {id:$target})-[:COLLECTED_BY]->(r:CollectionRoute {id:$route}) RETURN r.id LIMIT 2',{'target':record.target_id,'route':record.route_id})
++  if rows!=[[record.route_id]]:raise PreconditionFailed('SERVICE_ROUTE_SCOPE')
++  eid=record.id;props=source_properties(record);nodes=[('Evidence',props)];edges=[];edge_id=None;pickup_hash=None;relationship_hash=None
++  if record.pickup_id:
++   pickup={**common(record.pickup_id,at),'route_id':record.route_id,'scheduled_at':record.scheduled_at,'status':record.status,'source_record_id':props['source_record_id'],**({'actual_at':record.actual_at} if record.actual_at else {})};nodes.append(('PickupExecution',pickup))
++   edge_id=stable('SERVICE-PICKUP-FOR',eid);ep={'id':edge_id,'municipality_id':'demo-city','created_at':at,'valid_from':at,'source_evidence_id':eid};edges.append(('PICKUP_FOR',record.pickup_id,record.target_id,ep));pickup_hash=r.decode_node(r.registry.labels('PickupExecution'),pickup).content_hash
++   from app.graph.models import EdgeRecord
++   relationship_hash=EdgeRecord(id=edge_id,kind='PICKUP_FOR',source=record.pickup_id,target=record.target_id,properties=ep).content_hash
++  opid=stable('SERVICE-OP',request);eventid=stable('SERVICE-EVENT',request)
++  receipt={'id':eid,'pickup_id':record.pickup_id,'report_evidence_id':record.report_evidence_id,'event_id':eventid,'status':record.status,'policy_version':VERSION}
++  event={'id':eventid,'type':'GRAPH_EVIDENCE_CHANGED','entity_id':record.investigation_id,'aggregate_revision':0,'occurred_at':at,'payload_schema_version':1,'source_kind':'SYNTHETIC','idempotency_key':request,'actor_id':record.observed_by,'actor_role':'DEPARTMENT_LEAD','payload':receipt}
++  nodes.append(('DomainEvent',{**common(eventid,at),'event_type':event['type'],'subject_id':event['entity_id'],'occurred_at':at,'delivery_status':'PENDING','idempotency_key':request,'payload_ref':'operation:'+opid}));edges.append(('EMITTED_EVENT',record.investigation_id,eventid,{'id':stable('SERVICE-EVENT-REL',request),'municipality_id':'demo-city','created_at':at,'valid_from':at}))
++  state={'record':record.model_dump(mode='json'),'source_hash':r.decode_node(r.registry.labels('Evidence'),props).content_hash,'report_hash':ref.content_hash,'pickup_hash':pickup_hash,'relationship_id':edge_id,'relationship_hash':relationship_hash,'operation_id':opid,'receipt':receipt}
++  with r._session() as session:
++   if self.store.get('service_evidence',record.report_evidence_id):raise Conflict('SERVICE_SOURCE_ALREADY_RECORDED')
++   if r._read('MATCH (e:Evidence {source_record_id:$id}) RETURN e.id LIMIT 2',{'id':props['source_record_id']}):raise Conflict('SERVICE_SOURCE_IDENTITY_CONFLICT')
++   event['aggregate_revision']=session.revision+1
++   operation={'record':state['record'],'source_hash':state['source_hash'],'receipt':receipt,'events':[event],'occurred_at':at,'native_hashes':{p['id']:digest(p) for _,p in nodes}}
++   self.store.commit(session,eid,nodes,[],edges,[('service_evidence',record.report_evidence_id,state),('operation',opid,operation)])
++  return self.readback(record.report_evidence_id)
+--- /dev/null
++++ b/backend/tests/integration/test_service_evidence_runtime.py
+@@ -0,0 +1,103 @@
++"""Real B19/FalkorDB/API/CLI/MCP service evidence; explicit synthetic facts, no model."""
++import asyncio,hashlib,json,os,subprocess,sys
++from pathlib import Path
++from uuid import uuid4
++import httpx,pytest
++from app.active import active_scope,load
++from app.api.__main__ import configured_app
++from app.graph.repository import GraphRepository,Conflict,PreconditionFailed
++from app.services.evidence.service import EvidenceService
++from app.services.evidence.policies import POLICIES
++from app.services.evidence.reader import Reader
++from app.services.service_evidence import ServiceEvidence,ServiceRecord,validate,parse_source
++from app.services.operations.storage import Storage
++from app.agents.mcp import brokers
++from app.mcp.civicly.contracts import Context
++from tests.b20_fixtures import shared
++from tests.integration.test_demo_runtime import fresh,client_run,headers,inspection,AT
++pytestmark=pytest.mark.integration
++
++@pytest.mark.parametrize('scenario,variant',[('S05','PRIMARY'),('S05','NEGATIVE'),('S06','PRIMARY'),('S06','NEGATIVE')])
++def test_dated_service_evidence(shared,scenario,variant,monkeypatch):
++ asyncio.run(journey(shared,scenario,variant,monkeypatch))
++
++async def journey(shared,scenario,variant,monkeypatch):
++ tag='B20RSE-'+scenario+'-'+variant;receipt=await fresh(shared,scenario,variant,tag+'-reset');path=shared.path.parent/receipt['profile_reference']/'profile.json';p=load(path);case=receipt['scenario']['cases'][0]
++ with active_scope(p):
++  r=GraphRepository(shared.db,p.graph);ev=EvidenceService(r,clock=lambda:AT);analyst=shared.auth.resolve(shared.tokens['OP-ANALYST']);hyp={};old={}
++  candidates={e.id:e.content_hash for kind in ['HAS_SCHEDULE','COLLECTED_BY','MAINTAINED_BY'] for e in r._edges(kind)}
++  for cause in ['MISSED_PICKUP','CAPACITY_SHORTFALL','ILLEGAL_DUMPING']:
++   rule=POLICIES['WASTE_ACCUMULATION'][cause]
++   hid=ev.execute({'operation':'propose','request_id':tag+'-hyp-'+cause,'investigation_id':case['investigation_id'],'incident_ids':[case['incident_id']],'asset_ids':[case['asset_id']],'cause_code':cause,'statement':'Explicit test competing '+cause,'mechanism':'Synthetic evidence must establish scoped dated mechanism','confirming_codes':rule['confirming'],'falsifying_codes':rule['falsifying']},analyst).entity_id;hyp[cause]=hid
++   a=ev.execute({'operation':'assess','request_id':tag+'-baseline-'+cause,'hypothesis_id':hid,'expected_hash':r.get_node(hid).content_hash,'evidence_ids':[],'as_of':AT},analyst).assessment;old[a.id]=r.get_node(a.id).content_hash
++  async def mcp_read():
++   async with brokers(p,path,timeout=10,memory_path=path.parent/'memory.json') as tools:
++    assert any(t['name']=='civicly::get_pickup_execution_history' for t in tools.catalog())
++    c=Context(trace_id=uuid4().hex,execution_id=uuid4().hex,source_graph=p.graph,investigation_id=case['investigation_id'])
++    return await tools.call('civicly::get_pickup_execution_history',{'collection_point_id':case['asset_id'],'days':1,'as_of':AT},c,'Read actual dated service execution; absence is not missed pickup',cutoff=AT)
++  before=await mcp_read();assert before['status'] in {'SUCCESS','PARTIAL'} and not before['pickup_executions'];assert r._read('MATCH (n:PickupExecution) RETURN count(n)')==[[0]]
++  app=configured_app(path,shared.auth.path,path.parent/'memory.json',AT)
++  async with app.router.lifespan_context(app),httpx.AsyncClient(transport=httpx.ASGITransport(app=app,raise_app_exceptions=False),base_url='http://local') as c:
++   s=app.state.services;view,lead=await inspection(shared,c,case,tag+'-survey');q={'expected_current_stage':'BASELINE_VISIBLE','stage':'EVIDENCE_REVEALED','investigation_id':case['investigation_id'],'inspection_id':view['id'],'expected_hash':view['expected_hash']};route='/api/v1/demo/scenarios/'+scenario+'/advance'
++   if scenario=='S05' and variant=='PRIMARY':
++    for who,field,reviewer in [('OP-ANALYST',lead,'OP-ANALYST'),('OP-ADMIN','OP-ROAD-LEAD','OP-ANALYST'),('OP-ADMIN',lead,'OP-APPROVER')]:
++     denied=await c.post(route,json=q,headers=headers(shared,who,tag+'-denied-'+who+field+reviewer,field=field,reviewer=reviewer));assert denied.status_code==403,denied.json()
++    assert r._read('MATCH (n:PickupExecution) RETURN count(n)')==[[0]]
++   # One actual controller/service commit with deliberate acknowledgement fault.
++   recovery=None;real=ServiceEvidence.readback;calls=[];execute=ServiceEvidence.record
++   if scenario=='S06' and variant=='NEGATIVE':
++    def counted(self,*a,**kw):calls.append(a[0]);return execute(self,*a,**kw)
++    def fault(self,id):
++     real(self,id);raise ValueError('PRIVATE_SERVICE_POST_COMMIT_READBACK')
++    monkeypatch.setattr(ServiceEvidence,'record',counted);monkeypatch.setattr(ServiceEvidence,'readback',fault)
++   h=headers(shared,key=tag+'-release',field=lead,reviewer='OP-ANALYST');response=await c.post(route,json=q,headers=h)
++   if scenario=='S06' and variant=='NEGATIVE':
++    assert response.status_code==409,response.json();recovery=response.json()['error'];assert recovery['code']=='RECOVERY_REQUIRED' and recovery['details']['commitment']=='UNKNOWN'
++    monkeypatch.setattr(ServiceEvidence,'readback',real)
++    replay=await c.post(route,json=q,headers=h);assert replay.status_code==409 and replay.json()['error']['details']==recovery['details'];assert len(calls)==1
++    record=calls[0];released=[record.report_evidence_id,record.id];assert s.delivery.store.get('api_request',recovery['details']['request_id'])['status']=='DISPATCHING'
++   else:
++    assert response.status_code==200,response.json();released=response.json()['data']['released_evidence_ids'];assert len(released)==2
++    replay=await c.post(route,json=q,headers=h);assert replay.status_code==200 and replay.json()['data']==response.json()['data']
++    record=validate(r,released[0],AT)
++   assert record and record.id==released[1];assert len(set(released))==2
++   native_source=r.get_node(record.id,'Evidence');assert native_source.properties['source_record_id']!=r.get_node(record.report_evidence_id).properties['source_record_id']
++   report=Reader(r,AT).evidence(record.report_evidence_id).report;assert report.review and report.inspector_id!=report.review.reviewer_id
++   assert all(ob.observed_at>=r.get_node(report.inspection_id).properties['requested_at'] for ob in report.observations)
++   assert record.checked_at<record.recorded_at and record.scheduled_at<record.checked_at
++   if record.actual_at:
++    from app.graph.schema import timestamp
++    assert timestamp(record.actual_at)<min(timestamp(ob.observed_at) for ob in report.observations)
++   expected_count=0 if record.status=='UNKNOWN' else 1
++   assert r._read('MATCH (n:PickupExecution) RETURN count(n)')==[[expected_count]]
++   if record.pickup_id:
++    n=r.get_node(record.pickup_id,'PickupExecution');assert n.properties['route_id']==record.route_id and n.properties['status']==record.status
++    if record.status=='MISSED':assert 'actual_at' not in n.properties
++    assert r._read('MATCH (n:PickupExecution {id:$id})-[:PICKUP_FOR]->(p:WasteCollectionPoint) RETURN p.id',{'id':record.pickup_id})==[[case['asset_id']]]
++   source=await c.get('/api/v1/evidence/'+record.id,headers=headers(shared,'OP-ANALYST'));assert source.status_code==200,source.json();assert source.json()['data']['reviewed'] and source.json()['data']['service_record']==record.model_dump(mode='json')
++   after={}
++   for cause,hid in hyp.items():
++    a=ev.execute({'operation':'assess','request_id':tag+'-after-'+cause,'hypothesis_id':hid,'expected_hash':r.get_node(hid).content_hash,'evidence_ids':released,'as_of':AT},analyst).assessment;after[cause]=a
++    assert a.previous_assessment_id in old and r.get_node(a.previous_assessment_id).content_hash==old[a.previous_assessment_id]
++   expected={('S05','PRIMARY'):('SUPPORTED','INCONCLUSIVE'),('S05','NEGATIVE'):('INCONCLUSIVE','INCONCLUSIVE'),('S06','PRIMARY'):('CONTRADICTED','SUPPORTED'),('S06','NEGATIVE'):('CONTRADICTED','INCONCLUSIVE')}[(scenario,variant)]
++   assert (after['MISSED_PICKUP'].assessment,after['ILLEGAL_DUMPING'].assessment)==expected,{k:v.model_dump(mode='json') for k,v in after.items()}
++   assert after['MISSED_PICKUP'].rule_version==after['ILLEGAL_DUMPING'].rule_version==3
++   if scenario=='S06' and variant=='PRIMARY':assert record.id in {ref.id for ref in after['ILLEGAL_DUMPING'].evidence_references}
++   # Strict duplicate source identity without adding a second canonical execution.
++   if not recovery:
++    with pytest.raises(Conflict):ServiceEvidence(s).record(record,tag+'-duplicate-source')
++   assert r._read('MATCH (n:PickupExecution) RETURN count(n)')==[[expected_count]]
++   events=s.delivery.discover();assert events;state=s.ops.store.get('service_evidence',record.report_evidence_id)
++   assert s.delivery.store.get('delivery',state['receipt']['event_id'])['event']['type']=='GRAPH_EVIDENCE_CHANGED'
++   assert r._read('MATCH (n:ResolutionPlan) RETURN count(n)')==[[0]] and r._read('MATCH (n:WorkOrder) RETURN count(n)')==[[0]]
++   assert all(r.get_relationship(id).content_hash==sha for id,sha in candidates.items())
++   # Real CLI delegates the accepted API read/service projection, no private logs.
++   cli=None
++   if scenario=='S06' and variant=='PRIMARY':
++    from cli.private import write_private,scope
++    session=path.parent/'service-session.json';write_private(session,{'version':1,'scope':scope(p,shared.auth.path),'token':shared.tokens['OP-ANALYST'],'operator_id':'OP-ANALYST','login_key':'B20RSE'})
++    command=[sys.executable,'-m','cli','--profile',str(path),'--auth-store',str(shared.auth.path),'--memory-profile',str(path.parent/'memory.json'),'--session',str(session),'--at',AT,'evidence','get','--id',record.id]
++    done=subprocess.run(command,capture_output=True,text=True,env={**os.environ,'PYTHONPATH':str(Path('backend/test_guards').resolve())+os.pathsep+str(Path('backend').resolve())},timeout=60);assert done.returncode==0,done.stdout;cli=json.loads(done.stdout);assert cli['data']['service_record']['actual_at']==record.actual_at
++  got=await mcp_read();assert got['status'] in {'SUCCESS','PARTIAL'},got;assert len(got['pickup_executions'])==expected_count
++  if record.pickup_id:assert record.id in got['source_evidence_ids']
++  Path('docs/evidence/B20R-SERVICE-EVIDENCE-'+scenario+'-'+variant+'-proof.json').write_text(json.dumps({'mode':'REAL_B19_FALKORDB_HTTP_CLI_MCP_EXPLICIT_SYNTHETIC_OBSERVATIONS_NO_MODEL','source_graph':p.graph,'profile_reference':receipt['profile_reference'],'case':case,'service_record':record.model_dump(mode='json'),'report':report.model_dump(mode='json'),'baseline_assessment_hashes':old,'new_assessments':{k:v.model_dump(mode='json') for k,v in after.items()},'candidate_hashes_retained':candidates,'pickup_count':expected_count,'runtime_mcp_before':before,'runtime_mcp_after':got,'api_source':source.json()['data'],'cli':cli,'recovery':recovery,'committed_once_no_redispatch':bool(recovery),'plans':0,'work_orders':0,'provider_requests':0},indent=2)+'\n')
+--- /dev/null
++++ b/backend/tests/unit/test_service_evidence.py
+@@ -0,0 +1,78 @@
++"""Synthetic service chronology/identity rules; no database or model success claimed."""
++from types import SimpleNamespace
++import pytest
++from pydantic import ValidationError
++from app.services.service_evidence import ServiceRecord,source_properties,parse_source,qualify
++from app.graph.repository import PreconditionFailed
++T0='2026-10-18T11:58:00.000000Z';T1='2026-10-18T11:59:00.000000Z';T2='2026-10-18T12:00:00.000000Z'
++def record(**extra):
++ return ServiceRecord.model_validate({'id':'SOURCE','pickup_id':'PICKUP','report_evidence_id':'REPORT','investigation_id':'INV','incident_id':'INC','target_id':'WASTE','route_id':'ROUTE','scheduled_at':T0,'checked_at':T1,'actual_at':T1,'recorded_at':T2,'status':'COMPLETED','record_id':'service-1','observed_by':'LEAD','reviewed_by':'ANALYST',**extra})
++@pytest.mark.parametrize('case,ok',[('valid',True),('equal',False),('reverse',False),('unknown',False),('missing_execution',False),('target',False),('source',False),('missed',False)])
++def test_pickup_before_deposit(case,ok):
++ r=record();at=T2;target='WASTE';source='field-survey'
++ if case=='equal':at=T1
++ if case=='reverse':at=T0
++ if case=='unknown':at=None
++ if case=='missing_execution':r=None
++ if case=='target':target='OTHER'
++ if case=='source':source=r.source_id
++ if case=='missed':r=record(status='MISSED',actual_at=None)
++ assert qualify(r,target=target,report_source=source,observed_at=at,code='DUMPING_OBSERVED',cause='ILLEGAL_DUMPING')[0]==ok
++@pytest.mark.parametrize('status,actual,pickup,ok',[('MISSED',None,'P',True),('UNKNOWN',None,None,False),('COMPLETED',T1,'P',False)])
++def test_explicit_missed_service_not_absence(status,actual,pickup,ok):
++ r=record(status=status,actual_at=actual,pickup_id=pickup)
++ assert qualify(r,target='WASTE',report_source='field',observed_at=T2,code='PICKUP_MISSED_CONFIRMED',cause='MISSED_PICKUP')[0]==ok
++@pytest.mark.parametrize('damage',[{'scheduled_at':T2},{'checked_at':T0},{'actual_at':None},{'status':'MISSED'},{'pickup_id':None},{'reviewed_by':'LEAD'},{'department_id':'DEPT-ROAD'},{'source_kind':'AGENT'},{'verified':True}])
++def test_closed_service_source(damage):
++ with pytest.raises(ValidationError):record(**damage)
++@pytest.mark.parametrize('damage',['label','identity','source','date','body'])
++def test_source_labels_and_identity_do_not_confer_authority(damage):
++ props=source_properties(record())
++ if damage=='label':props['reliability']='UNVERIFIED'
++ if damage=='identity':props['id']='OTHER'
++ if damage=='source':props['source_record_id']='wrong-source'
++ if damage=='date':props['observed_at']=T2
++ if damage=='body':props['summary']=record(id='OTHER').model_dump_json()
++ with pytest.raises(PreconditionFailed):parse_source(props)
++def test_roundtrip_unknown_does_not_create_execution_or_schedule():
++ r=record(status='UNKNOWN',actual_at=None,pickup_id=None);assert parse_source(source_properties(r))==r
++ assert 'schedule_id' not in r.model_dump() # Candidate schedule supplies no execution authority.
++@pytest.mark.parametrize('code,cause',[('PICKUP_COMPLETED_CONFIRMED','MISSED_PICKUP'),('PICKUP_MISSED_CONFIRMED','MISSED_PICKUP'),('DUMPING_OBSERVED','ILLEGAL_DUMPING')])
++def test_qualitative_code_without_dated_source_never_authorizes(code,cause):
++ assert not qualify(None,target='WASTE',report_source='schedule-only',observed_at=T2,code=code,cause=cause)[0]
++
++@pytest.mark.parametrize('scenario,investigation,expected',[('S05','INV',True),('S06','INV',True),('S04','INV',False),('S05','OTHER',False),(None,'INV',False)])
++def test_rule3_scope_is_controller_bound(monkeypatch,scenario,investigation,expected):
++ from app.services.service_evidence import policy_required,Storage
++ monkeypatch.setattr(Storage,'get',lambda self,*a:None if scenario is None else {'id':scenario,'cases':[{'investigation_id':'INV'}]})
++ assert policy_required(object(),investigation)==expected
++
++@pytest.mark.parametrize('scenario',['S05','S06'])
++def test_accepted_rule2_assessment_bytes_remain_parseable(scenario):
++ import json,hashlib
++ from pathlib import Path
++ from app.services.evidence.models import Assessment
++ path=Path('docs/evidence/B20-'+scenario+'-PRIMARY.json');before=hashlib.sha256(path.read_bytes()).hexdigest();body=json.loads(path.read_text());count=0
++ for rows in body['assessment_history'].values():
++  for value in rows:
++   a=Assessment.model_validate(value);assert a.rule_version==2;count+=1
++ assert count and hashlib.sha256(path.read_bytes()).hexdigest()==before
++
++
++def test_new_controller_packet_unavailable_to_agent_reads():
++ from pathlib import Path
++ from app.agents.isolation import agent_files
++ path=Path('data/scenarios/service-evidence-v1.json')
++ with agent_files():
++  with pytest.raises(PermissionError):path.read_text()
++ assert path.is_file()
++
++
++@pytest.mark.parametrize('present',[False,True])
++def test_optional_service_projection_preserves_legacy_evidence_shape(present):
++ from app.api.models import EvidenceDTO
++ value={'id':'E','expected_hash':'a'*64,'evidence_type':'SOURCE','summary':'Attributed source','source_kind':'SYNTHETIC','source_record_id':'source-record','reliability':'UNVERIFIED','observed_at':None,'recorded_at':T2,'document_id':None,'reviewed':False}
++ if present:value['service_record']=record()
++ out=EvidenceDTO.model_validate(value).model_dump(mode='json')
++ assert ('service_record' in out)==present
++ if present:assert out['service_record']==record().model_dump(mode='json')
+--- /dev/null
++++ b/contracts/service_evidence.json
+@@ -0,0 +1,160 @@
++{
++  "version": "B20-SERVICE-1",
++  "schema": {
++    "additionalProperties": false,
++    "properties": {
++      "version": {
++        "const": "B20-SERVICE-1",
++        "default": "B20-SERVICE-1",
++        "title": "Version",
++        "type": "string"
++      },
++      "id": {
++        "maxLength": 200,
++        "minLength": 1,
++        "title": "Id",
++        "type": "string"
++      },
++      "pickup_id": {
++        "anyOf": [
++          {
++            "maxLength": 200,
++            "minLength": 1,
++            "type": "string"
++          },
++          {
++            "type": "null"
++          }
++        ],
++        "title": "Pickup Id"
++      },
++      "report_evidence_id": {
++        "maxLength": 200,
++        "minLength": 1,
++        "title": "Report Evidence Id",
++        "type": "string"
++      },
++      "investigation_id": {
++        "maxLength": 200,
++        "minLength": 1,
++        "title": "Investigation Id",
++        "type": "string"
++      },
++      "incident_id": {
++        "maxLength": 200,
++        "minLength": 1,
++        "title": "Incident Id",
++        "type": "string"
++      },
++      "target_id": {
++        "maxLength": 200,
++        "minLength": 1,
++        "title": "Target Id",
++        "type": "string"
++      },
++      "route_id": {
++        "maxLength": 200,
++        "minLength": 1,
++        "title": "Route Id",
++        "type": "string"
++      },
++      "scheduled_at": {
++        "title": "Scheduled At",
++        "type": "string"
++      },
++      "checked_at": {
++        "title": "Checked At",
++        "type": "string"
++      },
++      "actual_at": {
++        "anyOf": [
++          {
++            "type": "string"
++          },
++          {
++            "type": "null"
++          }
++        ],
++        "title": "Actual At"
++      },
++      "recorded_at": {
++        "title": "Recorded At",
++        "type": "string"
++      },
++      "status": {
++        "enum": [
++          "COMPLETED",
++          "MISSED",
++          "UNKNOWN"
++        ],
++        "title": "Status",
++        "type": "string"
++      },
++      "source_kind": {
++        "const": "SYNTHETIC",
++        "default": "SYNTHETIC",
++        "title": "Source Kind",
++        "type": "string"
++      },
++      "source_id": {
++        "const": "B20-synthetic-service-log",
++        "default": "B20-synthetic-service-log",
++        "title": "Source Id",
++        "type": "string"
++      },
++      "record_id": {
++        "maxLength": 200,
++        "minLength": 1,
++        "title": "Record Id",
++        "type": "string"
++      },
++      "department_id": {
++        "const": "DEPT-SAN",
++        "default": "DEPT-SAN",
++        "title": "Department Id",
++        "type": "string"
++      },
++      "observed_by": {
++        "maxLength": 200,
++        "minLength": 1,
++        "title": "Observed By",
++        "type": "string"
++      },
++      "reviewed_by": {
++        "maxLength": 200,
++        "minLength": 1,
++        "title": "Reviewed By",
++        "type": "string"
++      }
++    },
++    "required": [
++      "id",
++      "pickup_id",
++      "report_evidence_id",
++      "investigation_id",
++      "incident_id",
++      "target_id",
++      "route_id",
++      "scheduled_at",
++      "checked_at",
++      "actual_at",
++      "recorded_at",
++      "status",
++      "record_id",
++      "observed_by",
++      "reviewed_by"
++    ],
++    "title": "ServiceRecord",
++    "type": "object"
++  },
++  "canonical_model": "PickupExecution / PICKUP_FOR; original registry and migrations unchanged",
++  "write_surface": "Authenticated controller-only S05/S06 release; existing B19 source-bound HTTP/API/CLI request, fenced0005 Storage + durable native event; no generic event/ledger endpoint",
++  "scope": "demo-city, WasteCollectionPoint WASTE-100, CollectionRoute ROUTE-C03, DEPT-SAN; target/route/source/review bound and validated",
++  "source": "Explicit bounded synthetic one-occurrence scheduled-service/log observation; separate B09 reviewed deposit/field inspection. Runtime cannot read unreleased controller profiles",
++  "time": "scheduled_at <= actual_at (COMPLETED) <= checked_at <= recorded_at. MISSED has explicit observed log result and no actual_at. UNKNOWN creates no PickupExecution. Deposit strictly later than actual_at, within real inspection lifecycle. Equal/reversed/unknown cannot establish sequence",
++  "authority": "Authenticated department plus distinct authenticated analyst review; caller labels cannot confer VERIFIED; reviewed source and hashed canonical/journal/companion identities revalidated",
++  "qualifications": "Candidate schedule != verified schedule; schedule != execution; no record != MISSED; completed != resolved; later waste != illegal dumping. Rule3 requires approved discriminating observation codes plus source/target/time scope; single log/report remains qualified, not independent cause verification",
++  "recovery": "Original source-bound HTTP request remains RECOVERY_REQUIRED/UNKNOWN and blocks redispatch on committed-readback uncertainty. No replacement key/repair/rollback/clearance",
++  "monitoring": "B14-2 outcome policy unchanged; evidence does not create plans/approvals/resolution",
++  "assessment_rule_scope": "Rule3 applies to MISSED_PICKUP/ILLEGAL_DUMPING in controller-bound S05/S06 demo/current investigations; existing generic rule2 qualitative observations remain compatible and do not establish pickup-before-deposit service history"
++}
+--- /dev/null
++++ b/data/scenarios/service-evidence-v1.json
+@@ -0,0 +1,9 @@
++{
++  "version": 1,
++  "scope": "Controller-authored synthetic one-occurrence service logs; not verified recurring schedules or real service claims",
++  "time_semantics": "Specific service due 120 seconds before release; field log checked 60 seconds before release; inspection waste/deposit observation at release, never before inspection start. Recording/review at release. No quantities supplied.",
++  "scenarios": {
++    "S05": {"PRIMARY": {"status": "MISSED"}, "NEGATIVE": {"status": "UNKNOWN"}},
++    "S06": {"PRIMARY": {"status": "COMPLETED"}, "NEGATIVE": {"status": "COMPLETED"}}
++  }
++}
+--- /dev/null
++++ b/docs/evidence/B20R-SERVICE-EVIDENCE-COMMANDS.md
+@@ -0,0 +1,23 @@
++# B20-R-SERVICE-EVIDENCE exact commands and observed results
++
++Root `/Users/vikashkumar/Desktop/Civicly`; existing Python3.12 isolated dependencies. DB commands use authorized local networking with existing10second bounded socket override, no broker/query budget changes. Ordinary pytest installs Gemini/countTokens interception and inherited Python-child guard, including actual MCP/CLI subprocesses. No broad/lifecycle/live suite.
++
++| Evidence | Exact command | Observed |
++|---|---|---|
++| unit.txt | `CIVICLY_TEST_REQUEST_LOG=/tmp/B20R-SERVICE-EVIDENCE-unit-provider.jsonl backend/.venv/bin/python -m pytest backend/tests/unit/test_service_evidence.py -q` |28PASS/1FAIL; test expected parse-only payload to prove target binding; corrected identity test, actual binding validated through state/native/journal |
++| unit-final.txt | `CIVICLY_TEST_REQUEST_LOG=/tmp/B20R-SERVICE-EVIDENCE-unit-final-provider.jsonl backend/.venv/bin/python -m pytest backend/tests/unit/test_service_evidence.py -q` |29PASS0.23s |
++| unit-second.txt | `CIVICLY_TEST_REQUEST_LOG=/tmp/B20R-SERVICE-EVIDENCE-unit-second-provider.jsonl backend/.venv/bin/python -m pytest backend/tests/unit/test_service_evidence.py -q` |36PASS0.13s; added scope/old-version compatibility |
++| focused.txt | `CIVICLY_TEST_REQUEST_LOG=/tmp/B20R-SERVICE-EVIDENCE-focused-provider.jsonl backend/.venv/bin/python -m pytest backend/tests/unit/test_service_evidence.py backend/tests/unit/test_demo_scenarios.py::test_demo_openapi_cli_parity_and_no_selectors backend/tests/unit/test_api.py::test_openapi_exact_matrix_closed_models_and_no_deferred_stubs -q` |39PASS3.62s =37new+2directcompatibility |
++| real.txt | `FALKORDB_SOCKET_TIMEOUT_SECONDS=10 CIVICLY_TEST_REQUEST_LOG=/tmp/B20R-SERVICE-EVIDENCE-real-provider.jsonl backend/.venv/bin/python -m pytest backend/tests/integration/test_service_evidence_runtime.py -q` |4FAIL43.98s; explicit rule_version/format_version2 coupling needed compatible rule3 support; graphs retained |
++| real-second.txt | `FALKORDB_SOCKET_TIMEOUT_SECONDS=10 CIVICLY_TEST_REQUEST_LOG=/tmp/B20R-SERVICE-EVIDENCE-real-second-provider.jsonl backend/.venv/bin/python -m pytest backend/tests/integration/test_service_evidence_runtime.py -q` |4FAIL49.14s; actual bounded empty MCP history PARTIAL/gaps, test incorrectly required SUCCESS; no fake success substituted |
++| real-third.txt | `FALKORDB_SOCKET_TIMEOUT_SECONDS=10 CIVICLY_TEST_REQUEST_LOG=/tmp/B20R-SERVICE-EVIDENCE-real-third-provider.jsonl backend/.venv/bin/python -m pytest backend/tests/integration/test_service_evidence_runtime.py -q` |4PASS99.74s; allfourvariants real DB/API/CLI/MCP, no model |
++| recovery-final.txt | `FALKORDB_SOCKET_TIMEOUT_SECONDS=10 CIVICLY_TEST_REQUEST_LOG=/tmp/B20R-SERVICE-EVIDENCE-recovery-final-provider.jsonl backend/.venv/bin/python -m pytest 'backend/tests/integration/test_service_evidence_runtime.py::test_dated_service_evidence[S06-NEGATIVE]' -q` |1PASS26.76s; only affected case rerun after removing duplicate-source conflict probe after UNKNOWN; original first passing proof retained |
++| spec.txt | `CIVICLY_TEST_NO_LIVE=1 CIVICLY_REQUEST_AUDIT_FILE=/tmp/B20R-SERVICE-EVIDENCE-spec-provider.jsonl PYTHONPATH=backend/test_guards:backend make test-spec` |Both validate_blueprint.py and validate_handoff.py PASS once after final source/schema/test edits |
++
++Every command redirected `> docs/evidence/B20R-SERVICE-EVIDENCE-<evidence> 2>&1`. No unchanged journey repeated for documentation-only edits. Failed graphs/earlier logs retained; no repairs/volume removal. Final distinct45PASS=41unit+4real,0unresolvedFAIL/0SKIP; repeated overlapping successes not added. Historical9failed executions retained. No fake model/genuine AI claim; observations explicitly authored synthetic. Actual ASGI HTTP/API, DB and MCP transport; no new network server/lifecycle test. Both validators are static, separate from runtime proof. Existing pinned dependencies unchanged.
++
++Final compatibility/static checks (no runtime journey repetition):
++- `CIVICLY_TEST_REQUEST_LOG=/tmp/B20R-SERVICE-EVIDENCE-focused-final-provider.jsonl backend/.venv/bin/python -m pytest backend/tests/unit/test_service_evidence.py backend/tests/unit/test_demo_scenarios.py::test_demo_openapi_cli_parity_and_no_selectors backend/tests/unit/test_api.py::test_openapi_exact_matrix_closed_models_and_no_deferred_stubs -q > docs/evidence/B20R-SERVICE-EVIDENCE-focused-final.txt 2>&1` —41PASS; adds2present/absent optional-field cases preserving legacy shape,45distinct overall.
++- `CIVICLY_TEST_NO_LIVE=1 CIVICLY_REQUEST_AUDIT_FILE=/tmp/B20R-SERVICE-EVIDENCE-spec-final-provider.jsonl PYTHONPATH=backend/test_guards:backend make test-spec > docs/evidence/B20R-SERVICE-EVIDENCE-spec-final.txt 2>&1` —bothPASS after removing repeated generated validator checks and minimizing JSON-only formatting.
++- `CIVICLY_TEST_NO_LIVE=1 CIVICLY_REQUEST_AUDIT_FILE=/tmp/B20R-SERVICE-EVIDENCE-spec-complete-provider.jsonl PYTHONPATH=backend/test_guards:backend make test-spec > docs/evidence/B20R-SERVICE-EVIDENCE-spec-complete.txt 2>&1` —bothPASS after final legacy optional-field serialization correction.
++- `FALKORDB_SOCKET_TIMEOUT_SECONDS=10 CIVICLY_TEST_NO_LIVE=1 CIVICLY_REQUEST_AUDIT_FILE=/tmp/B20R-SERVICE-EVIDENCE-retention-provider.jsonl PYTHONPATH=backend/test_guards:backend backend/.venv/bin/python docs/evidence/B20R-SERVICE-EVIDENCE-retention-script.py > docs/evidence/B20R-SERVICE-EVIDENCE-retention-final.txt 2>&1` —final read-only retention/security audit, no tests/mutations. Initial read-only audit used retention.txt; first JSON/txt copies retained as retention-first.*.
+--- /dev/null
++++ b/docs/evidence/B20R-SERVICE-EVIDENCE-DESIGN.md
+@@ -0,0 +1,20 @@
++# B20-R-SERVICE-EVIDENCE before implementation
++
++Only this evidence correction is authorized. AllR01–R18 remain binding; directly R04/R08/R09/R11/R15/R16/R17/R18. Accepted ownership/utility work remains intact; capacity/route/dumping interventions, B21, frontend and live providers are excluded.
++
++Reuse canonical PickupExecution(scheduled_at,actual_at,status,route_id,source_record_id)→PICKUP_FOR→WasteCollectionPoint. No existing runtime service-execution writer exists: add only controller-owned bounded typed synthetic source records through existing0005 fenced Storage batches, audit/DomainEvent/hashed companions and existing source-bound B19 HTTP intent. No generic writer/endpoint/parallel ledger. Candidate HAS_SCHEDULE remains unchanged. A specific dated scheduled-service log attestation is distinct from validating the imported recurring schedule. No quantities invented.
++
++Occurrence is distinct from recording: controller source log explicitly supplies due, observed service result/time before release; it is not an inspection performed before its start. Waste/deposit inspection observations remain at/after actual inspection start/current recording time. Separate authenticated department log attribution and independent authenticated analyst review bind actual target/route/source IDs. PRIMARY S05 supplies explicit observed MISSED service (not absence); NEGATIVE unknown cannot manufacture an execution. S06 supplies COMPLETED pickup and separately recorded later deposit observation; negative lacks dumping support. Exact variants/times belong only to controller source definitions, never runtime graph until released.
++
++New waste assessment rule3 validates typed canonical execution/source/target/route, immutable source hashes, reviewed journal/actor/reviewer, due/result/deposit chronology. Equal/reversed/unknown time, missing execution, mismatched target/source or candidate schedule alone cannot qualify causal service/ordering support. Old rule1/2 histories remain parseable/byte-identical; no retroactive reclassification. Other causes retain rule2. One service record plus deposit report remains qualified evidence, not independently VERIFIED root cause or resolution. Monitoring B14-2 is inspected and preserved: task completion/service completion do not close waste cases.
++
++Likely paths: demo controller plus narrow service-evidence helper/models and controller-only source JSON; operations Storage closed PickupExecution/PICKUP_FOR batch extension; evidence classification/service/models; HTTP safe EvidenceDTO projection; contracts/service evidence/evidence schemas/generated API; existing schema validators as needed; focused new units and four shared real S05/S06 variants with actual MCP calls; backend guide; six append-only trackers and new B20R-SERVICE-EVIDENCE artifacts. No migrations/package changes. Final inventory will identify exact paths.
++
++Risks: backdated inspection, fabricated absence-as-missed, source-label trust, late source mutation, unknown commit acknowledgement, false verification from code/count/timestamps, exposing unreleased definitions. Fail closed; no retry/replacement key/repair/quarantine clearance. Preserve earlier graphs/evidence/approvals/checkpoints/accounting.
++
++Planned exact tests (root, existing Python3.12 venv):
++- CIVICLY_TEST_REQUEST_LOG=/tmp/B20R-SERVICE-EVIDENCE-unit-provider.jsonl backend/.venv/bin/python -m pytest backend/tests/unit/test_service_evidence.py -q
++- FALKORDB_SOCKET_TIMEOUT_SECONDS=10 CIVICLY_TEST_REQUEST_LOG=/tmp/B20R-SERVICE-EVIDENCE-real-provider.jsonl backend/.venv/bin/python -m pytest backend/tests/integration/test_service_evidence_runtime.py -q
++- CIVICLY_TEST_NO_LIVE=1 CIVICLY_REQUEST_AUDIT_FILE=/tmp/B20R-SERVICE-EVIDENCE-spec-provider.jsonl PYTHONPATH=backend/test_guards:backend make test-spec
++
++Real shared fixtures: four fresh B19 variants, source release authentication/department denials, exact replay, actual canonical/service/report occurrence IDs, before/after assessments with old bytes retained, runtime MCP pickup/evidence/history reads, API/CLI projection; one actual service commit+injected readback uncertainty/no-redispatch. No model solver needed. Human checks native dates, distinct source records, candidate bytes, safe qualified assessments and original UNKNOWN request retained. Both final validators; no broad/lifecycle/live test. STOP for human review.
+--- /dev/null
++++ b/docs/evidence/B20R-SERVICE-EVIDENCE-RESULTS.md
+@@ -0,0 +1,41 @@
++# B20-R-SERVICE-EVIDENCE results — technically passing, review pending
++
++**45distinctPASS =39newunits+2directschema/API/CLIcompatibilityunits+4realS05/S06variants.0unresolvedFAIL/0SKIP.** Both final specification validatorsPASS. Zero external Gemini/countTokens, including actual child MCP/CLI. Earlier9failed executions and graphs retained; exact commands/results in COMMANDS.md. No provider/model solver, broad regression, lifecycle, capacity/route/dumping intervention, B21 or frontend.
++
++Root gap: qualitative completion/missed/dumping codes had no canonical execution or distinct service/deposit occurrence provenance. Reused canonical PickupExecution/PICKUP_FOR through existing fenced controller write/recovery; added typed source/receipt validation, independently dated service-log vs current inspection, controller-scoped compatible rule3 and existing read projections. No generic ledger/endpoint/storage subsystem or migration.
++
++| Real fresh variant | Actual service record | Missed-pickup assessment | Dumping assessment |
++|---|---|---|---|
++| S05 PRIMARY | MISSED /1 execution | SUPPORTED | INCONCLUSIVE |
++| S05 NEGATIVE | UNKNOWN /0 execution | INCONCLUSIVE | INCONCLUSIVE |
++| S06 PRIMARY | COMPLETED /1 execution | CONTRADICTED | SUPPORTED |
++| S06 NEGATIVE | COMPLETED /1 execution | CONTRADICTED | INCONCLUSIVE |
++
++Actual authored due11:58Z, checked11:59Z, COMPLETED actual11:59Z, separate inspection/deposit12:00Z, recording/review12:00Z. Native IDs/times and distinct source_record_id values are in each proof, not a narrative assertion. S05 explicit MISSED has no actual_at; UNKNOWN produces no canonical execution. Existing candidate schedule bytes unchanged. Native actual route/point references and hashes validated, no schedule or route promotion. Capacity observation remains separate qualifiedSUPPORT in S05PRIMARY; it does not authorize capacity work.
++
++| Acceptance | Expected | Observed |
++|---|---|---|
++| No execution / schedule / qualitative code alone | No invented miss/order | Units + real pre-release MCP PARTIAL/empty and baseline INCONCLUSIVE; UNKNOWN0execution |
++| Date/target/source integrity | Equal/reversed/unknown times and wrong refs rejected or context-only | Focused parameterized units; actual source/report/native hashed readback and route/point validation |
++| Lifecycle | No backdated inspection | Actual report observations at/after started inspection; earlier service occurrence from separately attributed synthetic log, recorded/reviewed now |
++| Provenance and authority | Authenticated department + distinct analyst, caller labels insufficient | Actual denied role/department/reviewer calls before execution; closed-source units; real B09 source/journal/review matched |
++| Replay/duplicate IDs | One execution per sourced record | Exact successful HTTP replay identical; source-identity duplicate Conflict probes only in successful fixtures, no extra effects |
++| Uncertain committed write | UNKNOWN/original identity/no redispatch | S06NEGATIVE actual service source/execution/event/receipt committed, then injected readback ValueError;409RECOVERY_REQUIRED/UNKNOWN, exact original HTTP replay blocked, one execution/source retained; intent/demo release reservationDISPATCHING. No replacement key/repair/clearance |
++| Source visibility | No unreleased controller content | File guard unit denies new controller file; real before-release MCP sees no PickupExecution; only typed released facts exposed |
++| Existing projections | Actual sourced service history | Runtime tools/list/tools/call pickup history and provenance validation PASS (PARTIAL/gaps remain honest); API optionalservice_record + actual CLI evidence get PASS |
++| Old evidence/assessment/candidates | Preserve bytes and semantic versions | Per-fixture hashes of baseline assessments/candidates unchanged; old accepted rule2 fixtures parse; final read-only retention audit separate |
++| Outcome boundaries | No manufactured capability/closure |0plans/0workorders/0independentlyVERIFIEDcauses; B14-2 monitoring unchanged |
++
++Rule3 is selected by existing hashed demo/current S05/S06 investigation binding; other generic field workflows retain rule2 without asserting service chronology. Old format1/rule1 and format2/rule2 remain readable and untouched. New format2/rule3 requires typed scoped dated evidence; source records stay contextual references, not automatic causal edges. Actual discriminating observations and existing independence tests remain necessary. Single log/report produces qualifiedSUPPORT, not independentVERIFIED cause or resolution.
++
++The source/execution/event/companion are atomic in one existing fenced batch. B09 report precedes that batch and stage acknowledgement follows it; no cross-command rollback is promised. An unknown release must be reconciled against original report/journal, source/native execution, operation receipt/event and intent. Safe readback is evidence, not automatic intent repair. Failed graphs and uncertain records are retained. First passing S06NEGATIVE additionally exercised an internal duplicate-source conflict probe after the fault; final focused recovery test removes that unnecessary probe and stops at original-key blocked replay. No duplicate or replacement effects occurred.
++
++Changed-file inventory and scoped patch are separate. Original scenario runtime-v1/city/registries/migrations/package versions are unchanged. Existing route/CLI inventories remain58operations/55paths; evidence DTO has one compatible optionaltyped field, requiring future client type regeneration only. No frontend work performed. Additional service log facts are explicitly synthetic controller data, not real municipal field measurements or newly invented quantities.
++
++Known limits: no generalized recurring schedule authority/route redesign, capacity intervention, dumping management/enforcement or waste resolution. Service-record attribution is conservative synthetic provenance, not proof against collusion. Rule2 historical qualitative evidence is not independently dated service history. Runtime MCP returns PARTIAL with existing evidence gaps; no fake SUCCESS. FullB20 remainsPARTIAL/BLOCKED; B10genuineOPEN/PARTIAL. STOP for human review.
++
++Final compatibility addition: optional service_record is omitted when absent, preserving old evidence response/DONE replay shape instead of adding a null field to legacy resources. Two focused present/absent serialization cases added; final focused41PASS2.98s (exact duration in focused-final.txt), total45distinctPASS41unit/4real. Actual new-service records remain populated exactly as exercised; runtime journeys were not repeated for this legacy-null serialization check. Both final validators reran only for cleanup of duplicate generated validator checks, then this final optional-field source edit; every earlier passing log is retained. Final source/contract testsPASS, no additional runtime failure.
++
++
++### B20-R-SERVICE-EVIDENCE final read-only preservation
++AuditPASS: all1728pre-task public files retained;1236earlier evidence files byte-identical;123accepted test files unchanged. Allsix histories append-only. Original registries/migrations0001–0005/city858nodes1246edges42candidate drains, runtime-v1 definitions, B01probe,12previousB20checkpoints, B12R2/B19quarantines and accepted ownership/utility records/UNKNOWNintents retained. Newfourvariant service source/report/native/candidate/oldassessment integrityPASS; uncertain intent+release reservationDISPATCHING retained. Historical2paidrequests/noactive sessions or holds unchanged. 12interlockreports0external/0unexpected; final publicartifact/patchprivate-value scanPASS. ActualFalkorDB6.0.2/Redis8.10.2 and pinnedpackages recorded, no version changes. Final45distinctPASS41unit/4real;0unresolvedFAIL/0SKIP. FullB20PARTIAL/BLOCKED/B10genuineOPEN/PARTIAL; STOPforhumanreview.
+--- /dev/null
++++ b/docs/evidence/B20R-SERVICE-EVIDENCE-WALKTHROUGH.md
+@@ -0,0 +1,26 @@
++# B20-R-SERVICE-EVIDENCE operator verification
++
++Preserve current proof/log files before rerunning tests. Use the exact focused commands in COMMANDS.md; the real test creates fresh isolated graphs and keeps all earlier graphs. No live provider call or real municipal work occurs.
++
++For retained S06PRIMARY, graph `civicly_b10_test_6c0aa62f64c74300807568e892cb5ba7` / private profile reference `demo-runs/HTTP-B16-f1ce93f31326134a1f7c0e1c930a20e0`:
++- Canonical pickup `PICKUP-B13-1404d30a33f51ef0c38bc10d406ec711`, collection point `WASTE-100`, route `ROUTE-C03`.
++- Service source `SERVICE-SOURCE-B13-1404d30a33f51ef0c38bc10d406ec711`, report `EV-REPORT-B09-c63618f46465c66cbdccfc6798d44489`.
++- Specific due `2026-10-18T11:58:00.000000Z`, actual `2026-10-18T11:59:00.000000Z`, service log checked `2026-10-18T11:59:00.000000Z`, recording `2026-10-18T12:00:00.000000Z`. Deposit/report observations are12:00Z and remain inside the actual inspection lifecycle. Source identities differ; no ordering inferred from equal timestamps.
++
++Copy-paste read-only CLI commands with existing authorized private files (do not paste credentials into logs):
++
++```sh
++export CIVICLY_TEST_NO_LIVE=1
++export PYTHONPATH=backend/test_guards:backend
++# Set PROFILE/AUTH_STORE/MEMORY_PROFILE/SESSION to the returned retained private files.
++backend/.venv/bin/python -m cli --profile "$PROFILE" --auth-store "$AUTH_STORE" --memory-profile "$MEMORY_PROFILE" --session "$SESSION" --at 2026-10-18T12:00:00.000000Z evidence get --id SERVICE-SOURCE-B13-1404d30a33f51ef0c38bc10d406ec711
++backend/.venv/bin/python -m cli --profile "$PROFILE" --auth-store "$AUTH_STORE" --memory-profile "$MEMORY_PROFILE" --session "$SESSION" --at 2026-10-18T12:00:00.000000Z evidence get --id EV-REPORT-B09-c63618f46465c66cbdccfc6798d44489
++```
++
++Expected: validated optional service_record with actual earlier time and route/point IDs, independently reviewed source/report, then separate dated inspection findings. API equivalents are authenticated GET `/api/v1/evidence/<id>`. Actual MCP tools/list/tools/call proof for `get_pickup_execution_history` is in the same JSON: expect bounded PARTIAL plus gaps, canonical pickup/source IDs and explicit dates, not fabricated SUCCESS or verified absence. New unit tests also prove equal/reversed/unknown time, missing execution, candidate schedule alone and wrong source/target cannot satisfy the service rule.
++
++S05PRIMARY proof: explicit reviewed MISSED source, no actual_at, one canonical execution; S05NEGATIVE: UNKNOWN and zero executions. S06NEGATIVE: completion only; no dumping evidence. Inspect new_assessments: qualified SUPPORTED/CONTRADICTED/INCONCLUSIVE as in RESULTS.md, no independently VERIFIED cause or resolved case. Check earlier assessment hashes and unchanged candidate hashes in each proof.0plans/0workorders.
++
++Uncertain S06NEGATIVE retains graph `civicly_b10_test_0417d94ac6124353b093cd6b49dbbab7` and original request `HTTP-B16-0ac0c37f8ad56bbc1df75315e7787273`. Actual report/source/execution/event committed; deliberate readback ValueError produced409RECOVERY_REQUIRED/UNKNOWN. Exact original HTTP replay did not invoke service again. Native execution `PICKUP-B13-bd160b90f53c5f96b2d665df891ec555` and source `SERVICE-SOURCE-B13-bd160b90f53c5f96b2d665df891ec555` remain, transport intent/demo reservationDISPATCHING. Use original request/inspection/report/source/operation/event evidence for supported human reconciliation. Do not replace keys, retry, delete/repair records or clear quarantine/intent. A read-only successful read is not automatic reconciliation.
++
++If verification fails, share only new sanitized proof/log/result files; retain failed graph/private config for operator inspection. No hidden controller packet is available through agent/MCP/read endpoints. Capacity/route/dumping interventions and B20/B10 genuine acceptance remain open. STOP for review.

@@ -1,0 +1,1271 @@
+--- a/backend/API.md
++++ b/backend/API.md
+@@ -111,3 +111,22 @@
+ ```
+ 
+ Existing immutable migrations, MCP credentials/ACL, memory capability, auth accounts and explicit B15activation must already exist for this exact source. Startup never provisions/migrates/seeds/activates/runs an agent. The separate existing worker `python -m app.events --profile "$PROFILE" run --owner local-demo --batches 10` performs discovery/INFO registration and only already authorized durable work. Do not use a worker command merely to inspect a retained recovery case. `/docs` covers52routes; login privately and use Bearer header for REST/SSE. Cursor/refetch protocol and actual retained IDs: docs/evidence/B17-RESULTS.md and B17-journey.json. No new packages or images; existing pinned runtime only.
++
++## B17-R query contract correction — DEC-063
++
++This section supersedes any broad shared-filter wording above. Each route's OpenAPI query list is its exact allowlist; unknown, irrelevant or repeated parameters return the existing sanitized422 VALIDATION_ERROR. Internal ReadFilters remains a service superset, not a public route schema. Route-specific closed query models reuse the existing scalar/boolean/date/bounds validators and convert into the unchanged service model only after validation. No domain filter, auth, storage, recovery or SSE redesign.
++
++| Read route | Accepted parameters |
++|---|---|
++| Investigation hypotheses | status, limit, cursor |
++| Dashboard summary | issue, status, department_id, after, before |
++| Investigation trace | status, after, before, limit, cursor |
++| Map features | issue, status, department_id, after, before, investigation_id, limit, cursor |
++| Six resource lists | issue, status, department_id, after, before, limit, cursor |
++| Investigation graph / asset neighbors | depth, include_candidates |
++| Asset detail | none |
++| Durable SSE | cursor, investigation_id; Last-Event-ID remains a header |
++
++Hypothesis status filters current native hypothesis status; pages use stable exclusive ID cursor and limit. **after/before are rejected**: creation time versus assessment time is not normatively defined, so no new history meaning is invented. Dashboard filters apply to each authorized metric's resource before aggregate calculation using existing status/issue/department and inclusive reported/start/request/create timestamp semantics; **limit/cursor are rejected**, because aggregate metrics have no pages. Trace after/before retain inclusive actual decision-decided/tool-finished timestamp filtering before chronological timestamp+stable eventID paging. Resource/map filtering, graph budgets and authenticated stream replay remain unchanged. Legacy paginated GETs also reject repeated scalar keys instead of selecting one silently.
++
++Exact all-GET query coverage/generated OpenAPI and verification: docs/evidence/B17R-QUERY-COVERAGE.md, B17R-openapi.json and B17R-RESULTS.md. No B18/frontend/live authorization.
+--- a/backend/app/api/application.py
++++ b/backend/app/api/application.py
+@@ -18,6 +18,7 @@
+ from .dependencies import services,authenticated,HTTPFailure
+ from .coverage import ROUTES
+ from . import models as m
++from .view_models import VIEW_QUERY_FIELDS,VIEW_QUERY_MODELS
+ MESSAGES={'READ_CAPACITY':'Bounded projection capacity reached; narrow the request or inspect configured source capacity','CURSOR_INVALID':'Cursor must be a supported nonnegative decimal registration cursor','CURSOR_CONFLICT':'Header and query cursors conflict','CURSOR_FUTURE':'Cursor exceeds the current registered stream','CURSOR_EXPIRED':'Durable cursor unavailable; refetch authoritative resources','VALIDATION_ERROR':'Request does not match the closed contract','UNAUTHORIZED':'A valid active demo session is required','PERMISSION_DENIED':'This identity is not authorized for the requested resource or action','NOT_FOUND':'The requested resource is unavailable','CONFLICT':'Request identity or expected revision conflicts with stored state','DEPENDENCY_BLOCKED':'Required evidence, approval or dependency is not satisfied','RECOVERY_REQUIRED':'Outcome requires operator reconciliation; do not automatically retry','GRAPH_UNAVAILABLE':'Graph dependency is unavailable','EXTERNAL_UNAVAILABLE':'Required configured dependency is unavailable','MCP_TOOL_ERROR':'MCP dependency failed','INTERNAL_ERROR':'Request could not be completed safely'}
+ def create_app(configured=None,*,lifespan=None):
+  app=FastAPI(title='Civicly B16 local service API',version='1.0.0',lifespan=lifespan)
+@@ -59,17 +60,15 @@
+    s=request.app.state.services
+    actor=None if public else principal.actor;token=None if public else principal.token
+    if not public and role!='ANY' and actor.role not in role.split(','):raise HTTPFailure(403,'PERMISSION_DENIED')
+-   if set(request.query_params)-({'limit','cursor'} if method=='GET' and ('list:' in name or name in {'plans','procedures','memory','monitoring','outcomes'}) else set()):raise ValueError('UNKNOWN_QUERY_FIELD')
++   if set(request.query_params)-({'limit','cursor'} if method=='GET' and ('list:' in name or name in {'plans','procedures','memory','monitoring','outcomes'}) else set()) or any(len(request.query_params.getlist(k))!=1 for k in request.query_params):raise ValueError('UNKNOWN_QUERY_FIELD')
+    return s,actor,token
+-  if method=='GET' and (name.startswith('list:') or name in {'dashboard','map','asset','neighbors','graph','trace','hypotheses'}):
+-   async def view(request:Request,filters:Annotated[m.ReadFilters,Query()],principal=dep):
++  if method=='GET' and name in VIEW_QUERY_MODELS:
++   async def view(request:Request,filters,principal=dep):
+     s=request.app.state.services
+     if role!='ANY' and principal.actor.role not in role.split(','):raise HTTPFailure(403,'PERMISSION_DENIED')
+-    # Shared filter model is closed; irrelevant filters are rejected, never ignored.
+     supplied=set(request.query_params)
+-    allowed={'limit','cursor','issue','status','department_id','after','before'} if name.startswith('list:') or name in {'dashboard','map'} else {'limit','cursor','status','after','before'} if name in {'trace','hypotheses'} else {'depth','include_candidates'} if name in {'graph','neighbors'} else set()
+-    if name=='map':allowed.add('investigation_id')
+-    if supplied-allowed or any(len(request.query_params.getlist(k))!=1 for k in supplied):raise ValueError('UNKNOWN_OR_REPEATED_QUERY_FIELD')
++    if supplied-set(VIEW_QUERY_FIELDS[name]) or any(len(request.query_params.getlist(k))!=1 for k in supplied):raise ValueError('UNKNOWN_OR_REPEATED_QUERY_FIELD')
++    filters=m.ReadFilters.model_validate(filters.model_dump())
+     from app.services.http.views import Views
+     from app.graph.analysis.reader import AnalysisBudgetExceeded
+     try:
+@@ -79,6 +78,7 @@
+      if str(e) in {'VIEW_CAPACITY','VIEW_ADJACENCY_CAPACITY','ACTIVITY_CAPACITY','TRACE_CAPACITY','SELECTED_PATH_CAPACITY','READ_EDGE_LIMIT'}:raise HTTPFailure(409,'READ_CAPACITY') from None
+      raise
+     return {'data':value,'request_id':request.state.request_id,'schema_version':1}
++   view.__annotations__['filters']=Annotated[VIEW_QUERY_MODELS[name],Query()]
+    return view
+   if name=='stream':
+    async def stream(request:Request,principal=dep,cursor:str|None=Query(None,max_length=32),investigation_id:str|None=Query(None,min_length=1,max_length=200),last_event_id:str|None=Header(None,alias='Last-Event-ID',max_length=32)):
+--- a/backend/app/api/view_models.py
++++ b/backend/app/api/view_models.py
+@@ -4,7 +4,25 @@
+ from app.services.evidence.models import Model,ID,Time,Text,Hash,Observation,IncidentAttribution
+ from app.graph.schema import timestamp
+ 
+-class ReadFilters(Model):
++class QueryRules(Model):
++ @field_validator('limit','depth',mode='before',check_fields=False)
++ @classmethod
++ def query_integer(cls,value):
++  if isinstance(value,str) and value.isascii() and value.isdecimal():return int(value)
++  return value
++ @field_validator('include_candidates',mode='before',check_fields=False)
++ @classmethod
++ def query_boolean(cls,value):
++  if value=='true':return True
++  if value=='false':return False
++  return value
++ @model_validator(mode='after')
++ def window(self):
++  after,before=getattr(self,'after',None),getattr(self,'before',None)
++  if after and before and timestamp(after)>timestamp(before):raise ValueError('REVERSED_WINDOW')
++  return self
++
++class ReadFilters(QueryRules):
+  limit:int=Field(default=25,ge=1,le=50)
+  cursor:ID|None=None
+  issue:Literal['WATERLOGGING','ROAD_DAMAGE','WASTE_ACCUMULATION']|None=None
+@@ -15,21 +33,36 @@
+  investigation_id:ID|None=None
+  depth:int=Field(default=2,ge=1,le=5)
+  include_candidates:bool=False
+- @field_validator('limit','depth',mode='before')
+- @classmethod
+- def query_integer(cls,value):
+-  if isinstance(value,str) and value.isascii() and value.isdecimal():return int(value)
+-  return value
+- @field_validator('include_candidates',mode='before')
+- @classmethod
+- def query_boolean(cls,value):
+-  if value=='true':return True
+-  if value=='false':return False
+-  return value
+- @model_validator(mode='after')
+- def window(self):
+-  if self.after and self.before and timestamp(self.after)>timestamp(self.before):raise ValueError('REVERSED_WINDOW')
+-  return self
++
++# Only these fields are public on each B17 projection; the service keeps the
++# existing internal superset/defaults. Models and allowlists share one definition.
++RESOURCE_FIELDS=('limit','cursor','issue','status','department_id','after','before')
++VIEW_QUERY_FIELDS={
++ 'list:Complaint':RESOURCE_FIELDS,'list:Incident':RESOURCE_FIELDS,
++ 'list:ProblemCluster':RESOURCE_FIELDS,'list:Approval':RESOURCE_FIELDS,
++ 'list:WorkOrder':RESOURCE_FIELDS,'list:Department':RESOURCE_FIELDS,
++ 'dashboard':('issue','status','department_id','after','before'),
++ 'map':(*RESOURCE_FIELDS,'investigation_id'),
++ 'hypotheses':('limit','cursor','status'),
++ 'trace':('limit','cursor','status','after','before'),
++ 'graph':('depth','include_candidates'),'neighbors':('depth','include_candidates'),
++ 'asset':(),
++}
++
++def query_model(name,fields):
++ from copy import deepcopy
++ from pydantic import create_model
++ return create_model(name,__base__=QueryRules,**{key:(ReadFilters.model_fields[key].annotation,deepcopy(ReadFilters.model_fields[key])) for key in fields})
++
++ResourceQuery=query_model('ResourceQuery',RESOURCE_FIELDS)
++DashboardQuery=query_model('DashboardQuery',VIEW_QUERY_FIELDS['dashboard'])
++MapQuery=query_model('MapQuery',VIEW_QUERY_FIELDS['map'])
++HypothesesQuery=query_model('HypothesesQuery',VIEW_QUERY_FIELDS['hypotheses'])
++TraceQuery=query_model('TraceQuery',VIEW_QUERY_FIELDS['trace'])
++GraphQuery=query_model('GraphQuery',VIEW_QUERY_FIELDS['graph'])
++AssetQuery=query_model('AssetQuery',())
++VIEW_QUERY_MODELS={name:ResourceQuery for name in VIEW_QUERY_FIELDS if name.startswith('list:')}
++VIEW_QUERY_MODELS.update(dashboard=DashboardQuery,map=MapQuery,hypotheses=HypothesesQuery,trace=TraceQuery,graph=GraphQuery,neighbors=GraphQuery,asset=AssetQuery)
+ class FindingDTO(Model):
+  id:ID
+  evidence_id:ID
+--- a/backend/tests/integration/test_frontend_runtime.py
++++ b/backend/tests/integration/test_frontend_runtime.py
+@@ -53,9 +53,16 @@
+   from tests.schema_examples import edge
+   r.create_relationship('DRAINS_TO','D1','D2',{**edge('B17-CANDIDATE-LINK'),'source_evidence_id':'EV','association_status':'CANDIDATE'})
+   delivery.discover()
++ query_proof={'unsupported':{},'supported':{}}
+  # Journey 1: overview/map/counts scoped before pages, actual coordinates only.
+  dashboard=get('/dashboard/summary');assert dashboard['completed_work_orders']==1 and dashboard['verified_work_orders']==1
+  assert get('/dashboard/summary','OP-ROAD-LEAD')['completed_work_orders']==0
++ for query in ['limit=1','cursor=PRIVATE-INPUT','issue=WATERLOGGING&issue=ROAD_DAMAGE']:
++  response=get('/dashboard/summary?'+query,expect=422);assert response['error']['code']=='VALIDATION_ERROR' and 'PRIVATE-INPUT' not in json.dumps(response)
++  query_proof['unsupported']['dashboard?'+query]=response['error']['code']
++ filtered_dashboard=get('/dashboard/summary?issue=ROAD_DAMAGE');assert filtered_dashboard['completed_work_orders']==0
++ assert get('/dashboard/summary?before=2020-01-01T00:00:00Z')['completed_work_orders']==0
++ query_proof['supported']['dashboard_completed_order_counts']=[dashboard['completed_work_orders'],filtered_dashboard['completed_work_orders']]
+  assert get('/work-orders?department_id=DEPT-DRAIN&status=COMPLETED&issue=WATERLOGGING')['total_count']==1
+  assert get('/work-orders?department_id=DEPT-DRAIN','OP-ROAD-LEAD')['total_count']==0
+  assert get('/work-orders?status=ASSIGNED')['total_count']==0
+@@ -80,6 +87,13 @@
+  assert complaints and all(q['incident_id']==incident for q in complaints)
+  hypotheses=get('/investigations/'+inv+'/hypotheses');assert hypotheses['total_count']>=2
+  assert any(h['assessment_history'] for h in hypotheses['items'])
++ for query in ['before=2020-01-01T00:00:00Z','after=2020-01-01T00:00:00Z','limit=1&limit=1']:
++  rejected=get('/investigations/'+inv+'/hypotheses?'+query,expect=422);assert rejected['error']['code']=='VALIDATION_ERROR'
++  query_proof['unsupported']['hypotheses?'+query]=rejected['error']['code']
++ status=hypotheses['items'][0]['status'];status_page=get('/investigations/'+inv+'/hypotheses?status='+status)
++ assert status_page['items'] and all(h['status']==status for h in status_page['items'])
++ assert get('/investigations/'+inv+'/hypotheses?status=UNAVAILABLE')['total_count']==0
++ query_proof['supported']['hypothesis_status_counts']=[status_page['total_count'],0]
+  hpage=get('/investigations/'+inv+'/hypotheses?limit=1');assert hpage['next_cursor']
+  hnext=get('/investigations/'+inv+'/hypotheses?limit=1&cursor='+hpage['next_cursor'])
+  assert hpage['items'][0]['id']!=hnext['items'][0]['id'] and hnext['total_count']==hpage['total_count']
+@@ -115,6 +129,12 @@
+  tnext=get('/investigations/'+inv+'/trace?limit=1&cursor='+tpage['next_cursor'])
+  assert tpage['items'][0]['event_id']!=tnext['items'][0]['event_id']
+  assert get('/investigations/'+inv+'/trace?status=SUCCESS')['total_count']==2
++ assert get('/investigations/'+inv+'/trace?before=2020-01-01T00:00:00Z')['total_count']==0
++ assert get('/investigations/'+inv+'/trace?after=2020-01-01T00:00:00Z')['total_count']==trace['total_count']
++ query_proof['supported']['trace_before2020_count']=0
++ for url in ['/assets/D1?limit=1','/assets/D1/neighbors?cursor=A','/investigations/'+inv+'/graph?limit=1','/investigations/'+inv+'/trace?issue=WATERLOGGING','/map/features?depth=2']:
++  assert get(url,expect=422)['error']['code']=='VALIDATION_ERROR'
++  query_proof['unsupported'][url]='VALIDATION_ERROR'
+  get('/investigations/'+inv+'/trace','OP-ROAD-LEAD',403)
+  # Journey 3: immutable draft vs current approval/execution, exact DAG/citations,
+  # actual recorded verification and memory are reconstructable through HTTP.
+@@ -136,8 +156,10 @@
+  # Same retained source, real subprocess Uvicorn and streaming TCP client.
+  network=network_sse(db,tmp_path,p,path,auth,tokens,memory,clock,services,inv,run,monkeypatch)
+  with active_scope(p):assert saver(p).get_tuple(saved.config).checkpoint==original_checkpoint
+- proof={'mode':'SCRIPTED_MODEL_REAL_HTTP_FALKORDB_MCP_SAVER_TCP_SSE','source_graph':p.graph,'investigation_id':inv,'incident_id':incident,'cluster_id':cluster,'plan_id':run.b['plan_id'],'work_order_id':run.w['id'],'outcome_id':outcome['id'],'checkpoint_id':saved.config['configurable']['checkpoint_id'],'all_eight_B17_routes_exercised':True,'complaints':complaints,'incident':incident_detail,'cluster':cluster_detail,'dashboard':dashboard,'map':mapdata,'evidence':evidence,'graph':graph,'neighbors':neighbors,'trace':trace,'network':network,'provider_requests':0}
+- Path('docs/evidence/B17-journey.json').write_text(json.dumps(proof,indent=2)+'\n')
++ proof={'mode':'SCRIPTED_MODEL_REAL_HTTP_FALKORDB_MCP_SAVER_TCP_SSE','source_graph':p.graph,'investigation_id':inv,'incident_id':incident,'cluster_id':cluster,'plan_id':run.b['plan_id'],'work_order_id':run.w['id'],'outcome_id':outcome['id'],'checkpoint_id':saved.config['configurable']['checkpoint_id'],'all_eight_B17_routes_exercised':True,'complaints':complaints,'incident':incident_detail,'cluster':cluster_detail,'dashboard':dashboard,'map':mapdata,'evidence':evidence,'graph':graph,'neighbors':neighbors,'trace':trace,'network':network,'provider_requests':0,'query_parameters':query_proof}
++ prefix=os.environ.get('CIVICLY_FRONTEND_EVIDENCE_PREFIX','B17')
++ assert prefix in {'B17','B17R'}
++ Path('docs/evidence/'+prefix+'-journey.json').write_text(json.dumps(proof,indent=2)+'\n')
+ 
+ 
+ def network_sse(db,tmp_path,p,path,auth,tokens,memory,clock,services,inv,run,monkeypatch):
+--- /dev/null
++++ b/backend/tests/unit/test_http_query_parameters.py
+@@ -0,0 +1,72 @@
++"""B17-R route/query units; mocked projection boundary, never database proof."""
++from contextlib import nullcontext
++from types import SimpleNamespace
++import pytest
++from fastapi.testclient import TestClient
++from pydantic import ValidationError
++from app.api.application import create_app
++from app.api.coverage import ROUTES
++from app.api.dependencies import HTTPFailure
++from app.api.view_models import ReadFilters,VIEW_QUERY_FIELDS,VIEW_QUERY_MODELS
++from app.services.evidence.models import Actor
++
++@pytest.fixture
++def transport(monkeypatch):
++ import app.api.application as application
++ import app.services.http.views as views
++ calls=[];actor=Actor(id='OP-APPROVER',role='APPROVER',department_id='DEPT-COORD')
++ services=SimpleNamespace(profile=None,auth=SimpleNamespace(resolve=lambda token:actor))
++ class ProjectionBoundary:
++  def __init__(self,s,actor,token,filters):self.filters=filters
++  def run(self,name,id):
++   calls.append((name,self.filters.model_dump()))
++   raise HTTPFailure(409,'READ_CAPACITY')  # Sentinel: accepted input reached projection.
++ monkeypatch.setattr(application,'active_scope',lambda profile:nullcontext())
++ monkeypatch.setattr(views,'Views',ProjectionBoundary)
++ return TestClient(create_app(services),raise_server_exceptions=False),calls
++
++PATHS={name:path for method,path,role,req,res,name in ROUTES if method=='GET' and name in VIEW_QUERY_FIELDS}
++UNSUPPORTED=[('hypotheses','before=2020-01-01T00:00:00Z'),('hypotheses','after=2020-01-01T00:00:00Z'),('dashboard','limit=1'),('dashboard','cursor=PRIVATE-INPUT'),('dashboard','investigation_id=PRIVATE-INPUT'),('trace','issue=WATERLOGGING'),('trace','department_id=PRIVATE-INPUT'),('graph','limit=1'),('neighbors','cursor=PRIVATE-INPUT'),('asset','before=2020-01-01T00:00:00Z'),('asset','limit=1'),('map','depth=1'),('map','include_candidates=true'),('list:Incident','investigation_id=PRIVATE-INPUT'),('list:WorkOrder','depth=1'),('hypotheses','status=OPEN&private=PRIVATE-INPUT')]
++@pytest.mark.parametrize('name,query',UNSUPPORTED)
++def test_unsupported_queries_are_sanitized_and_never_project(transport,name,query):
++ client,calls=transport
++ response=client.get('/api/v1'+PATHS[name].replace('{id}','INV')+'?'+query,headers={'Authorization':'Bearer unit-token'})
++ assert response.status_code==422 and response.json()['error']['code']=='VALIDATION_ERROR'
++ assert 'PRIVATE-INPUT' not in response.text and not calls
++
++@pytest.mark.parametrize('name,field,value',[('hypotheses','status','OPEN'),('hypotheses','limit','1'),('hypotheses','cursor','A'),('dashboard','issue','WATERLOGGING'),('dashboard','before','2020-01-01T00:00:00Z'),('trace','after','2020-01-01T00:00:00Z'),('map','investigation_id','INV'),('map','limit','1'),('graph','depth','2'),('neighbors','include_candidates','true'),('list:Incident','department_id','DEP')])
++def test_repeated_supported_queries_reject_before_projection(transport,name,field,value):
++ client,calls=transport
++ response=client.get('/api/v1'+PATHS[name].replace('{id}','INV'),params=[(field,value),(field,value)],headers={'Authorization':'Bearer unit-token'})
++ assert response.status_code==422 and response.json()['error']['code']=='VALIDATION_ERROR' and not calls
++
++@pytest.mark.parametrize('name,query,expected',[
++ ('hypotheses',{'limit':'1','cursor':'H1','status':'SUPPORTED'},{'limit':1,'cursor':'H1','status':'SUPPORTED'}),
++ ('dashboard',{'issue':'WATERLOGGING','status':'COMPLETED','department_id':'DEP','after':'2020-01-01T00:00:00Z','before':'2026-01-01T00:00:00Z'},{'issue':'WATERLOGGING','status':'COMPLETED','department_id':'DEP'}),
++ ('trace',{'limit':'1','status':'SUCCESS','after':'2020-01-01T00:00:00Z','before':'2026-01-01T00:00:00Z'},{'limit':1,'status':'SUCCESS','after':'2020-01-01T00:00:00Z','before':'2026-01-01T00:00:00Z'}),
++ ('map',{'limit':'2','cursor':'L1','investigation_id':'INV','issue':'WATERLOGGING'},{'limit':2,'cursor':'L1','investigation_id':'INV','issue':'WATERLOGGING'}),
++ ('graph',{'depth':'4','include_candidates':'true'},{'depth':4,'include_candidates':True}),
++ ('neighbors',{'depth':'1','include_candidates':'false'},{'depth':1,'include_candidates':False}),
++ ('asset',{},{}),
++ *[(name,{'limit':'2','status':'OPEN','issue':'WATERLOGGING','department_id':'DEP','after':'2020-01-01T00:00:00Z'},{'limit':2,'status':'OPEN','issue':'WATERLOGGING','department_id':'DEP','after':'2020-01-01T00:00:00Z'}) for name in VIEW_QUERY_FIELDS if name.startswith('list:')],
++])
++def test_supported_queries_reach_projection_with_existing_types(transport,name,query,expected):
++ client,calls=transport
++ response=client.get('/api/v1'+PATHS[name].replace('{id}','INV'),params=query,headers={'Authorization':'Bearer unit-token'})
++ assert response.status_code==409 and response.json()['error']['code']=='READ_CAPACITY'
++ assert len(calls)==1 and calls[0][0]==name
++ assert all(calls[0][1][key]==value for key,value in expected.items())
++
++@pytest.mark.parametrize('name',VIEW_QUERY_FIELDS)
++def test_openapi_and_closed_model_exactly_match_route_allowlist(name):
++ api=create_app().openapi();op=api['paths']['/api/v1'+PATHS[name]]['get']
++ query={v['name'] for v in op.get('parameters',[]) if v['in']=='query'}
++ assert query==set(VIEW_QUERY_FIELDS[name])==set(VIEW_QUERY_MODELS[name].model_fields)
++ assert VIEW_QUERY_MODELS[name].model_json_schema()['additionalProperties'] is False
++ with pytest.raises(ValidationError):VIEW_QUERY_MODELS[name].model_validate({'private':'PRIVATE-INPUT'})
++
++@pytest.mark.parametrize('name,query',[('hypotheses','limit=51'),('trace','after=2026-01-01T00:00:00Z&before=2020-01-01T00:00:00Z'),('graph','depth=6'),('neighbors','include_candidates=yes'),('dashboard','issue=INVALID'),('map','limit=-1')])
++def test_route_models_preserve_bounds_enums_and_time_validation(transport,name,query):
++ client,calls=transport
++ response=client.get('/api/v1'+PATHS[name].replace('{id}','INV')+'?'+query,headers={'Authorization':'Bearer unit-token'})
++ assert response.status_code==422 and not calls
+--- a/blockers.md
++++ b/blockers.md
+@@ -600,3 +600,6 @@
+ 
+ ### B17 final verification supersedes pending notes above
+ Both specification validators PASS in the single final make test-spec invocation. Final focused45unit+1real PASS,0unresolvedFAIL/0SKIP; repeated runs count as one distinct integration case. Delivery evidence separates source_graph from the public graph projection; failed-log session text sanitized without value disclosure. Final preservation/private-value/accounting audit and narrow patch recorded under B17-*. B16/R recovery paths unchanged; B10 genuine gate OPEN/PARTIAL. STOP for human B17review; exact proposed next B18 CLI, not authorized now.
++
++## CURRENT B17-R limitations/review gate — 2026-10-18
++Corrected silentlyignoredqueryfields;59unit+1realPASS,0unresolvedFAIL/0SKIP; bothSPECvalidatorsPASS. Hypothesisdatefiltering intentionallyunsupported422 until normativetimestampmeaning is separatelydefined; no ambiguouscreation-versus-assessmentfilter. Dashboardhasno pagination; onlyactualmetricfilters. Route-specificpublicschema reflects thesechoices, existingfinitequeries/pagination/revisions/SSElimits unchanged. No newdomain/storage/auth/recovery/provider capability. B10genuineacceptanceOPEN/PARTIAL; all42retaineddrainlinksCANDIDATE, frozen55legacydefects/historygaps/PROPOSEDsourceauthority/DEC-004futuregates andoriginalquarantinesremain. Noreset/retry/clearance. STOPforB17-Rreview; B18/frontend/liveunauthorized.
+--- a/contracts/api_endpoints.json
++++ b/contracts/api_endpoints.json
+@@ -21,7 +21,8 @@
+       "request_schema_id": null,
+       "response_schema_id": "OperatorAccount",
+       "milestone": "B16",
+-      "status": "IMPLEMENTED"
++      "status": "IMPLEMENTED",
++      "query_parameters": []
+     },
+     {
+       "method": "POST",
+@@ -43,7 +44,15 @@
+       "request_schema_id": null,
+       "response_schema_id": "DashboardSummary",
+       "milestone": "B17",
+-      "status": "IMPLEMENTED"
++      "status": "IMPLEMENTED",
++      "query_parameters": [
++        "issue",
++        "status",
++        "department_id",
++        "after",
++        "before"
++      ],
++      "query_schema_id": "DashboardQuery"
+     },
+     {
+       "method": "POST",
+@@ -65,7 +74,17 @@
+       "request_schema_id": null,
+       "response_schema_id": "Page[ComplaintDTO]",
+       "milestone": "B16",
+-      "status": "IMPLEMENTED"
++      "status": "IMPLEMENTED",
++      "query_parameters": [
++        "limit",
++        "cursor",
++        "issue",
++        "status",
++        "department_id",
++        "after",
++        "before"
++      ],
++      "query_schema_id": "ResourceQuery"
+     },
+     {
+       "method": "GET",
+@@ -76,7 +95,8 @@
+       "request_schema_id": null,
+       "response_schema_id": "ComplaintDTO",
+       "milestone": "B16",
+-      "status": "IMPLEMENTED"
++      "status": "IMPLEMENTED",
++      "query_parameters": []
+     },
+     {
+       "method": "GET",
+@@ -87,7 +107,17 @@
+       "request_schema_id": null,
+       "response_schema_id": "Page[IncidentDTO]",
+       "milestone": "B16",
+-      "status": "IMPLEMENTED"
++      "status": "IMPLEMENTED",
++      "query_parameters": [
++        "limit",
++        "cursor",
++        "issue",
++        "status",
++        "department_id",
++        "after",
++        "before"
++      ],
++      "query_schema_id": "ResourceQuery"
+     },
+     {
+       "method": "GET",
+@@ -98,7 +128,8 @@
+       "request_schema_id": null,
+       "response_schema_id": "IncidentDTO",
+       "milestone": "B16",
+-      "status": "IMPLEMENTED"
++      "status": "IMPLEMENTED",
++      "query_parameters": []
+     },
+     {
+       "method": "GET",
+@@ -109,7 +140,17 @@
+       "request_schema_id": null,
+       "response_schema_id": "Page[ProblemClusterDTO]",
+       "milestone": "B16",
+-      "status": "IMPLEMENTED"
++      "status": "IMPLEMENTED",
++      "query_parameters": [
++        "limit",
++        "cursor",
++        "issue",
++        "status",
++        "department_id",
++        "after",
++        "before"
++      ],
++      "query_schema_id": "ResourceQuery"
+     },
+     {
+       "method": "GET",
+@@ -120,7 +161,8 @@
+       "request_schema_id": null,
+       "response_schema_id": "ProblemClusterDTO",
+       "milestone": "B16",
+-      "status": "IMPLEMENTED"
++      "status": "IMPLEMENTED",
++      "query_parameters": []
+     },
+     {
+       "method": "POST",
+@@ -142,7 +184,8 @@
+       "request_schema_id": null,
+       "response_schema_id": "InvestigationDTO",
+       "milestone": "B16",
+-      "status": "IMPLEMENTED"
++      "status": "IMPLEMENTED",
++      "query_parameters": []
+     },
+     {
+       "method": "POST",
+@@ -164,7 +207,15 @@
+       "request_schema_id": null,
+       "response_schema_id": "AgentTracePage",
+       "milestone": "B17",
+-      "status": "IMPLEMENTED"
++      "status": "IMPLEMENTED",
++      "query_parameters": [
++        "limit",
++        "cursor",
++        "status",
++        "after",
++        "before"
++      ],
++      "query_schema_id": "TraceQuery"
+     },
+     {
+       "method": "GET",
+@@ -175,7 +226,13 @@
+       "request_schema_id": null,
+       "response_schema_id": "HypothesisPage",
+       "milestone": "B17",
+-      "status": "IMPLEMENTED"
++      "status": "IMPLEMENTED",
++      "query_parameters": [
++        "limit",
++        "cursor",
++        "status"
++      ],
++      "query_schema_id": "HypothesesQuery"
+     },
+     {
+       "method": "GET",
+@@ -186,7 +243,12 @@
+       "request_schema_id": null,
+       "response_schema_id": "GraphSubgraphDTO",
+       "milestone": "B17",
+-      "status": "IMPLEMENTED"
++      "status": "IMPLEMENTED",
++      "query_parameters": [
++        "depth",
++        "include_candidates"
++      ],
++      "query_schema_id": "GraphQuery"
+     },
+     {
+       "method": "GET",
+@@ -197,7 +259,8 @@
+       "request_schema_id": null,
+       "response_schema_id": "EvidenceDTO",
+       "milestone": "B16",
+-      "status": "IMPLEMENTED"
++      "status": "IMPLEMENTED",
++      "query_parameters": []
+     },
+     {
+       "method": "GET",
+@@ -208,7 +271,8 @@
+       "request_schema_id": null,
+       "response_schema_id": "InspectionDTO",
+       "milestone": "B16",
+-      "status": "IMPLEMENTED"
++      "status": "IMPLEMENTED",
++      "query_parameters": []
+     },
+     {
+       "method": "POST",
+@@ -230,7 +294,8 @@
+       "request_schema_id": null,
+       "response_schema_id": "PlanDTO",
+       "milestone": "B16",
+-      "status": "IMPLEMENTED"
++      "status": "IMPLEMENTED",
++      "query_parameters": []
+     },
+     {
+       "method": "POST",
+@@ -252,7 +317,17 @@
+       "request_schema_id": null,
+       "response_schema_id": "Page[ApprovalDTO]",
+       "milestone": "B16",
+-      "status": "IMPLEMENTED"
++      "status": "IMPLEMENTED",
++      "query_parameters": [
++        "limit",
++        "cursor",
++        "issue",
++        "status",
++        "department_id",
++        "after",
++        "before"
++      ],
++      "query_schema_id": "ResourceQuery"
+     },
+     {
+       "method": "POST",
+@@ -274,7 +349,17 @@
+       "request_schema_id": null,
+       "response_schema_id": "Page[WorkOrderDTO]",
+       "milestone": "B16",
+-      "status": "IMPLEMENTED"
++      "status": "IMPLEMENTED",
++      "query_parameters": [
++        "limit",
++        "cursor",
++        "issue",
++        "status",
++        "department_id",
++        "after",
++        "before"
++      ],
++      "query_schema_id": "ResourceQuery"
+     },
+     {
+       "method": "GET",
+@@ -285,7 +370,8 @@
+       "request_schema_id": null,
+       "response_schema_id": "WorkOrderDTO",
+       "milestone": "B16",
+-      "status": "IMPLEMENTED"
++      "status": "IMPLEMENTED",
++      "query_parameters": []
+     },
+     {
+       "method": "POST",
+@@ -318,7 +404,17 @@
+       "request_schema_id": null,
+       "response_schema_id": "Page[DepartmentDTO]",
+       "milestone": "B16",
+-      "status": "IMPLEMENTED"
++      "status": "IMPLEMENTED",
++      "query_parameters": [
++        "limit",
++        "cursor",
++        "issue",
++        "status",
++        "department_id",
++        "after",
++        "before"
++      ],
++      "query_schema_id": "ResourceQuery"
+     },
+     {
+       "method": "GET",
+@@ -329,7 +425,11 @@
+       "request_schema_id": null,
+       "response_schema_id": "Page[ProcedureDTO]",
+       "milestone": "B16",
+-      "status": "IMPLEMENTED"
++      "status": "IMPLEMENTED",
++      "query_parameters": [
++        "limit",
++        "cursor"
++      ]
+     },
+     {
+       "method": "GET",
+@@ -340,7 +440,8 @@
+       "request_schema_id": null,
+       "response_schema_id": "DocumentDTO",
+       "milestone": "B16",
+-      "status": "IMPLEMENTED"
++      "status": "IMPLEMENTED",
++      "query_parameters": []
+     },
+     {
+       "method": "GET",
+@@ -351,7 +452,11 @@
+       "request_schema_id": null,
+       "response_schema_id": "Page[CaseMemoryDTO]",
+       "milestone": "B16",
+-      "status": "IMPLEMENTED"
++      "status": "IMPLEMENTED",
++      "query_parameters": [
++        "limit",
++        "cursor"
++      ]
+     },
+     {
+       "method": "GET",
+@@ -362,7 +467,18 @@
+       "request_schema_id": null,
+       "response_schema_id": "MapFeatureCollection",
+       "milestone": "B17",
+-      "status": "IMPLEMENTED"
++      "status": "IMPLEMENTED",
++      "query_parameters": [
++        "limit",
++        "cursor",
++        "issue",
++        "status",
++        "department_id",
++        "after",
++        "before",
++        "investigation_id"
++      ],
++      "query_schema_id": "MapQuery"
+     },
+     {
+       "method": "GET",
+@@ -373,7 +489,9 @@
+       "request_schema_id": null,
+       "response_schema_id": "AssetDTO",
+       "milestone": "B17",
+-      "status": "IMPLEMENTED"
++      "status": "IMPLEMENTED",
++      "query_parameters": [],
++      "query_schema_id": "AssetQuery"
+     },
+     {
+       "method": "GET",
+@@ -384,7 +502,12 @@
+       "request_schema_id": null,
+       "response_schema_id": "GraphSubgraphDTO",
+       "milestone": "B17",
+-      "status": "IMPLEMENTED"
++      "status": "IMPLEMENTED",
++      "query_parameters": [
++        "depth",
++        "include_candidates"
++      ],
++      "query_schema_id": "GraphQuery"
+     },
+     {
+       "method": "GET",
+@@ -395,7 +518,11 @@
+       "request_schema_id": null,
+       "response_schema_id": "Page[MonitoringDTO]",
+       "milestone": "B16",
+-      "status": "IMPLEMENTED"
++      "status": "IMPLEMENTED",
++      "query_parameters": [
++        "limit",
++        "cursor"
++      ]
+     },
+     {
+       "method": "GET",
+@@ -406,7 +533,11 @@
+       "request_schema_id": null,
+       "response_schema_id": "Page[OutcomeDTO]",
+       "milestone": "B16",
+-      "status": "IMPLEMENTED"
++      "status": "IMPLEMENTED",
++      "query_parameters": [
++        "limit",
++        "cursor"
++      ]
+     },
+     {
+       "method": "GET",
+@@ -417,7 +548,11 @@
+       "request_schema_id": null,
+       "response_schema_id": "SSEStream",
+       "milestone": "B17",
+-      "status": "IMPLEMENTED"
++      "status": "IMPLEMENTED",
++      "query_parameters": [
++        "cursor",
++        "investigation_id"
++      ]
+     },
+     {
+       "method": "POST",
+@@ -461,7 +596,8 @@
+       "request_schema_id": null,
+       "response_schema_id": "HealthDTO",
+       "milestone": "B16",
+-      "status": "IMPLEMENTED"
++      "status": "IMPLEMENTED",
++      "query_parameters": []
+     },
+     {
+       "method": "GET",
+@@ -472,7 +608,8 @@
+       "request_schema_id": null,
+       "response_schema_id": "HealthDTO",
+       "milestone": "B16",
+-      "status": "IMPLEMENTED"
++      "status": "IMPLEMENTED",
++      "query_parameters": []
+     },
+     {
+       "method": "POST",
+@@ -582,7 +719,8 @@
+       "request_schema_id": null,
+       "response_schema_id": "ApprovalDTO",
+       "milestone": "B16",
+-      "status": "IMPLEMENTED"
++      "status": "IMPLEMENTED",
++      "query_parameters": []
+     },
+     {
+       "method": "GET",
+@@ -593,7 +731,11 @@
+       "request_schema_id": null,
+       "response_schema_id": "Page[PlanDTO]",
+       "milestone": "B16",
+-      "status": "IMPLEMENTED"
++      "status": "IMPLEMENTED",
++      "query_parameters": [
++        "limit",
++        "cursor"
++      ]
+     },
+     {
+       "method": "GET",
+@@ -604,7 +746,8 @@
+       "request_schema_id": null,
+       "response_schema_id": "HypothesisDTO",
+       "milestone": "B16",
+-      "status": "IMPLEMENTED"
++      "status": "IMPLEMENTED",
++      "query_parameters": []
+     }
+   ],
+   "envelope": {
+@@ -742,6 +885,18 @@
+       "CURSOR_EXPIRED"
+     ],
+     "reconnect": "Save event/cursor-control IDs, reconnect using same authenticated scope/filter, then authoritative GET refetch; no source discovery or domain acknowledgment in stream",
+-    "deferred": "B19 demo routes remain absent; B18/frontend/live not authorized"
++    "deferred": "B19 demo routes remain absent; B18/frontend/live not authorized",
++    "query_contract": {
++      "decision": "DEC-063",
++      "policy": "Closed per-route allowlists are identical to OpenAPI query parameters; unknown, irrelevant or repeated parameters return sanitized422",
++      "hypotheses": "status equality and exclusive stable ID cursor/limit only; after/before rejected (no normative creation-versus-assessment timestamp semantics)",
++      "dashboard": "issue/status/department_id/after/before apply independently to each authorized metric resource; aggregate response has no limit/cursor",
++      "trace": "after/before inclusively filter actual persisted tool-finished/decision-decided timestamp before chronological timestamp+eventID pagination",
++      "resources": "Existing resource filters/paging unchanged; inclusive after/before on reported/start/request/create timestamp per existing projection",
++      "map": "Existing resource filters/paging plus investigation_id; canonical location points only",
++      "graph_neighbors": "depth and include_candidates only",
++      "asset": "No query parameters",
++      "stream": "Existing cursor/investigation_id and Last-Event-ID header unchanged"
++    }
+   }
+ }
+--- a/contracts/api_models.json
++++ b/contracts/api_models.json
+@@ -8681,6 +8681,423 @@
+         }
+       },
+       "title": "PublicPayload",
++      "type": "object"
++    },
++    "ResourceQuery": {
++      "additionalProperties": false,
++      "properties": {
++        "limit": {
++          "default": 25,
++          "maximum": 50,
++          "minimum": 1,
++          "title": "Limit",
++          "type": "integer"
++        },
++        "cursor": {
++          "anyOf": [
++            {
++              "maxLength": 200,
++              "minLength": 1,
++              "type": "string"
++            },
++            {
++              "type": "null"
++            }
++          ],
++          "default": null,
++          "title": "Cursor"
++        },
++        "issue": {
++          "anyOf": [
++            {
++              "enum": [
++                "WATERLOGGING",
++                "ROAD_DAMAGE",
++                "WASTE_ACCUMULATION"
++              ],
++              "type": "string"
++            },
++            {
++              "type": "null"
++            }
++          ],
++          "default": null,
++          "title": "Issue"
++        },
++        "status": {
++          "anyOf": [
++            {
++              "maxLength": 200,
++              "minLength": 1,
++              "type": "string"
++            },
++            {
++              "type": "null"
++            }
++          ],
++          "default": null,
++          "title": "Status"
++        },
++        "department_id": {
++          "anyOf": [
++            {
++              "maxLength": 200,
++              "minLength": 1,
++              "type": "string"
++            },
++            {
++              "type": "null"
++            }
++          ],
++          "default": null,
++          "title": "Department Id"
++        },
++        "after": {
++          "anyOf": [
++            {
++              "type": "string"
++            },
++            {
++              "type": "null"
++            }
++          ],
++          "default": null,
++          "title": "After"
++        },
++        "before": {
++          "anyOf": [
++            {
++              "type": "string"
++            },
++            {
++              "type": "null"
++            }
++          ],
++          "default": null,
++          "title": "Before"
++        }
++      },
++      "title": "ResourceQuery",
++      "type": "object"
++    },
++    "GraphQuery": {
++      "additionalProperties": false,
++      "properties": {
++        "depth": {
++          "default": 2,
++          "maximum": 5,
++          "minimum": 1,
++          "title": "Depth",
++          "type": "integer"
++        },
++        "include_candidates": {
++          "default": false,
++          "title": "Include Candidates",
++          "type": "boolean"
++        }
++      },
++      "title": "GraphQuery",
++      "type": "object"
++    },
++    "HypothesesQuery": {
++      "additionalProperties": false,
++      "properties": {
++        "limit": {
++          "default": 25,
++          "maximum": 50,
++          "minimum": 1,
++          "title": "Limit",
++          "type": "integer"
++        },
++        "cursor": {
++          "anyOf": [
++            {
++              "maxLength": 200,
++              "minLength": 1,
++              "type": "string"
++            },
++            {
++              "type": "null"
++            }
++          ],
++          "default": null,
++          "title": "Cursor"
++        },
++        "status": {
++          "anyOf": [
++            {
++              "maxLength": 200,
++              "minLength": 1,
++              "type": "string"
++            },
++            {
++              "type": "null"
++            }
++          ],
++          "default": null,
++          "title": "Status"
++        }
++      },
++      "title": "HypothesesQuery",
++      "type": "object"
++    },
++    "DashboardQuery": {
++      "additionalProperties": false,
++      "properties": {
++        "issue": {
++          "anyOf": [
++            {
++              "enum": [
++                "WATERLOGGING",
++                "ROAD_DAMAGE",
++                "WASTE_ACCUMULATION"
++              ],
++              "type": "string"
++            },
++            {
++              "type": "null"
++            }
++          ],
++          "default": null,
++          "title": "Issue"
++        },
++        "status": {
++          "anyOf": [
++            {
++              "maxLength": 200,
++              "minLength": 1,
++              "type": "string"
++            },
++            {
++              "type": "null"
++            }
++          ],
++          "default": null,
++          "title": "Status"
++        },
++        "department_id": {
++          "anyOf": [
++            {
++              "maxLength": 200,
++              "minLength": 1,
++              "type": "string"
++            },
++            {
++              "type": "null"
++            }
++          ],
++          "default": null,
++          "title": "Department Id"
++        },
++        "after": {
++          "anyOf": [
++            {
++              "type": "string"
++            },
++            {
++              "type": "null"
++            }
++          ],
++          "default": null,
++          "title": "After"
++        },
++        "before": {
++          "anyOf": [
++            {
++              "type": "string"
++            },
++            {
++              "type": "null"
++            }
++          ],
++          "default": null,
++          "title": "Before"
++        }
++      },
++      "title": "DashboardQuery",
++      "type": "object"
++    },
++    "AssetQuery": {
++      "additionalProperties": false,
++      "properties": {},
++      "title": "AssetQuery",
++      "type": "object"
++    },
++    "TraceQuery": {
++      "additionalProperties": false,
++      "properties": {
++        "limit": {
++          "default": 25,
++          "maximum": 50,
++          "minimum": 1,
++          "title": "Limit",
++          "type": "integer"
++        },
++        "cursor": {
++          "anyOf": [
++            {
++              "maxLength": 200,
++              "minLength": 1,
++              "type": "string"
++            },
++            {
++              "type": "null"
++            }
++          ],
++          "default": null,
++          "title": "Cursor"
++        },
++        "status": {
++          "anyOf": [
++            {
++              "maxLength": 200,
++              "minLength": 1,
++              "type": "string"
++            },
++            {
++              "type": "null"
++            }
++          ],
++          "default": null,
++          "title": "Status"
++        },
++        "after": {
++          "anyOf": [
++            {
++              "type": "string"
++            },
++            {
++              "type": "null"
++            }
++          ],
++          "default": null,
++          "title": "After"
++        },
++        "before": {
++          "anyOf": [
++            {
++              "type": "string"
++            },
++            {
++              "type": "null"
++            }
++          ],
++          "default": null,
++          "title": "Before"
++        }
++      },
++      "title": "TraceQuery",
++      "type": "object"
++    },
++    "MapQuery": {
++      "additionalProperties": false,
++      "properties": {
++        "limit": {
++          "default": 25,
++          "maximum": 50,
++          "minimum": 1,
++          "title": "Limit",
++          "type": "integer"
++        },
++        "cursor": {
++          "anyOf": [
++            {
++              "maxLength": 200,
++              "minLength": 1,
++              "type": "string"
++            },
++            {
++              "type": "null"
++            }
++          ],
++          "default": null,
++          "title": "Cursor"
++        },
++        "issue": {
++          "anyOf": [
++            {
++              "enum": [
++                "WATERLOGGING",
++                "ROAD_DAMAGE",
++                "WASTE_ACCUMULATION"
++              ],
++              "type": "string"
++            },
++            {
++              "type": "null"
++            }
++          ],
++          "default": null,
++          "title": "Issue"
++        },
++        "status": {
++          "anyOf": [
++            {
++              "maxLength": 200,
++              "minLength": 1,
++              "type": "string"
++            },
++            {
++              "type": "null"
++            }
++          ],
++          "default": null,
++          "title": "Status"
++        },
++        "department_id": {
++          "anyOf": [
++            {
++              "maxLength": 200,
++              "minLength": 1,
++              "type": "string"
++            },
++            {
++              "type": "null"
++            }
++          ],
++          "default": null,
++          "title": "Department Id"
++        },
++        "after": {
++          "anyOf": [
++            {
++              "type": "string"
++            },
++            {
++              "type": "null"
++            }
++          ],
++          "default": null,
++          "title": "After"
++        },
++        "before": {
++          "anyOf": [
++            {
++              "type": "string"
++            },
++            {
++              "type": "null"
++            }
++          ],
++          "default": null,
++          "title": "Before"
++        },
++        "investigation_id": {
++          "anyOf": [
++            {
++              "maxLength": 200,
++              "minLength": 1,
++              "type": "string"
++            },
++            {
++              "type": "null"
++            }
++          ],
++          "default": null,
++          "title": "Investigation Id"
++        }
++      },
++      "title": "MapQuery",
+       "type": "object"
+     }
+   },
+--- a/decision.md
++++ b/decision.md
+@@ -1508,3 +1508,11 @@
+ 
+ ### B17 final verification supersedes pending notes above
+ Both specification validators PASS in the single final make test-spec invocation. Final focused45unit+1real PASS,0unresolvedFAIL/0SKIP; repeated runs count as one distinct integration case. Delivery evidence separates source_graph from the public graph projection; failed-log session text sanitized without value disclosure. Final preservation/private-value/accounting audit and narrow patch recorded under B17-*. B16/R recovery paths unchanged; B10 genuine gate OPEN/PARTIAL. STOP for human B17review; exact proposed next B18 CLI, not authorized now.
++
++## DEC-063 — B17-R truthful per-route query contracts (pre-edit)
++R08/R09/R15/R16; all18requirements preserved. Reject undocumented hypotheses date semantics instead of inventing creation-versus-assessment interpretation; remove ignored dashboard pagination. One explicit per-route query allowlist drives closed transport models/OpenAPI and runtime rejection. Internal ReadFilters and actual Views filtering unchanged. Existing query validators retained on derived models; all previously consumed resource/map/trace/graph filters preserved. Unknown/repeated fields sanitized422. Scope/files/risks/exacttests/humanverification recorded before source edits in docs/evidence/B17R-PLAN.md. No domain/storage/migration/worker/auth/SSE/recovery redesign or B18/live.
++
++## DEC-063 exercised B17-R correction — 2026-10-18
++Explicit VIEW_QUERY_FIELDS and route-specific QueryRules-derived models are now the single transport allowlist/OpenAPI source. Preserve ReadFilters field definitions/validators and unchanged Views; reject rather than invent hypotheses creation/assessment-time semantics. Dashboard aggregates reject pagination; other consumed filters retained. Other B17handlers inspected: map/resource matches, trace actual timestamps/paging, graph bounds/candidate flag, asset no query, SSE existingcursor/casefilter. Shared superset no longer advertises irrelevant parameters. Legacy scalar repeated keys rejected consistently; no domain/storage/migration/worker/auth/recovery/SSE redesign or dependency changes.
++
++Actual59distinctunitPASS +1realPASS28.03s,0unresolvedFAIL/0SKIP, bothSPECvalidatorsPASS once. One initial unit fixture used analyst against approver-only route; correctRBAC403, correctedfixture and13directlyaffected casesPASS; no realintegrationfailure/retry. Realcase run exactlyonce after finaledits, preserves originalB17assertions and TCPstream. New B17Rproof prefix prevents earlierartifact overwrite. All18requirementsbinding; genuineB10OPEN/PARTIAL; STOPafterB17-R, B18/frontend/liveunauthorized.
+--- a/docs/backend/08_api_frontend.md
++++ b/docs/backend/08_api_frontend.md
+@@ -61,3 +61,6 @@
+ B16/R accepted. All eight previously deferred read/stream routes now implemented,52operations/49paths, only B19demo routes deferred. Closed generated contractsv4 preserve planned DTO names/required identity fields, add typed actual observations, strict bounded graph/path/map/trace and source-local authorized SSE. Nullable asset condition corrects the planned mandatory string against optional canonical storage; no invented condition. B16legacy PlanDTO.approval_status is explicitly audited plan lifecycle, actual approval decision from ApprovalDTO.status. API clients must display these separately.
+ 
+ Actual runtime/query/control flow, metric/filter definitions, limits, cursor errors/auth and operator startup in backend/API.md current B17 section. Current evidence/matrix/OpenAPI and shared real HTTP/FalkorDB/MCP/Saver/TCP-SSE journey in docs/evidence/B17-*. Scripted model selections are labelled; B10 full genuine acceptance OPEN/PARTIAL. No frontend/B18/B19/live completion.
++
++## B17-R exact query parameters (DEC-063)
++Public query models are route-specific, not the shared internal ReadFilters. Hypotheses accept status/limit/cursor only; after/before rejected422 because creation-versus-assessment timestamp semantics are unspecified. Dashboard accepts only issue/status/department_id/after/before, rejects limit/cursor. Trace retains actual persisted decision/tool timestamp window before pagination; resource/map/graph filters unchanged. Unsupported/unknown/repeated keys return sanitized422. Exact current all-GET allowlists in contracts/api_endpoints.json query_parameters/query_schema_id and docs/evidence/B17R-QUERY-COVERAGE.md; OpenAPI generated from the same closed models. No business/storage/recovery/SSE redesign; all18requirements preserved, B18/frontend/live unauthorized.
+--- a/flow.md
++++ b/flow.md
+@@ -984,3 +984,8 @@
+ 
+ ### B17 final verification supersedes pending notes above
+ Both specification validators PASS in the single final make test-spec invocation. Final focused45unit+1real PASS,0unresolvedFAIL/0SKIP; repeated runs count as one distinct integration case. Delivery evidence separates source_graph from the public graph projection; failed-log session text sanitized without value disclosure. Final preservation/private-value/accounting audit and narrow patch recorded under B17-*. B16/R recovery paths unchanged; B10 genuine gate OPEN/PARTIAL. STOP for human B17review; exact proposed next B18 CLI, not authorized now.
++
++## B17-R actual query-control flow — 2026-10-18
++app.api.view_models.QueryRules retains integer/boolean/date-window validators → ReadFilters remains internal service superset; explicit VIEW_QUERY_FIELDS selects closed ResourceQuery/DashboardQuery/MapQuery/HypothesesQuery/TraceQuery/GraphQuery/AssetQuery. application.endpoint assigns that selected model to the FastAPI query annotation → OpenAPI exposes exactly its fields → unknown/irrelevant/repeated422 before Views → validated subset converted to original ReadFilters defaults → unchanged Views run/filter/pagination/graph/SSE paths. No service/storage/worker/auth/migration/recovery edits. Domain data and oldcheckpoint/quarantine unchanged.
++
++Hypotheses onlystatus/limit/cursor; dashboard onlyissue/status/department/date; trace inclusive actualeventtimestamps and pagination; resource/map filters and graph bounds preserved. scripts/validate_api checks actualOpenAPI querykeys=model_fields=contractquery_parameters and query_schema_id. B17Rexporter writesnewOpenAPI/querycoverage, never B17proofs. Existing realjourney extended with date-repro422/dashboard rejection/supportedmetricchanges/hypstatus andtracewindow, writesonlyB17R-journey whenexplicitprefixset; alloldassertions andrealTCPstreamretained.59unit+1realPASS, bothSPECvalidatorsPASS. STOPforB17-Rreview.
+--- a/implementation_status.md
++++ b/implementation_status.md
+@@ -565,3 +565,6 @@
+ 
+ ### B17 final verification supersedes pending notes above
+ Both specification validators PASS in the single final make test-spec invocation. Final focused45unit+1real PASS,0unresolvedFAIL/0SKIP; repeated runs count as one distinct integration case. Delivery evidence separates source_graph from the public graph projection; failed-log session text sanitized without value disclosure. Final preservation/private-value/accounting audit and narrow patch recorded under B17-*. B16/R recovery paths unchanged; B10 genuine gate OPEN/PARTIAL. STOP for human B17review; exact proposed next B18 CLI, not authorized now.
++
++## CURRENT B17-R — TECHNICALLY PASS, HUMAN REVIEW PENDING (2026-10-18)
++Supersedes priorB17statuswithoutchanginghistory. Narrow querycontractfixonly: public per-route closedmodels/allowlists/OpenAPI, hypothesesafter/before422, dashboardlimit/cursor422; consumedfilters unchanged.52operations/49pathsunchanged.59distinctunit+1actualHTTP/FalkorDB/MCP/Saver/TCP-SSEintegrationPASS,0unresolvedFAIL/0SKIP; bothSPECvalidatorsPASSonce. Scriptedmodel only,0externalprovider. No domain/storage/migration/worker/auth/recovery/SSEredesign. OriginalB17proofs preserved undernewB17Rprefix. All18requirementsbinding, genuineB10OPEN/PARTIAL. STOPafterB17-R; B18/frontend/liveunauthorized.
+--- a/scripts/validate_api.py
++++ b/scripts/validate_api.py
+@@ -5,6 +5,7 @@
+ from app.api.coverage import ROUTES,DEFERRED_B17,DEFERRED_B19
+ from app.api.application import create_app
+ from app.api import models
++from app.api.view_models import VIEW_QUERY_FIELDS,VIEW_QUERY_MODELS
+ from jsonschema import Draft202012Validator
+ c=json.loads((ROOT/'contracts/api_endpoints.json').read_text());d=json.loads((ROOT/'contracts/api_models.json').read_text())
+ api=create_app().openapi();actual={(method.upper(),path) for path,row in api['paths'].items() for method in row}
+@@ -19,6 +20,13 @@
+   schema=cls.model_json_schema();schema.pop('$defs',None)
+   assert schema==d['$defs'][cls.__name__],cls.__name__
+   assert schema.get('additionalProperties') is False
++ if method=='GET':
++  actual_query={v['name'] for v in api['paths']['/api/v1'+path]['get'].get('parameters',[]) if v['in']=='query'}
++  assert set(row['query_parameters'])==actual_query
++  if name in VIEW_QUERY_MODELS:
++   cls=VIEW_QUERY_MODELS[name];schema=cls.model_json_schema();schema.pop('$defs',None)
++   assert actual_query==set(VIEW_QUERY_FIELDS[name])==set(cls.model_fields)
++   assert row['query_schema_id']==cls.__name__ and schema==d['$defs'][cls.__name__]
+  assert row['idempotency_key']==(method=='POST' and name not in {'login','logout'})
+ assert not DEFERRED_B17
+ from app.api.coverage import B17_PATHS
+@@ -31,4 +39,4 @@
+ assert 'review' not in models.ReportRequest.model_fields
+ assert 'review' not in models.WorkInspectionReport.model_fields
+ assert 'request_id' not in models.WorkInspectionReport.model_fields
+-print('PASS B16/B17 STATIC:52 implemented operations/49paths, closed typed schemas/roles/idempotency and SSE;3B19 operations deferred; no runtime/live claim')
++print('PASS B16/B17 STATIC:52 implemented operations/49paths, closed typed schemas/roles/idempotency, exact per-route query allowlists and SSE;3B19 operations deferred; no runtime/live claim')
+--- a/task_board.md
++++ b/task_board.md
+@@ -501,3 +501,6 @@
+ 
+ ### B17 final verification supersedes pending notes above
+ Both specification validators PASS in the single final make test-spec invocation. Final focused45unit+1real PASS,0unresolvedFAIL/0SKIP; repeated runs count as one distinct integration case. Delivery evidence separates source_graph from the public graph projection; failed-log session text sanitized without value disclosure. Final preservation/private-value/accounting audit and narrow patch recorded under B17-*. B16/R recovery paths unchanged; B10 genuine gate OPEN/PARTIAL. STOP for human B17review; exact proposed next B18 CLI, not authorized now.
++
++## CURRENT B17-R — technically complete; human review pending (2026-10-18)
++Supersedes historicalB17pendingnoteswithoutremovingthem. Fixedquerycontract/OpenAPIonly; hypothesesdatesanddashboardpaginationreject422; truefilters/pagingunchanged.59unit+1singleactualDB/MCP/Saver/HTTP/TCP-SSEcasePASS, bothSPECvalidatorsPASSonce,0externalproviders. OneunitfixtureRBACmismatchcorrectedandaffectedgroupretested; norealintegrationfailures. Reviewdocs/evidence/B17R-RESULTS.md/B17R-COMMANDS.md/B17R-QUERY-COVERAGE.md/B17R-FILES.md/B17R-changes.patch. Humantryhypothesesbefore2020/dashboardlimit→422, supportedstatus/paging/tracewindow→actualresults. ExactnextproposedB18CLIrequiresseparateauthorization; frontend/liveunauthorized. STOPafterB17-R.
+--- a/test_log.md
++++ b/test_log.md
+@@ -1097,3 +1097,8 @@
+ 
+ ### B17 final verification supersedes pending notes above
+ Both specification validators PASS in the single final make test-spec invocation. Final focused45unit+1real PASS,0unresolvedFAIL/0SKIP; repeated runs count as one distinct integration case. Delivery evidence separates source_graph from the public graph projection; failed-log session text sanitized without value disclosure. Final preservation/private-value/accounting audit and narrow patch recorded under B17-*. B16/R recovery paths unchanged; B10 genuine gate OPEN/PARTIAL. STOP for human B17review; exact proposed next B18 CLI, not authorized now.
++
++## CURRENT B17-R focused verification — 2026-10-18
++59distinctunitPASS +1realintegrationPASS =60distinctcases,0unresolvedFAIL/0SKIP. Initial59unitrun58PASS/1FAIL8.20s: mockedquery-boundaryfixture usedANALYST forAPPROVER-only approvalslist; actual403correct. Fixture corrected; only13directlyaffected supported-querycases rerun13PASS1.93s (12overlap,1correctedcase), not13additionaldistinctcases. No applicationfailure concealed.
++
++Single extended originalrealjourney1PASS28.03s,3existingdependencydeprecationwarnings, runonceafterfinalsource/testedits. ActualHTTP hypothesesbefore2020andafter422; dashboardpagination422; hypothesisstatus/exclusiveIDpaging; tracebefore2020zero andafter2020retainsall; resource/date/issuefilters anddashboardmetricschange; old graph/9selectedpaths/citations/observations/TCP-SSEreplay/late-discovery/re-auth/disconnect/no-ack assertionsretained. Scriptedmodelbehavior distinctfromactualDB/MCP/Saver/network. BothspecvalidatorsPASSoncesinglemakeinvocationafterfinalapplication/test/contracts.3pytest/childguardproofs0externalGemini/countTokens,0unexpectedattempts. Nofullsuite/lifecycle/paidcalls. Exactcommands/logs/proof inB17R-COMMANDS/RESULTS/journey. PriorB17evidenceunchanged.

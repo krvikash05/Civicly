@@ -1,0 +1,789 @@
+{
+  "status": "PASS",
+  "checked_at": "2026-10-18T06:31:25.623Z",
+  "process": 30858,
+  "authorization": {
+    "task": "B11-LIVE-SMOKE-R",
+    "status": "READY",
+    "recorded_at": "2026-10-18T06:30:39.947Z",
+    "profile_path": ".runtime/b11-live-smoke-r-agent.json",
+    "memory_profile_path": ".runtime/b11-live-smoke-r-memory.json",
+    "graph": "civicly_b10_test_e924ed0c58b94d14a278202f0bb1ab15",
+    "checkpoint_graph": "civicly_b10_checkpoints_4412d2da051743eaaf1a0de67e92f706",
+    "investigation_id": "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+    "thread_id": "57185be0ce624da5a8b69472c16f811a",
+    "model": "gemini-3.8-flash",
+    "pricing_version": "google-gemini-standard-text-2026-10-18",
+    "max_total_usd": ".15",
+    "max_generation_attempts": 2,
+    "transient_retries": 0,
+    "max_count_per_generation": 1,
+    "max_provider_selections": 1,
+    "max_live_wakes": 1,
+    "output_tokens": 2048,
+    "budget": {
+      "max_iterations": 2,
+      "max_tools": 1,
+      "max_tokens": 60000,
+      "max_seconds": 120,
+      "max_wakes": 1
+    },
+    "initial_generation_reservation_nusd": 34128750,
+    "default_ledger_first_initialization": false,
+    "ledger": ".runtime/ai-spend.sqlite3",
+    "graph_interrupts": {
+      "before": [
+        "RootCauseAnalyst",
+        "ResolutionPlanner",
+        "Coordinator"
+      ],
+      "after": [
+        "Investigator"
+      ]
+    },
+    "prompt_version": "B11-1",
+    "original_attempt": "ae94b094ee9f4ad599f88789df4d959e",
+    "temporal_preflight": {
+      "status": "PASS",
+      "cutoff": "2026-10-18T06:30:39.860Z",
+      "visible_required_ids": [
+        "D1",
+        "INC-B08-3b169d9dcd081279142900a44b96e6ff",
+        "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+        "PC-B08-dfe595f9e0fdc0a8091e3b342c6a2691"
+      ],
+      "visible_relationships": [
+        "REL-B08-53b2dee7c5fda2fca57132403b8bb162",
+        "REL-B09-42612f0825dfc4d3c85803b674b96e2f",
+        "REL-B09-79fc2b1af79a794bfa6f491f5e02ac68"
+      ],
+      "binding_monotonic": true,
+      "no_checkpoint_quarantine_or_owner": true
+    },
+    "profile_sha256": "59af4afa0dd2ff7b3d104de2f0f2567f6ebe1daf02bc0e25b002432ac69ddc22",
+    "memory_profile_sha256": "d73b0cbc3c7d1e4447ccac22d144c2c6696bee3242b520bb56222fafcc104e9b",
+    "initial_state_sha256": "66a8542435224ef3711857477862ec85861d0b1738c1ba8c5a79a637a01ce544",
+    "prompt_sha256": "40316606a6d7189e273e14b7dbaaee7e016031a0ee73b3ca5cbb18e7a978a105"
+  },
+  "native_checkpoint_id": "1f1cabd8-07d6-60da-8002-032cf251731c",
+  "next_pending_tasks": [],
+  "state": {
+    "version": 1,
+    "graph": "civicly_b10_test_e924ed0c58b94d14a278202f0bb1ab15",
+    "investigation_id": "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+    "thread_id": "57185be0ce624da5a8b69472c16f811a",
+    "problem_cluster_id": "PC-B08-dfe595f9e0fdc0a8091e3b342c6a2691",
+    "discovered_tool_names": [
+      "official::get_graph_schema",
+      "official::get_node_schema",
+      "official::get_relationship_schema",
+      "official::query_graph_readonly",
+      "civicly::find_related_incidents",
+      "civicly::get_decision_evidence_path",
+      "civicly::get_maintenance_history",
+      "civicly::get_monitoring_status",
+      "civicly::get_organizational_procedures",
+      "civicly::get_pickup_execution_history",
+      "civicly::get_road_condition_history",
+      "civicly::get_source_document_excerpt",
+      "civicly::get_work_order_status",
+      "civicly::retrieve_case_memory",
+      "civicly::retrieve_external_evidence",
+      "civicly::trace_infrastructure_dependencies"
+    ],
+    "missing_evidence": [
+      "Source-backed Drainage Operations (DEPT-DRAIN) INSPECTION procedures and citations are needed before planning this synthetic waterlogging investigation. Choose one useful allowed READ; if organizational guidance cannot be accessed, report the limitation and select relevant graph evidence or pause.",
+      "ELIGIBLE_SOURCE_FALLBACK; verified source chunks outside global top12; applicability, not semantic ranking",
+      "Synthetic source excerpts; extracted statements remain PROPOSED, not verified policy or physical cause"
+    ],
+    "current_plan_id": null,
+    "incident_ids": [
+      "INC-B08-3b169d9dcd081279142900a44b96e6ff"
+    ],
+    "asset_ids": [
+      "D1"
+    ],
+    "issue": "WATERLOGGING",
+    "graph_revision": 24,
+    "phase": "Investigator",
+    "hypotheses": [],
+    "evidence": {},
+    "inventory_hash": "60e6cc345311a3446a1aedb713b945a2cfdd16b594fa40d2ae50a196dca57ebd",
+    "selection": {
+      "action": "READ",
+      "summary": "Retrieve applicable organizational inspection procedures for Drainage Operations (DEPT-DRAIN) to satisfy missing procedure evidence requirements before investigation planning.",
+      "tool_name": "civicly::get_organizational_procedures",
+      "arguments_json": "{\"department_id\":\"DEPT-DRAIN\",\"action_type\":\"INSPECTION\"}",
+      "pause_reason": "NONE"
+    },
+    "decisions": [
+      "DEC-B10-6db86522180a134fd3c9766e2a00e1e8"
+    ],
+    "executions": [
+      "MCP-B10-6db86522180a134fd3c9766e2a00e1e8"
+    ],
+    "pending_inspections": [],
+    "pending_approval": null,
+    "errors": [],
+    "observations": [
+      {
+        "status": "PARTIAL",
+        "trace_id": "57185be0ce624da5a8b69472c16f811a",
+        "execution_id": "MCP-B10-6db86522180a134fd3c9766e2a00e1e8",
+        "context": {
+          "trace_id": "57185be0ce624da5a8b69472c16f811a",
+          "execution_id": "MCP-B10-6db86522180a134fd3c9766e2a00e1e8",
+          "parent_execution_id": "DEC-B10-6db86522180a134fd3c9766e2a00e1e8",
+          "investigation_id": "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+          "municipality_id": "demo-city",
+          "source_graph": "civicly_b10_test_e924ed0c58b94d14a278202f0bb1ab15",
+          "caller_role": "READ_ONLY",
+          "invocation_origin": "APPLICATION"
+        },
+        "server_id": "civicly-domain",
+        "tool_name": "get_organizational_procedures",
+        "schema_version": 3,
+        "inventory_version": "49904935610e6fa1f9ea88070851e7a905e74594f1d764c3a500aaa294833119",
+        "source_evidence_ids": [],
+        "simulation_mode": true,
+        "graph_revision": 23,
+        "truncated": false,
+        "search_limited": true,
+        "error": null,
+        "procedures": [
+          {
+            "procedure_id": "ORGPROC:D001-PDF:1",
+            "version": 1,
+            "rule_summary": "SYNTHETIC DEMONSTRATION - PDF DERIVATIVE\n# Drain blockage inspection\n**DOCUMENT ID:** D001\n**SOURCE KIND:** SYNTHETIC\n**ORGANIZATION:** Fictional Civicly Demo City\n**OWNER:** Drainage Operations\n**VERSION:** 1\n**EFFECTIVE FROM:** 2026-09-01\n## Procedure / lesson\nBefore recommending drain cleaning, verify upstream inlet and downstream segment; log debris\ndepth, flow direction, source, photos and date. Do not infer obstruction from nearby litter alone.\nThese are invented demonstration records and do not claim to be official policies of any real\nmunicipality.\nDerived from authorized repository source: data/documents/D001_drain_blockage_inspection.md\nOriginal SHA256: b8a0f22665d1c961c0c96ad861d9576b433cea490adb82f8f86f98b21aeb4b86\n",
+            "citation": {
+              "source_document_id": "D001-PDF",
+              "source_version": 1,
+              "canonical_document_id": "ORG:D001-PDF:1",
+              "owner_department_id": "DEPT-DRAIN",
+              "source_uri": "data/documents/b11/D001_v1_derivative.pdf",
+              "content_checksum": "a72a4d12167e15a59ecbca32040324bfafcd59ca497dd645fd8de61fb61bcebb",
+              "quote_excerpt": "SYNTHETIC DEMONSTRATION - PDF DERIVATIVE\n# Drain blockage inspection\n**DOCUMENT ID:** D001\n**SOURCE KIND:** SYNTHETIC\n**ORGANIZATION:** Fictional Civicly Demo City\n**OWNER:** Drainage Operations\n**VERSION:** 1\n**EFFECTIVE FROM:** 2026-09-01\n## Procedure / lesson\nBefore recommending drain cleaning, verify upstream inlet and downstream segment; log debris\ndepth, flow direction, source, photos and date. Do not infer obstruction from nearby litter alone.\nThese are invented demonstration records and do not claim to be official policies of any real\nmunicipality.\nDerived from authorized repository source: data/documents/D001_drain_blockage_inspection.md\nOriginal SHA256: b8a0f22665d1c961c0c96ad861d9576b433cea490adb82f8f86f98b21aeb4b86\n",
+              "passage_location": "chunk:0:9584461c-6fa0-4637-be43-78ddafcb0b90",
+              "chunk_sha256": "831b15cd509d01a50aa63a329ebd4ac341bad9090f3474e6ac040f8bc86486ff",
+              "confidence_label": "SOURCE_REVIEWED_SYNTHETIC",
+              "assertion_status": "PROPOSED",
+              "retrieved_at": "2026-10-18T06:31:07.654Z",
+              "effective_from": "2026-09-01T00:00:00Z",
+              "derived_from": "ORG:D001:1",
+              "trusted_as_instructions": false
+            }
+          },
+          {
+            "procedure_id": "ORGPROC:D001:1",
+            "version": 1,
+            "rule_summary": "# Drain blockage inspection\n\n**DOCUMENT ID:** D001\n**SOURCE KIND:** SYNTHETIC\n**ORGANIZATION:** Fictional Civicly Demo City\n**OWNER:** Drainage Operations\n**VERSION:** 1\n**EFFECTIVE FROM:** 2026-09-01\n\n## Procedure / lesson\n\nBefore recommending drain cleaning, verify upstream inlet and downstream segment; log debris depth, flow direction, source, photos and date. Do not infer obstruction from nearby litter alone.\n\nThese are invented demonstration records and do not claim to be official policies of any real municipality.\n",
+            "citation": {
+              "source_document_id": "D001",
+              "source_version": 1,
+              "canonical_document_id": "ORG:D001:1",
+              "owner_department_id": "DEPT-DRAIN",
+              "source_uri": "data/documents/D001_drain_blockage_inspection.md",
+              "content_checksum": "b8a0f22665d1c961c0c96ad861d9576b433cea490adb82f8f86f98b21aeb4b86",
+              "quote_excerpt": "# Drain blockage inspection\n\n**DOCUMENT ID:** D001\n**SOURCE KIND:** SYNTHETIC\n**ORGANIZATION:** Fictional Civicly Demo City\n**OWNER:** Drainage Operations\n**VERSION:** 1\n**EFFECTIVE FROM:** 2026-09-01\n\n## Procedure / lesson\n\nBefore recommending drain cleaning, verify upstream inlet and downstream segment; log debris depth, flow direction, source, photos and date. Do not infer obstruction from nearby litter alone.\n\nThese are invented demonstration records and do not claim to be official policies of any real municipality.\n",
+              "passage_location": "chunk:0:a456c97f-ebf1-48f0-92f5-0bdc78a7446f",
+              "chunk_sha256": "b8a0f22665d1c961c0c96ad861d9576b433cea490adb82f8f86f98b21aeb4b86",
+              "confidence_label": "SOURCE_REVIEWED_SYNTHETIC",
+              "assertion_status": "PROPOSED",
+              "retrieved_at": "2026-10-18T06:31:07.656Z",
+              "effective_from": "2026-09-01T00:00:00Z",
+              "derived_from": null,
+              "trusted_as_instructions": false
+            }
+          },
+          {
+            "procedure_id": "ORGPROC:D002:1",
+            "version": 1,
+            "rule_summary": "# Drain capacity and storm comparison\n\n**DOCUMENT ID:** D002\n**SOURCE KIND:** SYNTHETIC\n**ORGANIZATION:** Fictional Civicly Demo City\n**OWNER:** Drainage Operations\n**VERSION:** 1\n**EFFECTIVE FROM:** 2026-09-01\n\n## Procedure / lesson\n\nCompare rainfall accumulation and time period against recorded drain capacity. A clear drain can still be undersized. Exceptional rain does not establish routine blockage.\n\nThese are invented demonstration records and do not claim to be official policies of any real municipality.\n",
+            "citation": {
+              "source_document_id": "D002",
+              "source_version": 1,
+              "canonical_document_id": "ORG:D002:1",
+              "owner_department_id": "DEPT-DRAIN",
+              "source_uri": "data/documents/D002_drain_capacity_and_storm_comparison.md",
+              "content_checksum": "fc684008634e5608d1cdd381552168d552576ae9cb186168cf8b14367522b57c",
+              "quote_excerpt": "# Drain capacity and storm comparison\n\n**DOCUMENT ID:** D002\n**SOURCE KIND:** SYNTHETIC\n**ORGANIZATION:** Fictional Civicly Demo City\n**OWNER:** Drainage Operations\n**VERSION:** 1\n**EFFECTIVE FROM:** 2026-09-01\n\n## Procedure / lesson\n\nCompare rainfall accumulation and time period against recorded drain capacity. A clear drain can still be undersized. Exceptional rain does not establish routine blockage.\n\nThese are invented demonstration records and do not claim to be official policies of any real municipality.\n",
+              "passage_location": "chunk:0:311bd0e8-181c-4ef3-a8b5-fe5ad65a6584",
+              "chunk_sha256": "fc684008634e5608d1cdd381552168d552576ae9cb186168cf8b14367522b57c",
+              "confidence_label": "SOURCE_REVIEWED_SYNTHETIC",
+              "assertion_status": "PROPOSED",
+              "retrieved_at": "2026-10-18T06:31:07.659Z",
+              "effective_from": "2026-09-01T00:00:00Z",
+              "derived_from": null,
+              "trusted_as_instructions": false
+            }
+          },
+          {
+            "procedure_id": "ORGPROC:D003:1",
+            "version": 1,
+            "rule_summary": "# Pumping station safety\n\n**DOCUMENT ID:** D003\n**SOURCE KIND:** SYNTHETIC\n**ORGANIZATION:** Fictional Civicly Demo City\n**OWNER:** Drainage Operations\n**VERSION:** 1\n**EFFECTIVE FROM:** 2026-09-01\n\n## Procedure / lesson\n\nInspect pump status, backup power and downstream discharge constraints. A failed pump requires authorized maintenance and safety controls.\n\nThese are invented demonstration records and do not claim to be official policies of any real municipality.\n",
+            "citation": {
+              "source_document_id": "D003",
+              "source_version": 1,
+              "canonical_document_id": "ORG:D003:1",
+              "owner_department_id": "DEPT-DRAIN",
+              "source_uri": "data/documents/D003_pumping_station_safety.md",
+              "content_checksum": "a5f8868d23782c338843e45c2a9f051cdfc5d5e26a268aebfa75141371d79fe6",
+              "quote_excerpt": "# Pumping station safety\n\n**DOCUMENT ID:** D003\n**SOURCE KIND:** SYNTHETIC\n**ORGANIZATION:** Fictional Civicly Demo City\n**OWNER:** Drainage Operations\n**VERSION:** 1\n**EFFECTIVE FROM:** 2026-09-01\n\n## Procedure / lesson\n\nInspect pump status, backup power and downstream discharge constraints. A failed pump requires authorized maintenance and safety controls.\n\nThese are invented demonstration records and do not claim to be official policies of any real municipality.\n",
+              "passage_location": "chunk:0:09e5bcfc-3a24-4a95-8cd1-67eed3824402",
+              "chunk_sha256": "a5f8868d23782c338843e45c2a9f051cdfc5d5e26a268aebfa75141371d79fe6",
+              "confidence_label": "SOURCE_REVIEWED_SYNTHETIC",
+              "assertion_status": "PROPOSED",
+              "retrieved_at": "2026-10-18T06:31:07.661Z",
+              "effective_from": "2026-09-01T00:00:00Z",
+              "derived_from": null,
+              "trusted_as_instructions": false
+            }
+          },
+          {
+            "procedure_id": "ORGPROC:D012:1",
+            "version": 1,
+            "rule_summary": "# Follow-up waterlogging verification\n\n**DOCUMENT ID:** D012\n**SOURCE KIND:** SYNTHETIC\n**ORGANIZATION:** Fictional Civicly Demo City\n**OWNER:** Drainage Operations\n**VERSION:** 1\n**EFFECTIVE FROM:** 2026-09-01\n\n## Procedure / lesson\n\nAfter drainage work, monitor comparable rainfall conditions before verifying recurrent waterlogging as resolved.\n\nThese are invented demonstration records and do not claim to be official policies of any real municipality.\n",
+            "citation": {
+              "source_document_id": "D012",
+              "source_version": 1,
+              "canonical_document_id": "ORG:D012:1",
+              "owner_department_id": "DEPT-DRAIN",
+              "source_uri": "data/documents/D012_follow-up_waterlogging_verification.md",
+              "content_checksum": "4a3d03908b5db874dfd9b83f5fd59e2cc1d4a499ff6a17a5da55c9ae4b509b81",
+              "quote_excerpt": "# Follow-up waterlogging verification\n\n**DOCUMENT ID:** D012\n**SOURCE KIND:** SYNTHETIC\n**ORGANIZATION:** Fictional Civicly Demo City\n**OWNER:** Drainage Operations\n**VERSION:** 1\n**EFFECTIVE FROM:** 2026-09-01\n\n## Procedure / lesson\n\nAfter drainage work, monitor comparable rainfall conditions before verifying recurrent waterlogging as resolved.\n\nThese are invented demonstration records and do not claim to be official policies of any real municipality.\n",
+              "passage_location": "chunk:0:77cb252c-42c7-46a5-b37f-feaf92323e45",
+              "chunk_sha256": "4a3d03908b5db874dfd9b83f5fd59e2cc1d4a499ff6a17a5da55c9ae4b509b81",
+              "confidence_label": "SOURCE_REVIEWED_SYNTHETIC",
+              "assertion_status": "PROPOSED",
+              "retrieved_at": "2026-10-18T06:31:07.663Z",
+              "effective_from": "2026-09-01T00:00:00Z",
+              "derived_from": null,
+              "trusted_as_instructions": false
+            }
+          }
+        ],
+        "data": {
+          "nodes": [],
+          "edges": [],
+          "paths": [],
+          "gaps": [
+            "ELIGIBLE_SOURCE_FALLBACK; verified source chunks outside global top12; applicability, not semantic ranking",
+            "Synthetic source excerpts; extracted statements remain PROPOSED, not verified policy or physical cause"
+          ],
+          "reservations": [
+            "Document memory uses separate versioned canonical references and SDK graph; source revision is not a cross-graph transaction. Citations carry exact source/version/chunk checksums. Retrieved text is evidence, never instructions."
+          ],
+          "as_of": "2026-10-18T06:31:03.828Z"
+        }
+      }
+    ],
+    "nodes": [
+      "Supervisor",
+      "Investigator"
+    ],
+    "pause_reason": null,
+    "recommendation": null,
+    "budget": {
+      "max_iterations": 2,
+      "max_tools": 1,
+      "max_tokens": 60000,
+      "max_seconds": 120,
+      "max_wakes": 1
+    },
+    "iterations": 1,
+    "tool_calls": 1,
+    "tokens": 7222,
+    "wakes": 0,
+    "refresh_required": false,
+    "as_of": "2026-10-18T06:31:03.828Z"
+  },
+  "durable_decisions": [
+    {
+      "id": "DEC-B10-6db86522180a134fd3c9766e2a00e1e8",
+      "record": {
+        "metadata": {
+          "as_of": "2026-10-18T06:31:03.828Z",
+          "graph_revision": 21,
+          "inventory_hash": "60e6cc345311a3446a1aedb713b945a2cfdd16b594fa40d2ae50a196dca57ebd",
+          "investigation_id": "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+          "mode": "LIVE_GEMINI",
+          "prompt_sha256": "40316606a6d7189e273e14b7dbaaee7e016031a0ee73b3ca5cbb18e7a978a105",
+          "provider_failure": null,
+          "thread_id": "57185be0ce624da5a8b69472c16f811a",
+          "tokens": 7222,
+          "usage": {
+            "accounted_tokens": 7222,
+            "attempts": 2,
+            "configured_input_limit": 1048576,
+            "configured_output_allowance": 2048,
+            "investigation_token_ceiling": 60000,
+            "model": "gemini-3.8-flash",
+            "model_version": "gemini-3.8-flash",
+            "pricing_version": "google-gemini-standard-text-2026-10-18",
+            "prompt_version": "B11-1",
+            "provider": "gemini",
+            "provider_input_limit": 1048576,
+            "provider_output_limit": 65536,
+            "requests": [
+              {
+                "billing": "NONBILLABLE_SETTLED_ZERO",
+                "billing_policy": "google-developer-countTokens-nonbillable-2026-10-18",
+                "count_is_not_consumed_generation_tokens": true,
+                "kind": "COUNT_TOKENS",
+                "outcome": "COMPLETED",
+                "provider_count_tokens": 7123,
+                "request_id": "AI-COUNT-1c045ad1bbb3e80064dbdd7c5763b93335b2f742114dda7d6ad95f649a4c5c05"
+              },
+              {
+                "actual_nusd": 5713500,
+                "category": null,
+                "consumed_tokens": 7222,
+                "kind": "GENERATE",
+                "request_id": "AI-91a26154308346499ad6149fd494d85f54cbe31512469baa46ab97c0964785c8",
+                "reserved_nusd": 34267500,
+                "status": 200,
+                "token_plan": {
+                  "input_allowance_tokens": 7139,
+                  "local_proxy_tokens": 7799,
+                  "method": "PROVIDER_COUNT_WITH_16_FRAMING_ALLOWANCE",
+                  "output_allowance_tokens": 2048,
+                  "provider_count_origin": "PROVIDER_COUNT_API",
+                  "provider_count_tokens": 7123,
+                  "serialized_utf8_bytes": 24186,
+                  "tokenizer_version": "gemma3-proxy-3.8-v1",
+                  "total_allowance_tokens": 9187,
+                  "uncertainty": "Gemma3 is not verified exact for Gemini3.8; live mode additionally counts full request with provider. Framing/model accounting may differ; actual usage is authoritative."
+                },
+                "unknown_tokens_held": false,
+                "usage": {
+                  "candidatesTokenCount": 99,
+                  "promptTokenCount": 7123,
+                  "totalTokenCount": 7222
+                }
+              }
+            ],
+            "spending": {
+              "accounting_scope": "Managed requests since B10-O; historical/external billing unknown; not a Google hard cap",
+              "case_accounted": 5713500,
+              "case_cap": 150000000,
+              "configuration": {
+                "case_cap": 500000000,
+                "complex_cap": 1500000000,
+                "id": 1,
+                "max_concurrent": 1,
+                "project_cap": 8000000000
+              },
+              "currency": "USD",
+              "holds": [],
+              "project_accounted": 5713500,
+              "project_cap": 8000000000,
+              "project_remaining": 7994286500,
+              "sessions": [
+                {
+                  "case_id": "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+                  "heartbeat": 1792305063.802669,
+                  "owner": "63ad92eabd64474b86d8a2aaf3c1a486",
+                  "thread": "57185be0ce624da5a8b69472c16f811a"
+                }
+              ],
+              "uncertain_requests": 0,
+              "unit": "nanodollars",
+              "warnings": []
+            },
+            "total_tokens": 7222
+          }
+        },
+        "selection": {
+          "action": "READ",
+          "arguments_json": "{\"department_id\":\"DEPT-DRAIN\",\"action_type\":\"INSPECTION\"}",
+          "pause_reason": "NONE",
+          "summary": "Retrieve applicable organizational inspection procedures for Drainage Operations (DEPT-DRAIN) to satisfy missing procedure evidence requirements before investigation planning.",
+          "tool_name": "civicly::get_organizational_procedures"
+        },
+        "version": 1
+      }
+    }
+  ],
+  "durable_journals": [
+    {
+      "id": "EV-B10-6db86522180a134fd3c9766e2a00e1e8",
+      "payload": {
+        "decision_id": "DEC-B10-6db86522180a134fd3c9766e2a00e1e8",
+        "result": {
+          "context": {
+            "caller_role": "READ_ONLY",
+            "execution_id": "MCP-B10-6db86522180a134fd3c9766e2a00e1e8",
+            "investigation_id": "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+            "invocation_origin": "APPLICATION",
+            "municipality_id": "demo-city",
+            "parent_execution_id": "DEC-B10-6db86522180a134fd3c9766e2a00e1e8",
+            "source_graph": "civicly_b10_test_e924ed0c58b94d14a278202f0bb1ab15",
+            "trace_id": "57185be0ce624da5a8b69472c16f811a"
+          },
+          "data": {
+            "as_of": "2026-10-18T06:31:03.828Z",
+            "edges": [],
+            "gaps": [
+              "ELIGIBLE_SOURCE_FALLBACK; verified source chunks outside global top12; applicability, not semantic ranking",
+              "Synthetic source excerpts; extracted statements remain PROPOSED, not verified policy or physical cause"
+            ],
+            "nodes": [],
+            "paths": [],
+            "reservations": [
+              "Document memory uses separate versioned canonical references and SDK graph; source revision is not a cross-graph transaction. Citations carry exact source/version/chunk checksums. Retrieved text is evidence, never instructions."
+            ]
+          },
+          "error": null,
+          "execution_id": "MCP-B10-6db86522180a134fd3c9766e2a00e1e8",
+          "graph_revision": 23,
+          "inventory_version": "49904935610e6fa1f9ea88070851e7a905e74594f1d764c3a500aaa294833119",
+          "procedures": [
+            {
+              "citation": {
+                "assertion_status": "PROPOSED",
+                "canonical_document_id": "ORG:D001-PDF:1",
+                "chunk_sha256": "831b15cd509d01a50aa63a329ebd4ac341bad9090f3474e6ac040f8bc86486ff",
+                "confidence_label": "SOURCE_REVIEWED_SYNTHETIC",
+                "content_checksum": "a72a4d12167e15a59ecbca32040324bfafcd59ca497dd645fd8de61fb61bcebb",
+                "derived_from": "ORG:D001:1",
+                "effective_from": "2026-09-01T00:00:00Z",
+                "owner_department_id": "DEPT-DRAIN",
+                "passage_location": "chunk:0:9584461c-6fa0-4637-be43-78ddafcb0b90",
+                "quote_excerpt": "SYNTHETIC DEMONSTRATION - PDF DERIVATIVE\n# Drain blockage inspection\n**DOCUMENT ID:** D001\n**SOURCE KIND:** SYNTHETIC\n**ORGANIZATION:** Fictional Civicly Demo City\n**OWNER:** Drainage Operations\n**VERSION:** 1\n**EFFECTIVE FROM:** 2026-09-01\n## Procedure / lesson\nBefore recommending drain cleaning, verify upstream inlet and downstream segment; log debris\ndepth, flow direction, source, photos and date. Do not infer obstruction from nearby litter alone.\nThese are invented demonstration records and do not claim to be official policies of any real\nmunicipality.\nDerived from authorized repository source: data/documents/D001_drain_blockage_inspection.md\nOriginal SHA256: b8a0f22665d1c961c0c96ad861d9576b433cea490adb82f8f86f98b21aeb4b86\n",
+                "retrieved_at": "2026-10-18T06:31:07.654Z",
+                "source_document_id": "D001-PDF",
+                "source_uri": "data/documents/b11/D001_v1_derivative.pdf",
+                "source_version": 1,
+                "trusted_as_instructions": false
+              },
+              "procedure_id": "ORGPROC:D001-PDF:1",
+              "rule_summary": "SYNTHETIC DEMONSTRATION - PDF DERIVATIVE\n# Drain blockage inspection\n**DOCUMENT ID:** D001\n**SOURCE KIND:** SYNTHETIC\n**ORGANIZATION:** Fictional Civicly Demo City\n**OWNER:** Drainage Operations\n**VERSION:** 1\n**EFFECTIVE FROM:** 2026-09-01\n## Procedure / lesson\nBefore recommending drain cleaning, verify upstream inlet and downstream segment; log debris\ndepth, flow direction, source, photos and date. Do not infer obstruction from nearby litter alone.\nThese are invented demonstration records and do not claim to be official policies of any real\nmunicipality.\nDerived from authorized repository source: data/documents/D001_drain_blockage_inspection.md\nOriginal SHA256: b8a0f22665d1c961c0c96ad861d9576b433cea490adb82f8f86f98b21aeb4b86\n",
+              "version": 1
+            },
+            {
+              "citation": {
+                "assertion_status": "PROPOSED",
+                "canonical_document_id": "ORG:D001:1",
+                "chunk_sha256": "b8a0f22665d1c961c0c96ad861d9576b433cea490adb82f8f86f98b21aeb4b86",
+                "confidence_label": "SOURCE_REVIEWED_SYNTHETIC",
+                "content_checksum": "b8a0f22665d1c961c0c96ad861d9576b433cea490adb82f8f86f98b21aeb4b86",
+                "derived_from": null,
+                "effective_from": "2026-09-01T00:00:00Z",
+                "owner_department_id": "DEPT-DRAIN",
+                "passage_location": "chunk:0:a456c97f-ebf1-48f0-92f5-0bdc78a7446f",
+                "quote_excerpt": "# Drain blockage inspection\n\n**DOCUMENT ID:** D001\n**SOURCE KIND:** SYNTHETIC\n**ORGANIZATION:** Fictional Civicly Demo City\n**OWNER:** Drainage Operations\n**VERSION:** 1\n**EFFECTIVE FROM:** 2026-09-01\n\n## Procedure / lesson\n\nBefore recommending drain cleaning, verify upstream inlet and downstream segment; log debris depth, flow direction, source, photos and date. Do not infer obstruction from nearby litter alone.\n\nThese are invented demonstration records and do not claim to be official policies of any real municipality.\n",
+                "retrieved_at": "2026-10-18T06:31:07.656Z",
+                "source_document_id": "D001",
+                "source_uri": "data/documents/D001_drain_blockage_inspection.md",
+                "source_version": 1,
+                "trusted_as_instructions": false
+              },
+              "procedure_id": "ORGPROC:D001:1",
+              "rule_summary": "# Drain blockage inspection\n\n**DOCUMENT ID:** D001\n**SOURCE KIND:** SYNTHETIC\n**ORGANIZATION:** Fictional Civicly Demo City\n**OWNER:** Drainage Operations\n**VERSION:** 1\n**EFFECTIVE FROM:** 2026-09-01\n\n## Procedure / lesson\n\nBefore recommending drain cleaning, verify upstream inlet and downstream segment; log debris depth, flow direction, source, photos and date. Do not infer obstruction from nearby litter alone.\n\nThese are invented demonstration records and do not claim to be official policies of any real municipality.\n",
+              "version": 1
+            },
+            {
+              "citation": {
+                "assertion_status": "PROPOSED",
+                "canonical_document_id": "ORG:D002:1",
+                "chunk_sha256": "fc684008634e5608d1cdd381552168d552576ae9cb186168cf8b14367522b57c",
+                "confidence_label": "SOURCE_REVIEWED_SYNTHETIC",
+                "content_checksum": "fc684008634e5608d1cdd381552168d552576ae9cb186168cf8b14367522b57c",
+                "derived_from": null,
+                "effective_from": "2026-09-01T00:00:00Z",
+                "owner_department_id": "DEPT-DRAIN",
+                "passage_location": "chunk:0:311bd0e8-181c-4ef3-a8b5-fe5ad65a6584",
+                "quote_excerpt": "# Drain capacity and storm comparison\n\n**DOCUMENT ID:** D002\n**SOURCE KIND:** SYNTHETIC\n**ORGANIZATION:** Fictional Civicly Demo City\n**OWNER:** Drainage Operations\n**VERSION:** 1\n**EFFECTIVE FROM:** 2026-09-01\n\n## Procedure / lesson\n\nCompare rainfall accumulation and time period against recorded drain capacity. A clear drain can still be undersized. Exceptional rain does not establish routine blockage.\n\nThese are invented demonstration records and do not claim to be official policies of any real municipality.\n",
+                "retrieved_at": "2026-10-18T06:31:07.659Z",
+                "source_document_id": "D002",
+                "source_uri": "data/documents/D002_drain_capacity_and_storm_comparison.md",
+                "source_version": 1,
+                "trusted_as_instructions": false
+              },
+              "procedure_id": "ORGPROC:D002:1",
+              "rule_summary": "# Drain capacity and storm comparison\n\n**DOCUMENT ID:** D002\n**SOURCE KIND:** SYNTHETIC\n**ORGANIZATION:** Fictional Civicly Demo City\n**OWNER:** Drainage Operations\n**VERSION:** 1\n**EFFECTIVE FROM:** 2026-09-01\n\n## Procedure / lesson\n\nCompare rainfall accumulation and time period against recorded drain capacity. A clear drain can still be undersized. Exceptional rain does not establish routine blockage.\n\nThese are invented demonstration records and do not claim to be official policies of any real municipality.\n",
+              "version": 1
+            },
+            {
+              "citation": {
+                "assertion_status": "PROPOSED",
+                "canonical_document_id": "ORG:D003:1",
+                "chunk_sha256": "a5f8868d23782c338843e45c2a9f051cdfc5d5e26a268aebfa75141371d79fe6",
+                "confidence_label": "SOURCE_REVIEWED_SYNTHETIC",
+                "content_checksum": "a5f8868d23782c338843e45c2a9f051cdfc5d5e26a268aebfa75141371d79fe6",
+                "derived_from": null,
+                "effective_from": "2026-09-01T00:00:00Z",
+                "owner_department_id": "DEPT-DRAIN",
+                "passage_location": "chunk:0:09e5bcfc-3a24-4a95-8cd1-67eed3824402",
+                "quote_excerpt": "# Pumping station safety\n\n**DOCUMENT ID:** D003\n**SOURCE KIND:** SYNTHETIC\n**ORGANIZATION:** Fictional Civicly Demo City\n**OWNER:** Drainage Operations\n**VERSION:** 1\n**EFFECTIVE FROM:** 2026-09-01\n\n## Procedure / lesson\n\nInspect pump status, backup power and downstream discharge constraints. A failed pump requires authorized maintenance and safety controls.\n\nThese are invented demonstration records and do not claim to be official policies of any real municipality.\n",
+                "retrieved_at": "2026-10-18T06:31:07.661Z",
+                "source_document_id": "D003",
+                "source_uri": "data/documents/D003_pumping_station_safety.md",
+                "source_version": 1,
+                "trusted_as_instructions": false
+              },
+              "procedure_id": "ORGPROC:D003:1",
+              "rule_summary": "# Pumping station safety\n\n**DOCUMENT ID:** D003\n**SOURCE KIND:** SYNTHETIC\n**ORGANIZATION:** Fictional Civicly Demo City\n**OWNER:** Drainage Operations\n**VERSION:** 1\n**EFFECTIVE FROM:** 2026-09-01\n\n## Procedure / lesson\n\nInspect pump status, backup power and downstream discharge constraints. A failed pump requires authorized maintenance and safety controls.\n\nThese are invented demonstration records and do not claim to be official policies of any real municipality.\n",
+              "version": 1
+            },
+            {
+              "citation": {
+                "assertion_status": "PROPOSED",
+                "canonical_document_id": "ORG:D012:1",
+                "chunk_sha256": "4a3d03908b5db874dfd9b83f5fd59e2cc1d4a499ff6a17a5da55c9ae4b509b81",
+                "confidence_label": "SOURCE_REVIEWED_SYNTHETIC",
+                "content_checksum": "4a3d03908b5db874dfd9b83f5fd59e2cc1d4a499ff6a17a5da55c9ae4b509b81",
+                "derived_from": null,
+                "effective_from": "2026-09-01T00:00:00Z",
+                "owner_department_id": "DEPT-DRAIN",
+                "passage_location": "chunk:0:77cb252c-42c7-46a5-b37f-feaf92323e45",
+                "quote_excerpt": "# Follow-up waterlogging verification\n\n**DOCUMENT ID:** D012\n**SOURCE KIND:** SYNTHETIC\n**ORGANIZATION:** Fictional Civicly Demo City\n**OWNER:** Drainage Operations\n**VERSION:** 1\n**EFFECTIVE FROM:** 2026-09-01\n\n## Procedure / lesson\n\nAfter drainage work, monitor comparable rainfall conditions before verifying recurrent waterlogging as resolved.\n\nThese are invented demonstration records and do not claim to be official policies of any real municipality.\n",
+                "retrieved_at": "2026-10-18T06:31:07.663Z",
+                "source_document_id": "D012",
+                "source_uri": "data/documents/D012_follow-up_waterlogging_verification.md",
+                "source_version": 1,
+                "trusted_as_instructions": false
+              },
+              "procedure_id": "ORGPROC:D012:1",
+              "rule_summary": "# Follow-up waterlogging verification\n\n**DOCUMENT ID:** D012\n**SOURCE KIND:** SYNTHETIC\n**ORGANIZATION:** Fictional Civicly Demo City\n**OWNER:** Drainage Operations\n**VERSION:** 1\n**EFFECTIVE FROM:** 2026-09-01\n\n## Procedure / lesson\n\nAfter drainage work, monitor comparable rainfall conditions before verifying recurrent waterlogging as resolved.\n\nThese are invented demonstration records and do not claim to be official policies of any real municipality.\n",
+              "version": 1
+            }
+          ],
+          "schema_version": 3,
+          "search_limited": true,
+          "server_id": "civicly-domain",
+          "simulation_mode": true,
+          "source_evidence_ids": [],
+          "status": "PARTIAL",
+          "tool_name": "get_organizational_procedures",
+          "trace_id": "57185be0ce624da5a8b69472c16f811a",
+          "truncated": false
+        },
+        "selection_sha256": "a6ba5a9f2d2bfe7ebda566254874817c977c9096c1d20181de08db47a7137a67",
+        "status": "COMMITTED",
+        "version": 1
+      }
+    }
+  ],
+  "durable_traces": [
+    {
+      "context": {
+        "trace_id": "57185be0ce624da5a8b69472c16f811a",
+        "execution_id": "MCP-B10-6db86522180a134fd3c9766e2a00e1e8",
+        "parent_execution_id": "DEC-B10-6db86522180a134fd3c9766e2a00e1e8",
+        "investigation_id": "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+        "municipality_id": "demo-city",
+        "source_graph": "civicly_b10_test_e924ed0c58b94d14a278202f0bb1ab15",
+        "caller_role": "READ_ONLY",
+        "invocation_origin": "APPLICATION"
+      },
+      "phase": "SERVER",
+      "server_id": "civicly-domain",
+      "server_version": "1.0.0",
+      "tool_name": "get_organizational_procedures",
+      "schema_version": 3,
+      "inventory_version": "49904935610e6fa1f9ea88070851e7a905e74594f1d764c3a500aaa294833119",
+      "schema_sha256": "efdd71c6f868aa206cc684aaafde56aac84008cb0474fffb6ab1e47d6df09552",
+      "arguments_sha256": "145b4c806ca62dd48d0bf351c77ec473954a3e6ab29f168f08cf051deaaaa478",
+      "arguments_summary": "values withheld",
+      "output_sha256": "55c104dd0cc9d49ad58b139d36f87d1465776348caffc02463025bdca43d5d7d",
+      "validated_output": true,
+      "started_at": "2026-10-18T06:31:07.534Z",
+      "finished_at": "2026-10-18T06:31:07.671Z",
+      "latency_ms": 137.47408299241215,
+      "status": "PARTIAL",
+      "error_code": null,
+      "protocol_version": null,
+      "graph_revision": 23,
+      "source_evidence_ids": [],
+      "graph_path_ids": [],
+      "result_summary": {
+        "nodes": 0,
+        "edges": 0,
+        "truncated": false
+      },
+      "simulation_mode": true,
+      "rationale_summary": null
+    },
+    {
+      "context": {
+        "trace_id": "57185be0ce624da5a8b69472c16f811a",
+        "execution_id": "aa34fccdf8eb4210b473a5e74f1e50a0",
+        "parent_execution_id": "MCP-B10-6db86522180a134fd3c9766e2a00e1e8",
+        "investigation_id": "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+        "municipality_id": "demo-city",
+        "source_graph": "civicly_b10_test_e924ed0c58b94d14a278202f0bb1ab15",
+        "caller_role": "READ_ONLY",
+        "invocation_origin": "APPLICATION"
+      },
+      "phase": "BROKER",
+      "server_id": "civicly-domain",
+      "server_version": "1.0.0",
+      "tool_name": "get_organizational_procedures",
+      "schema_version": 3,
+      "inventory_version": "49904935610e6fa1f9ea88070851e7a905e74594f1d764c3a500aaa294833119",
+      "schema_sha256": "6c459b220ec454b43fc4952d0925f47265d48c3bb8117a2834b263cee6149a9a",
+      "arguments_sha256": "607d80278e2e4af355baa33f6ddc9bb78abb483952018609d0d5242dcc54ef55",
+      "arguments_summary": "values withheld",
+      "output_sha256": "55c104dd0cc9d49ad58b139d36f87d1465776348caffc02463025bdca43d5d7d",
+      "validated_output": true,
+      "started_at": "2026-10-18T06:31:07.519Z",
+      "finished_at": "2026-10-18T06:31:07.777Z",
+      "latency_ms": 258.3449170924723,
+      "status": "SUCCESS",
+      "error_code": null,
+      "protocol_version": "2025-11-25",
+      "graph_revision": 23,
+      "source_evidence_ids": [],
+      "graph_path_ids": [],
+      "result_summary": {},
+      "simulation_mode": true,
+      "rationale_summary": "Retrieve applicable organizational inspection procedures for Drainage Operations (DEPT-DRAIN) to satisfy missing procedure evidence requirements before investigation planning."
+    }
+  ],
+  "selected": {
+    "action": "READ",
+    "arguments_json": "{\"department_id\":\"DEPT-DRAIN\",\"action_type\":\"INSPECTION\"}",
+    "pause_reason": "NONE",
+    "summary": "Retrieve applicable organizational inspection procedures for Drainage Operations (DEPT-DRAIN) to satisfy missing procedure evidence requirements before investigation planning.",
+    "tool_name": "civicly::get_organizational_procedures"
+  },
+  "live_organizational_citations": [
+    {
+      "assertion_status": "PROPOSED",
+      "canonical_document_id": "ORG:D001-PDF:1",
+      "chunk_sha256": "831b15cd509d01a50aa63a329ebd4ac341bad9090f3474e6ac040f8bc86486ff",
+      "confidence_label": "SOURCE_REVIEWED_SYNTHETIC",
+      "content_checksum": "a72a4d12167e15a59ecbca32040324bfafcd59ca497dd645fd8de61fb61bcebb",
+      "derived_from": "ORG:D001:1",
+      "effective_from": "2026-09-01T00:00:00Z",
+      "owner_department_id": "DEPT-DRAIN",
+      "passage_location": "chunk:0:9584461c-6fa0-4637-be43-78ddafcb0b90",
+      "quote_excerpt": "SYNTHETIC DEMONSTRATION - PDF DERIVATIVE\n# Drain blockage inspection\n**DOCUMENT ID:** D001\n**SOURCE KIND:** SYNTHETIC\n**ORGANIZATION:** Fictional Civicly Demo City\n**OWNER:** Drainage Operations\n**VERSION:** 1\n**EFFECTIVE FROM:** 2026-09-01\n## Procedure / lesson\nBefore recommending drain cleaning, verify upstream inlet and downstream segment; log debris\ndepth, flow direction, source, photos and date. Do not infer obstruction from nearby litter alone.\nThese are invented demonstration records and do not claim to be official policies of any real\nmunicipality.\nDerived from authorized repository source: data/documents/D001_drain_blockage_inspection.md\nOriginal SHA256: b8a0f22665d1c961c0c96ad861d9576b433cea490adb82f8f86f98b21aeb4b86\n",
+      "retrieved_at": "2026-10-18T06:31:07.654Z",
+      "source_document_id": "D001-PDF",
+      "source_uri": "data/documents/b11/D001_v1_derivative.pdf",
+      "source_version": 1,
+      "trusted_as_instructions": false
+    },
+    {
+      "assertion_status": "PROPOSED",
+      "canonical_document_id": "ORG:D001:1",
+      "chunk_sha256": "b8a0f22665d1c961c0c96ad861d9576b433cea490adb82f8f86f98b21aeb4b86",
+      "confidence_label": "SOURCE_REVIEWED_SYNTHETIC",
+      "content_checksum": "b8a0f22665d1c961c0c96ad861d9576b433cea490adb82f8f86f98b21aeb4b86",
+      "derived_from": null,
+      "effective_from": "2026-09-01T00:00:00Z",
+      "owner_department_id": "DEPT-DRAIN",
+      "passage_location": "chunk:0:a456c97f-ebf1-48f0-92f5-0bdc78a7446f",
+      "quote_excerpt": "# Drain blockage inspection\n\n**DOCUMENT ID:** D001\n**SOURCE KIND:** SYNTHETIC\n**ORGANIZATION:** Fictional Civicly Demo City\n**OWNER:** Drainage Operations\n**VERSION:** 1\n**EFFECTIVE FROM:** 2026-09-01\n\n## Procedure / lesson\n\nBefore recommending drain cleaning, verify upstream inlet and downstream segment; log debris depth, flow direction, source, photos and date. Do not infer obstruction from nearby litter alone.\n\nThese are invented demonstration records and do not claim to be official policies of any real municipality.\n",
+      "retrieved_at": "2026-10-18T06:31:07.656Z",
+      "source_document_id": "D001",
+      "source_uri": "data/documents/D001_drain_blockage_inspection.md",
+      "source_version": 1,
+      "trusted_as_instructions": false
+    },
+    {
+      "assertion_status": "PROPOSED",
+      "canonical_document_id": "ORG:D002:1",
+      "chunk_sha256": "fc684008634e5608d1cdd381552168d552576ae9cb186168cf8b14367522b57c",
+      "confidence_label": "SOURCE_REVIEWED_SYNTHETIC",
+      "content_checksum": "fc684008634e5608d1cdd381552168d552576ae9cb186168cf8b14367522b57c",
+      "derived_from": null,
+      "effective_from": "2026-09-01T00:00:00Z",
+      "owner_department_id": "DEPT-DRAIN",
+      "passage_location": "chunk:0:311bd0e8-181c-4ef3-a8b5-fe5ad65a6584",
+      "quote_excerpt": "# Drain capacity and storm comparison\n\n**DOCUMENT ID:** D002\n**SOURCE KIND:** SYNTHETIC\n**ORGANIZATION:** Fictional Civicly Demo City\n**OWNER:** Drainage Operations\n**VERSION:** 1\n**EFFECTIVE FROM:** 2026-09-01\n\n## Procedure / lesson\n\nCompare rainfall accumulation and time period against recorded drain capacity. A clear drain can still be undersized. Exceptional rain does not establish routine blockage.\n\nThese are invented demonstration records and do not claim to be official policies of any real municipality.\n",
+      "retrieved_at": "2026-10-18T06:31:07.659Z",
+      "source_document_id": "D002",
+      "source_uri": "data/documents/D002_drain_capacity_and_storm_comparison.md",
+      "source_version": 1,
+      "trusted_as_instructions": false
+    },
+    {
+      "assertion_status": "PROPOSED",
+      "canonical_document_id": "ORG:D003:1",
+      "chunk_sha256": "a5f8868d23782c338843e45c2a9f051cdfc5d5e26a268aebfa75141371d79fe6",
+      "confidence_label": "SOURCE_REVIEWED_SYNTHETIC",
+      "content_checksum": "a5f8868d23782c338843e45c2a9f051cdfc5d5e26a268aebfa75141371d79fe6",
+      "derived_from": null,
+      "effective_from": "2026-09-01T00:00:00Z",
+      "owner_department_id": "DEPT-DRAIN",
+      "passage_location": "chunk:0:09e5bcfc-3a24-4a95-8cd1-67eed3824402",
+      "quote_excerpt": "# Pumping station safety\n\n**DOCUMENT ID:** D003\n**SOURCE KIND:** SYNTHETIC\n**ORGANIZATION:** Fictional Civicly Demo City\n**OWNER:** Drainage Operations\n**VERSION:** 1\n**EFFECTIVE FROM:** 2026-09-01\n\n## Procedure / lesson\n\nInspect pump status, backup power and downstream discharge constraints. A failed pump requires authorized maintenance and safety controls.\n\nThese are invented demonstration records and do not claim to be official policies of any real municipality.\n",
+      "retrieved_at": "2026-10-18T06:31:07.661Z",
+      "source_document_id": "D003",
+      "source_uri": "data/documents/D003_pumping_station_safety.md",
+      "source_version": 1,
+      "trusted_as_instructions": false
+    },
+    {
+      "assertion_status": "PROPOSED",
+      "canonical_document_id": "ORG:D012:1",
+      "chunk_sha256": "4a3d03908b5db874dfd9b83f5fd59e2cc1d4a499ff6a17a5da55c9ae4b509b81",
+      "confidence_label": "SOURCE_REVIEWED_SYNTHETIC",
+      "content_checksum": "4a3d03908b5db874dfd9b83f5fd59e2cc1d4a499ff6a17a5da55c9ae4b509b81",
+      "derived_from": null,
+      "effective_from": "2026-09-01T00:00:00Z",
+      "owner_department_id": "DEPT-DRAIN",
+      "passage_location": "chunk:0:77cb252c-42c7-46a5-b37f-feaf92323e45",
+      "quote_excerpt": "# Follow-up waterlogging verification\n\n**DOCUMENT ID:** D012\n**SOURCE KIND:** SYNTHETIC\n**ORGANIZATION:** Fictional Civicly Demo City\n**OWNER:** Drainage Operations\n**VERSION:** 1\n**EFFECTIVE FROM:** 2026-09-01\n\n## Procedure / lesson\n\nAfter drainage work, monitor comparable rainfall conditions before verifying recurrent waterlogging as resolved.\n\nThese are invented demonstration records and do not claim to be official policies of any real municipality.\n",
+      "retrieved_at": "2026-10-18T06:31:07.663Z",
+      "source_document_id": "D012",
+      "source_uri": "data/documents/D012_follow-up_waterlogging_verification.md",
+      "source_version": 1,
+      "trusted_as_instructions": false
+    }
+  ],
+  "read_executed_persisted": true,
+  "validated_evidence_present": true,
+  "accounting": {
+    "requests": [
+      {
+        "id": "AI-COUNT-1c045ad1bbb3e80064dbdd7c5763b93335b2f742114dda7d6ad95f649a4c5c05",
+        "case_id": "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+        "thread": "57185be0ce624da5a8b69472c16f811a",
+        "model": "gemini-3.8-flash",
+        "milestone": "B11-LIVE-SMOKE-R",
+        "pricing": "google-gemini-standard-text-2026-10-18",
+        "reserved": 18907500,
+        "charged": 0,
+        "status": "SETTLED",
+        "usage": "{\"billing_policy\": \"google-developer-countTokens-nonbillable-2026-10-18\", \"count_is_not_generation_usage\": true, \"operation\": \"COUNT_TOKENS\", \"outcome\": \"COMPLETED\", \"provider_count_tokens\": 7123}",
+        "error": "COUNT_NONBILLABLE_COMPLETED",
+        "created": 1792305063.9535549
+      },
+      {
+        "id": "AI-91a26154308346499ad6149fd494d85f54cbe31512469baa46ab97c0964785c8",
+        "case_id": "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+        "thread": "57185be0ce624da5a8b69472c16f811a",
+        "model": "gemini-3.8-flash",
+        "milestone": "B11-LIVE-SMOKE-R",
+        "pricing": "google-gemini-standard-text-2026-10-18",
+        "reserved": 34267500,
+        "charged": 5713500,
+        "status": "SETTLED",
+        "usage": "{\"candidatesTokenCount\": 99, \"promptTokenCount\": 7123, \"totalTokenCount\": 7222}",
+        "error": null,
+        "created": 1792305064.480483
+      }
+    ],
+    "known_nusd": 5713500,
+    "held_nusd": 0,
+    "exposure_nusd": 5713500,
+    "project_config": {
+      "id": 1,
+      "project_cap": 8000000000,
+      "case_cap": 500000000,
+      "max_concurrent": 1,
+      "complex_cap": 1500000000
+    },
+    "active_sessions": 0,
+    "open_holds": 0,
+    "generation_attempts": 1,
+    "count_attempts": 1
+  },
+  "limits_observed": true,
+  "b10_full_acceptance": "OPEN/PARTIAL",
+  "no_resume": true
+}

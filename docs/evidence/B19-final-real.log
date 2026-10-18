@@ -1,0 +1,115 @@
+...F
+=================================== FAILURES ===================================
+______ test_representative_real_cli_mcp_saver_events_and_hidden_isolation ______
+  + Exception Group Traceback (most recent call last):
+  |   File "/Users/vikashkumar/Desktop/Civicly/backend/tests/integration/test_demo_runtime.py", line 199, in test_representative_real_cli_mcp_saver_events_and_hidden_isolation
+  |     asyncio.run(run())
+  |   File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 194, in run
+  |     return runner.run(main)
+  |            ^^^^^^^^^^^^^^^^
+  |   File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 118, in run
+  |     return self._loop.run_until_complete(task)
+  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |   File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/base_events.py", line 684, in run_until_complete
+  |     return future.result()
+  |            ^^^^^^^^^^^^^^^
+  |   File "/Users/vikashkumar/Desktop/Civicly/backend/tests/integration/test_demo_runtime.py", line 171, in run
+  |     before=await reads('baseline')
+  |            ^^^^^^^^^^^^^^^^^^^^^^^
+  |   File "/Users/vikashkumar/Desktop/Civicly/backend/tests/integration/test_demo_runtime.py", line 158, in reads
+  |     async with brokers(p,path,timeout=10,memory_path=mp) as tools:
+  |   File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py", line 231, in __aexit__
+  |     await self.gen.athrow(value)
+  |   File "/Users/vikashkumar/Desktop/Civicly/backend/app/agents/mcp.py", line 22, in brokers
+  |     async with open_broker(traces,timeout=min(timeout,10),max_calls=64,source_graph=profile.graph,credentials=creds) as official:
+  |   File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py", line 231, in __aexit__
+  |     await self.gen.athrow(value)
+  |   File "/Users/vikashkumar/Desktop/Civicly/backend/app/mcp/broker.py", line 252, in open_broker
+  |     async with Client(params, mode='legacy', read_timeout_seconds=timeout,
+  |   File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/mcp/client/client.py", line 480, in __aexit__
+  |     await self._exit_stack.__aexit__(exc_type, exc_val, exc_tb)
+  |   File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py", line 754, in __aexit__
+  |     raise exc_details[1]
+  |   File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py", line 737, in __aexit__
+  |     cb_suppress = await cb(*exc_details)
+  |                   ^^^^^^^^^^^^^^^^^^^^^^
+  |   File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py", line 231, in __aexit__
+  |     await self.gen.athrow(value)
+  |   File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/mcp/client/stdio.py", line 201, in stdio_client
+  |     async with anyio.create_task_group() as tg:
+  |   File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 847, in __aexit__
+  |     raise BaseExceptionGroup(
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Exception Group Traceback (most recent call last):
+    |   File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/mcp/client/stdio.py", line 205, in stdio_client
+    |     yield read_stream, write_stream
+    |   File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py", line 737, in __aexit__
+    |     cb_suppress = await cb(*exc_details)
+    |                   ^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/mcp/client/session.py", line 514, in __aexit__
+    |     result = await self._task_group.__aexit__(exc_type, exc_val, exc_tb)
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 847, in __aexit__
+    |     raise BaseExceptionGroup(
+    | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+    +-+---------------- 1 ----------------
+      | Exception Group Traceback (most recent call last):
+      |   File "/Users/vikashkumar/Desktop/Civicly/backend/app/mcp/broker.py", line 261, in open_broker
+      |     yield broker
+      |   File "/Users/vikashkumar/Desktop/Civicly/backend/app/agents/mcp.py", line 23, in brokers
+      |     async with Client(params,mode='legacy',read_timeout_seconds=timeout) as client:
+      |   File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/mcp/client/client.py", line 480, in __aexit__
+      |     await self._exit_stack.__aexit__(exc_type, exc_val, exc_tb)
+      |   File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py", line 754, in __aexit__
+      |     raise exc_details[1]
+      |   File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py", line 737, in __aexit__
+      |     cb_suppress = await cb(*exc_details)
+      |                   ^^^^^^^^^^^^^^^^^^^^^^
+      |   File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py", line 231, in __aexit__
+      |     await self.gen.athrow(value)
+      |   File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/mcp/client/stdio.py", line 201, in stdio_client
+      |     async with anyio.create_task_group() as tg:
+      |   File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 847, in __aexit__
+      |     raise BaseExceptionGroup(
+      | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+      +-+---------------- 1 ----------------
+        | Exception Group Traceback (most recent call last):
+        |   File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/mcp/client/stdio.py", line 205, in stdio_client
+        |     yield read_stream, write_stream
+        |   File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py", line 737, in __aexit__
+        |     cb_suppress = await cb(*exc_details)
+        |                   ^^^^^^^^^^^^^^^^^^^^^^
+        |   File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/mcp/client/session.py", line 514, in __aexit__
+        |     result = await self._task_group.__aexit__(exc_type, exc_val, exc_tb)
+        |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        |   File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 847, in __aexit__
+        |     raise BaseExceptionGroup(
+        | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+        +-+---------------- 1 ----------------
+          | Traceback (most recent call last):
+          |   File "/Users/vikashkumar/Desktop/Civicly/backend/app/agents/mcp.py", line 26, in brokers
+          |     yield Tools(official,domain,store,traces,profile.graph)
+          |   File "/Users/vikashkumar/Desktop/Civicly/backend/tests/integration/test_demo_runtime.py", line 164, in reads
+          |     out=await tools.call(name,args,ctx.model_copy(update={'execution_id':uuid4().hex}),'B19 operator boundary probe; not model-selected',cutoff=AT);outputs.append(out)
+          |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+          |   File "/Users/vikashkumar/Desktop/Civicly/backend/app/agents/mcp.py", line 59, in call
+          |     result=await self._actual_call(name,args,ctx,summary,cutoff=cutoff)
+          |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+          |   File "/Users/vikashkumar/Desktop/Civicly/backend/app/agents/mcp.py", line 74, in _actual_call
+          |     return await self.domain.call(name,args,invocation=ctx,rationale_summary=summary)
+          |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+          |   File "/Users/vikashkumar/Desktop/Civicly/backend/app/mcp/civicly/broker.py", line 95, in call
+          |     raise BrokerError(code) from None
+          | app.mcp.broker.BrokerError: INVALID_ARGUMENTS
+          +------------------------------------
+=============================== warnings summary ===============================
+backend/.venv/lib/python3.12/site-packages/graphrag_sdk/core/models.py:19
+  /Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/graphrag_sdk/core/models.py:19: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.14/migration/
+    class DataModel(BaseModel):
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED backend/tests/integration/test_demo_runtime.py::test_representative_real_cli_mcp_saver_events_and_hidden_isolation
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 3 passed, 22 deselected, 1 warning in 41.07s

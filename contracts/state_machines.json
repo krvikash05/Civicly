@@ -250,7 +250,9 @@
     "case_completion": "Cannot complete solely on WorkOrder COMPLETED; requires verification policy outcome and no open blocking tasks.",
     "hypothesis_verified": "Requires attributable physical/operational evidence and human-reviewed or explicit rule-based causality criterion.",
     "reopen": "Retain all old assessments, tasks, findings and outcomes.",
-    "work_order_creation": "Must validate approval bound to exact immutable plan id/version/hash, task and actor before creating AUTHORIZED WorkOrder; retry idempotent."
+    "work_order_creation": "Must validate approval bound to exact immutable plan id/version/hash, task and actor before creating AUTHORIZED WorkOrder; retry idempotent.",
+    "b14_execution": "Authenticated exact assignee, current approved binding/CAS, typed gates/dependencies. Failed attempt is WorkOrder BLOCKED + ActionTask FAILED, never invented WorkOrder FAILED.",
+    "b14_completion": "Completion needs reviewed attributable result report; plan enters MONITORING only once all tasks complete. Independent B14-1 policy plus all-task follow-ups and no contradictory addressed assessment required for case closure."
   },
   "municipality_scope": {
     "field": "municipality_id",

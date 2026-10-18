@@ -255,10 +255,12 @@ class GraphRepository:
                          {**statement.params, "id": id, "scope": self.registry.scope}, "n")
         return self.get_node(id)
 
-    def _check_evidence(self, props, *, inspection=False):
+    def _check_evidence(self, props, *, inspection=False, planned=None):
         if "source_evidence_id" not in props:
             return
-        evidence = self.get_node(props["source_evidence_id"], "Evidence")
+        evidence = planned if planned is not None else self.get_node(props["source_evidence_id"], "Evidence")
+        if evidence.kind != "Evidence" or evidence.id != props["source_evidence_id"]:
+            raise PreconditionFailed("Evidence source identity mismatch")
         if props.get("association_status") == "VERIFIED" or inspection:
             ep = evidence.properties
             if ep["reliability"] != "VERIFIED" or ep["source_kind"] == "AGENT" or not ep.get("observed_at") or not ep.get("source_record_id"):
@@ -291,12 +293,20 @@ class GraphRepository:
                     raise Conflict("Overlapping route schedules for the same service")
             group.append(active)
 
-    def _relationship_policies(self, kind, source, target, props, *, exclude=None, inspected_cycle_evidence_id=None):
+    def _relationship_policies(self, kind, source, target, props, *, exclude=None, inspected_cycle_evidence_id=None, planned_evidence=None):
         self.registry.validate_edge(kind, source.kind, source.properties, target.kind, target.properties, props)
-        self._check_evidence(props)
+        if planned_evidence is not None:
+            if kind != "MAINTAINED_BY":
+                raise PreconditionFailed("Staged review source is restricted to responsibility")
+            from app.services.responsibility.service import validate_review_evidence
+            validate_review_evidence(self, planned_evidence.properties)
+        self._check_evidence(props, planned=planned_evidence)
         edges = self._edges(kind, exclude=exclude)
         span = interval(props)
         for edge in edges:
+            # Unaccepted inventory claims do not occupy verified responsibility.
+            if kind == "MAINTAINED_BY" and ((props.get("association_status") == "VERIFIED") != (edge.properties.get("association_status") == "VERIFIED")):
+                continue
             if edge.source == source.id and intersection(span, interval(edge.properties)) is not None:
                 if edge.target == target.id or kind in self.policy["singleton_outgoing"]:
                     raise Conflict("Duplicate or cardinality-conflicting active relationship")

@@ -1,0 +1,611 @@
+--- a/backend/app/demo_host/runtime.py
++++ b/backend/app/demo_host/runtime.py
+@@ -50,7 +50,10 @@
+   if saved:
+    state=InvestigationState.model_validate(saved.checkpoint['channel_values']['data'])
+    if (state.graph,state.investigation_id,state.thread_id)!=(profile.graph,c.investigation_id,c.thread_id) or state.budget!=config.budget:raise HostBlocked('CHECKPOINT_SCOPE_OR_BUDGET_MISMATCH')
+-   if 'WRITE_OUTCOME_UNKNOWN' in state.errors or (state.pause_reason and ('RECOVERY' in state.pause_reason or state.pause_reason in {'DEPENDENCY_UNAVAILABLE','BUDGET_EXHAUSTED','TOKEN_BUDGET','TOOL_BUDGET'})):raise HostBlocked('CASE_REQUIRES_OPERATOR_NO_RETRY')
++   if 'WRITE_OUTCOME_UNKNOWN' in state.errors:
++    from .reconciliation import valid_reconciliation
++    if not valid_reconciliation(config,profile,repo,c,state):raise HostBlocked('CASE_REQUIRES_OPERATOR_NO_RETRY')
++   if state.pause_reason and ('RECOVERY' in state.pause_reason or state.pause_reason in {'DEPENDENCY_UNAVAILABLE','BUDGET_EXHAUSTED','TOKEN_BUDGET','TOOL_BUDGET'}):raise HostBlocked('CASE_REQUIRES_OPERATOR_NO_RETRY')
+   elif inv.properties.get('thread_id'):raise HostBlocked('BOUND_CHECKPOINT_MISSING')
+   checks.append({'investigation_id':c.investigation_id,'thread_id':c.thread_id,'issue':c.issue,'checkpoint_present':bool(saved),'quarantine':False})
+  if case_id and not checks:raise HostBlocked('CASE_NOT_HOST_AUTHORIZED')
+--- a/backend/app/demo_host/__main__.py
++++ b/backend/app/demo_host/__main__.py
+@@ -13,7 +13,7 @@
+ def main():
+  p=argparse.ArgumentParser(description=__doc__);p.add_argument('--config');sub=p.add_subparsers(dest='operation',required=True)
+  s=sub.add_parser('setup');s.add_argument('--directory',required=True)
+- s=sub.add_parser('preflight');s.add_argument('--authorize-model-metadata',action='store_true')
++ s=sub.add_parser('preflight');s.add_argument('--authorize-model-metadata',action='store_true');s.add_argument('--case')
+  s=sub.add_parser('queue');s.add_argument('--case',required=True);s.add_argument('--key',required=True)
+  s=sub.add_parser('api');s.add_argument('--port',type=int,default=8010)
+  sub.add_parser('status')
+@@ -24,6 +24,7 @@
+  s=sub.add_parser('worker');s.add_argument('--live',action='store_true');s.add_argument('--case',required=True);s.add_argument('--batches',type=int,default=1)
+  s=sub.add_parser('context-smoke');s.add_argument('--live',action='store_true');s.add_argument('--case',required=True)
+  sub.add_parser('context-smoke-verify')
++ s=sub.add_parser('reconcile-no-effect');s.add_argument('--case',required=True);s.add_argument('--decision',required=True);s.add_argument('--authorized',action='store_true')
+  args=p.parse_args()
+  if args.operation=='setup':
+   from .setup import setup
+@@ -39,6 +40,9 @@
+   return
+  with connect(Settings(_env_file='.env')) as db,active_scope(profile):
+   repo=GraphRepository(db,profile.graph)
++  if args.operation=='reconcile-no-effect':
++   from .reconciliation import reconcile
++   print(json.dumps(reconcile(config,profile,repo,args.case,args.decision,authorized=args.authorized),indent=2));return
+   if args.operation=='context-smoke-verify':
+    from .context_smoke import verify_smoke
+    print(json.dumps(verify_smoke(config,profile,repo),indent=2));return
+@@ -70,7 +74,7 @@
+    with source_writer(repo,60):row=Delivery(repo,utc_now).request_resume(args.case,args.key,operator='PRESENTER',reason='Explicit host-authorized demo investigation wake',authorize=True)
+    print(json.dumps({'event_id':row['id'],'status':row['status'],'investigation_id':args.case,'provider_requests':0}));return
+   if args.operation=='preflight':
+-   result=local_preflight(config,profile,repo)
++   result=local_preflight(config,profile,repo,case_id=args.case)
+    if args.authorize_model_metadata:
+     proof=asyncio.run(model_preflight(config));write_private(parent/('compatibility-'+__import__('uuid').uuid4().hex+'.json'),proof)
+     # Print safe proof only. Host selects the immutable compatible proof explicitly.
+--- a/backend/app/agents/inspection_context.py
++++ b/backend/app/agents/inspection_context.py
+@@ -5,9 +5,13 @@
+ 
+ def requested_inspections(service,state):
+  reader=Reader(service.repo,state.as_of);rows=[]
+- for id in state.pending_inspections:
++ linked=service.repo._read('MATCH (i:Inspection)-[:INSPECTS]->(a:InfrastructureAsset) WHERE a.id IN $assets RETURN DISTINCT i.id ORDER BY i.id LIMIT 101',{'assets':state.asset_ids})
++ if len(linked)>100:raise PreconditionFailed('INSPECTION_CONTEXT_CAPACITY')
++ for id in sorted(set(state.pending_inspections)|{r[0] for r in linked}):
+   node=reader.node(id,'Inspection');scope,assets=service.inspection_source(reader,id)
+-  if scope['investigation_id']!=state.investigation_id:raise PreconditionFailed('INSPECTION_CONTEXT_SCOPE')
++  if scope['investigation_id']!=state.investigation_id:
++   if id in state.pending_inspections:raise PreconditionFailed('INSPECTION_CONTEXT_SCOPE')
++   continue
+   reports=[]
+   for edge in reader.edges('PRODUCED',source=id):
+    ref=reader.evidence(edge.target)
+--- a/backend/tests/unit/test_inspection_context.py
++++ b/backend/tests/unit/test_inspection_context.py
+@@ -10,8 +10,8 @@
+  report=N(id='REPORT',report=N(inspection_id=report_inspection,private_findings='not in metadata'))
+  reader=N(node=lambda *a:N(properties={'status':status,'requested_at':'2026-10-18T12:00:00Z','completed_at':'2026-10-18T12:01:00Z'}),edges=lambda *a,**k:[N(target='REPORT')] if status=='COMPLETED' else [],evidence=lambda id:report)
+  monkeypatch.setattr(module,'Reader',lambda *a:reader)
+- service=N(repo=object(),inspection_source=lambda *a:({'investigation_id':scope,'department_id':'DEPT-SAN'},{'W1'}))
+- state=N(as_of='2026-10-18T13:00:00Z',investigation_id='INV',pending_inspections=['INS'])
++ service=N(repo=N(_read=lambda *a:[]),inspection_source=lambda *a:({'investigation_id':scope,'department_id':'DEPT-SAN'},{'W1'}))
++ state=N(as_of='2026-10-18T13:00:00Z',investigation_id='INV',pending_inspections=['INS'],asset_ids=['W1'])
+  return service,state
+ 
+ 
+@@ -30,3 +30,21 @@
+ def test_foreign_inspection_or_report_scope_rejected(monkeypatch,change):
+  service,state=fixture(monkeypatch,**change)
+  with pytest.raises(PreconditionFailed):requested_inspections(service,state)
++
++
++def test_supplemental_scoped_inspection_discovered_without_mutating_pending(monkeypatch):
++ service,state=fixture(monkeypatch);state.pending_inspections=[]
++ service.repo._read=lambda *a:[['INS']]
++ assert requested_inspections(service,state)[0]['report_evidence_ids']==['REPORT']
++ assert state.pending_inspections==[]
++
++
++def test_supplemental_foreign_investigation_is_not_exposed(monkeypatch):
++ service,state=fixture(monkeypatch,scope='OTHER');state.pending_inspections=[]
++ service.repo._read=lambda *a:[['INS']]
++ assert requested_inspections(service,state)==[]
++
++
++def test_supplemental_scan_overflow_fails_closed(monkeypatch):
++ service,state=fixture(monkeypatch);service.repo._read=lambda *a:[[str(i)] for i in range(101)]
++ with pytest.raises(PreconditionFailed,match='CAPACITY'):requested_inspections(service,state)
+--- a/backend/app/services/http/reads.py
++++ b/backend/app/services/http/reads.py
+@@ -205,6 +205,26 @@
+    out=self.outcomes(id,actor,token,50,None)['items']
+    rows.append({'problem_cluster_id':id,'status':n.properties['status'],'verification_policy':'B14-2; actual dated evidence/opportunity required','remaining_checks':[] if n.properties['status']=='CONTROLLED' and any(v['case_closed'] for v in out) else ['Independent observation opportunity and verification remain required'],'outcome_evidence_ids':sorted({i for v in out for i in v['evidence_ids']})})
+   return self.page(rows,limit,cursor)
++ def completed_case_context(self,id,actor,token):
++  incident=self.node(id,'Incident',actor,token)
++  if incident.properties['status']!='ENDED':return None
++  # Graph identity chain supplies the episode scope; immutable operation storage
++  # supplies attributable evidence. No guessed similarities or generated lesson.
++  linked=self.repo._read('MATCH (i:Investigation)-[:INVESTIGATES]->(:Incident {id:$id}) MATCH (i)-[:PRODUCED_PLAN]->(p:ResolutionPlan)-[:HAS_TASK]->(:ActionTask)<-[:IMPLEMENTS]-(w:WorkOrder)-[:RESULTED_IN]->(o:InterventionOutcome) RETURN DISTINCT i.id,p.id,w.id,o.id ORDER BY o.id LIMIT 101',{'id':id})
++  if len(linked)>100:raise PreconditionFailed('CASE_MEMORY_OUTCOME_LIMIT')
++  evidence=set();outcomes=[];invs=set()
++  for inv,pid,wid,oid in linked:
++   if not all(self.allowed(self.repo.get_node(target),actor,token) for target in [inv,wid,oid]):continue
++   value=self.ops.store.get('outcome',oid)
++   if not value or (value['id'],value['work_order_id'],value['plan_id'])!=(oid,wid,pid):raise PreconditionFailed('CASE_MEMORY_OUTCOME_BINDING')
++   outcomes.append(oid);invs.add(inv)
++   for ref in value['evidence_references']:
++    node=self.node(ref['id'],'Evidence',actor,token)
++    if node.content_hash!=ref['content_hash']:raise PreconditionFailed('CASE_MEMORY_EVIDENCE_CHANGED')
++    evidence.add(node.id)
++  if not outcomes:return None
++  if len(evidence)>100:raise PreconditionFailed('CASE_MEMORY_EVIDENCE_LIMIT')
++  return {'id':id,'source_investigation_id':next(iter(invs)) if len(invs)==1 else None,'outcome_ids':sorted(set(outcomes)),'evidence_ids':sorted(evidence),'gaps':['Recorded completed episode, not an automatically generalized lesson; synthetic outcome policy and original assessment gaps remain applicable'],'truncated':False}
+  def case_memory(self,id,actor,token,limit,cursor):
+   self.node(id,'Incident',actor,token)
+   from app.graph.analysis.engine import GraphAnalysis
+@@ -225,5 +245,7 @@
+    evidence_ids=sorted({i for path in result.paths if path.id in row.path_ids for i in path.evidence_ids})
+    if actor.role=='DEPARTMENT_LEAD':evidence_ids=[i for i in evidence_ids if self.allowed(self.repo.get_node(i,'Evidence'),actor,token)]
+    rows.append({'id':row.id,'source_investigation_id':invs[0] if len(invs)==1 else None,'outcome_ids':outcome_ids,'evidence_ids':evidence_ids,'gaps':list(dict.fromkeys([*row.gaps,*result.gaps])),'truncated':result.truncated})
++  own=self.completed_case_context(id,actor,token)
++  if own and not any(row['id']==id for row in rows):rows.append(own)
+   page=self.page(rows,limit,cursor);page.update(limitations=list(result.gaps)+list(result.reservations),truncated=result.truncated or result.search_limited)
+   return page
+--- a/README.md
++++ b/README.md
+@@ -1,3 +1,5 @@
++> **Current completed road demonstration — EXACT-ROAD-LIFECYCLE (18 Oct 2026).** The human-selected original incident `INC-B08-27a2cb5d89ae9ab9d86f999cf7b50472` now has a complete explicitly synthetic lifecycle. Original investigation `INV-B09-b9d4d66e130ed348c4f6a50e9d66a891`: real Gemini/MCP reads and supported assessments; analyst-assisted cited draft; exact human approval; three completed work orders; independent utility verification; monitoring; verified road outcome and retained case memory. This supersedes earlier road readiness descriptions below. Gemini stopped at its retained token limit before drafting; the planning/execution stages were authenticated operator assistance. Full B10/B20/B-END acceptance remains open. See [results](docs/evidence/EXACT-ROAD-LIFECYCLE-RESULTS.md).
++
+ > **Current presenter backend — DEMO-FIELD-REVIEW, PARTIAL (18 Oct 2026).** Actual Gemini/MCP/FalkorDB investigations, reviewed synthetic reports, water+road sourced drafts submitted for human review; waste report read then explicit token-budget stop. API localhost:8010,59operations/55paths/185schemas. No approval/work/resolution claimed. Current [judge walkthrough](backend/DEMO_WALKTHROUGH.md), [frontend handoff](backend/FRONTEND_HANDOFF.md), [results](docs/evidence/DEMO-FIELD-REVIEW-RESULTS.md) supersede historical status headers below. Frontend is being developed separately by explicit human authorization; full B10/B20/B-END acceptance remains open.
+ 
+ # Civicly — Backend-First Codex Build System (v2.0)
+--- a/backend/DEMO_WALKTHROUGH.md
++++ b/backend/DEMO_WALKTHROUGH.md
+@@ -1,3 +1,5 @@
++> **Current completed road demonstration — EXACT-ROAD-LIFECYCLE (18 Oct 2026).** The human-selected original incident `INC-B08-27a2cb5d89ae9ab9d86f999cf7b50472` now has a complete explicitly synthetic lifecycle. Original investigation `INV-B09-b9d4d66e130ed348c4f6a50e9d66a891`: real Gemini/MCP reads and supported assessments; analyst-assisted cited draft; exact human approval; three completed work orders; independent utility verification; monitoring; verified road outcome and retained case memory. This supersedes earlier road readiness descriptions below. Gemini stopped at its retained token limit before drafting; the planning/execution stages were authenticated operator assistance. Full B10/B20/B-END acceptance remains open. See [results](../docs/evidence/EXACT-ROAD-LIFECYCLE-RESULTS.md).
++
+ # Judge rehearsal — actual current backend
+ 
+ All municipal records/field work here are explicitly synthetic. Gemini tool selection, MCP execution, FalkorDB persistence, GraphRAG citations and Saver checkpoints are real. No broad B-END completion claim.
+--- a/backend/FRONTEND_HANDOFF.md
++++ b/backend/FRONTEND_HANDOFF.md
+@@ -64,3 +64,11 @@
+ Waste completed a genuine report read after a bounded malformed-output correction, then reached TOKEN_BUDGET. No final draft/new completed assessment exists; show its completed field report plus truthful budget pause. Do not keep retrying, raise a budget or clear a quarantine from the UI. Public reads/SSE remain healthy. No further live worker runs automatically in the HTTP process.
+ 
+ Judge story: backend/DEMO_WALKTHROUGH.md. Full public packet: docs/evidence/DEMO-FIELD-REVIEW-public-readback.json. These are persisted real reads, not fake live execution or verified resolution.
++
++## EXACT-ROAD-LIFECYCLE — selected original road now completed
++
++Use `INV-B09-b9d4d66e130ed348c4f6a50e9d66a891` / incident `INC-B08-27a2cb5d89ae9ab9d86f999cf7b50472` as the primary complete lifecycle. API/source/auth remain unchanged; only API reloaded, frontend untouched. Current investigation and plan COMPLETED, incident ENDED, cluster CONTROLLED. Three work orders, five outcomes, five work/follow-up reports, one recorded own-episode memory row are real persisted synthetic state. `/cases/{incident_id}/memory` now includes the ended selected episode as well as any related historical cases; DTO unchanged. One row does not imply an automatically learned general rule. Bounded/truncated flags remain meaningful.
++
++The completed incident moves to `historical_incident_ids`; selector must retain that mapping. Open `/investigations?investigation=INV-B09-b9d4d66e130ed348c4f6a50e9d66a891`. `/investigations/{id}/plans` and InvestigationDTO.current_plan_id identify the authoritative operational plan. The last agent checkpoint intentionally retains TOKEN_BUDGET and null current_plan_id: the later draft was analyst-assisted. Trace contains genuine LIVE_GEMINI events and four recorded decision paths. Legacy InvestigationDTO.runtime_status is a static development-era label; consult trace execution_mode, not that field, for actual live provenance. Do not conceal the agent budget pause or relabel the assisted plan as model-generated.
++
++Exact plan `PLAN-B12-11e6b8d220e7923a715f5cc0a371b993`, v1, hash `b0a730059b2339f87b24fa8434fe5f3706f9686d524ba47e746ee0c1f1c78c57`. Human explicitly approved water-lead PIPE-100 isolation/repair then road-lead ROAD-100 subgrade repair, with prerequisite verification. The verified UNDERLIES link supplies the road dependency; proximity alone is not used. Immutable review/execution/monitoring/readback/audit proofs: `docs/evidence/EXACT-ROAD-LIFECYCLE-*`. Water and separate clean-road pending plans, original waste quarantine and other paused cases remain unchanged. No new paid wake authorized by frontend reads.
+--- a/decision.md
++++ b/decision.md
+@@ -1769,3 +1769,31 @@
+ - Executed checks: 65 offline unit tests PASS (30 transport + 10 cases + 5 canvas-adapter + 7 sse + 8 plans + 5 memory); `check:api` PASS; `contracts` baseline PASS (59 operations / 55 paths / 185 schemas); `typecheck` PASS (`tsc --noEmit` zero errors); Next.js production build PASS (Turbopack 619ms); real isolated HTTP/FastAPI/FalkorDB integration PASS (`F07-integration.json`).
+ - Next: F08 integrated role/scenario journeys, accessibility/responsive checks and frontend handoff.
+ 
++
++## EXACT-ROAD-LIFECYCLE — 2026-10-18, technical PASS; human review pending
++
++Human explicitly selected original road incident INC-B08-27a2cb5d89ae9ab9d86f999cf7b50472 and authorized narrowly proved no-effect reconciliation; subsequently approved exact plan PLAN-B12-11e6b8d220e7923a715f5cc0a371b993/v1/hash b0a730059b2339f87b24fa8434fe5f3706f9686d524ba47e746ee0c1f1c78c57 and its three assigned tasks. This single focused demo task advances R02/R04/R06–R17/road R18, preserving all18requirements and broader B10/B20/B-END partial gates.
++
++Real same-thread Gemini/MCP reads created two SUPPORTED assessments and four path proofs, then TOKEN_BUDGET before drafting (375398 cumulative tokens). No raised cap/new wake. Analyst-assisted sourced conditional draft and exact human approval → water isolation/proof → leak repair → independent reviewed utility follow-up UTILITY_VERIFIED (case stays open) → road subgrade repair → MONITORING → separate synthetic wear/pavement follow-up RESOLUTION_VERIFIED → incident ENDED/investigation+plan COMPLETED/cluster CONTROLLED. Three tasks/work orders, five outcomes, own-episode case memory with five source report references. All physical actions explicitly simulated/synthetic; not an autonomous planner or long-term real municipal outcome claim.
++
++45 distinct final units PASS/0FAIL/0SKIP; one real retained-graph TCP HTTP/FalkorDB/GraphRAG/MCP/Gemini/Saver journey (101 execution HTTP calls, not 101 tests), fresh-process/reloaded API readback PASS; both final spec validators PASS. Paid wake 10count/9generation,275638 additional reported tokens,$0.20620095 known cost; cumulative case$0.28464795, retained$0.50cap and no outstanding reservations. Unit/operational verification zero external requests. Historical scope/import harness failures and initially empty own-memory read retained and corrected; no failed/uncertain work-order mutation. 1368 prior evidence files unchanged; original checkpoint/hash/error and all unrelated quarantines retained. Frontend untouched; backend API reloaded only.
++
++Evidence: docs/evidence/EXACT-ROAD-LIFECYCLE-{RESULTS,COMMANDS,FILES}.md, review/execution/monitoring/fresh-readback/audit/accounting/patch. User verify: refresh `/investigations?investigation=INV-B09-b9d4d66e130ed348c4f6a50e9d66a891`, inspect six stages; nonbillable `PYTHONPATH=backend backend/.venv/bin/python scripts/exact_road_lifecycle.py verify`. Expected ENDED/COMPLETED, three orders, five outcomes, one episode memory. Agent trace retains TOKEN_BUDGET/null checkpoint-plan; operational current plan comes from graph. Legacy static runtime_status is not live provenance. Bounded historical search/truncation retained; no fabricated generalized memory lesson. Original waste blocked; other plans remain pending. Next: human review and frontend walkthrough; no automatic B21/live continuation.
++
++Decision: prefer immutable scoped no-effect attestation over deleting a historical error or cloning the incident; prefer an openly analyst-assisted plan over raising the live token cap or disguising deterministic output as model choice. Expose completed seed memory from validated outcome/evidence records rather than inventing a lesson or changing related-case ranking.
++
++## F08 — Integrated Role/Scenario Journeys, Accessibility & Frontend Handoff (2026-10-18)
++F07 accepted. Scope: R12, R14, R15, R16, R17, R18; all essential frontend microtasks complete.
++- Scenario Journeys (`frontend/components/scenario-journey-guide.tsx`, `frontend/lib/read/journeys.ts`):
++  - Created interactive scenario browser covering all 12 pre-seeded municipal scenarios (`S01` to `S12`) across WATERLOGGING, ROAD_DAMAGE, WASTE_ACCUMULATION, and cross-category defect cascades.
++  - Category filters, stage status badges, next operator actions, and direct links to registered investigations/incidents.
++- Municipal Role Governance & RBAC (`frontend/components/role-governance-modal.tsx`, `frontend/lib/read/roles.ts`):
++  - Created interactive modal detailing the 7 municipal operators (`OP-ANALYST`, `OP-APPROVER`, `OP-DRAIN-LEAD`, `OP-ROAD-LEAD`, `OP-WASTE-LEAD`, `OP-WATER-LEAD`, `OP-ADMIN`).
++  - Reinforces core governance invariant: no judge sign-in form is required, but authorization boundaries are strictly enforced. Analysts can draft/submit plans, but cannot self-approve municipal intervention.
++- Accessibility & Responsive Enhancements:
++  - Visible focus indicators (`:focus-visible`), ARIA landmarks/dialogs/roles, screen reader announcements, and mobile-friendly layouts.
++- Technical Handoff (`frontend/docs/HANDOFF.md`):
++  - Comprehensive architectural guide detailing Next.js App Router, FalkorDB Canvas integration, SSE event/cursor protocol, role boundaries, and reproducible verification steps.
++- Executed checks: 70 offline unit tests PASS (30 transport + 10 cases + 5 canvas-adapter + 7 sse + 8 plans + 5 memory + 5 journeys); `check:api` PASS; `contracts` baseline PASS (59 operations / 55 paths / 185 schemas); `typecheck` PASS (`tsc --noEmit` zero errors); Next.js production build PASS (Turbopack 452ms); real isolated HTTP/FastAPI/FalkorDB integration PASS (`F08-integration.json`).
++- All essential frontend microtasks F00–F08 are fully complete and verified. Frontend handoff complete.
++
+--- a/flow.md
++++ b/flow.md
+@@ -1267,3 +1267,15 @@
+   4. Authoritative Case Memory:
+      - Loaded via `GET /api/v1/cases/{id}/memory`. Returns `DEPENDENCY_BLOCKED` (409) if the investigation is active and pending verified closure, surfacing clear pending state rather than crashing or inventing summaries.
+ 
++
++## EXACT-ROAD-LIFECYCLE — 2026-10-18, technical PASS; human review pending
++
++Human explicitly selected original road incident INC-B08-27a2cb5d89ae9ab9d86f999cf7b50472 and authorized narrowly proved no-effect reconciliation; subsequently approved exact plan PLAN-B12-11e6b8d220e7923a715f5cc0a371b993/v1/hash b0a730059b2339f87b24fa8434fe5f3706f9686d524ba47e746ee0c1f1c78c57 and its three assigned tasks. This single focused demo task advances R02/R04/R06–R17/road R18, preserving all18requirements and broader B10/B20/B-END partial gates.
++
++Real same-thread Gemini/MCP reads created two SUPPORTED assessments and four path proofs, then TOKEN_BUDGET before drafting (375398 cumulative tokens). No raised cap/new wake. Analyst-assisted sourced conditional draft and exact human approval → water isolation/proof → leak repair → independent reviewed utility follow-up UTILITY_VERIFIED (case stays open) → road subgrade repair → MONITORING → separate synthetic wear/pavement follow-up RESOLUTION_VERIFIED → incident ENDED/investigation+plan COMPLETED/cluster CONTROLLED. Three tasks/work orders, five outcomes, own-episode case memory with five source report references. All physical actions explicitly simulated/synthetic; not an autonomous planner or long-term real municipal outcome claim.
++
++45 distinct final units PASS/0FAIL/0SKIP; one real retained-graph TCP HTTP/FalkorDB/GraphRAG/MCP/Gemini/Saver journey (101 execution HTTP calls, not 101 tests), fresh-process/reloaded API readback PASS; both final spec validators PASS. Paid wake 10count/9generation,275638 additional reported tokens,$0.20620095 known cost; cumulative case$0.28464795, retained$0.50cap and no outstanding reservations. Unit/operational verification zero external requests. Historical scope/import harness failures and initially empty own-memory read retained and corrected; no failed/uncertain work-order mutation. 1368 prior evidence files unchanged; original checkpoint/hash/error and all unrelated quarantines retained. Frontend untouched; backend API reloaded only.
++
++Evidence: docs/evidence/EXACT-ROAD-LIFECYCLE-{RESULTS,COMMANDS,FILES}.md, review/execution/monitoring/fresh-readback/audit/accounting/patch. User verify: refresh `/investigations?investigation=INV-B09-b9d4d66e130ed348c4f6a50e9d66a891`, inspect six stages; nonbillable `PYTHONPATH=backend backend/.venv/bin/python scripts/exact_road_lifecycle.py verify`. Expected ENDED/COMPLETED, three orders, five outcomes, one episode memory. Agent trace retains TOKEN_BUDGET/null checkpoint-plan; operational current plan comes from graph. Legacy static runtime_status is not live provenance. Bounded historical search/truncation retained; no fabricated generalized memory lesson. Original waste blocked; other plans remain pending. Next: human review and frontend walkthrough; no automatic B21/live continuation.
++
++File/data flow: demo_host.__main__ → reconciliation.py → Saver historical hash + absent dispatch/domain/native proof → immutable Delivery storage attestation → runtime.local_preflight; inspection_context.py → bounded scope-filtered Inspection metadata → model still MCP reads reports. scripts/exact_road_lifecycle.py → authenticated existing HTTP planning/approval/operations services → FalkorDB native tasks/orders/outcomes → reads.completed_case_context → unchanged CaseMemoryDTO. Verified PIPE-100 UNDERLIES ROAD-100 drives conditional repair DAG. No direct operational Cypher writes.
+--- a/task_board.md
++++ b/task_board.md
+@@ -697,3 +697,15 @@
+ - Verification: 65 offline tests PASS (30 transport + 10 cases + 5 canvas-adapter + 7 sse + 8 plans + 5 memory), typecheck PASS (`tsc --noEmit` 0 errors), Next.js Turbopack build PASS (619ms), real isolated HTTP/FastAPI/FalkorDB integration PASS (`F07-integration.json`). Zero provider calls.
+ - Exact next: [ ] F08 integrated role/scenario journeys, accessibility/responsive checks and frontend handoff. STOP F07 for human review.
+ 
++
++## EXACT-ROAD-LIFECYCLE — 2026-10-18, technical PASS; human review pending
++
++Human explicitly selected original road incident INC-B08-27a2cb5d89ae9ab9d86f999cf7b50472 and authorized narrowly proved no-effect reconciliation; subsequently approved exact plan PLAN-B12-11e6b8d220e7923a715f5cc0a371b993/v1/hash b0a730059b2339f87b24fa8434fe5f3706f9686d524ba47e746ee0c1f1c78c57 and its three assigned tasks. This single focused demo task advances R02/R04/R06–R17/road R18, preserving all18requirements and broader B10/B20/B-END partial gates.
++
++Real same-thread Gemini/MCP reads created two SUPPORTED assessments and four path proofs, then TOKEN_BUDGET before drafting (375398 cumulative tokens). No raised cap/new wake. Analyst-assisted sourced conditional draft and exact human approval → water isolation/proof → leak repair → independent reviewed utility follow-up UTILITY_VERIFIED (case stays open) → road subgrade repair → MONITORING → separate synthetic wear/pavement follow-up RESOLUTION_VERIFIED → incident ENDED/investigation+plan COMPLETED/cluster CONTROLLED. Three tasks/work orders, five outcomes, own-episode case memory with five source report references. All physical actions explicitly simulated/synthetic; not an autonomous planner or long-term real municipal outcome claim.
++
++45 distinct final units PASS/0FAIL/0SKIP; one real retained-graph TCP HTTP/FalkorDB/GraphRAG/MCP/Gemini/Saver journey (101 execution HTTP calls, not 101 tests), fresh-process/reloaded API readback PASS; both final spec validators PASS. Paid wake 10count/9generation,275638 additional reported tokens,$0.20620095 known cost; cumulative case$0.28464795, retained$0.50cap and no outstanding reservations. Unit/operational verification zero external requests. Historical scope/import harness failures and initially empty own-memory read retained and corrected; no failed/uncertain work-order mutation. 1368 prior evidence files unchanged; original checkpoint/hash/error and all unrelated quarantines retained. Frontend untouched; backend API reloaded only.
++
++Evidence: docs/evidence/EXACT-ROAD-LIFECYCLE-{RESULTS,COMMANDS,FILES}.md, review/execution/monitoring/fresh-readback/audit/accounting/patch. User verify: refresh `/investigations?investigation=INV-B09-b9d4d66e130ed348c4f6a50e9d66a891`, inspect six stages; nonbillable `PYTHONPATH=backend backend/.venv/bin/python scripts/exact_road_lifecycle.py verify`. Expected ENDED/COMPLETED, three orders, five outcomes, one episode memory. Agent trace retains TOKEN_BUDGET/null checkpoint-plan; operational current plan comes from graph. Legacy static runtime_status is not live provenance. Bounded historical search/truncation retained; no fabricated generalized memory lesson. Original waste blocked; other plans remain pending. Next: human review and frontend walkthrough; no automatic B21/live continuation.
++
++[x] EXACT-ROAD-LIFECYCLE technical completion; human review pending. [ ] Next: completed-road frontend judge walkthrough. B21 and comprehensive acceptance remain unchecked.
+--- a/implementation_status.md
++++ b/implementation_status.md
+@@ -835,3 +835,13 @@
+   - Real integration verification (`frontend/scripts/verify_integration.py`) PASS: real Next proxy + FastAPI + FalkorDB (`F07-integration.json`), zero provider calls, backend code hash check unchanged.
+ - Next: [ ] F08 integrated role/scenario journeys, accessibility/responsive checks and frontend handoff. STOP F07 for human review.
+ 
++
++## EXACT-ROAD-LIFECYCLE — 2026-10-18, technical PASS; human review pending
++
++Human explicitly selected original road incident INC-B08-27a2cb5d89ae9ab9d86f999cf7b50472 and authorized narrowly proved no-effect reconciliation; subsequently approved exact plan PLAN-B12-11e6b8d220e7923a715f5cc0a371b993/v1/hash b0a730059b2339f87b24fa8434fe5f3706f9686d524ba47e746ee0c1f1c78c57 and its three assigned tasks. This single focused demo task advances R02/R04/R06–R17/road R18, preserving all18requirements and broader B10/B20/B-END partial gates.
++
++Real same-thread Gemini/MCP reads created two SUPPORTED assessments and four path proofs, then TOKEN_BUDGET before drafting (375398 cumulative tokens). No raised cap/new wake. Analyst-assisted sourced conditional draft and exact human approval → water isolation/proof → leak repair → independent reviewed utility follow-up UTILITY_VERIFIED (case stays open) → road subgrade repair → MONITORING → separate synthetic wear/pavement follow-up RESOLUTION_VERIFIED → incident ENDED/investigation+plan COMPLETED/cluster CONTROLLED. Three tasks/work orders, five outcomes, own-episode case memory with five source report references. All physical actions explicitly simulated/synthetic; not an autonomous planner or long-term real municipal outcome claim.
++
++45 distinct final units PASS/0FAIL/0SKIP; one real retained-graph TCP HTTP/FalkorDB/GraphRAG/MCP/Gemini/Saver journey (101 execution HTTP calls, not 101 tests), fresh-process/reloaded API readback PASS; both final spec validators PASS. Paid wake 10count/9generation,275638 additional reported tokens,$0.20620095 known cost; cumulative case$0.28464795, retained$0.50cap and no outstanding reservations. Unit/operational verification zero external requests. Historical scope/import harness failures and initially empty own-memory read retained and corrected; no failed/uncertain work-order mutation. 1368 prior evidence files unchanged; original checkpoint/hash/error and all unrelated quarantines retained. Frontend untouched; backend API reloaded only.
++
++Evidence: docs/evidence/EXACT-ROAD-LIFECYCLE-{RESULTS,COMMANDS,FILES}.md, review/execution/monitoring/fresh-readback/audit/accounting/patch. User verify: refresh `/investigations?investigation=INV-B09-b9d4d66e130ed348c4f6a50e9d66a891`, inspect six stages; nonbillable `PYTHONPATH=backend backend/.venv/bin/python scripts/exact_road_lifecycle.py verify`. Expected ENDED/COMPLETED, three orders, five outcomes, one episode memory. Agent trace retains TOKEN_BUDGET/null checkpoint-plan; operational current plan comes from graph. Legacy static runtime_status is not live provenance. Bounded historical search/truncation retained; no fabricated generalized memory lesson. Original waste blocked; other plans remain pending. Next: human review and frontend walkthrough; no automatic B21/live continuation.
+--- a/test_log.md
++++ b/test_log.md
+@@ -1369,3 +1369,13 @@
+   - Backend code/test/contracts retention hash verified identical before and after test execution (`backend_code_contract_retention: true`). Zero provider calls.
+ - Preview server: running on `http://127.0.0.1:3100`, connected to backend on `http://127.0.0.1:8010`.
+ 
++
++## EXACT-ROAD-LIFECYCLE — 2026-10-18, technical PASS; human review pending
++
++Human explicitly selected original road incident INC-B08-27a2cb5d89ae9ab9d86f999cf7b50472 and authorized narrowly proved no-effect reconciliation; subsequently approved exact plan PLAN-B12-11e6b8d220e7923a715f5cc0a371b993/v1/hash b0a730059b2339f87b24fa8434fe5f3706f9686d524ba47e746ee0c1f1c78c57 and its three assigned tasks. This single focused demo task advances R02/R04/R06–R17/road R18, preserving all18requirements and broader B10/B20/B-END partial gates.
++
++Real same-thread Gemini/MCP reads created two SUPPORTED assessments and four path proofs, then TOKEN_BUDGET before drafting (375398 cumulative tokens). No raised cap/new wake. Analyst-assisted sourced conditional draft and exact human approval → water isolation/proof → leak repair → independent reviewed utility follow-up UTILITY_VERIFIED (case stays open) → road subgrade repair → MONITORING → separate synthetic wear/pavement follow-up RESOLUTION_VERIFIED → incident ENDED/investigation+plan COMPLETED/cluster CONTROLLED. Three tasks/work orders, five outcomes, own-episode case memory with five source report references. All physical actions explicitly simulated/synthetic; not an autonomous planner or long-term real municipal outcome claim.
++
++45 distinct final units PASS/0FAIL/0SKIP; one real retained-graph TCP HTTP/FalkorDB/GraphRAG/MCP/Gemini/Saver journey (101 execution HTTP calls, not 101 tests), fresh-process/reloaded API readback PASS; both final spec validators PASS. Paid wake 10count/9generation,275638 additional reported tokens,$0.20620095 known cost; cumulative case$0.28464795, retained$0.50cap and no outstanding reservations. Unit/operational verification zero external requests. Historical scope/import harness failures and initially empty own-memory read retained and corrected; no failed/uncertain work-order mutation. 1368 prior evidence files unchanged; original checkpoint/hash/error and all unrelated quarantines retained. Frontend untouched; backend API reloaded only.
++
++Evidence: docs/evidence/EXACT-ROAD-LIFECYCLE-{RESULTS,COMMANDS,FILES}.md, review/execution/monitoring/fresh-readback/audit/accounting/patch. User verify: refresh `/investigations?investigation=INV-B09-b9d4d66e130ed348c4f6a50e9d66a891`, inspect six stages; nonbillable `PYTHONPATH=backend backend/.venv/bin/python scripts/exact_road_lifecycle.py verify`. Expected ENDED/COMPLETED, three orders, five outcomes, one episode memory. Agent trace retains TOKEN_BUDGET/null checkpoint-plan; operational current plan comes from graph. Legacy static runtime_status is not live provenance. Bounded historical search/truncation retained; no fabricated generalized memory lesson. Original waste blocked; other plans remain pending. Next: human review and frontend walkthrough; no automatic B21/live continuation.
+--- a/blockers.md
++++ b/blockers.md
+@@ -792,3 +792,13 @@
+ - Authoritative Case Memory: Gracefully handles 409 `DEPENDENCY_BLOCKED` when investigations are active and pending verified closure, surfacing clear pending state rather than crashing or inventing summaries.
+ - Next frontend task: [ ] F08 integrated role/scenario journeys, accessibility/responsive checks and frontend handoff. STOP F07 for human review.
+ 
++
++## EXACT-ROAD-LIFECYCLE — 2026-10-18, technical PASS; human review pending
++
++Human explicitly selected original road incident INC-B08-27a2cb5d89ae9ab9d86f999cf7b50472 and authorized narrowly proved no-effect reconciliation; subsequently approved exact plan PLAN-B12-11e6b8d220e7923a715f5cc0a371b993/v1/hash b0a730059b2339f87b24fa8434fe5f3706f9686d524ba47e746ee0c1f1c78c57 and its three assigned tasks. This single focused demo task advances R02/R04/R06–R17/road R18, preserving all18requirements and broader B10/B20/B-END partial gates.
++
++Real same-thread Gemini/MCP reads created two SUPPORTED assessments and four path proofs, then TOKEN_BUDGET before drafting (375398 cumulative tokens). No raised cap/new wake. Analyst-assisted sourced conditional draft and exact human approval → water isolation/proof → leak repair → independent reviewed utility follow-up UTILITY_VERIFIED (case stays open) → road subgrade repair → MONITORING → separate synthetic wear/pavement follow-up RESOLUTION_VERIFIED → incident ENDED/investigation+plan COMPLETED/cluster CONTROLLED. Three tasks/work orders, five outcomes, own-episode case memory with five source report references. All physical actions explicitly simulated/synthetic; not an autonomous planner or long-term real municipal outcome claim.
++
++45 distinct final units PASS/0FAIL/0SKIP; one real retained-graph TCP HTTP/FalkorDB/GraphRAG/MCP/Gemini/Saver journey (101 execution HTTP calls, not 101 tests), fresh-process/reloaded API readback PASS; both final spec validators PASS. Paid wake 10count/9generation,275638 additional reported tokens,$0.20620095 known cost; cumulative case$0.28464795, retained$0.50cap and no outstanding reservations. Unit/operational verification zero external requests. Historical scope/import harness failures and initially empty own-memory read retained and corrected; no failed/uncertain work-order mutation. 1368 prior evidence files unchanged; original checkpoint/hash/error and all unrelated quarantines retained. Frontend untouched; backend API reloaded only.
++
++Evidence: docs/evidence/EXACT-ROAD-LIFECYCLE-{RESULTS,COMMANDS,FILES}.md, review/execution/monitoring/fresh-readback/audit/accounting/patch. User verify: refresh `/investigations?investigation=INV-B09-b9d4d66e130ed348c4f6a50e9d66a891`, inspect six stages; nonbillable `PYTHONPATH=backend backend/.venv/bin/python scripts/exact_road_lifecycle.py verify`. Expected ENDED/COMPLETED, three orders, five outcomes, one episode memory. Agent trace retains TOKEN_BUDGET/null checkpoint-plan; operational current plan comes from graph. Legacy static runtime_status is not live provenance. Bounded historical search/truncation retained; no fabricated generalized memory lesson. Original waste blocked; other plans remain pending. Next: human review and frontend walkthrough; no automatic B21/live continuation.
+--- /dev/null
++++ b/backend/app/demo_host/reconciliation.py
+@@ -0,0 +1,72 @@
++"""Explicit operator no-effect attestation for one undispatched historical PROPOSE."""
++import json
++from pathlib import Path
++from app.agents.checkpoints import saver
++from app.graph.models import digest
++from app.graph.schema import utc_now
++from app.services.evidence.writer import stable
++from app.services.operations.auth import Auth
++from app.services.operations.storage import Storage
++from app.events.service import Delivery
++from cli.private import read_json
++from .runtime import HostBlocked
++
++
++def no_effect(repo,case,decision_id):
++    if not decision_id.startswith('DEC-B10-'):raise HostBlocked('RECONCILIATION_DECISION_ID')
++    decision=repo.get_node(decision_id,'AgentDecision');value=json.loads(decision.properties['rationale'])
++    meta=value['metadata']
++    if (meta.get('investigation_id'),meta.get('thread_id'))!=(case.investigation_id,case.thread_id) or value['selection']['action']!='PROPOSE':raise HostBlocked('RECONCILIATION_DECISION_SCOPE')
++    request=decision_id.replace('DEC-B10-','EV-B10-',1)
++    journal=stable('EV-JOURNAL','civicly-b10-analyst',request);entity=stable('HYP',journal)
++    absent=[request,journal,entity]
++    if any(repo._node_optional(id) is not None for id in absent):raise HostBlocked('RECONCILIATION_DISPATCH_OR_EFFECT_EXISTS')
++    rows=repo._read("MATCH (m:CivicSchemaMigration {id:'0001'}) RETURN m.state,coalesce(m.repo_pending,''),m.repo_revision LIMIT 2")
++    if len(rows)!=1 or rows[0][0]!='READY' or rows[0][1]:raise HostBlocked('RECONCILIATION_REPOSITORY_UNCERTAIN')
++    return {'decision_id':decision_id,'decision_hash':decision.content_hash,'request_id':request,
++        'domain_journal_id':journal,'hypothesis_id':entity,'absent_ids':absent,'source_revision':rows[0][2],
++        'conclusion':'NO_DISPATCH_JOURNAL_OR_DOMAIN_EFFECT','dispatch_rule':'B10 must persist its dispatch journal and original command before calling B09; B09 hypothesis and journal commit atomically'}
++
++
++def valid_reconciliation(config,profile,repo,case,state):
++    row=Storage(repo).get('demo_reconciliation',case.thread_id)
++    if row is None:return False
++    if row.get('version')!=1 or row.get('authorized_by_human') is not True or row.get('original_checkpoint_or_error_modified') is not False or row.get('quarantine_cleared') is not False or row.get('original_operation_replayed') is not False:raise HostBlocked('RECONCILIATION_ATTESTATION_INVALID')
++    if row['source_graph']!=profile.graph or row['investigation_id']!=case.investigation_id or row['thread_id']!=case.thread_id or row['actor']['role']!='ADMIN':raise HostBlocked('RECONCILIATION_ATTESTATION_SCOPE')
++    if state.errors.count('WRITE_OUTCOME_UNKNOWN')!=row['unknown_error_count']:raise HostBlocked('RECONCILIATION_NEW_UNCERTAINTY')
++    old=saver(profile).get_tuple({'configurable':{'thread_id':case.thread_id,'checkpoint_id':row['checkpoint_id']}})
++    if old is None or digest(old.checkpoint['channel_values']['data'])!=row['checkpoint_sha256']:raise HostBlocked('RECONCILIATION_ORIGINAL_CHECKPOINT_CHANGED')
++    current=no_effect(repo,case,row['proof']['decision_id'])
++    if any(current[k]!=row['proof'][k] for k in ['decision_hash','request_id','domain_journal_id','hypothesis_id','absent_ids']):raise HostBlocked('RECONCILIATION_PROOF_CHANGED')
++    return True
++
++
++def reconcile(config,profile,repo,case_id,decision_id,*,authorized=False):
++    if authorized is not True:raise HostBlocked('EXPLICIT_RECONCILIATION_AUTHORIZATION_REQUIRED')
++    case=next((c for c in config.cases if c.investigation_id==case_id),None)
++    if case is None:raise HostBlocked('CASE_NOT_HOST_AUTHORIZED')
++    auth=Auth(config.auth_store);passwords=read_json(Path(config.auth_store).parent/'presenter-credentials.json',private=True)
++    token=auth.login('OP-ADMIN',passwords['OP-ADMIN'])
++    try:
++        actor=auth.resolve(token)
++        if actor.role!='ADMIN':raise HostBlocked('RECONCILIATION_ADMIN_REQUIRED')
++        from .source import source_writer
++        with source_writer(repo):
++            key='civicly:b10:'+profile.graph+':'+digest(case.thread_id)
++            if repo.client.connection.exists(key,key+':quarantine'):raise HostBlocked('RECONCILIATION_LEASE_OR_QUARANTINE_PRESENT')
++            saved=saver(profile).get_tuple({'configurable':{'thread_id':case.thread_id}})
++            if saved is None:raise HostBlocked('RECONCILIATION_CHECKPOINT_MISSING')
++            state=saved.checkpoint['channel_values']['data']
++            if state['errors'].count('WRITE_OUTCOME_UNKNOWN')!=1 or decision_id not in state['decisions'] or state['pause_reason']!='MISSING_EVIDENCE':raise HostBlocked('RECONCILIATION_NOT_SUPPORTED')
++            proof=no_effect(repo,case,decision_id)
++            row={'version':1,'source_graph':profile.graph,'investigation_id':case_id,'thread_id':case.thread_id,
++                'checkpoint_id':saved.config['configurable']['checkpoint_id'],'checkpoint_sha256':digest(state),
++                'unknown_error_count':1,'proof':proof,'actor':actor.model_dump(mode='json'),'authorized_by_human':True,
++                'at':utc_now(),'original_checkpoint_or_error_modified':False,'quarantine_cleared':False,
++                'original_operation_replayed':False,'reason':'Explicit human-authorized original incident review; absent mandatory dispatch/domain journals and native effect prove no analytical write'}
++            store=Delivery(repo,utc_now).store
++            if store.get('demo_reconciliation',case.thread_id):raise HostBlocked('RECONCILIATION_ALREADY_RECORDED')
++            with repo._session() as session:store.write(session,[('demo_reconciliation',case.thread_id,row)])
++            if store.get('demo_reconciliation',case.thread_id)!=row:raise HostBlocked('RECONCILIATION_READBACK_FAILED')
++            return row
++    finally:auth.logout(token)
+--- /dev/null
++++ b/backend/tests/unit/test_demo_reconciliation.py
+@@ -0,0 +1,65 @@
++"""Known undispatched-proposal reconciliation fails closed on any persisted effect."""
++import json
++from types import SimpleNamespace as N
++import pytest
++from app.demo_host.reconciliation import no_effect,reconcile
++from app.demo_host.runtime import HostBlocked
++
++
++def fixture():
++ case=N(investigation_id='INV',thread_id='THREAD')
++ decision=N(content_hash='hash',properties={'rationale':json.dumps({'metadata':{'investigation_id':'INV','thread_id':'THREAD'},'selection':{'action':'PROPOSE'}})})
++ repo=N(get_node=lambda *a:decision,_node_optional=lambda id:None,_read=lambda *a:[["READY","",1]])
++ return case,decision,repo
++
++
++def test_absent_dispatch_domain_journal_and_effect_prove_narrow_no_effect():
++ case,_,repo=fixture();p=no_effect(repo,case,'DEC-B10-original')
++ assert len(p['absent_ids'])==3 and p['request_id']=='EV-B10-original'
++ assert p['conclusion']=='NO_DISPATCH_JOURNAL_OR_DOMAIN_EFFECT'
++
++@pytest.mark.parametrize('index',[0,1,2])
++def test_any_persisted_effect_blocks_reconciliation(index):
++ case,_,repo=fixture();id=no_effect(repo,case,'DEC-B10-original')['absent_ids'][index]
++ repo._node_optional=lambda target:object() if target==id else None
++ with pytest.raises(HostBlocked,match='EFFECT_EXISTS'):no_effect(repo,case,'DEC-B10-original')
++
++@pytest.mark.parametrize('change',['foreign','not_propose','pending','not_ready'])
++def test_scope_and_pending_or_nonready_repository_fail_closed(change):
++ case,d,repo=fixture()
++ if change=='foreign':case.investigation_id='OTHER'
++ if change=='not_propose':d.properties['rationale']=d.properties['rationale'].replace('PROPOSE','ASSESS')
++ if change=='pending':repo._read=lambda *a:[['READY','pending',1]]
++ if change=='not_ready':repo._read=lambda *a:[['FAILED','',1]]
++ with pytest.raises(HostBlocked):no_effect(repo,case,'DEC-B10-original')
++
++
++def test_no_human_authorization_stops_before_auth_or_graph():
++ with pytest.raises(HostBlocked,match='AUTHORIZATION_REQUIRED'):reconcile(None,None,None,'INV','DEC',authorized=False)
++
++
++def attestation(monkeypatch):
++ import app.demo_host.reconciliation as m
++ from app.graph.models import digest
++ case,_,repo=fixture();state={'errors':['WRITE_OUTCOME_UNKNOWN']}
++ row={'version':1,'source_graph':'graph','investigation_id':'INV','thread_id':'THREAD','actor':{'role':'ADMIN'},'authorized_by_human':True,'original_checkpoint_or_error_modified':False,'quarantine_cleared':False,'original_operation_replayed':False,'unknown_error_count':1,'checkpoint_id':'OLD','checkpoint_sha256':digest(state),'proof':no_effect(repo,case,'DEC-B10-original')}
++ monkeypatch.setattr(m,'Storage',lambda *a:N(get=lambda *a:row))
++ monkeypatch.setattr(m,'saver',lambda *a:N(get_tuple=lambda *a:N(checkpoint={'channel_values':{'data':state}})))
++ return m,case,repo,state,row
++
++
++def test_attestation_preserves_original_checkpoint_and_accepts_only_proved_error(monkeypatch):
++ m,case,repo,state,row=attestation(monkeypatch)
++ assert m.valid_reconciliation(None,N(graph='graph'),repo,case,N(errors=state['errors']))
++ assert row['original_checkpoint_or_error_modified'] is False
++
++@pytest.mark.parametrize('change',['authorization','checkpoint','new_error','scope','replayed','decision'])
++def test_changed_attestation_or_new_uncertainty_blocks(monkeypatch,change):
++ m,case,repo,state,row=attestation(monkeypatch);errors=list(state['errors'])
++ if change=='authorization':row['authorized_by_human']=False
++ if change=='checkpoint':row['checkpoint_sha256']='changed'
++ if change=='new_error':errors.append('WRITE_OUTCOME_UNKNOWN')
++ if change=='scope':row['thread_id']='OTHER'
++ if change=='replayed':row['original_operation_replayed']=True
++ if change=='decision':row['proof']['decision_hash']='changed'
++ with pytest.raises(HostBlocked):m.valid_reconciliation(None,N(graph='graph'),repo,case,N(errors=errors))
+--- /dev/null
++++ b/backend/tests/unit/test_completed_case_memory.py
+@@ -0,0 +1,36 @@
++"""Completed episode memory uses graph identity and recorded outcome evidence."""
++from types import SimpleNamespace as N
++import pytest
++from app.services.http.reads import Reads
++from app.graph.repository import PreconditionFailed
++
++
++def fixture(status='ENDED'):
++ nodes={'INC':N(id='INC',properties={'status':status}),'INV':N(id='INV'),'WO':N(id='WO'),'OUT':N(id='OUT'),'EV':N(id='EV',content_hash='hash')}
++ value={'id':'OUT','work_order_id':'WO','plan_id':'PLAN','evidence_references':[{'id':'EV','content_hash':'hash'}]}
++ r=Reads(N(_read=lambda *a:[['INV','PLAN','WO','OUT']],get_node=lambda id:nodes[id]),N(store=N(get=lambda *a:value)),None,None)
++ r.node=lambda id,*a:nodes[id];r.allowed=lambda *a:True
++ return r,value,nodes
++
++
++def test_completed_episode_exposes_persisted_outcome_and_source_not_generated_lesson():
++ r,_,_=fixture();out=r.completed_case_context('INC',None,None)
++ assert out['outcome_ids']==['OUT'] and out['evidence_ids']==['EV']
++ assert out['source_investigation_id']=='INV' and 'not an automatically generalized lesson' in out['gaps'][0]
++
++
++def test_open_case_does_not_become_historical_memory():
++ r,_,_=fixture('REPORTED');r.repo._read=lambda *a:pytest.fail('Should not read outcomes')
++ assert r.completed_case_context('INC',None,None) is None
++
++@pytest.mark.parametrize('fault',['scope','hash','overflow','redaction'])
++def test_invalid_or_hidden_completed_context_fails_closed(fault):
++ r,value,nodes=fixture()
++ if fault=='redaction':
++  r.allowed=lambda *a:False
++  assert r.completed_case_context('INC',None,None) is None
++  return
++ if fault=='scope':value['plan_id']='OTHER'
++ if fault=='hash':nodes['EV'].content_hash='changed'
++ if fault=='overflow':r.repo._read=lambda *a:[['INV','PLAN','WO','OUT']]*101
++ with pytest.raises(PreconditionFailed):r.completed_case_context('INC',None,None)
+--- /dev/null
++++ b/scripts/exact_road_lifecycle.py
+@@ -0,0 +1,136 @@
++"""Staged operator-assisted lifecycle for the human-selected original road incident.
++Preparation submits a non-executable draft. Execution requires the exact human-approved
++hash. All observations are explicitly synthetic; all writes use authenticated HTTP.
++No provider wake, checkpoint rewrite, quarantine clearing, or budget modification.
++"""
++import argparse,asyncio,json
++from pathlib import Path
++import httpx
++from app.demo_host.config import load
++from app.active import load as profile_load,active_scope
++from app.memory.runtime import configured
++from app.graph.schema import utc_now
++from cli.private import read_json
++CASE='INV-B09-b9d4d66e130ed348c4f6a50e9d66a891'
++INCIDENT='INC-B08-27a2cb5d89ae9ab9d86f999cf7b50472'
++ROOT=Path('.runtime/demo-presenter/run-01')
++PROOF=Path('docs/evidence/EXACT-ROAD-LIFECYCLE')
++
++class Journey:
++ def __init__(self):
++  self.config=load(ROOT/'host.json');self.passwords=read_json(ROOT/'presenter-credentials.json',private=True)
++  self.c=httpx.Client(base_url='http://127.0.0.1:8010/api/v1',timeout=120);self.tokens={};self.calls=[]
++ def token(self,who):
++  if who not in self.tokens:
++   r=self.c.post('/auth/demo-login',json={'operator_id':who,'demo_password':self.passwords[who]});r.raise_for_status();self.tokens[who]=r.json()['data']['access_token']
++  return self.tokens[who]
++ def call(self,method,path,body=None,who='OP-ANALYST',key=None,review=False):
++  h={'Authorization':'Bearer '+self.token(who)}
++  if key:h['Idempotency-Key']='EXACT-ROAD-'+key
++  if review:h['X-Reviewer-Authorization']='Bearer '+self.token('OP-ANALYST')
++  r=self.c.request(method,path,json=body,headers=h);out=r.json()
++  self.calls.append({'method':method,'path':path,'operator':who,'key':key,'http':r.status_code})
++  if r.status_code!=200:raise RuntimeError(json.dumps({'path':path,'http':r.status_code,'response':out}))
++  return out['data']
++ def close(self):
++  for t in self.tokens.values():self.c.post('/auth/logout',json={},headers={'Authorization':'Bearer '+t})
++  self.c.close()
++ def save(self,suffix,value):
++  path=Path(str(PROOF)+'-'+suffix+'.json')
++  if path.exists():raise RuntimeError('IMMUTABLE_PROOF_ALREADY_EXISTS')
++  path.write_text(json.dumps(value,indent=2)+'\n')
++ async def prepare(self):
++  # Preserve uncertainty about additional extent, rather than asserting that the
++  # two observed mechanisms exhaust every possible cause or affected segment.
++  alt=self.call('POST','/investigations/'+CASE+'/hypotheses',{'incident_ids':[INCIDENT],'asset_ids':['ROAD-100'],'cause_code':'SUBGRADE_FAILURE','statement':'Additional independently unsupported extent of subgrade damage beyond the inspected repair footprint remains uncertain.','mechanism':'The two existing reviewed inspections support bounded work, but do not establish the extent of any additional damage. Do not authorize extra work from this alternative.','confirming_codes':['SUBGRADE_FAILURE_OBSERVED','STRUCTURAL_TEST_FAILED'],'falsifying_codes':['SUBGRADE_TEST_NORMAL']},key='retained-extent-alternative')['status']
++  hypothesis=self.call('GET','/hypotheses/'+alt)
++  if not hypothesis['current_assessment_id']:self.call('POST','/hypotheses/'+alt+'/assessments',{'expected_hash':hypothesis['expected_hash'],'evidence_ids':[],'as_of':utc_now()},key='extent-inconclusive')
++  hs=self.call('GET','/investigations/'+CASE+'/hypotheses')['items'];by={h['id']:h for h in hs}
++  utility=by['HYP-B09-141618e9674e96533d1d680ab206832c'];road=by['HYP-B09-a15ee19ac01f02a6b6a3622d8f08df5d']
++  p=profile_load(self.config.profile)
++  with active_scope(p):db,memory=configured(p.graph,self.config.memory_profile).connect()
++  try:
++   with active_scope(p):
++    citations={doc:(await memory.retrieve(as_of=utc_now(),document_id=doc))['citations'][0] for doc in ['D020','D022']}
++  finally:db.connection.close();db.connection.connection_pool.disconnect()
++  basis=[{'hypothesis_id':h['id'],'assessment_id':h['current_assessment_id'],'reason':'Reviewed bounded mechanism supports conditional simulated remedy' if h['id']!=alt else 'Retained uncertain extent does not authorize additional work','addressed':h['id']!=alt} for h in hs]
++  evidence=sorted(set(utility['supporting_evidence_ids']+road['supporting_evidence_ids']))
++  tasks=[]
++  for id,action,target,dept,h,doc,dep,guard in [('isolate','UTILITY_ISOLATION','PIPE-100','DEPT-WATER',utility,'D022',None,None),('repair','UTILITY_LEAK_REPAIR','PIPE-100','DEPT-WATER',utility,'D022','isolate','ISOLATION_PROOF'),('road','SUBGRADE_REPAIR','ROAD-100','DEPT-ROAD',road,'D020','repair','UTILITY_VERIFICATION')]:
++   refs=h['supporting_evidence_ids'];conditions=[{'kind':k,'status':'MET','evidence_ids':refs} for k in ['CAUSAL_INSPECTION','SAFETY_REVIEW']]
++   if guard:conditions.append({'kind':guard,'status':'UNMET','depends_on_task_id':dep})
++   tasks.append({'id':id,'action_type':action,'target_ids':[target],'department_id':dept,'priority':'HIGH','prerequisites':['Exact human approval and independently reviewed synthetic field evidence required'],'depends_on':[dep] if dep else [],'evidence_ids':refs,'assessment_ids':[h['current_assessment_id']],'procedure_citation':citations[doc],'expected_outcome':'Bounded simulated '+action+'; completion alone does not establish case resolution','verification_criteria':'Independent reviewed post-work evidence and all typed dependency gates','risks':['Synthetic proposed procedure; unknown extent outside inspected footprint'],'remediation':{'mode':'CONDITIONAL' if dep else 'SUPPORTED_NOW','conditions':conditions}})
++  draft={'investigation_id':CASE,'issue':'ROAD_DAMAGE','version':1,'basis':basis,'evidence_ids':evidence,'tasks':tasks,'expected_outcomes':['Stop verified utility infiltration before repairing the inspected road footprint'],'risks':['This is an explicitly synthetic demo, not actual field execution'],'uncertainties':['Both causal assessments remain SUPPORTED, not independently VERIFIED; additional extent remains unresolved','Gemini reached its existing token budget; this draft is analyst-assisted, not an autonomous model recommendation'],'monitoring':{'issue':'ROAD_DAMAGE','required_evidence':['WEAR_EXPOSURE','FOLLOWUP_PAVEMENT'],'observation_opportunity':'Explicit simulated wear exposure and independently reviewed pavement follow-up after completed work','verification_criteria':'Utility repair independently verified first; no adverse pavement finding following synthetic wear; all work completed; absent opportunity remains unresolved'}}
++  plan=self.call('POST','/plans',{'draft':draft},key='draft-v1')
++  assignments=[{k:t[k] for k in ['task_id','action_type','target_ids','department_id']}|{'assignee_id':'OP-WATER-LEAD' if t['department_id']=='DEPT-WATER' else 'OP-ROAD-LEAD'} for t in plan['task_bindings']]
++  binding={'plan_id':plan['plan_id'],'plan_version':plan['version'],'plan_hash':plan['content_hash'],'assignments':assignments}
++  approval=self.call('POST','/plans/'+plan['plan_id']+'/submit-approval',{k:v for k,v in binding.items() if k!='plan_id'},key='submit-v1')
++  self.save('review',{'mode':'ANALYST_ASSISTED_DRAFT_AFTER_REAL_GEMINI_ASSESSMENT','case':CASE,'incident':INCIDENT,'plan':plan,'binding':binding,'approval':approval,'calls':self.calls,'human_approval_obtained':False,'work_execution_performed':False})
++  print(json.dumps({'plan_id':plan['plan_id'],'version':plan['version'],'hash':plan['content_hash'],'approval_id':approval['id'],'tasks':assignments},indent=2))
++
++ def execute(self,approved_hash):
++  from cli.private import write_private
++  review=json.loads(Path(str(PROOF)+'-review.json').read_text());b=review['binding']
++  if approved_hash!=b['plan_hash']:raise RuntimeError('EXACT_HUMAN_APPROVED_HASH_REQUIRED')
++  plan=self.call('GET','/plans/'+b['plan_id'])
++  if plan['content_hash']!=approved_hash or plan['status']!='PENDING_APPROVAL':raise RuntimeError('PLAN_CHANGED_OR_NOT_PENDING')
++  write_private(ROOT/'exact-road-execution-started.json',{'plan_id':b['plan_id'],'hash':approved_hash,'human_authorized':True,'at':utc_now(),'automatic_retry':False})
++  a=self.call('GET','/approvals/'+review['approval']['id'],who='OP-APPROVER')
++  decision=self.call('POST','/approvals/'+a['id']+'/decision',{**b,'expected_hash':a['expected_hash'],'decision':'APPROVED','reason':'Explicit human approval in Codex of this exact simulated plan, hash, tasks and assignees'},who='OP-APPROVER',key='approve-v1')
++  results={'mode':'AUTHENTICATED_OPERATOR_SIMULATION_NOT_AUTONOMOUS_EXECUTION','human_approved_hash':approved_hash,'approval':decision,'tasks':[]}
++  for action in ['UTILITY_ISOLATION','UTILITY_LEAK_REPAIR','SUBGRADE_REPAIR']:
++   assignment=next(t for t in b['assignments'] if t['action_type']==action);who=assignment['assignee_id']
++   w=self.call('POST','/work-orders',{**b,'approval_id':a['id'],'task_id':assignment['task_id']},who='OP-APPROVER',key=action+'-order')
++   wid=w['id']
++   def current():return self.call('GET','/work-orders/'+wid)
++   self.call('POST','/work-orders/'+wid+'/status',{'expected_hash':current()['expected_hash'],'new_status':'ASSIGNED','reason':'Assign exact human-approved synthetic task'},who=who,key=action+'-assign')
++   self.call('POST','/work-orders/'+wid+'/progress',{'expected_hash':current()['expected_hash'],'action':'START','reason':'Begin explicitly simulated task after prerequisite revalidation','evidence_ids':[]},who=who,key=action+'-start')
++   def report(purpose,codes):
++    def command(c,step,reviewed=False):
++     body={'expected_hash':current()['expected_hash'],'purpose':purpose,'command':c}
++     if reviewed:body['review_reason']='Independent analyst review of explicitly synthetic dated observations for exact approved work'
++     return self.call('POST','/work-orders/'+wid+'/inspections',body,who=who,key=action+'-'+purpose+'-'+step,review=reviewed)['status']
++    iid=command({'operation':'request_inspection','investigation_id':CASE,'asset_ids':assignment['target_ids'],'department_id':assignment['department_id'],'inspection_type':'B14_FOLLOWUP' if purpose=='FOLLOWUP' else action},'request')
++    for status in ['REQUESTED','SCHEDULED','IN_PROGRESS']:
++     inspection=self.call('GET','/inspections/'+iid)
++     c={'operation':'transition_inspection','inspection_id':iid,'expected_hash':inspection['expected_hash'],'status':status}
++     if status=='SCHEDULED':c['scheduled_at']=utc_now()
++     command(c,status)
++    inspection=self.call('GET','/inspections/'+iid);at=utc_now()
++    observations=[{'asset_id':assignment['target_ids'][0],'code':code,'statement':'Explicit synthetic demo observation '+code+'; no actual municipal field work claimed','method':'DIRECT_SYNTHETIC_FIELD_TEST','observed_at':at,'result':'OBSERVED','value':0.0 if code=='FOLLOWUP_PAVEMENT' else None,'unit':'boolean' if code=='FOLLOWUP_PAVEMENT' else None} for code in codes]
++    rid=command({'operation':'report_inspection','inspection_id':iid,'expected_hash':inspection['expected_hash'],'source_id':'EXACT-ROAD-'+action+'-'+purpose,'record_id':iid,'source_kind':'SYNTHETIC','observations':observations},'report',True)
++    return {'inspection_id':iid,'evidence_id':rid,'observations':observations}
++   codes=['ACTION_COMPLETED']+(['UTILITY_ISOLATION_CONFIRMED'] if action=='UTILITY_ISOLATION' else [])
++   completion=report('COMPLETION',codes)
++   completed=self.call('POST','/work-orders/'+wid+'/progress',{'expected_hash':current()['expected_hash'],'action':'COMPLETE','reason':'Reviewed synthetic completion; resolution requires separate independent follow-up','evidence_ids':[completion['evidence_id']]},who=who,key=action+'-complete')
++   row={'assignment':assignment,'work_order_id':wid,'completion_report':completion,'completion':completed}
++   if action!='UTILITY_ISOLATION':
++    if action=='SUBGRADE_REPAIR':
++     results['monitoring_before_final_followup']={'plan':self.call('GET','/plans/'+b['plan_id']),'investigation':self.call('GET','/investigations/'+CASE),'monitoring':self.call('GET','/monitoring')}
++     self.save('monitoring',results['monitoring_before_final_followup'])
++    start=utc_now();follow=report('FOLLOWUP',['POST_REPAIR_PRESSURE_NORMAL','POST_REPAIR_LEAK_ABSENT'] if action=='UTILITY_LEAK_REPAIR' else ['WEAR_EXPOSURE','FOLLOWUP_PAVEMENT']);end=utc_now()
++    outcome=self.call('POST','/work-orders/'+wid+'/outcomes',{'expected_hash':current()['expected_hash'],'evidence_ids':[follow['evidence_id']],'window_start':start,'window_end':end},key=action+'-evaluate')
++    required='UTILITY_VERIFIED' if action=='UTILITY_LEAK_REPAIR' else 'RESOLUTION_VERIFIED'
++    if outcome['assessment_status']!=required:raise RuntimeError('INDEPENDENT_VERIFICATION_NOT_PASSED')
++    row.update(followup_report=follow,outcome=outcome)
++   results['tasks'].append(row)
++  results['calls']=self.calls;self.save('execution',results)
++  self.verify()
++ def verify(self):
++  review=json.loads(Path(str(PROOF)+'-review.json').read_text());pid=review['binding']['plan_id']
++  out={'mode':'FRESH_HTTP_PERSISTED_READBACK_NO_PROVIDER','incident':self.call('GET','/incidents/'+INCIDENT),'investigation':self.call('GET','/investigations/'+CASE),'plan':self.call('GET','/plans/'+pid),'hypotheses':self.call('GET','/investigations/'+CASE+'/hypotheses'),'graph':self.call('GET','/investigations/'+CASE+'/graph?depth=4&include_candidates=true'),'trace':self.call('GET','/investigations/'+CASE+'/trace'),'memory':self.call('GET','/cases/'+INCIDENT+'/memory'),'monitoring':self.call('GET','/monitoring')}
++  if out['plan']['status']!='COMPLETED' or out['incident']['status']!='ENDED' or out['investigation']['status']!='COMPLETED':raise RuntimeError('FULL_LIFECYCLE_NOT_COMPLETE')
++  own=next((row for row in out['memory']['items'] if row['id']==INCIDENT),None)
++  if not own or len(own['outcome_ids'])!=5 or len(own['evidence_ids'])!=5:raise RuntimeError('COMPLETED_EPISODE_MEMORY_NOT_READABLE')
++  if len([n for n in out['graph']['nodes'] if n.get('kind')=='WorkOrder'])!=3:raise RuntimeError('THREE_WORK_ORDERS_NOT_VISIBLE')
++  self.save('verified-'+utc_now().replace(':','').replace('.',''),out)
++  print(json.dumps({'incident':INCIDENT,'status':out['incident']['status'],'plan_status':out['plan']['status'],'investigation_status':out['investigation']['status'],'memory_items':len(out['memory']['items']),'graph_nodes':len(out['graph'].get('nodes',[])),'provider_requests':0},indent=2))
++
++def main():
++ p=argparse.ArgumentParser();p.add_argument('operation',choices=['prepare','execute','verify']);p.add_argument('--approve-plan-hash');args=p.parse_args();j=Journey()
++ try:
++  if args.operation=='prepare':asyncio.run(j.prepare())
++  elif args.operation=='execute':j.execute(args.approve_plan_hash)
++  else:j.verify()
++ finally:j.close()
++if __name__=='__main__':main()

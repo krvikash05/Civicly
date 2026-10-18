@@ -1,0 +1,331 @@
+{
+  "version": "B11-R-1",
+  "scope": "demo-city organizational source memory only; no operational permissions",
+  "sdk": "graphrag-sdk[pdf,markdown]==1.4.0",
+  "graphs": {
+    "documents": "civicly_docs",
+    "ontology": "civicly_docs__ontology",
+    "canonical": "civicly_knowledge",
+    "tests": "validated B11 document UUID graphs, B11 canonical or explicitly configured B10 investigation proof graphs"
+  },
+  "source": {
+    "additionalProperties": false,
+    "properties": {
+      "document_id": {
+        "pattern": "^D[0-9]{3}(?:-PDF)?$",
+        "title": "Document Id",
+        "type": "string"
+      },
+      "title": {
+        "maxLength": 200,
+        "minLength": 1,
+        "title": "Title",
+        "type": "string"
+      },
+      "municipality_id": {
+        "const": "demo-city",
+        "default": "demo-city",
+        "title": "Municipality Id",
+        "type": "string"
+      },
+      "version": {
+        "maximum": 10000,
+        "minimum": 1,
+        "title": "Version",
+        "type": "integer"
+      },
+      "owner_department_id": {
+        "title": "Owner Department Id",
+        "type": "string"
+      },
+      "source_kind": {
+        "const": "SYNTHETIC",
+        "default": "SYNTHETIC",
+        "title": "Source Kind",
+        "type": "string"
+      },
+      "synthetic": {
+        "const": true,
+        "default": true,
+        "title": "Synthetic",
+        "type": "boolean"
+      },
+      "source_authority": {
+        "const": "SYNTHETIC_DEMONSTRATION",
+        "default": "SYNTHETIC_DEMONSTRATION",
+        "title": "Source Authority",
+        "type": "string"
+      },
+      "review_status": {
+        "enum": [
+          "REVIEWED",
+          "PROPOSED",
+          "DISPUTED"
+        ],
+        "title": "Review Status",
+        "type": "string"
+      },
+      "reviewed_by": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Reviewed By"
+      },
+      "effective_from": {
+        "title": "Effective From",
+        "type": "string"
+      },
+      "effective_to": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Effective To"
+      },
+      "file_path": {
+        "title": "File Path",
+        "type": "string"
+      },
+      "sha256": {
+        "pattern": "^[0-9a-f]{64}$",
+        "title": "Sha256",
+        "type": "string"
+      },
+      "status": {
+        "default": "ACTIVE",
+        "enum": [
+          "ACTIVE",
+          "REVOKED"
+        ],
+        "title": "Status",
+        "type": "string"
+      },
+      "supersedes": {
+        "anyOf": [
+          {
+            "minimum": 1,
+            "type": "integer"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Supersedes"
+      },
+      "derived_from": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Derived From"
+      },
+      "action_types": {
+        "items": {
+          "type": "string"
+        },
+        "maxItems": 12,
+        "minItems": 1,
+        "title": "Action Types",
+        "type": "array"
+      }
+    },
+    "required": [
+      "document_id",
+      "title",
+      "version",
+      "owner_department_id",
+      "review_status",
+      "effective_from",
+      "file_path",
+      "sha256",
+      "action_types"
+    ],
+    "title": "Source",
+    "type": "object"
+  },
+  "citation": {
+    "additionalProperties": false,
+    "properties": {
+      "source_document_id": {
+        "maxLength": 40,
+        "minLength": 1,
+        "title": "Source Document Id",
+        "type": "string"
+      },
+      "source_version": {
+        "minimum": 1,
+        "title": "Source Version",
+        "type": "integer"
+      },
+      "canonical_document_id": {
+        "maxLength": 60,
+        "minLength": 1,
+        "title": "Canonical Document Id",
+        "type": "string"
+      },
+      "owner_department_id": {
+        "title": "Owner Department Id",
+        "type": "string"
+      },
+      "source_uri": {
+        "maxLength": 512,
+        "title": "Source Uri",
+        "type": "string"
+      },
+      "content_checksum": {
+        "pattern": "^[0-9a-f]{64}$",
+        "title": "Content Checksum",
+        "type": "string"
+      },
+      "quote_excerpt": {
+        "maxLength": 800,
+        "minLength": 1,
+        "title": "Quote Excerpt",
+        "type": "string"
+      },
+      "passage_location": {
+        "pattern": "^chunk:[0-9]+:[a-f0-9-]{36}$",
+        "title": "Passage Location",
+        "type": "string"
+      },
+      "chunk_sha256": {
+        "pattern": "^[0-9a-f]{64}$",
+        "title": "Chunk Sha256",
+        "type": "string"
+      },
+      "confidence_label": {
+        "enum": [
+          "SOURCE_REVIEWED_SYNTHETIC",
+          "PROPOSED",
+          "DISPUTED"
+        ],
+        "title": "Confidence Label",
+        "type": "string"
+      },
+      "assertion_status": {
+        "const": "PROPOSED",
+        "default": "PROPOSED",
+        "title": "Assertion Status",
+        "type": "string"
+      },
+      "retrieved_at": {
+        "title": "Retrieved At",
+        "type": "string"
+      },
+      "effective_from": {
+        "title": "Effective From",
+        "type": "string"
+      },
+      "derived_from": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Derived From"
+      },
+      "trusted_as_instructions": {
+        "const": false,
+        "default": false,
+        "title": "Trusted As Instructions",
+        "type": "boolean"
+      }
+    },
+    "required": [
+      "source_document_id",
+      "source_version",
+      "canonical_document_id",
+      "owner_department_id",
+      "source_uri",
+      "content_checksum",
+      "quote_excerpt",
+      "passage_location",
+      "chunk_sha256",
+      "confidence_label",
+      "retrieved_at",
+      "effective_from"
+    ],
+    "title": "Citation",
+    "type": "object"
+  },
+  "owner_mapping": {
+    "Drainage Operations": "DEPT-DRAIN",
+    "Road Maintenance": "DEPT-ROAD",
+    "Water Utilities": "DEPT-WATER",
+    "Sanitation Services": "DEPT-SAN",
+    "Civic Operations Coordination": "DEPT-COORD"
+  },
+  "canonical_strategy": "Immutable v3 registry; version-bound strict Document plus validated CivicDocumentVersion companion via compatible additive0003. No SDK labels/indexes in canonical graph. Existing KnowledgeProcedure ORGPROC IDs/document_ref/status PROPOSED; string node version projected explicitly to integer MCP version. No automatic verification.",
+  "ingestion": {
+    "phases": [
+      "STAGED",
+      "INDEXED",
+      "READY"
+    ],
+    "authoritative_reference": "Document+companion atomic fenced commit only after actual SDK chunk text/hash/vector verification; READY required",
+    "retry": "Complete indexed source reused by same ID/hash; partial SDK ingestion fails closed for explicit repair; never acknowledge partial document",
+    "revocation": "Explicit operator/reason, previous metadata retained atomically in history_json; no fallback to superseded version",
+    "migration": "0003 checksummed, additive, readiness verified;0001/0002 unchanged",
+    "single_writer_lease_seconds": 60,
+    "deadline_seconds": 30,
+    "parsed_text_character_limit": 102400,
+    "version_update": "version>1 requires explicit supersedes of latest registered same-owner version; earlier effective history retained",
+    "indexing_validation": "Before successful replay/new registration and retrieval: actual Chunk embedding VECTOR index OPERATIONAL, dimension64 cosine; Chunk text FULLTEXT; exact bounded chunk ID count; finite64 vectors matching deterministic hash embedder within float32 tolerance. Invalid/missing state raises SDK_PARTIAL_REQUIRES_REPAIR, no automatic repair. Does not prove ANN internal membership or cross-graph atomic consistency."
+  },
+  "retrieval": {
+    "strategy": "Actual SDK LocalRetrieval; graph-scoped GRAPH.RO_QUERY, lexical hash64 embedding offline baseline",
+    "generated_cypher": false,
+    "llm_calls": false,
+    "max_candidates": 20,
+    "top_k": 12,
+    "max_citations": 5,
+    "max_excerpt_chars": 800,
+    "source_bytes_limit": 1000000,
+    "sdk_chunks_limit": 128,
+    "canonical_versions_limit": 100,
+    "confidence_labels": [
+      "SOURCE_REVIEWED_SYNTHETIC",
+      "PROPOSED",
+      "DISPUTED"
+    ],
+    "assertions": "PROPOSED; review of source does not verify physical/causal truth",
+    "current_version": "highest registered version effective at cutoff, superseded/revoked sources cannot silently fall back; historical cutoff supported",
+    "source_revisions": "recheck canonical document revision before acknowledgment; disable civic-only cache for organizational tools",
+    "security": "trusted exact-key private capability, closed manifest, source whitelist/checksum/path/symlink/injection checks; no evaluator artifacts or autonomous operations",
+    "eligible_fallback": "After actual global SDK top12, read and verify bounded eligible SDK chunks (<=20 sources, <=128 chunks/source); include applicable source chunks omitted by ranking, explicitly flag ELIGIBLE_SOURCE_FALLBACK. Not metadata-only or learned relevance evidence. Existing max5citations/max800chars applies; truncated means additional verified eligible chunks omitted."
+  },
+  "memory_layers": {
+    "working": "unchanged LangGraph/FalkorDBSaver",
+    "episodic": "Immutable B09 assessment corrections: temporal visibility before limit; latest assessed_at/id DESC with max_results+1 lookahead <=101; selected results assessed_at/id ASC. Truncation exposes omitted older history, exact total unknown; OMITTED_PREDECESSOR IDs are historical references, never returned evidence. No schema change to existing outcome_summary/envelope.",
+    "semantic": "existing B05 topology-qualified case retrieval and B09 classification; never promote correlation",
+    "procedural": "source-backed versioned citations through existing two MCP tools"
+  },
+  "limitations": [
+    "Offline lexical/extraction baseline is not genuine model-quality proof",
+    "SDK internal partial ingestion quarantined for explicit repair; automatic recovery covers complete SDK ingest to canonical registration boundary",
+    "B10 genuine live gates deferred explicitly; OPEN/PARTIAL",
+    "B12+ operational models remain unimplemented"
+  ],
+  "effective_date_mapping": "Frozen manifest calendar dates explicitly denote UTC start-of-day validity in this synthetic demonstration. Originals retained; not fabricated observation/review timestamps."
+}

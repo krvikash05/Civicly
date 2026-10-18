@@ -1,0 +1,77 @@
+....F                                                                    [100%]
+=================================== FAILURES ===================================
+__________ test_latest_assessment_budget_and_history_beyond_hard_cap ___________
+
+db = <falkordb.falkordb.FalkorDB object at 0x10f8a9460>
+tmp_path = PosixPath('/private/var/folders/ng/nxnstkjs7tn9dbx9nhvtvmzw0000gn/T/pytest-of-vikashkumar/pytest-108/test_latest_assessment_budget_0')
+
+    def test_latest_assessment_budget_and_history_beyond_hard_cap(db,tmp_path):
+     p,r,clock,receipt,inv,h=prepare(db,tmp_path/'agent.json','WATERLOGGING')
+     with active_scope(p):
+      service=CivicReadService(db,source_graph=p.graph)
+      def read(limit,at=None):
+       return service.run('retrieve_case_memory',{'investigation_id':inv,'max_results':limit,'as_of':at or clock()},Context(trace_id=uuid4().hex,execution_id=uuid4().hex,source_graph=p.graph,investigation_id=inv))
+      latest=r._read('MATCH (:Hypothesis {id:$id})-[:HAS_ASSESSMENT]->(a:HypothesisAssessment) RETURN a.id ORDER BY a.assessed_at DESC,a.id DESC LIMIT 1',{'id':h})[0][0]
+      small=read(1);assert json.loads(small['cases'][0]['outcome_summary'])['assessment_id']==latest
+      assert small['truncated'] and any('OMITTED_PREDECESSOR' in x for x in small['data']['gaps'])
+      f=Fixture(r,clock,{'WATERLOGGING':receipt},p.graph,{})
+      cutoff=clock();ids=[]
+>     for n in range(96):ids.append(assess(f,h,ref='B11R-correction-'+str(n)).entity_id)
+                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+backend/tests/integration/test_memory_review.py:69: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+backend/tests/b09_fixtures.py:119: in assess
+    return f.service.execute({'operation': 'assess', 'request_id': ref, 'hypothesis_id': hypothesis_id,
+backend/app/services/evidence/service.py:89: in execute
+    entity, nodes, updates, edges, assessment = self.plan(q, actor, reader, jid, now, session.revision)
+                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/app/services/evidence/service.py:246: in plan
+    result = self.evaluate(q, definition, h, cutoff, now, revision)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/app/services/evidence/service.py:261: in evaluate
+    history = Reader(self.repo, now).histories(h.id)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <app.services.evidence.reader.Reader object at 0x10f8a8830>
+hypothesis_id = 'HYP-B09-21ddd5f91e62c68fe556529762144190'
+
+    def histories(self, hypothesis_id):
+        key = GraphQueries._time_key
+        rows = self.query('MATCH (h:Hypothesis {id:$id})-[:HAS_ASSESSMENT]->(a:HypothesisAssessment) WHERE a.municipality_id=$scope AND '
+            + key('a.created_at') + '<=$at AND ' + key('a.assessed_at')
+            + '<=$at RETURN a.id,a.rationale ORDER BY ' + key('a.assessed_at') + ',a.id LIMIT 101',
+            {'id': hypothesis_id, 'at': timestamp(self.as_of).strftime('%Y-%m-%dT%H:%M:%S.%f')})
+        if len(rows) > 100:
+>           raise PreconditionFailed('B09 assessment history exceeds100; no hidden latest record')
+E           app.graph.repository.PreconditionFailed: B09 assessment history exceeds100; no hidden latest record
+
+backend/app/services/evidence/reader.py:151: PreconditionFailed
+=============================== warnings summary ===============================
+backend/.venv/lib/python3.12/site-packages/graphrag_sdk/core/models.py:19
+  /Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/graphrag_sdk/core/models.py:19: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.14/migration/
+    class DataModel(BaseModel):
+
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyPacked has no __module__ attribute
+
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyObject has no __module__ attribute
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+============================= slowest 10 durations =============================
+15.63s call     tests/integration/test_memory_review.py::test_latest_assessment_budget_and_history_beyond_hard_cap
+2.46s setup    tests/integration/test_memory_review.py::test_replay_checks_required_indexing_state[wrong_vector]
+2.36s setup    tests/integration/test_memory_review.py::test_all_seeded_department_action_pairs_survive_global_crowding
+2.33s setup    tests/integration/test_memory_review.py::test_replay_checks_required_indexing_state[missing]
+2.16s setup    tests/integration/test_memory_review.py::test_replay_checks_required_indexing_state[missing_index]
+1.66s call     tests/integration/test_memory_review.py::test_all_seeded_department_action_pairs_survive_global_crowding
+0.10s call     tests/integration/test_memory_review.py::test_replay_checks_required_indexing_state[missing_index]
+0.09s call     tests/integration/test_memory_review.py::test_replay_checks_required_indexing_state[wrong_vector]
+0.09s call     tests/integration/test_memory_review.py::test_replay_checks_required_indexing_state[missing]
+0.01s setup    tests/integration/test_memory_review.py::test_latest_assessment_budget_and_history_beyond_hard_cap
+=========================== short test summary info ============================
+FAILED backend/tests/integration/test_memory_review.py::test_latest_assessment_budget_and_history_beyond_hard_cap
+1 failed, 4 passed, 3 warnings in 28.07s
+sys:1: DeprecationWarning: builtin type swigvarlink has no __module__ attribute

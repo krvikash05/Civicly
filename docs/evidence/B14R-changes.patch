@@ -1,0 +1,743 @@
+--- a/backend/AGENTS_RUNTIME.md
++++ b/backend/AGENTS_RUNTIME.md
+@@ -183,3 +183,21 @@
+ required; no model-driven migration/bootstrap. See backend/PLANNING.md and B12
+ review evidence. Prior B11-1/B10-3 prompts and genuine smoke evidence preserved;
+ no further live provider authorization is implied.
++
++## B14-R validated recurrence refresh
++
++Explicit owned resume of a reopened investigation may discover additional sourced
++INVESTIGATES incident links. `recurrence.refresh` validates the B08 intake journal,
++canonical hash/receipt, AFTER_RECORDED_END, original cluster/issue, prior dated end,
++new active targets and actual independently reviewed report evidence. Existing
++three-incident graph/state bound retained. It constructs a new closed validated
++state with active incident/asset IDs and evidence hashes plus host-generated
++RECURRENCE_SCOPE_REFRESH audit. Historical incident links, native plan/hypothesis
++provenance and old public Saver checkpoint remain; no injection on decode, no
++historical checkpoint editing. Old plan/hypotheses are recorded earlier-episode
++context, never authority to assert cause/execute for new occurrence. Mandatory
++fresh MCP READ follows revision/scope refresh before another analytical action.
++Absent recurrence links leaves original resume behavior unchanged. Invalid refresh
++fails closed via existing ownership/quarantine; no B15 delivery/automatic wake or
++live calls. Actual test uses scripted READ new incident→READ new report→PAUSE with
++real MCP/Saver, clearly separate from genuine Gemini acceptance (still OPEN/PARTIAL).
+--- a/backend/OPERATIONS.md
++++ b/backend/OPERATIONS.md
+@@ -141,3 +141,36 @@
+ B14-RESULTS.md. Tests use real local FalkorDB6.0.2, actual B09/B08/B11 services;
+ provider guard blocks Gemini/countTokens in pytest and inherited children. No live
+ provider, lifecycle, full regression or scenario-catalog run is claimed.
++
++## B14-R current corrections
++
++Current verification B14-2 supersedes B14-1 for fresh evaluations. The explicitly
++synthetic24hour waste minimum now measures from each target's latest supplied
++ACTUAL_PICKUPS observed_at, not evaluation-window start. Every supplied window must
++claim >=24hours and actually elapse at least its claimed duration after that pickup;
++final condition follows the window. Equal repeated aggregate counts are not summed
++or inferred as vehicle identities: conservatively latest actual timestamp restarts
++observation. Differing pickup totals remain INCONCLUSIVE, missing/short/unknown
++opportunity MONITORING. Other target/coverage/review/source/chronology/contradiction
++rules unchanged. `verification_v1.py` preserves original B14-1 bytes for historical
++interpretation; contracts.operations.historical_verification retains its meaning.
++Existing outcomes and exact-request replay keep original policy/provenance. No
++retroactive outcome rewrite or inference that historical B14-1 success satisfies
++B14-2. New evaluation signatures use new version.
++
++Recurrence reuses the original investigation, atomically adding a temporal sourced
++INVESTIGATES→new incident link with all original links retained. Response/event gives
++investigation_id and investigates_relationship_id. Existing finite3incident bound
++is enforced before commit; exceeding it requires explicit operator redesign, no
++silent truncation/successor or unrelated infrastructure.
++
++On explicit same-thread resume, `agents.recurrence.refresh` validates the new link,
++B08 journal/canonical hash/COMMITTED receipt/AFTER_RECORDED_END, cluster/issue/targets,
++prior dated end and actual reviewed recurrence reports. It projects active episode
++IDs/assets and source hashes through full InvestigationState validation and records
++a host-generated RECURRENCE_SCOPE_REFRESH audit; original ended episode links and
++old checkpoints stay. Existing plan/hypothesis references remain historical episode
++context, not causal authority for the new incident. Mandatory fresh MCP READ barrier
++remains. Invalid/ambiguous refresh uses existing recovery/quarantine; no automatic
++wake, historical checkpoint rewrite or caller-injected incident list. See
++backend/AGENTS_RUNTIME.md and docs/evidence/B14R-RESULTS.md for actual focused proof.
+--- a/backend/app/agents/runtime.py
++++ b/backend/app/agents/runtime.py
+@@ -250,7 +250,10 @@
+         s.wakes+=1;s.pause_reason=None;s.as_of=self.clock()
+         current=self.revision();changed=current!=s.graph_revision or any(self.repo.get_node(id).content_hash!=h for id,h in s.evidence.items())
+         s.refresh_required=changed;s.graph_revision=current
+-        if changed:s.errors.append('SOURCE_CHANGED_REFRESH_REQUIRED')
++        if changed:
++            from .recurrence import refresh
++            s=refresh(self.repo,s)
++            s.errors.append('SOURCE_CHANGED_REFRESH_REQUIRED')
+         return self.output(s,'AwaitDependency')
+     async def run(self,initial=None,*,thread_id,resume=False,budget_increase=None,authorized=False,operator_reason=None):
+         if budget_increase is not None and (authorized is not True or not isinstance(operator_reason,str) or not operator_reason.strip() or len(operator_reason)>512):raise RecoveryRequired('BUDGET_INCREASE_REQUIRES_OPERATOR_AUTHORIZATION')
+--- a/backend/app/services/operations/execution.py
++++ b/backend/app/services/operations/execution.py
+@@ -187,9 +187,12 @@
+        transition(old.kind,old.properties['status'],'REOPENED');n=n.model_copy(update={'properties':{**n.properties,'status':'REOPENED'}})
+       updates[n.id]=(old,n.properties);hashes[n.id]=digest(n.properties)
+      edges.extend((e.kind,e.source,e.target,e.properties) for e in links)
++     if len(old_incidents)>=3:raise PreconditionFailed('RECURRENCE_INVESTIGATION_SCOPE_LIMIT')
++     edge('INVESTIGATES',inv.id,intake_result.incident_id,jid)
++     scope_link=edges[-1][3]['id']
+      changed(inv,'REOPENED');status='RECURRENCE_DETECTED';event_type='RECURRENCE_DETECTED'
+      result=outcome(status,'INCONCLUSIVE',refs,{'start':q.window_start,'end':q.window_end},gaps)
+-     result.update(prior_outcome_id=prior['id'],new_incident_id=intake_result.incident_id,cluster_id=intake_result.cluster_id,classification=intake_result.classification)
++     result.update(investigation_id=inv.id,investigates_relationship_id=scope_link,prior_outcome_id=prior['id'],new_incident_id=intake_result.incident_id,cluster_id=intake_result.cluster_id,classification=intake_result.classification)
+      states[-1]=('outcome',result['id'],result)
+     else:
+      if plan.properties['status']!='MONITORING':raise PreconditionFailed('PLAN_NOT_MONITORING')
+--- a/backend/app/services/operations/storage.py
++++ b/backend/app/services/operations/storage.py
+@@ -6,7 +6,7 @@
+ from .models import OpsRecovery
+ NODES={'Approval','WorkOrder','DomainEvent','StatusEvent','InterventionOutcome','Evidence','Finding','Inspection','HypothesisAssessment','Complaint','Incident','ProblemCluster'}
+ UPDATES={'ResolutionPlan','ActionTask','Approval','WorkOrder','Inspection','Hypothesis','Incident','Investigation','ProblemCluster'}
+-EDGES={'IMPLEMENTS','AUTHORIZED_BY','HAS_EVENT','EMITTED_EVENT','RESULTED_IN','INSPECTS','PRODUCED','ESTABLISHES','HAS_ASSESSMENT','SUPPORTED_BY','CONTRADICTED_BY','REPORTS','OCCURRED_AT','AFFECTS','PART_OF'}
++EDGES={'INVESTIGATES','IMPLEMENTS','AUTHORIZED_BY','HAS_EVENT','EMITTED_EVENT','RESULTED_IN','INSPECTS','PRODUCED','ESTABLISHES','HAS_ASSESSMENT','SUPPORTED_BY','CONTRADICTED_BY','REPORTS','OCCURRED_AT','AFFECTS','PART_OF'}
+ class Storage:
+  def __init__(self,repo):self.repo=repo
+  def get(self,kind,id):
+--- a/backend/app/services/operations/verification.py
++++ b/backend/app/services/operations/verification.py
+@@ -1,8 +1,8 @@
+-"""B14-1 synthetic demo observation policy; no hidden truth or provider access."""
++"""B14-2 synthetic demo observation policy; no hidden truth or provider access."""
+ from app.graph.schema import timestamp
+ from app.graph.repository import PreconditionFailed
+ 
+-VERSION = 'B14-1'
++VERSION = 'B14-2'
+ CODES = {
+  'ACTION_COMPLETED':None, 'ACTION_FAILED':None,
+  'COMPARABLE_FOLLOWUP_RAINFALL':None, 'FOLLOWUP_WATERLOGGING':'boolean',
+@@ -58,8 +58,11 @@
+    elif min(scheduled)<1 or scheduled!=actual:
+     gaps.append(target+': scheduled/actual pickup coverage insufficient');opportunity=False
+    windows=rows['REACCUMULATION_WINDOW']
+-   if any(x.value<24 or (timestamp(x.observed_at)-lo).total_seconds()<x.value*3600 for x in windows):
+-    gaps.append(target+': synthetic24hour observation window not established');opportunity=False
++   # Equal aggregate counts do not identify vehicles or independent pickups.
++   # Conservatively restart observation at the latest actual pickup timestamp.
++   anchor=max(timestamp(x.observed_at) for x in rows['ACTUAL_PICKUPS'])
++   if any(x.value<24 or (timestamp(x.observed_at)-anchor).total_seconds()<x.value*3600 for x in windows):
++    gaps.append(target+': synthetic24hour post-pickup observation window not established');opportunity=False
+    if min(timestamp(x.observed_at) for x in final)<max(timestamp(x.observed_at) for x in windows):
+     gaps.append(target+': reaccumulation finding precedes window');opportunity=False
+    if any(timestamp(x.observed_at)>min(timestamp(v.observed_at) for v in windows) for code in ['SCHEDULED_PICKUPS','ACTUAL_PICKUPS'] for x in rows[code]):
+--- a/backend/tests/integration/test_execution_runtime.py
++++ b/backend/tests/integration/test_execution_runtime.py
+@@ -1,5 +1,5 @@
+ """B14 real FalkorDB/SDK/native B09 journals and B08 recurrence, zero providers."""
+-import asyncio,json,copy
++import asyncio,json,copy,os
+ from pathlib import Path
+ import pytest
+ from app.active import active_scope
+@@ -16,7 +16,7 @@
+ from tests.integration.test_memory_graphrag import memory
+ pytestmark=pytest.mark.integration
+ 
+-def save(name,value):Path('docs/evidence/B14-'+name+'.json').write_text(json.dumps(value,indent=2)+'\n')
++def save(name,value):Path('docs/evidence/'+os.environ.get('CIVICLY_OPERATIONS_EVIDENCE_PREFIX','B14')+'-'+name+'.json').write_text(json.dumps(value,indent=2)+'\n')
+ 
+ @pytest.mark.parametrize('issue',['WATERLOGGING','ROAD_DAMAGE','WASTE_ACCUMULATION'])
+ def test_actual_three_issue_completion_verification_and_water_recurrence(db,tmp_path,memory,issue):
+@@ -40,13 +40,18 @@
+    query,followup=await f.followup()
+    verified=await f.call(query,'OP-ANALYST')
+    assert verified['assessment_status']=='RESOLUTION_VERIFIED' and verified['case_closed']
+-   assert verified['policy_version']=='B14-1' and verified['evidence_references'][0]['id']==followup['entity_id']
++   from app.services.operations.verification import VERSION
++   assert verified['policy_version']==VERSION and verified['evidence_references'][0]['id']==followup['entity_id']
+    assert r.get_node(f.b['plan_id']).properties['status']=='COMPLETED' and r.get_node(inv).properties['status']=='COMPLETED'
+    assert planning.store.get(f.b['plan_id'])==draft_saved
+    assert await f.call(query,'OP-ANALYST')==verified
+    assert r._read('MATCH (w:WorkOrder {id:$id})-[:RESULTED_IN]->(o:InterventionOutcome) RETURN count(o)',{'id':f.w['id']})==[[3]]
+    proof={'graph':p.graph,'binding':f.b,'completion':completed,'no_opportunity':awaiting,'verified':verified,'report':report,'followup':followup,'provider_calls':0}
+    if issue=='WATERLOGGING':
++    before_agent=None
++    if os.environ.get('CIVICLY_B14R_CHECKPOINT_PROOF')=='1':
++     from tests.b14r_runtime import pause
++     before_agent=await pause(p,r,clock,path,inv,f,planning)
+     recurrence,rep=await f.followup(1.0)
+     incident=Reader(r,clock()).edges('INVESTIGATES',source=inv)
+     old=next(r.get_node(e.target) for e in incident if r.get_node(e.target).kind=='Incident')
+@@ -57,7 +62,16 @@
+     assert r.get_node(reopened['cluster_id']).properties['status']=='REOPENED' and r.get_node(inv).properties['status']=='REOPENED'
+     assert reopened['new_incident_id']!=old.id and r.get_node(old.id).properties['status']=='ENDED'
+     assert ops.store.get('outcome',verified['id'])==verified
++    scope_before=r._read('MATCH (i:Investigation {id:$id})-[e:INVESTIGATES]->(n:Incident) RETURN n.id,e.id ORDER BY n.id',{'id':inv})
++    assert {row[0] for row in scope_before}=={old.id,reopened['new_incident_id']}
++    assert reopened['investigation_id']==inv and reopened['investigates_relationship_id'] in {row[1] for row in scope_before}
++    native_before=r._read('MATCH (n:CivicEntity) RETURN count(n)');events_before=r._read('MATCH (e:DomainEvent) RETURN count(e)')
+     assert await f.call(recurrence,'OP-ANALYST')==reopened
++    assert scope_before==r._read('MATCH (i:Investigation {id:$id})-[e:INVESTIGATES]->(n:Incident) RETURN n.id,e.id ORDER BY n.id',{'id':inv})
++    assert r._read('MATCH (n:CivicEntity) RETURN count(n)')==native_before and r._read('MATCH (e:DomainEvent) RETURN count(e)')==events_before
++    if before_agent:
++     from tests.b14r_runtime import resume
++     proof['checkpoint_refresh']=await resume(p,r,clock,path,inv,f,planning,before_agent,reopened,rep)
+     # Existing B05 case-memory retrieval, rather than a B14 fake history.
+     memory_result=GraphAnalysis(r).cases(CaseRequest(seed_incident_id=reopened['new_incident_id'],as_of=clock(),limit=40,max_hops=4,include_candidates=True))
+     assert verified['id'] in {n.id for n in memory_result.nodes}
+--- a/backend/tests/unit/test_execution_policy.py
++++ b/backend/tests/unit/test_execution_policy.py
+@@ -7,7 +7,7 @@
+ def time(hours):return (datetime(2026,10,18,tzinfo=timezone.utc)+timedelta(hours=hours)).isoformat().replace('+00:00','Z')
+ def ob(code,hour=2,value=None,unit=None,**extra):return Observation(asset_id='A',code=code,statement='Authored synthetic observation',method='DIRECT_SYNTHETIC_FIELD_TEST',observed_at=time(hour),value=value,unit=unit,**extra)
+ def rows(issue,adverse=0.0):
+- if issue=='WASTE_ACCUMULATION':return [ob('SCHEDULED_PICKUPS',2,1.0,'pickups'),ob('ACTUAL_PICKUPS',3,1.0,'pickups'),ob('REACCUMULATION_WINDOW',26,24.0,'hours'),ob('WASTE_REACCUMULATION',26,adverse,'boolean')]
++ if issue=='WASTE_ACCUMULATION':return [ob('SCHEDULED_PICKUPS',2,1.0,'pickups'),ob('ACTUAL_PICKUPS',2,1.0,'pickups'),ob('REACCUMULATION_WINDOW',26,24.0,'hours'),ob('WASTE_REACCUMULATION',26,adverse,'boolean')]
+  return [ob(REQUIRED[issue][0],2),ob(REQUIRED[issue][1],3,adverse,'boolean')]
+ @pytest.mark.parametrize('issue',list(REQUIRED))
+ @pytest.mark.parametrize('adverse,expected',[(0.0,'RESOLUTION_VERIFIED'),(1.0,'PROBLEM_PERSISTS')])
+--- a/blockers.md
++++ b/blockers.md
+@@ -1,4 +1,7 @@
+ # blockers.md — Current blockers and verification spikes
++
++> **CURRENT B14-R — TECHNICALLY PASS, HUMAN REVIEW PENDING.** Corrected waste B14-2 anchors24hours to latest actual pickup; B14-1 outcomes/implementation preserved. Recurrence includes original investigation/new incident sourced link and validated explicit same-thread active-episode refresh; old checkpoints retained, actual MCP/Saver reads exercised.14distinctPASS(11unit/3real),0unresolvedFAIL/0SKIP; both SPEC validatorsPASS once;5pytest/child guards0provider. B10 full genuine acceptance OPEN/PARTIAL. All18requirements binding; no B15/live/full-suite/lifecycle. This summary supersedes historical headers; docs/evidence/B14R-RESULTS.md.
++
+ 
+ > **CURRENT B14 — TECHNICALLY PASS, HUMAN REVIEW PENDING.** B13 accepted.41distinct focusedPASS(30unit/11real),0unresolvedFAIL/0SKIP; both final SPEC validatorsPASS. Authenticated simulated execution, actual B09 evidence/assessment history, independent3issue follow-up, failure/recurrence and existing memory verified.12pytest/child interlocks0external Gemini/countTokens; B10 full genuine acceptance OPEN/PARTIAL. Earlier data/migrations/history/quarantines preserved. No B15delivery/worker/API/frontend/live or full-backend completion. All18requirements binding. This current summary supersedes historical headers; docs/evidence/B14-RESULTS.md.
+ 
+@@ -551,3 +554,9 @@
+ No unresolved focused B14 failure. Demonstration policy, binary condition observations and report-level pickup totals, synthetic PROPOSED procedures and bounded history limits remain; no claim of actual municipal dispatch, hydraulic/structural prediction or independent physical inspector organizations. Independent authenticated analyst review and deterministic verification are real. PENDING events await B15 delivery/worker; no new delivery/restart claim. Original B12R2 quarantines untouched and require operator reconciliation before separately authorized resume. B10 full genuine acceptance OPEN/PARTIAL. Frozen55legacy Observation defects retained; canonical B04 artifact unchanged. Remaining DEC-004 future gates remain at designated milestones. B15 not authorized.
+ 
+ Review backend/OPERATIONS.md and docs/evidence/B14-RESULTS.md, B14-COMMANDS.md, B14-FILES.md, B14-changes.patch. Human inspect retained3issue outcomes, contradiction/failure/recurrence-memory and ACK-loss proof; optional single isolated water test. STOP after B14 for review.
++
++## B14-R corrective review — 2026-10-18
++
++No unresolved focused B14-R failure. Historical pre-correction outcomes/scopes are not rewritten: B14-1 records retain old semantics, ended-only REOPENED scope fails closed until operator reconciles original recurrence journal/link and checkpoint under existing recovery procedure. No automatic repair/reset/quarantine clearance. Existing3incident bound, synthetic aggregate pickup policy, B11 PROPOSED/bounded-memory limits, prior quarantines and remaining DEC-004 future gates persist. B10 full genuine acceptance OPEN/PARTIAL; B15 not authorized.
++
++Review docs/evidence/B14R-RESULTS.md, B14R-COMMANDS.md, B14R-FILES.md, B14R-changes.patch and B14R-audit.json. Human inspect waste timestamps/versions and sourced new investigation link/checkpoint refresh; optional two-case isolated reproduction. STOP for human review before B15.
+--- a/contracts/agent_runtime.json
++++ b/contracts/agent_runtime.json
+@@ -50,7 +50,8 @@
+     "Committed operation result replay without repeating calls",
+     "Unknown prepared read outcome pauses for reconciliation",
+     "Uncertain checkpoint failures quarantine thread; no automatic reset",
+-    "Explicit operator-authorized monotonic Budget increase, preserving cumulative known/unknown token exposure and decision/action history"
++    "Explicit operator-authorized monotonic Budget increase, preserving cumulative known/unknown token exposure and decision/action history",
++    "B14-R explicit recurrence-scope refresh validates sourced INVESTIGATES/B08 AFTER_RECORDED_END receipt and reviewed evidence before projecting active episode; old checkpoint retained, finite 3-incident bound and fresh MCP READ required"
+   ],
+   "reasoning_guarantees": [
+     "Model cannot self-grant VERIFIED",
+--- a/contracts/operations.json
++++ b/contracts/operations.json
+@@ -1,5 +1,5 @@
+ {
+-  "version": "B14-1",
++  "version": "B14R-1",
+   "municipality_id": "demo-city",
+   "operators": {
+     "OP-ANALYST": {
+@@ -1186,7 +1186,7 @@
+     }
+   },
+   "verification": {
+-    "version": "B14-1",
++    "version": "B14-2",
+     "required_codes": {
+       "WATERLOGGING": [
+         "COMPARABLE_FOLLOWUP_RAINFALL",
+@@ -1218,7 +1218,7 @@
+     "synthetic_waste_minimum_hours": 24,
+     "origin": "SYNTHETIC demo policy, not a municipal standard",
+     "water_road_opportunity": "Explicit authored comparability/wear observation precedes final binary adverse-condition observation; no meteorological/engineering threshold inferred",
+-    "waste_window": "Scheduled/actual matching integer pickup counts >=1, pickups precede window observation, window hours>=24 and actually elapsed since start; reaccumulation finding at/after window",
++    "waste_window": "Matching integral scheduled/actual aggregate pickup counts >=1; do not sum repeated totals. Latest ACTUAL_PICKUPS observed_at per target anchors every supplied REACCUMULATION_WINDOW: claimed hours>=24 and actual elapsed time since latest pickup >= claimed hours. Final condition follows window. Different pickup totals INCONCLUSIVE; insufficient elapsed opportunity MONITORING.",
+     "all_targets": true,
+     "independent_review": "Server resolves ANALYST reviewer token; department operator cannot self-review or supply Review",
+     "ordering": "completion < window_start <= observations <= window_end <= controlled service clock; final finding after exposure/window",
+@@ -1242,5 +1242,69 @@
+     "VERIFY": "All task follow-ups pass\u2192plan/investigation COMPLETED, incidents ENDED with time, cluster CONTROLLED",
+     "RECUR": "B08 AFTER_RECORDED_END new incident in original cluster; cluster/investigation REOPENED; immutable prior completed plan/outcome retained"
+   },
+-  "revised_authorization": "Changed finding meaning/immutable gate/scope requires existing PlanningService.create version+1 with previous_plan_id, Operations.submit and fresh decide. Same-label assessment with original support retained and identical contradiction set can advance legitimate progress; terminal result recording is not authority for further work."
++  "revised_authorization": "Changed finding meaning/immutable gate/scope requires existing PlanningService.create version+1 with previous_plan_id, Operations.submit and fresh decide. Same-label assessment with original support retained and identical contradiction set can advance legitimate progress; terminal result recording is not authority for further work.",
++  "historical_verification": {
++    "B14-1": {
++      "version": "B14-1",
++      "required_codes": {
++        "WATERLOGGING": [
++          "COMPARABLE_FOLLOWUP_RAINFALL",
++          "FOLLOWUP_WATERLOGGING"
++        ],
++        "ROAD_DAMAGE": [
++          "WEAR_EXPOSURE",
++          "FOLLOWUP_PAVEMENT"
++        ],
++        "WASTE_ACCUMULATION": [
++          "SCHEDULED_PICKUPS",
++          "ACTUAL_PICKUPS",
++          "REACCUMULATION_WINDOW",
++          "WASTE_REACCUMULATION"
++        ]
++      },
++      "units": {
++        "ACTION_COMPLETED": null,
++        "ACTION_FAILED": null,
++        "COMPARABLE_FOLLOWUP_RAINFALL": null,
++        "FOLLOWUP_WATERLOGGING": "boolean",
++        "WEAR_EXPOSURE": null,
++        "FOLLOWUP_PAVEMENT": "boolean",
++        "SCHEDULED_PICKUPS": "pickups",
++        "ACTUAL_PICKUPS": "pickups",
++        "REACCUMULATION_WINDOW": "hours",
++        "WASTE_REACCUMULATION": "boolean"
++      },
++      "synthetic_waste_minimum_hours": 24,
++      "origin": "SYNTHETIC demo policy, not a municipal standard",
++      "water_road_opportunity": "Explicit authored comparability/wear observation precedes final binary adverse-condition observation; no meteorological/engineering threshold inferred",
++      "waste_window": "Scheduled/actual matching integer pickup counts >=1, pickups precede window observation, window hours>=24 and actually elapsed since start; reaccumulation finding at/after window",
++      "all_targets": true,
++      "independent_review": "Server resolves ANALYST reviewer token; department operator cannot self-review or supply Review",
++      "ordering": "completion < window_start <= observations <= window_end <= controlled service clock; final finding after exposure/window",
++      "classification": [
++        "MONITORING",
++        "INCONCLUSIVE",
++        "PROBLEM_PERSISTS",
++        "RESOLUTION_VERIFIED",
++        "RECURRENCE_DETECTED",
++        "INTERVENTION_FAILED"
++      ],
++      "native_result": "ACTION_COMPLETED only on work completion; INCONCLUSIVE for missing/contradictory/failure/recurrence; MITIGATION_VERIFIED for independent successful verification; never infer ROOT_CAUSE_ADDRESSED",
++      "case_completion": "All approved tasks/dependencies/gates complete plus each work order independently verified; latest addressed contradiction/inconclusive blocks closure",
++      "replay": "Exact authenticated request returns historical receipt; equivalent evaluation window/evidence deduplicates. Fresh side effects always revalidate scope. Historical result never new authority."
++    }
++  },
++  "recurrence_scope": {
++    "investigation": "Reuse original; add INVESTIGATES new incident atomically with recurrence journal/outcome/event",
++    "provenance": "INVESTIGATES.source_evidence_id is new COMMITTED B08 intake journal; valid_from is recurrence commit time",
++    "result_fields": [
++      "investigation_id",
++      "investigates_relationship_id",
++      "new_incident_id",
++      "cluster_id",
++      "prior_outcome_id"
++    ],
++    "maximum_bound_incidents": 3,
++    "checkpoint": "Explicit owned resume only. Validate new graph links, B08 canonical hash/receipt/classification/cluster/episode and reviewed evidence; closed state validation projects active incidents/assets and source hashes with RECURRENCE_SCOPE_REFRESH audit. Preserve prior checkpoint/history and require fresh MCP READ. No automatic delivery."
++  }
+ }
+--- a/decision.md
++++ b/decision.md
+@@ -1,4 +1,7 @@
+ # decision.md — Append-only engineering decision log
++
++> **CURRENT B14-R — TECHNICALLY PASS, HUMAN REVIEW PENDING.** Corrected waste B14-2 anchors24hours to latest actual pickup; B14-1 outcomes/implementation preserved. Recurrence includes original investigation/new incident sourced link and validated explicit same-thread active-episode refresh; old checkpoints retained, actual MCP/Saver reads exercised.14distinctPASS(11unit/3real),0unresolvedFAIL/0SKIP; both SPEC validatorsPASS once;5pytest/child guards0provider. B10 full genuine acceptance OPEN/PARTIAL. All18requirements binding; no B15/live/full-suite/lifecycle. This summary supersedes historical headers; docs/evidence/B14R-RESULTS.md.
++
+ 
+ > **CURRENT B14 — TECHNICALLY PASS, HUMAN REVIEW PENDING.** B13 accepted.41distinct focusedPASS(30unit/11real),0unresolvedFAIL/0SKIP; both final SPEC validatorsPASS. Authenticated simulated execution, actual B09 evidence/assessment history, independent3issue follow-up, failure/recurrence and existing memory verified.12pytest/child interlocks0external Gemini/countTokens; B10 full genuine acceptance OPEN/PARTIAL. Earlier data/migrations/history/quarantines preserved. No B15delivery/worker/API/frontend/live or full-backend completion. All18requirements binding. This current summary supersedes historical headers; docs/evidence/B14-RESULTS.md.
+ 
+@@ -1416,3 +1419,16 @@
+ DEC-056 implemented and exercised, including current same-meaning assessment guard with immutable original remediation references, truthful evidence-only audit proof, narrow planned journal sources and retained original B03 semantics. Native FAILED WorkOrder rejected as nonexistent; failed task/blocked work/immutable inconclusive outcome used. No root-cause verification inferred.41distinctPASS/both final validatorsPASS/0provider. Review source inventory, exact narrow patch and sanitized runtime evidence under B14.
+ 
+ Review backend/OPERATIONS.md and docs/evidence/B14-RESULTS.md, B14-COMMANDS.md, B14-FILES.md, B14-changes.patch. Human inspect retained3issue outcomes, contradiction/failure/recurrence-memory and ACK-loss proof; optional single isolated water test. STOP after B14 for review.
++
++## DEC-057 — B14-R pickup-anchored verification and validated recurrence scope (before code)
++Scope R03/R09/R12/R13/R15/R17; all18 binding. Only B14-R authorized. B14-1 incorrectly measured waste window from evaluation start; new B14-2 uses latest relevant actual pickup observed_at per target. Repeated equal aggregate pickup counts are not summed or interpreted as per-vehicle telemetry: conservatively latest actual observation anchors interval. Differing totals remain INCONCLUSIVE. Every supplied reaccumulation window must claim >=24hours and actually elapse at least its claimed duration after that anchor; final condition follows the window. Missing/too-short opportunity MONITORING; contradictory findings remain explicit. Preserve B14-1 implementation separately for historical interpretation and leave all old outcomes/checkpoints/proofs immutable. Fresh requests use B14-2; exact old-request replay remains historical acknowledgment only.
++
++Reuse original investigation: recurrence write atomically adds sourced temporal INVESTIGATES(new incident) with original incident/cluster links retained. Response/event exposes investigation and link identities. Reject exceeding existing three-incident runtime bound rather than silently truncate or expand storage/state. On explicit resume under existing ownership, validate graph link, B08 COMMITTED journal/canonical hash/AFTER_RECORDED_END receipt, same cluster/issue and ended prior episode, and actual reviewed recurrence evidence. Only then project active incident/asset IDs and source hashes into a newly validated state, record host-generated scope-refresh audit, retain historical plan/hypothesis references as historical context, and require fresh MCP READ. No mutation of old checkpoints, arbitrary caller-supplied incident injection or automatic wake. Invalid/ambiguous scope fails closed through existing recovery/quarantine.
++
++Alternatives: successor investigation (unnecessary identity/checkpoint handoff), blindly append graph IDs on decode (unvalidated silent injection), evaluation-start timer (reproduced false positive), summed duplicate aggregate counts (invented telemetry), rewrite B14-1 records (false provenance). Minimal tests: targeted waste policy boundaries/multiple pickups+affected old policies, one real waste flow, extended water recurrence with replay/history + same-thread actual MCP/Saver refresh and one direct legacy resume case if concrete binding risk warrants. Both validators once after final source edits, no provider/full suite/lifecycle/B15.
++
++## B14-R corrective review — 2026-10-18
++
++DEC-057 implemented/exercised. Latest actual pickup timestamp conservatively anchors repeated aggregate observations; insufficient duration cannot verify despite declared window/evaluation start. B14-1 retained exactly with historical contract/provenance. Original investigation gains new sourced temporal incident link in same fence. Explicit resume validates B08 receipt and reviewed source evidence before model-validating new active scope; mandatory MCP read remains. Successor investigation/telemetry/new delivery machinery rejected as unnecessary.14distinctPASS, both validatorsPASS once,0provider.
++
++Review docs/evidence/B14R-RESULTS.md, B14R-COMMANDS.md, B14R-FILES.md, B14R-changes.patch and B14R-audit.json. Human inspect waste timestamps/versions and sourced new investigation link/checkpoint refresh; optional two-case isolated reproduction. STOP for human review before B15.
+--- a/docs/backend/07_operations.md
++++ b/docs/backend/07_operations.md
+@@ -58,3 +58,10 @@
+ approval/procedure/target/gates, independent authenticated analyst review, all-task
+ completion/verification and temporal guards required. No worker/scheduler/API or
+ live provider authorization. See DEC-056 and B14 evidence for actual test results.
++
++B14-R corrects fresh verification to B14-2: waste elapsed interval anchored to latest
++actual pickup observation per target, retaining synthetic24hours and B14-1 historical
++provenance. Recurrence atomically links the new incident to the original reopened
++investigation; explicit validated same-thread resume refreshes active episode and
++source refs while preserving historical checkpoints and fresh-MCP-read guard.
++See DEC-057, contracts/operations.json and backend/AGENTS_RUNTIME.md. No B15 wakeup.
+--- a/flow.md
++++ b/flow.md
+@@ -1,4 +1,7 @@
+ # flow.md — Repository map and runtime data/control flow (update after every microtask)
++
++> **CURRENT B14-R — TECHNICALLY PASS, HUMAN REVIEW PENDING.** Corrected waste B14-2 anchors24hours to latest actual pickup; B14-1 outcomes/implementation preserved. Recurrence includes original investigation/new incident sourced link and validated explicit same-thread active-episode refresh; old checkpoints retained, actual MCP/Saver reads exercised.14distinctPASS(11unit/3real),0unresolvedFAIL/0SKIP; both SPEC validatorsPASS once;5pytest/child guards0provider. B10 full genuine acceptance OPEN/PARTIAL. All18requirements binding; no B15/live/full-suite/lifecycle. This summary supersedes historical headers; docs/evidence/B14R-RESULTS.md.
++
+ 
+ > **CURRENT B14 — TECHNICALLY PASS, HUMAN REVIEW PENDING.** B13 accepted.41distinct focusedPASS(30unit/11real),0unresolvedFAIL/0SKIP; both final SPEC validatorsPASS. Authenticated simulated execution, actual B09 evidence/assessment history, independent3issue follow-up, failure/recurrence and existing memory verified.12pytest/child interlocks0external Gemini/countTokens; B10 full genuine acceptance OPEN/PARTIAL. Earlier data/migrations/history/quarantines preserved. No B15delivery/worker/API/frontend/live or full-backend completion. All18requirements binding. This current summary supersedes historical headers; docs/evidence/B14-RESULTS.md.
+ 
+@@ -901,3 +904,36 @@
+ Implemented B14 file/control/data graph above exercised. Exact native lifecycle and0005 attestations retain B12 payload/checkpoint hashes; new report/result/monitor operations reuse B09/B08 planners and existing fence. Final41distinct cases total(30unit/11real), both validatorsPASS; no new persistence/worker machinery. See B14-RESULTS/B14-FILES/B14-changes.patch.
+ 
+ Review backend/OPERATIONS.md and docs/evidence/B14-RESULTS.md, B14-COMMANDS.md, B14-FILES.md, B14-changes.patch. Human inspect retained3issue outcomes, contradiction/failure/recurrence-memory and ACK-loss proof; optional single isolated water test. STOP after B14 for review.
++
++## B14-R implemented control/data flow
++
++```
++operations/verification.py B14-2
++  -> ACTUAL_PICKUPS latest observed_at per target -> elapsed window -> outcome
++operations/verification_v1.py (exact original B14-1 bytes, historical reference only)
++operations/execution.py Recur
++  -> existing B08 plan/journal -> new incident + old cluster
++  -> sourced temporal INVESTIGATES(new incident), old links retained
++  -> same fenced0005 operation/outcome/event + REOPENED original investigation
++agents/runtime.py explicit owned AwaitDependency resume
++  -> agents/recurrence.py refresh
++  -> B09 temporal Reader + B08 normalize/load/receipt + reviewed report proof
++  -> validated active incident/assets/source hashes + host scope audit
++  -> fresh MCP READ barrier -> actual read new incident/report -> new Saver checkpoint
++```
++
++No old checkpoint rewritten; public SDK ID-specific read proves original persisted
++checkpoint unchanged. Native recurrence receipt/event exposes investigation and link
++IDs. Latest equal aggregate pickup observations are not summed; latest timestamp
++conservatively anchors every supplied window. Conflicting totals INCONCLUSIVE;
++insufficient elapsed MONITORING. Historical B14-1 outcomes/exact replay untouched.
++No new schema/migration/infrastructure/dependency/automatic wake. Existing graph and
++closed state max3incidents retained, invalid/missing-active historical reopen fails
++closed using existing ownership/quarantine. Old plan/hypothesis refs remain explicit
++earlier-episode context. Actual14focused checks; commands/evidence under B14R.
++
++## B14-R corrective review — 2026-10-18
++
++File/control flow above exercised with real B09/B08/FalkorDB/MCP/LangGraph/Saver. Original checkpoint remains immutable; refreshed state and two actual new-episode/report reads persisted only after explicit owned resume. No automatic event delivery or new storage schema.
++
++Review docs/evidence/B14R-RESULTS.md, B14R-COMMANDS.md, B14R-FILES.md, B14R-changes.patch and B14R-audit.json. Human inspect waste timestamps/versions and sourced new investigation link/checkpoint refresh; optional two-case isolated reproduction. STOP for human review before B15.
+--- a/implementation_status.md
++++ b/implementation_status.md
+@@ -1,4 +1,7 @@
+ # implementation_status.md — Current implementation truth
++
++> **CURRENT B14-R — TECHNICALLY PASS, HUMAN REVIEW PENDING.** Corrected waste B14-2 anchors24hours to latest actual pickup; B14-1 outcomes/implementation preserved. Recurrence includes original investigation/new incident sourced link and validated explicit same-thread active-episode refresh; old checkpoints retained, actual MCP/Saver reads exercised.14distinctPASS(11unit/3real),0unresolvedFAIL/0SKIP; both SPEC validatorsPASS once;5pytest/child guards0provider. B10 full genuine acceptance OPEN/PARTIAL. All18requirements binding; no B15/live/full-suite/lifecycle. This summary supersedes historical headers; docs/evidence/B14R-RESULTS.md.
++
+ 
+ > **CURRENT B14 — TECHNICALLY PASS, HUMAN REVIEW PENDING.** B13 accepted.41distinct focusedPASS(30unit/11real),0unresolvedFAIL/0SKIP; both final SPEC validatorsPASS. Authenticated simulated execution, actual B09 evidence/assessment history, independent3issue follow-up, failure/recurrence and existing memory verified.12pytest/child interlocks0external Gemini/countTokens; B10 full genuine acceptance OPEN/PARTIAL. Earlier data/migrations/history/quarantines preserved. No B15delivery/worker/API/frontend/live or full-backend completion. All18requirements binding. This current summary supersedes historical headers; docs/evidence/B14-RESULTS.md.
+ 
+@@ -522,3 +525,9 @@
+ B14 progresses R01/R03/R08–R13/R15/R17, all18 binding. Exact authorization/execution, actual inspection/report/assessment provenance, completed-but-monitoring, condition-specific independent verification, failed/persistent attempts, recurrence/new incident/reopen and existing memory paths exercised. Immutable migrations0001–0005/registry/city/history retained.41distinctPASS/both finalSPECvalidatorsPASS/0provider; no capability-complete/live intelligence/backend-complete claim.
+ 
+ Review backend/OPERATIONS.md and docs/evidence/B14-RESULTS.md, B14-COMMANDS.md, B14-FILES.md, B14-changes.patch. Human inspect retained3issue outcomes, contradiction/failure/recurrence-memory and ACK-loss proof; optional single isolated water test. STOP after B14 for review.
++
++## B14-R corrective review — 2026-10-18
++
++R03/R09/R12/R13/R15/R17 corrective coverage; all18 mandatory. Actual waste premature monitoring/later verification, recurring incident active investigation scope and historical memory, duplicate-free replay, ID-specific old checkpoint preservation, validated refresh + actual two MCP reads, ordinary resume compatibility PASS.14distinct(11unit/3real), both static validatorsPASS once, no genuine model/new delivery claim.
++
++Review docs/evidence/B14R-RESULTS.md, B14R-COMMANDS.md, B14R-FILES.md, B14R-changes.patch and B14R-audit.json. Human inspect waste timestamps/versions and sourced new investigation link/checkpoint refresh; optional two-case isolated reproduction. STOP for human review before B15.
+--- a/scripts/validate_operations.py
++++ b/scripts/validate_operations.py
+@@ -19,4 +19,7 @@
+ assert c['verification']['version']==VERSION and c['verification']['units']==CODES
+ assert c['verification']['required_codes']=={k:list(v) for k,v in REQUIRED.items()}
+ assert c['verification']['synthetic_waste_minimum_hours']==24
++from app.services.operations.verification_v1 import VERSION as HISTORICAL_VERSION
++assert c['historical_verification'][HISTORICAL_VERSION]['version']==HISTORICAL_VERSION
++assert c['recurrence_scope']['maximum_bound_incidents']==3
+ print('PASS B14 STATIC: execution schemas/policy parity; B13 STATIC: closed commands, exact seven-account/four-role demo permissions, AUTHORIZED initial state and compatible0005; not execution/provider/runtime proof')
+--- a/task_board.md
++++ b/task_board.md
+@@ -1,4 +1,7 @@
+ # task_board.md — Human-reviewed task queue
++
++> **CURRENT B14-R — TECHNICALLY PASS, HUMAN REVIEW PENDING.** Corrected waste B14-2 anchors24hours to latest actual pickup; B14-1 outcomes/implementation preserved. Recurrence includes original investigation/new incident sourced link and validated explicit same-thread active-episode refresh; old checkpoints retained, actual MCP/Saver reads exercised.14distinctPASS(11unit/3real),0unresolvedFAIL/0SKIP; both SPEC validatorsPASS once;5pytest/child guards0provider. B10 full genuine acceptance OPEN/PARTIAL. All18requirements binding; no B15/live/full-suite/lifecycle. This summary supersedes historical headers; docs/evidence/B14R-RESULTS.md.
++
+ 
+ > **CURRENT B14 — TECHNICALLY PASS, HUMAN REVIEW PENDING.** B13 accepted.41distinct focusedPASS(30unit/11real),0unresolvedFAIL/0SKIP; both final SPEC validatorsPASS. Authenticated simulated execution, actual B09 evidence/assessment history, independent3issue follow-up, failure/recurrence and existing memory verified.12pytest/child interlocks0external Gemini/countTokens; B10 full genuine acceptance OPEN/PARTIAL. Earlier data/migrations/history/quarantines preserved. No B15delivery/worker/API/frontend/live or full-backend completion. All18requirements binding. This current summary supersedes historical headers; docs/evidence/B14-RESULTS.md.
+ 
+@@ -454,3 +457,9 @@
+ B13 human accepted; B14 technicallyPASS with41distinct cases and both final validatorsPASS. Human review pending; exact proposed next B15 durable event delivery/single worker/resume/reconciliation only after separate authorization. No automatic continuation.
+ 
+ Review backend/OPERATIONS.md and docs/evidence/B14-RESULTS.md, B14-COMMANDS.md, B14-FILES.md, B14-changes.patch. Human inspect retained3issue outcomes, contradiction/failure/recurrence-memory and ACK-loss proof; optional single isolated water test. STOP after B14 for review.
++
++## B14-R corrective review — 2026-10-18
++
++Only B14-R completed technically; human review pending.14focused casesPASS/both validatorsPASS/0provider. B15 remains proposed next only after explicit authorization; do not automatically continue.
++
++Review docs/evidence/B14R-RESULTS.md, B14R-COMMANDS.md, B14R-FILES.md, B14R-changes.patch and B14R-audit.json. Human inspect waste timestamps/versions and sourced new investigation link/checkpoint refresh; optional two-case isolated reproduction. STOP for human review before B15.
+--- a/test_log.md
++++ b/test_log.md
+@@ -1,4 +1,7 @@
+ # test_log.md — Append-only verification record
++
++> **CURRENT B14-R — TECHNICALLY PASS, HUMAN REVIEW PENDING.** Corrected waste B14-2 anchors24hours to latest actual pickup; B14-1 outcomes/implementation preserved. Recurrence includes original investigation/new incident sourced link and validated explicit same-thread active-episode refresh; old checkpoints retained, actual MCP/Saver reads exercised.14distinctPASS(11unit/3real),0unresolvedFAIL/0SKIP; both SPEC validatorsPASS once;5pytest/child guards0provider. B10 full genuine acceptance OPEN/PARTIAL. All18requirements binding; no B15/live/full-suite/lifecycle. This summary supersedes historical headers; docs/evidence/B14R-RESULTS.md.
++
+ 
+ > **CURRENT B14 — TECHNICALLY PASS, HUMAN REVIEW PENDING.** B13 accepted.41distinct focusedPASS(30unit/11real),0unresolvedFAIL/0SKIP; both final SPEC validatorsPASS. Authenticated simulated execution, actual B09 evidence/assessment history, independent3issue follow-up, failure/recurrence and existing memory verified.12pytest/child interlocks0external Gemini/countTokens; B10 full genuine acceptance OPEN/PARTIAL. Earlier data/migrations/history/quarantines preserved. No B15delivery/worker/API/frontend/live or full-backend completion. All18requirements binding. This current summary supersedes historical headers; docs/evidence/B14-RESULTS.md.
+ 
+@@ -1044,3 +1047,9 @@
+ Final41distinctPASS:18new policy+12affected auth unit,7new B14 real+4accepted B13/B12 real. Final unit30PASS11.45s; real4 initial5PASS/1fixtureFAIL60.22s, focused6PASS65.38s, final recurrence1PASS10.96s; strengthened progress initial1CAS-fixtureFAIL10.97s then1PASS11.63s. Earlier socket/planned-journal/auth-matrix failures retained in B14-COMMANDS/raw logs. Both final validatorsPASS once each; preliminary pass before final same-meaning assessment/gate correction retained honestly.12ordinarypytest/childguards0external/0unexpected; no paid/model/lifecycle/full-suite run. Scripted checkpoint distinct from real DB/SDK/MCP/Saver/fresh-process. Exact commands/count dedup in B14-test-summary.json.
+ 
+ Review backend/OPERATIONS.md and docs/evidence/B14-RESULTS.md, B14-COMMANDS.md, B14-FILES.md, B14-changes.patch. Human inspect retained3issue outcomes, contradiction/failure/recurrence-memory and ACK-loss proof; optional single isolated water test. STOP after B14 for review.
++
++## B14-R corrective review — 2026-10-18
++
++Focused unit9PASS0.12s/14deselected plus2MOCK bindingPASS0.38s. Initial real1PASS/1test-only row-shapeFAIL31.51s; correct properties.id assertion, recurrence alone1PASS26.13s. One accepted ordinary source-refresh MCP/Saver case1PASS8.22s. Final14distinctPASS/0unresolvedFAIL/0SKIP; overlaps not added. Both validatorsPASS once after final edits;5inherited pytest/child guards0external/0unexpected. No full suites/live/lifecycle. Exact commands/raw logs B14R-COMMANDS.md.
++
++Review docs/evidence/B14R-RESULTS.md, B14R-COMMANDS.md, B14R-FILES.md, B14R-changes.patch and B14R-audit.json. Human inspect waste timestamps/versions and sourced new investigation link/checkpoint refresh; optional two-case isolated reproduction. STOP for human review before B15.
+--- /dev/null
++++ b/backend/app/agents/recurrence.py
+@@ -0,0 +1,51 @@
++"""Validated active-episode refresh on explicit owned resume; no checkpoint rewrite."""
++from app.graph.schema import timestamp
++from app.graph.models import digest
++from app.services.evidence.reader import Reader
++from app.services.complaints.models import Journal,normalize
++from app.services.complaints.service import ComplaintService
++from .models import InvestigationState
++from .checkpoints import RecoveryRequired
++
++def refresh(repo,state):
++ reader=Reader(repo,state.as_of)
++ links=reader.edges('INVESTIGATES',source=state.investigation_id)
++ incidents={e.target:reader.node(e.target) for e in links if reader.node(e.target).kind=='Incident'}
++ additions=set(incidents)-set(state.incident_ids)
++ if not additions:
++  if reader.node(state.investigation_id,'Investigation').properties['status']=='REOPENED' and not any(n.properties['status'] in {'REPORTED','ACTIVE','MITIGATED'} for n in incidents.values()):raise RecoveryRequired('RECURRENCE_SCOPE_MISSING_ACTIVE_EPISODE')
++  return state
++ if len(incidents)>3 or reader.node(state.investigation_id,'Investigation').properties['status']!='REOPENED':raise RecoveryRequired('RECURRENCE_SCOPE_NOT_REFRESHABLE')
++ evidence={};proof=[]
++ for id in sorted(additions):
++  incident=incidents[id];edge=next(e for e in links if e.target==id)
++  journal_id=edge.properties.get('source_evidence_id')
++  if not journal_id:raise RecoveryRequired('RECURRENCE_SCOPE_PROVENANCE')
++  native=reader.node(journal_id,'Evidence');journal=Journal.model_validate_json(native.properties['summary'])
++  q,norm=normalize(journal.original)
++  intake=ComplaintService(repo)
++  _,stored=intake.load(journal_id,norm.request_hash)
++  receipt=intake.receipt(stored)
++  previous=[incidents[old] for old in state.incident_ids if old in receipt.related_incident_ids and old in incidents]
++  memberships=reader.edges('PART_OF',source=id)
++  affected={e.target for e in reader.edges('AFFECTS',source=id)}
++  if (journal.operation!='INTAKE' or journal.state!='COMMITTED' or journal.canonical!=norm.canonical
++      or receipt.graph!=state.graph or receipt.incident_id!=id or not receipt.created_incident
++      or receipt.classification!='AFTER_RECORDED_END' or receipt.cluster_id!=state.problem_cluster_id
++      or {e.target for e in memberships}!={state.problem_cluster_id} or q.issue_type!=state.issue
++      or incident.properties['issue_type']!=state.issue or incident.properties['started_at']!=q.occurred_at
++      or affected!=set(q.asset_ids) or not q.evidence_ids or not previous
++      or not any(n.properties['status']=='ENDED' and n.properties.get('ended_at') and timestamp(n.properties['ended_at'])<timestamp(q.occurred_at) for n in previous)):
++   raise RecoveryRequired('RECURRENCE_SCOPE_BINDING')
++  for eid in q.evidence_ids:
++   ref=reader.evidence(eid)
++   if not ref.report or not ref.report.review or ref.source_kind!='SYNTHETIC' or timestamp(ref.observed_at)<timestamp(q.occurred_at):raise RecoveryRequired('RECURRENCE_SCOPE_EVIDENCE')
++   evidence[eid]=ref.content_hash
++  evidence[journal_id]=native.content_hash
++  proof.append({'incident_id':id,'investigates_relationship_id':edge.id,'journal_id':journal_id,'receipt_hash':digest(receipt.model_dump(mode='json'))})
++ active=sorted(id for id,n in incidents.items() if n.properties['status'] in {'REPORTED','ACTIVE','MITIGATED'})
++ assets=sorted({e.target for id in active for e in reader.edges('AFFECTS',source=id)})
++ audit={'operation':'RECURRENCE_SCOPE_REFRESH','host_generated':True,'investigation_id':state.investigation_id,'previous_incident_ids':state.incident_ids,'active_incident_ids':active,'historical_incident_ids':sorted(set(incidents)-set(active)),'evidence_ids':sorted(evidence),'scope_proofs':proof,'limitations':['Earlier plan/hypotheses describe their recorded episodes; not causal authority for recurrence. Fresh MCP READ required.']}
++ # Full closed model validation, original graph/thread/inventory/plan identities intact.
++ return InvestigationState.model_validate({**state.model_dump(mode='json'),'incident_ids':active,'asset_ids':assets,
++  'evidence':{**state.evidence,**evidence},'observations':[*state.observations,audit],'refresh_required':True})
+--- /dev/null
++++ b/backend/app/services/operations/verification_v1.py
+@@ -0,0 +1,69 @@
++"""B14-1 synthetic demo observation policy; no hidden truth or provider access."""
++from app.graph.schema import timestamp
++from app.graph.repository import PreconditionFailed
++
++VERSION = 'B14-1'
++CODES = {
++ 'ACTION_COMPLETED':None, 'ACTION_FAILED':None,
++ 'COMPARABLE_FOLLOWUP_RAINFALL':None, 'FOLLOWUP_WATERLOGGING':'boolean',
++ 'WEAR_EXPOSURE':None, 'FOLLOWUP_PAVEMENT':'boolean',
++ 'SCHEDULED_PICKUPS':'pickups', 'ACTUAL_PICKUPS':'pickups',
++ 'REACCUMULATION_WINDOW':'hours', 'WASTE_REACCUMULATION':'boolean',
++}
++REQUIRED = {
++ 'WATERLOGGING':('COMPARABLE_FOLLOWUP_RAINFALL','FOLLOWUP_WATERLOGGING'),
++ 'ROAD_DAMAGE':('WEAR_EXPOSURE','FOLLOWUP_PAVEMENT'),
++ 'WASTE_ACCUMULATION':('SCHEDULED_PICKUPS','ACTUAL_PICKUPS','REACCUMULATION_WINDOW','WASTE_REACCUMULATION'),
++}
++
++def validate_observation(ob, allowed):
++ if ob.code not in allowed or ob.method != 'DIRECT_SYNTHETIC_FIELD_TEST':
++  raise PreconditionFailed('OBSERVATION_CODE_OR_METHOD')
++ if ob.result=='UNKNOWN' and ob.value is None and ob.unit is None:return
++ if ob.code in CODES:
++  unit=CODES[ob.code]
++  if ob.unit!=unit or (unit is None and ob.value is not None):raise PreconditionFailed('OBSERVATION_UNIT')
++  if unit=='boolean' and ob.value not in (0.0,1.0):raise PreconditionFailed('OBSERVATION_BOOLEAN')
++  if unit in {'hours','pickups'} and (ob.value is None or ob.value<0 or (unit=='pickups' and ob.value!=int(ob.value))):raise PreconditionFailed('OBSERVATION_QUANTITY')
++ elif ob.value is not None or ob.unit is not None:raise PreconditionFailed('UNSPECIFIED_MEASUREMENT_UNIT')
++
++def evaluate(issue, targets, observations, start, end, completed_at, now):
++ """Return classification and gaps; all targets must qualify, never choose one row."""
++ lo,hi,done,at=map(timestamp,[start,end,completed_at,now])
++ if not done<lo<=hi<=at:raise PreconditionFailed('OUTCOME_WINDOW_ORDER')
++ gaps=[];adverse=False;contradictory=False;opportunity=True
++ for target in targets:
++  rows={code:[] for code in REQUIRED[issue]}
++  for ob in observations:
++   if ob.asset_id!=target:continue
++   validate_observation(ob,set(REQUIRED[issue]))
++   when=timestamp(ob.observed_at)
++   if not lo<=when<=hi:raise PreconditionFailed('OUTCOME_EVIDENCE_OUTSIDE_WINDOW')
++   if ob.result=='OBSERVED':rows[ob.code].append(ob)
++   else:gaps.append(target+': unknown '+ob.code);opportunity=False
++  missing=[code for code,values in rows.items() if not values]
++  if missing:
++   gaps.append(target+': missing '+','.join(missing));opportunity=False;continue
++  final=rows[REQUIRED[issue][-1]]
++  values={ob.value for ob in final}
++  contradictory |= len(values)>1
++  adverse |= 1.0 in values
++  if issue in {'WATERLOGGING','ROAD_DAMAGE'}:
++   exposure=rows[REQUIRED[issue][0]]
++   if min(timestamp(x.observed_at) for x in final)<max(timestamp(x.observed_at) for x in exposure):
++    gaps.append(target+': final finding precedes exposure');opportunity=False
++  else:
++   scheduled={x.value for x in rows['SCHEDULED_PICKUPS']};actual={x.value for x in rows['ACTUAL_PICKUPS']}
++   if len(scheduled)!=1 or len(actual)!=1:contradictory=True
++   elif min(scheduled)<1 or scheduled!=actual:
++    gaps.append(target+': scheduled/actual pickup coverage insufficient');opportunity=False
++   windows=rows['REACCUMULATION_WINDOW']
++   if any(x.value<24 or (timestamp(x.observed_at)-lo).total_seconds()<x.value*3600 for x in windows):
++    gaps.append(target+': synthetic24hour observation window not established');opportunity=False
++   if min(timestamp(x.observed_at) for x in final)<max(timestamp(x.observed_at) for x in windows):
++    gaps.append(target+': reaccumulation finding precedes window');opportunity=False
++   if any(timestamp(x.observed_at)>min(timestamp(v.observed_at) for v in windows) for code in ['SCHEDULED_PICKUPS','ACTUAL_PICKUPS'] for x in rows[code]):
++    gaps.append(target+': pickups follow observation window');opportunity=False
++ if contradictory:return 'INCONCLUSIVE',gaps+['Contradictory observations retained; no source arbitration']
++ if not opportunity:return 'MONITORING',gaps
++ return ('PROBLEM_PERSISTS' if adverse else 'RESOLUTION_VERIFIED'),gaps
+--- /dev/null
++++ b/backend/tests/b14r_runtime.py
+@@ -0,0 +1,46 @@
++"""Explicit same-thread resume, scripted choices; real MCP/Saver/source validation."""
++import copy
++from uuid import uuid4
++from app.agents.models import InvestigationState
++from app.agents.runtime import InvestigationAgent
++from app.agents.mcp import brokers
++from app.agents.checkpoints import saver,ownership,RecoveryRequired
++from app.services.evidence.reader import Reader
++from tests.b10_fixtures import ScriptedModel,choose
++
++async def pause(p,r,clock,path,inv,f,planning):
++ async with brokers(p,path,timeout=10) as tools:
++  bound=Reader(r,clock()).edges('INVESTIGATES',source=inv);thread=uuid4().hex
++  s=InvestigationState(graph=p.graph,investigation_id=inv,thread_id=thread,problem_cluster_id=next(e.target for e in bound if r.get_node(e.target).kind=='ProblemCluster'),incident_ids=[e.target for e in bound if r.get_node(e.target).kind=='Incident'],asset_ids=['D1'],issue='WATERLOGGING',graph_revision=r._read("MATCH (m:CivicSchemaMigration {id:'0001'}) RETURN m.repo_revision")[0][0],inventory_hash=tools.inventory_hash,as_of=clock(),hypotheses=[v['hypothesis_id'] for v in f.saved['draft']['basis']],current_plan_id=f.b['plan_id'],current_plan_version=f.b['plan_version'],current_plan_hash=f.b['plan_hash'])
++  agent=InvestigationAgent(p,r,tools,ScriptedModel([choose()]),saver(p),clock=clock,planning_service=planning)
++  result=await agent.run(s,thread_id=thread);assert result['__interrupt__']
++  snap=await agent.graph.aget_state({'configurable':{'thread_id':thread}})
++  return {'thread_id':thread,'config':copy.deepcopy(snap.config),'values':copy.deepcopy(snap.values)}
++
++async def resume(p,r,clock,path,inv,f,planning,before,reopened,report):
++ async with brokers(p,path,timeout=10) as tools:
++  model=ScriptedModel([choose('READ',{'template':'node','id':reopened['new_incident_id']},'official::query_graph_readonly'),choose('READ',{'template':'node','id':report['entity_id']},'official::query_graph_readonly'),choose()])
++  agent=InvestigationAgent(p,r,tools,model,saver(p),clock=clock,planning_service=planning)
++  thread=before['thread_id'];config={'configurable':{'thread_id':thread}}
++  after=await agent.graph.aget_state(config)
++  assert after.values==before['values'] and after.config==before['config'] # Domain write did not rewrite checkpoint.
++  async with ownership(r.client,p,thread) as check:
++   agent.check=check;forged=copy.deepcopy(after.values);forged['data']['incident_ids']=['UNBOUND-INCIDENT']
++   try:agent.decode(forged)
++   except RecoveryRequired:pass
++   else:raise AssertionError('Unvalidated incident binding accepted')
++  result=await agent.run(thread_id=thread,resume=True);state=result['data']
++  assert state['incident_ids']==[reopened['new_incident_id']] and state['wakes']==1
++  assert report['entity_id'] in state['evidence']
++  refresh=next(x for x in state['observations'] if x.get('operation')=='RECURRENCE_SCOPE_REFRESH')
++  assert refresh['previous_incident_ids']==before['values']['data']['incident_ids']
++  assert state['tool_calls']==2 and not state['refresh_required'] and len(state['executions'])==2
++  assert model.contexts[0]['state']['refresh_required'] is True
++  assert model.contexts[0]['state']['incident_ids']==[reopened['new_incident_id']]
++  assert report['entity_id'] in model.contexts[0]['source_evidence_hashes']
++  assert any(row.get('rows') and row['rows'][0]['properties']['id']==reopened['new_incident_id'] for row in state['observations'])
++  assert any(row.get('rows') and row['rows'][0]['properties']['id']==report['entity_id'] for row in state['observations'])
++  # Public SDK reads an old checkpoint by ID, proving it was retained byte-for-byte.
++  old=await agent.graph.aget_state(before['config']);assert old.values==before['values']
++  latest=await agent.graph.aget_state(config)
++  return {'mode':'SCRIPTED_MODEL_REAL_FALKORDB_MCP_SAVER','thread_id':thread,'old_checkpoint_id':before['config']['configurable']['checkpoint_id'],'new_checkpoint_id':latest.config['configurable']['checkpoint_id'],'old_checkpoint_unchanged':True,'explicit_resume_only':True,'active_incident_ids':state['incident_ids'],'recurrence_evidence_id':report['entity_id'],'refresh_audit':refresh,'fresh_mcp_executions':state['executions'],'unvalidated_binding_rejected':True,'provider_calls':0}
+--- /dev/null
++++ b/backend/tests/integration/test_waste_post_pickup_runtime.py
+@@ -0,0 +1,34 @@
++"""One real B14-R waste flow: premature follow-up remains unresolved, later verifies."""
++import asyncio,json
++from pathlib import Path
++import pytest
++from app.active import active_scope
++from tests.b14_fixtures import prepare,Run
++from tests.integration.test_memory_graphrag import memory
++pytestmark=pytest.mark.integration
++
++def test_actual_waste_post_pickup_elapsed_window(db,tmp_path,memory):
++ p,r,clock,path,inv,draft,planning,auth,tokens,ops=prepare(db,tmp_path,memory,'WASTE_ACCUMULATION')
++ async def run():
++  with active_scope(p):
++   f=Run(r,clock,ops,tokens,'WASTE_ACCUMULATION');await f.begin(planning,draft);await f.complete()
++   clock.advance();start=clock();clock.advance(24*3600)
++   pickup={}
++   def pickups(at):
++    pickup['at']=at
++    return [f.observation('SCHEDULED_PICKUPS',at,1.0,'pickups'),f.observation('ACTUAL_PICKUPS',at,1.0,'pickups')]
++   _,record=await f.report('FOLLOWUP',pickups)
++   clock.advance(3600)
++   def window(at):return [f.observation('REACCUMULATION_WINDOW',at,24.0,'hours'),f.observation('WASTE_REACCUMULATION',at,0.0,'boolean')]
++   _,early=await f.report('FOLLOWUP',window)
++   def query(report):return {'operation':'evaluate','request_id':f.key(),'work_order_id':f.w['id'],'expected_hash':f.hash(),'evidence_ids':[record['entity_id'],report['entity_id']],'window_start':start,'window_end':clock()}
++   premature=await f.call(query(early),'OP-ANALYST')
++   assert premature['assessment_status']=='MONITORING' and not premature['case_closed'] and premature['policy_version']=='B14-2'
++   assert r.get_node(f.b['plan_id']).properties['status']=='MONITORING'
++   clock.advance(23*3600)
++   _,late=await f.report('FOLLOWUP',window);q=query(late);verified=await f.call(q,'OP-ANALYST')
++   assert verified['assessment_status']=='RESOLUTION_VERIFIED' and verified['case_closed']
++   assert verified['policy_version']=='B14-2' and await f.call(q,'OP-ANALYST')==verified
++   assert ops.store.get('outcome',premature['id'])==premature
++   Path('docs/evidence/B14R-waste.json').write_text(json.dumps({'graph':p.graph,'pickup_at':pickup['at'],'premature':premature,'verified':verified,'early_report':early['entity_id'],'late_report':late['entity_id'],'pickup_report':record['entity_id'],'historical_premature_outcome_retained':True,'provider_calls':0},indent=2)+'\n')
++ asyncio.run(run())
+--- /dev/null
++++ b/backend/tests/unit/test_recurrence_scope.py
+@@ -0,0 +1,17 @@
++"""Mock bounded graph read only: historical incoherent scope fails closed."""
++from types import SimpleNamespace
++import pytest
++from app.agents.checkpoints import RecoveryRequired
++from app.agents import recurrence
++@pytest.mark.parametrize('status,blocked',[('OPEN',False),('REOPENED',True)])
++def test_no_new_binding_preserves_ordinary_resume_but_blocks_ended_only_reopen(monkeypatch,status,blocked):
++ nodes={'INV':SimpleNamespace(properties={'status':status}), 'OLD':SimpleNamespace(kind='Incident',properties={'status':'ENDED'})}
++ class Read:
++  def __init__(self,*a):pass
++  def edges(self,*a,**kw):return [SimpleNamespace(target='OLD')]
++  def node(self,id,*a):return nodes[id]
++ monkeypatch.setattr(recurrence,'Reader',Read)
++ state=SimpleNamespace(as_of='2026-10-18T00:00:00Z',investigation_id='INV',incident_ids=['OLD'])
++ if blocked:
++  with pytest.raises(RecoveryRequired,match='MISSING_ACTIVE_EPISODE'):recurrence.refresh(None,state)
++ else:assert recurrence.refresh(None,state) is state
+--- /dev/null
++++ b/backend/tests/unit/test_waste_post_pickup.py
+@@ -0,0 +1,24 @@
++"""B14-R regression: observed elapsed time, not declared/evaluation duration."""
++import pytest
++from app.services.operations.verification import evaluate,VERSION
++from app.services.operations.verification_v1 import evaluate as historical,VERSION as OLD
++from tests.unit.test_execution_policy import ob,time
++
++def data(pickup,observed):
++ return [ob('SCHEDULED_PICKUPS',pickup,1.0,'pickups'),ob('ACTUAL_PICKUPS',pickup,1.0,'pickups'),ob('REACCUMULATION_WINDOW',observed,24.0,'hours'),ob('WASTE_REACCUMULATION',observed,0.0,'boolean')]
++def check(values):return evaluate('WASTE_ACCUMULATION',['A'],values,time(1),time(75),time(0),time(76))[0]
++def test_one_hour_false_positive_and_frozen_historical_policy():
++ values=data(25,26)
++ assert OLD=='B14-1' and VERSION=='B14-2'
++ assert historical('WASTE_ACCUMULATION',['A'],values,time(1),time(27),time(0),time(28))[0]=='RESOLUTION_VERIFIED'
++ assert check(values)=='MONITORING'
++@pytest.mark.parametrize('hours,expected',[(23.999,'MONITORING'),(24,'RESOLUTION_VERIFIED'),(24.001,'RESOLUTION_VERIFIED')])
++def test_elapsed_post_pickup_boundary(hours,expected):assert check(data(25,25+hours))==expected
++
++def test_multiple_aggregate_pickups_use_latest_anchor_without_summing_or_choosing_first():
++ values=data(25,49)+[ob('ACTUAL_PICKUPS',40,1.0,'pickups')]
++ assert check(values)=='MONITORING'
++ assert check(list(reversed(values)))=='MONITORING'
++ assert check(data(25,64)+[ob('ACTUAL_PICKUPS',40,1.0,'pickups')])=='RESOLUTION_VERIFIED'
++ conflicting=data(25,64)+[ob('ACTUAL_PICKUPS',40,2.0,'pickups')]
++ assert check(conflicting)=='INCONCLUSIVE'

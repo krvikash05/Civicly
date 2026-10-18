@@ -1,0 +1,1120 @@
+--- /dev/null
++++ b/backend/OPERATOR_CLI.md
+@@ -0,0 +1,87 @@
++# Civicly B18 operator CLI
++
++B17/B17-R accepted. This is a local SIMULATED operator interface, not a new municipal engine or genuine live-model demonstration. B10fullgenuine acceptance remains OPEN/PARTIAL. No B19scenario generator, frontend or paid provider. Existing Python3.12environment and running FalkorDB/MCP/Saver/GraphRAG/auth dependencies required.
++
++## Setup and secrets
++
++`civicly` remains `cli.main:main`. From projectroot use `PYTHONPATH=backend backend/.venv/bin/python -m cli`. Existing `civicly health --env-file .env`, `migrate [--retry-failed]` and `schema-status` retain their original semantics. These infrastructure commands are distinct from the operator flow.
++
++Every new command requires host-owned `--profile`, `--auth-store`, `--memory-profile`, `--session`; optional `--at` is a controlled UTC demonstration clock, not client authority over stored facts. Existing immutable migrations/capabilities/explicitdeliveryactivation must already be ready. Normal startup never migrates/seeds/activates/startsworker. Private source and memory profiles authorize the exact configured graph; no runtime graph/query/role/provider selectors.
++
++Credential input is a private0600regular JSON file `{operator_id,demo_password}` created securely by the host. Sessions are saved0600without overwrite and bound to configured source/authstore; no password/token flags or output. Login is idempotent with the same private session file/key/operator while that session remains valid; an expired/revoked session must not be silently renewed. Use a new session file and explicit newlogin after proper operator action. Never share credential/session/profile/authstore files. Payload/query files accept bounded regular JSON; duplicatekeys/nonfinitevalues rejected. Complex mutation payloads are exactly accepted API schemas, with server identities/roles/request IDs excluded. Independent reviewer uses `--reviewer-session` privatefile, never JSON reviewer/token.
++
++## Commands and accepted services
++
++Global configuration flags precede the group/action. Mutation actions require `--key` and `--payload`. Resource actions take `--id`. Read filters use `--query` JSON and the exact B17-R allowlist (unsupported/repeated query parameters rejected). No arbitraryURL/Cypher/shell.
++
++| Group | Actions | Accepted implementation |
++|---|---|---|
++| auth | login --credentials --key; whoami; logout --key | Existing Auth/API, private saved session |
++| complaint | create/get/list | B08intake and scoped reads |
++| investigate | open/get/resume/trace/hypotheses | B09case, B15queuedintent, B17state/trace |
++| hypothesis | propose/assess/get | B09immutable assessments/history |
++| evidence | get | Validated typed findings/source/review |
++| inspect | request/transition/report/get | B09typed lifecycle; standalone reports unreviewed |
++| plan | create/get/list/submit | B12sourcedDAG, B13exactsubmission |
++| approve | decide/get/list | Exact version/hash/scope and APPROVER |
++| work | create/get/list/status/progress/inspect/evaluate | B13/B14same auth/CAS/state/independent review |
++| graph | explain/neighbors/asset | B17authorized neighborhood plus B03actual bounded evidence paths/provenance/reservations |
++| source | document/procedures | Actual versioned B11citations, PROPOSED authority |
++| advance | discover --key; run --key [--batches1..4] | Separate explicit B15discovery or bounded offlineWorker |
++| reset | --key --output-dir NEW_PRIVATE_DIRECTORY | Fresh-only isolated starter, no retained graph reset |
++| test | no extra command text | Actual bounded Services.health(readiness), no suites/lifecycle/live |
++
++All actions use the configured in-process FastAPI/API→same Services path; no HTTP listener or webUI necessary. Auth/RBAC/strictmodels/errorenvelopes/exactbindings/source-bound idempotency/B16-RpostdispatchUNKNOWN are the same as the accepted API. Graph explain adds bounded actual hypothesis-evidence PathRecords from the accepted B03 template only if their endpoints/edges/evidence are in the authorized B17view at the same revision. These analysis paths are labelled context, not model-selected decisions. Read output uses typed public DTOs, no raw graph properties/journals/provider bodies/private reasoning. `--format text` adds a readable SIMULATED heading; default JSON is machine-readable with status/data/mode. Both contain actual public service output.
++
++Exit0success,2validation/configinput,3authorization,4conflict/missingresource,5dependency/unavailable,6RECOVERY_REQUIRED/UNKNOWN. Errors are bounded/sanitized; supplied safe correlation/request/entity/investigation/plan IDs retained. No automated retry/replacementrequest/rollback/deletion/quarantineclearance. A failed response means inspect original durable intent/journal/checkpoint under existing recovery procedure; never choose a new key merely to bypass uncertainty. Exact successful domain/advance/reset replay returns original acknowledgment, not current execution authority. Authentication retains existing expiry/revocation semantics: repeated logout is denied after revocation and never resurrects a session.
++
++## Advance and reset boundaries
++
++Queued resume returns PENDING intent; it does not execute investigation. `advance discover` only registers existing committedfacts. `advance run` consumes at most1..4existing batches, performs no implicit discovery, uses accepted Runtime.ReadPause (one real MCPread thenpause) labelled B15_DETERMINISTIC_DEVELOPMENT_NO_PROVIDER. It is not a hardcoded scenario solver or autonomous model. Explicit ADMIN/ANALYST, key bound to source/operator/action/bounds. Existing fenced companion records DISPATCHING then DONE; uncertainty blocks same-key redispatch. Worker receipts/status checked; partial/recovery cannot report successful delivery. Work completion remains separate from independently dated outcome verification.
++
++Reset is ADMIN-only, explicitkey/newprivateoutputdirectory, servergenerated ActiveProfile/source/Saver. It validates the existing B04canonical bundle and copies only actual DRAIN-100,LOC-005,DEPT-DRAIN,EVD-B04-IMPORT + their2location/ownership edges using the existing schema/repository. Fixed content/timestamps/hash are deterministic across distinctnewgraphs. CANDIDATE ownership remainsCANDIDATE, not invented verified responsibility or physicalcause; no complaint/incident/work/action/hiddentruth seeded. A full case requires actual accepted evidence/knowledge/ownership prerequisites; reset alone is not a solved scenario. Existing approved memory/readcapability reused explicitly with newsource binding, authstore unchanged. Fresh target only, apply existing0001/0004/0005 there, provision exactread/SaverACL and explicitfreshcutover; no deletedoldgraph/volume/migrationchange/sourcepromotion. Oldsource andhistory remain.
++
++Existing source/operator/key companion binds destination; a changed destination under the same key conflicts. DISPATCHING blocks uncertain replay even if a local manifest was written. Exclusive private STARTED manifest precedes provisioning; DONE requires exactfixture readback. Same completedrequest returns historicalreceipt, never clears current data. Reset administrative intent/audit appends to the previous source; existing domain records and history are not rewritten. Incomplete/unverified reset staysUNKNOWN/manualinspection, no automaticrepair or reuse of partialtarget. Newdirectory contains `profile.json`, `memory.json`, `reset.json`; contains secrets, never share. B19twelve scenarios/delayedreveals/evaluation remain deferred.
++
++## Copy-paste operator walkthrough
++
++Prepare existing private setup and authored accepted payload JSON files; no secrets below. Shell helper only invokes the fixed CLI, not arbitrary command strings:
++
++```sh
++cli() { PYTHONPATH=backend backend/.venv/bin/python -m cli --profile "$PROFILE" --auth-store "$AUTH_STORE" --memory-profile "$MEMORY_PROFILE" --session "$SESSION" "$@"; }
++cli auth login --credentials "$CREDENTIAL_FILE" --key login-1
++cli auth whoami
++cli investigate open --payload open-case.json --key open-case-1
++cli investigate get --id "$INVESTIGATION"
++cli investigate resume --id "$INVESTIGATION" --payload resume.json --key resume-1
++cli advance run --key offline-wake-1 --batches 1
++cli investigate trace --id "$INVESTIGATION"
++cli inspect request --payload inspection-request.json --key inspection-1
++cli inspect transition --id "$INSPECTION" --payload transition.json --key transition-1
++cli inspect report --id "$INSPECTION" --payload observations.json --key report-1
++cli plan create --payload sourced-plan.json --key draft-1
++cli plan submit --id "$PLAN" --payload exact-submission.json --key submit-1
++# Set SESSION to the authenticated APPROVER private session file.
++cli approve decide --id "$APPROVAL" --payload exact-decision.json --key decision-1
++cli work create --payload authorized-order.json --key order-1
++# Set SESSION to assigned DEPARTMENT_LEAD; reports use independent analyst file.
++cli work status --id "$WORK_ORDER" --payload assignment.json --key assignment-1
++cli work progress --id "$WORK_ORDER" --payload start.json --key start-1
++cli work inspect --id "$WORK_ORDER" --payload work-inspection.json --key work-inspection-1 --reviewer-session "$ANALYST_SESSION"
++cli work progress --id "$WORK_ORDER" --payload completion.json --key complete-1
++# Set SESSION back to ANALYST for actual follow-up evaluation.
++cli work evaluate --id "$WORK_ORDER" --payload outcome-window.json --key outcome-1
++cli work get --id "$WORK_ORDER"
++cli graph explain --id "$INVESTIGATION" --query graph-query.json
++cli source document --id "$CANONICAL_DOCUMENT"
++cli advance discover --key discover-1
++cli test
++# ADMIN only; this creates a new starter, preserves current source.
++cli reset --output-dir "$NEW_PRIVATE_DIRECTORY" --key fresh-demo-1
++```
++
++Payload examples/schema are available from existing accepted API/models and the actual subprocess proof. Transitions/inspection report follow exact accepted order and expected_hash; workapproval binds fullplan/version/hash/taskassignments. Completion requires attributable reviewed evidence; follow-up needs a real authorized inspection/report and qualifying observation opportunity, not arbitrary declared success. The test's authored payloads are clearly synthetic; operator commands neither choose hiddenanswers nor invent a verifiedcause.
++
++Exact reproducible focused tests, command counts, retained IDs, failures and recovery/isolatedreset proof: docs/evidence/B18-COMMANDS.md/B18-RESULTS.md/B18-cli-journey.json. STOPfor B18review; B19/frontend/live not authorized.
++
++Reset nodes/edges counts describe the4fixedfixture nodes/2edges; activation/audit/migration metadata is additional. A fresh starter intentionally lacks independently verified responsibility/causal evidence; existing accepted planning gates can block until their actual prerequisites are supplied through reviewed setup/services. B18 does not add an ownership-verification API or silently upgrade candidate records. The real acceptance journey uses existing accepted fixture evidence/verified ownership, then a newly CLI-opened case and operator-authored service commands.
+--- /dev/null
++++ b/backend/app/services/operator.py
+@@ -0,0 +1,16 @@
++"""Operator read explanation over accepted B03 queries and authorized B17 DTO."""
++from app.api.view_models import GraphSubgraphDTO
++from app.graph.models import QueryRequest,digest
++from app.graph.queries import GraphQueries
++from app.graph.repository import PreconditionFailed
++
++def explain(repo,investigation,projection,cutoff):
++ view=GraphSubgraphDTO.model_validate(projection)
++ result=GraphQueries(repo).run(QueryRequest(template='hypothesis_evidence',id=investigation,as_of=cutoff,max_hops=4,limit=40))
++ if result.graph_revision!=view.graph_revision:raise PreconditionFailed('EXPLANATION_CHANGED_REFETCH')
++ ids={n.id for n in view.nodes};edges={e.id for e in view.edges};evidence=ids|{id for e in view.edges for id in e.source_evidence_ids}
++ paths=[]
++ for path in result.paths:
++  if set(path.node_ids)<=ids and set(path.edge_ids)<=edges and set(path.evidence_ids)<=evidence:
++   value=path.model_dump(mode='json');paths.append({'id':'EXPLAIN-'+digest(value)[:32],**value})
++ return {**projection,'analysis_paths':paths,'analysis_path_kind':'ACTUAL_HYPOTHESIS_EVIDENCE_CONTEXT_NOT_MODEL_SELECTED','analysis_truncated':result.truncated,'analysis_search_limited':result.search_limited,'analysis_reservations':list(result.reservations)}
+--- /dev/null
++++ b/backend/cli/advance.py
+@@ -0,0 +1,39 @@
++"""Explicit bounded offline delivery, using existing fenced companion storage."""
++from app.graph.models import digest
++from app.graph.repository import Conflict
++from app.services.http.service import Recovery
++from app.services.operations.auth import Denied
++
++async def advance(s,action,batches,key,actor,token):
++ if actor.role not in {'ADMIN','ANALYST'}:raise Denied('ADVANCE_ROLE')
++ if action not in {'discover','run'} or type(batches) is not int or not 1<=batches<=4:raise ValueError('ADVANCE_BOUND')
++ request='CLI-B18-'+digest([s.profile.graph,actor.id,key])[:32];sha=digest([action,batches]);store=s.delivery.store
++ with s.repo._session() as session:
++  old=store.get('cli_advance',request)
++  if old:
++   if old['hash']!=sha:raise Conflict('ADVANCE_KEY_CONFLICT')
++   if old['status']=='DONE':return old['receipt']
++   raise Recovery(request)
++  row={'id':request,'hash':sha,'actor_id':actor.id,'status':'DISPATCHING'}
++  try:store.write(session,[('cli_advance',request,row)])
++  except Exception:raise Recovery(request) from None
++ try:
++  if action=='discover':
++   ids=s.delivery.discover();value={'request_id':request,'action':'DISCOVERY_ONLY','registered_ids':ids,'execution_completed':False}
++  else:
++   from app.events.runtime import Runtime
++   from app.events.worker import Worker
++   worker=Worker(s.delivery,Runtime(s.profile,s.profile_path,s.repo,s.clock),'CLI-'+request);rows=[]
++   for _ in range(batches):
++    s.auth.resolve(token)
++    claim=await worker.once(discover=False)
++    if not claim:break
++    states=[s.delivery.store.get('delivery',id)['status'] for id in claim['ids']]
++    if any(v!='DONE' for v in states):raise Recovery(request,identities={'investigation_id':claim['case_id']} if claim['case_id'] else None)
++    rows.append({'batch_key':claim['key'],'event_ids':claim['ids'],'investigation_id':claim['case_id'],'status':'DONE','action':claim['action']})
++   value={'request_id':request,'action':'BOUNDED_OFFLINE_WORKER','batches':rows,'discovery_performed':False,'execution_mode':'B15_DETERMINISTIC_DEVELOPMENT_NO_PROVIDER','resolution_verified':False}
++  with s.repo._session() as session:store.write(session,[('cli_advance',request,{**row,'status':'DONE','receipt':value})])
++  return value
++ except Exception as exc:
++  if isinstance(exc,Recovery):raise
++  raise Recovery(request) from None
+--- /dev/null
++++ b/backend/cli/legacy.py
+@@ -0,0 +1,45 @@
++"""CLI invokes services; it accepts no executable Cypher or write action."""
++
++import argparse
++import json
++
++from pydantic import ValidationError
++from redis.exceptions import RedisError
++
++from app.config import Settings
++from app.services.health import check_health
++from app.graph.migration import MigrationError
++from app.services.schema import schema_operation
++
++
++def main(argv: list[str] | None = None) -> int:
++    parser = argparse.ArgumentParser(prog="civicly")
++    parser.add_argument("command", choices=["health", "migrate", "schema-status"])
++    parser.add_argument("--env-file", default=".env", help="Local settings file (default: .env)")
++    parser.add_argument("--retry-failed", action="store_true", help="Migration only: recreate known FAILED constraints after data repair")
++    args = parser.parse_args(argv)
++    if args.retry_failed and args.command != "migrate":
++        parser.error("--retry-failed is only valid for migrate")
++    try:
++        settings = Settings(_env_file=args.env_file)
++    except ValidationError:
++        print(json.dumps({"status": "unavailable", "error_code": "CONFIG_INVALID"}))
++        return 2
++    if args.command != "health":
++        try:
++            result = schema_operation(settings, apply=args.command == "migrate", retry_failed=args.retry_failed)
++        except MigrationError as error:
++            print(json.dumps({"ready": False, "error_code": "SCHEMA_MIGRATION_ERROR", "message": str(error)}))
++            return 1
++        except RedisError:
++            print(json.dumps({"ready": False, "error_code": "SCHEMA_MIGRATION_ERROR"}))
++            return 1
++        print(json.dumps(result))
++        return 0 if result["ready"] else 1
++    result = check_health(settings)
++    print(result.model_dump_json())
++    return 0 if result.status == "ok" else 1
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
+--- a/backend/cli/main.py
++++ b/backend/cli/main.py
+@@ -1,45 +1,141 @@
+-"""CLI invokes services; it accepts no executable Cypher or write action."""
++"""Civicly operator interface; legacy infrastructure commands remain compatible."""
++import argparse,asyncio,json,sys
++from . import private
+ 
+-import argparse
+-import json
++# action: accepted API method/path. No caller-controlled URL or executable query.
++ACTIONS={
++ 'complaint':{'create':('POST','/complaints'),'get':('GET','/complaints/{id}'),'list':('GET','/complaints')},
++ 'investigate':{'open':('POST','/investigations'),'get':('GET','/investigations/{id}'),'resume':('POST','/investigations/{id}/resume'),'trace':('GET','/investigations/{id}/trace'),'hypotheses':('GET','/investigations/{id}/hypotheses')},
++ 'hypothesis':{'propose':('POST','/investigations/{id}/hypotheses'),'assess':('POST','/hypotheses/{id}/assessments'),'get':('GET','/hypotheses/{id}')},
++ 'evidence':{'get':('GET','/evidence/{id}')},
++ 'inspect':{'request':('POST','/inspections'),'transition':('POST','/inspections/{id}/transitions'),'report':('POST','/inspections/{id}/observations'),'get':('GET','/inspections/{id}')},
++ 'plan':{'create':('POST','/plans'),'get':('GET','/plans/{id}'),'list':('GET','/investigations/{id}/plans'),'submit':('POST','/plans/{id}/submit-approval')},
++ 'approve':{'decide':('POST','/approvals/{id}/decision'),'get':('GET','/approvals/{id}'),'list':('GET','/approvals')},
++ 'work':{'create':('POST','/work-orders'),'get':('GET','/work-orders/{id}'),'list':('GET','/work-orders'),'status':('POST','/work-orders/{id}/status'),'progress':('POST','/work-orders/{id}/progress'),'inspect':('POST','/work-orders/{id}/inspections'),'evaluate':('POST','/work-orders/{id}/outcomes')},
++ 'graph':{'explain':('GET','/investigations/{id}/graph'),'neighbors':('GET','/assets/{id}/neighbors'),'asset':('GET','/assets/{id}')},
++ 'source':{'document':('GET','/documents/{id}'),'procedures':('GET','/procedures')},
++}
++EXIT={'VALIDATION_ERROR':2,'UNAUTHORIZED':3,'PERMISSION_DENIED':3,'NOT_FOUND':4,'CONFLICT':4,'DEPENDENCY_BLOCKED':5,'READ_CAPACITY':5,'RECOVERY_REQUIRED':6}
++class Parser(argparse.ArgumentParser):
++ def error(self,message):
++  print(json.dumps({'status':'ERROR','error':{'code':'VALIDATION_ERROR','message':'Arguments do not match the operator command contract'}}))
++  raise SystemExit(2)
+ 
+-from pydantic import ValidationError
+-from redis.exceptions import RedisError
++def parser():
++ p=Parser(prog='civicly',description='SIMULATED civic operator; no live provider or automatic worker',epilog='Legacy: civicly health|migrate|schema-status [--env-file FILE]; migrate alone supports --retry-failed')
++ p.add_argument('--profile',required=True);p.add_argument('--auth-store',required=True);p.add_argument('--memory-profile',required=True);p.add_argument('--session',required=True);p.add_argument('--at');p.add_argument('--format',choices=['json','text'],default='json')
++ sub=p.add_subparsers(dest='group',required=True,parser_class=Parser)
++ auth=sub.add_parser('auth').add_subparsers(dest='action',required=True,parser_class=Parser)
++ a=auth.add_parser('login');a.add_argument('--credentials',required=True);a.add_argument('--key',required=True)
++ auth.add_parser('whoami');a=auth.add_parser('logout');a.add_argument('--key',required=True)
++ for group,actions in ACTIONS.items():
++  commands=sub.add_parser(group).add_subparsers(dest='action',required=True,parser_class=Parser)
++  for name,(method,path) in actions.items():
++   a=commands.add_parser(name)
++   if '{id}' in path:a.add_argument('--id',required=True)
++   if method=='POST':a.add_argument('--payload',required=True);a.add_argument('--key',required=True);a.add_argument('--reviewer-session')
++   else:a.add_argument('--query',help='Closed per-route query JSON file; unsupported fields rejected')
++ commands=sub.add_parser('advance').add_subparsers(dest='action',required=True,parser_class=Parser)
++ for name in ['discover','run']:
++  a=commands.add_parser(name);a.add_argument('--key',required=True)
++  if name=='run':a.add_argument('--batches',type=int,choices=range(1,5),default=1)
++ a=sub.add_parser('reset');a.add_argument('--output-dir',required=True);a.add_argument('--key',required=True)
++ sub.add_parser('test',help='Bounded actual dependency readiness; no shell, full pytest, lifecycle or provider')
++ return p
+ 
+-from app.config import Settings
+-from app.services.health import check_health
+-from app.graph.migration import MigrationError
+-from app.services.schema import schema_operation
++def key(value):
++ if not isinstance(value,str) or not 1<=len(value)<=200 or any(ord(c)<33 or ord(c)>126 for c in value):raise ValueError('IDEMPOTENCY_KEY')
++ return value
+ 
++def output(value,mode='json'):
++ if mode=='text':print('Civicly — '+value['status']+' — SIMULATED / OFFLINE; data below is persisted service output')
++ print(json.dumps(value,indent=2,allow_nan=False))
+ 
+-def main(argv: list[str] | None = None) -> int:
+-    parser = argparse.ArgumentParser(prog="civicly")
+-    parser.add_argument("command", choices=["health", "migrate", "schema-status"])
+-    parser.add_argument("--env-file", default=".env", help="Local settings file (default: .env)")
+-    parser.add_argument("--retry-failed", action="store_true", help="Migration only: recreate known FAILED constraints after data repair")
+-    args = parser.parse_args(argv)
+-    if args.retry_failed and args.command != "migrate":
+-        parser.error("--retry-failed is only valid for migrate")
+-    try:
+-        settings = Settings(_env_file=args.env_file)
+-    except ValidationError:
+-        print(json.dumps({"status": "unavailable", "error_code": "CONFIG_INVALID"}))
+-        return 2
+-    if args.command != "health":
+-        try:
+-            result = schema_operation(settings, apply=args.command == "migrate", retry_failed=args.retry_failed)
+-        except MigrationError as error:
+-            print(json.dumps({"ready": False, "error_code": "SCHEMA_MIGRATION_ERROR", "message": str(error)}))
+-            return 1
+-        except RedisError:
+-            print(json.dumps({"ready": False, "error_code": "SCHEMA_MIGRATION_ERROR"}))
+-            return 1
+-        print(json.dumps(result))
+-        return 0 if result["ready"] else 1
+-    result = check_health(settings)
+-    print(result.model_dump_json())
+-    return 0 if result.status == "ok" else 1
++def result_error(code,details=None):
++ return {'status':'ERROR','error':{'code':code,'message':'Operator request failed safely; inspect supplied reconciliation IDs where present','details':details or {}},'simulation_mode':'SIMULATED'}
+ 
++async def execute(args):
++ from pathlib import Path
++ from urllib.parse import quote
++ import httpx
++ from app.api.__main__ import configured_app
++ from app.graph.schema import timestamp
++ if args.at:timestamp(args.at)
++ if hasattr(args,'key'):key(args.key)
++ app=configured_app(args.profile,args.auth_store,args.memory_profile,args.at)
++ async with app.router.lifespan_context(app):
++  s=app.state.services;s._cli_memory_path=args.memory_profile
++  async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app,raise_app_exceptions=False),base_url='http://civicly.local') as client:
++   if args.group=='auth' and args.action=='login':
++    from app.api.models import LoginRequest
++    credentials=LoginRequest.model_validate(private.read_json(args.credentials,private=True))
++    if Path(args.session).exists():
++     old=private.session(args.session,s.profile,args.auth_store)
++     if old['login_key']!=args.key or old['operator_id']!=credentials.operator_id:raise ValueError('SESSION_FILE_EXISTS')
++     actor=s.auth.resolve(old['token']);return {'status':'OK','data':s.identity(actor),'session_saved':True,'replayed':True,'simulation_mode':'SIMULATED'},0
++    response=await client.post('/api/v1/auth/demo-login',json=credentials.model_dump(mode='json')|{'demo_password':credentials.demo_password.get_secret_value()})
++    if response.status_code==200:
++     data=response.json()['data']
++     try:private.write_private(args.session,{'version':1,'scope':private.scope(s.profile,args.auth_store),'token':data['access_token'],'login_key':args.key,'operator_id':data['operator_id']})
++     except OSError:
++      from app.graph.repository import OutcomeUnknown
++      raise OutcomeUnknown('SESSION_SAVE_UNCERTAIN') from None
++     return {'status':'OK','data':{k:v for k,v in data.items() if k!='access_token'},'session_saved':True,'simulation_mode':'SIMULATED'},0
++   else:
++    saved=private.session(args.session,s.profile,args.auth_store);actor=s.auth.resolve(saved['token']);headers={'Authorization':'Bearer '+saved['token']}
++    if args.group in {'advance','reset'}:
++     from app.active import active_scope
++     with active_scope(s.profile):
++      if args.group=='reset':
++       from .reset import reset
++       value=reset(s,args.output_dir,args.key,actor)
++      else:
++       from .advance import advance
++       value=await advance(s,args.action,getattr(args,'batches',1),args.key,actor,saved['token'])
++     return {'status':'OK','data':value,'simulation_mode':'SIMULATED','execution_mode':'B15_DETERMINISTIC_DEVELOPMENT_NO_PROVIDER'},0
++    if args.group=='test':
++     from app.active import active_scope
++     with active_scope(s.profile):value=await s.health(True)
++     return {'status':'OK' if value['status']=='ok' else 'ERROR','data':value,'simulation_mode':'SIMULATED'},0 if value['status']=='ok' else 5
++    if args.group=='auth':method,path=('GET','/auth/me') if args.action=='whoami' else ('POST','/auth/logout')
++    else:method,path=ACTIONS[args.group][args.action]
++    if '{id}' in path:
++     from pydantic import TypeAdapter
++     from app.api.models import ID
++     id=TypeAdapter(ID).validate_python(args.id);path=path.replace('{id}',quote(id,safe=''))
++    body={} if args.group=='auth' else private.read_json(args.payload) if method=='POST' else None
++    query=private.read_json(args.query) if getattr(args,'query',None) else None
++    if query is not None and (not isinstance(query,dict) or any(not isinstance(v,(str,int,bool)) for v in query.values())):raise ValueError('QUERY_OBJECT')
++    if hasattr(args,'key'):headers['Idempotency-Key']=args.key
++    if getattr(args,'reviewer_session',None):headers['X-Reviewer-Authorization']='Bearer '+private.session(args.reviewer_session,s.profile,args.auth_store)['token']
++    response=await client.request(method,'/api/v1'+path,json=body,params=query,headers=headers)
++   value=response.json()
++   if response.status_code>=400:
++    error=value.get('error',{});code=error.get('code','DEPENDENCY_UNAVAILABLE')
++    return result_error(code,error.get('details')),EXIT.get(code,5)
++   if args.group=='graph' and args.action=='explain':
++    from app.active import active_scope
++    from app.services.operator import explain
++    with active_scope(s.profile):value['data']=explain(s.repo,args.id,value['data'],s.clock())
++   return {'status':'OK',**value,'simulation_mode':'SIMULATED','execution_mode':'OPERATOR_SERVICES_NO_PROVIDER'},0
+ 
+-if __name__ == "__main__":
+-    raise SystemExit(main())
++def main(argv=None):
++ argv=list(sys.argv[1:] if argv is None else argv)
++ if argv and argv[0] in {'health','migrate','schema-status'}:
++  from .legacy import main as legacy
++  return legacy(argv)
++ try:
++  args=parser().parse_args(argv);value,code=asyncio.run(execute(args))
++ except SystemExit:raise
++ except Exception as exc:
++  from app.graph.repository import OutcomeUnknown,Conflict,NotFound,PreconditionFailed
++  from app.services.operations.auth import Denied
++  if isinstance(exc,OutcomeUnknown):
++   fields={k:v for k,v in getattr(exc,'reconciliation',{}).items() if k in {'request_id','entity_id','investigation_id','plan_id'} and isinstance(v,str) and len(v)<=200}
++   value=result_error('RECOVERY_REQUIRED',{'commitment':'UNKNOWN',**fields});code=6
++  else:
++   name='UNAUTHORIZED' if isinstance(exc,Denied) else 'CONFLICT' if isinstance(exc,(Conflict,NotFound)) else 'DEPENDENCY_BLOCKED' if isinstance(exc,PreconditionFailed) else 'VALIDATION_ERROR' if isinstance(exc,(ValueError,OSError)) else 'DEPENDENCY_UNAVAILABLE'
++   value=result_error(name);code=EXIT.get(name,5)
++ output(value,getattr(locals().get('args'),'format','json'));return code
++
++if __name__=='__main__':raise SystemExit(main())
+--- /dev/null
++++ b/backend/cli/private.py
+@@ -0,0 +1,27 @@
++"""Bounded local operator inputs; secrets remain in owner-only files."""
++import json,os
++from pathlib import Path
++from app.graph.models import digest
++
++def pairs(rows):
++ result={}
++ for key,value in rows:
++  if key in result:raise ValueError('DUPLICATE_JSON_KEY')
++  result[key]=value
++ return result
++
++def read_json(path,*,private=False):
++ p=Path(path)
++ if p.is_symlink() or not p.is_file() or private and p.stat().st_mode&0o077 or p.stat().st_size>131072:raise ValueError('BOUNDED_REGULAR_FILE_REQUIRED')
++ with p.open() as f:return json.load(f,object_pairs_hook=pairs,parse_constant=lambda v:(_ for _ in ()).throw(ValueError('NONFINITE_JSON')))
++
++def write_private(path,value):
++ fd=os.open(path,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600)
++ with os.fdopen(fd,'w') as f:json.dump(value,f,allow_nan=False)
++
++def scope(profile,auth):return digest([profile.graph,str(Path(auth).resolve())])
++def session(path,profile,auth):
++ value=read_json(path,private=True)
++ if set(value)!={'version','scope','token','login_key','operator_id'} or value['version']!=1 or value['scope']!=scope(profile,auth):raise ValueError('SESSION_SOURCE_BINDING')
++ if not isinstance(value['token'],str):raise ValueError('SESSION_FORMAT')
++ return value
+--- /dev/null
++++ b/backend/cli/reset.py
+@@ -0,0 +1,72 @@
++"""Fresh-only deterministic starter, never a destructive scenario/city reset."""
++import json,os
++from pathlib import Path
++from app.active import new_profile,save,active_scope,provision,load
++from app.graph.models import digest
++from app.graph.repository import GraphRepository,Conflict
++from app.graph.migration import MigrationRunner
++from app.services.http.service import Recovery
++from app.services.operations.auth import Denied
++from .private import read_json,write_private,scope
++ROOT=Path(__file__).resolve().parents[2]
++
++def fixture():
++ from app.ingestion.conversion import validate_bundle
++ bundle=json.loads((ROOT/'data/ingestion/city-v3.json').read_text())
++ validate_bundle(bundle)
++ edges=[e for e in bundle['relationships'] if e['source_id']=='DRAIN-100' and e['type'] in {'LOCATED_AT','MAINTAINED_BY'}]
++ ids={'DRAIN-100'}|{e['target_id'] for e in edges}|{e['properties']['source_evidence_id'] for e in edges}
++ nodes=[n for n in bundle['nodes'] if n['properties']['id'] in ids]
++ if len(edges)!=2 or len(nodes)!=4:raise ValueError('FIXED_STARTER_SCOPE')
++ hashes={id:bundle['manifest']['record_hashes'][id] for id in ids|{e['properties']['id'] for e in edges}}
++ return nodes,edges,hashes
++
++def reset(s,directory,key,actor):
++ if actor.role!='ADMIN':raise Denied('RESET_ADMIN_REQUIRED')
++ path=Path(directory);manifest=path/'reset.json';binding=digest([scope(s.profile,s.auth.path),actor.id,key,str(path.absolute())])
++ request='RESET-B18-'+digest([s.profile.graph,actor.id,key])[:32];store=s.delivery.store
++ with s.repo._session() as session:
++  prior=store.get('cli_reset',request)
++  if prior:
++   if prior['binding']!=binding:raise Conflict('RESET_KEY_DESTINATION_CONFLICT')
++   if prior['status']!='DONE':raise Recovery(request)
++   receipt=prior['receipt']
++   if load(path/'profile.json').graph!=receipt['source_graph']:raise Conflict('RESET_PROFILE_BINDING')
++   return receipt
++ if path.is_symlink():raise ValueError('RESET_DIRECTORY_SYMLINK')
++ if path.exists():raise Conflict('RESET_OUTPUT_ALREADY_OWNED')
++ nodes,edges,hashes=fixture();profile=new_profile()
++ with s.repo._session() as session:
++  # Recheck under the same fence: simultaneous callers may have won since read.
++  if store.get('cli_reset',request):raise Recovery(request)
++  try:store.write(session,[('cli_reset',request,{'id':request,'binding':binding,'status':'DISPATCHING'})])
++  except Exception:raise Recovery(request) from None
++ started={'binding':binding,'request_id':request,'status':'STARTED'}
++ try:
++  path.mkdir(mode=0o700,parents=False,exist_ok=False);write_private(manifest,started)
++  # Neither target is caller supplied, retained or shared. No drop/delete path.
++  if s.repo.client.connection.exists(profile.graph) or s.repo.client.connection.exists(profile.checkpoints):raise Conflict('FRESH_TARGET_EXISTS')
++  save(profile,path/'profile.json')
++  with active_scope(profile):
++   MigrationRunner(s.repo.client,profile.graph).apply()
++   repo=GraphRepository(s.repo.client,profile.graph)
++   from app.services.planning.storage import PlanMigration
++   from app.services.operations.migration import OperationsMigration
++   PlanMigration(s.repo.client,profile.graph).apply();OperationsMigration(s.repo.client,profile.graph).apply()
++   for n in nodes:repo.create_node(n['label'],n['properties'])
++   for e in edges:repo.create_relationship(e['type'],e['source_id'],e['target_id'],e['properties'])
++   actual={n['properties']['id']:repo.get_node(n['properties']['id']).content_hash for n in nodes}
++   actual.update({e['properties']['id']:repo.get_relationship(e['properties']['id']).content_hash for e in edges})
++   if actual!=hashes:raise Conflict('RESET_FIXTURE_READBACK')
++   provision(s.repo.client,profile)
++   from app.memory.runtime import Profile
++   memory=read_json(s._cli_memory_path,private=True)
++   Profile.model_validate({**memory,'source_graphs':[profile.graph]}).json_private(path/'memory.json')
++   from app.events.service import Delivery
++   Delivery(repo,s.clock).activate(operator=actor.id,reason='Explicit B18 fresh starter; no retained history activation',authorize=True)
++  receipt={'request_id':request,'source_graph':profile.graph,'fixture_hash':digest(actual),'nodes':4,'edges':2,'previous_source_preserved':True,'source_profile_saved':True,'memory_profile_saved':True,'fixture_asset_id':'DRAIN-100','fixture_location_id':'LOC-005','authority':'CANDIDATE ownership remains unverified; no incident, cause or work seeded'}
++  temp=path/'reset.done.json';write_private(temp,{**started,'status':'DONE','receipt':receipt});os.replace(temp,manifest)
++  with s.repo._session() as session:store.write(session,[('cli_reset',request,{'id':request,'binding':binding,'status':'DONE','receipt':receipt})])
++  return receipt
++ except Exception:
++  raise Recovery(request) from None
+--- /dev/null
++++ b/backend/tests/b18_fault.py
+@@ -0,0 +1,11 @@
++"""Test-only CLI child fault injection; no fault switch in operator interface."""
++import sys
++from app.services.evidence.service import EvidenceService
++from cli.main import main
++original=EvidenceService.readback
++
++def mismatch(self,receipt):
++ original(self,receipt)
++ raise ValueError('Injected post-commit readback mismatch; private text must not escape')
++EvidenceService.readback=mismatch
++raise SystemExit(main(sys.argv[1:]))
+--- /dev/null
++++ b/backend/tests/integration/test_operator_cli_runtime.py
+@@ -0,0 +1,155 @@
++"""One real water case across actual CLI processes; authored payloads, no LLM."""
++import asyncio,copy,hashlib,json,os,secrets,subprocess,sys
++from pathlib import Path
++from uuid import uuid4
++import pytest
++from app.active import active_scope,load
++from app.services.operations.auth import Auth,OPERATORS
++from app.services.evidence.reader import Reader
++from tests.b14_fixtures import prepare
++from tests.b13_fixtures import binding
++from tests.integration.test_memory_graphrag import memory
++pytestmark=pytest.mark.integration
++
++def test_operator_subprocess_water_journey_reset_and_recovery(db,tmp_path,memory):
++ p,r,clock,path,oldinv,draft,planning,_,_,_=prepare(db,tmp_path,memory,'WATERLOGGING')
++ passwords={id:secrets.token_urlsafe(24) for id in OPERATORS};auth=Auth.provision(tmp_path/'operator-auth.sqlite3',passwords)
++ from app.memory.runtime import Profile
++ user='b18_memory_'+uuid4().hex;pw=secrets.token_urlsafe(48)
++ db.connection.execute_command('ACL','SETUSER',user,'reset','on','#'+hashlib.sha256(pw.encode()).hexdigest(),'~'+memory.repo.graph.name,'~'+memory.config.graph_name,'-@all','+ping','+info','+client|setinfo','+graph.ro_query')
++ mp=Profile(docs_graph=memory.config.graph_name,canonical_graph=memory.repo.graph.name,source_graphs=[p.graph],reader_user=user,reader_password=pw)
++ mpath=tmp_path/'memory.json';mp.json_private(mpath)
++ from app.events.service import Delivery
++ with active_scope(p):delivery=Delivery(r,clock);delivery.activate(operator='B18-test',reason='Explicit fresh isolated workflow cutover',authorize=True)
++ env={**os.environ,'PYTHONPATH':str(Path('backend/test_guards').resolve())+os.pathsep+str(Path('backend').resolve())};counter=0;calls=[];sessions={id:tmp_path/(id+'.session.json') for id in OPERATORS}
++ def call(group,action=None,*,who='OP-ANALYST',body=None,id=None,query=None,key=None,reviewer=None,expect=0,fault=False,extra=None):
++  nonlocal counter
++  counter+=1;argv=['--profile',str(path),'--auth-store',str(auth.path),'--memory-profile',str(mpath),'--session',str(sessions[who]),'--at',clock(),group]
++  if action:argv.append(action)
++  if id:argv+=['--id',id]
++  if key:argv+=['--key',key]
++  if reviewer:argv+=['--reviewer-session',str(sessions[reviewer])]
++  for field,value in [('payload',body),('query',query)]:
++   if value is not None:
++    f=tmp_path/(str(counter)+'-'+field+'.json');f.write_text(json.dumps(value));argv+=['--'+field,str(f)]
++  argv+=extra or []
++  command=[sys.executable,'-m','tests.b18_fault' if fault else 'cli',*argv]
++  result=subprocess.run(command,env=env,capture_output=True,text=True,timeout=60)
++  # No secret value may escape even on a failing child; never print raw stderr.
++  assert not any(secret in result.stdout+result.stderr for secret in [pw,*passwords.values()])
++  value=json.loads(result.stdout)
++  calls.append({'command':group+(' '+action if action else ''),'exit':result.returncode,'status':value['status'],'id':value.get('data',{}).get('id') if isinstance(value.get('data'),dict) else None})
++  assert result.returncode==expect,{'command':group+' '+str(action),'exit':result.returncode,'sanitized_output':value}
++  if expect:return value
++  return value['data']
++ for id in ['OP-ANALYST','OP-APPROVER','OP-DRAIN-LEAD','OP-ROAD-LEAD','OP-ADMIN']:
++  credentials=tmp_path/(id+'.credentials.json');credentials.write_text(json.dumps({'operator_id':id,'demo_password':passwords[id]}));credentials.chmod(0o600)
++  call('auth','login',who=id,key='login-'+id,extra=['--credentials',str(credentials)])
++ assert call('auth','whoami')['role']=='ANALYST'
++ # Existing accepted physical evidence/citations are fixture setup. All following
++ # case decisions and lifecycle commands execute through independent CLI children.
++ with active_scope(p):
++  targets=delivery.sources.repo._read('MATCH (i:Investigation {id:$id})-[:INVESTIGATES]->(n) RETURN n.id,labels(n)',{'id':oldinv})
++ incident=next(row[0] for row in targets if 'Incident' in row[1]);cluster=next(row[0] for row in targets if 'ProblemCluster' in row[1])
++ opened=call('investigate','open',body={'incident_ids':[incident],'cluster_id':cluster},key='open')
++ assert call('investigate','open',body={'incident_ids':[incident],'cluster_id':cluster},key='open')==opened
++ inv=opened['id'];assert not opened['current_plan_id']
++ resume=call('investigate','resume',id=inv,body={'reason':'Explicit offline operator wake'},key='resume');assert resume['accepted'] and resume['status']=='PENDING'
++ advanced=call('advance','run',key='advance-1',extra=['--batches','1']);assert advanced['batches'] and advanced['batches'][0]['status']=='DONE'
++ assert call('advance','run',key='advance-1',extra=['--batches','1'])==advanced
++ trace=call('investigate','trace',id=inv)
++ assert any(v['kind']=='TOOL' and v['validated_output'] for v in trace['items'])
++ assert all(v['execution_mode']=='B15_DETERMINISTIC_DEVELOPMENT_NO_PROVIDER' for v in trace['items'])
++ assert trace['phase']=='Coordinator' and not trace['recovery_required']
++ # Explicit authored hypotheses reuse actual prior incident evidence, never hidden
++ # truth. New proposal and assessment identities belong to this CLI-opened case.
++ fresh=copy.deepcopy(draft.model_dump(mode='json'));fresh['investigation_id']=inv
++ for i,basis in enumerate(fresh['basis']):
++  with active_scope(p):_,definition=Reader(r,clock()).definition(basis['hypothesis_id'])
++  proposal=definition.model_dump(mode='json')
++  for field in ['operation','request_id','investigation_id']:proposal.pop(field)
++  made=call('hypothesis','propose',id=inv,body=proposal,key='hyp-'+str(i));hid=made['status']
++  h=call('hypothesis','get',id=hid);clock.advance()
++  call('hypothesis','assess',id=hid,body={'expected_hash':h['expected_hash'],'evidence_ids':fresh['evidence_ids'],'as_of':clock()},key='assessment-'+str(i))
++  h=call('hypothesis','get',id=hid);basis.update(hypothesis_id=hid,assessment_id=h['current_assessment_id'])
++ fresh['tasks'][0]['assessment_ids']=[b['assessment_id'] for b in fresh['basis']]
++ # Standalone inspection through CLI is correctly UNREVIEWED, no authority spoof.
++ inspection=call('inspect','request',body={'investigation_id':inv,'asset_ids':['D1'],'department_id':'DEPT-DRAIN','inspection_type':'B18_CONTEXT'},key='context-request')
++ iid=inspection['id']
++ for status in ['REQUESTED','SCHEDULED','IN_PROGRESS']:
++  clock.advance();current=call('inspect','get',id=iid)
++  body={'expected_hash':current['expected_hash'],'status':status}
++  if status=='SCHEDULED':body['scheduled_at']=clock()
++  call('inspect','transition',id=iid,body=body,key='context-'+status,who='OP-DRAIN-LEAD')
++ clock.advance();current=call('inspect','get',id=iid)
++ unreviewed=call('inspect','report',id=iid,who='OP-DRAIN-LEAD',key='context-report',body={'expected_hash':current['expected_hash'],'source_id':'B18-context','record_id':'context','observations':[{'asset_id':'D1','code':'OPERATOR_CONTEXT','statement':'Authored synthetic context; cause is not asserted','method':'DIRECT_SYNTHETIC_FIELD_TEST','observed_at':clock()}]})
++ assert not unreviewed['reviewed'] and unreviewed['findings']
++ assert call('evidence','get',id=unreviewed['id'])['findings']==unreviewed['findings']
++ plan=call('plan','create',body={'draft':fresh},key='draft');assert plan['status']=='DRAFT' and not plan['draft_receipt']['approved']
++ with active_scope(p):saved=planning.store.get(plan['plan_id']);b=binding(saved)
++ submit={k:v for k,v in b.items() if k!='plan_id'}
++ approval=call('plan','submit',id=b['plan_id'],body=submit,key='submit')
++ decision={**b,'expected_hash':approval['expected_hash'],'decision':'APPROVED','reason':'Exact authenticated synthetic plan review'}
++ decided=call('approve','decide',id=approval['id'],body=decision,key='approve',who='OP-APPROVER');assert decided['status']=='APPROVED'
++ orderbody={**b,'approval_id':approval['id'],'task_id':b['assignments'][0]['task_id']}
++ denied=call('work','create',body=orderbody,key='denied-order',who='OP-ROAD-LEAD',expect=3);assert denied['error']['code']=='PERMISSION_DENIED'
++ work=call('work','create',body=orderbody,key='order',who='OP-APPROVER')
++ assert call('work','create',body=orderbody,key='order',who='OP-APPROVER')==work
++ wid=work['id']
++ work=call('work','status',id=wid,body={'expected_hash':work['expected_hash'],'new_status':'ASSIGNED','reason':'Explicit synthetic assignment'},key='assign',who='OP-DRAIN-LEAD')
++ work=call('work','progress',id=wid,body={'expected_hash':work['expected_hash'],'action':'START','reason':'Explicit synthetic start'},key='start',who='OP-DRAIN-LEAD')
++ def work_report(purpose,codes):
++  nonlocal counter
++  request=call('work','inspect',id=wid,who='OP-DRAIN-LEAD',key='wi-'+str(counter),body={'expected_hash':work['expected_hash'],'purpose':purpose,'command':{'operation':'request_inspection','investigation_id':inv,'asset_ids':['D1'],'department_id':'DEPT-DRAIN','inspection_type':fresh['tasks'][0]['action_type'] if purpose=='COMPLETION' else 'B14_FOLLOWUP'}})
++  iid=request['status']
++  for state in ['REQUESTED','SCHEDULED','IN_PROGRESS']:
++   clock.advance();view=call('inspect','get',id=iid)
++   c={'operation':'transition_inspection','inspection_id':iid,'expected_hash':view['expected_hash'],'status':state}
++   if state=='SCHEDULED':c['scheduled_at']=clock()
++   call('work','inspect',id=wid,who='OP-DRAIN-LEAD',key='wi-'+str(counter),body={'expected_hash':work['expected_hash'],'purpose':purpose,'command':c})
++  clock.advance();view=call('inspect','get',id=iid)
++  observations=[]
++  for code in codes:
++   clock.advance();observations.append({'asset_id':'D1','code':code,'statement':'Authored synthetic '+code,'method':'DIRECT_SYNTHETIC_FIELD_TEST','observed_at':clock(),'value':0.0 if code=='FOLLOWUP_WATERLOGGING' else None,'unit':'boolean' if code=='FOLLOWUP_WATERLOGGING' else None})
++  return call('work','inspect',id=wid,who='OP-DRAIN-LEAD',reviewer='OP-ANALYST',key='wi-'+str(counter),body={'expected_hash':work['expected_hash'],'purpose':purpose,'review_reason':'Independent authenticated review of synthetic measurements','command':{'operation':'report_inspection','inspection_id':iid,'expected_hash':view['expected_hash'],'source_id':'B18-field','record_id':'B18-'+str(counter),'observations':observations}})['status']
++ completed_report=work_report('COMPLETION',['ACTION_COMPLETED'])
++ work=call('work','progress',id=wid,who='OP-DRAIN-LEAD',key='complete',body={'expected_hash':work['expected_hash'],'action':'COMPLETE','reason':'Attributed synthetic completion','evidence_ids':[completed_report]})
++ assert work['status']=='COMPLETED' and not work['resolution_verified']
++ clock.advance();start=clock();clock.advance()
++ monitoring=call('work','evaluate',id=wid,key='no-opportunity',body={'expected_hash':work['expected_hash'],'evidence_ids':[],'window_start':start,'window_end':clock()});assert not monitoring['case_closed']
++ followup=work_report('FOLLOWUP',['COMPARABLE_FOLLOWUP_RAINFALL','FOLLOWUP_WATERLOGGING']);clock.advance()
++ outcome=call('work','evaluate',id=wid,key='verify',body={'expected_hash':work['expected_hash'],'evidence_ids':[followup],'window_start':start,'window_end':clock()})
++ assert outcome['assessment_status']=='RESOLUTION_VERIFIED' and outcome['case_closed']
++ work=call('work','get',id=wid);assert work['resolution_verified']
++ graph=call('graph','explain',id=inv,query={'depth':4,'include_candidates':True});assert graph['nodes'] and graph['edges'] and graph['analysis_paths']
++ source=call('source','document',id=fresh['tasks'][0]['procedure_citation']['canonical_document_id']);assert source['citations'] and source['assertion_status']=='PROPOSED'
++ # Actual committed B09inspection then injected readback ValueError inside CLIchild.
++ body={'investigation_id':inv,'asset_ids':['D1'],'department_id':'DEPT-DRAIN','inspection_type':'B18_FAULT_CONTEXT'}
++ with active_scope(p):before=r._read('MATCH (n:Inspection) RETURN count(n)')[0][0]
++ failure=call('inspect','request',body=body,key='uncertain',fault=True,expect=6)
++ assert failure['error']['code']=='RECOVERY_REQUIRED' and failure['error']['details']['commitment']=='UNKNOWN'
++ again=call('inspect','request',body=body,key='uncertain',expect=6);assert again['error']['details']['correlation_id']==failure['error']['details']['correlation_id']
++ with active_scope(p):
++  assert r._read('MATCH (n:Inspection) RETURN count(n)')[0][0]==before+1
++  assert r._read('MATCH (w:WorkOrder) RETURN count(w)')==[[1]]
++  assert delivery.store.get('api_request',failure['error']['details']['correlation_id'])['status']=='DISPATCHING'
++  from app.services.evidence.models import Journal
++  journal=next(Journal.model_validate_json(n[0]) for n in r._read('MATCH (e:Evidence {evidence_type:$kind}) RETURN e.summary',{'kind':'B09_OPERATION'}) if json.loads(n[0]).get('command',{}).get('request_id')==failure['error']['details']['correlation_id'])
++  assert journal.state=='COMMITTED'
++ # Two fresh starters have equal validated content and disjoint graph/profile IDs.
++ first=call('reset',who='OP-ADMIN',key='reset-a',extra=['--output-dir',str(tmp_path/'reset-a')])
++ replay=call('reset',who='OP-ADMIN',key='reset-a',extra=['--output-dir',str(tmp_path/'reset-a')]);assert replay==first
++ call('reset',who='OP-ADMIN',key='reset-a',extra=['--output-dir',str(tmp_path/'conflicting-destination')],expect=4)
++ second=call('reset',who='OP-ADMIN',key='reset-b',extra=['--output-dir',str(tmp_path/'reset-b')])
++ assert first['fixture_hash']==second['fixture_hash'] and first['source_graph']!=second['source_graph']!=p.graph
++ call('reset',who='OP-ADMIN',key='reset-other',extra=['--output-dir',str(tmp_path/'reset-a')],expect=4)
++ for directory,receipt in [(tmp_path/'reset-a',first),(tmp_path/'reset-b',second)]:
++  new=load(directory/'profile.json')
++  with active_scope(new):
++   from app.graph.repository import GraphRepository
++   rr=GraphRepository(db,new.graph);assert rr._read('MATCH (n:CivicEntity) WHERE NOT n:Evidence RETURN count(n)')==[[3]]
++   assert rr._read('MATCH ()-[e:MAINTAINED_BY]->() RETURN e.association_status')==[['CANDIDATE']]
++ call('test')
++ discovered=call('advance','discover',key='discover');assert not discovered['execution_completed']
++ proof={'mode':'REAL_SUCCESSIVE_CLI_PROCESSES_FALKORDB_MCP_SAVER_AUTHORED_OFFLINE_INPUTS','source_graph':p.graph,'investigation_id':inv,'prior_source_investigation_id':oldinv,'incident_id':incident,'plan_id':b['plan_id'],'approval_id':approval['id'],'work_order_id':wid,'outcome':outcome,'advance':advanced,'trace':trace,'graph':graph,'source_citation':source['citations'][0],'uncertain':failure,'uncertain_committed_journal_id':journal.receipt.journal_id,'uncertain_replay_inspection_count_change':1,'work_order_count':1,'resets':[first,second],'reset_replay_unchanged':True,'subprocess_count':counter,'calls':calls,'provider_calls':0}
++ Path('docs/evidence/B18-cli-journey.json').write_text(json.dumps(proof,indent=2)+'\n')
+--- /dev/null
++++ b/backend/tests/unit/test_operator_cli.py
+@@ -0,0 +1,127 @@
++"""B18 parsing/private-input/dispatch units; not DB or genuine model evidence."""
++import json
++from pathlib import Path
++from types import SimpleNamespace
++import pytest
++from cli.main import parser,main,key,ACTIONS,EXIT
++from cli.private import read_json,write_private,session,scope
++from app.api.coverage import ROUTES
++BASE=['--profile','private-profile','--auth-store','private-auth','--memory-profile','private-memory','--session','private-session']
++
++@pytest.mark.parametrize('group,action,method,path',[(g,a,*v) for g,rows in ACTIONS.items() for a,v in rows.items()])
++def test_command_exact_accepted_api_mapping(group,action,method,path):
++ args=[*BASE,group,action]
++ if '{id}' in path:args+=['--id','ID']
++ if method=='POST':args+=['--key','K','--payload','input.json']
++ parsed=parser().parse_args(args)
++ assert (parsed.group,parsed.action)==(group,action)
++ assert any((r[0],r[1])==(method,path) for r in ROUTES)
++
++@pytest.mark.parametrize('extra',[['--live'],['--password','PRIVATE_VALUE'],['--graph','civicly_knowledge'],['--provider','gemini'],['advance','run','--key','K','--batches','5'],['reset','--output-dir','private','--key','K','--target','civicly_knowledge']])
++def test_closed_parser_does_not_echo_private_input(extra,capsys):
++ with pytest.raises(SystemExit) as error:parser().parse_args([*BASE,*extra])
++ assert error.value.code==2
++ value=capsys.readouterr();assert 'PRIVATE_VALUE' not in value.out+value.err
++ assert json.loads(value.out)['error']['code']=='VALIDATION_ERROR'
++
++@pytest.mark.parametrize('value',['','with space','line\nline','a'*201])
++def test_mutations_require_bounded_printable_key(value):
++ with pytest.raises(ValueError):key(value)
++
++def test_private_files_and_session_exact_source(tmp_path):
++ path=tmp_path/'session.json';p=SimpleNamespace(graph='SOURCE');auth=tmp_path/'auth'
++ value={'version':1,'scope':scope(p,auth),'token':'PRIVATE_VALUE','operator_id':'OP','login_key':'K'}
++ write_private(path,value);assert path.stat().st_mode&0o077==0
++ assert session(path,p,auth)==value
++ with pytest.raises(ValueError):session(path,SimpleNamespace(graph='OTHER'),auth)
++ path.chmod(0o644)
++ with pytest.raises(ValueError):read_json(path,private=True)
++ path.chmod(0o600);link=tmp_path/'link';link.symlink_to(path)
++ with pytest.raises(ValueError):read_json(link,private=True)
++ with pytest.raises(FileExistsError):write_private(path,value)
++
++@pytest.mark.parametrize('raw',['{"a":1,"a":2}','{"a":NaN}'])
++def test_json_rejects_duplicate_fields_and_nonfinite(tmp_path,raw):
++ path=tmp_path/'payload';path.write_text(raw)
++ with pytest.raises(ValueError):read_json(path)
++
++@pytest.mark.parametrize('command',['health','migrate','schema-status'])
++def test_legacy_command_arguments_forwarded_unchanged(monkeypatch,command):
++ import cli.legacy
++ calls=[];monkeypatch.setattr(cli.legacy,'main',lambda argv:calls.append(argv) or 0)
++ argv=[command,'--env-file','local.env']+(['--retry-failed'] if command=='migrate' else [])
++ assert main(argv)==0 and calls==[argv]
++
++@pytest.mark.parametrize('error,code', [('VALIDATION_ERROR',2),('UNAUTHORIZED',3),('PERMISSION_DENIED',3),('CONFLICT',4),('DEPENDENCY_BLOCKED',5),('RECOVERY_REQUIRED',6)])
++def test_stable_exit_codes(error,code):assert EXIT[error]==code
++
++@pytest.mark.parametrize('kind,expected',[('validation',2),('authorization',3),('conflict',4),('dependency',5),('unknown',6),('external',5)])
++def test_errors_sanitized_and_unknown_ids_preserved(monkeypatch,capsys,kind,expected):
++ import cli.main as cli
++ from app.graph.repository import Conflict,PreconditionFailed
++ from app.services.http.service import Recovery
++ from app.services.operations.auth import Denied
++ errors={'validation':ValueError('PRIVATE_VALUE'),'authorization':Denied('PRIVATE_VALUE'),'conflict':Conflict('PRIVATE_VALUE'),'dependency':PreconditionFailed('PRIVATE_VALUE'),'unknown':Recovery('REQUEST',identities={'investigation_id':'INV'}),'external':RuntimeError('PRIVATE_VALUE')}
++ async def execute(args):raise errors[kind]
++ monkeypatch.setattr(cli,'execute',execute)
++ assert main([*BASE,'test'])==expected
++ raw=capsys.readouterr().out;assert 'PRIVATE_VALUE' not in raw
++ if kind=='unknown':assert json.loads(raw)['error']['details']=={'commitment':'UNKNOWN','request_id':'REQUEST','investigation_id':'INV'}
++
++def test_test_command_has_no_arbitrary_shell_or_suite(capsys):
++ with pytest.raises(SystemExit):parser().parse_args([*BASE,'test','--command','PRIVATE_VALUE'])
++ assert 'PRIVATE_VALUE' not in capsys.readouterr().out
++
++@pytest.mark.parametrize('mode',['unknown','conflict','done'])
++def test_advance_replay_never_dispatches(monkeypatch,mode):
++ import asyncio
++ from contextlib import nullcontext
++ from app.graph.repository import Conflict
++ from app.graph.models import digest
++ from app.services.http.service import Recovery
++ from cli.advance import advance
++ old={'hash':digest(['run',1]),'status':'DISPATCHING' if mode=='unknown' else 'DONE','receipt':{'historical':'receipt'}}
++ if mode=='conflict':old['hash']='different'
++ repo=SimpleNamespace(_session=lambda:nullcontext(None))
++ s=SimpleNamespace(profile=SimpleNamespace(graph='SOURCE'),repo=repo,delivery=SimpleNamespace(store=SimpleNamespace(get=lambda *args:old)))
++ actor=SimpleNamespace(role='ANALYST',id='OP')
++ if mode=='done':assert asyncio.run(advance(s,'run',1,'KEY',actor,'private'))==old['receipt']
++ else:
++  with pytest.raises(Recovery if mode=='unknown' else Conflict):asyncio.run(advance(s,'run',1,'KEY',actor,'private'))
++
++
++def test_explain_uses_actual_paths_and_filters_scope(monkeypatch):
++ from app.services.operator import explain
++ import app.services.operator as module
++ from app.graph.models import PathRecord
++ from app.graph.repository import PreconditionFailed
++ view={'nodes':[{'id':id,'labels':['Evidence'],'kind':'Evidence','display_label':id,'status':None,'source_kind':'SYNTHETIC','evidence_ids':[],'observed_at':None} for id in ['A','B']],'edges':[{'id':'E','type':'SUPPORTED_BY','source':'A','target':'B','valid_from':None,'valid_to':None,'observed_at':None,'verification_status':'RECORDED_ASSOCIATION_NOT_CAUSATION','source_evidence_ids':['B']}],'decision_path_ids':[],'graph_revision':1,'as_of':'2026-10-18T00:00:00Z','truncated':False,'reservations':[]}
++ paths=[PathRecord(node_ids=('A','B'),edge_ids=('E',),directions=('OUTGOING',),evidence_ids=('B',)),PathRecord(node_ids=('A','PRIVATE'),edge_ids=('FOREIGN',),directions=('OUTGOING',),evidence_ids=('PRIVATE',))]
++ result=SimpleNamespace(graph_revision=1,paths=paths,truncated=False,search_limited=True,reservations=['Bounded context'])
++ monkeypatch.setattr(module,'GraphQueries',lambda repo:SimpleNamespace(run=lambda request:result))
++ output=explain(None,'INV',view,view['as_of'])
++ assert len(output['analysis_paths'])==1 and 'PRIVATE' not in json.dumps(output)
++ assert output['analysis_search_limited'] and output['analysis_path_kind'].endswith('NOT_MODEL_SELECTED')
++ result.graph_revision=2
++ with pytest.raises(PreconditionFailed):explain(None,'INV',view,view['as_of'])
++
++@pytest.mark.parametrize('operation',['advance','reset'])
++def test_uncertain_initial_intent_preserves_original_request_id(monkeypatch,tmp_path,operation):
++ import asyncio
++ from contextlib import nullcontext
++ from app.graph.repository import OutcomeUnknown
++ from app.services.http.service import Recovery
++ repo=SimpleNamespace(_session=lambda:nullcontext(None))
++ def fail(*args,**kw):raise OutcomeUnknown('PRIVATE_VALUE')
++ s=SimpleNamespace(profile=SimpleNamespace(graph='SOURCE'),auth=SimpleNamespace(path=tmp_path/'auth'),repo=repo,delivery=SimpleNamespace(store=SimpleNamespace(get=lambda *args:None,write=fail)))
++ actor=SimpleNamespace(role='ADMIN',id='OP')
++ with pytest.raises(Recovery) as error:
++  if operation=='advance':
++   from cli.advance import advance
++   asyncio.run(advance(s,'run',1,'KEY',actor,'private'))
++  else:
++   import cli.reset as module
++   monkeypatch.setattr(module,'fixture',lambda:([],[],{}))
++   module.reset(s,tmp_path/'NEW','KEY',actor)
++ assert error.value.reconciliation['request_id'].startswith('CLI-B18-' if operation=='advance' else 'RESET-B18-')
++ assert not (tmp_path/'NEW').exists()
+--- a/blockers.md
++++ b/blockers.md
+@@ -603,3 +603,8 @@
+ 
+ ## CURRENT B17-R limitations/review gate — 2026-10-18
+ Corrected silentlyignoredqueryfields;59unit+1realPASS,0unresolvedFAIL/0SKIP; bothSPECvalidatorsPASS. Hypothesisdatefiltering intentionallyunsupported422 until normativetimestampmeaning is separatelydefined; no ambiguouscreation-versus-assessmentfilter. Dashboardhasno pagination; onlyactualmetricfilters. Route-specificpublicschema reflects thesechoices, existingfinitequeries/pagination/revisions/SSElimits unchanged. No newdomain/storage/auth/recovery/provider capability. B10genuineacceptanceOPEN/PARTIAL; all42retaineddrainlinksCANDIDATE, frozen55legacydefects/historygaps/PROPOSEDsourceauthority/DEC-004futuregates andoriginalquarantinesremain. Noreset/retry/clearance. STOPforB17-Rreview; B18/frontend/liveunauthorized.
++
++## CURRENT B18 review gate and limits — 2026-10-18
++No unresolvedfocusedCLItestfailure:71unit+1realPASS, bothSPECvalidatorsPASS,0externalprovider. LocaldemoCLI requires existingprivateActiveProfile/auth/memory/READYmigrations/explicitdeliverysetup; no publicidentity/remoteproductiondeployment. AdvanceexistingReadPauseisofflineauthoreddevelopmentbehavior, not autonomousgenuineGemini. Explicitboundedworker/discovery retainatleastonce/quarantine/reconciliationlimits; UNKNOWNmustnotbe bypassedwithnewkeys, reset or replay. Authenticationretainsrevocation/expirysemantics; repeatedlogoutdenied, nopromiseofsessionresurrection. Resetcreatesonlyfresh4node/2edgestarterandmetadata; candidateownerisnotverifiedplanningauthority, no newownershipverificationAPI/fullscenariofixture/hiddenreveals. Exactsourcepromotion/B19engine separatelyreviewed. Graphanalysisevidencepathsqualified/bounded,currentrevision, notphysicalcausation orfakeagentselectedpaths. Existingfinitecapacities/currentpages/boundedMCP/Saver/PROPOSEDsource/historygaps persist.
++
++Originaldata/42CANDIDATEdrains/frozen55legacydefects/DEC-004futuregates/recoveryquarantines/accountingpreserved; B10fullgenuineacceptanceOPEN/PARTIAL. Noautomaticrepair/delete/clearance/paidpermit/frontendorbackendcompleteclaim. Operatorsteps: inspectoriginalrequest/committedjournal/lastcheckpoint underexistingmanualreconciliationprocedure; no newrecoveryframework. STOPafterB18forhumanreview. ExactnextproposedB19scenarioengineonlyafterseparateauthorization; live/frontendunauthorized.
+--- /dev/null
++++ b/contracts/operator_cli.json
+@@ -0,0 +1,216 @@
++{
++  "schema_version": 1,
++  "microtask": "B18",
++  "decision": "DEC-064",
++  "entrypoint": "cli.main:main",
++  "legacy_commands": [
++    "health",
++    "migrate",
++    "schema-status"
++  ],
++  "host_configuration": [
++    "profile",
++    "auth-store",
++    "memory-profile",
++    "session",
++    "at"
++  ],
++  "secret_transport": "Owner-only regular JSON credentials/session files; no plaintext password/token CLI arguments or output; sessions bound to exact source/auth-store",
++  "mutations": "Explicit key plus accepted API payload/binding/CAS; same configured API/Services path, no duplicate business rules",
++  "advance": "Authenticated ADMIN/ANALYST explicit keyed discover or1..4offline worker batches; existing companion/fence stores DISPATCHING then DONE; unknown intent blocks replay; no auto discovery during run and no provider",
++  "reset": "Authenticated ADMIN explicit key, new exclusive private output directory, generated fresh ActiveProfile/source/Saver; strict existing B04bundle subset4nodes/2edges, exact hash readback; retain CANDIDATE ownership; existing migrations onlynewgraph; prior source/history untouched; STARTED blocks uncertain replay, DONE returns historicalreceipt; source/operator/key companion binds destination hash, changed destination conflicts, uncertain companion blocks even if private manifest was written",
++  "reset_fixture": {
++    "asset_id": "DRAIN-100",
++    "location_id": "LOC-005",
++    "node_count": 4,
++    "edge_count": 2,
++    "new_operational_records": 0
++  },
++  "test": "Actual bounded dependency readiness through existing Services.health; no arbitrary shell/pytest/suite/container/live execution",
++  "exit_codes": {
++    "success": 0,
++    "validation": 2,
++    "authorization": 3,
++    "conflict_or_missing": 4,
++    "dependency": 5,
++    "recovery_required_unknown": 6
++  },
++  "output": "SIMULATED JSON by default; optional readable text label + same data; concise safe errors/reconciliation IDs, no raw journals/credentials/provider/private reasoning",
++  "asynchronous_semantics": [
++    "queued resume is not completed investigation",
++    "discovery is not delivery",
++    "work completion is not verified resolution",
++    "explicit bounded worker is deterministic offline, not genuine autonomy"
++  ],
++  "no_live_provider": true,
++  "no_destructive_reset": true,
++  "no_automatic_recovery_clearance": true,
++  "deferred": [
++    "B19twelve-scenario generator",
++    "frontend",
++    "genuineB10fullacceptanceOPEN/PARTIAL"
++  ],
++  "commands": {
++    "complaint": {
++      "create": {
++        "method": "POST",
++        "path": "/api/v1/complaints"
++      },
++      "get": {
++        "method": "GET",
++        "path": "/api/v1/complaints/{id}"
++      },
++      "list": {
++        "method": "GET",
++        "path": "/api/v1/complaints"
++      }
++    },
++    "investigate": {
++      "open": {
++        "method": "POST",
++        "path": "/api/v1/investigations"
++      },
++      "get": {
++        "method": "GET",
++        "path": "/api/v1/investigations/{id}"
++      },
++      "resume": {
++        "method": "POST",
++        "path": "/api/v1/investigations/{id}/resume"
++      },
++      "trace": {
++        "method": "GET",
++        "path": "/api/v1/investigations/{id}/trace"
++      },
++      "hypotheses": {
++        "method": "GET",
++        "path": "/api/v1/investigations/{id}/hypotheses"
++      }
++    },
++    "hypothesis": {
++      "propose": {
++        "method": "POST",
++        "path": "/api/v1/investigations/{id}/hypotheses"
++      },
++      "assess": {
++        "method": "POST",
++        "path": "/api/v1/hypotheses/{id}/assessments"
++      },
++      "get": {
++        "method": "GET",
++        "path": "/api/v1/hypotheses/{id}"
++      }
++    },
++    "evidence": {
++      "get": {
++        "method": "GET",
++        "path": "/api/v1/evidence/{id}"
++      }
++    },
++    "inspect": {
++      "request": {
++        "method": "POST",
++        "path": "/api/v1/inspections"
++      },
++      "transition": {
++        "method": "POST",
++        "path": "/api/v1/inspections/{id}/transitions"
++      },
++      "report": {
++        "method": "POST",
++        "path": "/api/v1/inspections/{id}/observations"
++      },
++      "get": {
++        "method": "GET",
++        "path": "/api/v1/inspections/{id}"
++      }
++    },
++    "plan": {
++      "create": {
++        "method": "POST",
++        "path": "/api/v1/plans"
++      },
++      "get": {
++        "method": "GET",
++        "path": "/api/v1/plans/{id}"
++      },
++      "list": {
++        "method": "GET",
++        "path": "/api/v1/investigations/{id}/plans"
++      },
++      "submit": {
++        "method": "POST",
++        "path": "/api/v1/plans/{id}/submit-approval"
++      }
++    },
++    "approve": {
++      "decide": {
++        "method": "POST",
++        "path": "/api/v1/approvals/{id}/decision"
++      },
++      "get": {
++        "method": "GET",
++        "path": "/api/v1/approvals/{id}"
++      },
++      "list": {
++        "method": "GET",
++        "path": "/api/v1/approvals"
++      }
++    },
++    "work": {
++      "create": {
++        "method": "POST",
++        "path": "/api/v1/work-orders"
++      },
++      "get": {
++        "method": "GET",
++        "path": "/api/v1/work-orders/{id}"
++      },
++      "list": {
++        "method": "GET",
++        "path": "/api/v1/work-orders"
++      },
++      "status": {
++        "method": "POST",
++        "path": "/api/v1/work-orders/{id}/status"
++      },
++      "progress": {
++        "method": "POST",
++        "path": "/api/v1/work-orders/{id}/progress"
++      },
++      "inspect": {
++        "method": "POST",
++        "path": "/api/v1/work-orders/{id}/inspections"
++      },
++      "evaluate": {
++        "method": "POST",
++        "path": "/api/v1/work-orders/{id}/outcomes"
++      }
++    },
++    "graph": {
++      "explain": {
++        "method": "GET",
++        "path": "/api/v1/investigations/{id}/graph"
++      },
++      "neighbors": {
++        "method": "GET",
++        "path": "/api/v1/assets/{id}/neighbors"
++      },
++      "asset": {
++        "method": "GET",
++        "path": "/api/v1/assets/{id}"
++      }
++    },
++    "source": {
++      "document": {
++        "method": "GET",
++        "path": "/api/v1/documents/{id}"
++      },
++      "procedures": {
++        "method": "GET",
++        "path": "/api/v1/procedures"
++      }
++    }
++  },
++  "graph_explain": "B17 authorized neighborhood plus existing bounded B03hypothesis_evidence paths at same revision, filtered to authorized endpoint/edge/evidence IDs, qualified as analysis not model-selected"
++}
+--- a/decision.md
++++ b/decision.md
+@@ -1516,3 +1516,16 @@
+ Explicit VIEW_QUERY_FIELDS and route-specific QueryRules-derived models are now the single transport allowlist/OpenAPI source. Preserve ReadFilters field definitions/validators and unchanged Views; reject rather than invent hypotheses creation/assessment-time semantics. Dashboard aggregates reject pagination; other consumed filters retained. Other B17handlers inspected: map/resource matches, trace actual timestamps/paging, graph bounds/candidate flag, asset no query, SSE existingcursor/casefilter. Shared superset no longer advertises irrelevant parameters. Legacy scalar repeated keys rejected consistently; no domain/storage/migration/worker/auth/recovery/SSE redesign or dependency changes.
+ 
+ Actual59distinctunitPASS +1realPASS28.03s,0unresolvedFAIL/0SKIP, bothSPECvalidatorsPASS once. One initial unit fixture used analyst against approver-only route; correctRBAC403, correctedfixture and13directlyaffected casesPASS; no realintegrationfailure/retry. Realcase run exactlyonce after finaledits, preserves originalB17assertions and TCPstream. New B17Rproof prefix prevents earlierartifact overwrite. All18requirementsbinding; genuineB10OPEN/PARTIAL; STOPafterB17-R, B18/frontend/liveunauthorized.
++
++## DEC-064 — B18 operator CLI boundary (pre-implementation)
++B17/R accepted. Requirements, exact command→acceptedservice mapping, touchedfiles, risks, tests and humanverification in docs/evidence/B18-PLAN.md. Reuse configured in-processAPI/service adapters to preserveRBAC/idempotency/B16-RUNKNOWN instead of secondbusinessimplementation. Explicit boundedofflineadvance only; resetfreshisolatedsmallvalidatedB04subset preserving CANDIDATEfacts, neverdestructivecityreset/B19generator. Privatefiles/secureinput, nonzerofailurestatus; testboundedreadiness only. No liveprovider/frontend/B19, oldevidence/data/quarantine preserved. RuntimePASS requires actualsuccessiveCLIprocessjourney andisolatedresetproof.
++
++### DEC-064 focused refinement after first real journey
++First actualCLIjourneyPASS129.07s. Inspection beforefinaldelivery: bind resetidempotencykey source/operator globally through existingcompanion, with destination in payloadhash, so changingdirectory under samekeyconflicts rather thancreatinganotherfreshsource. Preserve privateSTARTED/DONEmanifest andunknownblocking; no storage redesign. Graph explain should include actual B03hypothesis-evidence PathRecords as qualified analysis, not onlyB17neighborhood; existingfixedGraphQueries service filters to already-authorized publicgraph endpoint/evidenceIDs and same revision, neverrawproperties or inventedmodel-selectedpaths. Add evidenceget read mapping. Directtests and samefocusedjourney recheck thesechangedboundaries only; no broad/lifecycle/live.
++
++## DEC-064 B18 exercised implementation — 2026-10-18
++B17/R humanaccepted. Installed civicly entrypoint delegates originalfoundationcode byte-identically to cli.legacy for health/migrate/schema-status, and newoperatorinterface to explicitlyconfigured in-processFastAPI→acceptedServices. No duplicatedapproval/CAS/provenance/inspection/monitoringrules or arbitraryURL/graph/query/shell/providerflags. Privatecredentials/sessionfiles and exactsource/authstorebinding; domainmutations require explicitkey/acceptedtypedpayload, existingUNKNOWN/replay preserved. Stableexits0/2/3/4/5/6; outputSIMULATED/offline, bounded safeIDs/errors. No newpackages/images/migrations.
++
++Explicitadvance uses existingDelivery/Worker/Runtime.ReadPause, no productionhardcodedsolver or paidpermit: discoveryseparatefromconsumption, max4batches, source/actor/key/action/boundshash+existingcompanion/fence gives replayreceipt or UNKNOWNblocking. Resetuses generatedfreshActiveProfile/source/Saver and fixed strictB04subset4nodes2edges; CANDIDATEowner preserved, existingmigrations/ACL/freshcutoveronlynewtarget, previousdomainhistoryunchanged. Existingcompanionbindsdestinationhash/privateSTARTEDmanifest; uncertaininitial/finalintent neverautomaticretry/repair, exactDONEreplayhistorical. Candidateownerstarter lacks verifiedplanningprerequisites bydesign; no newowner-verificationAPI/B19engine or solvedscenario claim. Administrativeauditmetadata additional tofixturecounts. Graph explain combines authorizedB17view with actualB03hypothesis-evidencepaths atsamerevision; qualifiedanalysis, not inventedmodel-selectedcausation, no rawproperties.
++
++Final71distinctunit+1real=72PASS,0FAIL/0SKIP; actual71CLIchildinvocations across onesharedwatercase, defaultofflinechoices and actualDB/MCP/Saver/SDK/sourcecitations/auth. TwooverlappingrealrunsPASS129.07/132.37s (1distinctcase); exception-onlyinitialintentIDretention checked with2mockfaultunits afterlasthealthyjourney, samehealthylogicunchanged. ExistingfoundationredactioncasePASS. BothfinalSPECvalidatorsPASSonce;6guards0externalGemini/countTokens. One metadatautility wronginterpreter failedbeforewrites, correctedtovenv; no testfailurehidden. All18requirementsbinding, genuineB10OPEN/PARTIAL; STOPB18review, B19/frontend/liveunauthorized.
+--- a/flow.md
++++ b/flow.md
+@@ -989,3 +989,12 @@
+ app.api.view_models.QueryRules retains integer/boolean/date-window validators → ReadFilters remains internal service superset; explicit VIEW_QUERY_FIELDS selects closed ResourceQuery/DashboardQuery/MapQuery/HypothesesQuery/TraceQuery/GraphQuery/AssetQuery. application.endpoint assigns that selected model to the FastAPI query annotation → OpenAPI exposes exactly its fields → unknown/irrelevant/repeated422 before Views → validated subset converted to original ReadFilters defaults → unchanged Views run/filter/pagination/graph/SSE paths. No service/storage/worker/auth/migration/recovery edits. Domain data and oldcheckpoint/quarantine unchanged.
+ 
+ Hypotheses onlystatus/limit/cursor; dashboard onlyissue/status/department/date; trace inclusive actualeventtimestamps and pagination; resource/map filters and graph bounds preserved. scripts/validate_api checks actualOpenAPI querykeys=model_fields=contractquery_parameters and query_schema_id. B17Rexporter writesnewOpenAPI/querycoverage, never B17proofs. Existing realjourney extended with date-repro422/dashboard rejection/supportedmetricchanges/hypstatus andtracewindow, writesonlyB17R-journey whenexplicitprefixset; alloldassertions andrealTCPstreamretained.59unit+1realPASS, bothSPECvalidatorsPASS. STOPforB17-Rreview.
++
++## B18 actual operator command/file flow — 2026-10-18
++cli.main → legacy.main(originalbyte-identicalhealth/migrate/schema-status) or closedoperatorparser → cli.private boundedJSON/private0600files/session exactsource/authstore → existing app.api.__main__.configured_app lifespan → exactconfiguredAuth/Planning/Operations/Delivery/Memory → httpx ASGITransport(in-process, no serverUI) → existingtypedAPI/RBAC/Services/ROprojections anddomainwriters. Source-bound HTTPrequest/CAS/idempotency/B16-RRecovery unchanged; independentreviewerreadfromprivatefileheader. No credentials/token values inargv/output/logs; sourceuntrustedtext neverinstructions. Commandtable↔contracts/operator_cli.json/staticvalidate_cli.py↔acceptedAPIrouteinventory.
++
++Graph explain: authorizedB17GraphSubgraphDTO → services.operator.explain → fixedB03GraphQueries(hypothesis_evidence,max4/limit40) → samerevision/authorizedendpoint-edge-evidencefilter → qualifiedanalysisPaths withprovenance/reservations, not modelselectedclaims. Existingstructuredfindings/citations/draftapprovalworkoutcomedistinctions retained.
++
++Advance: authADMIN/ANALYST+explicitkey → existingcli_advancecompanion/fencedintent → separateDelivery.discover OR max4Worker.once(discoverFalse) → actualbrokers/officialFalkorDBSaver+existingReadPause → validatedDONEbatchsummary → samekeyhistoricalreceipt; uncertainintent/status→RecoveryoriginalrequestID, neverredispatch/clearance. Reset: authADMIN+key/destinationhash→existingcli_resetintent→exclusivenewprivateSTARTEDmanifest/newprofile→freshkeycheck→existing0001/0004/0005/newrepositoryfixedcanonical4node2edgewrites→exacthashreadback→newread/SaverACL+memorysourcecapability/freshactivation→privateDONE+companionreceipt. Samekeychangedpathconflict; partial→UNKNOWN andmanualinspection; nooldtargetdelete/repair/reseed. Requiredactivation/auditmetadata additional tofixturecounts. TestcommandcallsboundedactualServices.health(True), neverarbitraryshell/suite/lifecycle/provider.
++
++ActualsharedCLIprocessjourney71invocations: newlyopenedcase→offlineworkeractualMCP/Saver→hypotheses/assessment/citations→typedstandaloneinspection(unreviewed)→sourcedplan/exactapproval/authorizedorder→independentreviewedcompletion/followup→verifiedoutcome→graphpath/trace/source→realcommittedreadbackfault/UNKNOWN/replayblocked→2deterministicfreshresets/conflicts. DomainjournalCOMMITTED/1inspectioneffectretained,1workorder; existingquarantine untouched.71unit+1realPASS, bothSPECvalidatorsPASS; all18binding/B10genuineOPEN. See backend/OPERATOR_CLI.md+B18evidence; STOPforreview.
+--- a/implementation_status.md
++++ b/implementation_status.md
+@@ -568,3 +568,6 @@
+ 
+ ## CURRENT B17-R — TECHNICALLY PASS, HUMAN REVIEW PENDING (2026-10-18)
+ Supersedes priorB17statuswithoutchanginghistory. Narrow querycontractfixonly: public per-route closedmodels/allowlists/OpenAPI, hypothesesafter/before422, dashboardlimit/cursor422; consumedfilters unchanged.52operations/49pathsunchanged.59distinctunit+1actualHTTP/FalkorDB/MCP/Saver/TCP-SSEintegrationPASS,0unresolvedFAIL/0SKIP; bothSPECvalidatorsPASSonce. Scriptedmodel only,0externalprovider. No domain/storage/migration/worker/auth/recovery/SSEredesign. OriginalB17proofs preserved undernewB17Rprefix. All18requirementsbinding, genuineB10OPEN/PARTIAL. STOPafterB17-R; B18/frontend/liveunauthorized.
++
++## CURRENT B18 — TECHNICALLY PASS, HUMAN REVIEW PENDING (2026-10-18)
++B17/Raccepted; thisentrytakesprecedencewithoutremovinghistory. FunctionaloperatorCLI onexistingentrypoint: privateauth/identity, complaint/case/resume/trace/hypotheses, typedinspection/evidence, sourcedplanning/exactapproval, authorizedwork/progress/review/evaluation, boundedgraphpaths/citations, explicitofflineadvance, fresh-onlysmallreset, boundedreadinesstest. Originalhealth/migrate/schema-status retained. No duplicatebusinessrules or API/domain/migrationchange.71distinctunit+1actualCLI/FalkorDB/MCP/Saverintegration=72PASS,0FAIL/0SKIP;71actualCLIchildinvocations. BothSPECvalidatorsPASS,6guards0providers. Scriptedofflinechoices notgenuineAI; B10fullgenuineOPEN/PARTIAL. Candidateownerstarterrequiresactualplanningprerequisites, notsolvedscenario. All18binding; noB19/frontend/live/fullbackendclaim. STOPB18review.
+--- a/scripts/validate_blueprint.py
++++ b/scripts/validate_blueprint.py
+@@ -228,4 +228,6 @@
+     if result:raise SystemExit(result)
+     result=subprocess.call([sys.executable,str(ROOT/'scripts/validate_events.py')])
+     if result:raise SystemExit(result)
+-    raise SystemExit(subprocess.call([sys.executable,str(ROOT/'scripts/validate_api.py')]))
++    result=subprocess.call([sys.executable,str(ROOT/'scripts/validate_api.py')])
++    if result:raise SystemExit(result)
++    raise SystemExit(subprocess.call([sys.executable,str(ROOT/'scripts/validate_cli.py')]))
+--- /dev/null
++++ b/scripts/validate_cli.py
+@@ -0,0 +1,16 @@
++"""B18 static CLI/service inventory parity; not runtime or autonomous AI proof."""
++import json,sys
++from pathlib import Path
++ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT/'backend'))
++from cli.main import ACTIONS,EXIT
++from app.api.coverage import ROUTES
++c=json.loads((ROOT/'contracts/operator_cli.json').read_text())
++assert c['entrypoint']=='cli.main:main' and c['microtask']=='B18'
++assert c['legacy_commands']==['health','migrate','schema-status']
++assert c['no_live_provider'] and c['no_destructive_reset'] and c['no_automatic_recovery_clearance']
++for actions in ACTIONS.values():
++ for method,path in actions.values():assert any((row[0],row[1])==(method,path) for row in ROUTES)
++assert c['commands']=={group:{action:{'method':method,'path':'/api/v1'+path} for action,(method,path) in actions.items()} for group,actions in ACTIONS.items()}
++assert c['exit_codes']['recovery_required_unknown']==EXIT['RECOVERY_REQUIRED']==6
++assert c['reset_fixture']=={'asset_id':'DRAIN-100','location_id':'LOC-005','node_count':4,'edge_count':2,'new_operational_records':0}
++print('PASS B18 STATIC: closed operator inventory delegates accepted API/services, private configuration, fresh-only reset and offline bounded worker; not runtime/model proof')
+--- a/scripts/validate_handoff.py
++++ b/scripts/validate_handoff.py
+@@ -133,4 +133,6 @@
+ if result:raise SystemExit(result)
+ result=subprocess.call([sys.executable,str(ROOT/'scripts/validate_events.py')])
+ if result:raise SystemExit(result)
+-raise SystemExit(subprocess.call([sys.executable,str(ROOT/'scripts/validate_api.py')]))
++result=subprocess.call([sys.executable,str(ROOT/'scripts/validate_api.py')])
++if result:raise SystemExit(result)
++raise SystemExit(subprocess.call([sys.executable,str(ROOT/'scripts/validate_cli.py')]))
+--- a/task_board.md
++++ b/task_board.md
+@@ -504,3 +504,6 @@
+ 
+ ## CURRENT B17-R — technically complete; human review pending (2026-10-18)
+ Supersedes historicalB17pendingnoteswithoutremovingthem. Fixedquerycontract/OpenAPIonly; hypothesesdatesanddashboardpaginationreject422; truefilters/pagingunchanged.59unit+1singleactualDB/MCP/Saver/HTTP/TCP-SSEcasePASS, bothSPECvalidatorsPASSonce,0externalproviders. OneunitfixtureRBACmismatchcorrectedandaffectedgroupretested; norealintegrationfailures. Reviewdocs/evidence/B17R-RESULTS.md/B17R-COMMANDS.md/B17R-QUERY-COVERAGE.md/B17R-FILES.md/B17R-changes.patch. Humantryhypothesesbefore2020/dashboardlimit→422, supportedstatus/paging/tracewindow→actualresults. ExactnextproposedB18CLIrequiresseparateauthorization; frontend/liveunauthorized. STOPafterB17-R.
++
++## CURRENT B18 — technically complete; human review pending (2026-10-18)
++B17/B17-Rhumanaccepted. Existingciviclyentrypointnowfunctionaloperatorinterfacewithacceptedservice/APIvalidation/RBAC/idempotency/recovery; oldfoundationcommandsunchanged.71distinctunit+1realPASS=72,0FAIL/0SKIP; actualsharedwaterjourney71CLIchildinvocations, realMCP/Saver/sourceSDK/offlinechoices, actualcommittedfailure/replaydeny and2deterministicfreshstarterresets. BothSPECvalidatorsPASS,6guards0providers. Review backend/OPERATOR_CLI.md, docs/evidence/B18-RESULTS.md/B18-COMMANDS.md/B18-FILES.md/B18-changes.patch/B18-WALKTHROUGH.md/B18-cli-journey.json/audit. All18requirementsbinding, B10genuineOPEN/PARTIAL. ExactnextproposedB19scenariofixture/generator/delayedrevealproofonlyafterseparateauthorization; B19/frontend/live notstarted. STOPafterB18review.
+--- a/test_log.md
++++ b/test_log.md
+@@ -1102,3 +1102,8 @@
+ 59distinctunitPASS +1realintegrationPASS =60distinctcases,0unresolvedFAIL/0SKIP. Initial59unitrun58PASS/1FAIL8.20s: mockedquery-boundaryfixture usedANALYST forAPPROVER-only approvalslist; actual403correct. Fixture corrected; only13directlyaffected supported-querycases rerun13PASS1.93s (12overlap,1correctedcase), not13additionaldistinctcases. No applicationfailure concealed.
+ 
+ Single extended originalrealjourney1PASS28.03s,3existingdependencydeprecationwarnings, runonceafterfinalsource/testedits. ActualHTTP hypothesesbefore2020andafter422; dashboardpagination422; hypothesisstatus/exclusiveIDpaging; tracebefore2020zero andafter2020retainsall; resource/date/issuefilters anddashboardmetricschange; old graph/9selectedpaths/citations/observations/TCP-SSEreplay/late-discovery/re-auth/disconnect/no-ack assertionsretained. Scriptedmodelbehavior distinctfromactualDB/MCP/Saver/network. BothspecvalidatorsPASSoncesinglemakeinvocationafterfinalapplication/test/contracts.3pytest/childguardproofs0externalGemini/countTokens,0unexpectedattempts. Nofullsuite/lifecycle/paidcalls. Exactcommands/logs/proof inB17R-COMMANDS/RESULTS/journey. PriorB17evidenceunchanged.
++
++## CURRENT B18 focused verification — 2026-10-18
++Final **72distinctPASS:71unit/1real,0FAIL/0SKIP**. NewCLIunits63PASS0.44s, refined68PASS0.45s(overlap); finalinitial-intent-UNKNOWN/replay5PASS0.26s(3overlap+2new); directlyaffectedacceptedfoundationredaction1PASS. No fullhistoricalsuites/lifecycle/live. One realsharedWATERLOGGINGtest firstPASS129.07s, refinementPASS132.37s,3existingdependencydeprecationwarnings; repeatedrunis1distinctcase. Finalhealthylogicexercisedthrough71actualCLIprocessinvocations; last exception-onlyintentIDwrapping verifiedbyexplicitmockunitfaults, notclaimedrealDBfaultthere. ActualB09postcommitreadbackfaultthroughCLI retainsCOMMITTEDjournal/oneinspection, exit6UNKNOWN/saferequestIDs, ordinarysamekeyreplay0duplicateeffect; wrongroleexit3, exactorder/advance/resetreplayunchanged, changedresetdestinationconflicts. ActualdefaultReadPauseMCP/Saver/SDK/auth/sourcequeriesdistinctfromauthoredpayloads/offlinechoices.
++
++FullCLIwaterstorynewcase/assessments/inspection/evidence/plan/citations/exactapproval/order/completion/independentfollowupverification; actualboundedanalysispath;2newstarterprofiles equal098e7c819cfc396a4dc92f03f75b77bc1e946dfce3a1cc9db0d060a115060d6cfixturehash/differentgraphs, oldsource/workhistoryretained. BothfinalSPECvalidatorsPASSonceincludingnewCLIinventoryhook. Sixpytest/childinterlocks0externalGemini/countTokens,0unexpectedattempts; oldpaidledgerunchanged. MetadatautilitysystempythonimportfailedModuleNotFound:pydanticbeforewrites, correctedvenv; notacceptancetestfailure. Commands/counts/IDs/logs/patch/walkthrough/audit underB18-*. STOPforreview; B19/frontend/liveunauthorized.

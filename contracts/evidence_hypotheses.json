@@ -798,7 +798,8 @@
               "default": 1,
               "enum": [
                 1,
-                2
+                2,
+                3
               ],
               "title": "Rule Version",
               "type": "integer"
@@ -2304,7 +2305,8 @@
           "default": 1,
           "enum": [
             1,
-            2
+            2,
+            3
           ],
           "title": "Rule Version",
           "type": "integer"
@@ -3307,7 +3309,8 @@
     "assessment_v1": "Read unchanged historical meaning; no new classification field emitted or historical rewrite",
     "assessment_v2": "rule_version2, explicit classification/uses and matching causal-edge lists",
     "report_v1": "No explicit attribution field; preserve original report/command/journal hash shape",
-    "report_v2": "Explicit typed occurrence or retrospective attribution; absent new optional fields excluded from old serialized models"
+    "report_v2": "Explicit typed occurrence or retrospective attribution; absent new optional fields excluded from old serialized models",
+    "assessment_v3": "Compatible format2 classification envelope; rule3 for new MISSED_PICKUP/ILLEGAL_DUMPING in controller-bound S05/S06, requiring actual dated typed service provenance. Generic rule2 and stored rule1/2 histories preserved; no rule2 pickup-before-deposit inference."
   },
   "occurrence_attribution": {
     "bindings": "Actual EXPLAINS/CONCERNS must match original proposal; INSPECTS request journal -> Investigation INVESTIGATES Incident binds reports",
@@ -3315,5 +3318,6 @@
     "retrospective": "Independent review, rationale, explicit target IDs within request investigation and 1..5 earlier reviewed direct inspection records with matching asset/code/dated occurrence binding. No recursive retrospective basis. Derivative source cannot create independence.",
     "cutoff": "All source/current-version visibility, report recording and observation chronology preserved. Future records excluded; no mutable historical state reconstruction.",
     "storage": "Typed metadata in existing immutable attributed report/journal JSON; no new schema property, state, relationship or migration"
-  }
+  },
+  "service_evidence_contract": "contracts/service_evidence.json"
 }

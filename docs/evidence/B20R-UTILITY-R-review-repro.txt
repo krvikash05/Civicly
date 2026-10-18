@@ -1,0 +1,133 @@
+FFF.......                                                               [100%]
+=================================== FAILURES ===================================
+_ test_complete_road_binding[two_same_road-UTILITY_MULTIPLE_REPAIR_PREDECESSORS] _
+
+case = 'two_same_road', expected = 'UTILITY_MULTIPLE_REPAIR_PREDECESSORS'
+
+    @pytest.mark.parametrize('case,expected',[
+     ('two_same_road','UTILITY_MULTIPLE_REPAIR_PREDECESSORS'),
+     ('two_road_targets','UTILITY_MULTIPLE_REPAIR_PREDECESSORS'),
+     ('sole_substituted','UTILITY_DEPENDENCY_BINDING'),
+     ('sole_omitted','UTILITY_DEPENDENCY_REQUIRED'),
+     ('dependency_substituted','UTILITY_DEPENDENCY_BINDING'),
+     ('valid_single',None),('unlinked_other_repair',None),
+     ('missing_target','UTILITY_DEPENDENCY_TARGET'),
+     ('extra_dependency','UTILITY_DEPENDENCY_SCOPE'),
+     ('no_linked_repair',None),
+    ])
+    def test_complete_road_binding(case,expected):
+     value=draft().model_dump(mode='json');isolate=deepcopy(value['tasks'][0]);isolate.update(id='isolate2',target_ids=['P2'])
+     repair=deepcopy(value['tasks'][1]);repair.update(id='repair2',target_ids=['P2'],depends_on=['isolate2']);repair['remediation']['conditions'][-1]['depends_on_task_id']='isolate2'
+     road=deepcopy(value['tasks'][0]);road.update(id='road',action_type='SUBGRADE_REPAIR',department_id='DEPT-ROAD',target_ids=['R'],depends_on=['repair']);road['remediation'].update(mode='CONDITIONAL');road['remediation']['conditions'].append({'kind':'UTILITY_VERIFICATION','status':'UNMET','depends_on_task_id':'repair'})
+     value['tasks'] += [isolate,repair,road];links={'P':{'R'},'P2':set()}
+     if case=='two_same_road':links['P2']={'R'}
+     if case=='two_road_targets':road['target_ids']=['R','R2'];links['P2']={'R2'}
+     if case=='sole_substituted':road['depends_on']=['repair2'];road['remediation']['conditions'][-1]['depends_on_task_id']='repair2'
+     if case in {'sole_omitted','no_linked_repair'}:road['depends_on']=[];road['remediation']['conditions'].pop();road['remediation']['mode']='SUPPORTED_NOW'
+     if case=='no_linked_repair':links['P']=set()
+     if case=='dependency_substituted':road['depends_on']=['repair2']
+     if case=='missing_target':road['target_ids']=['R','R2']
+     if case=='extra_dependency':road['depends_on'].append('repair2')
+     d=PlanDraft.model_validate(value) # All ten drafts are schema-valid.
+     def topology(q):
+      targets=sorted(links[q.source_id]);return NS(truncated=False,edges=[NS(id=t,kind='UNDERLIES') for t in targets],paths=[NS(node_ids=(q.source_id,t),edge_ids=(t,),directions=('OUTGOING',)) for t in targets])
+     reader=NS(topology=topology)
+     if expected:
+>     with pytest.raises(PreconditionFailed,match='^'+expected+'$'):validate_dependencies(d.tasks[-1],d,reader,reject)
+E     Failed: DID NOT RAISE PreconditionFailed
+
+backend/tests/unit/test_utility_intervention.py:119: Failed
+_ test_complete_road_binding[two_road_targets-UTILITY_MULTIPLE_REPAIR_PREDECESSORS] _
+
+case = 'two_road_targets', expected = 'UTILITY_MULTIPLE_REPAIR_PREDECESSORS'
+
+    @pytest.mark.parametrize('case,expected',[
+     ('two_same_road','UTILITY_MULTIPLE_REPAIR_PREDECESSORS'),
+     ('two_road_targets','UTILITY_MULTIPLE_REPAIR_PREDECESSORS'),
+     ('sole_substituted','UTILITY_DEPENDENCY_BINDING'),
+     ('sole_omitted','UTILITY_DEPENDENCY_REQUIRED'),
+     ('dependency_substituted','UTILITY_DEPENDENCY_BINDING'),
+     ('valid_single',None),('unlinked_other_repair',None),
+     ('missing_target','UTILITY_DEPENDENCY_TARGET'),
+     ('extra_dependency','UTILITY_DEPENDENCY_SCOPE'),
+     ('no_linked_repair',None),
+    ])
+    def test_complete_road_binding(case,expected):
+     value=draft().model_dump(mode='json');isolate=deepcopy(value['tasks'][0]);isolate.update(id='isolate2',target_ids=['P2'])
+     repair=deepcopy(value['tasks'][1]);repair.update(id='repair2',target_ids=['P2'],depends_on=['isolate2']);repair['remediation']['conditions'][-1]['depends_on_task_id']='isolate2'
+     road=deepcopy(value['tasks'][0]);road.update(id='road',action_type='SUBGRADE_REPAIR',department_id='DEPT-ROAD',target_ids=['R'],depends_on=['repair']);road['remediation'].update(mode='CONDITIONAL');road['remediation']['conditions'].append({'kind':'UTILITY_VERIFICATION','status':'UNMET','depends_on_task_id':'repair'})
+     value['tasks'] += [isolate,repair,road];links={'P':{'R'},'P2':set()}
+     if case=='two_same_road':links['P2']={'R'}
+     if case=='two_road_targets':road['target_ids']=['R','R2'];links['P2']={'R2'}
+     if case=='sole_substituted':road['depends_on']=['repair2'];road['remediation']['conditions'][-1]['depends_on_task_id']='repair2'
+     if case in {'sole_omitted','no_linked_repair'}:road['depends_on']=[];road['remediation']['conditions'].pop();road['remediation']['mode']='SUPPORTED_NOW'
+     if case=='no_linked_repair':links['P']=set()
+     if case=='dependency_substituted':road['depends_on']=['repair2']
+     if case=='missing_target':road['target_ids']=['R','R2']
+     if case=='extra_dependency':road['depends_on'].append('repair2')
+     d=PlanDraft.model_validate(value) # All ten drafts are schema-valid.
+     def topology(q):
+      targets=sorted(links[q.source_id]);return NS(truncated=False,edges=[NS(id=t,kind='UNDERLIES') for t in targets],paths=[NS(node_ids=(q.source_id,t),edge_ids=(t,),directions=('OUTGOING',)) for t in targets])
+     reader=NS(topology=topology)
+     if expected:
+>     with pytest.raises(PreconditionFailed,match='^'+expected+'$'):validate_dependencies(d.tasks[-1],d,reader,reject)
+E     AssertionError: 
+E     - UTILITY_DEPENDENCY_TARGET
+E     + UTILITY_MULTIPLE_REPAIR_PREDECESSORS
+
+backend/tests/unit/test_utility_intervention.py:119: AssertionError
+___ test_complete_road_binding[sole_substituted-UTILITY_DEPENDENCY_BINDING] ____
+
+case = 'sole_substituted', expected = 'UTILITY_DEPENDENCY_BINDING'
+
+    @pytest.mark.parametrize('case,expected',[
+     ('two_same_road','UTILITY_MULTIPLE_REPAIR_PREDECESSORS'),
+     ('two_road_targets','UTILITY_MULTIPLE_REPAIR_PREDECESSORS'),
+     ('sole_substituted','UTILITY_DEPENDENCY_BINDING'),
+     ('sole_omitted','UTILITY_DEPENDENCY_REQUIRED'),
+     ('dependency_substituted','UTILITY_DEPENDENCY_BINDING'),
+     ('valid_single',None),('unlinked_other_repair',None),
+     ('missing_target','UTILITY_DEPENDENCY_TARGET'),
+     ('extra_dependency','UTILITY_DEPENDENCY_SCOPE'),
+     ('no_linked_repair',None),
+    ])
+    def test_complete_road_binding(case,expected):
+     value=draft().model_dump(mode='json');isolate=deepcopy(value['tasks'][0]);isolate.update(id='isolate2',target_ids=['P2'])
+     repair=deepcopy(value['tasks'][1]);repair.update(id='repair2',target_ids=['P2'],depends_on=['isolate2']);repair['remediation']['conditions'][-1]['depends_on_task_id']='isolate2'
+     road=deepcopy(value['tasks'][0]);road.update(id='road',action_type='SUBGRADE_REPAIR',department_id='DEPT-ROAD',target_ids=['R'],depends_on=['repair']);road['remediation'].update(mode='CONDITIONAL');road['remediation']['conditions'].append({'kind':'UTILITY_VERIFICATION','status':'UNMET','depends_on_task_id':'repair'})
+     value['tasks'] += [isolate,repair,road];links={'P':{'R'},'P2':set()}
+     if case=='two_same_road':links['P2']={'R'}
+     if case=='two_road_targets':road['target_ids']=['R','R2'];links['P2']={'R2'}
+     if case=='sole_substituted':road['depends_on']=['repair2'];road['remediation']['conditions'][-1]['depends_on_task_id']='repair2'
+     if case in {'sole_omitted','no_linked_repair'}:road['depends_on']=[];road['remediation']['conditions'].pop();road['remediation']['mode']='SUPPORTED_NOW'
+     if case=='no_linked_repair':links['P']=set()
+     if case=='dependency_substituted':road['depends_on']=['repair2']
+     if case=='missing_target':road['target_ids']=['R','R2']
+     if case=='extra_dependency':road['depends_on'].append('repair2')
+     d=PlanDraft.model_validate(value) # All ten drafts are schema-valid.
+     def topology(q):
+      targets=sorted(links[q.source_id]);return NS(truncated=False,edges=[NS(id=t,kind='UNDERLIES') for t in targets],paths=[NS(node_ids=(q.source_id,t),edge_ids=(t,),directions=('OUTGOING',)) for t in targets])
+     reader=NS(topology=topology)
+     if expected:
+>     with pytest.raises(PreconditionFailed,match='^'+expected+'$'):validate_dependencies(d.tasks[-1],d,reader,reject)
+E     AssertionError: 
+E     - UTILITY_DEPENDENCY_TARGET
+E     ?                    ^^^ --
+E     + UTILITY_DEPENDENCY_BINDING
+E     ?                    ^^^^^^
+
+backend/tests/unit/test_utility_intervention.py:119: AssertionError
+=============================== warnings summary ===============================
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyPacked has no __module__ attribute
+
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyObject has no __module__ attribute
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED backend/tests/unit/test_utility_intervention.py::test_complete_road_binding[two_same_road-UTILITY_MULTIPLE_REPAIR_PREDECESSORS]
+FAILED backend/tests/unit/test_utility_intervention.py::test_complete_road_binding[two_road_targets-UTILITY_MULTIPLE_REPAIR_PREDECESSORS]
+FAILED backend/tests/unit/test_utility_intervention.py::test_complete_road_binding[sole_substituted-UTILITY_DEPENDENCY_BINDING]
+3 failed, 7 passed, 41 deselected, 2 warnings in 0.99s
+sys:1: DeprecationWarning: builtin type swigvarlink has no __module__ attribute

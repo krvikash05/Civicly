@@ -68,7 +68,7 @@
     "task_dependencies"
   ],
   "temporal": "half-open validity intersection; absent start/end is unknown/open; created/observed/recorded/updated time cannot exceed query as_of",
-  "cardinality": "All declared singleton edges are primary. Concurrent overlapping assignments are refused; nonoverlapping history retained. Other relationship types are not universally singleton or acyclic.",
+  "cardinality": "All declared singleton edges are primary. Concurrent overlapping assignments are refused; nonoverlapping history retained. Other relationship types are not universally singleton or acyclic. MAINTAINED_BY unaccepted claims and VERIFIED responsibility occupy separate tiers (DEC-067); both retain exclusive temporal cardinality within their tier.",
   "write_boundary": "Trusted domain services only; auth, approval binding, state transitions and durable event delivery are later gates, not supplied by these low-level repositories.",
   "schedule_cardinality": {
     "relationship": "HAS_SCHEDULE",
@@ -156,5 +156,12 @@
     "infrastructure_hops": "DRAINS_TO edges only; derived as effective total minus fixed connectors",
     "search_limited": "true for variable-length families or omitted fixed branches; empty result is only a bounded negative",
     "truncated": "result row/node/edge cap reached; independent of hop/search bounds"
+  },
+  "ownership_cardinality": {
+    "relationship": "MAINTAINED_BY",
+    "decision": "DEC-067",
+    "verified": "One nonoverlapping reviewed responsibility interval per asset, independent of retained candidate claims",
+    "unverified": "Candidate/reported claims retain existing exclusivity within their claim tier",
+    "candidate_promotion": "Never automatic; acquisition adds immutable sourced records"
   }
 }

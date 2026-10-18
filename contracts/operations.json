@@ -1,0 +1,1324 @@
+{
+  "version": "B14R-1",
+  "municipality_id": "demo-city",
+  "operators": {
+    "OP-ANALYST": {
+      "role": "ANALYST",
+      "department_id": "DEPT-COORD"
+    },
+    "OP-APPROVER": {
+      "role": "APPROVER",
+      "department_id": "DEPT-COORD"
+    },
+    "OP-DRAIN-LEAD": {
+      "role": "DEPARTMENT_LEAD",
+      "department_id": "DEPT-DRAIN"
+    },
+    "OP-ROAD-LEAD": {
+      "role": "DEPARTMENT_LEAD",
+      "department_id": "DEPT-ROAD"
+    },
+    "OP-WASTE-LEAD": {
+      "role": "DEPARTMENT_LEAD",
+      "department_id": "DEPT-SAN"
+    },
+    "OP-WATER-LEAD": {
+      "role": "DEPARTMENT_LEAD",
+      "department_id": "DEPT-WATER"
+    },
+    "OP-ADMIN": {
+      "role": "ADMIN",
+      "department_id": "DEPT-COORD"
+    }
+  },
+  "permissions": {
+    "draft": [
+      "ANALYST"
+    ],
+    "submit": [
+      "ANALYST"
+    ],
+    "decide": [
+      "APPROVER"
+    ],
+    "order": [
+      "APPROVER"
+    ],
+    "update": [
+      "DEPARTMENT_LEAD"
+    ],
+    "read": [
+      "ADMIN",
+      "ANALYST",
+      "APPROVER",
+      "DEPARTMENT_LEAD"
+    ],
+    "revoke_session": [
+      "ADMIN"
+    ],
+    "progress": [
+      "DEPARTMENT_LEAD"
+    ],
+    "inspect": [
+      "ANALYST",
+      "DEPARTMENT_LEAD"
+    ],
+    "evaluate": [
+      "ANALYST"
+    ],
+    "recur": [
+      "ANALYST"
+    ]
+  },
+  "commands": {
+    "Submit": {
+      "$defs": {
+        "Assignment": {
+          "additionalProperties": false,
+          "properties": {
+            "task_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Task Id",
+              "type": "string"
+            },
+            "action_type": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Action Type",
+              "type": "string"
+            },
+            "target_ids": {
+              "items": {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              "maxItems": 5,
+              "minItems": 1,
+              "title": "Target Ids",
+              "type": "array"
+            },
+            "department_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Department Id",
+              "type": "string"
+            },
+            "assignee_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Assignee Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "task_id",
+            "action_type",
+            "target_ids",
+            "department_id",
+            "assignee_id"
+          ],
+          "title": "Assignment",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "plan_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Plan Id",
+          "type": "string"
+        },
+        "plan_version": {
+          "maximum": 100,
+          "minimum": 1,
+          "title": "Plan Version",
+          "type": "integer"
+        },
+        "plan_hash": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Plan Hash",
+          "type": "string"
+        },
+        "assignments": {
+          "items": {
+            "$ref": "#/$defs/Assignment"
+          },
+          "maxItems": 12,
+          "minItems": 1,
+          "title": "Assignments",
+          "type": "array"
+        },
+        "operation": {
+          "const": "submit",
+          "default": "submit",
+          "title": "Operation",
+          "type": "string"
+        },
+        "request_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Request Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "plan_id",
+        "plan_version",
+        "plan_hash",
+        "assignments",
+        "request_id"
+      ],
+      "title": "Submit",
+      "type": "object"
+    },
+    "Decide": {
+      "$defs": {
+        "Assignment": {
+          "additionalProperties": false,
+          "properties": {
+            "task_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Task Id",
+              "type": "string"
+            },
+            "action_type": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Action Type",
+              "type": "string"
+            },
+            "target_ids": {
+              "items": {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              "maxItems": 5,
+              "minItems": 1,
+              "title": "Target Ids",
+              "type": "array"
+            },
+            "department_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Department Id",
+              "type": "string"
+            },
+            "assignee_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Assignee Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "task_id",
+            "action_type",
+            "target_ids",
+            "department_id",
+            "assignee_id"
+          ],
+          "title": "Assignment",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "plan_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Plan Id",
+          "type": "string"
+        },
+        "plan_version": {
+          "maximum": 100,
+          "minimum": 1,
+          "title": "Plan Version",
+          "type": "integer"
+        },
+        "plan_hash": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Plan Hash",
+          "type": "string"
+        },
+        "assignments": {
+          "items": {
+            "$ref": "#/$defs/Assignment"
+          },
+          "maxItems": 12,
+          "minItems": 1,
+          "title": "Assignments",
+          "type": "array"
+        },
+        "operation": {
+          "const": "decide",
+          "default": "decide",
+          "title": "Operation",
+          "type": "string"
+        },
+        "request_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Request Id",
+          "type": "string"
+        },
+        "approval_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Approval Id",
+          "type": "string"
+        },
+        "expected_hash": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Expected Hash",
+          "type": "string"
+        },
+        "decision": {
+          "enum": [
+            "APPROVED",
+            "REJECTED"
+          ],
+          "title": "Decision",
+          "type": "string"
+        },
+        "reason": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "plan_id",
+        "plan_version",
+        "plan_hash",
+        "assignments",
+        "request_id",
+        "approval_id",
+        "expected_hash",
+        "decision",
+        "reason"
+      ],
+      "title": "Decide",
+      "type": "object"
+    },
+    "Order": {
+      "$defs": {
+        "Assignment": {
+          "additionalProperties": false,
+          "properties": {
+            "task_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Task Id",
+              "type": "string"
+            },
+            "action_type": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Action Type",
+              "type": "string"
+            },
+            "target_ids": {
+              "items": {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              "maxItems": 5,
+              "minItems": 1,
+              "title": "Target Ids",
+              "type": "array"
+            },
+            "department_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Department Id",
+              "type": "string"
+            },
+            "assignee_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Assignee Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "task_id",
+            "action_type",
+            "target_ids",
+            "department_id",
+            "assignee_id"
+          ],
+          "title": "Assignment",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "plan_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Plan Id",
+          "type": "string"
+        },
+        "plan_version": {
+          "maximum": 100,
+          "minimum": 1,
+          "title": "Plan Version",
+          "type": "integer"
+        },
+        "plan_hash": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Plan Hash",
+          "type": "string"
+        },
+        "assignments": {
+          "items": {
+            "$ref": "#/$defs/Assignment"
+          },
+          "maxItems": 12,
+          "minItems": 1,
+          "title": "Assignments",
+          "type": "array"
+        },
+        "operation": {
+          "const": "order",
+          "default": "order",
+          "title": "Operation",
+          "type": "string"
+        },
+        "request_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Request Id",
+          "type": "string"
+        },
+        "approval_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Approval Id",
+          "type": "string"
+        },
+        "task_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Task Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "plan_id",
+        "plan_version",
+        "plan_hash",
+        "assignments",
+        "request_id",
+        "approval_id",
+        "task_id"
+      ],
+      "title": "Order",
+      "type": "object"
+    },
+    "Update": {
+      "additionalProperties": false,
+      "properties": {
+        "operation": {
+          "const": "update",
+          "default": "update",
+          "title": "Operation",
+          "type": "string"
+        },
+        "request_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Request Id",
+          "type": "string"
+        },
+        "work_order_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Work Order Id",
+          "type": "string"
+        },
+        "expected_hash": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Expected Hash",
+          "type": "string"
+        },
+        "new_status": {
+          "enum": [
+            "ASSIGNED",
+            "CANCELLED"
+          ],
+          "title": "New Status",
+          "type": "string"
+        },
+        "reason": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "request_id",
+        "work_order_id",
+        "expected_hash",
+        "new_status",
+        "reason"
+      ],
+      "title": "Update",
+      "type": "object"
+    }
+  },
+  "binding": "Full exact task/action/target/department/assignee scope, current plan/version/hash, authenticated decision and current proof. B12 draft immutable; native lifecycle independently audited.",
+  "conditional": "Human may approve CONDITIONAL proposal; UNMET causal/safety or non-COMPLETED dependencies block work-order creation. No waiver/fabricated finding.",
+  "rejection": "Exact immutable current scope and CAS still required; current causal/source validity need not be repaired to reject. Binding-only validation recorded explicitly.",
+  "auth": "Private SQLite PBKDF2-HMAC-SHA256600000/random16byte salts, signed30minute revocable sessions; caller roles never trusted. Existing5source operators plus private-admin and water-utility lead metadata, four roles.",
+  "storage": "Compatible additive0005 companion indexes; one existing fenced mutation couples native Approval/WorkOrder/StatusEvent/DomainEvent/audit/request ledger. No cross-graph transaction claim.",
+  "b13_transitions": [
+    "AUTHORIZED->ASSIGNED",
+    "AUTHORIZED->CANCELLED",
+    "ASSIGNED->CANCELLED"
+  ],
+  "excluded": [
+    "event delivery/worker",
+    "API",
+    "frontend",
+    "live provider"
+  ],
+  "execution_commands": {
+    "Progress": {
+      "additionalProperties": false,
+      "properties": {
+        "request_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Request Id",
+          "type": "string"
+        },
+        "work_order_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Work Order Id",
+          "type": "string"
+        },
+        "expected_hash": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Expected Hash",
+          "type": "string"
+        },
+        "operation": {
+          "const": "progress",
+          "default": "progress",
+          "title": "Operation",
+          "type": "string"
+        },
+        "action": {
+          "enum": [
+            "START",
+            "BLOCK",
+            "FAIL",
+            "COMPLETE"
+          ],
+          "title": "Action",
+          "type": "string"
+        },
+        "reason": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Reason",
+          "type": "string"
+        },
+        "evidence_ids": {
+          "items": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 10,
+          "title": "Evidence Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "request_id",
+        "work_order_id",
+        "expected_hash",
+        "action",
+        "reason"
+      ],
+      "title": "Progress",
+      "type": "object"
+    },
+    "Inspect": {
+      "$defs": {
+        "Assess": {
+          "additionalProperties": false,
+          "properties": {
+            "request_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Request Id",
+              "type": "string"
+            },
+            "operation": {
+              "const": "assess",
+              "default": "assess",
+              "title": "Operation",
+              "type": "string"
+            },
+            "hypothesis_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Hypothesis Id",
+              "type": "string"
+            },
+            "expected_hash": {
+              "pattern": "^[0-9a-f]{64}$",
+              "title": "Expected Hash",
+              "type": "string"
+            },
+            "evidence_ids": {
+              "items": {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              "maxItems": 20,
+              "title": "Evidence Ids",
+              "type": "array"
+            },
+            "as_of": {
+              "title": "As Of",
+              "type": "string"
+            }
+          },
+          "required": [
+            "request_id",
+            "hypothesis_id",
+            "expected_hash",
+            "as_of"
+          ],
+          "title": "Assess",
+          "type": "object"
+        },
+        "IncidentAttribution": {
+          "additionalProperties": false,
+          "description": "Optional explicit occurrence binding; retrospective claims require prior source basis.",
+          "properties": {
+            "incident_ids": {
+              "items": {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              "maxItems": 3,
+              "minItems": 1,
+              "title": "Incident Ids",
+              "type": "array"
+            },
+            "mode": {
+              "default": "OCCURRENCE",
+              "enum": [
+                "OCCURRENCE",
+                "RETROSPECTIVE"
+              ],
+              "title": "Mode",
+              "type": "string"
+            },
+            "rationale": {
+              "maxLength": 2000,
+              "minLength": 1,
+              "title": "Rationale",
+              "type": "string"
+            },
+            "basis_evidence_ids": {
+              "items": {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              "maxItems": 5,
+              "title": "Basis Evidence Ids",
+              "type": "array"
+            }
+          },
+          "required": [
+            "incident_ids",
+            "rationale"
+          ],
+          "title": "IncidentAttribution",
+          "type": "object"
+        },
+        "Observation": {
+          "additionalProperties": false,
+          "properties": {
+            "asset_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Asset Id",
+              "type": "string"
+            },
+            "code": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Code",
+              "type": "string"
+            },
+            "statement": {
+              "maxLength": 2000,
+              "minLength": 1,
+              "title": "Statement",
+              "type": "string"
+            },
+            "method": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Method",
+              "type": "string"
+            },
+            "observed_at": {
+              "title": "Observed At",
+              "type": "string"
+            },
+            "result": {
+              "default": "OBSERVED",
+              "enum": [
+                "OBSERVED",
+                "UNKNOWN"
+              ],
+              "title": "Result",
+              "type": "string"
+            },
+            "value": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Value"
+            },
+            "unit": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Unit"
+            }
+          },
+          "required": [
+            "asset_id",
+            "code",
+            "statement",
+            "method",
+            "observed_at"
+          ],
+          "title": "Observation",
+          "type": "object"
+        },
+        "ReportInspection": {
+          "additionalProperties": false,
+          "properties": {
+            "request_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Request Id",
+              "type": "string"
+            },
+            "operation": {
+              "const": "report_inspection",
+              "default": "report_inspection",
+              "title": "Operation",
+              "type": "string"
+            },
+            "inspection_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Inspection Id",
+              "type": "string"
+            },
+            "expected_hash": {
+              "pattern": "^[0-9a-f]{64}$",
+              "title": "Expected Hash",
+              "type": "string"
+            },
+            "source_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Source Id",
+              "type": "string"
+            },
+            "record_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Record Id",
+              "type": "string"
+            },
+            "source_kind": {
+              "default": "SYNTHETIC",
+              "enum": [
+                "SYNTHETIC",
+                "MUNICIPAL",
+                "PUBLIC"
+              ],
+              "title": "Source Kind",
+              "type": "string"
+            },
+            "observations": {
+              "items": {
+                "$ref": "#/$defs/Observation"
+              },
+              "maxItems": 10,
+              "minItems": 1,
+              "title": "Observations",
+              "type": "array"
+            },
+            "review": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/Review"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            },
+            "attribution": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/IncidentAttribution"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null
+            }
+          },
+          "required": [
+            "request_id",
+            "inspection_id",
+            "expected_hash",
+            "source_id",
+            "record_id",
+            "observations"
+          ],
+          "title": "ReportInspection",
+          "type": "object"
+        },
+        "RequestInspection": {
+          "additionalProperties": false,
+          "properties": {
+            "request_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Request Id",
+              "type": "string"
+            },
+            "operation": {
+              "const": "request_inspection",
+              "default": "request_inspection",
+              "title": "Operation",
+              "type": "string"
+            },
+            "investigation_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Investigation Id",
+              "type": "string"
+            },
+            "asset_ids": {
+              "items": {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              "maxItems": 3,
+              "minItems": 1,
+              "title": "Asset Ids",
+              "type": "array"
+            },
+            "department_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Department Id",
+              "type": "string"
+            },
+            "inspection_type": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Inspection Type",
+              "type": "string"
+            }
+          },
+          "required": [
+            "request_id",
+            "investigation_id",
+            "asset_ids",
+            "department_id",
+            "inspection_type"
+          ],
+          "title": "RequestInspection",
+          "type": "object"
+        },
+        "Review": {
+          "additionalProperties": false,
+          "properties": {
+            "reviewer_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Reviewer Id",
+              "type": "string"
+            },
+            "role": {
+              "enum": [
+                "ANALYST",
+                "ADMIN"
+              ],
+              "title": "Role",
+              "type": "string"
+            },
+            "reviewed": {
+              "const": true,
+              "title": "Reviewed",
+              "type": "boolean"
+            },
+            "reason": {
+              "maxLength": 2000,
+              "minLength": 1,
+              "title": "Reason",
+              "type": "string"
+            }
+          },
+          "required": [
+            "reviewer_id",
+            "role",
+            "reviewed",
+            "reason"
+          ],
+          "title": "Review",
+          "type": "object"
+        },
+        "TransitionInspection": {
+          "additionalProperties": false,
+          "properties": {
+            "request_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Request Id",
+              "type": "string"
+            },
+            "operation": {
+              "const": "transition_inspection",
+              "default": "transition_inspection",
+              "title": "Operation",
+              "type": "string"
+            },
+            "inspection_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Inspection Id",
+              "type": "string"
+            },
+            "expected_hash": {
+              "pattern": "^[0-9a-f]{64}$",
+              "title": "Expected Hash",
+              "type": "string"
+            },
+            "status": {
+              "enum": [
+                "REQUESTED",
+                "SCHEDULED",
+                "IN_PROGRESS",
+                "FAILED",
+                "CANCELLED"
+              ],
+              "title": "Status",
+              "type": "string"
+            },
+            "scheduled_at": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Scheduled At"
+            }
+          },
+          "required": [
+            "request_id",
+            "inspection_id",
+            "expected_hash",
+            "status"
+          ],
+          "title": "TransitionInspection",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "request_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Request Id",
+          "type": "string"
+        },
+        "work_order_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Work Order Id",
+          "type": "string"
+        },
+        "expected_hash": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Expected Hash",
+          "type": "string"
+        },
+        "operation": {
+          "const": "inspect",
+          "default": "inspect",
+          "title": "Operation",
+          "type": "string"
+        },
+        "purpose": {
+          "enum": [
+            "COMPLETION",
+            "FOLLOWUP",
+            "ASSESSMENT"
+          ],
+          "title": "Purpose",
+          "type": "string"
+        },
+        "command": {
+          "discriminator": {
+            "mapping": {
+              "assess": "#/$defs/Assess",
+              "report_inspection": "#/$defs/ReportInspection",
+              "request_inspection": "#/$defs/RequestInspection",
+              "transition_inspection": "#/$defs/TransitionInspection"
+            },
+            "propertyName": "operation"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/RequestInspection"
+            },
+            {
+              "$ref": "#/$defs/TransitionInspection"
+            },
+            {
+              "$ref": "#/$defs/ReportInspection"
+            },
+            {
+              "$ref": "#/$defs/Assess"
+            }
+          ],
+          "title": "Command"
+        },
+        "review_reason": {
+          "anyOf": [
+            {
+              "maxLength": 2000,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Review Reason"
+        }
+      },
+      "required": [
+        "request_id",
+        "work_order_id",
+        "expected_hash",
+        "purpose",
+        "command"
+      ],
+      "title": "Inspect",
+      "type": "object"
+    },
+    "Evaluate": {
+      "additionalProperties": false,
+      "properties": {
+        "request_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Request Id",
+          "type": "string"
+        },
+        "work_order_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Work Order Id",
+          "type": "string"
+        },
+        "expected_hash": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Expected Hash",
+          "type": "string"
+        },
+        "operation": {
+          "const": "evaluate",
+          "default": "evaluate",
+          "title": "Operation",
+          "type": "string"
+        },
+        "evidence_ids": {
+          "items": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 10,
+          "title": "Evidence Ids",
+          "type": "array"
+        },
+        "window_start": {
+          "title": "Window Start",
+          "type": "string"
+        },
+        "window_end": {
+          "title": "Window End",
+          "type": "string"
+        }
+      },
+      "required": [
+        "request_id",
+        "work_order_id",
+        "expected_hash",
+        "window_start",
+        "window_end"
+      ],
+      "title": "Evaluate",
+      "type": "object"
+    },
+    "Recur": {
+      "additionalProperties": false,
+      "properties": {
+        "request_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Request Id",
+          "type": "string"
+        },
+        "work_order_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Work Order Id",
+          "type": "string"
+        },
+        "expected_hash": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Expected Hash",
+          "type": "string"
+        },
+        "operation": {
+          "const": "recur",
+          "default": "recur",
+          "title": "Operation",
+          "type": "string"
+        },
+        "evidence_ids": {
+          "items": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 10,
+          "title": "Evidence Ids",
+          "type": "array"
+        },
+        "window_start": {
+          "title": "Window Start",
+          "type": "string"
+        },
+        "window_end": {
+          "title": "Window End",
+          "type": "string"
+        },
+        "verified_outcome_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Verified Outcome Id",
+          "type": "string"
+        },
+        "complaint": {
+          "additionalProperties": true,
+          "title": "Complaint",
+          "type": "object"
+        }
+      },
+      "required": [
+        "request_id",
+        "work_order_id",
+        "expected_hash",
+        "window_start",
+        "window_end",
+        "verified_outcome_id",
+        "complaint"
+      ],
+      "title": "Recur",
+      "type": "object"
+    }
+  },
+  "verification": {
+    "version": "B14-2",
+    "required_codes": {
+      "WATERLOGGING": [
+        "COMPARABLE_FOLLOWUP_RAINFALL",
+        "FOLLOWUP_WATERLOGGING"
+      ],
+      "ROAD_DAMAGE": [
+        "WEAR_EXPOSURE",
+        "FOLLOWUP_PAVEMENT"
+      ],
+      "WASTE_ACCUMULATION": [
+        "SCHEDULED_PICKUPS",
+        "ACTUAL_PICKUPS",
+        "REACCUMULATION_WINDOW",
+        "WASTE_REACCUMULATION"
+      ]
+    },
+    "units": {
+      "ACTION_COMPLETED": null,
+      "ACTION_FAILED": null,
+      "COMPARABLE_FOLLOWUP_RAINFALL": null,
+      "FOLLOWUP_WATERLOGGING": "boolean",
+      "WEAR_EXPOSURE": null,
+      "FOLLOWUP_PAVEMENT": "boolean",
+      "SCHEDULED_PICKUPS": "pickups",
+      "ACTUAL_PICKUPS": "pickups",
+      "REACCUMULATION_WINDOW": "hours",
+      "WASTE_REACCUMULATION": "boolean"
+    },
+    "synthetic_waste_minimum_hours": 24,
+    "origin": "SYNTHETIC demo policy, not a municipal standard",
+    "water_road_opportunity": "Explicit authored comparability/wear observation precedes final binary adverse-condition observation; no meteorological/engineering threshold inferred",
+    "waste_window": "Matching integral scheduled/actual aggregate pickup counts >=1; do not sum repeated totals. Latest ACTUAL_PICKUPS observed_at per target anchors every supplied REACCUMULATION_WINDOW: claimed hours>=24 and actual elapsed time since latest pickup >= claimed hours. Final condition follows window. Different pickup totals INCONCLUSIVE; insufficient elapsed opportunity MONITORING.",
+    "all_targets": true,
+    "independent_review": "Server resolves ANALYST reviewer token; department operator cannot self-review or supply Review",
+    "ordering": "completion < window_start <= observations <= window_end <= controlled service clock; final finding after exposure/window",
+    "classification": [
+      "MONITORING",
+      "INCONCLUSIVE",
+      "PROBLEM_PERSISTS",
+      "RESOLUTION_VERIFIED",
+      "RECURRENCE_DETECTED",
+      "INTERVENTION_FAILED"
+    ],
+    "native_result": "ACTION_COMPLETED only on work completion; INCONCLUSIVE for missing/contradictory/failure/recurrence; MITIGATION_VERIFIED for independent successful verification; never infer ROOT_CAUSE_ADDRESSED",
+    "case_completion": "All approved tasks/dependencies/gates complete plus each work order independently verified; latest addressed contradiction/inconclusive blocks closure",
+    "replay": "Exact authenticated request returns historical receipt; equivalent evaluation window/evidence deduplicates. Fresh side effects always revalidate scope. Historical result never new authority."
+  },
+  "execution_lifecycle": {
+    "START": "ASSIGNED\u2192IN_PROGRESS; ActionTask APPROVED\u2192QUEUED\u2192IN_PROGRESS; plan APPROVED\u2192IN_EXECUTION",
+    "BLOCK": "WorkOrder/ActionTask IN_PROGRESS\u2192BLOCKED; explicit START can resume ordinary BLOCKED task via ASSIGNED/QUEUED",
+    "FAIL": "WorkOrder IN_PROGRESS\u2192BLOCKED, ActionTask IN_PROGRESS\u2192FAILED, immutable failed InterventionOutcome; no automatic failed-task retry",
+    "COMPLETE": "Attributable reviewed ACTION_COMPLETED report per target; WorkOrder/ActionTask COMPLETED. All tasks completed\u2192plan/investigation MONITORING; no automatic resolution",
+    "VERIFY": "All task follow-ups pass\u2192plan/investigation COMPLETED, incidents ENDED with time, cluster CONTROLLED",
+    "RECUR": "B08 AFTER_RECORDED_END new incident in original cluster; cluster/investigation REOPENED; immutable prior completed plan/outcome retained"
+  },
+  "revised_authorization": "Changed finding meaning/immutable gate/scope requires existing PlanningService.create version+1 with previous_plan_id, Operations.submit and fresh decide. Same-label assessment with original support retained and identical contradiction set can advance legitimate progress; terminal result recording is not authority for further work.",
+  "historical_verification": {
+    "B14-1": {
+      "version": "B14-1",
+      "required_codes": {
+        "WATERLOGGING": [
+          "COMPARABLE_FOLLOWUP_RAINFALL",
+          "FOLLOWUP_WATERLOGGING"
+        ],
+        "ROAD_DAMAGE": [
+          "WEAR_EXPOSURE",
+          "FOLLOWUP_PAVEMENT"
+        ],
+        "WASTE_ACCUMULATION": [
+          "SCHEDULED_PICKUPS",
+          "ACTUAL_PICKUPS",
+          "REACCUMULATION_WINDOW",
+          "WASTE_REACCUMULATION"
+        ]
+      },
+      "units": {
+        "ACTION_COMPLETED": null,
+        "ACTION_FAILED": null,
+        "COMPARABLE_FOLLOWUP_RAINFALL": null,
+        "FOLLOWUP_WATERLOGGING": "boolean",
+        "WEAR_EXPOSURE": null,
+        "FOLLOWUP_PAVEMENT": "boolean",
+        "SCHEDULED_PICKUPS": "pickups",
+        "ACTUAL_PICKUPS": "pickups",
+        "REACCUMULATION_WINDOW": "hours",
+        "WASTE_REACCUMULATION": "boolean"
+      },
+      "synthetic_waste_minimum_hours": 24,
+      "origin": "SYNTHETIC demo policy, not a municipal standard",
+      "water_road_opportunity": "Explicit authored comparability/wear observation precedes final binary adverse-condition observation; no meteorological/engineering threshold inferred",
+      "waste_window": "Scheduled/actual matching integer pickup counts >=1, pickups precede window observation, window hours>=24 and actually elapsed since start; reaccumulation finding at/after window",
+      "all_targets": true,
+      "independent_review": "Server resolves ANALYST reviewer token; department operator cannot self-review or supply Review",
+      "ordering": "completion < window_start <= observations <= window_end <= controlled service clock; final finding after exposure/window",
+      "classification": [
+        "MONITORING",
+        "INCONCLUSIVE",
+        "PROBLEM_PERSISTS",
+        "RESOLUTION_VERIFIED",
+        "RECURRENCE_DETECTED",
+        "INTERVENTION_FAILED"
+      ],
+      "native_result": "ACTION_COMPLETED only on work completion; INCONCLUSIVE for missing/contradictory/failure/recurrence; MITIGATION_VERIFIED for independent successful verification; never infer ROOT_CAUSE_ADDRESSED",
+      "case_completion": "All approved tasks/dependencies/gates complete plus each work order independently verified; latest addressed contradiction/inconclusive blocks closure",
+      "replay": "Exact authenticated request returns historical receipt; equivalent evaluation window/evidence deduplicates. Fresh side effects always revalidate scope. Historical result never new authority."
+    }
+  },
+  "recurrence_scope": {
+    "investigation": "Reuse original; add INVESTIGATES new incident atomically with recurrence journal/outcome/event",
+    "provenance": "INVESTIGATES.source_evidence_id is new COMMITTED B08 intake journal; valid_from is recurrence commit time",
+    "result_fields": [
+      "investigation_id",
+      "investigates_relationship_id",
+      "new_incident_id",
+      "cluster_id",
+      "prior_outcome_id"
+    ],
+    "maximum_bound_incidents": 3,
+    "checkpoint": "Explicit owned resume only. Validate new graph links, B08 canonical hash/receipt/classification/cluster/episode and reviewed evidence; closed state validation projects active incidents/assets and source hashes with RECURRENCE_SCOPE_REFRESH audit. Preserve prior checkpoint/history and require fresh MCP READ. No automatic delivery."
+  },
+  "utility_policy": {
+    "version": "B20R-UTILITY-1",
+    "isolation_code": "UTILITY_ISOLATION_CONFIRMED",
+    "followup_codes": [
+      "POST_REPAIR_LEAK_ABSENT",
+      "POST_REPAIR_LEAK_PRESENT",
+      "POST_REPAIR_PRESSURE_ABNORMAL",
+      "POST_REPAIR_PRESSURE_NORMAL"
+    ],
+    "verified_status": "UTILITY_VERIFIED",
+    "case_closed": false,
+    "independence": "Authenticated distinct analyst review, separate post-completion report/source and window; pressure/leak observations target-bound; no quantitative inference",
+    "recovery": "Existing fenced0005 operations and HTTP UNKNOWN no-redispatch; no new recovery path"
+  }
+}

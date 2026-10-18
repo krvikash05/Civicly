@@ -1,0 +1,671 @@
+--- /dev/null
++++ b/backend/tests/b20_fixtures.py
+@@ -0,0 +1,74 @@
++"""B19 mechanics: actual DB/HTTP/CLI/MCP/Saver; no model solver/live provider."""
++import asyncio,hashlib,json,os,secrets,subprocess,sys,time
++from pathlib import Path
++from uuid import uuid4
++from types import SimpleNamespace
++import pytest,httpx
++from app.config import Settings
++from app.graph.connection import connect
++from app.active import new_profile,save,provision,active_scope,load
++from app.graph.migration import MigrationRunner
++from app.graph.repository import GraphRepository
++from app.services.planning.storage import PlanMigration
++from app.services.operations.migration import OperationsMigration
++from app.services.operations.auth import Auth,OPERATORS
++from app.services.demo.inventory import ISSUES
++from app.services.demo.definitions import load as worlds,BASE
++from app.api.__main__ import configured_app
++from tests.integration.test_memory_graphrag import memory as memory_fixture
++pytestmark=pytest.mark.integration
++AT='2026-10-18T12:00:00.000000Z'
++@pytest.fixture(scope='module')
++def shared():
++ settings=Settings(_env_file='.env');parent=Path('.runtime/b20-review').resolve();parent.mkdir(mode=0o700,parents=True,exist_ok=True);directory=parent/uuid4().hex;directory.mkdir(mode=0o700)
++ with connect(settings) as db:
++  gen=memory_fixture.__wrapped__(db,settings);memory=next(gen)
++  from app.memory.models import sources
++  for dept in ['DEPT-DRAIN','DEPT-ROAD','DEPT-WATER','DEPT-SAN']:
++   asyncio.run(memory.ingest(next(s for s in sources() if s.owner_department_id==dept and s.document_id!='D001-PDF')))
++  p=new_profile();path=directory/'agent.json';save(p,path)
++  with active_scope(p):
++   MigrationRunner(db,p.graph).apply();PlanMigration(db,p.graph).apply();OperationsMigration(db,p.graph).apply();r=GraphRepository(db,p.graph)
++   from cli.reset import fixture
++   nodes,edges,_=fixture()
++   for n in nodes:r.create_node(n['label'],n['properties'])
++   for e in edges:r.create_relationship(e['type'],e['source_id'],e['target_id'],e['properties'])
++   provision(db,p)
++   from app.events.service import Delivery
++   Delivery(r,lambda:AT).activate(operator='B20-test',reason='Explicit new isolated scenario harness source',authorize=True)
++  passwords={id:secrets.token_urlsafe(24) for id in OPERATORS};auth=Auth.provision(directory/'auth.sqlite3',passwords);tokens={id:auth.login(id,pw) for id,pw in passwords.items()}
++  from app.memory.runtime import Profile
++  user='b20_memory_'+uuid4().hex;pw=secrets.token_urlsafe(48)
++  db.connection.execute_command('ACL','SETUSER',user,'reset','on','#'+hashlib.sha256(pw.encode()).hexdigest(),'~'+memory.repo.graph.name,'~'+memory.config.graph_name,'-@all','+ping','+info','+client|setinfo','+graph.ro_query')
++  mp=directory/'memory.json';Profile(docs_graph=memory.config.graph_name,canonical_graph=memory.repo.graph.name,source_graphs=[p.graph],reader_user=user,reader_password=pw).json_private(mp)
++  yield SimpleNamespace(db=db,p=p,path=path,directory=directory,auth=auth,tokens=tokens,mp=mp,memory=memory,proofs=[])
++  try:next(gen)
++  except StopIteration:pass
++
++
++from app.agents.models import Selection
++from tests.b10_fixtures import choose
++from app.services.evidence.policies import POLICIES
++class PolicyModel:
++ """Issue-only authored choices, no scenario ID, variant, oracle, or tool results."""
++ mode='B20_SCRIPTED_POLICY_SELECTIONS_NOT_GENUINE_AI'
++ def __init__(self,*,resume=False):self.resume=resume;self.step=0;self.contexts=[]
++ async def choose(self,context,remaining_tokens):
++  self.contexts.append(context);state=context['state'];issue=state['issue'];rules=context['policies']
++  causes={'WATERLOGGING':['BLOCKAGE','CAPACITY_DEFICIT'],'ROAD_DAMAGE':['SUBGRADE_FAILURE','UTILITY_LEAK'],'WASTE_ACCUMULATION':['MISSED_PICKUP','CAPACITY_SHORTFALL','ILLEGAL_DUMPING']}[issue]
++  n=self.step;self.step+=1
++  if n==0:
++   value=choose('READ',{'asset_id':state['asset_ids'][0],'from_time':'2026-10-18T10:00:00.000000Z','to_time':state['as_of'],'as_of':state['as_of']},'civicly::get_maintenance_history') if self.resume else choose('READ',{'template':'node','id':state['incident_ids'][0]},'official::query_graph_readonly')
++  elif not self.resume and n==1:
++   args={'investigation_id':state['investigation_id'],'asset_id':'PIPE-100' if issue=='ROAD_DAMAGE' else state['asset_ids'][0],'direction':'DOWNSTREAM' if issue=='ROAD_DAMAGE' else 'BOTH','max_hops':4,'network':'TYPED_DEPENDENCIES' if issue=='ROAD_DAMAGE' else 'DRAINAGE','as_of':state['as_of']}
++   value=choose('READ',args,'civicly::trace_infrastructure_dependencies')
++  elif not self.resume and n<=len(causes)+1:
++   cause=causes[n-2];rule=rules[cause];asset=state['asset_ids'][0]
++   if issue=='ROAD_DAMAGE':asset='PIPE-100' if cause=='UTILITY_LEAK' else 'ROAD-100'
++   args={'cause_code':cause,'asset_ids':[asset],'statement':'Test competing '+cause+' mechanism; awaiting attributed evidence','mechanism':'Authored synthetic mechanism requiring domain evidence validation','confirming_codes':rule['confirming'],'falsifying_codes':rule['falsifying']}
++   if cause=='UTILITY_LEAK':args['topology']={'source_id':asset,'target_id':'ROAD-100','operation':'dependencies','max_hops':3}
++   value=choose('PROPOSE',args)
++  else:
++   offset=n-1 if self.resume else n-2-len(causes)
++   value=choose('ASSESS',{'hypothesis_id':context['hypotheses'][offset]['id'],'evidence_ids':[]}) if offset<len(causes) else choose()
++  return Selection.model_validate(value),0
+--- /dev/null
++++ b/backend/tests/integration/test_scenario_behavior.py
+@@ -0,0 +1,176 @@
++"""B20 issue-only scripted choices, actual B19/HTTP/FalkorDB/MCP/LangGraph/Saver."""
++import asyncio,copy,json,hashlib
++from pathlib import Path
++from uuid import uuid4
++import pytest
++from app.active import active_scope,load
++from app.graph.repository import GraphRepository,PreconditionFailed
++from app.graph.queries import GraphQueries
++from app.agents.runtime import InvestigationAgent
++from app.agents.models import InvestigationState,Budget
++from app.agents.mcp import brokers
++from app.agents.checkpoints import saver
++from app.services.evidence import EvidenceService,Actor
++from app.services.evidence.reader import Reader
++from app.services.evidence.policies import POLICIES
++from app.services.planning.models import PlanDraft
++from app.services.planning.service import PlanningService,PlanningBlocked
++from tests.b20_fixtures import shared,PolicyModel,AT
++from tests.integration.test_demo_runtime import fresh,client_run,headers,inspection
++from tests.b12_fixtures import sample,REQUIRED
++pytestmark=pytest.mark.integration
++ANALYST=Actor(id='B20-explicit-evaluator',role='ANALYST')
++EXPECTED={
++ 'S01':({'BLOCKAGE':'SUPPORTED','CAPACITY_DEFICIT':'INCONCLUSIVE'},{'BLOCKAGE':'CONTRADICTED','CAPACITY_DEFICIT':'SUPPORTED'}),
++ 'S02':({'BLOCKAGE':'CONTRADICTED','CAPACITY_DEFICIT':'SUPPORTED'},{'BLOCKAGE':'CONTRADICTED','CAPACITY_DEFICIT':'SUPPORTED'}),
++ 'S03':({'SUBGRADE_FAILURE':'SUPPORTED','UTILITY_LEAK':'INCONCLUSIVE'},{'SUBGRADE_FAILURE':'INCONCLUSIVE','UTILITY_LEAK':'INCONCLUSIVE'}),
++ 'S04':({'SUBGRADE_FAILURE':'INCONCLUSIVE','UTILITY_LEAK':'SUPPORTED'},{'SUBGRADE_FAILURE':'INCONCLUSIVE','UTILITY_LEAK':'CONTRADICTED'}),
++ 'S05':({'MISSED_PICKUP':'SUPPORTED','CAPACITY_SHORTFALL':'SUPPORTED','ILLEGAL_DUMPING':'INCONCLUSIVE'},{'MISSED_PICKUP':'INCONCLUSIVE','CAPACITY_SHORTFALL':'INCONCLUSIVE','ILLEGAL_DUMPING':'INCONCLUSIVE'}),
++ 'S06':({'MISSED_PICKUP':'CONTRADICTED','CAPACITY_SHORTFALL':'INCONCLUSIVE','ILLEGAL_DUMPING':'SUPPORTED'},{'MISSED_PICKUP':'CONTRADICTED','CAPACITY_SHORTFALL':'INCONCLUSIVE','ILLEGAL_DUMPING':'INCONCLUSIVE'}),
++}
++def histories(r,inv):
++ service=EvidenceService(r,clock=lambda:'2026-10-18T14:00:00.000000Z')
++ return {r.get_node(e.target).properties['cause_code']:service.history(e.target,'2026-10-18T14:00:00.000000Z') for e in Reader(r,AT).edges('PROPOSES',source=inv)}
++def proof_history(values):return {cause:[x.model_dump(mode='json') for x in rows] for cause,rows in values.items()}
++
++async def run_agent(p,r,path,case,*,resume=False,thread=None):
++ at='2026-10-18T12:00:02.000000Z' if resume and thread else '2026-10-18T11:00:00.000000Z'
++ if resume:
++  previous=saver(p).get_tuple({'configurable':{'thread_id':thread}})
++  from datetime import datetime,timedelta
++  at=(datetime.fromisoformat(previous.checkpoint['channel_values']['data']['as_of'].replace('Z','+00:00'))+timedelta(hours=1,seconds=1)).isoformat(timespec='microseconds').replace('+00:00','Z')
++ async with brokers(p,path,timeout=10,memory_path=path.parent/'memory.json') as tools:
++  model=PolicyModel(resume=resume);agent=InvestigationAgent(p,r,tools,model,saver(p),clock=lambda:at)
++  thread=thread or uuid4().hex
++  initial=None if resume else InvestigationState(graph=p.graph,investigation_id=case['investigation_id'],thread_id=thread,problem_cluster_id=case['cluster_id'],incident_ids=[case['incident_id']],asset_ids=[case['asset_id']],issue=case['issue_type'],inventory_hash=tools.inventory_hash,discovered_tool_names=[t['name'] for t in tools.catalog()],graph_revision=GraphQueries(r)._state(),as_of=at,budget=Budget(max_iterations=32))
++  result=await agent.run(initial,thread_id=thread,resume=resume)
++  assert result['__interrupt__'] and result['data']['pause_reason']=='MISSING_EVIDENCE',result['data']['errors']
++  assert not any(e not in {'SOURCE_CHANGED_REFRESH_REQUIRED'} for e in result['data']['errors']),result['data']['errors']
++  assert result['data']['executions'] and all(v.get('status')!='ERROR' for v in result['data']['observations'])
++  if resume:assert model.contexts[0]['state']['refresh_required'] and not result['data']['refresh_required']
++  snap=await agent.graph.aget_state({'configurable':{'thread_id':thread}})
++  return agent,thread,result['data'],copy.deepcopy(snap)
++
++async def draft_boundaries(shared,r,case,values):
++ rows=[x[-1] for x in values.values()]
++ from app.memory.models import sources
++ source=next(s for s in sources() if s.owner_department_id==case['department_id'] and s.document_id!='D001-PDF')
++ citation=(await shared.memory.retrieve(as_of=AT,document_id=source.document_id))['citations']
++ assert citation
++ value=sample();value.update(investigation_id=case['investigation_id'],issue=case['issue_type'])
++ value['basis']=[{'hypothesis_id':a.hypothesis_id,'assessment_id':a.id,'reason':'Retain actual evaluated evidence and alternatives','addressed':i==0} for i,a in enumerate(rows)]
++ ids=list(dict.fromkeys(id for a in rows for id in a.supporting_evidence_ids+a.contradicting_evidence_ids))
++ value['evidence_ids']=ids or ['B20-MISSING-EVIDENCE']
++ task=value['tasks'][0];task.update(target_ids=[case['asset_id']],department_id=case['department_id'],evidence_ids=value['evidence_ids'],assessment_ids=[rows[0].id],procedure_citation=citation[0])
++ value['monitoring'].update(issue=case['issue_type'],required_evidence=REQUIRED[case['issue_type']])
++ service=PlanningService(r,shared.memory,clock=lambda:'2026-10-18T14:00:00.000000Z')
++ task_model=PlanDraft.model_validate(value).tasks[0]
++ with pytest.raises(PlanningBlocked,match='OWNERSHIP_UNKNOWN_OR_CONFLICTING'):await service.resolve(task_model,Reader(r,AT),AT)
++ with pytest.raises((PlanningBlocked,PreconditionFailed)):await service.create(value,request_id='B20-candidate-owner-or-missing-evidence',actor=ANALYST)
++ invalid=copy.deepcopy(value);invalid['tasks'][0]['depends_on']=['inspect']
++ with pytest.raises(ValueError):await service.create(invalid,request_id='B20-invalid-DAG',actor=ANALYST)
++ missing=copy.deepcopy(value);missing['evidence_ids']=missing['tasks'][0]['evidence_ids']=['B20-MISSING-EVIDENCE']
++ with pytest.raises(PlanningBlocked,match='EVIDENCE_OUTSIDE_ASSESSMENTS'):await service.create(missing,request_id='B20-missing-evidence',actor=ANALYST)
++ # Force an unrelated supported remedy against the actual latest assessments.
++ remedy={'WATERLOGGING':'DRAIN_BLOCKAGE_CLEARANCE','ROAD_DAMAGE':'SUBGRADE_REPAIR','WASTE_ACCUMULATION':'MISSED_PICKUP_RECOVERY'}[case['issue_type']]
++ from app.services.planning.policy import validate_remediation
++ forced=copy.deepcopy(value);forced['tasks'][0].update(action_type=remedy,remediation={'mode':'SUPPORTED_NOW','conditions':[{'kind':kind,'status':'MET','evidence_ids':forced['evidence_ids']} for kind in ['CAUSAL_INSPECTION','SAFETY_REVIEW']]})
++ parsed=PlanDraft.model_validate(forced)
++ with pytest.raises(PlanningBlocked):validate_remediation(parsed.tasks[0],parsed,Reader(r,AT),rows,PlanningBlocked)
++ assert r._read('MATCH (p:ResolutionPlan) RETURN count(p)')==[[0]]
++ return {'candidate_ownership_rejected':True,'missing_evidence_rejected':True,'invalid_DAG_rejected':True,'forced_remedy_without_required_causal_safety_evidence_rejected':True,'plan_count':0}
++
++@pytest.mark.parametrize('scenario',[f'S{i:02}' for i in range(1,7)])
++@pytest.mark.parametrize('variant',['PRIMARY','NEGATIVE'])
++def test_six_scenario_behavior(shared,scenario,variant):
++ async def run():
++  setup=await fresh(shared,scenario,variant,'B20-'+scenario+'-'+variant);path=shared.path.parent/setup['profile_reference']/'profile.json';p=load(path);case=setup['scenario']['cases'][0]
++  with active_scope(p):
++   r=GraphRepository(shared.db,p.graph)
++   agent,thread,baseline,old=await run_agent(p,r,path,case)
++   before=histories(r,case['investigation_id']);assert len(before)>=2 and all(x[-1].assessment=='INCONCLUSIVE' for x in before.values())
++   async def release(c,s):
++    view,lead=await inspection(shared,c,case,'B20-release')
++    body={'expected_current_stage':'BASELINE_VISIBLE','stage':'EVIDENCE_REVEALED','investigation_id':case['investigation_id'],'inspection_id':view['id'],'expected_hash':view['expected_hash']}
++    res=await c.post('/api/v1/demo/scenarios/'+scenario+'/advance',json=body,headers=headers(shared,key='B20-release',field=lead,reviewer='OP-ANALYST'));assert res.status_code==200,res.json()
++    return res.json()['data']
++   released=await client_run(shared,path,release)
++   agent,_,state,new=await run_agent(p,r,path,case,resume=True,thread=thread)
++   assert (await agent.graph.aget_state(old.config)).values==old.values
++   after=histories(r,case['investigation_id']);assert {k:v[-1].assessment for k,v in after.items()}==EXPECTED[scenario][variant=='NEGATIVE']
++   assert all(v[0]==before[k][0] and v[-1].previous_assessment_id==v[0].id for k,v in after.items())
++   for rows in after.values():
++    a=rows[-1];assert a.rule_version==2 and a.classification and a.graph==p.graph
++    assert all(ref.report and ref.report.review and ref.report.attribution and case['incident_id'] in ref.report.attribution.incident_ids for ref in a.evidence_references if ref.report)
++   boundaries=await draft_boundaries(shared,r,case,after)
++   extra={}
++   if scenario=='S01' and variant=='PRIMARY':
++    async def clear_drain(c,s):
++     view,lead=await inspection(shared,c,case,'B20-clear-contradiction')
++     q={'operation':'report_inspection','request_id':'B20-clear-contradiction','inspection_id':view['id'],'expected_hash':view['expected_hash'],'source_id':'B20-independent-clear-drain-survey','record_id':'B20-clear','observations':[{'asset_id':case['asset_id'],'code':'DRAIN_CLEAR','statement':'New independent synthetic clear-drain observation contradicts retained obstruction evidence','method':'SYNTHETIC_DRAIN_SURVEY','observed_at':AT}], 'review':{'reviewer_id':'OP-ANALYST','role':'ANALYST','reviewed':True,'reason':'Independent synthetic clear-drain review'},'attribution':{'incident_ids':[case['incident_id']],'rationale':'Direct present episode drainage survey'}}
++     return EvidenceService(r,clock=lambda:AT).execute(q,shared.auth.resolve(shared.tokens[lead])).entity_id
++    clear_id=await client_run(shared,path,clear_drain)
++    agent,_,state,third=await run_agent(p,r,path,case,resume=True,thread=thread)
++    revised=histories(r,case['investigation_id']);assert revised['BLOCKAGE'][-1].assessment=='INCONCLUSIVE'
++    assert clear_id in revised['BLOCKAGE'][-1].contradicting_evidence_ids and revised['BLOCKAGE'][-1].supporting_evidence_ids
++    assert revised['BLOCKAGE'][:2]==after['BLOCKAGE']
++    assert (await agent.graph.aget_state(new.config)).values==new.values
++    revision_boundaries=await draft_boundaries(shared,r,case,revised)
++    from app.services.complaints import ComplaintService
++    from app.services.demo.definitions import load as world_definitions,intake,BASE
++    payload=intake(world_definitions()['S01'],case['issue_type']);payload['external_record_id']='B20-independent-same-event-report';payload['reported_at']=AT
++    duplicate=ComplaintService(r,clock=lambda:AT).intake(payload)
++    assert duplicate.incident_id==case['incident_id']
++    assert r._read('MATCH (i:Incident) RETURN count(i)')==[[1]]
++    extra={'clear_drain_report_id':clear_id,'revised_assessments':proof_history(revised),'revision_boundaries':revision_boundaries,'supported_to_inconclusive_with_contradiction':True,'second_checkpoint_unchanged':True,'duplicate_complaint_same_incident':duplicate.model_dump(mode='json')}
++   if scenario=='S03':
++    assert not after['UTILITY_LEAK'][-1].contradicting_evidence_ids
++    async def utility(c,s):
++     scoped={**case,'asset_id':'PIPE-100','department_id':'DEPT-WATER'};view,lead=await inspection(shared,c,scoped,'B20-separate-utility')
++     actor=shared.auth.resolve(shared.tokens[lead])
++     q={'operation':'report_inspection','request_id':'B20-separate-utility-pressure','inspection_id':view['id'],'expected_hash':view['expected_hash'],'source_id':'B20-independent-synthetic-utility-survey','record_id':scenario+'-'+variant,'observations':[{'asset_id':'PIPE-100','code':'PRESSURE_TEST_NORMAL','statement':'Separately attributed synthetic utility pressure test normal; no road-survey inference','method':'SYNTHETIC_UTILITY_PRESSURE_TEST','observed_at':AT}], 'review':{'reviewer_id':'OP-ANALYST','role':'ANALYST','reviewed':True,'reason':'Explicit synthetic target-specific utility review'},'attribution':{'incident_ids':[case['incident_id']],'rationale':'Direct present episode utility pressure survey'}}
++     receipt=EvidenceService(r,clock=lambda:AT).execute(q,actor);return receipt.entity_id
++    utility_id=await client_run(shared,path,utility)
++    agent,_,state,third=await run_agent(p,r,path,case,resume=True,thread=thread)
++    final=histories(r,case['investigation_id']);assert final['UTILITY_LEAK'][-1].assessment=='CONTRADICTED' and utility_id in final['UTILITY_LEAK'][-1].contradicting_evidence_ids
++    assert (await agent.graph.aget_state(new.config)).values==new.values
++    extra={'separate_utility_report_id':utility_id,'assessments_after_independent_utility':proof_history(final),'second_checkpoint_unchanged':True}
++   async def views(c,s):
++    out={}
++    for suffix in ['hypotheses','graph','trace']:
++     res=await c.get('/api/v1/investigations/'+case['investigation_id']+'/'+suffix,headers=headers(shared));assert res.status_code==200,res.json();out[suffix]=res.json()['data']
++    return out
++   from app.api.__main__ import configured_app
++   import httpx
++   app=configured_app(path,shared.auth.path,path.parent/'memory.json','2026-10-18T14:00:00.000000Z')
++   async with app.router.lifespan_context(app),httpx.AsyncClient(transport=httpx.ASGITransport(app=app,raise_app_exceptions=False),base_url='http://local') as c:
++    public=await views(c,app.state.services)
++   assert r._read('MATCH (w:WorkOrder) RETURN count(w)')==[[0]]
++   assert r._read("MATCH ()-[r:MAINTAINED_BY]->() WHERE r.association_status<>'CANDIDATE' RETURN count(r)")==[[0]]
++   reports=[r.get_node(id,'Evidence').properties for id in released['released_evidence_ids']]
++   proof={'mode':'ISSUE_ONLY_SCRIPTED_CHOICES_REAL_B19_HTTP_MCP_LANGGRAPH_FALKORDB_SAVER','scenario':scenario,'variant':variant,'source_graph':p.graph,'case':case,'thread_id':thread,'baseline':baseline,'after_release':state,'assessment_history':proof_history(after),'released_evidence':reports,'boundaries':boundaries,'public_views':public,'baseline_checkpoint_id':old.config['configurable']['checkpoint_id'],'baseline_checkpoint_unchanged':True,'no_work_or_verified_owner_fabricated':True,'provider_requests':0,**extra}
++   Path('docs/evidence/B20-'+scenario+'-'+variant+'.json').write_text(json.dumps(proof,indent=2)+'\n')
++ asyncio.run(run())
++
++def test_supported_action_and_stale_citation_real_boundary(shared):
++ """Separate authored verified-owner control, not a promoted B19 scenario owner."""
++ from tests.b12_fixtures import prepared
++ directory=shared.directory/'positive-policy-control';directory.mkdir(mode=0o700)
++ p,r,clock,path,inv,draft,service=prepared(shared.db,directory,shared.memory,'WATERLOGGING',remedial=True)
++ from datetime import datetime,timedelta
++ # Real SDK citation retrieval uses wall time; move the authored clock forward,
++ # never rewrite the returned citation to evade the future-citation guard.
++ clock.value=max(clock.value,datetime.fromisoformat(draft.tasks[0].procedure_citation.retrieved_at.replace('Z','+00:00')))+timedelta(seconds=1)
++ async def run():
++  with active_scope(p):
++   invalid=draft.model_dump(mode='json');quote=invalid['tasks'][0]['procedure_citation']['quote_excerpt'];invalid['tasks'][0]['procedure_citation']['quote_excerpt']=('X' if quote[0]!='X' else 'Y')+quote[1:]
++   with pytest.raises(PlanningBlocked,match='PROCEDURE_STALE_REVOKED_OR_UNAVAILABLE'):await service.create(invalid,request_id='B20-stale-citation-control',actor=ANALYST)
++   assert r._read('MATCH (p:ResolutionPlan) RETURN count(p)')==[[0]]
++   receipt=await service.create(draft.model_dump(mode='json'),request_id='B20-valid-sourced-control',actor=ANALYST)
++   saved=service.store.get(receipt.id);proof=saved['proof']['tasks']['remedy']
++   assert proof['owners'][0]['department_id']=='DEPT-DRAIN' and proof['procedure_status']=='PROPOSED'
++   assert proof['remediation']['unmet_guards']==[] and not proof['remediation']['execution_authority']
++   again=await service.create(draft.model_dump(mode='json'),request_id='B20-valid-sourced-control',actor=ANALYST)
++   assert again==receipt and r._read('MATCH (p:ResolutionPlan) RETURN count(p)')==[[1]]
++   Path('docs/evidence/B20-planning-control.json').write_text(json.dumps({'mode':'REAL_DOMAIN_DB_SDK_AUTHORED_VERIFIED_OWNER_CONTROL_NOT_B19_SCENARIO_READINESS','graph':p.graph,'stale_citation_rejected_before_plan':True,'receipt':receipt.model_dump(mode='json'),'saved':saved,'idempotent_single_plan':True,'provider_requests':0},indent=2)+'\n')
++ asyncio.run(run())
+--- /dev/null
++++ b/backend/tests/unit/test_scenario_behavior.py
+@@ -0,0 +1,29 @@
++"""B20 closed-boundary tests. No mock successes or live model reasoning claims."""
++import copy
++import pytest
++from app.services.evidence.models import parse_command
++from app.services.planning.models import PlanDraft,TaskDraft
++from app.services.evidence.policies import classify_reviewed
++from tests.b12_fixtures import sample
++
++@pytest.mark.parametrize('action',['UTILITY_REPAIR','CAPACITY_UPGRADE','ROUTE_REDESIGN','DUMPING_ENFORCEMENT'])
++def test_unsupported_interventions_remain_closed(action):
++ value=sample()['tasks'][0];value['action_type']=action
++ with pytest.raises(ValueError):TaskDraft.model_validate(value)
++
++@pytest.mark.parametrize('claimed',['VERIFIED','SUPPORTED','CONTRADICTED'])
++def test_caller_cannot_force_diagnosis_status(claimed):
++ with pytest.raises(ValueError):parse_command({'operation':'assess','request_id':'B20-forced','hypothesis_id':'H','expected_hash':'a'*64,'as_of':'2026-10-18T12:00:00Z','assessment':claimed})
++
++@pytest.mark.parametrize('mutation',['cycle','unknown_dependency','no_safety','fake_resolution'])
++def test_invalid_plan_or_resolution_fails_at_strict_boundary(mutation):
++ value=sample()
++ if mutation=='cycle':value['tasks'][0]['depends_on']=['inspect']
++ if mutation=='unknown_dependency':value['tasks'][0]['depends_on']=['absent']
++ if mutation=='no_safety':value['tasks'][0].update(action_type='DRAIN_BLOCKAGE_CLEARANCE',remediation={'mode':'SUPPORTED_NOW','conditions':[{'kind':'CAUSAL_INSPECTION','status':'MET','evidence_ids':['EV']}]})
++ if mutation=='fake_resolution':value['monitoring']['completion_implies_resolution']=True
++ with pytest.raises(ValueError):PlanDraft.model_validate(value)
++
++@pytest.mark.parametrize('reviewed_support,unreviewed_support,reviewed_contradiction,expected',[(False,True,True,'INCONCLUSIVE'),(False,False,True,'CONTRADICTED'),(True,False,False,'SUPPORTED')])
++def test_source_authority_never_promotes_single_report_to_verified(reviewed_support,unreviewed_support,reviewed_contradiction,expected):
++ assert classify_reviewed(reviewed_support=reviewed_support,unreviewed_support=unreviewed_support,reviewed_contradiction=reviewed_contradiction,unreviewed_contradiction=False,sufficient=False)==expected
+--- a/blockers.md
++++ b/blockers.md
+@@ -623,3 +623,17 @@
+ 
+ ### B19 final UNKNOWN replay identity check — current superseding total
+ Final148distinctPASS122unit/26real,0unresolvedFAIL/0SKIP. One new unit verifies committed reconciliation.entity_id precedes route label on UNKNOWN replay;3acceptedBoundaryunits overlapPASS0.35s. Strengthenedreal reportfault/replayPASS25.17s with original/replayrequest/report/investigationIDs identical, COMMITTEDjournal/oneeffect andDISPATCHINGreservation retained. Firstattempt1setupERROR4.40s sockettimeoutbeforefaultpath; read-onlycontainerhealthy/CLIhealthok, freshfixture-onlyretry, nooldrequestredispatch/lifecycle/quarantineclearance. Fourpriorfailedassertionattempts+onesetupERROR recorded. BothfinalSPECvalidatorsPASS afterlast executablechange;13pytestchild+3specguards0external/0unexpected. Prior147subtotal superseded. B19RESULTS/COMMANDS/FILES/patch/audit current; retainedfailedwake/all18requirements/B10genuineOPEN unchanged. STOPB19review; B20/frontend/liveunauthorized.
++
++
++## CURRENT B20 — focused checks passing; acceptance PARTIAL/BLOCKED (2026-10-18)
++B19 human accepted. Only S01–S06 primary/negative behavioral evaluation performed, using issue-only scripted selections and actual B19 setup/release, HTTP/FalkorDB, official/domain MCP, LangGraph decisions and FalkorDBSaver. All18 requirements remain binding; these are not genuine AI reasoning results. 27distinct pytest PASS (14unit/13real:12scenario variants +1separate sourced-planning control),0unresolvedFAIL/0SKIP. Four historical harness failures retained: broker timeout above limit, typed dependency direction, overlength altered citation and control clock earlier than actual SDK citation retrieval. Corrected only new tests; failing graphs/checkpoints retained. Final control-only retry1PASS13.26s; twelve scenario variants passed in the264.76s selection that also exposed the initial control fault. Both final specification validators PASS after final source edit. Nine guard reports record0external Gemini/countTokens and0unexpected attempts.
++
++Every variant pauses before authorized release and explicitly resumes the same thread with fresh MCP reads and unchanged prior checkpoint. S01 PRIMARY additionally preserves supported obstruction + new clear-drain contradiction as INCONCLUSIVE, rejects unsupported clearance and deduplicates an additional same-event complaint without manufacturing recurrence. Both S03 variants receive a separately attributable reviewed utility pressure report; road pressure context alone remains INCONCLUSIVE for leak, independent pipe report yields CONTRADICTED while subgrade is assessed separately. Forced remedies, candidate owners, missing evidence and invalid DAG fail closed. Separate authored verified-owner control proves actual stale citation denial, sourced synthetic/PROPOSED drainage draft, typed causal/safety guards and one-plan exact replay; it does not supply B19 ownership acquisition.
++
++BLOCK-B20-01..05 prevent full operational acceptance: absent public verified-owner acquisition, unsupported utility/capacity/route/dumping responses and missing independently dated pickup-before-dumping sequence. No candidate promoted, scenario plan/work/resolution fabricated, production logic/contract/migration/data/accepted test modified, quarantine cleared or live call made. B10 genuine-provider acceptance remains OPEN/PARTIAL. Earlier audit history remains authoritative for earlier executed phases; this latest entry supersedes earlier B20-unauthorized statements only for this authorized evaluation.
++
++Review docs/evidence/B20-RESULTS.md, B20-MATRIX.md, B20-GAPS.md, B20-COMMANDS.md, B20-FILES.md, B20-changes.patch, B20-audit.json and B20-WALKTHROUGH.md. Proposed next is human review and authorization of bounded B20 corrective ownership/action/service-evidence microtasks; B21 cross-category/ablation remains deferred, B22 restart/recurrence and B23 genuine provider also deferred. STOP after B20; no frontend/backend-complete claim.
++
++
++### B20 final retention evidence — 2026-10-18
++Read-only auditPASS: all1534pre-B20 public files retained,1085earlier evidence files byte-identical,116accepted test files unchanged, allsix tracker histories append-only. Production logic/contracts/migrations/data unchanged; original city858nodes/1246relationships/fullcontenthash and42CANDIDATE drainage links intact, B01probe and original B12R2singleplan/quarantine + B19quarantines retained. Historical2paidrequests unchanged with no active sessions/holds. Finalpublicartifact/patchprivate-value scanPASS;9guardreports0external/0unexpected. Actual FalkorDBmodule60002(6.0.2); installed falkordb1.8.0,mcp2.3.0,langgraph1.2.16,langchain-falkordb0.2.0,fastapi0.143.3,pydantic2.14.1; no dependency changes. Exact inventory/patch use pre-B20 snapshot, excluding earlier accepted uncommitted Git work. No old failed graph repaired. B20acceptance remainsPARTIAL/BLOCKED; STOPforreview.
+--- a/decision.md
++++ b/decision.md
+@@ -1565,3 +1565,15 @@
+ 
+ ### B19 final UNKNOWN replay identity check — current superseding total
+ Final148distinctPASS122unit/26real,0unresolvedFAIL/0SKIP. One new unit verifies committed reconciliation.entity_id precedes route label on UNKNOWN replay;3acceptedBoundaryunits overlapPASS0.35s. Strengthenedreal reportfault/replayPASS25.17s with original/replayrequest/report/investigationIDs identical, COMMITTEDjournal/oneeffect andDISPATCHINGreservation retained. Firstattempt1setupERROR4.40s sockettimeoutbeforefaultpath; read-onlycontainerhealthy/CLIhealthok, freshfixture-onlyretry, nooldrequestredispatch/lifecycle/quarantineclearance. Fourpriorfailedassertionattempts+onesetupERROR recorded. BothfinalSPECvalidatorsPASS afterlast executablechange;13pytestchild+3specguards0external/0unexpected. Prior147subtotal superseded. B19RESULTS/COMMANDS/FILES/patch/audit current; retainedfailedwake/all18requirements/B10genuineOPEN unchanged. STOPB19review; B20/frontend/liveunauthorized.
++
++
++## DEC-066 — B20 qualified evaluation and explicit capability gates (2026-10-18)
++Decision recorded before coding in docs/evidence/B20-PLAN.md. Preserve accepted architecture and allR01–R18; add only new evaluation helpers/tests and review evidence. Issue-policy scripts receive current public runtime context and never scenario ID, hidden expected answers or fabricated results. Real services determine classification; the evaluator-only expected map stays outside the model. Alternatives considered: broad action/ownership implementation would require new provenance, permission, procedure, safety and outcome contracts; automatic candidate promotion or unrelated remedies violate accepted contracts. Therefore report PARTIAL/BLOCKED with bounded proposed corrective tasks rather than claiming full acceptance through pauses. No dependency, schema, migration or production behavior changed.
++
++Use existing B19 host reset/release and actual authenticated department/reviewer controls. S03 separate utility report is a new explicitly synthetic target-specific service operation by an authenticated water-department actor; preserve road pressure as context. S01 later independent clear survey retains earlier support and therefore revises to INCONCLUSIVE, not falsely erasing prior evidence to force a clean contradiction label. Distinct authored phase clocks establish chronological assessments; the separate existing B12-R control advances its new clock past the actual SDK citation retrieved_at rather than altering a source citation to bypass time validation. The same-length citation mismatch reaches the actual stale-source resolver. These are harness compatibility choices, not production/recovery changes.
++
++27distinct testsPASS14unit/13real, four retained failed attempts and final2SPECvalidatorsPASS. Actual source-backed positive drainage policy control remains DRAFT/non-executable with synthetic PROPOSED procedure and explicit reviewed causal/safety prerequisites. It does not cure missing scenario owner acquisition. BLOCK-B20-01..05 in B20-GAPS.md retain mandatory ownership, utility, capacity/route, dumping and independent pickup/dumping sequence gaps. S02 partial capacity support from clear drain is a configured discriminator, not measured or VERIFIED capacity failure. No recurrence/outcome manufactured. B10 genuineOPEN/PARTIAL; STOPB20review, noB21/live/frontend.
++
++
++### B20 final retention evidence — 2026-10-18
++Read-only auditPASS: all1534pre-B20 public files retained,1085earlier evidence files byte-identical,116accepted test files unchanged, allsix tracker histories append-only. Production logic/contracts/migrations/data unchanged; original city858nodes/1246relationships/fullcontenthash and42CANDIDATE drainage links intact, B01probe and original B12R2singleplan/quarantine + B19quarantines retained. Historical2paidrequests unchanged with no active sessions/holds. Finalpublicartifact/patchprivate-value scanPASS;9guardreports0external/0unexpected. Actual FalkorDBmodule60002(6.0.2); installed falkordb1.8.0,mcp2.3.0,langgraph1.2.16,langchain-falkordb0.2.0,fastapi0.143.3,pydantic2.14.1; no dependency changes. Exact inventory/patch use pre-B20 snapshot, excluding earlier accepted uncommitted Git work. No old failed graph repaired. B20acceptance remainsPARTIAL/BLOCKED; STOPforreview.
+--- /dev/null
++++ b/docs/evidence/B20-COMMANDS.md
+@@ -0,0 +1,51 @@
++# B20 exact focused commands and attempts
++
++Run from `/Users/vikashkumar/Desktop/Civicly`. Python project virtual environment and installed lock remain unchanged. No full historical suite, live smoke, container lifecycle or external provider command executed.
++
++```sh
++CIVICLY_TEST_REQUEST_LOG=/tmp/b20-unit-provider.jsonl backend/.venv/bin/python -m pytest backend/tests/unit/test_scenario_behavior.py -q
++```
++14PASS,0FAIL/0SKIP,2.37s; two existing PDF/SWIG import deprecation warnings. Test-model choices and schema/policy unit tests are explicitly not live AI evidence. Guard: B20-unit-zero-live.json.
++
++```sh
++CIVICLY_TEST_REQUEST_LOG=/tmp/b20-real-provider.jsonl backend/.venv/bin/python -m pytest backend/tests/integration/test_scenario_behavior.py -xq
++```
++B20-real-attempt1.txt:1FAIL24.15s, stopped firstcase. Harness requested15second broker timeout; existing domain broker requires<=10. Actual boundary correctly refused construction. Corrected harness budget, not production policy. Fresh source retained; no old request/wake repaired or replayed. Guard: B20-real-zero-live.json.
++
++```sh
++CIVICLY_TEST_REQUEST_LOG=/tmp/b20-real2-provider.jsonl backend/.venv/bin/python -m pytest backend/tests/integration/test_scenario_behavior.py -xq
++```
++B20-real-attempt2.txt:2PASS/1FAIL56.76s, stopped S03primary. Typed dependency read supplied BOTH while existing schema requires DOWNSTREAM; actual MCP schema enforcement returned sanitized dependency pause. Corrected issue-only harness direction and pipe root. Separately gave phases distinct canonical timestamps so ID ties cannot masquerade as chronological history. Existing graph/trace/checkpoint retained; no quarantine cleared. Guard: B20-real2-zero-live.json.
++
++```sh
++CIVICLY_TEST_REQUEST_LOG=/tmp/b20-real3-provider.jsonl backend/.venv/bin/python -m pytest backend/tests/integration/test_scenario_behavior.py -xq
++```
++Final strengthened matrix includes twelve scenario/variant cases and one separate verified-owner sourced-planning/stale-citation control. Results appended below after actual execution; no result anticipated. B20-real-attempt3.txt and B20-real3-zero-live.json.
++
++Read-only inspection commands included required file reads, Git public-file/status inventory and pre-edit SHA256 snapshot1534files under /tmp/b20-baseline. One sandboxed process-list inspection was denied by the OS; no state change or acceptance result attributed to it. No permission bypass attempted.
++
++## Strengthened matrix outcome and control-only correction
++
++B20-real-attempt3.txt: **12scenario variantsPASS /1controlFAIL**,264.76s,3existingSDK/PDF import deprecations. The stale-citation negative appended text to an already800character excerpt, so strict Pydantic validation rejected length before the intended resolver. Corrected only that test to a different same-length excerpt. No production change and no previous scenario rerun; failed control graph retained.
++
++```sh
++CIVICLY_TEST_REQUEST_LOG=/tmp/b20-planning-provider.jsonl backend/.venv/bin/python -m pytest backend/tests/integration/test_scenario_behavior.py::test_supported_action_and_stale_citation_real_boundary -xq
++CIVICLY_TEST_NO_LIVE=1 CIVICLY_REQUEST_AUDIT_FILE=/tmp/b20-spec-provider.jsonl PYTHONPATH=backend/test_guards:backend make test-spec
++CIVICLY_TEST_NO_LIVE=1 CIVICLY_REQUEST_AUDIT_FILE=/tmp/b20-final-spec-provider.jsonl PYTHONPATH=backend/test_guards:backend make test-spec
++```
++First specification invocation passed both validators before the control-only correction; final invocation repeats both after that final test edit. These are static checks, not extra scenario cases. Raw retained logs B20-spec.txt/B20-final-spec.txt. Provider interlock enabled in both. The control-only retry result is recorded below after readback.
++
++Artifact assembly: `python3 /tmp/b20-delivery.py` builds expected/observed matrix from twelve actual retained proofs. `PYTHONPATH=backend backend/.venv/bin/python docs/evidence/B20-audit-script.py` performs read-only retention/credential/accounting checks. Baseline-relative patch generated with Python difflib from /tmp/b20-baseline; no Git commit/push or application reset.
++
++Control-only retry1:1FAIL16.14s. The same-length mismatch reached the future-citation guard first: accepted B12-R fixture clock is12:00, while actual SDK retrieval timestamps now occur later. Kept the real citation unchanged and advanced only the new authored control clock beyond its actual retrieved_at. No accepted fixture or production clock behavior changed; earlier control graph retained.
++```sh
++CIVICLY_TEST_REQUEST_LOG=/tmp/b20-planning2-provider.jsonl backend/.venv/bin/python -m pytest backend/tests/integration/test_scenario_behavior.py::test_supported_action_and_stale_citation_real_boundary -xq
++```
++B20-planning-retry2.txt / B20-planning2-zero-live.json. Only directly affected control rerun; all12passing scenario variants unchanged. A final guarded specification invocation after this control clock adjustment is recorded below.
++
++## Final observed totals
++Control-only retry2:1PASS13.26s,3existing import deprecations; actual stale-source resolver denial, valid sourced DRAFT and one-plan replay exercised. Final bothSPECvalidatorsPASS after the last source edit:
++```sh
++CIVICLY_TEST_NO_LIVE=1 CIVICLY_REQUEST_AUDIT_FILE=/tmp/b20-verified-spec-provider.jsonl PYTHONPATH=backend/test_guards:backend make test-spec
++```
++Final distinct27PASS =14unit +12real scenario variants +1real domain/SDK planning control.0unresolvedFAIL/0SKIP. Four retained failed attempts (one each broker budget, dependency direction, altered citation length, citation timing); repeated passes counted once. Nine pytest/child/spec guard summaries0external/0unexpected. No full historical, lifecycle, live provider or frontend execution. Specification invocations are overlap checks, not extra test cases. One schema-inspection utility initially assumed the wrong JSON root key and raised KeyError; corrected by reading the actual registry structure, no application/data edit or acceptance result implied.
+--- /dev/null
++++ b/docs/evidence/B20-GAPS.md
+@@ -0,0 +1,17 @@
++# B20 capability gates — no full scenario/backend acceptance
++
++All R01–R18 remain mandatory. Passing evidence/denial tests do not satisfy missing operational branches. B19 is accepted for mechanics; these gaps concern B20 behavior/demo readiness. B10 genuine-provider acceptance remains OPEN/PARTIAL. No B21–B23 or frontend executed.
++
++| Blocker | Affected scope | Exact missing capability / acceptance impact | Proposed corrective microtask (requires human authorization) |
++|---|---|---|---|
++| BLOCK-B20-01 | S01/S03/S05 and every operational case; R10/R11/R14/R18 | Actual B19 MAINTAINED_BY remains CANDIDATE. Existing resolver rejects it correctly. No public verified responsibility acquisition/review operation exists. Positive B12-R fixture control is not a scenario ownership workflow. | B20-R-OWNERSHIP: narrowly scoped attributed synthetic responsibility evidence plus explicit authorized review/temporal binding, conflict rejection, durable identity and API/CLI source readback. Never promote imported candidates by default. |
++| BLOCK-B20-02 | S04; R10/R11/R17/R18 | Closed action inventory has no utility isolation/leak repair or reviewed matching source procedure, safety policy and utility-before-road dependency semantics. SUBGRADE_REPAIR cannot substitute. A pause alone cannot pass confirmed-leak operational acceptance. | B20-R-UTILITY: define bounded synthetic utility isolation/repair/proposed procedure and safety prerequisites with explicit responsibility and road coordination DAG, then actual service/approval/execution/outcome boundary tests. |
++| BLOCK-B20-03 | S02/S05; R10/R17/R18 | No capacity change/route redesign action or appropriate approved synthetic guidance and monitoring semantics. MISSED_PICKUP_RECOVERY alone cannot address sustained excess demand. | B20-R-CAPACITY: specify small demo capacity/route intervention inventory and sourced policies before implementation; preserve candidate schedule/execution distinction. |
++| BLOCK-B20-04 | S06; R10/R11/R17/R18 | No bounded dumping-specific intervention/procedure/authority policy. Missed-pickup recovery is unrelated and rejected. | B20-R-DUMPING: define explicit synthetic dumping investigation/management action, accountable department, reviewed proposed guidance and independent observation opportunity. |
++| BLOCK-B20-05 | S05/S06; R09/R17/R18 | B19 supplies reviewed qualitative pickup/dumping codes, not canonical dated PickupExecution history. Primary S06 pickup and dumping observations share the same timestamp: this does not establish pickup occurred before later dumping. Reported reliability is not independently demonstrated service history. | B20-R-SERVICE-EVIDENCE: add controller-only attributed actual pickup/time sequence through existing validated operational model; separately date dumping and retain report/event identities. No backfilled invented ledger or completion→resolution inference. |
++
++Historical repairs/failed patches in initial complaints remain attributed reports, not manufactured completed work chains. No recurrence history was constructed. Same-event complaint dedup is evaluated separately from recurrence. S03's separate utility test is explicitly synthetic, independently targeted and reviewed; it is not inferred from road survey context. A single reviewed supporting report never proves an independently VERIFIED root cause.
++
++S02 negative clear-drain evidence is a configured confirming discriminator for CAPACITY_DEFICIT as well as a contradiction for BLOCKAGE. Under accepted rule v2 it can yield qualified SUPPORTED with incomplete capacity criteria; it is not capacity measurement or VERIFIED capacity failure. Review the retained missing_evidence/classification before interpreting the label. No new rainfall capacity or blockage inference is asserted.
++
++B20 completion must be PARTIAL/BLOCKED while these mandatory operational/evidence gates remain. Proposed corrective work above is a review proposal, not authorization to implement it. B21 remains deferred pending explicit review.
+--- /dev/null
++++ b/docs/evidence/B20-MATRIX.md
+@@ -0,0 +1,26 @@
++# B20 acceptance matrix — expected versus observed
++
++**B20 PARTIAL/BLOCKED.** Twelve real scenario variants passed their qualified evidence/rejection assertions, not full operational acceptance or genuine AI reasoning. Baseline/release/negative/permitted/forbidden definitions were recorded before coding in [B20-PLAN.md](B20-PLAN.md). Mandatory unmet gates are [B20-GAPS.md](B20-GAPS.md). All tests use issue-only scripted choices and actual HTTP/FalkorDB/MCP/LangGraph/Saver.
++
++| Scenario / variant | Expected and observed assessment | Actual proof | Acceptance limitation |
++|---|---|---|---|
++| S01 NEGATIVE | Matched: BLOCKAGE: CONTRADICTED, CAPACITY_DEFICIT: SUPPORTED | [B20-S01-NEGATIVE.json](B20-S01-NEGATIVE.json) | Candidate owner; no scenario plan/work. Reports of prior cleaning are not verified repair history. |
++| S01 PRIMARY | Matched: BLOCKAGE: SUPPORTED, CAPACITY_DEFICIT: INCONCLUSIVE; later clear contradiction: BLOCKAGE INCONCLUSIVE (prior support retained) | [B20-S01-PRIMARY.json](B20-S01-PRIMARY.json) | Candidate owner; no scenario plan/work. Reports of prior cleaning are not verified repair history. |
++| S02 NEGATIVE | Matched: BLOCKAGE: CONTRADICTED, CAPACITY_DEFICIT: SUPPORTED | [B20-S02-NEGATIVE.json](B20-S02-NEGATIVE.json) | No capacity action. Clear alone supplies incomplete configured support; no capacity failure VERIFIED. Rainfall125mm remains REPORTED. |
++| S02 PRIMARY | Matched: BLOCKAGE: CONTRADICTED, CAPACITY_DEFICIT: SUPPORTED | [B20-S02-PRIMARY.json](B20-S02-PRIMARY.json) | No capacity action. Clear alone supplies incomplete configured support; no capacity failure VERIFIED. Rainfall125mm remains REPORTED. |
++| S03 NEGATIVE | Matched: SUBGRADE_FAILURE: INCONCLUSIVE, UTILITY_LEAK: INCONCLUSIVE; separate utility report: UTILITY_LEAK CONTRADICTED | [B20-S03-NEGATIVE.json](B20-S03-NEGATIVE.json) | Separate target-specific synthetic utility inspection required and executed; subgrade independent. Candidate owner blocks operational plan. |
++| S03 PRIMARY | Matched: SUBGRADE_FAILURE: SUPPORTED, UTILITY_LEAK: INCONCLUSIVE; separate utility report: UTILITY_LEAK CONTRADICTED | [B20-S03-PRIMARY.json](B20-S03-PRIMARY.json) | Separate target-specific synthetic utility inspection required and executed; subgrade independent. Candidate owner blocks operational plan. |
++| S04 NEGATIVE | Matched: SUBGRADE_FAILURE: INCONCLUSIVE, UTILITY_LEAK: CONTRADICTED | [B20-S04-NEGATIVE.json](B20-S04-NEGATIVE.json) | Utility action/procedure/safety/DAG missing; road repair cannot substitute. |
++| S04 PRIMARY | Matched: SUBGRADE_FAILURE: INCONCLUSIVE, UTILITY_LEAK: SUPPORTED | [B20-S04-PRIMARY.json](B20-S04-PRIMARY.json) | Utility action/procedure/safety/DAG missing; road repair cannot substitute. |
++| S05 NEGATIVE | Matched: MISSED_PICKUP: INCONCLUSIVE, CAPACITY_SHORTFALL: INCONCLUSIVE, ILLEGAL_DUMPING: INCONCLUSIVE | [B20-S05-NEGATIVE.json](B20-S05-NEGATIVE.json) | Candidate schedule is not execution. Cleanup/follow-up absence is unresolved; capacity/route action and owner missing. |
++| S05 PRIMARY | Matched: MISSED_PICKUP: SUPPORTED, CAPACITY_SHORTFALL: SUPPORTED, ILLEGAL_DUMPING: INCONCLUSIVE | [B20-S05-PRIMARY.json](B20-S05-PRIMARY.json) | Candidate schedule is not execution. Cleanup/follow-up absence is unresolved; capacity/route action and owner missing. |
++| S06 NEGATIVE | Matched: MISSED_PICKUP: CONTRADICTED, CAPACITY_SHORTFALL: INCONCLUSIVE, ILLEGAL_DUMPING: INCONCLUSIVE | [B20-S06-NEGATIVE.json](B20-S06-NEGATIVE.json) | Qualitative completed-pickup evidence does not establish independent dated service sequence. Dumping-specific response absent. |
++| S06 PRIMARY | Matched: MISSED_PICKUP: CONTRADICTED, CAPACITY_SHORTFALL: INCONCLUSIVE, ILLEGAL_DUMPING: SUPPORTED | [B20-S06-PRIMARY.json](B20-S06-PRIMARY.json) | Qualitative completed-pickup evidence does not establish independent dated service sequence. Dumping-specific response absent. |
++
++Every variant retains at least two actual immutable assessment versions and a byte-identical baseline checkpoint on the same thread. New source writes require a fresh actual MCP read before reassessment. S01 PRIMARY and both S03 variants additionally retain the first resumed checkpoint across a second explicit resume. S01 duplicate complaint retains one incident; no resolved/recurring history is manufactured.
++
++Actual boundary checks in every variant: unverified ownership rejected by resolver; missing evidence rejected by PlanningService; invalid DAG rejected by strict plan validation; forced remedial action without reviewed causal/safety prerequisites rejected by policy; zero scenario plans/work orders. Unit cases additionally reject caller-assigned diagnosis status, unsupported actions and false completion-implies-resolution.
++
++The independent planning control [B20-planning-control.json](B20-planning-control.json) proves stale citation rejection and a sourced drainage draft with verified authored fixture ownership, explicit typed causal/safety conditions, valid DAG and one-plan exact replay. It does not satisfy the missing B19 ownership workflow.
++
++No false quantitative confidence, physical cause VERIFIED, fabricated pickup execution, approval, performed work or resolved outcome was inserted. Partial-support labels, bounded searches and absent historical data remain qualified. No B21 topology ablation, B22 comprehensive recurrence/restart/failure or B23 live evaluation ran.
+--- /dev/null
++++ b/docs/evidence/B20-PLAN.md
+@@ -0,0 +1,31 @@
++# B20 scope recorded before coding — 2026-10-18
++
++Only S01–S06 behavioral evaluation and smallest exposed corrections authorized. R01–R18 remain binding; primary direct coverage R01,R02,R04,R06–R11,R13–R18. Cross-category B21, comprehensive recurrence/restart B22 and genuine provider B23 deferred. B10 genuine acceptance OPEN/PARTIAL.
++
++Planned paths: new backend/tests/b20_fixtures.py, backend/tests/integration/test_scenario_behavior.py, backend/tests/unit/test_scenario_behavior.py; new B20 evidence/matrix/runbook/patch and append six trackers. No production alteration unless an actual reproduced defect warrants a recorded compatible correction. Existing source, fixture data, migrations, evidence, failed graphs and quarantines retained. Pre-B20 public byte snapshot /tmp/b20-baseline distinguishes this work from accepted uncommitted earlier phases.
++
++Choice: general issue-policy scripted selections (no hidden world answers or fabricated tool outputs), real B19 fresh reset/release on twelve new retained sources, actual official/domain MCP discovery/call, LangGraph decisions and FalkorDBSaver. Baseline propose/assess competing policies; explicit same-thread resume after actual authenticated release with fresh domain read and reassessment. Separately attributable S03 utility inspection through existing service, never reinterpret road pressure context as pipe health. Closed action capabilities remain closed; candidate owners must not be promoted for a passing demo. A supported plan cannot be claimed without its ownership/procedure/safety prerequisites.
++
++Risks: source revision changes require fresh MCP read; cumulative finite iteration/tool budgets; assessed support from one report is not independent VERIFIED cause; reported history is not operational history; source timestamp/incident binding; shared mutable fixture privacy; false acceptance by scripted abstention. Report operational gaps separately from passing boundary checks. All provider requests blocked in pytest and children.
++
++Exact planned focused commands (run from project root):
++- CIVICLY_TEST_REQUEST_LOG=/tmp/b20-unit-provider.jsonl backend/.venv/bin/python -m pytest backend/tests/unit/test_scenario_behavior.py -q
++- CIVICLY_TEST_REQUEST_LOG=/tmp/b20-real-provider.jsonl backend/.venv/bin/python -m pytest backend/tests/integration/test_scenario_behavior.py -xq
++- CIVICLY_TEST_NO_LIVE=1 CIVICLY_REQUEST_AUDIT_FILE=/tmp/b20-spec-provider.jsonl PYTHONPATH=backend/test_guards:backend make test-spec
++Only failing/directly affected reruns as needed. Human verification: inspect retained scenario proof and HTTP hypotheses/graph/trace/evidence on returned private source profile; compare assessment history/provenance, checkpoints and no unauthorized work. Never expose private profiles/credentials in public evidence.
++
++| Scenario | Baseline | Primary release | Negative release | Permitted conclusion | Forbidden conclusion/action | Expected proof |
++|---|---|---|---|---|---|---|
++| S01 | Cleaning failure is reported; verified downstream flow | Downstream obstruction/restriction | Clear drain | Qualified blockage support or contradiction; retained revisions | Flooding alone proves blockage; clearance despite contradiction | Directed verified path, typed downstream report, immutable assessments; rejected clearance |
++| S02 | Synthetic125mm REPORTED gauge, not observed/live weather | Capacity exceeded + clear | Clear + unverified debris claim | Capacity support with limits; blockage contradicted | Rain proves blockage; debris overrides clear | Measurement basis/source/unit; classified support/contradiction/context |
++| S03 | Verified UNDERLIES, reported failed patches | Road structural/subgrade + contextual pressure | Contextual pressure only | Separate utility pressure inspection contradicts leak; independent subgrade support when present | Proximity proves leak or road survey proves pipe health | Actual separately targeted utility journal/report; path; per-asset classification |
++| S04 | Road+pipe affected; verified UNDERLIES | Targeted reviewed leak/infiltration | Pipe pressure normal | Qualified leak support or contradiction; utility response prerequisites | Road repair substitutes for leak repair; candidate owner accepted | Pipe-target proof, alternative assessment, wrong-action/ownership rejection; utility action gap |
++| S05 | Candidate daily schedule; overflow is report | Missed pickup/persistence + capacity | Cleanup without follow-up | Qualified missed service/capacity; negative unresolved | Schedule proves execution; cleanup proves resolution | Actual schedule status, no fabricated CollectionEvent; independent outcome absent |
++| S06 | Reliable pickups are report | Completed pickup + dumping | Completed pickup only | Missed pickup contradicted, dumping supported only primary | Invent missed pickup, unrelated recovery or resolution | Attributed codes and classification; wrong remedy rejected; dumping action gap |
++
++Expected unmet gates: no verified ownership acquisition workflow in B19; no utility isolation/repair, capacity upgrade/route redesign or dumping intervention action contracts. If confirmed, B20 PARTIAL/BLOCKED despite passing safe rejection tests; propose separate bounded corrective microtask, do not scaffold it here.
++
++## Additional focused boundary control recorded before execution
++Reuse the accepted B12-R authored verified-owner/remedial fixture on a separate new retained graph to test a real stale-citation denial, sourced drainage action, typed MET safety/causal conditions, valid DAG and healthy exact replay. This control is explicitly NOT B19 ownership acquisition and does not upgrade any scenario's CANDIDATE edge. Its source guidance remains synthetic/PROPOSED, never execution authority. Add `test_supported_action_and_stale_citation_real_boundary` to the focused integration command; no accepted tests changed.
++
++Harness refinements before final evaluation: use existing10second broker budget and TYPED_DEPENDENCIES/DOWNSTREAM contract; baseline11:00, authorized release12:00, explicit resumes advance onehour/second, public reads14:00. Distinct canonical phase times avoid assessment-ID tie ordering masquerading as chronological revision. Add S01 primary second independently attributed clear-drain report and same-thread revision; preserve support+contradiction as INCONCLUSIVE, never erase support to force CONTRADICTED. Check same-event additional complaint retains one incident, not fabricated recurrence. Existing production timing and policies unchanged.
+--- /dev/null
++++ b/docs/evidence/B20-RESULTS.md
+@@ -0,0 +1,19 @@
++# B20 — focused verification passes; acceptance PARTIAL/BLOCKED
++
++Implemented only the authorized S01–S06 evaluation. No production logic, normative contract, dependency, migration, city fixture or accepted test changed. All18 requirements remain mandatory. New evidence uses B20-*; old source/evidence/quarantines/accounting are preserved. B19 was accepted; B10 genuine-provider acceptance remains OPEN/PARTIAL.
++
++**27 distinct tests PASS:14unit +13real integrations. 0unresolvedFAIL/0SKIP.** Real integrations are12primary/negative scenario variants plus one separate sourced-planning control. Four historical failed attempts remain in the exact-command log; their earlier graphs/checkpoints were retained. Do not add overlapping passes from retries to the distinct total. The12scenario variants passed in264.76s; that selection's initial control failed. Only that control reran, finally1PASS13.26s. Both final specification validators passed after the final test correction. Nine provider guard reports show0external requests/0unexpected attempts. SDK index reinitialization log messages and existing Pydantic/PDF deprecation warnings are retained; they do not constitute extra passing checks.
++
++The model is an **issue-only authored selection script**, not genuine autonomous reasoning. It does not receive scenario/variant IDs or hidden expected answers and never supplies tool results. Actual official/domain MCP initialization/discovery/calls, result validation, durable traces, LangGraph decisions, B09 graph journals/assessments and FalkorDBSaver execute. All12variants pause before real authenticated B19 evidence release, then explicitly resume the same thread with fresh reads and byte-identical old checkpoints. Existing API projections expose the real case story.
++
++S01 actual verified drainage context and obstruction evidence support a qualified hypothesis. Later independently attributed clear-drain evidence preserves support plus contradiction and revises to INCONCLUSIVE; forced clearance fails. Same-event extra complaint retains one incident. S02125mm rainfall remains a reported synthetic gauge value; clear evidence contradicts blockage and unverified debris text is contextual. A configured partial capacity-support label is not verified capacity failure. S03 road-survey pressure remains contextual; separately attributed PIPE-100/DEPT-WATER report contradicts utility leak independently of road subgrade evidence. S04 pipe-targeted leak support cannot authorize unrelated road restoration. S05 candidate schedules do not prove pickup execution, and cleanup-only evidence remains unresolved. S06 completed-pickup qualitative evidence contradicts missed pickup, with dumping supported only in primary; independently dated pickup-before-dumping history is still missing.
++
++Actual enforcement checks reject candidate ownership, missing evidence, invalid task graph and unsupported/unjustified remedies. Unit cases also reject caller-set assessment labels and completion-implies-resolution. The separate authored verified-owner control reaches the actual stale-citation resolver, then persists one sourced drainage DRAFT with typed causal/safety guards, verified fixture department, valid DAG and healthy exact replay. Its procedure is synthetic/PROPOSED, not execution authority, and its ownership is not an acquisition workflow for the B19 cases.
++
++**Mandatory unmet acceptance:** verified ownership acquisition, utility repair/isolation and coordination, capacity/route changes, dumping-specific response and independent service/dumping timing. See [B20-GAPS.md](B20-GAPS.md) for exact blockers and proposed corrective microtasks. Passing safe deferral does not satisfy these operational requirements. No scenario work, approval, resolution, full repair history or recurrence was manufactured.
++
++Review [matrix](B20-MATRIX.md), [exact commands and failures](B20-COMMANDS.md), [changed files](B20-FILES.md), [patch](B20-changes.patch), [retention audit](B20-audit.json) and [human walkthrough](B20-WALKTHROUGH.md). No broad historical/lifecycle/live suite ran. B21–B23/frontend remain deferred. STOP for B20 human review and a decision on the proposed bounded corrective scope; no backend-complete claim.
++
++
++### B20 final retention evidence — 2026-10-18
++Read-only auditPASS: all1534pre-B20 public files retained,1085earlier evidence files byte-identical,116accepted test files unchanged, allsix tracker histories append-only. Production logic/contracts/migrations/data unchanged; original city858nodes/1246relationships/fullcontenthash and42CANDIDATE drainage links intact, B01probe and original B12R2singleplan/quarantine + B19quarantines retained. Historical2paidrequests unchanged with no active sessions/holds. Finalpublicartifact/patchprivate-value scanPASS;9guardreports0external/0unexpected. Actual FalkorDBmodule60002(6.0.2); installed falkordb1.8.0,mcp2.3.0,langgraph1.2.16,langchain-falkordb0.2.0,fastapi0.143.3,pydantic2.14.1; no dependency changes. Exact inventory/patch use pre-B20 snapshot, excluding earlier accepted uncommitted Git work. No old failed graph repaired. B20acceptance remainsPARTIAL/BLOCKED; STOPforreview.
+--- /dev/null
++++ b/docs/evidence/B20-WALKTHROUGH.md
+@@ -0,0 +1,12 @@
++# B20 human review — two minutes plus optional rerun
++
++1. Open B20-MATRIX.md and the linked S01 PRIMARY proof. Inspect `baseline.observations` for the real verified drainage path, `assessment_history` for initial INCONCLUSIVE→SUPPORTED, then `revised_assessments` for retained support plus a distinct clear-drain contradiction→INCONCLUSIVE. `revision_boundaries` shows forced clearance rejected. `baseline_checkpoint_unchanged` and `second_checkpoint_unchanged` must be true. Additional same-event complaint retains the original incident; it does not create recurrence.
++2. Open S03 PRIMARY: road survey pressure is CONTEXT, initial utility assessment remains INCONCLUSIVE. `separate_utility_report_id` must appear in the later utility assessment's contradiction references, with its own PIPE-100 target, DEPT-WATER inspector, synthetic source, review, date and occurrence attribution. Subgrade is evaluated separately. UNDERLIES is a sourced physical context, not leak proof.
++3. Compare S04/S05/S06 PRIMARY/NEGATIVE. Read the classifications, missing evidence, bounded reservations and public HTTP graph/hypotheses/trace projections. No scenario has a fabricated verified owner, plan, work order or resolution. S06 service-versus-dumping ordering remains a documented blocker, not a passing timing claim. Review B20-GAPS.md before accepting any readiness statement.
++4. Open B20-planning-control.json: explicitly separate authored verified-owner control, actual sourced synthetic/PROPOSED procedure, stale citation rejected, typed causal/safety guards MET, valid task graph and one idempotent DRAFT. This is not a B19 owner acquisition workflow or authority to execute.
++
++To reproduce, run the focused commands in B20-COMMANDS.md from the project root. Expect the final distinct counts recorded in B20-RESULTS.md, real local DB/MCP child processes and no external provider calls. Reruns create new retained graphs; they never repair old failed graphs. If a focused case fails, retain its source/private profile/quarantine and share only the sanitized new pytest log and provider guard report, never .env or private profiles.
++
++For live local inspection of a retained source, match `source_graph` from a public B20 proof to its host-only `.runtime/b20-review/<run>/demo-runs/<request>/profile.json`; neighboring memory.json plus the private auth store identify the accepted API/CLI configuration. Use normal authenticated `investigate get/trace`, `graph explain` or GET `/api/v1/investigations/{id}/hypotheses`, `/graph`, `/trace` and `/api/v1/evidence/{id}`. Globals/profile/auth/session are documented in backend/OPERATOR_CLI.md. These expose the same real records/projections captured in the proofs. Do not change request keys to bypass recovery, run a worker against these threads, clear a quarantine or reveal credential files. These scenario clocks are explicit synthetic test clocks; use the proof's cutoff for historical views.
++
++No Gemini/countTokens invocation is authorized. B10 genuine acceptance remains OPEN/PARTIAL. B20 is PARTIAL/BLOCKED; proposed corrective microtasks and B21 both require review/authorization. STOP.
+--- /dev/null
++++ b/docs/evidence/B20-audit-script.py
+@@ -0,0 +1,90 @@
++"""B20 read-only retention/private-artifact audit. Never emits credential values."""
++import hashlib,importlib.metadata,json,re,sqlite3,subprocess,sys
++from pathlib import Path
++root=Path.cwd();base=Path('/tmp/b20-baseline');before=json.loads((base/'hashes.json').read_text())
++public=sorted(n for n in subprocess.check_output(['git','ls-files','--cached','--others','--exclude-standard','-z']).decode().split('\0') if n and Path(n).is_file())
++sha=lambda p:hashlib.sha256(Path(p).read_bytes()).hexdigest()
++assert set(before)<=set(public)
++changed=sorted(n for n,h in before.items() if sha(n)!=h);new=sorted(set(public)-set(before))
++trackers={'decision.md','flow.md','implementation_status.md','test_log.md','blockers.md','task_board.md'}
++assert set(changed)==trackers,(set(changed)^trackers)
++for n in trackers:assert Path(n).read_bytes().startswith((base/'files'/n).read_bytes())
++old_evidence=[n for n in before if n.startswith('docs/evidence/')];old_tests=[n for n in before if n.startswith('backend/tests/')]
++assert not (set(old_evidence)|set(old_tests))&set(changed)
++assert {n for n in new if not n.startswith('docs/evidence/B20-')}=={'backend/tests/b20_fixtures.py','backend/tests/integration/test_scenario_behavior.py','backend/tests/unit/test_scenario_behavior.py'}
++private=[]
++for line in Path('.env').read_text().splitlines():
++ if '=' in line:
++  k,v=line.split('=',1);v=v.strip(' \"\'')
++  if any(t in k.upper() for t in ['KEY','SECRET','TOKEN','PASSWORD']) and len(v)>7:private.append(v.encode())
++def collect(x):
++ if isinstance(x,dict):
++  for k,v in x.items():
++   if any(t in k.lower() for t in ['password','secret','api_key','token']) and isinstance(v,str) and len(v)>7:private.append(v.encode())
++   else:collect(v)
++ elif isinstance(x,list):
++  for v in x:collect(v)
++for p in [*Path('.runtime').glob('*.json'),*Path('.runtime/b20-review').glob('**/profile.json'),*Path('.runtime/b20-review').glob('**/agent.json'),*Path('.runtime/b20-review').glob('**/memory.json')]:collect(json.loads(p.read_text()))
++for n in changed+new:
++ raw=Path(n).read_bytes()
++ assert not any(v in raw for v in private),'PRIVATE_VALUE_IN_PUBLIC_ARTIFACT'
++ assert not re.search(rb'-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----|\bAKIA[0-9A-Z]{16}\b|\bsk-[A-Za-z0-9_-]{24,}|[A-Za-z0-9_-]{43}\.[0-9a-f]{64}',raw),'PRIVATE_PATTERN'
++guards=list(Path('docs/evidence').glob('B20-*-zero-live.json'))
++for p in guards:
++ v=json.loads(p.read_text());assert v['external_gemini_requests_sent']==v['ordinary_unexpected_attempts']==0
++accepted=json.loads(Path('docs/evidence/B11-LIVE-SMOKE-R-fresh-process.json').read_text())['accounting']['requests']
++with sqlite3.connect('file:'+str(root/'.runtime/ai-spend.sqlite3')+'?mode=ro',uri=True) as conn:
++ conn.row_factory=sqlite3.Row;requests=[dict(r) for r in conn.execute('SELECT * FROM requests ORDER BY created,id')];assert requests==accepted
++ assert conn.execute('SELECT count(*) FROM sessions').fetchone()[0]==0
++ assert conn.execute("SELECT count(*) FROM request_holds WHERE status='OPEN'").fetchone()[0]==0
++sys.path.insert(0,str(root/'backend'))
++from app.config import Settings
++from app.graph.connection import connect
++from app.graph.repository import GraphRepository
++from app.graph.models import digest
++from app.mcp.runtime import CITY_GRAPH
++from app.active import load,active_scope
++profiles={load(p).graph:load(p) for p in Path('.runtime/b20-review').glob('*/demo-runs/*/profile.json')}
++runs=[]
++with connect(Settings(_env_file='.env')) as db:
++ server=db.connection.info('server')['redis_version'];modules=db.connection.execute_command('MODULE','LIST')
++ module_versions={}
++ for row in modules:
++  d={str(row[i].decode() if isinstance(row[i],bytes) else row[i]):row[i+1] for i in range(0,len(row),2)}
++  name=d['name'];module_versions[name.decode() if isinstance(name,bytes) else name]=d['ver']
++ for path in sorted(Path('docs/evidence').glob('B20-S0*-*.json')):
++  proof=json.loads(path.read_text());p=profiles[proof['source_graph']]
++  with active_scope(p):
++   r=GraphRepository(db,p.graph);assert r._read('MATCH (w:WorkOrder) RETURN count(w)')==[[0]]
++   for e in proof['released_evidence']:r.get_node(e['id'],'Evidence')
++   from app.agents.checkpoints import saver
++   saved=saver(p).get_tuple({'configurable':{'thread_id':proof['thread_id'],'checkpoint_id':proof['baseline_checkpoint_id']}})
++   assert saved and saved.checkpoint['channel_values']['data']==proof['baseline']
++   if proof['scenario']=='S01':
++    assert any(x['verification_status']=='VERIFIED' and x['relationship']=='DRAINS_TO' for x in proof['baseline']['observations'][1]['paths'])
++    edge=r.get_relationship('B19-SURVEY-FLOW');assert edge.source=='DRAIN-100' and edge.target=='DRAIN-101'
++   if proof['scenario'] in {'S03','S04'}:
++    assert any(x['verification_status']=='VERIFIED' and x['relationship']=='UNDERLIES' for x in proof['baseline']['observations'][1]['paths'])
++   if proof['scenario'] in {'S05','S06'}:
++    assert r._read('MATCH (p:PickupExecution) RETURN count(p)')==[[0]]
++    assert r._read('MATCH ()-[r:HAS_SCHEDULE]->() RETURN r.association_status')==[['CANDIDATE']]
++   if proof['scenario']=='S02':
++    journals=r._read("MATCH (e:Evidence {evidence_type:'COMPLAINT_INTAKE'}) RETURN e.summary")
++    obs=[m for row in journals for m in json.loads(row[0])['canonical']['details']['measurements']]
++    assert any(m['name']=='rainfall' and m['value']==125.0 and m['unit']=='mm' and m['basis']=='REPORTED' for m in obs)
++   runs.append({'scenario':proof['scenario'],'variant':proof['variant'],'source_graph':p.graph,'baseline_checkpoint_unchanged':True})
++ assert len(runs)==12
++ city=GraphRepository(db,CITY_GRAPH);ns=city._read('MATCH (n:CivicEntity) RETURN labels(n),properties(n) LIMIT 859');es=city._read('MATCH (s:CivicEntity)-[e]->(t:CivicEntity) RETURN type(e),properties(e),labels(s),properties(s),labels(t),properties(t) LIMIT 1247')
++ assert len(ns)==858 and len(es)==1246
++ records=[city.decode_node(*n) for n in ns]+[city._decode_edge_row(e) for e in es]
++ city_hash=digest({n.id:n.content_hash for n in records});assert city_hash==json.loads(Path('docs/evidence/B04-retained-post-recreation.json').read_text())['verified_content_hash']
++ assert city._read("MATCH ()-[e:DRAINS_TO]->() WHERE e.association_status='CANDIDATE' RETURN count(e)")==[[42]]
++ assert db.select_graph('civicly_b01_runtime').ro_query('MATCH (n:B01Probe {id:$id}) RETURN n.id,n.source_kind,n.task LIMIT 1',params={'id':'B01-PERSISTENCE'}).result_set==[['B01-PERSISTENCE','SYNTHETIC','B01']]
++ fault=json.loads(Path('docs/evidence/B12R2-postcommit-recovery.json').read_text());ctx=fault['reconciliation']
++ assert db.connection.get('civicly:b10:'+ctx['graph']+':'+digest(fault['thread_id'])+':quarantine')
++ assert db.select_graph(ctx['graph']).ro_query('MATCH (p:ResolutionPlan) RETURN p.id,p.version,p.plan_hash').result_set==[[ctx['plan_id'],1,ctx['expected_plan_hash']]]
++ previous=json.loads(Path('docs/evidence/B19-retained-failed-wake.json').read_text())
++ for f in previous['failed_wakes']:assert db.connection.get('civicly:b10:'+f['source_graph']+':'+digest(f['thread_id'])+':quarantine')
++value={'task':'B20','acceptance':'PARTIAL_BLOCKED','baseline_public_files_retained':len(before),'prior_evidence_byte_identical':len(old_evidence),'prior_test_files_unchanged':len(old_tests),'all_six_trackers_append_only':True,'changed':changed,'new':new,'all_production_data_contracts_migrations_unchanged':True,'private_value_scan':'PASS including patch','provider_guard_reports':len(guards),'external_provider_requests':0,'paid_requests_unchanged':len(requests),'retained_scenario_runs':runs,'B01_probe_unchanged':True,'B04_city_hash':city_hash,'candidate_drains':42,'B12R2_quarantine_single_plan_retained':True,'B19_quarantines_retained':True,'redis_version':server,'module_versions':module_versions,'versions':{n:importlib.metadata.version(n) for n in ['falkordb','mcp','langgraph','langchain-falkordb','fastapi','pydantic']}}
++Path('docs/evidence/B20-audit.json').write_text(json.dumps(value,indent=2)+'\n')
++print(json.dumps(value,indent=2))
+--- a/flow.md
++++ b/flow.md
+@@ -1015,3 +1015,15 @@
+ 
+ ### B19 final UNKNOWN replay identity check — current superseding total
+ Final148distinctPASS122unit/26real,0unresolvedFAIL/0SKIP. One new unit verifies committed reconciliation.entity_id precedes route label on UNKNOWN replay;3acceptedBoundaryunits overlapPASS0.35s. Strengthenedreal reportfault/replayPASS25.17s with original/replayrequest/report/investigationIDs identical, COMMITTEDjournal/oneeffect andDISPATCHINGreservation retained. Firstattempt1setupERROR4.40s sockettimeoutbeforefaultpath; read-onlycontainerhealthy/CLIhealthok, freshfixture-onlyretry, nooldrequestredispatch/lifecycle/quarantineclearance. Fourpriorfailedassertionattempts+onesetupERROR recorded. BothfinalSPECvalidatorsPASS afterlast executablechange;13pytestchild+3specguards0external/0unexpected. Prior147subtotal superseded. B19RESULTS/COMMANDS/FILES/patch/audit current; retainedfailedwake/all18requirements/B10genuineOPEN unchanged. STOPB19review; B20/frontend/liveunauthorized.
++
++
++## B20 implemented evaluation file/control flow — 2026-10-18
++New files only: tests/b20_fixtures.py reuses accepted Settings/connect, B19 host fixture setup, active profile migrations/provision, private Auth and existing GraphRAG Memory; no prior teardown/evidence writes reused. Private .runtime/b20-review retains all fresh sources/profiles. tests/integration/test_scenario_behavior.py imports B19 fresh/client_run/headers/inspection helpers and new PolicyModel; test_scenario_behavior.py unit tests import existing strict evidence/plan models and classify_reviewed. Production imports/logic remain unchanged.
++
++Actual flow: authorized host B19 reset → B08 real intake + B09 investigation → real brokers initialize/tools/list → issue-only scripted READ/PROPOSE/ASSESS/PAUSE → existing MCP validation/RO_QUERY/trace + EvidenceService journals/immutable assessments + LangGraph decisions/FalkorDBSaver checkpoint → host authenticated inspection lifecycle + B19 staged reviewed release → explicit same-thread resume → source revision requires fresh MCP read → reassessment/new checkpoint. Old checkpoint is read by its exact ID and compared, never rewritten. S01 independent clear survey and S03 separately targeted utility survey each add a second explicit resume with preserved history/checkpoint. No automatic worker or recovery retry.
++
++Boundary flow: current actual assessments + sourced citation → strict PlanDraft/PlanningService → missing evidence, invalid DAG, causal/safety or candidate ownership rejection with zero scenario plans/work. Separate new authored B12-R verified-owner control → real SDK cited PROPOSED procedure → stale same-length quote rejected → valid sourced drainage policy/typed MET guards → one persisted DRAFT → exact idempotent replay. Existing storage/recovery infrastructure unchanged. HTTP read projections demonstrate graph/hypothesis/trace story at explicit synthetic cutoff; public B20 proofs carry safe IDs/source evidence, not private profiles or secrets. docs/evidence/B20-audit-script.py reads retained city/B01probe/B12R2+B19 quarantines/accounting and hashes previous files. No old graph/volume/checkpoint deletion. B20 remains PARTIAL/BLOCKED per capability matrix; noB21/live/frontend.
++
++
++### B20 final retention evidence — 2026-10-18
++Read-only auditPASS: all1534pre-B20 public files retained,1085earlier evidence files byte-identical,116accepted test files unchanged, allsix tracker histories append-only. Production logic/contracts/migrations/data unchanged; original city858nodes/1246relationships/fullcontenthash and42CANDIDATE drainage links intact, B01probe and original B12R2singleplan/quarantine + B19quarantines retained. Historical2paidrequests unchanged with no active sessions/holds. Finalpublicartifact/patchprivate-value scanPASS;9guardreports0external/0unexpected. Actual FalkorDBmodule60002(6.0.2); installed falkordb1.8.0,mcp2.3.0,langgraph1.2.16,langchain-falkordb0.2.0,fastapi0.143.3,pydantic2.14.1; no dependency changes. Exact inventory/patch use pre-B20 snapshot, excluding earlier accepted uncommitted Git work. No old failed graph repaired. B20acceptance remainsPARTIAL/BLOCKED; STOPforreview.
+--- a/implementation_status.md
++++ b/implementation_status.md
+@@ -584,3 +584,17 @@
+ 
+ ### B19 final UNKNOWN replay identity check — current superseding total
+ Final148distinctPASS122unit/26real,0unresolvedFAIL/0SKIP. One new unit verifies committed reconciliation.entity_id precedes route label on UNKNOWN replay;3acceptedBoundaryunits overlapPASS0.35s. Strengthenedreal reportfault/replayPASS25.17s with original/replayrequest/report/investigationIDs identical, COMMITTEDjournal/oneeffect andDISPATCHINGreservation retained. Firstattempt1setupERROR4.40s sockettimeoutbeforefaultpath; read-onlycontainerhealthy/CLIhealthok, freshfixture-onlyretry, nooldrequestredispatch/lifecycle/quarantineclearance. Fourpriorfailedassertionattempts+onesetupERROR recorded. BothfinalSPECvalidatorsPASS afterlast executablechange;13pytestchild+3specguards0external/0unexpected. Prior147subtotal superseded. B19RESULTS/COMMANDS/FILES/patch/audit current; retainedfailedwake/all18requirements/B10genuineOPEN unchanged. STOPB19review; B20/frontend/liveunauthorized.
++
++
++## CURRENT B20 — focused checks passing; acceptance PARTIAL/BLOCKED (2026-10-18)
++B19 human accepted. Only S01–S06 primary/negative behavioral evaluation performed, using issue-only scripted selections and actual B19 setup/release, HTTP/FalkorDB, official/domain MCP, LangGraph decisions and FalkorDBSaver. All18 requirements remain binding; these are not genuine AI reasoning results. 27distinct pytest PASS (14unit/13real:12scenario variants +1separate sourced-planning control),0unresolvedFAIL/0SKIP. Four historical harness failures retained: broker timeout above limit, typed dependency direction, overlength altered citation and control clock earlier than actual SDK citation retrieval. Corrected only new tests; failing graphs/checkpoints retained. Final control-only retry1PASS13.26s; twelve scenario variants passed in the264.76s selection that also exposed the initial control fault. Both final specification validators PASS after final source edit. Nine guard reports record0external Gemini/countTokens and0unexpected attempts.
++
++Every variant pauses before authorized release and explicitly resumes the same thread with fresh MCP reads and unchanged prior checkpoint. S01 PRIMARY additionally preserves supported obstruction + new clear-drain contradiction as INCONCLUSIVE, rejects unsupported clearance and deduplicates an additional same-event complaint without manufacturing recurrence. Both S03 variants receive a separately attributable reviewed utility pressure report; road pressure context alone remains INCONCLUSIVE for leak, independent pipe report yields CONTRADICTED while subgrade is assessed separately. Forced remedies, candidate owners, missing evidence and invalid DAG fail closed. Separate authored verified-owner control proves actual stale citation denial, sourced synthetic/PROPOSED drainage draft, typed causal/safety guards and one-plan exact replay; it does not supply B19 ownership acquisition.
++
++BLOCK-B20-01..05 prevent full operational acceptance: absent public verified-owner acquisition, unsupported utility/capacity/route/dumping responses and missing independently dated pickup-before-dumping sequence. No candidate promoted, scenario plan/work/resolution fabricated, production logic/contract/migration/data/accepted test modified, quarantine cleared or live call made. B10 genuine-provider acceptance remains OPEN/PARTIAL. Earlier audit history remains authoritative for earlier executed phases; this latest entry supersedes earlier B20-unauthorized statements only for this authorized evaluation.
++
++Review docs/evidence/B20-RESULTS.md, B20-MATRIX.md, B20-GAPS.md, B20-COMMANDS.md, B20-FILES.md, B20-changes.patch, B20-audit.json and B20-WALKTHROUGH.md. Proposed next is human review and authorization of bounded B20 corrective ownership/action/service-evidence microtasks; B21 cross-category/ablation remains deferred, B22 restart/recurrence and B23 genuine provider also deferred. STOP after B20; no frontend/backend-complete claim.
++
++
++### B20 final retention evidence — 2026-10-18
++Read-only auditPASS: all1534pre-B20 public files retained,1085earlier evidence files byte-identical,116accepted test files unchanged, allsix tracker histories append-only. Production logic/contracts/migrations/data unchanged; original city858nodes/1246relationships/fullcontenthash and42CANDIDATE drainage links intact, B01probe and original B12R2singleplan/quarantine + B19quarantines retained. Historical2paidrequests unchanged with no active sessions/holds. Finalpublicartifact/patchprivate-value scanPASS;9guardreports0external/0unexpected. Actual FalkorDBmodule60002(6.0.2); installed falkordb1.8.0,mcp2.3.0,langgraph1.2.16,langchain-falkordb0.2.0,fastapi0.143.3,pydantic2.14.1; no dependency changes. Exact inventory/patch use pre-B20 snapshot, excluding earlier accepted uncommitted Git work. No old failed graph repaired. B20acceptance remainsPARTIAL/BLOCKED; STOPforreview.
+--- a/task_board.md
++++ b/task_board.md
+@@ -520,3 +520,17 @@
+ 
+ ### B19 final UNKNOWN replay identity check — current superseding total
+ Final148distinctPASS122unit/26real,0unresolvedFAIL/0SKIP. One new unit verifies committed reconciliation.entity_id precedes route label on UNKNOWN replay;3acceptedBoundaryunits overlapPASS0.35s. Strengthenedreal reportfault/replayPASS25.17s with original/replayrequest/report/investigationIDs identical, COMMITTEDjournal/oneeffect andDISPATCHINGreservation retained. Firstattempt1setupERROR4.40s sockettimeoutbeforefaultpath; read-onlycontainerhealthy/CLIhealthok, freshfixture-onlyretry, nooldrequestredispatch/lifecycle/quarantineclearance. Fourpriorfailedassertionattempts+onesetupERROR recorded. BothfinalSPECvalidatorsPASS afterlast executablechange;13pytestchild+3specguards0external/0unexpected. Prior147subtotal superseded. B19RESULTS/COMMANDS/FILES/patch/audit current; retainedfailedwake/all18requirements/B10genuineOPEN unchanged. STOPB19review; B20/frontend/liveunauthorized.
++
++
++## CURRENT B20 — focused checks passing; acceptance PARTIAL/BLOCKED (2026-10-18)
++B19 human accepted. Only S01–S06 primary/negative behavioral evaluation performed, using issue-only scripted selections and actual B19 setup/release, HTTP/FalkorDB, official/domain MCP, LangGraph decisions and FalkorDBSaver. All18 requirements remain binding; these are not genuine AI reasoning results. 27distinct pytest PASS (14unit/13real:12scenario variants +1separate sourced-planning control),0unresolvedFAIL/0SKIP. Four historical harness failures retained: broker timeout above limit, typed dependency direction, overlength altered citation and control clock earlier than actual SDK citation retrieval. Corrected only new tests; failing graphs/checkpoints retained. Final control-only retry1PASS13.26s; twelve scenario variants passed in the264.76s selection that also exposed the initial control fault. Both final specification validators PASS after final source edit. Nine guard reports record0external Gemini/countTokens and0unexpected attempts.
++
++Every variant pauses before authorized release and explicitly resumes the same thread with fresh MCP reads and unchanged prior checkpoint. S01 PRIMARY additionally preserves supported obstruction + new clear-drain contradiction as INCONCLUSIVE, rejects unsupported clearance and deduplicates an additional same-event complaint without manufacturing recurrence. Both S03 variants receive a separately attributable reviewed utility pressure report; road pressure context alone remains INCONCLUSIVE for leak, independent pipe report yields CONTRADICTED while subgrade is assessed separately. Forced remedies, candidate owners, missing evidence and invalid DAG fail closed. Separate authored verified-owner control proves actual stale citation denial, sourced synthetic/PROPOSED drainage draft, typed causal/safety guards and one-plan exact replay; it does not supply B19 ownership acquisition.
++
++BLOCK-B20-01..05 prevent full operational acceptance: absent public verified-owner acquisition, unsupported utility/capacity/route/dumping responses and missing independently dated pickup-before-dumping sequence. No candidate promoted, scenario plan/work/resolution fabricated, production logic/contract/migration/data/accepted test modified, quarantine cleared or live call made. B10 genuine-provider acceptance remains OPEN/PARTIAL. Earlier audit history remains authoritative for earlier executed phases; this latest entry supersedes earlier B20-unauthorized statements only for this authorized evaluation.
++
++Review docs/evidence/B20-RESULTS.md, B20-MATRIX.md, B20-GAPS.md, B20-COMMANDS.md, B20-FILES.md, B20-changes.patch, B20-audit.json and B20-WALKTHROUGH.md. Proposed next is human review and authorization of bounded B20 corrective ownership/action/service-evidence microtasks; B21 cross-category/ablation remains deferred, B22 restart/recurrence and B23 genuine provider also deferred. STOP after B20; no frontend/backend-complete claim.
++
++
++### B20 final retention evidence — 2026-10-18
++Read-only auditPASS: all1534pre-B20 public files retained,1085earlier evidence files byte-identical,116accepted test files unchanged, allsix tracker histories append-only. Production logic/contracts/migrations/data unchanged; original city858nodes/1246relationships/fullcontenthash and42CANDIDATE drainage links intact, B01probe and original B12R2singleplan/quarantine + B19quarantines retained. Historical2paidrequests unchanged with no active sessions/holds. Finalpublicartifact/patchprivate-value scanPASS;9guardreports0external/0unexpected. Actual FalkorDBmodule60002(6.0.2); installed falkordb1.8.0,mcp2.3.0,langgraph1.2.16,langchain-falkordb0.2.0,fastapi0.143.3,pydantic2.14.1; no dependency changes. Exact inventory/patch use pre-B20 snapshot, excluding earlier accepted uncommitted Git work. No old failed graph repaired. B20acceptance remainsPARTIAL/BLOCKED; STOPforreview.
+--- a/test_log.md
++++ b/test_log.md
+@@ -1122,3 +1122,17 @@
+ 
+ ### B19 final UNKNOWN replay identity check — current superseding total
+ Final148distinctPASS122unit/26real,0unresolvedFAIL/0SKIP. One new unit verifies committed reconciliation.entity_id precedes route label on UNKNOWN replay;3acceptedBoundaryunits overlapPASS0.35s. Strengthenedreal reportfault/replayPASS25.17s with original/replayrequest/report/investigationIDs identical, COMMITTEDjournal/oneeffect andDISPATCHINGreservation retained. Firstattempt1setupERROR4.40s sockettimeoutbeforefaultpath; read-onlycontainerhealthy/CLIhealthok, freshfixture-onlyretry, nooldrequestredispatch/lifecycle/quarantineclearance. Fourpriorfailedassertionattempts+onesetupERROR recorded. BothfinalSPECvalidatorsPASS afterlast executablechange;13pytestchild+3specguards0external/0unexpected. Prior147subtotal superseded. B19RESULTS/COMMANDS/FILES/patch/audit current; retainedfailedwake/all18requirements/B10genuineOPEN unchanged. STOPB19review; B20/frontend/liveunauthorized.
++
++
++## CURRENT B20 — focused checks passing; acceptance PARTIAL/BLOCKED (2026-10-18)
++B19 human accepted. Only S01–S06 primary/negative behavioral evaluation performed, using issue-only scripted selections and actual B19 setup/release, HTTP/FalkorDB, official/domain MCP, LangGraph decisions and FalkorDBSaver. All18 requirements remain binding; these are not genuine AI reasoning results. 27distinct pytest PASS (14unit/13real:12scenario variants +1separate sourced-planning control),0unresolvedFAIL/0SKIP. Four historical harness failures retained: broker timeout above limit, typed dependency direction, overlength altered citation and control clock earlier than actual SDK citation retrieval. Corrected only new tests; failing graphs/checkpoints retained. Final control-only retry1PASS13.26s; twelve scenario variants passed in the264.76s selection that also exposed the initial control fault. Both final specification validators PASS after final source edit. Nine guard reports record0external Gemini/countTokens and0unexpected attempts.
++
++Every variant pauses before authorized release and explicitly resumes the same thread with fresh MCP reads and unchanged prior checkpoint. S01 PRIMARY additionally preserves supported obstruction + new clear-drain contradiction as INCONCLUSIVE, rejects unsupported clearance and deduplicates an additional same-event complaint without manufacturing recurrence. Both S03 variants receive a separately attributable reviewed utility pressure report; road pressure context alone remains INCONCLUSIVE for leak, independent pipe report yields CONTRADICTED while subgrade is assessed separately. Forced remedies, candidate owners, missing evidence and invalid DAG fail closed. Separate authored verified-owner control proves actual stale citation denial, sourced synthetic/PROPOSED drainage draft, typed causal/safety guards and one-plan exact replay; it does not supply B19 ownership acquisition.
++
++BLOCK-B20-01..05 prevent full operational acceptance: absent public verified-owner acquisition, unsupported utility/capacity/route/dumping responses and missing independently dated pickup-before-dumping sequence. No candidate promoted, scenario plan/work/resolution fabricated, production logic/contract/migration/data/accepted test modified, quarantine cleared or live call made. B10 genuine-provider acceptance remains OPEN/PARTIAL. Earlier audit history remains authoritative for earlier executed phases; this latest entry supersedes earlier B20-unauthorized statements only for this authorized evaluation.
++
++Review docs/evidence/B20-RESULTS.md, B20-MATRIX.md, B20-GAPS.md, B20-COMMANDS.md, B20-FILES.md, B20-changes.patch, B20-audit.json and B20-WALKTHROUGH.md. Proposed next is human review and authorization of bounded B20 corrective ownership/action/service-evidence microtasks; B21 cross-category/ablation remains deferred, B22 restart/recurrence and B23 genuine provider also deferred. STOP after B20; no frontend/backend-complete claim.
++
++
++### B20 final retention evidence — 2026-10-18
++Read-only auditPASS: all1534pre-B20 public files retained,1085earlier evidence files byte-identical,116accepted test files unchanged, allsix tracker histories append-only. Production logic/contracts/migrations/data unchanged; original city858nodes/1246relationships/fullcontenthash and42CANDIDATE drainage links intact, B01probe and original B12R2singleplan/quarantine + B19quarantines retained. Historical2paidrequests unchanged with no active sessions/holds. Finalpublicartifact/patchprivate-value scanPASS;9guardreports0external/0unexpected. Actual FalkorDBmodule60002(6.0.2); installed falkordb1.8.0,mcp2.3.0,langgraph1.2.16,langchain-falkordb0.2.0,fastapi0.143.3,pydantic2.14.1; no dependency changes. Exact inventory/patch use pre-B20 snapshot, excluding earlier accepted uncommitted Git work. No old failed graph repaired. B20acceptance remainsPARTIAL/BLOCKED; STOPforreview.

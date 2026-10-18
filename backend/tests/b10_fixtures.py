@@ -22,11 +22,13 @@ def choose(action='PAUSE',args=None,tool='',summary='Authored deterministic mode
     import json
     return {'action':action,'arguments_json':json.dumps(args or {}),'tool_name':tool,'summary':summary,'pause_reason':reason if action=='PAUSE' else 'NONE'}
 
-def create(db,path,issue='WATERLOGGING'):
-    p=new_profile();save(p,path);MigrationRunner(db,p.graph).apply();r=GraphRepository(db,p.graph,lease_seconds=30);clock=Clock()
+def create(db,path,issue='WATERLOGGING',*,clock=None):
+    injected_clock=clock is not None
+    p=new_profile();save(p,path);MigrationRunner(db,p.graph).apply();r=GraphRepository(db,p.graph,lease_seconds=30);clock=clock if injected_clock else Clock()
     with active_scope(p):
         populate(r);r.create_node('Department',{**common('DEP'),'name':'Synthetic inspection department','department_type':'ENGINEERING'})
-        receipt=ComplaintService(r,clock=clock).intake(payload(issue,ref='B10-controlled-'+issue))
+        dates={'reported_at':clock(),'occurred_at':clock()} if injected_clock else {}
+        receipt=ComplaintService(r,clock=clock).intake(payload(issue,ref='B10-controlled-'+issue,**dates))
         inv=EvidenceService(r,clock=clock).execute({'operation':'open','request_id':'B10-open','incident_ids':[receipt.incident_id],'cluster_id':receipt.cluster_id},ANALYST).entity_id
         provision(db,p)
     return p,r,clock,receipt,inv

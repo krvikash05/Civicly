@@ -1,0 +1,23 @@
+.F.F........                                                             [100%]
+=================================== FAILURES ===================================
+______________ test_no_implicit_role_bypass[OP-ANALYST-allowed0] _______________
+backend/tests/unit/test_operations.py:29: in test_no_implicit_role_bypass
+    with pytest.raises(Denied):auth.require(t[operator],operation)
+E   Failed: DID NOT RAISE Denied
+_____________ test_no_implicit_role_bypass[OP-DRAIN-LEAD-allowed2] _____________
+backend/tests/unit/test_operations.py:29: in test_no_implicit_role_bypass
+    with pytest.raises(Denied):auth.require(t[operator],operation)
+E   Failed: DID NOT RAISE Denied
+=============================== warnings summary ===============================
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyPacked has no __module__ attribute
+
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyObject has no __module__ attribute
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED backend/tests/unit/test_operations.py::test_no_implicit_role_bypass[OP-ANALYST-allowed0]
+FAILED backend/tests/unit/test_operations.py::test_no_implicit_role_bypass[OP-DRAIN-LEAD-allowed2]
+2 failed, 10 passed, 2 warnings in 10.56s
+sys:1: DeprecationWarning: builtin type swigvarlink has no __module__ attribute

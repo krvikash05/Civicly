@@ -1,0 +1,430 @@
+FFFF                                                                     [100%]
+=================================== FAILURES ===================================
+___________________ test_dated_service_evidence[S05-PRIMARY] ___________________
+
+shared = namespace(db=<falkordb.falkordb.FalkorDB object at 0x10e8f7320>, p=ActiveProfile(version=1, graph='civicly_b10_test_57...ew/2291901fbbec4d38a9b127e02097bec9/memory.json'), memory=<app.memory.service.Memory object at 0x10d369550>, proofs=[])
+scenario = 'S05', variant = 'PRIMARY'
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10fc4d250>
+
+    @pytest.mark.parametrize('scenario,variant',[('S05','PRIMARY'),('S05','NEGATIVE'),('S06','PRIMARY'),('S06','NEGATIVE')])
+    def test_dated_service_evidence(shared,scenario,variant,monkeypatch):
+>    asyncio.run(journey(shared,scenario,variant,monkeypatch))
+
+backend/tests/integration/test_service_evidence_runtime.py:22: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/base_events.py:684: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+backend/tests/integration/test_service_evidence_runtime.py:32: in journey
+    a=ev.execute({'operation':'assess','request_id':tag+'-baseline-'+cause,'hypothesis_id':hid,'expected_hash':r.get_node(hid).content_hash,'evidence_ids':[],'as_of':AT},analyst).assessment;old[a.id]=r.get_node(a.id).content_hash
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/app/services/evidence/service.py:89: in execute
+    entity, nodes, updates, edges, assessment = self.plan(q, actor, reader, jid, now, session.revision)
+                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/app/services/evidence/service.py:246: in plan
+    result = self.evaluate(q, definition, h, cutoff, now, revision)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <app.services.evidence.service.EvidenceService object at 0x1185319a0>
+q = Assess(request_id='B20RSE-S05-PRIMARY-baseline-MISSED_PICKUP', operation='assess', hypothesis_id='HYP-B09-01c8e018ec93...1f924d9f6cddab1de0c1db3ab4bb524eb6e578825cbe96b17de1cd7cde430c4', evidence_ids=[], as_of='2026-10-18T12:00:00.000000Z')
+definition = Propose(request_id='B20RSE-S05-PRIMARY-hyp-MISSED_PICKUP', operation='propose', investigation_id='INV-B09-29c92346afe1...P_MISSED_CONFIRMED', 'WASTE_PERSISTED_AFTER_SCHEDULE'], falsifying_codes=['PICKUP_COMPLETED_CONFIRMED'], topology=None)
+h = NodeRecord(id='HYP-B09-01c8e018ec939bc185050c1a9ad2680c', kind='Hypothesis', labels=('Hypothesis',), properties={'id':...00.000000Z', 'schema_version': 3, 'statement': 'Explicit test competing MISSED_PICKUP', 'cause_code': 'MISSED_PICKUP'})
+r = <app.services.evidence.reader.Reader object at 0x118532090>
+now = '2026-10-18T12:00:00.000000Z', revision = 38
+
+    def evaluate(self, q, definition, h, r, now, revision):
+        incidents = [r.node(id, 'Incident') for id in definition.incident_ids]
+        issue = incidents[0].properties['issue_type']
+        rule = POLICIES[issue].get(definition.cause_code)
+        history = Reader(self.repo, now).histories(h.id)
+        refs, classification, gaps, complete = classify_evidence(self.repo, r, q, definition, incidents, rule, history)
+        support = classification.reviewed_support_ids
+        contradiction = classification.reviewed_contradiction_ids
+        excluded = classification.excluded_evidence_ids
+        paths, pathids, truncated, topology_ok = [], [], False, True
+        if rule and rule['requires_topology'] and not definition.topology:
+            topology_ok = False
+            gaps.append('This domain cause requires explicit verified topology; reported impact alone is insufficient')
+        if definition.topology:
+            result = r.topology(definition.topology)
+            paths = [PathRecord(**p.model_dump(exclude={'id'}),) for p in result.paths if p.node_ids[-1] == definition.topology.target_id]
+            pathids = [p.id for p in result.paths if p.node_ids[-1] == definition.topology.target_id]
+            paths = [p.model_copy(update={'context': {**p.context, 'path_id': id}}) for p, id in zip(paths, pathids, strict=True)]
+            truncated = result.truncated
+            topology_ok = bool(paths) and not truncated
+            gaps.extend(result.gaps)
+            if not topology_ok:
+                gaps.append('Required verified-only topology path unavailable within bounded search; candidate/proximity insufficient')
+            for id in sorted({ev for p in paths for ev in p.evidence_ids} - {ref.id for ref in refs}):
+                refs.append(r.evidence(id, context_only=True))
+                classification = add_topology_context(classification, id)
+        if len(refs) > 20:
+            raise PreconditionFailed('B09 total source evidence references exceed20 including topology')
+        sufficient = bool(rule and complete and topology_ok)
+        label = classify_reviewed(reviewed_support=bool(support),
+            unreviewed_support=bool(classification.unreviewed_support_ids),
+            reviewed_contradiction=bool(contradiction),
+            unreviewed_contradiction=bool(classification.unreviewed_contradiction_ids), sufficient=sufficient)
+        if (support or classification.unreviewed_support_ids) and (contradiction or classification.unreviewed_contradiction_ids):
+            gaps.append('Conflicting evidence retained; no automatic source arbitration')
+        if not support and not contradiction:
+            gaps.append('Reviewed discriminating inspection evidence missing or insufficient; no completed inspection invented')
+        final = {'POSSIBLE': 'UNDER_REVIEW', 'SUPPORTED': 'SUPPORTED', 'CONTRADICTED': 'REJECTED', 'VERIFIED': 'VERIFIED', 'INCONCLUSIVE': 'INCONCLUSIVE'}[label]
+        state = h.properties['status']
+        sequence = [state]
+        if state != 'UNDER_REVIEW':
+            sequence.append(transition('Hypothesis', state, 'UNDER_REVIEW'))
+        if final != 'UNDER_REVIEW':
+            sequence.append(transition('Hypothesis', 'UNDER_REVIEW', final))
+        id = stable('ASSESS', q.hypothesis_id, q.request_id)
+>       return Assessment(format_version=2, rule_version=3 if issue=='WASTE_ACCUMULATION' and definition.cause_code in {'MISSED_PICKUP','ILLEGAL_DUMPING'} else 2, classification=classification, id=id, hypothesis_id=h.id, previous_assessment_id=history[-1].id if history else None,
+            assessment=label, cause_code=definition.cause_code, mechanism=definition.mechanism,
+            confirming_codes=definition.confirming_codes, falsifying_codes=definition.falsifying_codes,
+            supporting_evidence_ids=support, contradicting_evidence_ids=contradiction, evidence_references=refs,
+            excluded_evidence_ids=excluded, missing_evidence=list(dict.fromkeys(gaps)), graph=self.repo.graph.name,
+            source_graph_revision=revision, graph_revision=revision+1, as_of=q.as_of, assessed_at=now,
+            paths=paths, path_ids=pathids, truncated=truncated, state_transitions=sequence,
+            reservations=['Observed findings and connectivity are distinct from causal criteria.',
+                'Verification uses versioned reviewed synthetic-domain criteria with per-occurrence coverage; rule3 service/ordering requires bound dated execution. Not prediction or resolution verification.',
+                'Attribution-based independence is a conservative demo rule, not proof against colluding sources.',
+                'Current versions only; future-updated evidence excluded, historical source versions not reconstructed.'])
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for Assessment
+E         Value error, Assessment semantic version mismatch [type=value_error]
+E           For further information visit https://errors.pydantic.dev/2.14/v/value_error
+
+backend/app/services/evidence/service.py:302: ValidationError
+------------------------------ Captured log setup ------------------------------
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'text' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'name' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'text' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'name' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'text' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'name' is already indexed
+__________________ test_dated_service_evidence[S05-NEGATIVE] ___________________
+
+shared = namespace(db=<falkordb.falkordb.FalkorDB object at 0x10e8f7320>, p=ActiveProfile(version=1, graph='civicly_b10_test_57...ew/2291901fbbec4d38a9b127e02097bec9/memory.json'), memory=<app.memory.service.Memory object at 0x10d369550>, proofs=[])
+scenario = 'S05', variant = 'NEGATIVE'
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10f7b0ef0>
+
+    @pytest.mark.parametrize('scenario,variant',[('S05','PRIMARY'),('S05','NEGATIVE'),('S06','PRIMARY'),('S06','NEGATIVE')])
+    def test_dated_service_evidence(shared,scenario,variant,monkeypatch):
+>    asyncio.run(journey(shared,scenario,variant,monkeypatch))
+
+backend/tests/integration/test_service_evidence_runtime.py:22: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/base_events.py:684: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+backend/tests/integration/test_service_evidence_runtime.py:32: in journey
+    a=ev.execute({'operation':'assess','request_id':tag+'-baseline-'+cause,'hypothesis_id':hid,'expected_hash':r.get_node(hid).content_hash,'evidence_ids':[],'as_of':AT},analyst).assessment;old[a.id]=r.get_node(a.id).content_hash
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/app/services/evidence/service.py:89: in execute
+    entity, nodes, updates, edges, assessment = self.plan(q, actor, reader, jid, now, session.revision)
+                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/app/services/evidence/service.py:246: in plan
+    result = self.evaluate(q, definition, h, cutoff, now, revision)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <app.services.evidence.service.EvidenceService object at 0x10ff115e0>
+q = Assess(request_id='B20RSE-S05-NEGATIVE-baseline-MISSED_PICKUP', operation='assess', hypothesis_id='HYP-B09-517c9edac12...67fabbc355bf53a776dc266472e917e8bfe3fb349b3e4325eed591b126bc9db', evidence_ids=[], as_of='2026-10-18T12:00:00.000000Z')
+definition = Propose(request_id='B20RSE-S05-NEGATIVE-hyp-MISSED_PICKUP', operation='propose', investigation_id='INV-B09-6e9d6bcf463...P_MISSED_CONFIRMED', 'WASTE_PERSISTED_AFTER_SCHEDULE'], falsifying_codes=['PICKUP_COMPLETED_CONFIRMED'], topology=None)
+h = NodeRecord(id='HYP-B09-517c9edac129862a272c5c78376a71ee', kind='Hypothesis', labels=('Hypothesis',), properties={'id':...00.000000Z', 'schema_version': 3, 'statement': 'Explicit test competing MISSED_PICKUP', 'cause_code': 'MISSED_PICKUP'})
+r = <app.services.evidence.reader.Reader object at 0x10ff132f0>
+now = '2026-10-18T12:00:00.000000Z', revision = 38
+
+    def evaluate(self, q, definition, h, r, now, revision):
+        incidents = [r.node(id, 'Incident') for id in definition.incident_ids]
+        issue = incidents[0].properties['issue_type']
+        rule = POLICIES[issue].get(definition.cause_code)
+        history = Reader(self.repo, now).histories(h.id)
+        refs, classification, gaps, complete = classify_evidence(self.repo, r, q, definition, incidents, rule, history)
+        support = classification.reviewed_support_ids
+        contradiction = classification.reviewed_contradiction_ids
+        excluded = classification.excluded_evidence_ids
+        paths, pathids, truncated, topology_ok = [], [], False, True
+        if rule and rule['requires_topology'] and not definition.topology:
+            topology_ok = False
+            gaps.append('This domain cause requires explicit verified topology; reported impact alone is insufficient')
+        if definition.topology:
+            result = r.topology(definition.topology)
+            paths = [PathRecord(**p.model_dump(exclude={'id'}),) for p in result.paths if p.node_ids[-1] == definition.topology.target_id]
+            pathids = [p.id for p in result.paths if p.node_ids[-1] == definition.topology.target_id]
+            paths = [p.model_copy(update={'context': {**p.context, 'path_id': id}}) for p, id in zip(paths, pathids, strict=True)]
+            truncated = result.truncated
+            topology_ok = bool(paths) and not truncated
+            gaps.extend(result.gaps)
+            if not topology_ok:
+                gaps.append('Required verified-only topology path unavailable within bounded search; candidate/proximity insufficient')
+            for id in sorted({ev for p in paths for ev in p.evidence_ids} - {ref.id for ref in refs}):
+                refs.append(r.evidence(id, context_only=True))
+                classification = add_topology_context(classification, id)
+        if len(refs) > 20:
+            raise PreconditionFailed('B09 total source evidence references exceed20 including topology')
+        sufficient = bool(rule and complete and topology_ok)
+        label = classify_reviewed(reviewed_support=bool(support),
+            unreviewed_support=bool(classification.unreviewed_support_ids),
+            reviewed_contradiction=bool(contradiction),
+            unreviewed_contradiction=bool(classification.unreviewed_contradiction_ids), sufficient=sufficient)
+        if (support or classification.unreviewed_support_ids) and (contradiction or classification.unreviewed_contradiction_ids):
+            gaps.append('Conflicting evidence retained; no automatic source arbitration')
+        if not support and not contradiction:
+            gaps.append('Reviewed discriminating inspection evidence missing or insufficient; no completed inspection invented')
+        final = {'POSSIBLE': 'UNDER_REVIEW', 'SUPPORTED': 'SUPPORTED', 'CONTRADICTED': 'REJECTED', 'VERIFIED': 'VERIFIED', 'INCONCLUSIVE': 'INCONCLUSIVE'}[label]
+        state = h.properties['status']
+        sequence = [state]
+        if state != 'UNDER_REVIEW':
+            sequence.append(transition('Hypothesis', state, 'UNDER_REVIEW'))
+        if final != 'UNDER_REVIEW':
+            sequence.append(transition('Hypothesis', 'UNDER_REVIEW', final))
+        id = stable('ASSESS', q.hypothesis_id, q.request_id)
+>       return Assessment(format_version=2, rule_version=3 if issue=='WASTE_ACCUMULATION' and definition.cause_code in {'MISSED_PICKUP','ILLEGAL_DUMPING'} else 2, classification=classification, id=id, hypothesis_id=h.id, previous_assessment_id=history[-1].id if history else None,
+            assessment=label, cause_code=definition.cause_code, mechanism=definition.mechanism,
+            confirming_codes=definition.confirming_codes, falsifying_codes=definition.falsifying_codes,
+            supporting_evidence_ids=support, contradicting_evidence_ids=contradiction, evidence_references=refs,
+            excluded_evidence_ids=excluded, missing_evidence=list(dict.fromkeys(gaps)), graph=self.repo.graph.name,
+            source_graph_revision=revision, graph_revision=revision+1, as_of=q.as_of, assessed_at=now,
+            paths=paths, path_ids=pathids, truncated=truncated, state_transitions=sequence,
+            reservations=['Observed findings and connectivity are distinct from causal criteria.',
+                'Verification uses versioned reviewed synthetic-domain criteria with per-occurrence coverage; rule3 service/ordering requires bound dated execution. Not prediction or resolution verification.',
+                'Attribution-based independence is a conservative demo rule, not proof against colluding sources.',
+                'Current versions only; future-updated evidence excluded, historical source versions not reconstructed.'])
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for Assessment
+E         Value error, Assessment semantic version mismatch [type=value_error]
+E           For further information visit https://errors.pydantic.dev/2.14/v/value_error
+
+backend/app/services/evidence/service.py:302: ValidationError
+___________________ test_dated_service_evidence[S06-PRIMARY] ___________________
+
+shared = namespace(db=<falkordb.falkordb.FalkorDB object at 0x10e8f7320>, p=ActiveProfile(version=1, graph='civicly_b10_test_57...ew/2291901fbbec4d38a9b127e02097bec9/memory.json'), memory=<app.memory.service.Memory object at 0x10d369550>, proofs=[])
+scenario = 'S06', variant = 'PRIMARY'
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x1184170b0>
+
+    @pytest.mark.parametrize('scenario,variant',[('S05','PRIMARY'),('S05','NEGATIVE'),('S06','PRIMARY'),('S06','NEGATIVE')])
+    def test_dated_service_evidence(shared,scenario,variant,monkeypatch):
+>    asyncio.run(journey(shared,scenario,variant,monkeypatch))
+
+backend/tests/integration/test_service_evidence_runtime.py:22: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/base_events.py:684: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+backend/tests/integration/test_service_evidence_runtime.py:32: in journey
+    a=ev.execute({'operation':'assess','request_id':tag+'-baseline-'+cause,'hypothesis_id':hid,'expected_hash':r.get_node(hid).content_hash,'evidence_ids':[],'as_of':AT},analyst).assessment;old[a.id]=r.get_node(a.id).content_hash
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/app/services/evidence/service.py:89: in execute
+    entity, nodes, updates, edges, assessment = self.plan(q, actor, reader, jid, now, session.revision)
+                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/app/services/evidence/service.py:246: in plan
+    result = self.evaluate(q, definition, h, cutoff, now, revision)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <app.services.evidence.service.EvidenceService object at 0x11834d280>
+q = Assess(request_id='B20RSE-S06-PRIMARY-baseline-MISSED_PICKUP', operation='assess', hypothesis_id='HYP-B09-7ebc69128731...a892b9d79a0acc02517f4611c628b0bf16f6c9fb8a0b90ac251b617b1421244', evidence_ids=[], as_of='2026-10-18T12:00:00.000000Z')
+definition = Propose(request_id='B20RSE-S06-PRIMARY-hyp-MISSED_PICKUP', operation='propose', investigation_id='INV-B09-7cb02219a311...P_MISSED_CONFIRMED', 'WASTE_PERSISTED_AFTER_SCHEDULE'], falsifying_codes=['PICKUP_COMPLETED_CONFIRMED'], topology=None)
+h = NodeRecord(id='HYP-B09-7ebc691287319988d2b89195a6def17b', kind='Hypothesis', labels=('Hypothesis',), properties={'id':...00.000000Z', 'schema_version': 3, 'statement': 'Explicit test competing MISSED_PICKUP', 'cause_code': 'MISSED_PICKUP'})
+r = <app.services.evidence.reader.Reader object at 0x11834f440>
+now = '2026-10-18T12:00:00.000000Z', revision = 38
+
+    def evaluate(self, q, definition, h, r, now, revision):
+        incidents = [r.node(id, 'Incident') for id in definition.incident_ids]
+        issue = incidents[0].properties['issue_type']
+        rule = POLICIES[issue].get(definition.cause_code)
+        history = Reader(self.repo, now).histories(h.id)
+        refs, classification, gaps, complete = classify_evidence(self.repo, r, q, definition, incidents, rule, history)
+        support = classification.reviewed_support_ids
+        contradiction = classification.reviewed_contradiction_ids
+        excluded = classification.excluded_evidence_ids
+        paths, pathids, truncated, topology_ok = [], [], False, True
+        if rule and rule['requires_topology'] and not definition.topology:
+            topology_ok = False
+            gaps.append('This domain cause requires explicit verified topology; reported impact alone is insufficient')
+        if definition.topology:
+            result = r.topology(definition.topology)
+            paths = [PathRecord(**p.model_dump(exclude={'id'}),) for p in result.paths if p.node_ids[-1] == definition.topology.target_id]
+            pathids = [p.id for p in result.paths if p.node_ids[-1] == definition.topology.target_id]
+            paths = [p.model_copy(update={'context': {**p.context, 'path_id': id}}) for p, id in zip(paths, pathids, strict=True)]
+            truncated = result.truncated
+            topology_ok = bool(paths) and not truncated
+            gaps.extend(result.gaps)
+            if not topology_ok:
+                gaps.append('Required verified-only topology path unavailable within bounded search; candidate/proximity insufficient')
+            for id in sorted({ev for p in paths for ev in p.evidence_ids} - {ref.id for ref in refs}):
+                refs.append(r.evidence(id, context_only=True))
+                classification = add_topology_context(classification, id)
+        if len(refs) > 20:
+            raise PreconditionFailed('B09 total source evidence references exceed20 including topology')
+        sufficient = bool(rule and complete and topology_ok)
+        label = classify_reviewed(reviewed_support=bool(support),
+            unreviewed_support=bool(classification.unreviewed_support_ids),
+            reviewed_contradiction=bool(contradiction),
+            unreviewed_contradiction=bool(classification.unreviewed_contradiction_ids), sufficient=sufficient)
+        if (support or classification.unreviewed_support_ids) and (contradiction or classification.unreviewed_contradiction_ids):
+            gaps.append('Conflicting evidence retained; no automatic source arbitration')
+        if not support and not contradiction:
+            gaps.append('Reviewed discriminating inspection evidence missing or insufficient; no completed inspection invented')
+        final = {'POSSIBLE': 'UNDER_REVIEW', 'SUPPORTED': 'SUPPORTED', 'CONTRADICTED': 'REJECTED', 'VERIFIED': 'VERIFIED', 'INCONCLUSIVE': 'INCONCLUSIVE'}[label]
+        state = h.properties['status']
+        sequence = [state]
+        if state != 'UNDER_REVIEW':
+            sequence.append(transition('Hypothesis', state, 'UNDER_REVIEW'))
+        if final != 'UNDER_REVIEW':
+            sequence.append(transition('Hypothesis', 'UNDER_REVIEW', final))
+        id = stable('ASSESS', q.hypothesis_id, q.request_id)
+>       return Assessment(format_version=2, rule_version=3 if issue=='WASTE_ACCUMULATION' and definition.cause_code in {'MISSED_PICKUP','ILLEGAL_DUMPING'} else 2, classification=classification, id=id, hypothesis_id=h.id, previous_assessment_id=history[-1].id if history else None,
+            assessment=label, cause_code=definition.cause_code, mechanism=definition.mechanism,
+            confirming_codes=definition.confirming_codes, falsifying_codes=definition.falsifying_codes,
+            supporting_evidence_ids=support, contradicting_evidence_ids=contradiction, evidence_references=refs,
+            excluded_evidence_ids=excluded, missing_evidence=list(dict.fromkeys(gaps)), graph=self.repo.graph.name,
+            source_graph_revision=revision, graph_revision=revision+1, as_of=q.as_of, assessed_at=now,
+            paths=paths, path_ids=pathids, truncated=truncated, state_transitions=sequence,
+            reservations=['Observed findings and connectivity are distinct from causal criteria.',
+                'Verification uses versioned reviewed synthetic-domain criteria with per-occurrence coverage; rule3 service/ordering requires bound dated execution. Not prediction or resolution verification.',
+                'Attribution-based independence is a conservative demo rule, not proof against colluding sources.',
+                'Current versions only; future-updated evidence excluded, historical source versions not reconstructed.'])
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for Assessment
+E         Value error, Assessment semantic version mismatch [type=value_error]
+E           For further information visit https://errors.pydantic.dev/2.14/v/value_error
+
+backend/app/services/evidence/service.py:302: ValidationError
+__________________ test_dated_service_evidence[S06-NEGATIVE] ___________________
+
+shared = namespace(db=<falkordb.falkordb.FalkorDB object at 0x10e8f7320>, p=ActiveProfile(version=1, graph='civicly_b10_test_57...ew/2291901fbbec4d38a9b127e02097bec9/memory.json'), memory=<app.memory.service.Memory object at 0x10d369550>, proofs=[])
+scenario = 'S06', variant = 'NEGATIVE'
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x11834e360>
+
+    @pytest.mark.parametrize('scenario,variant',[('S05','PRIMARY'),('S05','NEGATIVE'),('S06','PRIMARY'),('S06','NEGATIVE')])
+    def test_dated_service_evidence(shared,scenario,variant,monkeypatch):
+>    asyncio.run(journey(shared,scenario,variant,monkeypatch))
+
+backend/tests/integration/test_service_evidence_runtime.py:22: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/base_events.py:684: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+backend/tests/integration/test_service_evidence_runtime.py:32: in journey
+    a=ev.execute({'operation':'assess','request_id':tag+'-baseline-'+cause,'hypothesis_id':hid,'expected_hash':r.get_node(hid).content_hash,'evidence_ids':[],'as_of':AT},analyst).assessment;old[a.id]=r.get_node(a.id).content_hash
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/app/services/evidence/service.py:89: in execute
+    entity, nodes, updates, edges, assessment = self.plan(q, actor, reader, jid, now, session.revision)
+                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/app/services/evidence/service.py:246: in plan
+    result = self.evaluate(q, definition, h, cutoff, now, revision)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <app.services.evidence.service.EvidenceService object at 0x1184b7800>
+q = Assess(request_id='B20RSE-S06-NEGATIVE-baseline-MISSED_PICKUP', operation='assess', hypothesis_id='HYP-B09-1629974d366...476e81595e9c59c56c734313689d87e2895aa169b161ca596fb51da03737c3b', evidence_ids=[], as_of='2026-10-18T12:00:00.000000Z')
+definition = Propose(request_id='B20RSE-S06-NEGATIVE-hyp-MISSED_PICKUP', operation='propose', investigation_id='INV-B09-1baf3d491a9...P_MISSED_CONFIRMED', 'WASTE_PERSISTED_AFTER_SCHEDULE'], falsifying_codes=['PICKUP_COMPLETED_CONFIRMED'], topology=None)
+h = NodeRecord(id='HYP-B09-1629974d3660f0494b0a1181520b9895', kind='Hypothesis', labels=('Hypothesis',), properties={'id':...00.000000Z', 'schema_version': 3, 'statement': 'Explicit test competing MISSED_PICKUP', 'cause_code': 'MISSED_PICKUP'})
+r = <app.services.evidence.reader.Reader object at 0x1184b7a40>
+now = '2026-10-18T12:00:00.000000Z', revision = 38
+
+    def evaluate(self, q, definition, h, r, now, revision):
+        incidents = [r.node(id, 'Incident') for id in definition.incident_ids]
+        issue = incidents[0].properties['issue_type']
+        rule = POLICIES[issue].get(definition.cause_code)
+        history = Reader(self.repo, now).histories(h.id)
+        refs, classification, gaps, complete = classify_evidence(self.repo, r, q, definition, incidents, rule, history)
+        support = classification.reviewed_support_ids
+        contradiction = classification.reviewed_contradiction_ids
+        excluded = classification.excluded_evidence_ids
+        paths, pathids, truncated, topology_ok = [], [], False, True
+        if rule and rule['requires_topology'] and not definition.topology:
+            topology_ok = False
+            gaps.append('This domain cause requires explicit verified topology; reported impact alone is insufficient')
+        if definition.topology:
+            result = r.topology(definition.topology)
+            paths = [PathRecord(**p.model_dump(exclude={'id'}),) for p in result.paths if p.node_ids[-1] == definition.topology.target_id]
+            pathids = [p.id for p in result.paths if p.node_ids[-1] == definition.topology.target_id]
+            paths = [p.model_copy(update={'context': {**p.context, 'path_id': id}}) for p, id in zip(paths, pathids, strict=True)]
+            truncated = result.truncated
+            topology_ok = bool(paths) and not truncated
+            gaps.extend(result.gaps)
+            if not topology_ok:
+                gaps.append('Required verified-only topology path unavailable within bounded search; candidate/proximity insufficient')
+            for id in sorted({ev for p in paths for ev in p.evidence_ids} - {ref.id for ref in refs}):
+                refs.append(r.evidence(id, context_only=True))
+                classification = add_topology_context(classification, id)
+        if len(refs) > 20:
+            raise PreconditionFailed('B09 total source evidence references exceed20 including topology')
+        sufficient = bool(rule and complete and topology_ok)
+        label = classify_reviewed(reviewed_support=bool(support),
+            unreviewed_support=bool(classification.unreviewed_support_ids),
+            reviewed_contradiction=bool(contradiction),
+            unreviewed_contradiction=bool(classification.unreviewed_contradiction_ids), sufficient=sufficient)
+        if (support or classification.unreviewed_support_ids) and (contradiction or classification.unreviewed_contradiction_ids):
+            gaps.append('Conflicting evidence retained; no automatic source arbitration')
+        if not support and not contradiction:
+            gaps.append('Reviewed discriminating inspection evidence missing or insufficient; no completed inspection invented')
+        final = {'POSSIBLE': 'UNDER_REVIEW', 'SUPPORTED': 'SUPPORTED', 'CONTRADICTED': 'REJECTED', 'VERIFIED': 'VERIFIED', 'INCONCLUSIVE': 'INCONCLUSIVE'}[label]
+        state = h.properties['status']
+        sequence = [state]
+        if state != 'UNDER_REVIEW':
+            sequence.append(transition('Hypothesis', state, 'UNDER_REVIEW'))
+        if final != 'UNDER_REVIEW':
+            sequence.append(transition('Hypothesis', 'UNDER_REVIEW', final))
+        id = stable('ASSESS', q.hypothesis_id, q.request_id)
+>       return Assessment(format_version=2, rule_version=3 if issue=='WASTE_ACCUMULATION' and definition.cause_code in {'MISSED_PICKUP','ILLEGAL_DUMPING'} else 2, classification=classification, id=id, hypothesis_id=h.id, previous_assessment_id=history[-1].id if history else None,
+            assessment=label, cause_code=definition.cause_code, mechanism=definition.mechanism,
+            confirming_codes=definition.confirming_codes, falsifying_codes=definition.falsifying_codes,
+            supporting_evidence_ids=support, contradicting_evidence_ids=contradiction, evidence_references=refs,
+            excluded_evidence_ids=excluded, missing_evidence=list(dict.fromkeys(gaps)), graph=self.repo.graph.name,
+            source_graph_revision=revision, graph_revision=revision+1, as_of=q.as_of, assessed_at=now,
+            paths=paths, path_ids=pathids, truncated=truncated, state_transitions=sequence,
+            reservations=['Observed findings and connectivity are distinct from causal criteria.',
+                'Verification uses versioned reviewed synthetic-domain criteria with per-occurrence coverage; rule3 service/ordering requires bound dated execution. Not prediction or resolution verification.',
+                'Attribution-based independence is a conservative demo rule, not proof against colluding sources.',
+                'Current versions only; future-updated evidence excluded, historical source versions not reconstructed.'])
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for Assessment
+E         Value error, Assessment semantic version mismatch [type=value_error]
+E           For further information visit https://errors.pydantic.dev/2.14/v/value_error
+
+backend/app/services/evidence/service.py:302: ValidationError
+=============================== warnings summary ===============================
+backend/.venv/lib/python3.12/site-packages/graphrag_sdk/core/models.py:19
+  /Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/graphrag_sdk/core/models.py:19: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.14/migration/
+    class DataModel(BaseModel):
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED backend/tests/integration/test_service_evidence_runtime.py::test_dated_service_evidence[S05-PRIMARY]
+FAILED backend/tests/integration/test_service_evidence_runtime.py::test_dated_service_evidence[S05-NEGATIVE]
+FAILED backend/tests/integration/test_service_evidence_runtime.py::test_dated_service_evidence[S06-PRIMARY]
+FAILED backend/tests/integration/test_service_evidence_runtime.py::test_dated_service_evidence[S06-NEGATIVE]
+4 failed, 1 warning in 43.98s

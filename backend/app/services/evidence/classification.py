@@ -45,6 +45,8 @@ def classify_evidence(repo, reader, request, definition, incidents, rule, histor
             inspection_report_ids.update(produced)
     if len(known) > 20:
         raise PreconditionFailed('B09 evidence union exceeds20; incomplete evidence cannot verify')
+    from app.services.service_evidence import policy_required
+    strict_service=policy_required(repo,definition.investigation_id)
     coverage = {i.id: {'codes': set(), 'sources': {}} for i in incidents}
     for evidence_id in sorted(known):
         ev = repo.get_node(evidence_id, 'Evidence')
@@ -63,6 +65,11 @@ def classify_evidence(repo, reader, request, definition, incidents, rule, histor
         if report.attribution:
             for basis_id in report.attribution.basis_evidence_ids:
                 refs[basis_id] = reader.evidence(basis_id)
+        service_record=None
+        if definition.cause_code in {'MISSED_PICKUP','ILLEGAL_DUMPING'}:
+            from app.services.service_evidence import validate as validate_service
+            service_record=validate_service(repo,evidence_id,reader.as_of)
+            if service_record:refs[service_record.id]=reader.evidence(service_record.id)
         for index, ob in enumerate(report.observations):
             incident_ids, reason, basis_ids = attribute(reader, report, ob, incidents, definition, affected)
             if not incident_ids:
@@ -70,6 +77,9 @@ def classify_evidence(repo, reader, request, definition, incidents, rule, histor
                 gaps.append(reason + ': ' + evidence_id)
             elif rule and not set(reader.node(ob.asset_id).labels) & set(rule['asset_labels']):
                 category, reason = 'CONTEXT', 'Observation lacks the domain criterion asset subtype'
+            elif strict_service and definition.cause_code in {'MISSED_PICKUP','ILLEGAL_DUMPING'} and ob.code in set(definition.confirming_codes+definition.falsifying_codes) and not __import__('app.services.service_evidence',fromlist=['qualify']).qualify(service_record,target=ob.asset_id,report_source=report.source_id,observed_at=ob.observed_at,code=ob.code,cause=definition.cause_code)[0]:
+                category,reason='CONTEXT','Rule3 requires bound dated reviewed service execution and applicable target/source/strict chronology'
+                gaps.append(reason+': '+evidence_id)
             elif ob.code in definition.confirming_codes:
                 category = 'REVIEWED_SUPPORT' if report.review else 'UNREVIEWED_SUPPORT'
                 if report.review:

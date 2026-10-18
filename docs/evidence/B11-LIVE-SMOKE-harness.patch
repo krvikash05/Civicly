@@ -1,0 +1,189 @@
+--- /dev/null
++++ b/scripts/b11_live_smoke.py
+@@ -0,0 +1,159 @@
++"""One authorized B11 smoke; manual CLI outside pytest, no resume or cap flags."""
++import argparse,asyncio,hashlib,json,os,sqlite3,sys
++from pathlib import Path
++from uuid import uuid4
++ROOT=Path(__file__).resolve().parents[1]
++sys.path.insert(0,str(ROOT/'backend'))
++from app.active import load,active_scope
++from app.config import Settings
++from app.graph.connection import connect
++from app.graph.repository import GraphRepository
++from app.graph.schema import utc_now
++from app.agents.models import InvestigationState,Budget
++from app.agents.provider import Gemini,ProviderSettings,PROMPT,ProviderError
++from app.agents.policy import Permit
++from app.agents.spending import Ledger,Pricing,DEFAULT_LEDGER
++from app.agents.limits import CountBillingPolicy
++from app.agents.runtime import InvestigationAgent
++from app.agents.checkpoints import saver
++from app.agents.mcp import brokers
++from app.memory.runtime import Profile,PROFILE
++from app.mcp.civicly.contracts import Context
++from app.graph.models import digest
++PREFIX=ROOT/'docs/evidence/B11-LIVE-SMOKE-'
++AGENT=ROOT/'.runtime/b11-live-smoke-agent.json'
++MEMORY=ROOT/'.runtime/b11-live-smoke-memory.json'
++STATE=ROOT/'.runtime/b11-live-smoke-state.json'
++AUTH=Path(str(PREFIX)+'authorization.json')
++STARTED=ROOT/'.runtime/b11-live-smoke-started.json'
++CAP='.15'
++def emit(suffix,value):
++ Path(str(PREFIX)+suffix+'.json').write_text(json.dumps(value,indent=2,default=str)+'\n')
++def private(path,value):
++ fd=os.open(path,os.O_CREAT|os.O_EXCL|os.O_WRONLY,0o600)
++ with os.fdopen(fd,'w') as f:json.dump(value,f)
++def smoke_graph(agent):
++ # Public StateGraph compile flags; handlers/routing and native Saver unchanged.
++ return agent.graph.builder.compile(checkpointer=agent.saver,
++  interrupt_before=['RootCauseAnalyst','ResolutionPlanner','Coordinator'],interrupt_after=['Investigator'])
++def settings():
++ s=ProviderSettings(_env_file=ROOT/'.env').model_copy(update={'transient_retries':0,'retry_wait_budget':0.,'max_output_tokens':2048})
++ assert s.model=='gemini-3.8-flash' and s.provider=='gemini' and s.key
++ p=Pricing(s.pricing_file);p.validate(s.model)
++ assert CountBillingPolicy().nonbillable(s.model,p.clock())
++ return s,p
++def accounting(case):
++ # Inspect existing live ledger read-only, never initialize/reset during verification.
++ with sqlite3.connect('file:'+str(DEFAULT_LEDGER)+'?mode=ro',uri=True) as db:
++  db.row_factory=sqlite3.Row
++  rows=[dict(r) for r in db.execute('SELECT * FROM requests WHERE case_id=? ORDER BY created,id',(case,))]
++  caps=dict(db.execute('SELECT * FROM config').fetchone())
++  known=sum(r['charged'] or 0 for r in rows)
++  held=sum(r['reserved'] for r in rows if r['charged'] is None)
++  return {'requests':rows,'known_nusd':known,'held_nusd':held,'exposure_nusd':known+held,'project_config':caps,
++   'active_sessions':db.execute('SELECT count(*) FROM sessions').fetchone()[0],
++   'open_holds':db.execute("SELECT count(*) FROM request_holds WHERE status='OPEN'").fetchone()[0],
++   'generation_attempts':sum(not r['id'].startswith('AI-COUNT-') for r in rows),
++   'count_attempts':sum(r['id'].startswith('AI-COUNT-') for r in rows)}
++async def prepare():
++ private(ROOT/'.runtime/b11-live-smoke-preparing.json',{'scope':'One investigation only; no automatic reprepare','at':utc_now()})
++ s,pricing=settings();existed=DEFAULT_LEDGER.exists()
++ ledger=Ledger(project_limit=s.project_limit)
++ before=ledger.summary();assert not before['sessions'] and not before['holds'] and before['project_remaining']>=150000000
++ from tests.b10_fixtures import create,state
++ with connect(Settings(_env_file=ROOT/'.env')) as db:
++  p,r,clock,receipt,inv=create(db,AGENT,'WATERLOGGING')
++  existing=Profile.model_validate_json(PROFILE.read_text())
++  mp=existing.model_copy(update={'source_graphs':[p.graph]});Profile.model_validate(mp);mp.json_private(MEMORY)
++  thread=uuid4().hex
++  permit=Permit.explicit_live(approved=True,investigation_id=inv,thread_id=thread,max_usd=CAP,milestone='B11-LIVE-SMOKE')
++  ledger.configure_case(inv,CAP)
++  with active_scope(p):
++   async with brokers(p,AGENT,memory_path=MEMORY,timeout=10) as tools:
++    catalog=tools.catalog();assert len(catalog)==16
++    c=Context(trace_id=thread,execution_id='PREFLIGHT-'+uuid4().hex,source_graph=p.graph,investigation_id=inv,caller_role='READ_ONLY',invocation_origin='APPLICATION')
++    result=await tools.call('civicly::get_organizational_procedures',{'department_id':'DEPT-DRAIN','action_type':'INSPECTION'},c,'Host nonbillable source capability preflight; not a model-selected call',cutoff=utc_now())
++    assert result['procedures'] and all(v['citation']['owner_department_id']=='DEPT-DRAIN' for v in result['procedures'])
++    user=db.connection.acl_getuser(p.read_user);assert '+graph.ro_query' in user['commands'] and '+graph.query' not in user['commands']
++    assert user['keys']==['~'+p.graph]
++    model=Gemini(s,permit=permit,ledger=ledger,pricing=pricing)
++    initial=state(p,r,tools,utc_now,receipt,inv,thread=thread)
++    initial.budget=Budget(max_iterations=2,max_tools=1,max_tokens=60000,max_seconds=120,max_wakes=1)
++    initial.missing_evidence=['Source-backed Drainage Operations (DEPT-DRAIN) INSPECTION procedures and citations are needed before planning this synthetic waterlogging investigation. Choose one useful allowed READ; if organizational guidance cannot be accessed, report the limitation and select relevant graph evidence or pause.']
++    agent=InvestigationAgent(p,r,tools,model,saver(p));agent.graph=smoke_graph(agent)
++    assert saver(p).get_tuple({'configurable':{'thread_id':thread}}) is None
++    context=agent.context(initial);model.check(context)
++    text=PROMPT+'\nCONTEXT_JSON:\n'+json.dumps(context,sort_keys=True,separators=(',',':'),allow_nan=False)
++    from app.agents.models import Selection
++    body={'contents':[{'role':'user','parts':[{'text':text}]}],'generationConfig':{'responseMimeType':'application/json','responseJsonSchema':Selection.model_json_schema(),'maxOutputTokens':s.max_output_tokens,'thinkingConfig':{'thinkingLevel':'LOW'}}}
++    from app.agents.tokens import plan
++    allocation=plan(body);reservation=pricing.estimate(allocation['serialized_utf8_bytes'],s.max_output_tokens,input_tokens=allocation['input_allowance_tokens'])
++    assert reservation<=150000000
++    private(STATE,initial.model_dump(mode='json'))
++    authorization={'task':'B11-LIVE-SMOKE','status':'READY','recorded_at':utc_now(),'profile_path':str(AGENT.relative_to(ROOT)),'memory_profile_path':str(MEMORY.relative_to(ROOT)),'graph':p.graph,'checkpoint_graph':p.checkpoints,'investigation_id':inv,'thread_id':thread,'model':s.model,'pricing_version':pricing.version,'max_total_usd':CAP,'max_generation_attempts':2,'transient_retries':0,'max_count_per_generation':1,'max_provider_selections':1,'max_live_wakes':1,'output_tokens':s.max_output_tokens,'budget':initial.budget.model_dump(),'initial_generation_reservation_nusd':reservation,'default_ledger_first_initialization':not existed,'ledger':str(DEFAULT_LEDGER.relative_to(ROOT)),'graph_interrupts':{'before':['RootCauseAnalyst','ResolutionPlanner','Coordinator'],'after':['Investigator']},'original_prompt_sha256':hashlib.sha256(PROMPT.encode()).hexdigest(),'prompt_limitation':'B10-3 still excludes organizational tools; preserved; graph-only success is not live organizational proof','profile_sha256':hashlib.sha256(AGENT.read_bytes()).hexdigest(),'memory_profile_sha256':hashlib.sha256(MEMORY.read_bytes()).hexdigest(),'initial_state_sha256':hashlib.sha256(STATE.read_bytes()).hexdigest()}
++    emit('authorization',authorization)
++    emit('preflight',{'status':'PASS','authorization':authorization,'model_key_present_not_logged':True,'actual_mcp_catalog':catalog,'non_model_selected_source_result':result,'official_transport':tools.traces,'source_reader_commands':user['commands'],'source_reader_keys':user['keys'],'ledger_before':before,'ledger_after_case_allocation':ledger.summary(inv),'provider_calls':0,'token_plan':allocation})
++    print(json.dumps(authorization,indent=2))
++async def execute(approved):
++ assert approved is True,'Explicit --live required'
++ auth=json.loads(AUTH.read_text());assert auth['status']=='READY'
++ for path,field in [(AGENT,'profile_sha256'),(MEMORY,'memory_profile_sha256'),(STATE,'initial_state_sha256')]:assert hashlib.sha256(path.read_bytes()).hexdigest()==auth[field]
++ private(STARTED,{'authorization_sha256':hashlib.sha256(AUTH.read_bytes()).hexdigest(),'started_at':utc_now(),'no_resume_or_second_wake':True})
++ p=load(AGENT);initial=InvestigationState.model_validate_json(STATE.read_text());assert (initial.thread_id,initial.investigation_id)==(auth['thread_id'],auth['investigation_id'])
++ s,pricing=settings();ledger=Ledger(project_limit=s.project_limit)
++ assert not accounting(initial.investigation_id)['requests']
++ permit=Permit.explicit_live(approved=True,investigation_id=initial.investigation_id,thread_id=initial.thread_id,max_usd=CAP,milestone='B11-LIVE-SMOKE')
++ model=Gemini(s,permit=permit,ledger=ledger,pricing=pricing);failure=None;result=None
++ try:
++  with connect(Settings(_env_file=ROOT/'.env')) as db,active_scope(p):
++   r=GraphRepository(db,p.graph,lease_seconds=30)
++   async with brokers(p,AGENT,memory_path=MEMORY,timeout=10) as tools:
++    assert tools.inventory_hash==initial.inventory_hash
++    agent=InvestigationAgent(p,r,tools,model,saver(p));agent.graph=smoke_graph(agent)
++    result=await agent.run(initial,thread_id=initial.thread_id)
++ except Exception as exc:failure={'class':type(exc).__name__,'code':getattr(exc,'code','HOST_EXECUTION_FAILED')}
++ finally:
++  finance=accounting(initial.investigation_id)
++  assert finance['generation_attempts']<=2 and finance['count_attempts']<=2
++  emit('execution',{'status':'FINISHED_REVIEW_REQUIRED','authorization':auth,'result':result,'host_failure':failure,'provider_usage':model.last_usage,'provider_failure':model.last_failure,'accounting':finance,'no_further_live_calls':True})
++  print(json.dumps({'phase':'execution','host_failure':failure,'generation_attempts':finance['generation_attempts'],'count_attempts':finance['count_attempts'],'exposure_nusd':finance['exposure_nusd']}))
++def verify():
++ auth=json.loads(AUTH.read_text());p=load(AGENT);thread=auth['thread_id'];inv=auth['investigation_id']
++ saved=saver(p).get_tuple({'configurable':{'thread_id':thread}})
++ assert saved is not None,'No durable checkpoint; retain evidence and report'
++ state=InvestigationState.model_validate(saved.checkpoint['channel_values']['data'])
++ from app.mcp.civicly.runtime import connections
++ from app.mcp.civicly.storage import TraceStore
++ with connect(Settings(_env_file=ROOT/'.env')) as db,active_scope(p),connections() as (_,writer,name):
++  r=GraphRepository(db,p.graph);traces=TraceStore(writer,name)
++  decisions=[{'id':id,'record':json.loads(r.get_node(id,'AgentDecision').properties['rationale'])} for id in state.decisions]
++  actual_traces=[]
++  for id in state.executions:
++   row=traces.get(id);assert row is not None;actual_traces.append(row.model_dump(mode='json'))
++   children=traces.repo._read('MATCH (d:CivicMCPTraceDetail) WHERE d.payload_json CONTAINS $id RETURN d.id LIMIT 8',{'id':id})
++   for child, in children:
++    item=traces.get(child)
++    if item.context.parent_execution_id==id:actual_traces.append(item.model_dump(mode='json'))
++  journals=[]
++  for d in decisions:
++   from app.agents.control import identity
++   journal_id=identity('EV',thread,1,0);node=r._node_optional(journal_id)
++   if node:journals.append({'id':journal_id,'payload':json.loads(node.properties['summary'])})
++  selection=decisions[0]['record']['selection'] if decisions else None
++  read_ok=bool(selection and selection['action']=='READ' and state.executions and state.observations and journals and journals[0]['payload']['status']=='COMMITTED')
++  result=journals[0]['payload']['result'] if journals else {}
++  citations=[v['citation'] for v in result.get('procedures',[])]+result.get('document_excerpt',{}).get('citations',[])
++  evidence=bool(citations or result.get('rows') or result.get('data',{}).get('nodes'))
++  validated=any(t['validated_output'] for t in actual_traces)
++  if read_ok:
++   assert digest(result)==actual_traces[0]['output_sha256']
++   assert result in state.observations
++  finance=accounting(inv)
++  status='PASS' if read_ok and evidence and validated and citations else 'PARTIAL' if read_ok and evidence and validated else 'BLOCKED'
++  emit('fresh-process',{'status':status,'checked_at':utc_now(),'process':os.getpid(),'authorization':auth,'native_checkpoint_id':saved.config['configurable'].get('checkpoint_id'),'next_pending_tasks':getattr(saved,'pending_writes',None),'state':state.model_dump(mode='json'),'durable_decisions':decisions,'durable_journals':journals,'durable_traces':actual_traces,'selected':selection,'live_organizational_citations':citations,'read_executed_persisted':read_ok,'validated_evidence_present':evidence and validated,'accounting':finance,'limits_observed':finance['generation_attempts']<=2 and finance['count_attempts']<=2 and finance['exposure_nusd']<=150000000,'b10_full_acceptance':'OPEN/PARTIAL','no_resume':True})
++  print(json.dumps({'status':status,'native_checkpoint_id':saved.config['configurable'].get('checkpoint_id'),'selected':selection,'citations':len(citations),'accounting':finance},indent=2))
++def main():
++ parser=argparse.ArgumentParser();parser.add_argument('phase',choices=['prepare','execute','verify']);parser.add_argument('--live',action='store_true');args=parser.parse_args()
++ if args.phase=='verify':verify()
++ else:asyncio.run(prepare() if args.phase=='prepare' else execute(args.live))
++if __name__=='__main__':main()
+--- /dev/null
++++ b/backend/tests/unit/test_live_smoke_harness.py
+@@ -0,0 +1,24 @@
++"""Only test harness static fences, offline and no actual investigation/provider."""
++import importlib.util
++from pathlib import Path
++from types import SimpleNamespace
++import pytest
++from langgraph.graph import StateGraph,START
++from langgraph.checkpoint.memory import InMemorySaver
++spec=importlib.util.spec_from_file_location('smoke',Path(__file__).resolve().parents[3]/'scripts/b11_live_smoke.py')
++smoke=importlib.util.module_from_spec(spec);spec.loader.exec_module(smoke)
++@pytest.mark.parametrize('action,node',[('READ','Investigator'),('PROPOSE','RootCauseAnalyst'),('ASSESS','RootCauseAnalyst'),('INSPECT','Coordinator'),('RECOMMEND','ResolutionPlanner'),('PAUSE','Coordinator')])
++def test_only_read_can_execute_and_second_selection_is_interrupted(action,node):
++ calls=[];builder=StateGraph(dict)
++ def supervisor(value):calls.append('Supervisor');return value
++ builder.add_node('Supervisor',supervisor)
++ for name in ['Investigator','RootCauseAnalyst','ResolutionPlanner','Coordinator']:
++  def handler(value,name=name):calls.append(name);return value
++  builder.add_node(name,handler);builder.add_edge(name,'Supervisor')
++ builder.add_edge(START,'Supervisor');builder.add_conditional_edges('Supervisor',lambda value:node)
++ checkpointer=InMemorySaver();agent=SimpleNamespace(graph=builder.compile(checkpointer=checkpointer),saver=checkpointer)
++ graph=smoke.smoke_graph(agent);cfg={'configurable':{'thread_id':'offline-'+action}}
++ graph.invoke({'action':action},cfg,durability='sync')
++ assert calls==(['Supervisor','Investigator'] if action=='READ' else ['Supervisor'])
++ snapshot=graph.get_state(cfg);assert snapshot.values=={'action':action}
++ assert snapshot.next==('Supervisor',) if action=='READ' else snapshot.next==(node,)

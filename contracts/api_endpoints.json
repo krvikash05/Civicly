@@ -1,5 +1,5 @@
 {
-  "schema_version": 2,
+  "schema_version": 4,
   "routes": [
     {
       "method": "POST",
@@ -7,8 +7,10 @@
       "role": "PUBLIC",
       "response_dto": "DemoSession",
       "idempotency_key": false,
-      "request_schema_id": "auth_demo-login_Request",
-      "response_schema_id": "DemoSession"
+      "request_schema_id": "LoginRequest",
+      "response_schema_id": "DemoSession",
+      "milestone": "B16",
+      "status": "IMPLEMENTED"
     },
     {
       "method": "GET",
@@ -17,7 +19,10 @@
       "response_dto": "OperatorAccount",
       "idempotency_key": false,
       "request_schema_id": null,
-      "response_schema_id": "OperatorAccount"
+      "response_schema_id": "OperatorAccount",
+      "milestone": "B16",
+      "status": "IMPLEMENTED",
+      "query_parameters": []
     },
     {
       "method": "POST",
@@ -25,8 +30,10 @@
       "role": "ANY",
       "response_dto": "Ack",
       "idempotency_key": false,
-      "request_schema_id": "auth_logout_Request",
-      "response_schema_id": "Ack"
+      "request_schema_id": "EmptyRequest",
+      "response_schema_id": "Ack",
+      "milestone": "B16",
+      "status": "IMPLEMENTED"
     },
     {
       "method": "GET",
@@ -35,7 +42,17 @@
       "response_dto": "DashboardSummary",
       "idempotency_key": false,
       "request_schema_id": null,
-      "response_schema_id": "DashboardSummary"
+      "response_schema_id": "DashboardSummary",
+      "milestone": "B17",
+      "status": "IMPLEMENTED",
+      "query_parameters": [
+        "issue",
+        "status",
+        "department_id",
+        "after",
+        "before"
+      ],
+      "query_schema_id": "DashboardQuery"
     },
     {
       "method": "POST",
@@ -43,17 +60,31 @@
       "role": "ANALYST",
       "response_dto": "ComplaintDTO",
       "idempotency_key": true,
-      "request_schema_id": "complaints_Request",
-      "response_schema_id": "ComplaintDTO"
+      "request_schema_id": "ComplaintRequest",
+      "response_schema_id": "ComplaintDTO",
+      "milestone": "B16",
+      "status": "IMPLEMENTED"
     },
     {
       "method": "GET",
       "path": "/api/v1/complaints",
       "role": "ANY",
-      "response_dto": "ComplaintPage",
+      "response_dto": "Page[ComplaintDTO]",
       "idempotency_key": false,
       "request_schema_id": null,
-      "response_schema_id": "ComplaintPage"
+      "response_schema_id": "Page[ComplaintDTO]",
+      "milestone": "B16",
+      "status": "IMPLEMENTED",
+      "query_parameters": [
+        "limit",
+        "cursor",
+        "issue",
+        "status",
+        "department_id",
+        "after",
+        "before"
+      ],
+      "query_schema_id": "ResourceQuery"
     },
     {
       "method": "GET",
@@ -62,16 +93,31 @@
       "response_dto": "ComplaintDTO",
       "idempotency_key": false,
       "request_schema_id": null,
-      "response_schema_id": "ComplaintDTO"
+      "response_schema_id": "ComplaintDTO",
+      "milestone": "B16",
+      "status": "IMPLEMENTED",
+      "query_parameters": []
     },
     {
       "method": "GET",
       "path": "/api/v1/incidents",
       "role": "ANY",
-      "response_dto": "IncidentPage",
+      "response_dto": "Page[IncidentDTO]",
       "idempotency_key": false,
       "request_schema_id": null,
-      "response_schema_id": "IncidentPage"
+      "response_schema_id": "Page[IncidentDTO]",
+      "milestone": "B16",
+      "status": "IMPLEMENTED",
+      "query_parameters": [
+        "limit",
+        "cursor",
+        "issue",
+        "status",
+        "department_id",
+        "after",
+        "before"
+      ],
+      "query_schema_id": "ResourceQuery"
     },
     {
       "method": "GET",
@@ -80,16 +126,31 @@
       "response_dto": "IncidentDTO",
       "idempotency_key": false,
       "request_schema_id": null,
-      "response_schema_id": "IncidentDTO"
+      "response_schema_id": "IncidentDTO",
+      "milestone": "B16",
+      "status": "IMPLEMENTED",
+      "query_parameters": []
     },
     {
       "method": "GET",
       "path": "/api/v1/problem-clusters",
       "role": "ANY",
-      "response_dto": "ClusterPage",
+      "response_dto": "Page[ProblemClusterDTO]",
       "idempotency_key": false,
       "request_schema_id": null,
-      "response_schema_id": "ClusterPage"
+      "response_schema_id": "Page[ProblemClusterDTO]",
+      "milestone": "B16",
+      "status": "IMPLEMENTED",
+      "query_parameters": [
+        "limit",
+        "cursor",
+        "issue",
+        "status",
+        "department_id",
+        "after",
+        "before"
+      ],
+      "query_schema_id": "ResourceQuery"
     },
     {
       "method": "GET",
@@ -98,7 +159,10 @@
       "response_dto": "ProblemClusterDTO",
       "idempotency_key": false,
       "request_schema_id": null,
-      "response_schema_id": "ProblemClusterDTO"
+      "response_schema_id": "ProblemClusterDTO",
+      "milestone": "B16",
+      "status": "IMPLEMENTED",
+      "query_parameters": []
     },
     {
       "method": "POST",
@@ -106,8 +170,10 @@
       "role": "ANALYST",
       "response_dto": "InvestigationDTO",
       "idempotency_key": true,
-      "request_schema_id": "investigations_Request",
-      "response_schema_id": "InvestigationDTO"
+      "request_schema_id": "OpenRequest",
+      "response_schema_id": "InvestigationDTO",
+      "milestone": "B16",
+      "status": "IMPLEMENTED"
     },
     {
       "method": "GET",
@@ -116,7 +182,10 @@
       "response_dto": "InvestigationDTO",
       "idempotency_key": false,
       "request_schema_id": null,
-      "response_schema_id": "InvestigationDTO"
+      "response_schema_id": "InvestigationDTO",
+      "milestone": "B16",
+      "status": "IMPLEMENTED",
+      "query_parameters": []
     },
     {
       "method": "POST",
@@ -124,8 +193,10 @@
       "role": "ANALYST",
       "response_dto": "AgentResumeDTO",
       "idempotency_key": true,
-      "request_schema_id": "investigations_id_resume_Request",
-      "response_schema_id": "AgentResumeDTO"
+      "request_schema_id": "ResumeRequest",
+      "response_schema_id": "AgentResumeDTO",
+      "milestone": "B16",
+      "status": "IMPLEMENTED"
     },
     {
       "method": "GET",
@@ -134,7 +205,17 @@
       "response_dto": "AgentTracePage",
       "idempotency_key": false,
       "request_schema_id": null,
-      "response_schema_id": "AgentTracePage"
+      "response_schema_id": "AgentTracePage",
+      "milestone": "B17",
+      "status": "IMPLEMENTED",
+      "query_parameters": [
+        "limit",
+        "cursor",
+        "status",
+        "after",
+        "before"
+      ],
+      "query_schema_id": "TraceQuery"
     },
     {
       "method": "GET",
@@ -143,7 +224,15 @@
       "response_dto": "HypothesisPage",
       "idempotency_key": false,
       "request_schema_id": null,
-      "response_schema_id": "HypothesisPage"
+      "response_schema_id": "HypothesisPage",
+      "milestone": "B17",
+      "status": "IMPLEMENTED",
+      "query_parameters": [
+        "limit",
+        "cursor",
+        "status"
+      ],
+      "query_schema_id": "HypothesesQuery"
     },
     {
       "method": "GET",
@@ -152,7 +241,14 @@
       "response_dto": "GraphSubgraphDTO",
       "idempotency_key": false,
       "request_schema_id": null,
-      "response_schema_id": "GraphSubgraphDTO"
+      "response_schema_id": "GraphSubgraphDTO",
+      "milestone": "B17",
+      "status": "IMPLEMENTED",
+      "query_parameters": [
+        "depth",
+        "include_candidates"
+      ],
+      "query_schema_id": "GraphQuery"
     },
     {
       "method": "GET",
@@ -161,7 +257,10 @@
       "response_dto": "EvidenceDTO",
       "idempotency_key": false,
       "request_schema_id": null,
-      "response_schema_id": "EvidenceDTO"
+      "response_schema_id": "EvidenceDTO",
+      "milestone": "B16",
+      "status": "IMPLEMENTED",
+      "query_parameters": []
     },
     {
       "method": "GET",
@@ -170,7 +269,10 @@
       "response_dto": "InspectionDTO",
       "idempotency_key": false,
       "request_schema_id": null,
-      "response_schema_id": "InspectionDTO"
+      "response_schema_id": "InspectionDTO",
+      "milestone": "B16",
+      "status": "IMPLEMENTED",
+      "query_parameters": []
     },
     {
       "method": "POST",
@@ -178,8 +280,10 @@
       "role": "DEPARTMENT_LEAD",
       "response_dto": "EvidenceDTO",
       "idempotency_key": true,
-      "request_schema_id": "inspections_id_observations_Request",
-      "response_schema_id": "EvidenceDTO"
+      "request_schema_id": "ReportRequest",
+      "response_schema_id": "EvidenceDTO",
+      "milestone": "B16",
+      "status": "IMPLEMENTED"
     },
     {
       "method": "GET",
@@ -188,7 +292,10 @@
       "response_dto": "PlanDTO",
       "idempotency_key": false,
       "request_schema_id": null,
-      "response_schema_id": "PlanDTO"
+      "response_schema_id": "PlanDTO",
+      "milestone": "B16",
+      "status": "IMPLEMENTED",
+      "query_parameters": []
     },
     {
       "method": "POST",
@@ -196,17 +303,31 @@
       "role": "ANALYST",
       "response_dto": "ApprovalDTO",
       "idempotency_key": true,
-      "request_schema_id": "plans_id_submit-approval_Request",
-      "response_schema_id": "ApprovalDTO"
+      "request_schema_id": "SubmitRequest",
+      "response_schema_id": "ApprovalDTO",
+      "milestone": "B16",
+      "status": "IMPLEMENTED"
     },
     {
       "method": "GET",
       "path": "/api/v1/approvals",
       "role": "APPROVER",
-      "response_dto": "ApprovalPage",
+      "response_dto": "Page[ApprovalDTO]",
       "idempotency_key": false,
       "request_schema_id": null,
-      "response_schema_id": "ApprovalPage"
+      "response_schema_id": "Page[ApprovalDTO]",
+      "milestone": "B16",
+      "status": "IMPLEMENTED",
+      "query_parameters": [
+        "limit",
+        "cursor",
+        "issue",
+        "status",
+        "department_id",
+        "after",
+        "before"
+      ],
+      "query_schema_id": "ResourceQuery"
     },
     {
       "method": "POST",
@@ -214,17 +335,31 @@
       "role": "APPROVER",
       "response_dto": "ApprovalDTO",
       "idempotency_key": true,
-      "request_schema_id": "approvals_id_decision_Request",
-      "response_schema_id": "ApprovalDTO"
+      "request_schema_id": "DecideRequest",
+      "response_schema_id": "ApprovalDTO",
+      "milestone": "B16",
+      "status": "IMPLEMENTED"
     },
     {
       "method": "GET",
       "path": "/api/v1/work-orders",
       "role": "ANY",
-      "response_dto": "WorkOrderPage",
+      "response_dto": "Page[WorkOrderDTO]",
       "idempotency_key": false,
       "request_schema_id": null,
-      "response_schema_id": "WorkOrderPage"
+      "response_schema_id": "Page[WorkOrderDTO]",
+      "milestone": "B16",
+      "status": "IMPLEMENTED",
+      "query_parameters": [
+        "limit",
+        "cursor",
+        "issue",
+        "status",
+        "department_id",
+        "after",
+        "before"
+      ],
+      "query_schema_id": "ResourceQuery"
     },
     {
       "method": "GET",
@@ -233,7 +368,10 @@
       "response_dto": "WorkOrderDTO",
       "idempotency_key": false,
       "request_schema_id": null,
-      "response_schema_id": "WorkOrderDTO"
+      "response_schema_id": "WorkOrderDTO",
+      "milestone": "B16",
+      "status": "IMPLEMENTED",
+      "query_parameters": []
     },
     {
       "method": "POST",
@@ -241,35 +379,57 @@
       "role": "DEPARTMENT_LEAD",
       "response_dto": "WorkOrderDTO",
       "idempotency_key": true,
-      "request_schema_id": "work-orders_id_status_Request",
-      "response_schema_id": "WorkOrderDTO"
+      "request_schema_id": "UpdateRequest",
+      "response_schema_id": "WorkOrderDTO",
+      "milestone": "B16",
+      "status": "IMPLEMENTED"
     },
     {
       "method": "POST",
       "path": "/api/v1/work-orders/{id}/outcomes",
-      "role": "DEPARTMENT_LEAD",
+      "role": "ANALYST",
       "response_dto": "OutcomeDTO",
       "idempotency_key": true,
-      "request_schema_id": "work-orders_id_outcomes_Request",
-      "response_schema_id": "OutcomeDTO"
+      "request_schema_id": "EvaluateRequest",
+      "response_schema_id": "OutcomeDTO",
+      "milestone": "B16",
+      "status": "IMPLEMENTED"
     },
     {
       "method": "GET",
       "path": "/api/v1/departments",
       "role": "ANY",
-      "response_dto": "DepartmentPage",
+      "response_dto": "Page[DepartmentDTO]",
       "idempotency_key": false,
       "request_schema_id": null,
-      "response_schema_id": "DepartmentPage"
+      "response_schema_id": "Page[DepartmentDTO]",
+      "milestone": "B16",
+      "status": "IMPLEMENTED",
+      "query_parameters": [
+        "limit",
+        "cursor",
+        "issue",
+        "status",
+        "department_id",
+        "after",
+        "before"
+      ],
+      "query_schema_id": "ResourceQuery"
     },
     {
       "method": "GET",
       "path": "/api/v1/procedures",
       "role": "ANY",
-      "response_dto": "ProcedurePage",
+      "response_dto": "Page[ProcedureDTO]",
       "idempotency_key": false,
       "request_schema_id": null,
-      "response_schema_id": "ProcedurePage"
+      "response_schema_id": "Page[ProcedureDTO]",
+      "milestone": "B16",
+      "status": "IMPLEMENTED",
+      "query_parameters": [
+        "limit",
+        "cursor"
+      ]
     },
     {
       "method": "GET",
@@ -278,16 +438,25 @@
       "response_dto": "DocumentDTO",
       "idempotency_key": false,
       "request_schema_id": null,
-      "response_schema_id": "DocumentDTO"
+      "response_schema_id": "DocumentDTO",
+      "milestone": "B16",
+      "status": "IMPLEMENTED",
+      "query_parameters": []
     },
     {
       "method": "GET",
       "path": "/api/v1/cases/{id}/memory",
       "role": "ANY",
-      "response_dto": "CaseMemoryPage",
+      "response_dto": "Page[CaseMemoryDTO]",
       "idempotency_key": false,
       "request_schema_id": null,
-      "response_schema_id": "CaseMemoryPage"
+      "response_schema_id": "Page[CaseMemoryDTO]",
+      "milestone": "B16",
+      "status": "IMPLEMENTED",
+      "query_parameters": [
+        "limit",
+        "cursor"
+      ]
     },
     {
       "method": "GET",
@@ -296,7 +465,20 @@
       "response_dto": "MapFeatureCollection",
       "idempotency_key": false,
       "request_schema_id": null,
-      "response_schema_id": "MapFeatureCollection"
+      "response_schema_id": "MapFeatureCollection",
+      "milestone": "B17",
+      "status": "IMPLEMENTED",
+      "query_parameters": [
+        "limit",
+        "cursor",
+        "issue",
+        "status",
+        "department_id",
+        "after",
+        "before",
+        "investigation_id"
+      ],
+      "query_schema_id": "MapQuery"
     },
     {
       "method": "GET",
@@ -305,7 +487,11 @@
       "response_dto": "AssetDTO",
       "idempotency_key": false,
       "request_schema_id": null,
-      "response_schema_id": "AssetDTO"
+      "response_schema_id": "AssetDTO",
+      "milestone": "B17",
+      "status": "IMPLEMENTED",
+      "query_parameters": [],
+      "query_schema_id": "AssetQuery"
     },
     {
       "method": "GET",
@@ -314,25 +500,44 @@
       "response_dto": "GraphSubgraphDTO",
       "idempotency_key": false,
       "request_schema_id": null,
-      "response_schema_id": "GraphSubgraphDTO"
+      "response_schema_id": "GraphSubgraphDTO",
+      "milestone": "B17",
+      "status": "IMPLEMENTED",
+      "query_parameters": [
+        "depth",
+        "include_candidates"
+      ],
+      "query_schema_id": "GraphQuery"
     },
     {
       "method": "GET",
       "path": "/api/v1/monitoring",
       "role": "ANY",
-      "response_dto": "MonitoringPage",
+      "response_dto": "Page[MonitoringDTO]",
       "idempotency_key": false,
       "request_schema_id": null,
-      "response_schema_id": "MonitoringPage"
+      "response_schema_id": "Page[MonitoringDTO]",
+      "milestone": "B16",
+      "status": "IMPLEMENTED",
+      "query_parameters": [
+        "limit",
+        "cursor"
+      ]
     },
     {
       "method": "GET",
       "path": "/api/v1/problem-clusters/{id}/outcomes",
       "role": "ANY",
-      "response_dto": "OutcomePage",
+      "response_dto": "Page[OutcomeDTO]",
       "idempotency_key": false,
       "request_schema_id": null,
-      "response_schema_id": "OutcomePage"
+      "response_schema_id": "Page[OutcomeDTO]",
+      "milestone": "B16",
+      "status": "IMPLEMENTED",
+      "query_parameters": [
+        "limit",
+        "cursor"
+      ]
     },
     {
       "method": "GET",
@@ -341,7 +546,13 @@
       "response_dto": "SSEStream",
       "idempotency_key": false,
       "request_schema_id": null,
-      "response_schema_id": "SSEStream"
+      "response_schema_id": "SSEStream",
+      "milestone": "B17",
+      "status": "IMPLEMENTED",
+      "query_parameters": [
+        "cursor",
+        "investigation_id"
+      ]
     },
     {
       "method": "POST",
@@ -349,8 +560,11 @@
       "role": "ADMIN",
       "response_dto": "SeedReport",
       "idempotency_key": true,
-      "request_schema_id": "demo_reset_Request",
-      "response_schema_id": "SeedReport"
+      "request_schema_id": "DemoResetRequest",
+      "response_schema_id": "SeedReport",
+      "milestone": "B19",
+      "status": "IMPLEMENTED",
+      "query_parameters": []
     },
     {
       "method": "POST",
@@ -358,8 +572,11 @@
       "role": "ADMIN",
       "response_dto": "SimulationStepDTO",
       "idempotency_key": true,
-      "request_schema_id": "demo_scenarios_id_advance_Request",
-      "response_schema_id": "SimulationStepDTO"
+      "request_schema_id": "DemoAdvanceRequest",
+      "response_schema_id": "SimulationStepDTO",
+      "milestone": "B19",
+      "status": "IMPLEMENTED",
+      "query_parameters": []
     },
     {
       "method": "GET",
@@ -368,7 +585,10 @@
       "response_dto": "ScenarioPage",
       "idempotency_key": false,
       "request_schema_id": null,
-      "response_schema_id": "ScenarioPage"
+      "response_schema_id": "ScenarioPage",
+      "milestone": "B19",
+      "status": "IMPLEMENTED",
+      "query_parameters": []
     },
     {
       "method": "GET",
@@ -377,7 +597,10 @@
       "response_dto": "HealthDTO",
       "idempotency_key": false,
       "request_schema_id": null,
-      "response_schema_id": "HealthDTO"
+      "response_schema_id": "HealthDTO",
+      "milestone": "B16",
+      "status": "IMPLEMENTED",
+      "query_parameters": []
     },
     {
       "method": "GET",
@@ -386,7 +609,203 @@
       "response_dto": "HealthDTO",
       "idempotency_key": false,
       "request_schema_id": null,
-      "response_schema_id": "HealthDTO"
+      "response_schema_id": "HealthDTO",
+      "milestone": "B16",
+      "status": "IMPLEMENTED",
+      "query_parameters": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/investigations/{id}/hypotheses",
+      "role": "ANALYST",
+      "response_dto": "Ack",
+      "idempotency_key": true,
+      "request_schema_id": "ProposeRequest",
+      "response_schema_id": "Ack",
+      "milestone": "B16",
+      "status": "IMPLEMENTED"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/hypotheses/{id}/assessments",
+      "role": "ANALYST",
+      "response_dto": "Ack",
+      "idempotency_key": true,
+      "request_schema_id": "AssessRequest",
+      "response_schema_id": "Ack",
+      "milestone": "B16",
+      "status": "IMPLEMENTED"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/inspections",
+      "role": "ANALYST",
+      "response_dto": "InspectionDTO",
+      "idempotency_key": true,
+      "request_schema_id": "InspectionRequest",
+      "response_schema_id": "InspectionDTO",
+      "milestone": "B16",
+      "status": "IMPLEMENTED"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/inspections/{id}/transitions",
+      "role": "ANALYST,DEPARTMENT_LEAD",
+      "response_dto": "InspectionDTO",
+      "idempotency_key": true,
+      "request_schema_id": "TransitionRequest",
+      "response_schema_id": "InspectionDTO",
+      "milestone": "B16",
+      "status": "IMPLEMENTED"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/plans",
+      "role": "ANALYST",
+      "response_dto": "PlanDTO",
+      "idempotency_key": true,
+      "request_schema_id": "DraftRequest",
+      "response_schema_id": "PlanDTO",
+      "milestone": "B16",
+      "status": "IMPLEMENTED"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/work-orders",
+      "role": "APPROVER",
+      "response_dto": "WorkOrderDTO",
+      "idempotency_key": true,
+      "request_schema_id": "OrderRequest",
+      "response_schema_id": "WorkOrderDTO",
+      "milestone": "B16",
+      "status": "IMPLEMENTED"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/work-orders/{id}/progress",
+      "role": "DEPARTMENT_LEAD",
+      "response_dto": "WorkOrderDTO",
+      "idempotency_key": true,
+      "request_schema_id": "ProgressRequest",
+      "response_schema_id": "WorkOrderDTO",
+      "milestone": "B16",
+      "status": "IMPLEMENTED"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/work-orders/{id}/inspections",
+      "role": "DEPARTMENT_LEAD,ANALYST",
+      "response_dto": "Ack",
+      "idempotency_key": true,
+      "request_schema_id": "WorkInspectionRequest",
+      "response_schema_id": "Ack",
+      "milestone": "B16",
+      "status": "IMPLEMENTED"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/work-orders/{id}/recurrence",
+      "role": "ANALYST",
+      "response_dto": "OutcomeDTO",
+      "idempotency_key": true,
+      "request_schema_id": "RecurRequest",
+      "response_schema_id": "OutcomeDTO",
+      "milestone": "B16",
+      "status": "IMPLEMENTED"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/approvals/{id}",
+      "role": "APPROVER",
+      "response_dto": "ApprovalDTO",
+      "idempotency_key": false,
+      "request_schema_id": null,
+      "response_schema_id": "ApprovalDTO",
+      "milestone": "B16",
+      "status": "IMPLEMENTED",
+      "query_parameters": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/investigations/{id}/plans",
+      "role": "ANY",
+      "response_dto": "Page[PlanDTO]",
+      "idempotency_key": false,
+      "request_schema_id": null,
+      "response_schema_id": "Page[PlanDTO]",
+      "milestone": "B16",
+      "status": "IMPLEMENTED",
+      "query_parameters": [
+        "limit",
+        "cursor"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/hypotheses/{id}",
+      "role": "ANY",
+      "response_dto": "HypothesisDTO",
+      "idempotency_key": false,
+      "request_schema_id": null,
+      "response_schema_id": "HypothesisDTO",
+      "milestone": "B16",
+      "status": "IMPLEMENTED",
+      "query_parameters": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/responsibilities",
+      "role": "DEPARTMENT_LEAD",
+      "response_dto": "ResponsibilityDTO",
+      "idempotency_key": true,
+      "request_schema_id": "ResponsibilitySubmission",
+      "response_schema_id": "ResponsibilityDTO",
+      "milestone": "B20-R-OWNERSHIP",
+      "status": "IMPLEMENTED"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/responsibilities/{id}/review",
+      "role": "ANALYST",
+      "response_dto": "ResponsibilityDTO",
+      "idempotency_key": true,
+      "request_schema_id": "ResponsibilityReview",
+      "response_schema_id": "ResponsibilityDTO",
+      "milestone": "B20-R-OWNERSHIP",
+      "status": "IMPLEMENTED"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/responsibilities/{id}",
+      "role": "ANY",
+      "response_dto": "ResponsibilityDTO",
+      "idempotency_key": false,
+      "request_schema_id": null,
+      "response_schema_id": "ResponsibilityDTO",
+      "milestone": "B20-R-OWNERSHIP",
+      "status": "IMPLEMENTED",
+      "query_parameters": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/investigations",
+      "role": "ANY",
+      "response_dto": "Page[InvestigationDTO]",
+      "idempotency_key": false,
+      "request_schema_id": null,
+      "response_schema_id": "Page[InvestigationDTO]",
+      "milestone": "FRONTEND-BACKEND-DEMO",
+      "status": "IMPLEMENTED",
+      "query_parameters": [
+        "limit",
+        "cursor",
+        "issue",
+        "status",
+        "department_id",
+        "after",
+        "before"
+      ],
+      "query_schema_id": "ResourceQuery"
     }
   ],
   "envelope": {
@@ -400,7 +819,7 @@
       "request_id"
     ]
   },
-  "sse_cursor": "durable monotonically sortable event_id; Last-Event-ID with replay/refetch semantics",
+  "sse_cursor": "B15 source-local registration cursor distinct from domain event ID/attempt; nonnegative decimal, Last-Event-ID or cursor, both must agree; gaps CURSOR_EXPIRED/refetch, future409, malformed422",
   "dto_contracts": {
     "GraphSubgraphDTO": {
       "required": [
@@ -441,13 +860,17 @@
     "PlanDTO": {
       "required": [
         "plan_id",
+        "investigation_id",
         "version",
         "content_hash",
-        "tasks",
-        "dependencies",
+        "draft",
+        "draft_receipt",
         "status",
+        "expected_hash",
+        "approval_status",
+        "execution_gates_verified",
         "simulated",
-        "monitoring_criteria"
+        "limitations"
       ]
     }
   },
@@ -457,5 +880,81 @@
     "mode": "single_synthetic_municipality",
     "caller_selectable": false,
     "framework_tenant_id_mapping": "explicit boundary adapter only; never a domain property"
+  },
+  "b16_security": {
+    "reviewer_transport": "X-Reviewer-Authorization: Bearer; authenticated independent analyst, never JSON",
+    "source_configuration": "Host-only exact private profiles; no caller graph/runtime/role selection",
+    "request_identity": "Server-generated X-Request-ID correlation; Idempotency-Key bound to server actor+path+entity+validated body+reviewer identity",
+    "recovery": "409 RECOVERY_REQUIRED UNKNOWN, persisted transport intent; no automatic redispatch",
+    "public": [
+      "POST /api/v1/auth/demo-login",
+      "GET /api/v1/health/live",
+      "GET /api/v1/health/ready"
+    ],
+    "finite_reads": "Bound500 candidates, authorize before total/count/page; limit1..50; stable ID cursor; rich B17 views deferred"
+  },
+  "b17": {
+    "decision": "DEC-062",
+    "routes": [
+      "/dashboard/summary",
+      "/investigations/{id}/trace",
+      "/investigations/{id}/hypotheses",
+      "/investigations/{id}/graph",
+      "/map/features",
+      "/assets/{id}",
+      "/assets/{id}/neighbors",
+      "/events/stream"
+    ],
+    "bounds": {
+      "candidates_per_family": 500,
+      "adjacency_per_batch": 5000,
+      "nodes": 120,
+      "edges": 200,
+      "depth": 5,
+      "page": 50,
+      "stream_batch": 50,
+      "stream_seconds": 30,
+      "stream_poll_seconds": 0.25
+    },
+    "list_filters": [
+      "issue",
+      "status",
+      "department_id",
+      "after",
+      "before",
+      "limit",
+      "cursor"
+    ],
+    "list_scope": "Six canonical resource lists authorize and filter before counts/pages; ID ordering; revision readback detects writes during a response, later pages are current projections",
+    "graph": "Fixed bounded RO neighborhood; reuse registry and B05 provenance/temporal rules; explicit candidate opt-in and persisted selected path bodies only",
+    "trace": "Validated source/thread-bound decisions and BROKER records, SERVER parent linkage; readonly official Saver; no raw journals/provider bodies/private reasoning",
+    "evidence": "Validated typed inspection observations, finding IDs/status, measurements/units, attributed source and review; non-report unavailable explicitly",
+    "legacy_compatibility": [
+      "Preserve DashboardSummary/AgentTracePage/HypothesisPage/MapFeatureCollection/AssetDTO/SSEStream names and original required fields",
+      "Asset condition is nullable because registry makes it optional; never invent a condition",
+      "PlanDTO.approval_status retains B16 audited lifecycle meaning with explicit schema/response limitation; actual approval is ApprovalDTO.status",
+      "SSEStream event_id/timestamp alias canonical durable id/occurred_at; raw B15 public projection unchanged"
+    ],
+    "browser_auth": "fetch Authorization Bearer header only; query tokens rejected",
+    "stream_errors": [
+      "CURSOR_INVALID",
+      "CURSOR_CONFLICT",
+      "CURSOR_FUTURE",
+      "CURSOR_EXPIRED"
+    ],
+    "reconnect": "Save event/cursor-control IDs, reconnect using same authenticated scope/filter, then authoritative GET refetch; no source discovery or domain acknowledgment in stream",
+    "deferred": "None through B19; B20/frontend/live not authorized",
+    "query_contract": {
+      "decision": "DEC-063",
+      "policy": "Closed per-route allowlists are identical to OpenAPI query parameters; unknown, irrelevant or repeated parameters return sanitized422",
+      "hypotheses": "status equality and exclusive stable ID cursor/limit only; after/before rejected (no normative creation-versus-assessment timestamp semantics)",
+      "dashboard": "issue/status/department_id/after/before apply independently to each authorized metric resource; aggregate response has no limit/cursor",
+      "trace": "after/before inclusively filter actual persisted tool-finished/decision-decided timestamp before chronological timestamp+eventID pagination",
+      "resources": "Existing resource filters/paging unchanged; inclusive after/before on reported/start/request/create timestamp per existing projection",
+      "map": "Existing resource filters/paging plus investigation_id; canonical location points only",
+      "graph_neighbors": "depth and include_candidates only",
+      "asset": "No query parameters",
+      "stream": "Existing cursor/investigation_id and Last-Event-ID header unchanged"
+    }
   }
 }

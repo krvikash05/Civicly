@@ -145,3 +145,59 @@ Runtime budgets remain16 iterations/8tools/60000tokens/240seconds/5wakes, config
 3. Under that **separate approval only**, invoke `python -m app.agents` with the exact profile/investigation/thread, `--live`, and approved `--max-cost-usd`. Observe both countTokens and generateContent request reservations and genuine usage/cost. Verify at least one multi-step tool-selected investigation, actual tools/list/call, native hypothesis/assessment/inspection actions, source evidence and durable decision/rationale/trace/checkpoint IDs. Stop at cap/unknown billing rather than reset accounting.
 4. Submit a contradictory reviewed inspection through B09, then explicitly resume the same approved thread. Compare genuine model-selected next action and preserved historical classifications; repeat the selected road topology variants and waste explanation test. Distinguish topology from causal evidence and retain candidate/negative limits. Exercise provider interruption recovery only where feasible without blind duplicate billing/actions.
 5. Reopen checkpoints/ledger in a fresh process, inspect actual usage receipts and persisted outputs, compare retained data fingerprints, and publish sanitized proof. Mark a live gate green only for behavior directly observed. B10 live three-category/contradiction/topology/structured-output gates remain OPEN until this succeeds. B10-O-R mock HTTP cannot close them. B11 requires separate review/authorization.
+
+
+## B11 compatible memory extension
+
+See [memory guide](MEMORY.md) and contracts/organizational_memory.json. Existing organizational MCP read tools now return closed source/version/owner/hash/chunk citations under an explicit private exact-key capability; missing capability remains UNAVAILABLE. retrieve_case_memory projects actual corrected B09 assessment/Evidence chronology plus existing B05 case paths. Read-only SDK LocalRetrieval, no generated Cypher/write permission. Organizational reads bypass civic-only cache, enforce source revocation independently. Original B10 state/Saver/native journals/spending and16-tool catalog remain; new optional citation schema fields change inventory hash and require actual discovery. No historical trace rewritten. B10 genuine live acceptance remains OPEN/PARTIAL, explicitly deferred by human to final integration; B11 does not pass those gates. No B12+ implemented.
+
+## B11-LIVE-SMOKE-R prompt and one-shot harness
+
+Current provider prompt B11-1 is a versioned successor of B10-3; only stale memory
+capability guidance changes. Organizational/case-memory READ requires actual
+catalog discovery/authorization; source text remains untrusted, citations/version/
+revocation/authority/uncertainty and all competing-hypothesis/approval safeguards
+remain. Historical B10-3 bytes/hashes are preserved.
+
+`scripts/b11_live_smoke.py` now targets a separate B11-LIVE-SMOKE-R profile/thread
+and evidence prefix. Actual UTC clock is injected into fixture preparation, leaving
+deterministic tests' default clock unchanged. Required investigation/incident/
+cluster/assets and connecting relationships must be visible; binding monotonic,
+source profile exact, no conflicting binding/checkpoint/quarantine/owner. Checks
+repeat before execution ownership. Failed original case/markers/quarantine retained.
+Existing ledger only, case cap0.15 including reservations, no project change;
+provider retries0, two schema attempts maximum, count<=1 per generation. Static
+LangGraph interrupts prevent analytical writes and stop after one READ. One
+exclusive attempt marker, no resume/second wake. Sanitized nested errors retain
+class/allowlisted codes only. Manual phases require explicit live authorization;
+ordinary pytest interlock remains. Results do not establish full B10 acceptance.
+
+## B12 compatible typed draft planning
+
+Current B12-1 prompt permits RECOMMEND {plan_draft} matching the exact closed
+controlled schema. Domain service validates all source/basis/DAG/owner/procedure
+refs, persists DRAFT/PROPOSED only and returns immutable version/hash receipt.
+Invalid input pauses PLAN_CLARIFICATION_REQUIRED. Legacy recommendation payload
+and old checkpoint defaults remain. Plan ID/version/hash is validated on decode;
+no approval/execution permission added. Apply0004/operator memory capability is
+required; no model-driven migration/bootstrap. See backend/PLANNING.md and B12
+review evidence. Prior B11-1/B10-3 prompts and genuine smoke evidence preserved;
+no further live provider authorization is implied.
+
+## B14-R validated recurrence refresh
+
+Explicit owned resume of a reopened investigation may discover additional sourced
+INVESTIGATES incident links. `recurrence.refresh` validates the B08 intake journal,
+canonical hash/receipt, AFTER_RECORDED_END, original cluster/issue, prior dated end,
+new active targets and actual independently reviewed report evidence. Existing
+three-incident graph/state bound retained. It constructs a new closed validated
+state with active incident/asset IDs and evidence hashes plus host-generated
+RECURRENCE_SCOPE_REFRESH audit. Historical incident links, native plan/hypothesis
+provenance and old public Saver checkpoint remain; no injection on decode, no
+historical checkpoint editing. Old plan/hypotheses are recorded earlier-episode
+context, never authority to assert cause/execute for new occurrence. Mandatory
+fresh MCP READ follows revision/scope refresh before another analytical action.
+Absent recurrence links leaves original resume behavior unchanged. Invalid refresh
+fails closed via existing ownership/quarantine; no B15 delivery/automatic wake or
+live calls. Actual test uses scripted READ new incident→READ new report→PAUSE with
+real MCP/Saver, clearly separate from genuine Gemini acceptance (still OPEN/PARTIAL).

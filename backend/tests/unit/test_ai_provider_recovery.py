@@ -62,7 +62,7 @@ def test_overall_deadline_retains_reservation_and_trace_versions(tmp_path,monkey
     monkeypatch.setattr(asyncio,'timeout',lambda seconds:original(.01))
     with pytest.raises(ProviderError,match='PROVIDER_TIMEOUT'):asyncio.run(m.choose({},60000))
     assert m.ledger.summary()['uncertain_requests']==1
-    assert m.last_usage['prompt_version']=='B10-3' and m.last_usage['usage_status']=='UNCERTAIN'
+    assert m.last_usage['prompt_version']==__import__('app.agents.provider',fromlist=['PROMPT_VERSION']).PROMPT_VERSION and m.last_usage['usage_status']=='UNCERTAIN'
     assert m.last_failure['reservation_retained']
 
 

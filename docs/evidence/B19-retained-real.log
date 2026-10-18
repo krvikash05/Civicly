@@ -1,0 +1,112 @@
+.........................F
+=================================== FAILURES ===================================
+______ test_representative_real_cli_mcp_saver_events_and_hidden_isolation ______
+
+shared = namespace(db=<falkordb.falkordb.FalkorDB object at 0x108eeaa20>, p=ActiveProfile(version=1, graph='civicly_b10_test_ca...ew/56f1be9f3e4947a38763694e46f4553f/memory.json'), memory=<app.memory.service.Memory object at 0x109c88740>, proofs=[])
+
+    def test_representative_real_cli_mcp_saver_events_and_hidden_isolation(shared):
+     async def run():
+      receipt=await fresh(shared,'S07','PRIMARY','representative-source');path=shared.path.parent/receipt['profile_reference']/'profile.json';p=load(path)
+      case=next(c for c in receipt['scenario']['cases'] if c['issue_type']=='WATERLOGGING')
+      private=path.parent;mp=private/'memory.json'
+      from cli.private import write_private,scope
+      sessions={}
+      for who in ['OP-ADMIN','OP-ANALYST','OP-DRAIN-LEAD']:
+       sessions[who]=private/(who+'.session.json');write_private(sessions[who],{'version':1,'scope':scope(p,shared.auth.path),'token':shared.tokens[who],'operator_id':who,'login_key':'B19-host-provisioned-session'})
+      calls=[];env={**os.environ,'PYTHONPATH':str(Path('backend/test_guards').resolve())+os.pathsep+str(Path('backend').resolve())}
+      def cli(args,who='OP-ADMIN'):
+       result=subprocess.run([sys.executable,'-m','cli','--profile',str(path),'--auth-store',str(shared.auth.path),'--memory-profile',str(mp),'--session',str(sessions[who]),'--at',AT,*args],env=env,capture_output=True,text=True,timeout=60)
+       assert all(t not in result.stdout+result.stderr for t in shared.tokens.values())
+       value=json.loads(result.stdout);assert result.returncode==0,value;calls.append({'command':' '.join(args[:2]),'status':value['status']});return value['data']
+      catalog=cli(['demo','scenarios']);assert len(catalog['items'])==12
+      public=cli(['investigate','get','--id',case['investigation_id']],'OP-ANALYST')
+      # Every runtime tool catalog is discovered from actual servers. Explicit test-only
+      # calls probe the boundary; no claim of model-selected sequence/autonomy.
+      from app.agents.mcp import brokers
+      from app.mcp.civicly.contracts import context
+      future_phrases=[x.statement for world in worlds().values() for packet in [world.release,world.negative] for rows in packet.values() for x in rows]
+      truth=json.loads(Path('data/scenarios/hidden_truth.json').read_text())
+      async def reads(phase):
+       outputs=[]
+       async with brokers(p,path,timeout=10,memory_path=mp) as tools:
+        ctx=context(case['investigation_id']).model_copy(update={'source_graph':p.graph})
+        for forbidden in ['data/scenarios/hidden_truth.json','data/scenarios/event_reveals.json','data/scenarios/runtime-v1.json','contracts/scenarios/catalog.json']:
+         with pytest.raises(PermissionError):Path(forbidden).read_text()
+        assert tools.catalog() and not any('demo' in t['name'] or 'scenario' in t['name'] or 'hidden' in t['name'] for t in tools.catalog())
+        for name,args in [('official::query_graph_readonly',{'template':'node','id':case['incident_id']}),('civicly::get_maintenance_history',{'asset_id':case['asset_id'],'from_time':BASE,'to_time':AT,'as_of':AT}),('civicly::retrieve_external_evidence',{'location_id':'LOC-005','evidence_type':'RAINFALL','from_time':BASE,'to_time':AT,'as_of':AT})]:
+         out=await tools.call(name,args,ctx.model_copy(update={'execution_id':uuid4().hex}),'B19 operator boundary probe; not model-selected',cutoff=AT);outputs.append(out)
+        docs=await tools.call('civicly::get_organizational_procedures',{'department_id':'DEPT-DRAIN','action_type':'INSPECTION','as_of':AT},ctx.model_copy(update={'execution_id':uuid4().hex}),'B19 sourced organizational read',cutoff=AT);outputs.append(docs)
+       raw=json.dumps(outputs)
+       assert 'underlying_cause' not in raw and 'evaluation_note' not in raw and 'expected_safe_next_actions' not in raw and 'EVALUATOR_ONLY' not in raw
+       if phase=='baseline':assert all(text not in raw for text in future_phrases)
+       assert outputs[2]['status']=='UNAVAILABLE'
+       return outputs
+      before=await reads('baseline')
+      # Explicit queue and one actual offline worker, genuine Saver/MCP I/O.
+      resume=private/'resume.json';resume.write_text(json.dumps({'reason':'B19 explicit offline boundary check'}))
+      queued=cli(['investigate','resume','--id',case['investigation_id'],'--payload',str(resume),'--key','B19-wake'],'OP-ANALYST');assert queued['status']=='PENDING'
+      advanced=cli(['advance','run','--key','B19-worker','--batches','1']);assert advanced['batches'][0]['status']=='DONE'
+      trace=cli(['investigate','trace','--id',case['investigation_id']],'OP-ANALYST');assert trace['items'] and not trace['recovery_required']
+      assert all(x['execution_mode']=='B15_DETERMINISTIC_DEVELOPMENT_NO_PROVIDER' for x in trace['items'])
+      from app.agents.checkpoints import saver
+      saved=list(saver(p).list(None));assert saved
+      checkpoints=[(s.config['configurable']['checkpoint_id'],hashlib.sha256(json.dumps(s.checkpoint,default=str,sort_keys=True).encode()).hexdigest()) for s in saved]
+      async def release(c,s):
+       view,lead=await inspection(shared,c,case,'representative')
+       q={'expected_stage':'BASELINE_VISIBLE','stage':'EVIDENCE_REVEALED','investigation_id':case['investigation_id'],'inspection_id':view['id'],'expected_hash':view['expected_hash']};payload=private/'release.json';payload.write_text(json.dumps(q))
+       out=cli(['demo','advance','--id','S07','--payload',str(payload),'--key','representative-release','--field-session',str(sessions[lead]),'--reviewer-session',str(sessions['OP-ANALYST'])]);assert not out['stage_advanced']
+       # Other categories' unreleased packets remain absent from canonical records and all public views.
+       evidence=await c.get('/api/v1/evidence/'+out['released_evidence_ids'][0],headers=headers(shared));assert evidence.status_code==200 and evidence.json()['data']['reviewed']
+       graph=(await c.get('/api/v1/investigations/'+case['investigation_id']+'/graph',params={'depth':4,'include_candidates':'true'},headers=headers(shared))).json()['data']
+       visible=json.dumps(graph)
+       for issue in ['ROAD_DAMAGE','WASTE_ACCUMULATION']:
+        assert all(x.statement not in visible for x in worlds()['S07'].release[issue])
+       later=s.delivery.discover();assert later
+       return out,graph,later
+      out,graph,later=await client_run(shared,path,release)
+      after=await reads('released')
+      assert out['released_evidence_ids'][0] in json.dumps(after)
+      assert all('underlying_cause' not in json.dumps(x) and 'expected_safe_next_actions' not in json.dumps(x) for x in [catalog,public,trace,graph])
+      assert {(s.config['configurable']['checkpoint_id'],hashlib.sha256(json.dumps(s.checkpoint,default=str,sort_keys=True).encode()).hexdigest()) for s in saver(p).list(None)}>=set(checkpoints)
+      Path('docs/evidence/B19-hidden-isolation.json').write_text(json.dumps({'mode':'REAL_CLI_HTTP_MCP_SAVER_EVENTS_SCRIPTED_READPAUSE_NO_SOLVER','source_graph':p.graph,'investigation_id':case['investigation_id'],'cli_calls':calls,'baseline_future_packets_absent':True,'evaluator_fields_absent':True,'unreleased_other_categories_absent':True,'before':before,'after':after,'released_evidence_ids':out['released_evidence_ids'],'graph':graph,'trace':trace,'checkpoint_ids_retained':[id for id,_ in checkpoints],'discovered_event_ids':later,'external_provider_calls':0},indent=2)+'\n')
+>    asyncio.run(run())
+
+backend/tests/integration/test_demo_runtime.py:199: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/base_events.py:684: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+backend/tests/integration/test_demo_runtime.py:175: in run
+    advanced=cli(['advance','run','--key','B19-worker','--batches','1']);assert advanced['batches'][0]['status']=='DONE'
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+args = ['advance', 'run', '--key', 'B19-worker', '--batches', '1']
+who = 'OP-ADMIN'
+
+    def cli(args,who='OP-ADMIN'):
+     result=subprocess.run([sys.executable,'-m','cli','--profile',str(path),'--auth-store',str(shared.auth.path),'--memory-profile',str(mp),'--session',str(sessions[who]),'--at',AT,*args],env=env,capture_output=True,text=True,timeout=60)
+     assert all(t not in result.stdout+result.stderr for t in shared.tokens.values())
+>    value=json.loads(result.stdout);assert result.returncode==0,value;calls.append({'command':' '.join(args[:2]),'status':value['status']});return value['data']
+                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E    AssertionError: {'status': 'ERROR', 'error': {'code': 'RECOVERY_REQUIRED', 'message': 'Operator request failed safely; inspect supplie...5232dbfd3317191bc4c', 'investigation_id': 'INV-B09-14a04c11249f2c170768f77fa8fbc947'}}, 'simulation_mode': 'SIMULATED'}
+E    assert 6 == 0
+E     +  where 6 = CompletedProcess(args=['/Users/vikashkumar/Desktop/Civicly/backend/.venv/bin/python', '-m', 'cli', '--profile', '/User...gation_id": "INV-B09-14a04c11249f2c170768f77fa8fbc947"\n    }\n  },\n  "simulation_mode": "SIMULATED"\n}\n', stderr='').returncode
+
+backend/tests/integration/test_demo_runtime.py:147: AssertionError
+=============================== warnings summary ===============================
+backend/.venv/lib/python3.12/site-packages/graphrag_sdk/core/models.py:19
+  /Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/graphrag_sdk/core/models.py:19: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.14/migration/
+    class DataModel(BaseModel):
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED backend/tests/integration/test_demo_runtime.py::test_representative_real_cli_mcp_saver_events_and_hidden_isolation
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 25 passed, 1 warning in 210.80s (0:03:30)

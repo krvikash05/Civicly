@@ -1,0 +1,85 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_____ test_api_bindings_submit_exact_persisted_tasks_without_guessing_ids ______
+
+db = <falkordb.falkordb.FalkorDB object at 0x11890a990>
+tmp_path = PosixPath('/private/var/folders/ng/nxnstkjs7tn9dbx9nhvtvmzw0000gn/T/pytest-of-vikashkumar/pytest-226/test_api_bindings_submit_exact0')
+memory = <app.memory.service.Memory object at 0x11d3c7770>
+
+    def test_api_bindings_submit_exact_persisted_tasks_without_guessing_ids(db,tmp_path,memory):
+     p,r,clock,path,inv,draft,planning,auth,tokens,ops=setup(db,tmp_path,memory)
+     with active_scope(p):
+>     receipt=asyncio.run(ops.draft(draft,request_id='BINDING-DRAFT',token=tokens['OP-ANALYST']))
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+backend/tests/integration/test_plan_binding_http.py:17: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/base_events.py:684: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+backend/app/services/operations/service.py:32: in draft
+    self.target();actor=self.auth.require(token,'draft');return await self.planning.create(value,request_id=request_id,actor=actor)
+                                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/app/services/planning/service.py:97: in create
+    proof['tasks'][task.id]={**await self.resolve(task,reader,at),'remediation':action_proof}
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <app.services.planning.service.PlanningService object at 0x11d5ad9a0>
+task = TaskDraft(id='inspect0', action_type='INSPECTION', remediation=None, target_ids=['D1'], department_id='DEPT-DRAIN', pr...eria='Independent reviewed findings distinguish alternatives', risks=['Reported condition may have another mechanism'])
+reader = <app.services.evidence.reader.Reader object at 0x128961520>
+as_of = '2026-10-18T12:00:17.000000Z'
+
+    async def resolve(self,task,reader,as_of):
+     owners=[]
+     for target in task.target_ids:
+      reader.node(target,'InfrastructureAsset')
+      rows=self.repo._read('MATCH (:InfrastructureAsset {id:$id})-[r:MAINTAINED_BY]->(d:Department) RETURN r.id,d.id LIMIT 21',{'id':target})
+      if len(rows)>20:raise PlanningBlocked('OWNERSHIP_SCAN_LIMIT')
+      verified=[]
+      for edge_id,department in rows:
+       edge=self.repo.get_relationship(edge_id)
+       if not reader.visible(edge.properties) or edge.properties.get('association_status')!='VERIFIED':continue
+       reader.node(department,'Department')
+       evidence=reader.node(edge.properties.get('source_evidence_id',''),'Evidence')
+       if evidence.properties['reliability']!='VERIFIED' or evidence.properties.get('source_kind')=='AGENT' or not evidence.properties.get('observed_at'):raise PlanningBlocked('OWNERSHIP_EVIDENCE_INVALID')
+       if evidence.properties['evidence_type']=='RESPONSIBILITY_REVIEW':
+        from app.services.responsibility.service import validate_review_evidence
+        review,record=validate_review_evidence(self.repo,evidence.properties)
+        state=__import__('app.services.operations.storage',fromlist=['Storage']).Storage(self.repo).get('responsibility',review.submission_id)
+        q=record.command
+        if not state or state['relationship_id']!=edge_id or state['relationship_hash']!=edge.content_hash or (q.asset_id,q.department_id,q.valid_from,q.valid_to)!=(target,department,edge.properties.get('valid_from'),edge.properties.get('valid_to')):raise PlanningBlocked('OWNERSHIP_REVIEW_BINDING')
+       self.repo._check_evidence(edge.properties)  # Reuse B03 attribution/date ordering guarantees.
+       verified.append((department,edge_id,evidence.id))
+      if len(verified)!=1:raise PlanningBlocked('OWNERSHIP_UNKNOWN_OR_CONFLICTING')
+      if verified[0][0]!=task.department_id:raise PlanningBlocked('ACCOUNTABLE_DEPARTMENT_MISMATCH')
+      owners.append({'asset_id':target,'department_id':verified[0][0],'relationship_id':verified[0][1],'evidence_id':verified[0][2],'relationship_hash':self.repo.get_relationship(verified[0][1]).content_hash,'evidence_hash':self.repo.get_node(verified[0][2],'Evidence').content_hash})
+     if self.memory is None:raise PlanningBlocked('PROCEDURE_CAPABILITY_UNAVAILABLE')
+     citation=task.procedure_citation
+>    if timestamp(citation.retrieved_at)>timestamp(as_of):raise PlanningBlocked('PROCEDURE_CITATION_FROM_FUTURE')
+                                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E    app.services.planning.service.PlanningBlocked: PROCEDURE_CITATION_FROM_FUTURE
+
+backend/app/services/planning/service.py:48: PlanningBlocked
+=============================== warnings summary ===============================
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyPacked has no __module__ attribute
+
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyObject has no __module__ attribute
+
+backend/.venv/lib/python3.12/site-packages/graphrag_sdk/core/models.py:19
+  /Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/graphrag_sdk/core/models.py:19: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.14/migration/
+    class DataModel(BaseModel):
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED backend/tests/integration/test_plan_binding_http.py::test_api_bindings_submit_exact_persisted_tasks_without_guessing_ids
+1 failed, 3 warnings in 46.28s
+sys:1: DeprecationWarning: builtin type swigvarlink has no __module__ attribute

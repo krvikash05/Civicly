@@ -1,0 +1,73 @@
+# B20-R-SERVICE-EVIDENCE exact file inventory
+
+Baseline snapshot1728public files includes prior accepted uncommitted work; scoped patch excludes that earlier Git diff. No commit/push or frontend edits/execution.
+
+- `backend/SERVICE_EVIDENCE.md` — created; bounded service provenance/controller/read projection, compatible schema, focused test or operator guidance.
+- `backend/app/api/models.py` — modified; bounded service provenance/controller/read projection, compatible schema, focused test or operator guidance.
+- `backend/app/mcp/civicly/service.py` — modified; bounded service provenance/controller/read projection, compatible schema, focused test or operator guidance.
+- `backend/app/services/demo/service.py` — modified; bounded service provenance/controller/read projection, compatible schema, focused test or operator guidance.
+- `backend/app/services/demo/service_history.py` — created; bounded service provenance/controller/read projection, compatible schema, focused test or operator guidance.
+- `backend/app/services/evidence/classification.py` — modified; bounded service provenance/controller/read projection, compatible schema, focused test or operator guidance.
+- `backend/app/services/evidence/models.py` — modified; bounded service provenance/controller/read projection, compatible schema, focused test or operator guidance.
+- `backend/app/services/evidence/service.py` — modified; bounded service provenance/controller/read projection, compatible schema, focused test or operator guidance.
+- `backend/app/services/http/reads.py` — modified; bounded service provenance/controller/read projection, compatible schema, focused test or operator guidance.
+- `backend/app/services/operations/storage.py` — modified; bounded service provenance/controller/read projection, compatible schema, focused test or operator guidance.
+- `backend/app/services/service_evidence.py` — created; bounded service provenance/controller/read projection, compatible schema, focused test or operator guidance.
+- `backend/tests/integration/test_service_evidence_runtime.py` — created; bounded service provenance/controller/read projection, compatible schema, focused test or operator guidance.
+- `backend/tests/unit/test_service_evidence.py` — created; bounded service provenance/controller/read projection, compatible schema, focused test or operator guidance.
+- `blockers.md` — modified; append-only tracker history.
+- `contracts/api_models.json` — modified; bounded service provenance/controller/read projection, compatible schema, focused test or operator guidance.
+- `contracts/evidence_hypotheses.json` — modified; bounded service provenance/controller/read projection, compatible schema, focused test or operator guidance.
+- `contracts/scenarios/runtime.json` — modified; bounded service provenance/controller/read projection, compatible schema, focused test or operator guidance.
+- `contracts/service_evidence.json` — created; bounded service provenance/controller/read projection, compatible schema, focused test or operator guidance.
+- `data/scenarios/service-evidence-v1.json` — created; bounded service provenance/controller/read projection, compatible schema, focused test or operator guidance.
+- `decision.md` — modified; append-only tracker history.
+- `docs/evidence/B20R-SERVICE-EVIDENCE-COMMANDS.md` — created; sanitized review evidence.
+- `docs/evidence/B20R-SERVICE-EVIDENCE-DESIGN.md` — created; sanitized review evidence.
+- `docs/evidence/B20R-SERVICE-EVIDENCE-FILES.md` — created; sanitized review evidence.
+- `docs/evidence/B20R-SERVICE-EVIDENCE-RESULTS.md` — created; sanitized review evidence.
+- `docs/evidence/B20R-SERVICE-EVIDENCE-S05-NEGATIVE-proof.json` — created; sanitized review evidence.
+- `docs/evidence/B20R-SERVICE-EVIDENCE-S05-PRIMARY-proof.json` — created; sanitized review evidence.
+- `docs/evidence/B20R-SERVICE-EVIDENCE-S06-NEGATIVE-first-passing-proof.json` — created; sanitized review evidence.
+- `docs/evidence/B20R-SERVICE-EVIDENCE-S06-NEGATIVE-proof.json` — created; sanitized review evidence.
+- `docs/evidence/B20R-SERVICE-EVIDENCE-S06-PRIMARY-proof.json` — created; sanitized review evidence.
+- `docs/evidence/B20R-SERVICE-EVIDENCE-WALKTHROUGH.md` — created; sanitized review evidence.
+- `docs/evidence/B20R-SERVICE-EVIDENCE-changes.patch` — created; sanitized review evidence.
+- `docs/evidence/B20R-SERVICE-EVIDENCE-focused-final-zero-live.json` — created; sanitized review evidence.
+- `docs/evidence/B20R-SERVICE-EVIDENCE-focused-final.txt` — created; sanitized review evidence.
+- `docs/evidence/B20R-SERVICE-EVIDENCE-focused-zero-live.json` — created; sanitized review evidence.
+- `docs/evidence/B20R-SERVICE-EVIDENCE-focused.txt` — created; sanitized review evidence.
+- `docs/evidence/B20R-SERVICE-EVIDENCE-real-second-zero-live.json` — created; sanitized review evidence.
+- `docs/evidence/B20R-SERVICE-EVIDENCE-real-second.txt` — created; sanitized review evidence.
+- `docs/evidence/B20R-SERVICE-EVIDENCE-real-third-zero-live.json` — created; sanitized review evidence.
+- `docs/evidence/B20R-SERVICE-EVIDENCE-real-third.txt` — created; sanitized review evidence.
+- `docs/evidence/B20R-SERVICE-EVIDENCE-real-zero-live.json` — created; sanitized review evidence.
+- `docs/evidence/B20R-SERVICE-EVIDENCE-real.txt` — created; sanitized review evidence.
+- `docs/evidence/B20R-SERVICE-EVIDENCE-recovery-final-zero-live.json` — created; sanitized review evidence.
+- `docs/evidence/B20R-SERVICE-EVIDENCE-recovery-final.txt` — created; sanitized review evidence.
+- `docs/evidence/B20R-SERVICE-EVIDENCE-retention-final.txt` — created; sanitized review evidence.
+- `docs/evidence/B20R-SERVICE-EVIDENCE-retention-first.json` — created; sanitized review evidence.
+- `docs/evidence/B20R-SERVICE-EVIDENCE-retention-first.txt` — created; sanitized review evidence.
+- `docs/evidence/B20R-SERVICE-EVIDENCE-retention-script.py` — created; sanitized review evidence.
+- `docs/evidence/B20R-SERVICE-EVIDENCE-retention-zero-live.json` — created; sanitized review evidence.
+- `docs/evidence/B20R-SERVICE-EVIDENCE-retention.json` — created; sanitized review evidence.
+- `docs/evidence/B20R-SERVICE-EVIDENCE-retention.txt` — created; sanitized review evidence.
+- `docs/evidence/B20R-SERVICE-EVIDENCE-spec-complete-zero-live.json` — created; sanitized review evidence.
+- `docs/evidence/B20R-SERVICE-EVIDENCE-spec-complete.txt` — created; sanitized review evidence.
+- `docs/evidence/B20R-SERVICE-EVIDENCE-spec-final-zero-live.json` — created; sanitized review evidence.
+- `docs/evidence/B20R-SERVICE-EVIDENCE-spec-final.txt` — created; sanitized review evidence.
+- `docs/evidence/B20R-SERVICE-EVIDENCE-spec-zero-live.json` — created; sanitized review evidence.
+- `docs/evidence/B20R-SERVICE-EVIDENCE-spec.txt` — created; sanitized review evidence.
+- `docs/evidence/B20R-SERVICE-EVIDENCE-unit-final-zero-live.json` — created; sanitized review evidence.
+- `docs/evidence/B20R-SERVICE-EVIDENCE-unit-final.txt` — created; sanitized review evidence.
+- `docs/evidence/B20R-SERVICE-EVIDENCE-unit-second-zero-live.json` — created; sanitized review evidence.
+- `docs/evidence/B20R-SERVICE-EVIDENCE-unit-second.txt` — created; sanitized review evidence.
+- `docs/evidence/B20R-SERVICE-EVIDENCE-unit-zero-live.json` — created; sanitized review evidence.
+- `docs/evidence/B20R-SERVICE-EVIDENCE-unit.txt` — created; sanitized review evidence.
+- `flow.md` — modified; append-only tracker history.
+- `implementation_status.md` — modified; append-only tracker history.
+- `scripts/validate_demo.py` — modified; bounded service provenance/controller/read projection, compatible schema, focused test or operator guidance.
+- `task_board.md` — modified; append-only tracker history.
+- `test_log.md` — modified; append-only tracker history.
+
+Patch includes changed source/contracts/new controller data/guidance/trackers/main evidence Markdown. Runtime JSON/logs/provider/retention proofs listed separately. Dependencies excluded: existing backend/.venv, Docker images/volumes, private runtime auth/session/profile/.env files, credential values and Git internals. No migration/dependency/schema-registry/scenario-v1/city changes.

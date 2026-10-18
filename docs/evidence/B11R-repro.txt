@@ -1,0 +1,238 @@
+FFF                                                                      [100%]
+=================================== FAILURES ===================================
+_______ test_all_seeded_department_action_pairs_survive_global_crowding ________
+
+memory = <app.memory.service.Memory object at 0x116636cc0>
+
+    def test_all_seeded_department_action_pairs_survive_global_crowding(memory):
+     async def run():
+      corpus=sources()
+      for s in corpus:await memory.ingest(s)
+      sdk=SDK(memory.config,readonly=True)
+      try:global_ids={i.metadata['chunk_id'] for i in (await sdk.retrieve('INSPECTION')).items}
+      finally:await sdk.close()
+      water=[s for s in corpus if s.owner_department_id=='DEPT-WATER']
+      assert {s.document_id for s in water}=={'D005','D017'}
+      assert all(c['id'] not in global_ids for s in water for c in memory.store.get(s.id)[1]),'Real corpus must reproduce global top-k crowding'
+      rows=[]
+      for department,action in sorted({(s.owner_department_id,a) for s in corpus for a in s.action_types}):
+       eligible=[s for s in corpus if s.owner_department_id==department and action in s.action_types]
+       got=await memory.retrieve(as_of=AT,department_id=department,action_type=action)
+       assert got['citations'],(department,action,got)
+       assert {c['source_document_id'] for c in got['citations']}=={s.document_id for s in eligible}
+       for c in got['citations']:
+        source=next(s for s in eligible if s.document_id==c['source_document_id'])
+        assert c['source_version']==source.version and c['owner_department_id']==department and c['content_checksum']==source.sha256
+        chunks=memory.store.get(source.id)[1]
+        assert any(c['quote_excerpt']==v['text'][:800] and c['chunk_sha256']==v['sha256'] for v in chunks)
+       rows.append({'department':department,'action':action,'result':got})
+      proof('corpus',{'sdk_graph':memory.config.graph_name,'global_inspection_top12':sorted(global_ids),'pairs':rows})
+>    asyncio.run(run())
+
+backend/tests/integration/test_memory_review.py:42: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/base_events.py:684: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    async def run():
+     corpus=sources()
+     for s in corpus:await memory.ingest(s)
+     sdk=SDK(memory.config,readonly=True)
+     try:global_ids={i.metadata['chunk_id'] for i in (await sdk.retrieve('INSPECTION')).items}
+     finally:await sdk.close()
+     water=[s for s in corpus if s.owner_department_id=='DEPT-WATER']
+     assert {s.document_id for s in water}=={'D005','D017'}
+     assert all(c['id'] not in global_ids for s in water for c in memory.store.get(s.id)[1]),'Real corpus must reproduce global top-k crowding'
+     rows=[]
+     for department,action in sorted({(s.owner_department_id,a) for s in corpus for a in s.action_types}):
+      eligible=[s for s in corpus if s.owner_department_id==department and action in s.action_types]
+      got=await memory.retrieve(as_of=AT,department_id=department,action_type=action)
+      assert got['citations'],(department,action,got)
+>     assert {c['source_document_id'] for c in got['citations']}=={s.document_id for s in eligible}
+E     AssertionError: assert {'D010', 'D015', 'D016'} == {'D010', 'D01...D016', 'D018'}
+E       
+E       Extra items in the right set:
+E       'D018'
+E       'D011'
+E       Use -v to get more diff
+
+backend/tests/integration/test_memory_review.py:34: AssertionError
+------------------------------ Captured log call -------------------------------
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'text' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'name' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'text' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'name' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'text' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'name' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'text' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'name' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'text' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'name' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'text' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'name' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'text' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'name' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'text' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'name' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'text' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'name' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'text' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'name' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'text' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'name' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'text' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'name' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'text' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'name' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'text' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'name' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'text' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'name' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'text' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'name' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'text' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'name' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'embedding' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'text' is already indexed
+ERROR    graphrag_sdk.core.connection:connection.py:203 Non-transient FalkorDB query failure: ResponseError: Attribute 'name' is already indexed
+_____________ test_replay_checks_required_indexing_state[missing] ______________
+
+memory = <app.memory.service.Memory object at 0x116b99820>, damage = 'missing'
+
+    @pytest.mark.parametrize('damage',['missing','wrong_vector','missing_index'])
+    def test_replay_checks_required_indexing_state(memory,damage):
+     async def run():
+      s=sources()[0];first=await memory.ingest(s);healthy=await memory.ingest(s)
+      assert healthy['replayed'] and healthy['chunks']==first['chunks']
+      graph=memory.repo.client.select_graph(memory.config.graph_name)
+      if damage=='missing':graph.query('MATCH (:Document {id:$id})-[:PART_OF]->(c:Chunk) REMOVE c.embedding',params={'id':s.id})
+      elif damage=='wrong_vector':graph.query('MATCH (:Document {id:$id})-[:PART_OF]->(c:Chunk) SET c.embedding=vecf32($v)',params={'id':s.id,'v':[1.0]*64})
+      else:graph.query('DROP VECTOR INDEX FOR (c:Chunk) ON (c.embedding)')
+      with pytest.raises(SourceError,match='SDK_PARTIAL_REQUIRES_REPAIR'):await memory.ingest(s)
+      with pytest.raises(SourceError,match='SDK_PARTIAL_REQUIRES_REPAIR'):await memory.retrieve(as_of=AT,document_id=s.document_id)
+      proof('index-'+damage,{'graph':memory.config.graph_name,'healthy_replay':healthy['replayed'],'damage':damage,'broken_replay':'REPAIR_REQUIRED','broken_retrieval':'REPAIR_REQUIRED'})
+>    asyncio.run(run())
+
+backend/tests/integration/test_memory_review.py:56: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/base_events.py:684: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    async def run():
+     s=sources()[0];first=await memory.ingest(s);healthy=await memory.ingest(s)
+     assert healthy['replayed'] and healthy['chunks']==first['chunks']
+     graph=memory.repo.client.select_graph(memory.config.graph_name)
+     if damage=='missing':graph.query('MATCH (:Document {id:$id})-[:PART_OF]->(c:Chunk) REMOVE c.embedding',params={'id':s.id})
+     elif damage=='wrong_vector':graph.query('MATCH (:Document {id:$id})-[:PART_OF]->(c:Chunk) SET c.embedding=vecf32($v)',params={'id':s.id,'v':[1.0]*64})
+     else:graph.query('DROP VECTOR INDEX FOR (c:Chunk) ON (c.embedding)')
+>    with pytest.raises(SourceError,match='SDK_PARTIAL_REQUIRES_REPAIR'):await memory.ingest(s)
+E    Failed: DID NOT RAISE SourceError
+
+backend/tests/integration/test_memory_review.py:53: Failed
+__________ test_latest_assessment_budget_and_history_beyond_hard_cap ___________
+
+db = <falkordb.falkordb.FalkorDB object at 0x116bc3710>
+tmp_path = PosixPath('/private/var/folders/ng/nxnstkjs7tn9dbx9nhvtvmzw0000gn/T/pytest-of-vikashkumar/pytest-107/test_latest_assessment_budget_0')
+
+    def test_latest_assessment_budget_and_history_beyond_hard_cap(db,tmp_path):
+     p,r,clock,receipt,inv,h=prepare(db,tmp_path/'agent.json','WATERLOGGING')
+     with active_scope(p):
+      service=CivicReadService(db,source_graph=p.graph)
+      def read(limit,at=None):
+       return service.run('retrieve_case_memory',{'investigation_id':inv,'max_results':limit,'as_of':at or clock()},Context(trace_id=uuid4().hex,execution_id=uuid4().hex,source_graph=p.graph,investigation_id=inv))
+      latest=r._read('MATCH (:Hypothesis {id:$id})-[:HAS_ASSESSMENT]->(a:HypothesisAssessment) RETURN a.id ORDER BY a.assessed_at DESC,a.id DESC LIMIT 1',{'id':h})[0][0]
+>     small=read(1);assert json.loads(small['cases'][0]['outcome_summary'])['assessment_id']==latest
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E     AssertionError: assert 'ASSESS-B09-b...4e9cb62ea2b45' == 'ASSESS-B09-0...497bad0a037d4'
+E       
+E       - ASSESS-B09-0ddd3eb5d6b5af88921497bad0a037d4
+E       + ASSESS-B09-b03c319c1e3125f442d4e9cb62ea2b45
+
+backend/tests/integration/test_memory_review.py:65: AssertionError
+=============================== warnings summary ===============================
+backend/.venv/lib/python3.12/site-packages/graphrag_sdk/core/models.py:19
+  /Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/graphrag_sdk/core/models.py:19: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.14/migration/
+    class DataModel(BaseModel):
+
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyPacked has no __module__ attribute
+
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyObject has no __module__ attribute
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED backend/tests/integration/test_memory_review.py::test_all_seeded_department_action_pairs_survive_global_crowding
+FAILED backend/tests/integration/test_memory_review.py::test_replay_checks_required_indexing_state[missing]
+FAILED backend/tests/integration/test_memory_review.py::test_latest_assessment_budget_and_history_beyond_hard_cap
+3 failed, 2 deselected, 3 warnings in 16.44s
+sys:1: DeprecationWarning: builtin type swigvarlink has no __module__ attribute

@@ -1,0 +1,339 @@
+..FFFF...................FFFF.                                           [100%]
+=================================== FAILURES ===================================
+____________ test_closed_dependency[met-UTILITY_DEPENDENCY_BINDING] ____________
+
+change = 'met', code = 'UTILITY_DEPENDENCY_BINDING'
+
+    @pytest.mark.parametrize('change,code',[(None,None),('missing','UTILITY_DEPENDENCY_REQUIRED'),('met','UTILITY_DEPENDENCY_BINDING'),('wrong_action','UTILITY_DEPENDENCY_BINDING'),('wrong_target','UTILITY_DEPENDENCY_TARGET'),('unmet_safety','UTILITY_CURRENT_EVIDENCE_REQUIRED'),('extra_dependency','UTILITY_DEPENDENCY_SCOPE')])
+    def test_closed_dependency(change,code):
+     d=draft();t=d.tasks[1]
+     if change=='missing':t.remediation.conditions.pop()
+>    if change=='met':t.remediation.conditions[-1].status='MET'
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+backend/tests/unit/test_utility_intervention.py:26: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+backend/.venv/lib/python3.12/site-packages/pydantic/main.py:1111: in __setattr__
+    elif (setattr_handler := self._setattr_handler(name, value)) is not None:
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/pydantic/main.py:1147: in _setattr_handler
+    _check_frozen(cls, name, value)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+model_cls = <class 'app.services.planning.models.Prerequisite'>, name = 'status'
+value = 'MET'
+
+    def _check_frozen(model_cls: type[BaseModel], name: str, value: Any) -> None:
+        if model_cls.model_config.get('frozen'):
+            error_type = 'frozen_instance'
+        elif getattr(model_cls.__pydantic_fields__.get(name), 'frozen', False):
+            error_type = 'frozen_field'
+        else:
+            return
+    
+>       raise ValidationError.from_exception_data(
+            model_cls.__name__, [{'type': error_type, 'loc': (name,), 'input': value}]
+        )
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for Prerequisite
+E       status
+E         Instance is frozen [type=frozen_instance, input_value='MET', input_type=str]
+E           For further information visit https://errors.pydantic.dev/2.14/v/frozen_instance
+
+backend/.venv/lib/python3.12/site-packages/pydantic/main.py:104: ValidationError
+_______ test_closed_dependency[wrong_action-UTILITY_DEPENDENCY_BINDING] ________
+
+change = 'wrong_action', code = 'UTILITY_DEPENDENCY_BINDING'
+
+    @pytest.mark.parametrize('change,code',[(None,None),('missing','UTILITY_DEPENDENCY_REQUIRED'),('met','UTILITY_DEPENDENCY_BINDING'),('wrong_action','UTILITY_DEPENDENCY_BINDING'),('wrong_target','UTILITY_DEPENDENCY_TARGET'),('unmet_safety','UTILITY_CURRENT_EVIDENCE_REQUIRED'),('extra_dependency','UTILITY_DEPENDENCY_SCOPE')])
+    def test_closed_dependency(change,code):
+     d=draft();t=d.tasks[1]
+     if change=='missing':t.remediation.conditions.pop()
+     if change=='met':t.remediation.conditions[-1].status='MET'
+>    if change=='wrong_action':d.tasks[0].action_type='INSPECTION'
+                               ^^^^^^^^^^^^^^^^^^^^^^
+
+backend/tests/unit/test_utility_intervention.py:27: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+backend/.venv/lib/python3.12/site-packages/pydantic/main.py:1111: in __setattr__
+    elif (setattr_handler := self._setattr_handler(name, value)) is not None:
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/pydantic/main.py:1147: in _setattr_handler
+    _check_frozen(cls, name, value)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+model_cls = <class 'app.services.planning.models.TaskDraft'>
+name = 'action_type', value = 'INSPECTION'
+
+    def _check_frozen(model_cls: type[BaseModel], name: str, value: Any) -> None:
+        if model_cls.model_config.get('frozen'):
+            error_type = 'frozen_instance'
+        elif getattr(model_cls.__pydantic_fields__.get(name), 'frozen', False):
+            error_type = 'frozen_field'
+        else:
+            return
+    
+>       raise ValidationError.from_exception_data(
+            model_cls.__name__, [{'type': error_type, 'loc': (name,), 'input': value}]
+        )
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for TaskDraft
+E       action_type
+E         Instance is frozen [type=frozen_instance, input_value='INSPECTION', input_type=str]
+E           For further information visit https://errors.pydantic.dev/2.14/v/frozen_instance
+
+backend/.venv/lib/python3.12/site-packages/pydantic/main.py:104: ValidationError
+________ test_closed_dependency[wrong_target-UTILITY_DEPENDENCY_TARGET] ________
+
+change = 'wrong_target', code = 'UTILITY_DEPENDENCY_TARGET'
+
+    @pytest.mark.parametrize('change,code',[(None,None),('missing','UTILITY_DEPENDENCY_REQUIRED'),('met','UTILITY_DEPENDENCY_BINDING'),('wrong_action','UTILITY_DEPENDENCY_BINDING'),('wrong_target','UTILITY_DEPENDENCY_TARGET'),('unmet_safety','UTILITY_CURRENT_EVIDENCE_REQUIRED'),('extra_dependency','UTILITY_DEPENDENCY_SCOPE')])
+    def test_closed_dependency(change,code):
+     d=draft();t=d.tasks[1]
+     if change=='missing':t.remediation.conditions.pop()
+     if change=='met':t.remediation.conditions[-1].status='MET'
+     if change=='wrong_action':d.tasks[0].action_type='INSPECTION'
+>    if change=='wrong_target':d.tasks[0].target_ids=['OTHER']
+                               ^^^^^^^^^^^^^^^^^^^^^
+
+backend/tests/unit/test_utility_intervention.py:28: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+backend/.venv/lib/python3.12/site-packages/pydantic/main.py:1111: in __setattr__
+    elif (setattr_handler := self._setattr_handler(name, value)) is not None:
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/pydantic/main.py:1147: in _setattr_handler
+    _check_frozen(cls, name, value)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+model_cls = <class 'app.services.planning.models.TaskDraft'>
+name = 'target_ids', value = ['OTHER']
+
+    def _check_frozen(model_cls: type[BaseModel], name: str, value: Any) -> None:
+        if model_cls.model_config.get('frozen'):
+            error_type = 'frozen_instance'
+        elif getattr(model_cls.__pydantic_fields__.get(name), 'frozen', False):
+            error_type = 'frozen_field'
+        else:
+            return
+    
+>       raise ValidationError.from_exception_data(
+            model_cls.__name__, [{'type': error_type, 'loc': (name,), 'input': value}]
+        )
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for TaskDraft
+E       target_ids
+E         Instance is frozen [type=frozen_instance, input_value=['OTHER'], input_type=list]
+E           For further information visit https://errors.pydantic.dev/2.14/v/frozen_instance
+
+backend/.venv/lib/python3.12/site-packages/pydantic/main.py:104: ValidationError
+____ test_closed_dependency[unmet_safety-UTILITY_CURRENT_EVIDENCE_REQUIRED] ____
+
+change = 'unmet_safety', code = 'UTILITY_CURRENT_EVIDENCE_REQUIRED'
+
+    @pytest.mark.parametrize('change,code',[(None,None),('missing','UTILITY_DEPENDENCY_REQUIRED'),('met','UTILITY_DEPENDENCY_BINDING'),('wrong_action','UTILITY_DEPENDENCY_BINDING'),('wrong_target','UTILITY_DEPENDENCY_TARGET'),('unmet_safety','UTILITY_CURRENT_EVIDENCE_REQUIRED'),('extra_dependency','UTILITY_DEPENDENCY_SCOPE')])
+    def test_closed_dependency(change,code):
+     d=draft();t=d.tasks[1]
+     if change=='missing':t.remediation.conditions.pop()
+     if change=='met':t.remediation.conditions[-1].status='MET'
+     if change=='wrong_action':d.tasks[0].action_type='INSPECTION'
+     if change=='wrong_target':d.tasks[0].target_ids=['OTHER']
+>    if change=='unmet_safety':t.remediation.conditions[1].status='UNMET'
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+backend/tests/unit/test_utility_intervention.py:29: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+backend/.venv/lib/python3.12/site-packages/pydantic/main.py:1111: in __setattr__
+    elif (setattr_handler := self._setattr_handler(name, value)) is not None:
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/pydantic/main.py:1147: in _setattr_handler
+    _check_frozen(cls, name, value)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+model_cls = <class 'app.services.planning.models.Prerequisite'>, name = 'status'
+value = 'UNMET'
+
+    def _check_frozen(model_cls: type[BaseModel], name: str, value: Any) -> None:
+        if model_cls.model_config.get('frozen'):
+            error_type = 'frozen_instance'
+        elif getattr(model_cls.__pydantic_fields__.get(name), 'frozen', False):
+            error_type = 'frozen_field'
+        else:
+            return
+    
+>       raise ValidationError.from_exception_data(
+            model_cls.__name__, [{'type': error_type, 'loc': (name,), 'input': value}]
+        )
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for Prerequisite
+E       status
+E         Instance is frozen [type=frozen_instance, input_value='UNMET', input_type=str]
+E           For further information visit https://errors.pydantic.dev/2.14/v/frozen_instance
+
+backend/.venv/lib/python3.12/site-packages/pydantic/main.py:104: ValidationError
+____________________ test_road_dependency[True-False-False] ____________________
+
+linked = True, guard = False, ok = False
+
+    @pytest.mark.parametrize('linked,guard,ok',[(True,False,False),(True,True,True),(False,True,False),(False,False,True)])
+    def test_road_dependency(linked,guard,ok):
+>    d=draft();t=deepcopy(d.tasks[0]);t.id='road';t.action_type='SUBGRADE_REPAIR';t.target_ids=['R'];t.depends_on=[]
+                                      ^^^^
+
+backend/tests/unit/test_utility_intervention.py:55: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+backend/.venv/lib/python3.12/site-packages/pydantic/main.py:1111: in __setattr__
+    elif (setattr_handler := self._setattr_handler(name, value)) is not None:
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/pydantic/main.py:1147: in _setattr_handler
+    _check_frozen(cls, name, value)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+model_cls = <class 'app.services.planning.models.TaskDraft'>, name = 'id'
+value = 'road'
+
+    def _check_frozen(model_cls: type[BaseModel], name: str, value: Any) -> None:
+        if model_cls.model_config.get('frozen'):
+            error_type = 'frozen_instance'
+        elif getattr(model_cls.__pydantic_fields__.get(name), 'frozen', False):
+            error_type = 'frozen_field'
+        else:
+            return
+    
+>       raise ValidationError.from_exception_data(
+            model_cls.__name__, [{'type': error_type, 'loc': (name,), 'input': value}]
+        )
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for TaskDraft
+E       id
+E         Instance is frozen [type=frozen_instance, input_value='road', input_type=str]
+E           For further information visit https://errors.pydantic.dev/2.14/v/frozen_instance
+
+backend/.venv/lib/python3.12/site-packages/pydantic/main.py:104: ValidationError
+_____________________ test_road_dependency[True-True-True] _____________________
+
+linked = True, guard = True, ok = True
+
+    @pytest.mark.parametrize('linked,guard,ok',[(True,False,False),(True,True,True),(False,True,False),(False,False,True)])
+    def test_road_dependency(linked,guard,ok):
+>    d=draft();t=deepcopy(d.tasks[0]);t.id='road';t.action_type='SUBGRADE_REPAIR';t.target_ids=['R'];t.depends_on=[]
+                                      ^^^^
+
+backend/tests/unit/test_utility_intervention.py:55: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+backend/.venv/lib/python3.12/site-packages/pydantic/main.py:1111: in __setattr__
+    elif (setattr_handler := self._setattr_handler(name, value)) is not None:
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/pydantic/main.py:1147: in _setattr_handler
+    _check_frozen(cls, name, value)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+model_cls = <class 'app.services.planning.models.TaskDraft'>, name = 'id'
+value = 'road'
+
+    def _check_frozen(model_cls: type[BaseModel], name: str, value: Any) -> None:
+        if model_cls.model_config.get('frozen'):
+            error_type = 'frozen_instance'
+        elif getattr(model_cls.__pydantic_fields__.get(name), 'frozen', False):
+            error_type = 'frozen_field'
+        else:
+            return
+    
+>       raise ValidationError.from_exception_data(
+            model_cls.__name__, [{'type': error_type, 'loc': (name,), 'input': value}]
+        )
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for TaskDraft
+E       id
+E         Instance is frozen [type=frozen_instance, input_value='road', input_type=str]
+E           For further information visit https://errors.pydantic.dev/2.14/v/frozen_instance
+
+backend/.venv/lib/python3.12/site-packages/pydantic/main.py:104: ValidationError
+____________________ test_road_dependency[False-True-False] ____________________
+
+linked = False, guard = True, ok = False
+
+    @pytest.mark.parametrize('linked,guard,ok',[(True,False,False),(True,True,True),(False,True,False),(False,False,True)])
+    def test_road_dependency(linked,guard,ok):
+>    d=draft();t=deepcopy(d.tasks[0]);t.id='road';t.action_type='SUBGRADE_REPAIR';t.target_ids=['R'];t.depends_on=[]
+                                      ^^^^
+
+backend/tests/unit/test_utility_intervention.py:55: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+backend/.venv/lib/python3.12/site-packages/pydantic/main.py:1111: in __setattr__
+    elif (setattr_handler := self._setattr_handler(name, value)) is not None:
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/pydantic/main.py:1147: in _setattr_handler
+    _check_frozen(cls, name, value)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+model_cls = <class 'app.services.planning.models.TaskDraft'>, name = 'id'
+value = 'road'
+
+    def _check_frozen(model_cls: type[BaseModel], name: str, value: Any) -> None:
+        if model_cls.model_config.get('frozen'):
+            error_type = 'frozen_instance'
+        elif getattr(model_cls.__pydantic_fields__.get(name), 'frozen', False):
+            error_type = 'frozen_field'
+        else:
+            return
+    
+>       raise ValidationError.from_exception_data(
+            model_cls.__name__, [{'type': error_type, 'loc': (name,), 'input': value}]
+        )
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for TaskDraft
+E       id
+E         Instance is frozen [type=frozen_instance, input_value='road', input_type=str]
+E           For further information visit https://errors.pydantic.dev/2.14/v/frozen_instance
+
+backend/.venv/lib/python3.12/site-packages/pydantic/main.py:104: ValidationError
+____________________ test_road_dependency[False-False-True] ____________________
+
+linked = False, guard = False, ok = True
+
+    @pytest.mark.parametrize('linked,guard,ok',[(True,False,False),(True,True,True),(False,True,False),(False,False,True)])
+    def test_road_dependency(linked,guard,ok):
+>    d=draft();t=deepcopy(d.tasks[0]);t.id='road';t.action_type='SUBGRADE_REPAIR';t.target_ids=['R'];t.depends_on=[]
+                                      ^^^^
+
+backend/tests/unit/test_utility_intervention.py:55: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+backend/.venv/lib/python3.12/site-packages/pydantic/main.py:1111: in __setattr__
+    elif (setattr_handler := self._setattr_handler(name, value)) is not None:
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/pydantic/main.py:1147: in _setattr_handler
+    _check_frozen(cls, name, value)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+model_cls = <class 'app.services.planning.models.TaskDraft'>, name = 'id'
+value = 'road'
+
+    def _check_frozen(model_cls: type[BaseModel], name: str, value: Any) -> None:
+        if model_cls.model_config.get('frozen'):
+            error_type = 'frozen_instance'
+        elif getattr(model_cls.__pydantic_fields__.get(name), 'frozen', False):
+            error_type = 'frozen_field'
+        else:
+            return
+    
+>       raise ValidationError.from_exception_data(
+            model_cls.__name__, [{'type': error_type, 'loc': (name,), 'input': value}]
+        )
+E       pydantic_core._pydantic_core.ValidationError: 1 validation error for TaskDraft
+E       id
+E         Instance is frozen [type=frozen_instance, input_value='road', input_type=str]
+E           For further information visit https://errors.pydantic.dev/2.14/v/frozen_instance
+
+backend/.venv/lib/python3.12/site-packages/pydantic/main.py:104: ValidationError
+=============================== warnings summary ===============================
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyPacked has no __module__ attribute
+
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyObject has no __module__ attribute
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED backend/tests/unit/test_utility_intervention.py::test_closed_dependency[met-UTILITY_DEPENDENCY_BINDING]
+FAILED backend/tests/unit/test_utility_intervention.py::test_closed_dependency[wrong_action-UTILITY_DEPENDENCY_BINDING]
+FAILED backend/tests/unit/test_utility_intervention.py::test_closed_dependency[wrong_target-UTILITY_DEPENDENCY_TARGET]
+FAILED backend/tests/unit/test_utility_intervention.py::test_closed_dependency[unmet_safety-UTILITY_CURRENT_EVIDENCE_REQUIRED]
+FAILED backend/tests/unit/test_utility_intervention.py::test_road_dependency[True-False-False]
+FAILED backend/tests/unit/test_utility_intervention.py::test_road_dependency[True-True-True]
+FAILED backend/tests/unit/test_utility_intervention.py::test_road_dependency[False-True-False]
+FAILED backend/tests/unit/test_utility_intervention.py::test_road_dependency[False-False-True]
+8 failed, 22 passed, 2 warnings in 1.66s
+sys:1: DeprecationWarning: builtin type swigvarlink has no __module__ attribute

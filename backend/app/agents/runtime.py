@@ -3,6 +3,7 @@ import asyncio,json,time,hashlib
 from typing import TypedDict
 from langgraph.graph import StateGraph,START
 from langgraph.types import interrupt,Command
+from .isolation import agent_files
 from app.active import active_scope
 from app.graph.queries import GraphQueries
 from app.graph.schema import utc_now
@@ -19,10 +20,11 @@ class Channels(TypedDict):
     data:dict
 
 class InvestigationAgent:
-    def __init__(self,profile,repo,tools,model,checkpointer,*,clock=utc_now):
+    def __init__(self,profile,repo,tools,model,checkpointer,*,clock=utc_now,planning_service=None):
         if repo.graph.name!=profile.graph or tools.graph!=profile.graph:raise ValueError('Active graph mismatch')
         self.profile,self.repo,self.tools,self.model,self.saver,self.clock=profile,repo,tools,model,checkpointer,clock
         if hasattr(tools,'bind_read_cache'):tools.bind_read_cache(self.revision)
+        self.planning_service=planning_service
         self.control=Control(repo,clock);self.service=EvidenceService(repo,clock=clock);self.check=lambda:None
         graph=StateGraph(Channels)
         for name,handler in [('Supervisor',self.supervisor),('Investigator',self.investigator),('RootCauseAnalyst',self.analyst),('ResolutionPlanner',self.planner),('Coordinator',self.coordinator),('AwaitDependency',self.await_dependency)]:graph.add_node(name,handler)
@@ -41,6 +43,10 @@ class InvestigationAgent:
         if not set(state.incident_ids+[state.problem_cluster_id])<=bound:raise RecoveryRequired('CHECKPOINT_INCIDENT_BINDING_MISMATCH')
         known={e.target for e in reader.edges('PROPOSES',source=state.investigation_id)}
         if not set(state.hypotheses)<=known:raise RecoveryRequired('CHECKPOINT_HYPOTHESIS_BINDING_MISMATCH')
+        if state.current_plan_id is not None:
+            from app.services.planning.storage import Store
+            saved=Store(self.repo).get(state.current_plan_id)
+            if not saved or saved['draft']['investigation_id']!=state.investigation_id or saved['receipt']['version']!=state.current_plan_version or saved['receipt']['plan_hash']!=state.current_plan_hash:raise RecoveryRequired('CHECKPOINT_PLAN_BINDING_MISMATCH')
         self.check();return state
     def output(self,s,node):
         s.phase=node;s.nodes.append(node)
@@ -57,6 +63,8 @@ class InvestigationAgent:
             schema['properties']={k:v for k,v in schema['properties'].items() if k not in host}
             schema['required']=[k for k in schema.get('required',[]) if k not in host]
             result[name]=schema
+        from app.services.planning.models import PlanDraft
+        result['RECOMMEND']={'type':'object','additionalProperties':False,'required':['plan_draft'],'properties':{'plan_draft':PlanDraft.model_json_schema()}}
         return result
     def context(self,s):
         r=Reader(self.repo,s.as_of);hypotheses=[]
@@ -64,9 +72,16 @@ class InvestigationAgent:
             n=r.node(id,'Hypothesis');history=self.service.history(id,s.as_of)
             hypotheses.append({'id':id,'definition':n.properties,'assessments':[h.model_dump(mode='json') for h in history]})
         from .context import build
-        return build(s,hypotheses,self.tools.catalog(),POLICIES[s.issue],self.action_schemas(),
+        context=build(s,hypotheses,self.tools.catalog(),POLICIES[s.issue],self.action_schemas(),
             self.repo._read('MATCH (d:Department {municipality_id:$scope}) RETURN d.id LIMIT 10',{'scope':'demo-city'}),
             self.model.spending() if hasattr(self.model,'spending') and self.model.permit is not None else None)
+        from app.services.planning.policy import ACTIONS
+        context['planning_action_policies']={k:v for k,v in ACTIONS.items() if v['issue']==s.issue}
+        from .inspection_context import requested_inspections
+        context['requested_inspections']=requested_inspections(self.service,s)
+        context['inspection_status_guidance']='state.pending_inspections retains request IDs from earlier checkpoints. Use requested_inspections for current lifecycle status. A COMPLETED request is not still awaiting field work. Its report references are metadata, not causal proof: retrieve the actual report/findings through an approved MCP read such as get_maintenance_history for the requested asset before reassessment. If no registered evidence can be retrieved, state that limitation.'
+        context['planning_guards']='Remedial proposals require reviewed target-specific causal support and explicit causal inspection/safety conditions. SUPPORTED_NOW: both MET with validated report evidence and no future task dependencies. CONDITIONAL: any unmet causal inspection must depend on a target-covering INSPECTION task; safety remains an explicit unresolved gate. Insufficient/contradicted support: INSPECTION only. All procedures PROPOSED, no execution authority. Use planning_feedback for later authorized clarification; never auto-replan on operator recovery.'
+        return context
 
     async def supervisor(self,channel):
         s=self.decode(channel);s.as_of=self.clock();s.iterations+=1
@@ -176,10 +191,50 @@ class InvestigationAgent:
     async def analyst(self,channel):
         s=self.decode(channel)
         try:await self.domain_action(s,'propose' if s.selection.action=='PROPOSE' else 'assess')
-        except Exception as e:s.errors.append(getattr(e,'code','ANALYTICAL_ACTION_REJECTED'))
+        except Exception as e:
+            s.errors.append(getattr(e,'code','ANALYTICAL_ACTION_REJECTED'))
+            from app.graph.repository import OutcomeUnknown
+            if isinstance(e,(OutcomeUnknown,RecoveryRequired)):
+                s.pause_reason='RECOVERY_REQUIRED'
         return self.output(s,'RootCauseAnalyst')
     async def planner(self,channel):
         s=self.decode(channel);args=s.selection.arguments
+        if set(args)=={'plan_draft'}:
+            connection=None
+            try:
+                from app.services.planning.service import PlanningService,PlanningBlocked
+                service=self.planning_service
+                if service is None:
+                    from app.memory.runtime import configured
+                    capability=configured(s.graph)
+                    if capability is None:
+                        from app.services.planning.service import PlanningBlocked
+                        raise PlanningBlocked('PROCEDURE_CAPABILITY_UNAVAILABLE')
+                    connection,memory=capability.connect();service=PlanningService(self.repo,memory,clock=self.clock)
+                if args['plan_draft'].get('investigation_id')!=s.investigation_id or args['plan_draft'].get('issue')!=s.issue:raise PlanningBlocked('PLAN_SCOPE_MISMATCH')
+                self.check()
+                receipt=await service.create(args['plan_draft'],request_id=identity('PLANREQ',s.thread_id,s.iterations,s.wakes),actor=Actor(id='civicly-b12-planner',role='ANALYST'))
+                s.planning_feedback=None
+                s.current_plan_id=receipt.id;s.current_plan_version=receipt.version;s.current_plan_hash=receipt.plan_hash
+                s.observations.append({'operation':'PLAN_DRAFTED','receipt':receipt.model_dump(mode='json'),'human_review_required':True})
+                s.graph_revision=self.revision();s.pause_reason='HUMAN_REVIEW'
+            except Exception as error:
+                from app.services.planning.feedback import feedback
+                from app.graph.repository import OutcomeUnknown
+                detail=feedback(error).model_dump(mode='json')
+                # Unsafe writes/lease failures must reach the existing wake quarantine.
+                # A failed/lost checkpoint cannot truthfully persist new feedback.
+                if isinstance(error,(RecoveryRequired,OutcomeUnknown)) or detail['draft_committed']=='UNKNOWN':
+                    recovery=RecoveryRequired('PLAN_OPERATOR_RECOVERY_REQUIRED')
+                    from app.services.planning.service import PlanRecoveryRequired
+                    if isinstance(error,PlanRecoveryRequired):recovery.reconciliation=dict(error.reconciliation)
+                    raise recovery from None
+                self.check()
+                s.planning_feedback=feedback(error);s.observations.append({'operation':'PLAN_DRAFT_REJECTED','feedback':detail})
+                s.errors.append('PLAN_DRAFT_REJECTED');s.pause_reason='PLAN_OPERATOR_RECOVERY_REQUIRED' if detail['resolution']=='OPERATOR_RECOVERY' else 'PLAN_CLARIFICATION_REQUIRED'
+            finally:
+                if connection is not None:connection.connection.close();connection.connection.connection_pool.disconnect()
+            return self.output(s,'ResolutionPlanner')
         if set(args)!={'next_action','target_ids','basis_evidence_ids','limitations'} or not isinstance(args['next_action'],str) or len(args['next_action'])>2000 or not isinstance(args['limitations'],list):
             s.errors.append('INVALID_RECOMMENDATION')
         elif not set(args['target_ids'])<=set(s.asset_ids) or not set(args['basis_evidence_ids'])<=set(s.evidence):s.errors.append('UNSUPPORTED_RECOMMENDATION_REFERENCES')
@@ -192,6 +247,8 @@ class InvestigationAgent:
             try:await self.domain_action(s,'request_inspection');s.pause_reason='MISSING_EVIDENCE'
             except Exception as e:s.errors.append(getattr(e,'code','INSPECTION_REQUEST_REJECTED'));s.pause_reason='DEPENDENCY_UNAVAILABLE'
         s.pause_reason=s.pause_reason or s.selection.pause_reason or 'HUMAN_REVIEW'
+        starts=[o['delivery_key'] for o in s.observations if o.get('operation')=='B15_DELIVERY_STARTED' and o.get('host_generated') is True]
+        if starts and s.pause_reason not in {'RECOVERY_REQUIRED','PLAN_OPERATOR_RECOVERY_REQUIRED','DEPENDENCY_UNAVAILABLE'} and not any(o.get('operation')=='B15_DELIVERY_CONSUMED' and o.get('delivery_key')==starts[-1] for o in s.observations):s.observations.append({'operation':'B15_DELIVERY_CONSUMED','host_generated':True,'delivery_key':starts[-1]})
         return self.output(s,'Coordinator')
     async def await_dependency(self,channel):
         s=self.decode(channel)
@@ -200,12 +257,17 @@ class InvestigationAgent:
         if isinstance(recovery,dict) and recovery.get('budget_increase'):
             old=s.budget.model_dump(mode='json');s.budget=__import__('app.agents.models',fromlist=['Budget']).Budget.model_validate(recovery['budget_increase'])
             s.observations.append({'operation':'AUTHORIZED_BUDGET_INCREASE','host_generated':True,'previous':old,'current':s.budget.model_dump(mode='json'),'reason':recovery['operator_reason']})
+        if isinstance(recovery,dict) and recovery.get('delivery_key'):s.observations.append({'operation':'B15_DELIVERY_STARTED','host_generated':True,'delivery_key':recovery['delivery_key']})
         s.wakes+=1;s.pause_reason=None;s.as_of=self.clock()
         current=self.revision();changed=current!=s.graph_revision or any(self.repo.get_node(id).content_hash!=h for id,h in s.evidence.items())
         s.refresh_required=changed;s.graph_revision=current
-        if changed:s.errors.append('SOURCE_CHANGED_REFRESH_REQUIRED')
+        if changed:
+            from .recurrence import refresh
+            s=refresh(self.repo,s)
+            s.errors.append('SOURCE_CHANGED_REFRESH_REQUIRED')
         return self.output(s,'AwaitDependency')
-    async def run(self,initial=None,*,thread_id,resume=False,budget_increase=None,authorized=False,operator_reason=None):
+    async def run(self,initial=None,*,thread_id,resume=False,budget_increase=None,authorized=False,operator_reason=None,delivery_key=None):
+        if delivery_key is not None and (not isinstance(delivery_key,str) or not delivery_key.startswith('BATCH-B15-') or len(delivery_key)!=42):raise RecoveryRequired('INVALID_HOST_DELIVERY_KEY')
         if budget_increase is not None and (authorized is not True or not isinstance(operator_reason,str) or not operator_reason.strip() or len(operator_reason)>512):raise RecoveryRequired('BUDGET_INCREASE_REQUIRES_OPERATOR_AUTHORIZATION')
         self.started=time.monotonic();config={'configurable':{'thread_id':thread_id},'recursion_limit':150}
         # Operator input errors must not quarantine an otherwise valid paused thread.
@@ -222,7 +284,7 @@ class InvestigationAgent:
                 from .models import Budget
                 prior=Budget.model_validate(snapshot.values['data']['budget'])
                 if snapshot.values['data']['wakes']>=prior.max_wakes:raise RecoveryRequired('WAKE_BUDGET_EXHAUSTED')
-        with active_scope(self.profile):
+        with active_scope(self.profile),agent_files():
             async with ownership(self.repo.client,self.profile,thread_id) as check:
                 self.check=check
                 snapshot=await self.graph.aget_state(config)
@@ -231,6 +293,7 @@ class InvestigationAgent:
                     state=self.decode(snapshot.values)
                     if state.wakes>=(candidate.max_wakes if budget_increase is not None else state.budget.max_wakes):raise RecoveryRequired('WAKE_BUDGET_EXHAUSTED')
                     recovery={'host_resume':True}
+                    if delivery_key:recovery['delivery_key']=delivery_key
                     if budget_increase is not None:
                         from .models import Budget
                         if authorized is not True or not isinstance(operator_reason,str) or not operator_reason.strip() or len(operator_reason)>512:raise RecoveryRequired('BUDGET_INCREASE_REQUIRES_OPERATOR_AUTHORIZATION')
@@ -241,7 +304,9 @@ class InvestigationAgent:
                 else:
                     if snapshot.values:raise RecoveryRequired('THREAD_ALREADY_EXISTS; resume explicitly')
                     if not isinstance(initial,InvestigationState) or initial.thread_id!=thread_id:raise ValueError('Initial thread mismatch')
-                    self.control.bind(initial.investigation_id,thread_id);value={'data':initial.model_dump(mode='json')}
+                    self.control.bind(initial.investigation_id,thread_id)
+                    if delivery_key:initial=initial.model_copy(update={'observations':[*initial.observations,{'operation':'B15_DELIVERY_STARTED','host_generated':True,'delivery_key':delivery_key}]})
+                    value={'data':initial.model_dump(mode='json')}
                 budget=initial.budget if initial is not None else (increased if budget_increase is not None else state.budget)
                 async with asyncio.timeout(budget.max_seconds+65):
                     if hasattr(self.model,'execution_scope'):

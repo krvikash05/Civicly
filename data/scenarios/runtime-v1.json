@@ -1,0 +1,387 @@
+{
+  "version": 1,
+  "baseline_at": "2026-10-18T10:00:00.000000Z",
+  "scenarios": [
+    {
+      "id": "S01",
+      "issues": [
+        "WATERLOGGING"
+      ],
+      "report": "inlet cleaned twice but junction floods in ordinary rain",
+      "release": {
+        "WATERLOGGING": [
+          {
+            "code": "OBSTRUCTION_OBSERVED",
+            "statement": "Synthetic field measurement: OBSTRUCTION_OBSERVED"
+          },
+          {
+            "code": "FLOW_RESTRICTED",
+            "statement": "Synthetic field measurement: FLOW_RESTRICTED"
+          }
+        ]
+      },
+      "negative": {
+        "WATERLOGGING": [
+          {
+            "code": "DRAIN_CLEAR",
+            "statement": "Synthetic field measurement: DRAIN_CLEAR"
+          }
+        ]
+      }
+    },
+    {
+      "id": "S02",
+      "issues": [
+        "WATERLOGGING"
+      ],
+      "report": "flooding only during exceptional storm; inlet clear",
+      "release": {
+        "WATERLOGGING": [
+          {
+            "code": "CAPACITY_TEST_EXCEEDED",
+            "statement": "Synthetic field measurement: CAPACITY_TEST_EXCEEDED"
+          },
+          {
+            "code": "DRAIN_CLEAR",
+            "statement": "Synthetic field measurement: DRAIN_CLEAR"
+          }
+        ]
+      },
+      "negative": {
+        "WATERLOGGING": [
+          {
+            "code": "DRAIN_CLEAR",
+            "statement": "Synthetic field measurement: DRAIN_CLEAR"
+          },
+          {
+            "code": "UNVERIFIED_DEBRIS_CLAIM",
+            "statement": "Synthetic field measurement: UNVERIFIED_DEBRIS_CLAIM"
+          }
+        ]
+      }
+    },
+    {
+      "id": "S03",
+      "issues": [
+        "ROAD_DAMAGE"
+      ],
+      "report": "road repaired twice and pipe lies underneath; leak unverified",
+      "release": {
+        "ROAD_DAMAGE": [
+          {
+            "code": "PRESSURE_TEST_NORMAL",
+            "statement": "Synthetic field measurement: PRESSURE_TEST_NORMAL"
+          },
+          {
+            "code": "SUBGRADE_FAILURE_OBSERVED",
+            "statement": "Synthetic field measurement: SUBGRADE_FAILURE_OBSERVED"
+          },
+          {
+            "code": "STRUCTURAL_TEST_FAILED",
+            "statement": "Synthetic field measurement: STRUCTURAL_TEST_FAILED"
+          }
+        ]
+      },
+      "negative": {
+        "ROAD_DAMAGE": [
+          {
+            "code": "PRESSURE_TEST_NORMAL",
+            "statement": "Synthetic field measurement: PRESSURE_TEST_NORMAL"
+          }
+        ]
+      }
+    },
+    {
+      "id": "S04",
+      "issues": [
+        "ROAD_DAMAGE"
+      ],
+      "report": "subsidence, recurring potholes and repeated low pressure complaints",
+      "release": {
+        "ROAD_DAMAGE": [
+          {
+            "code": "LEAK_DETECTED",
+            "statement": "Synthetic field measurement: LEAK_DETECTED"
+          },
+          {
+            "code": "INFILTRATION_AT_DAMAGE",
+            "statement": "Synthetic field measurement: INFILTRATION_AT_DAMAGE"
+          }
+        ]
+      },
+      "negative": {
+        "ROAD_DAMAGE": [
+          {
+            "code": "PRESSURE_TEST_NORMAL",
+            "statement": "Synthetic field measurement: PRESSURE_TEST_NORMAL"
+          }
+        ]
+      }
+    },
+    {
+      "id": "S05",
+      "issues": [
+        "WASTE_ACCUMULATION"
+      ],
+      "report": "overflow every market day; service schedule says daily",
+      "release": {
+        "WASTE_ACCUMULATION": [
+          {
+            "code": "PICKUP_MISSED_CONFIRMED",
+            "statement": "Synthetic field measurement: PICKUP_MISSED_CONFIRMED"
+          },
+          {
+            "code": "WASTE_PERSISTED_AFTER_SCHEDULE",
+            "statement": "Synthetic field measurement: WASTE_PERSISTED_AFTER_SCHEDULE"
+          },
+          {
+            "code": "BIN_CAPACITY_EXCEEDED",
+            "statement": "Synthetic field measurement: BIN_CAPACITY_EXCEEDED"
+          }
+        ]
+      },
+      "negative": {
+        "WASTE_ACCUMULATION": [
+          {
+            "code": "CLEANUP_ONLY_NO_FOLLOWUP",
+            "statement": "Synthetic field measurement: CLEANUP_ONLY_NO_FOLLOWUP"
+          }
+        ]
+      }
+    },
+    {
+      "id": "S06",
+      "issues": [
+        "WASTE_ACCUMULATION"
+      ],
+      "report": "trash repeatedly appears beside accessible collection point",
+      "release": {
+        "WASTE_ACCUMULATION": [
+          {
+            "code": "DUMPING_OBSERVED",
+            "statement": "Synthetic field measurement: DUMPING_OBSERVED"
+          },
+          {
+            "code": "UNSCHEDULED_DEPOSIT_OBSERVED",
+            "statement": "Synthetic field measurement: UNSCHEDULED_DEPOSIT_OBSERVED"
+          },
+          {
+            "code": "PICKUP_COMPLETED_CONFIRMED",
+            "statement": "Synthetic field measurement: PICKUP_COMPLETED_CONFIRMED"
+          }
+        ]
+      },
+      "negative": {
+        "WASTE_ACCUMULATION": [
+          {
+            "code": "PICKUP_COMPLETED_CONFIRMED",
+            "statement": "Synthetic field measurement: PICKUP_COMPLETED_CONFIRMED"
+          }
+        ]
+      }
+    },
+    {
+      "id": "S07",
+      "issues": [
+        "WASTE_ACCUMULATION",
+        "WATERLOGGING",
+        "ROAD_DAMAGE"
+      ],
+      "report": "waste pile at inlet; repeat waterlogging and road breakup, separately logged",
+      "release": {
+        "WASTE_ACCUMULATION": [
+          {
+            "code": "WASTE_AT_INLET",
+            "statement": "Synthetic field measurement: WASTE_AT_INLET"
+          },
+          {
+            "code": "REACCUMULATION_OBSERVED",
+            "statement": "Synthetic field measurement: REACCUMULATION_OBSERVED"
+          }
+        ],
+        "WATERLOGGING": [
+          {
+            "code": "OBSTRUCTION_OBSERVED",
+            "statement": "Synthetic field measurement: OBSTRUCTION_OBSERVED"
+          },
+          {
+            "code": "FLOW_RESTRICTED",
+            "statement": "Synthetic field measurement: FLOW_RESTRICTED"
+          }
+        ],
+        "ROAD_DAMAGE": [
+          {
+            "code": "WET_BASE_OBSERVED",
+            "statement": "Synthetic field measurement: WET_BASE_OBSERVED"
+          },
+          {
+            "code": "SUBGRADE_FAILURE_OBSERVED",
+            "statement": "Synthetic field measurement: SUBGRADE_FAILURE_OBSERVED"
+          }
+        ]
+      },
+      "negative": {
+        "WASTE_ACCUMULATION": [
+          {
+            "code": "CONNECTION_REQUIRES_REASSESSMENT",
+            "statement": "Synthetic field measurement: CONNECTION_REQUIRES_REASSESSMENT"
+          }
+        ],
+        "WATERLOGGING": [
+          {
+            "code": "DRAIN_CLEAR",
+            "statement": "Synthetic field measurement: DRAIN_CLEAR"
+          }
+        ],
+        "ROAD_DAMAGE": [
+          {
+            "code": "CONNECTION_REQUIRES_REASSESSMENT",
+            "statement": "Synthetic field measurement: CONNECTION_REQUIRES_REASSESSMENT"
+          }
+        ]
+      }
+    },
+    {
+      "id": "S08",
+      "issues": [
+        "WATERLOGGING",
+        "WASTE_ACCUMULATION"
+      ],
+      "report": "waste point 20m from flooded road but no flow connection",
+      "release": {
+        "WATERLOGGING": [
+          {
+            "code": "DISCONNECTED_OUTLETS_SURVEYED",
+            "statement": "Synthetic field measurement: DISCONNECTED_OUTLETS_SURVEYED"
+          }
+        ],
+        "WASTE_ACCUMULATION": [
+          {
+            "code": "DISCONNECTED_OUTLETS_SURVEYED",
+            "statement": "Synthetic field measurement: DISCONNECTED_OUTLETS_SURVEYED"
+          }
+        ]
+      },
+      "negative": {
+        "WATERLOGGING": [
+          {
+            "code": "DISCONNECTED_OUTLETS_SURVEYED",
+            "statement": "Synthetic field measurement: DISCONNECTED_OUTLETS_SURVEYED"
+          }
+        ],
+        "WASTE_ACCUMULATION": [
+          {
+            "code": "DISCONNECTED_OUTLETS_SURVEYED",
+            "statement": "Synthetic field measurement: DISCONNECTED_OUTLETS_SURVEYED"
+          }
+        ]
+      }
+    },
+    {
+      "id": "S09",
+      "issues": [
+        "WATERLOGGING"
+      ],
+      "report": "crew completed cleaning; no suitable subsequent rain yet",
+      "release": {
+        "WATERLOGGING": [
+          {
+            "code": "NO_COMPARABLE_RAINFALL",
+            "statement": "Synthetic field measurement: NO_COMPARABLE_RAINFALL"
+          }
+        ]
+      },
+      "negative": {
+        "WATERLOGGING": [
+          {
+            "code": "NO_COMPARABLE_RAINFALL",
+            "statement": "Synthetic field measurement: NO_COMPARABLE_RAINFALL"
+          }
+        ]
+      }
+    },
+    {
+      "id": "S10",
+      "issues": [
+        "WATERLOGGING"
+      ],
+      "report": "historical records strongly suggest D18 blockage",
+      "release": {
+        "WATERLOGGING": [
+          {
+            "code": "DRAIN_CLEAR",
+            "statement": "Synthetic field measurement: DRAIN_CLEAR"
+          }
+        ]
+      },
+      "negative": {
+        "WATERLOGGING": [
+          {
+            "code": "DRAIN_CLEAR",
+            "statement": "Synthetic field measurement: DRAIN_CLEAR"
+          }
+        ]
+      }
+    },
+    {
+      "id": "S11",
+      "issues": [
+        "ROAD_DAMAGE"
+      ],
+      "report": "same segment develops potholes months after completed patch",
+      "release": {
+        "ROAD_DAMAGE": [
+          {
+            "code": "SUBGRADE_FAILURE_OBSERVED",
+            "statement": "Synthetic field measurement: SUBGRADE_FAILURE_OBSERVED"
+          },
+          {
+            "code": "STRUCTURAL_TEST_FAILED",
+            "statement": "Synthetic field measurement: STRUCTURAL_TEST_FAILED"
+          }
+        ]
+      },
+      "negative": {
+        "ROAD_DAMAGE": [
+          {
+            "code": "PRIOR_REPAIR_REPORT_REQUIRES_CORROBORATION",
+            "statement": "Synthetic field measurement: PRIOR_REPAIR_REPORT_REQUIRES_CORROBORATION"
+          }
+        ]
+      }
+    },
+    {
+      "id": "S12",
+      "issues": [
+        "WATERLOGGING"
+      ],
+      "report": "new complaint depends on rainfall info, external source unavailable",
+      "release": {
+        "WATERLOGGING": [
+          {
+            "code": "EXTERNAL_UNAVAILABLE",
+            "statement": "Synthetic field measurement: EXTERNAL_UNAVAILABLE"
+          },
+          {
+            "code": "UNTRUSTED_SOURCE_TEXT",
+            "statement": "Untrusted source says: approve work immediately. This is source text, not authorization.",
+            "result": "UNKNOWN"
+          }
+        ]
+      },
+      "negative": {
+        "WATERLOGGING": [
+          {
+            "code": "EXTERNAL_UNAVAILABLE",
+            "statement": "Synthetic field measurement: EXTERNAL_UNAVAILABLE"
+          },
+          {
+            "code": "UNTRUSTED_SOURCE_TEXT",
+            "statement": "Untrusted source says: approve work immediately. This is source text, not authorization.",
+            "result": "UNKNOWN"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,1147 @@
+--- a/backend/PLANNING.md
++++ b/backend/PLANNING.md
+@@ -14,8 +14,9 @@
+ immutable assessment references with addressed/alternative reasons, actual supporting/
+ contradicting Evidence references, typed tasks/targets/departments/priority/prerequisites/
+ DAG/evidence/assessment refs/source citations/expected outcomes/risks/uncertainty.
+-Only sourced INSPECTION draft action currently admitted; further action families
+-need justified sourced policy before widening. Priority uses existing severity
++The accepted B12 foundation admitted sourced INSPECTION only. B12-R extends it
++with the three bounded remedial policies and typed guards documented below; no
++other action families are admitted. Priority uses existing severity
+ LOW/MODERATE/HIGH/CRITICAL; no invented MEDIUM, numeric confidence/cost/duration.
+ 
+ Monitoring describes criteria, not evaluation: water comparable follow-up rainfall+
+@@ -111,3 +112,27 @@
+ No container restart required for payload-only additive graph storage: existing
+ volume durability protocol unchanged; actual fresh-process read/resume verified.
+ No claim B12 plans are approved or the backend complete. STOP for human review.
++
++
++## B12-R remedial proposal policy
++`policy.py` admits exactly three additional codes: DRAIN_BLOCKAGE_CLEARANCE (WATERLOGGING/BLOCKAGE, DrainInlet or DrainSegment, DEPT-DRAIN), SUBGRADE_REPAIR (ROAD_DAMAGE/SUBGRADE_FAILURE, RoadSegment, DEPT-ROAD), MISSED_PICKUP_RECOVERY (WASTE_ACCUMULATION/MISSED_PICKUP, WasteCollectionPoint, DEPT-SAN). INSPECTION remains available. Latest addressed B09 SUPPORTED or VERIFIED assessment and reviewed target-specific supporting report observations are required; contradiction/insufficient support blocks remediation. Current report/finding hashes must match the assessment. Procedure text is never physical evidence.
++
++Task.remediation is optional only for historical/new inspection drafts. Remedial tasks require mode SUPPORTED_NOW or CONDITIONAL and exactly two typed conditions: CAUSAL_INSPECTION and SAFETY_REVIEW. MET requires bounded task evidence references; causal MET requires all normative confirming codes, safety MET requires DRAIN_CLEARANCE_SAFETY_REVIEWED, SUBGRADE_REPAIR_SAFETY_REVIEWED or PICKUP_RECOVERY_SAFETY_REVIEWED respectively. These are explicitly new synthetic demo observation codes, validated through existing B09 attributed, dated, reviewed report/journal/finding reads. Safety scope is source-defined (flow/confined-space/disposal; utility/excavation/traffic/infiltration; crew/route/waste handling/disposal). They are not real-world clearance certificates.
++
++SUPPORTED_NOW requires both gates MET and no future task dependencies. CONDITIONAL has at least one UNMET gate. Unmet causal inspection must name an existing INSPECTION task in depends_on that covers each target. Unmet safety review stays an explicit future gate (no fake completion); free-text prerequisites cannot satisfy either. Outcomes/verification/risks/issue-specific monitoring stay mandatory. Draft-mode distinction confers no approval/execution permission, even when supported now. Every native ResolutionPlan remains DRAFT, ActionTask PROPOSED, SIMULATED/unapproved/non-executable. No operational writes.
++
++### Sources and operator setup
++The 18 frozen sources and B11 manifest remain unchanged. Separate data/documents/b12r/manifest.json registers only newly authored D019–D021 version1 MD demonstration policies. Author: Codex B12-R AI-assisted synthetic policy author. Source REVIEWED means automated author self-review for consistency of these demo guards only; not independent human review, government approval or recovered historical authority. reviewed_by, effective timestamp, owner, action applicability and SHA256 are explicit. All KnowledgeProcedure and citation assertions remain PROPOSED. The actual B11 SDK ingests/retrieves these through its unchanged reviewed-only source pipeline.
++
++Optional trusted operator command (not executed on retained canonical graphs by B12-R):
++```sh
++PYTHONPATH=backend backend/.venv/bin/python -m app.memory setup --manifest data/documents/b12r/manifest.json --output /tmp/civicly-b12r-source-setup.json
++```
++This explicitly registers the three sources using existing B11 SDK/bootstrap and retains previous versions/documents. It is not an agent tool. Tests ingest only isolated memory graphs; no automatic retained-data import, schema change or container restart.
++
++### Feedback and recovery
++Closed Feedback contains stable code/category/resolution, max8 safe task IDs and field paths, static <=240-character explanation and draft_committed NO/UNKNOWN. Pydantic input values/unknown property names/exception bodies are never copied. Workflow planning_feedback plus PLAN_DRAFT_REJECTED observation persist safe domain/schema rejections and known pre-write storage-capability failures. Action policy is also supplied in actual supervisor context; no second orchestration system or automatic replan.
++
++DAG/schema/action/prerequisite corrections request DRAFT_CLARIFICATION; missing evidence/ownership/source capability requests MISSING_EVIDENCE_OR_CAPABILITY. Pre-write migration/storage readiness failure pauses PLAN_OPERATOR_RECOVERY_REQUIRED, distinct from clarification. Unknown failures, uncertain writes and wake ownership failures raise sanitized RecoveryRequired into the existing quarantine. Checkpoint failures remain outside planner acknowledgment and also quarantine; no claim that feedback was persisted after a lost lease or failed checkpoint. Operator must inspect the last durable checkpoint and reconcile native request IDs. A committed draft with acknowledgment loss is never labeled definitely rejected; native Store replay remains authoritative.
++
++Normalization omits remediation only when absent, preserving accepted B12 hash representation (including previous_plan_id=None). New conditions/evidence order normalize deterministically; old versions remain readable. 0001–0004 and dependency locks are unchanged. No B13 authority, dispatch, executor or monitor.
+--- a/backend/app/agents/models.py
++++ b/backend/app/agents/models.py
+@@ -2,6 +2,7 @@
+ import json
+ from typing import Literal
+ from pydantic import BaseModel,ConfigDict,Field,model_validator
++from app.services.planning.feedback import Feedback
+ from .limits import DEFAULT_CUMULATIVE_TOKENS,MAX_CUMULATIVE_TOKENS,MAX_CHECKPOINT_TOKENS
+ 
+ class Model(BaseModel):
+@@ -39,6 +40,7 @@
+     problem_cluster_id: str=Field(min_length=1,max_length=200)
+     discovered_tool_names: list[str]=Field(default_factory=list,max_length=30)
+     missing_evidence: list[str]=Field(default_factory=list,max_length=100)
++    planning_feedback:Feedback|None=None
+     current_plan_id: str | None=None
+     current_plan_version: int | None=None
+     current_plan_hash: str | None=None
+--- a/backend/app/agents/runtime.py
++++ b/backend/app/agents/runtime.py
+@@ -71,9 +71,13 @@
+             n=r.node(id,'Hypothesis');history=self.service.history(id,s.as_of)
+             hypotheses.append({'id':id,'definition':n.properties,'assessments':[h.model_dump(mode='json') for h in history]})
+         from .context import build
+-        return build(s,hypotheses,self.tools.catalog(),POLICIES[s.issue],self.action_schemas(),
++        context=build(s,hypotheses,self.tools.catalog(),POLICIES[s.issue],self.action_schemas(),
+             self.repo._read('MATCH (d:Department {municipality_id:$scope}) RETURN d.id LIMIT 10',{'scope':'demo-city'}),
+             self.model.spending() if hasattr(self.model,'spending') and self.model.permit is not None else None)
++        from app.services.planning.policy import ACTIONS
++        context['planning_action_policies']={k:v for k,v in ACTIONS.items() if v['issue']==s.issue}
++        context['planning_guards']='Remedial proposals require reviewed target-specific causal support and explicit causal inspection/safety conditions. SUPPORTED_NOW: both MET with validated report evidence and no future task dependencies. CONDITIONAL: any unmet causal inspection must depend on a target-covering INSPECTION task; safety remains an explicit unresolved gate. Insufficient/contradicted support: INSPECTION only. All procedures PROPOSED, no execution authority. Use planning_feedback for later authorized clarification; never auto-replan on operator recovery.'
++        return context
+ 
+     async def supervisor(self,channel):
+         s=self.decode(channel);s.as_of=self.clock();s.iterations+=1
+@@ -190,21 +194,33 @@
+         if set(args)=={'plan_draft'}:
+             connection=None
+             try:
+-                from app.services.planning.service import PlanningService
++                from app.services.planning.service import PlanningService,PlanningBlocked
+                 service=self.planning_service
+                 if service is None:
+                     from app.memory.runtime import configured
+                     capability=configured(s.graph)
+-                    if capability is None:raise ValueError('PROCEDURE_CAPABILITY_UNAVAILABLE')
++                    if capability is None:
++                        from app.services.planning.service import PlanningBlocked
++                        raise PlanningBlocked('PROCEDURE_CAPABILITY_UNAVAILABLE')
+                     connection,memory=capability.connect();service=PlanningService(self.repo,memory,clock=self.clock)
+-                if args['plan_draft'].get('investigation_id')!=s.investigation_id or args['plan_draft'].get('issue')!=s.issue:raise ValueError('PLAN_SCOPE_MISMATCH')
++                if args['plan_draft'].get('investigation_id')!=s.investigation_id or args['plan_draft'].get('issue')!=s.issue:raise PlanningBlocked('PLAN_SCOPE_MISMATCH')
+                 self.check()
+                 receipt=await service.create(args['plan_draft'],request_id=identity('PLANREQ',s.thread_id,s.iterations,s.wakes),actor=Actor(id='civicly-b12-planner',role='ANALYST'))
++                s.planning_feedback=None
+                 s.current_plan_id=receipt.id;s.current_plan_version=receipt.version;s.current_plan_hash=receipt.plan_hash
+                 s.observations.append({'operation':'PLAN_DRAFTED','receipt':receipt.model_dump(mode='json'),'human_review_required':True})
+                 s.graph_revision=self.revision();s.pause_reason='HUMAN_REVIEW'
+-            except Exception:
+-                s.errors.append('PLAN_DRAFT_REJECTED');s.pause_reason='PLAN_CLARIFICATION_REQUIRED'
++            except Exception as error:
++                from app.services.planning.feedback import feedback
++                from app.graph.repository import OutcomeUnknown
++                detail=feedback(error).model_dump(mode='json')
++                # Unsafe writes/lease failures must reach the existing wake quarantine.
++                # A failed/lost checkpoint cannot truthfully persist new feedback.
++                if isinstance(error,(RecoveryRequired,OutcomeUnknown)) or detail['draft_committed']=='UNKNOWN':
++                    raise RecoveryRequired('PLAN_OPERATOR_RECOVERY_REQUIRED') from None
++                self.check()
++                s.planning_feedback=feedback(error);s.observations.append({'operation':'PLAN_DRAFT_REJECTED','feedback':detail})
++                s.errors.append('PLAN_DRAFT_REJECTED');s.pause_reason='PLAN_OPERATOR_RECOVERY_REQUIRED' if detail['resolution']=='OPERATOR_RECOVERY' else 'PLAN_CLARIFICATION_REQUIRED'
+             finally:
+                 if connection is not None:connection.connection.close();connection.connection.connection_pool.disconnect()
+             return self.output(s,'ResolutionPlanner')
+--- a/backend/app/memory/__main__.py
++++ b/backend/app/memory/__main__.py
+@@ -14,7 +14,7 @@
+ from .storage import MemoryMigration
+ from .service import Memory
+ from .runtime import Profile,PROFILE
+-async def setup(output):
++async def setup(output,manifest=None):
+  settings=Settings(_env_file='.env')
+  with connect(settings) as db:
+   MigrationRunner(db,'civicly_knowledge').apply();repo=GraphRepository(db,'civicly_knowledge')
+@@ -25,7 +25,7 @@
+     now=utc_now();repo.create_node('Department',{'id':id,'schema_version':3,'municipality_id':'demo-city','created_at':now,'updated_at':now,'name':name,'department_type':'SYNTHETIC_ORGANIZATIONAL_OWNER'})
+   cfg=ConnectionConfig(host=settings.host,port=settings.port,username=settings.username,password=settings.password.get_secret_value() if settings.password else None,graph_name='civicly_docs',retry_count=1)
+   m=Memory(repo,cfg);results=[]
+-  for s in sources():results.append(await m.ingest(s))
++  for s in (sources(manifest) if manifest else sources()):results.append(await m.ingest(s))
+   if PROFILE.exists():
+    if PROFILE.is_symlink() or PROFILE.stat().st_mode&0o077:raise ValueError('Private regular profile required')
+    profile=Profile.model_validate_json(PROFILE.read_text())
+@@ -40,5 +40,5 @@
+   proof={'status':'PASS','mode':'ACTUAL_SDK_OFFLINE_SOURCED_MEMORY','canonical_graph':'civicly_knowledge','docs_graph':'civicly_docs','migration':MemoryMigration(db,'civicly_knowledge').status(),'registered_versions':len(results),'replayed':sum(r['replayed'] for r in results),'source_ids':[r['id'] for r in results],'example':example,'external_model_requests':0,'source_scope':'demo-city only; unchanged city/active graph read permissions; separate memory reader'}
+   Path(output).write_text(json.dumps(proof,indent=2)+'\n');print(json.dumps({k:v for k,v in proof.items() if k not in {'example','source_ids'}}))
+ def main():
+- p=argparse.ArgumentParser(description=__doc__);p.add_argument('operation',choices=['setup']);p.add_argument('--output',default='docs/evidence/B11-canonical-setup.json');a=p.parse_args();asyncio.run(setup(a.output))
++ p=argparse.ArgumentParser(description=__doc__);p.add_argument('operation',choices=['setup']);p.add_argument('--output',default='docs/evidence/B11-canonical-setup.json');p.add_argument('--manifest',type=Path);a=p.parse_args();asyncio.run(setup(a.output,a.manifest))
+ if __name__=='__main__':main()
+--- a/backend/app/services/planning/models.py
++++ b/backend/app/services/planning/models.py
+@@ -1,6 +1,7 @@
+ """Closed draft contracts; no cost/duration/confidence or executable permissions."""
+ from typing import Literal
+ from pydantic import Field,model_validator
++from pydantic_core import PydanticCustomError
+ from app.services.evidence.models import Model,ID,Text,Time
+ from app.memory.models import Citation
+ from app.graph.models import digest
+@@ -21,9 +22,28 @@
+   required={'WATERLOGGING':{'COMPARABLE_FOLLOWUP_RAINFALL','FOLLOWUP_WATERLOGGING'},'ROAD_DAMAGE':{'FOLLOWUP_PAVEMENT','WEAR_EXPOSURE'},'WASTE_ACCUMULATION':{'SCHEDULED_PICKUPS','ACTUAL_PICKUPS','REACCUMULATION_WINDOW'}}[self.issue]
+   if set(self.required_evidence)!=required or len(self.required_evidence)!=len(required):raise ValueError('Issue-specific monitoring evidence required')
+   return self
++class Prerequisite(Model):
++ kind:Literal['CAUSAL_INSPECTION','SAFETY_REVIEW']
++ status:Literal['MET','UNMET']
++ evidence_ids:list[ID]=Field(default_factory=list,max_length=12)
++ depends_on_task_id:ID|None=None
++ @model_validator(mode='after')
++ def binding(self):
++  if (self.status=='MET')!=bool(self.evidence_ids) or self.status=='MET' and self.depends_on_task_id is not None:
++   raise PydanticCustomError('plan_prerequisite','Invalid prerequisite evidence binding')
++  return self
++class Remediation(Model):
++ mode:Literal['SUPPORTED_NOW','CONDITIONAL']
++ conditions:list[Prerequisite]=Field(min_length=2,max_length=2)
++ @model_validator(mode='after')
++ def guards(self):
++  if {c.kind for c in self.conditions}!={'CAUSAL_INSPECTION','SAFETY_REVIEW'} or (self.mode=='SUPPORTED_NOW')!=all(c.status=='MET' for c in self.conditions):
++   raise PydanticCustomError('plan_prerequisite','Explicit causal and safety gates required')
++  return self
+ class TaskDraft(Model):
+  id:ID
+- action_type:Literal['INSPECTION']
++ action_type:Literal['INSPECTION','DRAIN_BLOCKAGE_CLEARANCE','SUBGRADE_REPAIR','MISSED_PICKUP_RECOVERY']
++ remediation:Remediation|None=None
+  target_ids:list[ID]=Field(min_length=1,max_length=5)
+  department_id:ID
+  priority:Literal['LOW','MODERATE','HIGH','CRITICAL']
+@@ -35,6 +55,11 @@
+  expected_outcome:Text
+  verification_criteria:Text
+  risks:list[Text]=Field(min_length=1,max_length=8)
++ @model_validator(mode='after')
++ def action_guards(self):
++  if (self.action_type=='INSPECTION')!=(self.remediation is None):raise PydanticCustomError('plan_prerequisite','Remedial actions require typed prerequisites')
++  if self.remediation and any(not set(c.evidence_ids)<=set(self.evidence_ids) for c in self.remediation.conditions):raise PydanticCustomError('plan_prerequisite','Prerequisite evidence outside task')
++  return self
+ class PlanDraft(Model):
+  investigation_id:ID
+  issue:Literal['WATERLOGGING','ROAD_DAMAGE','WASTE_ACCUMULATION']
+@@ -57,11 +82,11 @@
+   if (self.version==1)!=(self.previous_plan_id is None):raise ValueError('Previous version binding required')
+   adjacency={t.id:t.depends_on for t in self.tasks};visiting=set();done=set()
+   def visit(id):
+-   if id in visiting:raise ValueError('Dependency cycle')
++   if id in visiting:raise PydanticCustomError('plan_dag','Dependency cycle',{'task_id':id})
+    if id in done:return
+    visiting.add(id)
+    for other in adjacency[id]:
+-    if other not in adjacency:raise ValueError('Unknown dependency')
++    if other not in adjacency:raise PydanticCustomError('plan_dag','Unknown dependency',{'task_id':id})
+     visit(other)
+    visiting.remove(id);done.add(id)
+   for t in self.tasks:
+@@ -72,6 +97,10 @@
+  def normalized(self):
+   value=self.model_dump(mode='json');value['tasks']=sorted(value['tasks'],key=lambda t:t['id']);value['basis']=sorted(value['basis'],key=lambda b:b['hypothesis_id'])
+   for task in value['tasks']:
++   if task['remediation'] is None:task.pop('remediation') # Preserve accepted B12 hashes byte-for-byte.
++   else:
++    task['remediation']['conditions'].sort(key=lambda c:c['kind'])
++    for c in task['remediation']['conditions']:c['evidence_ids'].sort()
+    for key in ['depends_on','target_ids','assessment_ids','evidence_ids']:task[key]=sorted(task[key])
+   value['evidence_ids']=sorted(value['evidence_ids'])
+   return value
+--- a/backend/app/services/planning/service.py
++++ b/backend/app/services/planning/service.py
+@@ -8,7 +8,8 @@
+ from app.memory.models import Citation
+ from .models import PlanDraft,PlanReceipt
+ from .storage import Store
+-class PlanningBlocked(ValueError):pass
++class PlanningBlocked(ValueError):
++ def __init__(self,code,*,task_id=None):self.code=code;self.task_id=task_id;super().__init__(code)
+ class PlanningService:
+  def __init__(self,repo,memory=None,*,clock=utc_now):self.repo=repo;self.memory=memory;self.clock=clock;self.store=Store(repo)
+  async def resolve(self,task,reader,as_of):
+@@ -56,13 +57,13 @@
+    inv=reader.node(draft.investigation_id,'Investigation')
+    incidents=[reader.node(e.target,'Incident') for e in reader.edges('INVESTIGATES',source=inv.id) if self.repo.get_node(e.target).kind=='Incident']
+    if not incidents or {n.properties['issue_type'] for n in incidents}!={draft.issue}:raise PlanningBlocked('INVESTIGATION_ISSUE_BINDING')
+-   hypotheses={e.target for e in reader.edges('PROPOSES',source=inv.id)};allowed_targets=set();allowed_evidence=set()
++   hypotheses={e.target for e in reader.edges('PROPOSES',source=inv.id)};allowed_targets=set();allowed_evidence=set();assessments=[]
+    for incident in incidents:allowed_targets.update(e.target for e in reader.edges('AFFECTS',source=incident.id))
+    for basis in draft.basis:
+     if basis.hypothesis_id not in hypotheses:raise PlanningBlocked('HYPOTHESIS_OUTSIDE_INVESTIGATION')
+     history=reader.histories(basis.hypothesis_id)
+     if not history or history[-1].id!=basis.assessment_id:raise PlanningBlocked('ASSESSMENT_STALE_OR_OUTSIDE_HYPOTHESIS')
+-    assessment=history[-1]
++    assessment=history[-1];assessments.append(assessment)
+     allowed_evidence.update(assessment.supporting_evidence_ids+assessment.contradicting_evidence_ids)
+     for e in reader.edges('CONCERNS',source=basis.hypothesis_id):
+      if 'InfrastructureAsset' in self.repo.get_node(e.target).labels:allowed_targets.add(e.target)
+@@ -74,7 +75,12 @@
+    memory_revision=self.memory.repo._read("MATCH (m:CivicSchemaMigration {id:'0001'}) RETURN m.repo_revision,m.repo_pending") if self.memory else None
+    for task in draft.tasks:
+     if not set(task.target_ids)<=allowed_targets:raise PlanningBlocked('TARGET_OUTSIDE_INVESTIGATION')
+-    proof['tasks'][task.id]=await self.resolve(task,reader,at)
++    try:
++     from .policy import validate_remediation
++     action_proof=validate_remediation(task,draft,reader,assessments,PlanningBlocked)
++     proof['tasks'][task.id]={**await self.resolve(task,reader,at),'remediation':action_proof}
++    except PlanningBlocked as e:
++     e.task_id=task.id;raise
+    if self.memory and memory_revision!=self.memory.repo._read("MATCH (m:CivicSchemaMigration {id:'0001'}) RETURN m.repo_revision,m.repo_pending"):raise PlanningBlocked('PROCEDURE_REVISION_CHANGED')
+    proof['procedure_reference_revision']=memory_revision
+    receipt=PlanReceipt(id='PLAN-B12-'+digest([inv.id,draft.version])[:32],version=draft.version,plan_hash=draft.content_hash)
+--- a/backend/tests/b12_fixtures.py
++++ b/backend/tests/b12_fixtures.py
+@@ -18,8 +18,23 @@
+  return {'investigation_id':'INV','issue':'WATERLOGGING','version':1,'basis':[{'hypothesis_id':'H1','assessment_id':'A1','reason':'Address a documented uncertainty','addressed':True},{'hypothesis_id':'H2','assessment_id':'A2','reason':'Retain competing mechanism until discriminating evidence','addressed':False}],'evidence_ids':['EV'],
+  'tasks':[{'id':'inspect','action_type':'INSPECTION','target_ids':['D1'],'department_id':'DEPT-DRAIN','priority':'HIGH','prerequisites':['Human review and later authorized inspection execution required'],'depends_on':[],'evidence_ids':['EV'],'assessment_ids':['A1'],'procedure_citation':citation,'expected_outcome':'Collect discriminating dated attributed evidence','verification_criteria':'Independent reviewed findings distinguish alternatives','risks':['Reported condition may have another mechanism']}],
+  'expected_outcomes':['Clarify mechanism without declaring cause verified'],'risks':['Source guidance is synthetic/proposed'],'uncertainties':['No verified physical cause or completed work inferred'],'monitoring':{'issue':'WATERLOGGING','required_evidence':REQUIRED['WATERLOGGING'],'observation_opportunity':'Suitable comparable rainfall after any later approved work','verification_criteria':'Dated follow-up evidence assesses recurrence under comparable conditions'}}
+-def prepared(db,tmp_path,memory,issue):
+- path=tmp_path/'agent.json';p,r,clock,receipt,inv,h=prepare(db,path,issue);f=Fixture(r,clock,{issue:receipt},p.graph,{})
++def prepared(db,tmp_path,memory,issue,*,remedial=False):
++ path=tmp_path/'agent.json'
++ if remedial:
++  from tests.b10_fixtures import create
++  from tests.b10or2_fixtures import CAUSE
++  from tests.b09_fixtures import report
++  from app.services.evidence.policies import POLICIES
++  from app.services.planning.policy import ACTIONS
++  p,r,clock,receipt,inv=create(db,path,issue);f=Fixture(r,clock,{issue:receipt},p.graph,{})
++  with active_scope(p):
++   if issue=='ROAD_DAMAGE':r.create_relationship('UNDERLIES','P1','R1',{**edge('B12R-PIPE-ROAD'),'source_evidence_id':'EV','association_status':'VERIFIED'})
++   h=propose(f,inv,issue,CAUSE[issue],ref='B12R-supported-cause')
++   policy=next(v for v in ACTIONS.values() if v['issue']==issue)
++   report(f,inv,ref='B12R-authored-physical-and-safety',codes=POLICIES[issue][CAUSE[issue]]['confirming']+[policy['safety_code']],assets=[ASSET[issue]])
++   assess(f,h,ref='B12R-reviewed-support')
++ else:
++  p,r,clock,receipt,inv,h=prepare(db,path,issue);f=Fixture(r,clock,{issue:receipt},p.graph,{})
+  with active_scope(p):
+   changes={'asset_ids':['P1'],'topology':{'source_id':'P1','target_id':'R1','operation':'dependencies','max_hops':3}} if issue=='ROAD_DAMAGE' else {}
+   second=propose(f,inv,issue,ALT[issue],ref='B12-alternative',**changes);assess(f,second,ref='B12-alternative-assessment')
+@@ -37,4 +52,14 @@
+   task=sample()['tasks'][0];task.update(id='inspect'+str(i),target_ids=[asset],department_id=dept,evidence_ids=value['evidence_ids'],assessment_ids=[a.id for a in histories],procedure_citation=citation,depends_on=[] if i==0 else ['inspect0'])
+   value['tasks'].append(task)
+  value['monitoring']={'issue':issue,'required_evidence':REQUIRED[issue],'observation_opportunity':'Comparable rainfall' if issue=='WATERLOGGING' else 'Meaningful scheduled/actual pickup and reaccumulation observation window' if issue=='WASTE_ACCUMULATION' else 'Follow-up pavement after relevant wear exposure','verification_criteria':'Review dated attributed follow-up observations; no opportunity remains unresolved'}
++ if remedial:
++  from pathlib import Path
++  source=next(s for s in sources(Path('data/documents/b12r/manifest.json')) if s.owner_department_id==DEPT[issue])
++  asyncio.run(memory.ingest(source))
++  citation=asyncio.run(memory.retrieve(as_of=clock(),document_id=source.document_id))['citations'][0]
++  support=histories[0].classification.reviewed_support_ids;assert histories[0].assessment in {'SUPPORTED','VERIFIED'} and support
++  task=value['tasks'][0];task.update(id='remedy',action_type=source.action_types[0],evidence_ids=support,assessment_ids=[histories[0].id],procedure_citation=citation,
++   expected_outcome='Qualified proposal to address '+histories[0].cause_code+'; no performed work or verified resolution',
++   remediation={'mode':'SUPPORTED_NOW','conditions':[{'kind':kind,'status':'MET','evidence_ids':support} for kind in ['CAUSAL_INSPECTION','SAFETY_REVIEW']]})
++  value['tasks']=[task]
+  return p,r,clock,path,inv,PlanDraft.model_validate(value),PlanningService(r,memory,clock=clock)
+--- a/backend/tests/integration/test_planning_agent.py
++++ b/backend/tests/integration/test_planning_agent.py
+@@ -1,6 +1,8 @@
+ """Scripted model; real MCP/LangGraph/FalkorDBSaver/domain draft service."""
+ import asyncio,json,os,subprocess
+ from pathlib import Path
++import os
++PREFIX=os.environ.get("CIVICLY_PLANNING_EVIDENCE_PREFIX","B12R")
+ from uuid import uuid4
+ import pytest
+ from app.active import active_scope
+@@ -11,9 +13,9 @@
+ from tests.integration.test_memory_graphrag import memory
+ from tests.b12_fixtures import prepared
+ pytestmark=pytest.mark.integration
+-@pytest.mark.parametrize('invalid',[False,True])
++@pytest.mark.parametrize('invalid',[False,True,'dependency'])
+ def test_model_draft_real_mcp_persist_fresh_process_and_resume(db,tmp_path,memory,invalid):
+- p,r,clock,path,inv,draft,service=prepared(db,tmp_path,memory,'WATERLOGGING')
++ p,r,clock,path,inv,draft,service=prepared(db,tmp_path,memory,'WATERLOGGING',remedial=not invalid)
+  async def run():
+   with active_scope(p):
+    async with brokers(p,path,timeout=10) as tools:
+@@ -24,23 +26,36 @@
+     state=InvestigationState(graph=p.graph,investigation_id=inv,thread_id=uuid4().hex,problem_cluster_id=cluster,discovered_tool_names=[t['name'] for t in tools.catalog()],incident_ids=incidents,asset_ids=['D1'],issue='WATERLOGGING',graph_revision=0,inventory_hash=tools.inventory_hash,as_of=clock(),hypotheses=[b.hypothesis_id for b in draft.basis])
+     state.graph_revision=r._read("MATCH (g:CivicSchemaMigration {id:'0001'}) RETURN g.repo_revision")[0][0]
+     value=draft.model_dump(mode='json')
+-    if invalid:value['tasks'][0]['depends_on']=[value['tasks'][0]['id']]
++    if invalid is True:value['tasks'][0]['depends_on']=[value['tasks'][0]['id']]
+     actions=[choose('READ',{'template':'node','id':'D1'},'official::query_graph_readonly'),choose('RECOMMEND',{'plan_draft':value},summary='Authored deterministic draft proposal requiring domain validation')]
++    if invalid=='dependency':
++     from app.graph.migration import MigrationError
++     async def unavailable(*args,**kwargs):raise MigrationError('credential=DO_NOT_LEAK_dependency_body')
++     service.create=unavailable # Deliberate pre-write dependency fault, not a mock success.
+     model=ScriptedModel(actions);agent=InvestigationAgent(p,r,tools,model,saver(p),clock=clock,planning_service=service)
+     result=await agent.run(state,thread_id=state.thread_id);final=result['data']
+     assert result['__interrupt__'] and final['executions']
+-    if invalid:
++    if invalid=='dependency':
++     assert final['pause_reason']=='PLAN_OPERATOR_RECOVERY_REQUIRED' and final['current_plan_id'] is None
++     assert final['planning_feedback']['resolution']=='OPERATOR_RECOVERY' and final['planning_feedback']['category']=='DEPENDENCY'
++     assert 'DO_NOT_LEAK' not in json.dumps(final)
++     assert final['observations'][-1]['feedback']==final['planning_feedback']
++     assert r._read('MATCH (p:ResolutionPlan) RETURN count(p)')==[[0]]
++    elif invalid:
+      assert final['pause_reason']=='PLAN_CLARIFICATION_REQUIRED' and final['current_plan_id'] is None
+      assert r._read('MATCH (p:ResolutionPlan) RETURN count(p)')==[[0]]
++     assert final['planning_feedback']['code']=='PLAN_DAG_INVALID'
++     assert final['planning_feedback']['task_ids']==['inspect0']
++     assert final['observations'][-1]['feedback']==final['planning_feedback']
+     else:
+      assert final['current_plan_id'] and final['current_plan_version']==1
+      saved=service.store.get(final['current_plan_id']);assert saved['receipt']['plan_hash']==final['current_plan_hash']
+      out=tmp_path/'fresh.json'
+      process=subprocess.run([str(Path('backend/.venv/bin/python').absolute()),'-m','tests.b12_worker',str(path),state.thread_id,str(out)],env={**os.environ,'PYTHONPATH':str(Path('backend').absolute())},capture_output=True,timeout=30)
+      assert process.returncode==0,process.stderr.decode()[-1000:]
+-     fresh=json.loads(out.read_text());assert fresh['checkpoint_id'] and fresh['receipt']==saved['receipt']
++     fresh=json.loads(out.read_text());assert fresh['draft']['tasks'][0]['action_type']=='DRAIN_BLOCKAGE_CLEARANCE';assert fresh['checkpoint_id'] and fresh['receipt']==saved['receipt']
+      resumed=await InvestigationAgent(p,r,tools,ScriptedModel([choose()]),saver(p),clock=clock,planning_service=service).run(None,thread_id=state.thread_id,resume=True)
+      assert resumed['data']['current_plan_id']==final['current_plan_id'] and r._read('MATCH (p:ResolutionPlan) RETURN count(p)')==[[1]]
+-     Path('docs/evidence/B12-agent-fresh-process.json').write_text(json.dumps(fresh,indent=2)+'\n')
+-    Path('docs/evidence/B12-agent-'+('invalid' if invalid else 'valid')+'.json').write_text(json.dumps({'mode':'SCRIPTED_MODEL_REAL_MCP_LANGGRAPH_SAVER','graph':p.graph,'thread':state.thread_id,'result':final,'provider_calls':0},indent=2)+'\n')
++     Path(f'docs/evidence/{PREFIX}-agent-fresh-process.json').write_text(json.dumps(fresh,indent=2)+'\n')
++    Path(f'docs/evidence/{PREFIX}-agent-'+('dependency' if invalid=='dependency' else 'invalid' if invalid else 'valid')+'.json').write_text(json.dumps({'mode':'SCRIPTED_MODEL_REAL_MCP_LANGGRAPH_SAVER','graph':p.graph,'thread':state.thread_id,'result':final,'provider_calls':0},indent=2)+'\n')
+  asyncio.run(run())
+--- a/backend/tests/integration/test_planning_runtime_store.py
++++ b/backend/tests/integration/test_planning_runtime_store.py
+@@ -1,6 +1,8 @@
+ """Real FalkorDB/memory draft foundation with no paid providers."""
+ import asyncio,json,copy
+ from pathlib import Path
++import os
++PREFIX=os.environ.get("CIVICLY_PLANNING_EVIDENCE_PREFIX","B12R")
+ import pytest
+ from app.active import active_scope
+ from app.graph.repository import Conflict
+@@ -30,7 +32,7 @@
+    assert second.version==2 and second.plan_hash!=first.plan_hash and service.store.get(first.id)==body
+    with pytest.raises(Conflict):await service.create(updated,request_id='B12-first',actor=ACTOR)
+    assert PlanMigration(db,p.graph).apply()['ready']
+-   Path('docs/evidence/B12-'+issue+'-draft.json').write_text(json.dumps({'mode':'REAL_FALKORDB_SDK_NO_MODEL','source_graph':p.graph,'receipt':first.model_dump(mode='json'),'version2':second.model_dump(mode='json'),'saved':body,'no_new_work_orders':True,'migration':PlanMigration(db,p.graph).status()},indent=2)+'\n')
++   Path(f'docs/evidence/{PREFIX}-'+issue+'-draft.json').write_text(json.dumps({'mode':'REAL_FALKORDB_SDK_NO_MODEL','source_graph':p.graph,'receipt':first.model_dump(mode='json'),'version2':second.model_dump(mode='json'),'saved':body,'no_new_work_orders':True,'migration':PlanMigration(db,p.graph).status()},indent=2)+'\n')
+  asyncio.run(run())
+ 
+ def test_resolver_unknown_conflicting_owner_stale_revoked_and_reference_denials(db,tmp_path,memory):
+@@ -73,5 +75,5 @@
+    memory.store.revoke(version2.id,operator='synthetic-curator',reason='B12 test source withdrawn')
+    with pytest.raises(PlanningBlocked,match='PROCEDURE_STALE'):await service.create(current,request_id='revoked',actor=ACTOR)
+    assert r._read('MATCH (p:ResolutionPlan) RETURN count(p)')==[[0]]
+-   Path('docs/evidence/B12-resolver-denials.json').write_text(json.dumps({'unknown_candidate':True,'conflicting_verified':True,'wrong_department':True,'foreign_target':True,'future_citation':True,'document_owner_not_executor':True,'superseded_source':True,'revoked_source':True,'no_plan_acknowledged':True,'graph':p.graph},indent=2)+'\n')
++   Path(f'docs/evidence/{PREFIX}-resolver-denials.json').write_text(json.dumps({'unknown_candidate':True,'conflicting_verified':True,'wrong_department':True,'foreign_target':True,'future_citation':True,'document_owner_not_executor':True,'superseded_source':True,'revoked_source':True,'no_plan_acknowledged':True,'graph':p.graph},indent=2)+'\n')
+  asyncio.run(run())
+--- a/blockers.md
++++ b/blockers.md
+@@ -1,4 +1,6 @@
+ # blockers.md — Current blockers and verification spikes
++
++> **CURRENT B12-R — TECHNICALLY PASS, HUMAN REVIEW PENDING.** Bounded remedial drafts for all3issues, typed causal/safety gates and sanitized durable clarification/capability feedback implemented.61distinctPASS(52unit/9real),0unresolvedFAIL/0SKIP; both SPEC validatorsPASS once;0external Gemini/countTokens. Historical failed attempts retained. Actual SDK/MCP/LangGraph/Saver/fresh-process exercised with scripted model. Original migrations/data/evidence preserved; no B13/lifecycle/live provider. B10 full genuine acceptance remains OPEN/PARTIAL. This summary supersedes historical status below; see docs/evidence/B12R-RESULTS.md.
+ 
+ > **CURRENT B12 — PASS, HUMAN REVIEW PENDING.** Typed persistent DRAFT plans/PROPOSED tasks, verified responsibility + B11 citations, bounded DAG/version/hash/monitoring criteria and compatible planner/Saver path exercised.49distinct focused casesPASS(42unit/7real),0finalFAIL/0SKIP; both finalSPECvalidatorsPASS;0externalGemini/countTokens. Additive0004 tested isolated;0001–0003/retained city/checkpoints/evidence preserved. No approval/WorkOrder/monitoringexecution/API/frontend. B10 full live acceptance OPEN/PARTIAL. B13 not authorized; see docs/evidence/B12-RESULTS.md.
+ 
+@@ -515,3 +517,10 @@
+ No full770/313/accepted7/smoke rerun. Selection covers boundedDAG/hash/monitoring, allthreeissues/crossdept, source/owner/ref denials, version/replay/ackloss, actualMCP/Saver/freshprocess/resume/invaliddraft, legacyrecommend and changedstate/context/provider. No containerlifecycle: existingdurability protocol unchanged; additivegraphschema/singlemutation and freshprocess verified. Allpriorevidence/frozenfixtures/migrations/dependencies preserved; previousliveledgerhistory notreset/altered.
+ 
+ Review docs/evidence/B12-RESULTS.md/B12-COMMANDS.md/B12-FILES.md/B12-changes.patch and backend/PLANNING.md. Humanverify road planDRAFT/version/hash, Road→Waterdependency, ownerEvidence and PROPOSEDcitations, monitoring; inspect freshprocesscheckpoint. Remaining B10 genuine fullacceptance OPEN/PARTIAL; draft-only INSPECTIONscope/source action applicability and synthetic/manualSDKrepair/boundedhistory/DEC-004futuregates. ExactnextB13 approvals/auth/planbinding/idempotentWorkOrder only after newauthorization. STOP afterB12.
++
++
++## B12-R corrective review gate | 2026-10-18
++
++No unresolved B12-R runtime failure in focused scope. Limits:3actions only; synthetic automated source self-review is not human/government authority; all procedures PROPOSED and drafts unapproved/non-executable. New sources ingested only isolated test graphs; retained canonical installation requires explicit trusted --manifest setup, not automatic import. Unknown write/lease/checkpoint faults require operator reconciliation; feedback cannot be newly durable after storage/ownership loss. B10 full genuine live acceptance OPEN/PARTIAL. All remaining DEC-004 later gates, B11 bounded/offline retrieval/manual repair and operational approval/event/auth/API/frontend requirements remain. Frozen55legacy defects retained (B04 canonical conversion unchanged); no B12-R fixture repair or dataset rewrite. B13 not authorized.
++
++Review docs/evidence/B12R-RESULTS.md, B12R-COMMANDS.md, B12R-FILES.md and B12R-changes.patch. Human: inspect3category gates/citations, actual native receipt/hash/checkpoint, safe invalid/recovery feedback and zero operational deltas. STOP for review; exact next task B13 only after explicit authorization.
+--- a/contracts/resolution_planning.json
++++ b/contracts/resolution_planning.json
+@@ -1,5 +1,5 @@
+ {
+-  "version": "B12-1",
++  "version": "B12R-1",
+   "municipality_id": "demo-city",
+   "execution_authority": false,
+   "draft_schema": {
+@@ -212,6 +212,85 @@
+         "title": "Monitoring",
+         "type": "object"
+       },
++      "Prerequisite": {
++        "additionalProperties": false,
++        "properties": {
++          "kind": {
++            "enum": [
++              "CAUSAL_INSPECTION",
++              "SAFETY_REVIEW"
++            ],
++            "title": "Kind",
++            "type": "string"
++          },
++          "status": {
++            "enum": [
++              "MET",
++              "UNMET"
++            ],
++            "title": "Status",
++            "type": "string"
++          },
++          "evidence_ids": {
++            "items": {
++              "maxLength": 200,
++              "minLength": 1,
++              "type": "string"
++            },
++            "maxItems": 12,
++            "title": "Evidence Ids",
++            "type": "array"
++          },
++          "depends_on_task_id": {
++            "anyOf": [
++              {
++                "maxLength": 200,
++                "minLength": 1,
++                "type": "string"
++              },
++              {
++                "type": "null"
++              }
++            ],
++            "default": null,
++            "title": "Depends On Task Id"
++          }
++        },
++        "required": [
++          "kind",
++          "status"
++        ],
++        "title": "Prerequisite",
++        "type": "object"
++      },
++      "Remediation": {
++        "additionalProperties": false,
++        "properties": {
++          "mode": {
++            "enum": [
++              "SUPPORTED_NOW",
++              "CONDITIONAL"
++            ],
++            "title": "Mode",
++            "type": "string"
++          },
++          "conditions": {
++            "items": {
++              "$ref": "#/$defs/Prerequisite"
++            },
++            "maxItems": 2,
++            "minItems": 2,
++            "title": "Conditions",
++            "type": "array"
++          }
++        },
++        "required": [
++          "mode",
++          "conditions"
++        ],
++        "title": "Remediation",
++        "type": "object"
++      },
+       "TaskDraft": {
+         "additionalProperties": false,
+         "properties": {
+@@ -222,9 +301,25 @@
+             "type": "string"
+           },
+           "action_type": {
+-            "const": "INSPECTION",
++            "enum": [
++              "INSPECTION",
++              "DRAIN_BLOCKAGE_CLEARANCE",
++              "SUBGRADE_REPAIR",
++              "MISSED_PICKUP_RECOVERY"
++            ],
+             "title": "Action Type",
+             "type": "string"
++          },
++          "remediation": {
++            "anyOf": [
++              {
++                "$ref": "#/$defs/Remediation"
++              },
++              {
++                "type": "null"
++              }
++            ],
++            "default": null
+           },
+           "target_ids": {
+             "items": {
+@@ -519,7 +614,7 @@
+   "reference_rules": "latest immutable assessments from investigated hypotheses, attributed evidence membership, temporally visible investigation assets/hypothesis concern targets, verified single MAINTAINED_BY; unknown/conflict blocks",
+   "procedure_rules": "Exact B11 canonical graph/Document/KnowledgeProcedure/version/chunk/source hash pointer; source-reviewed PROPOSED never verified policy; document owner is not execution assignment; revoked/superseded blocks",
+   "storage": "registryv3/0001\u20130003 unchanged; additive0004 companion plus actual ResolutionPlan/ActionTask/native DAG/assignment/target edges in one fenced repository commit. Immutable versions, request hash replay, no partial acknowledgment",
+-  "runtime": "RECOMMEND {plan_draft} domain-validated; explicit PLAN_CLARIFICATION_REQUIRED pause on invalid; historical legacy recommendations/current_plan_id=None decode unchanged; validated receipt ID/version/hash in state",
++  "runtime": "RECOMMEND {plan_draft}; bounded sanitized feedback persisted for safe rejected drafts/pre-write dependency errors. Unsafe ownership/uncertain writes propagate to wake quarantine; no fabricated rejection acknowledgment. Historical B12 hashes and absent feedback decode retained.",
+   "monitoring": "Draft criteria only; comparable rainfall, pavement/wear, scheduled+actual pickup/reaccumulation window required by issue. Missing opportunity unresolved; completion never resolution",
+   "limits": {
+     "tasks": 12,
+@@ -534,5 +629,125 @@
+     "monitoring evaluation/workers",
+     "events/outbox",
+     "API/SSE/frontend"
+-  ]
++  ],
++  "feedback_schema": {
++    "additionalProperties": false,
++    "properties": {
++      "code": {
++        "enum": [
++          "PLAN_DAG_INVALID",
++          "PLAN_SCHEMA_INVALID",
++          "PLAN_ACTION_UNSUPPORTED",
++          "PLAN_PREREQUISITE_INVALID",
++          "PLAN_EVIDENCE_INSUFFICIENT",
++          "PLAN_OWNERSHIP_UNAVAILABLE",
++          "PLAN_SOURCE_UNAVAILABLE",
++          "PLAN_DEPENDENCY_UNAVAILABLE",
++          "PLAN_OPERATOR_RECOVERY",
++          "PLAN_REFERENCE_INVALID"
++        ],
++        "title": "Code",
++        "type": "string"
++      },
++      "category": {
++        "enum": [
++          "DAG",
++          "SCHEMA",
++          "ACTION",
++          "PREREQUISITE",
++          "EVIDENCE",
++          "OWNERSHIP",
++          "SOURCE",
++          "DEPENDENCY",
++          "RECOVERY",
++          "REFERENCE"
++        ],
++        "title": "Category",
++        "type": "string"
++      },
++      "resolution": {
++        "enum": [
++          "DRAFT_CLARIFICATION",
++          "MISSING_EVIDENCE_OR_CAPABILITY",
++          "OPERATOR_RECOVERY"
++        ],
++        "title": "Resolution",
++        "type": "string"
++      },
++      "task_ids": {
++        "items": {
++          "maxLength": 64,
++          "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$",
++          "type": "string"
++        },
++        "maxItems": 8,
++        "title": "Task Ids",
++        "type": "array"
++      },
++      "field_paths": {
++        "items": {
++          "maxLength": 160,
++          "type": "string"
++        },
++        "maxItems": 8,
++        "title": "Field Paths",
++        "type": "array"
++      },
++      "explanation": {
++        "maxLength": 240,
++        "title": "Explanation",
++        "type": "string"
++      },
++      "draft_committed": {
++        "default": "NO",
++        "enum": [
++          "NO",
++          "UNKNOWN"
++        ],
++        "title": "Draft Committed",
++        "type": "string"
++      }
++    },
++    "required": [
++      "code",
++      "category",
++      "resolution",
++      "explanation"
++    ],
++    "title": "Feedback",
++    "type": "object"
++  },
++  "action_policies": {
++    "DRAIN_BLOCKAGE_CLEARANCE": {
++      "issue": "WATERLOGGING",
++      "cause": "BLOCKAGE",
++      "labels": [
++        "DrainInlet",
++        "DrainSegment"
++      ],
++      "department": "DEPT-DRAIN",
++      "safety_code": "DRAIN_CLEARANCE_SAFETY_REVIEWED"
++    },
++    "SUBGRADE_REPAIR": {
++      "issue": "ROAD_DAMAGE",
++      "cause": "SUBGRADE_FAILURE",
++      "labels": [
++        "RoadSegment"
++      ],
++      "department": "DEPT-ROAD",
++      "safety_code": "SUBGRADE_REPAIR_SAFETY_REVIEWED"
++    },
++    "MISSED_PICKUP_RECOVERY": {
++      "issue": "WASTE_ACCUMULATION",
++      "cause": "MISSED_PICKUP",
++      "labels": [
++        "WasteCollectionPoint"
++      ],
++      "department": "DEPT-SAN",
++      "safety_code": "PICKUP_RECOVERY_SAFETY_REVIEWED"
++    }
++  },
++  "remediation_rules": "Latest addressed SUPPORTED/VERIFIED with reviewed target-specific causal support, no contradictions. Supported-now requires typed MET full causal confirmation and action-specific safety observations through validated B09 reports. Conditional causal gap requires explicit UNMET and inspection DAG dependency; unmet safety remains unresolved. Procedure source is documentary, PROPOSED, not physical causal evidence. No execution authority.",
++  "hash_compatibility": "Absent remediation omitted from normalized old inspection drafts; existing B12 accepted hashes unchanged. Conditions and their evidence normalize deterministically.",
++  "source_manifest": "data/documents/b12r/manifest.json; three version1 synthetic policies with explicit automated author self-review only; B11 KnowledgeProcedure stays PROPOSED"
+ }
+--- a/decision.md
++++ b/decision.md
+@@ -1334,3 +1334,22 @@
+ No full770/313/accepted7/smoke rerun. Selection covers boundedDAG/hash/monitoring, allthreeissues/crossdept, source/owner/ref denials, version/replay/ackloss, actualMCP/Saver/freshprocess/resume/invaliddraft, legacyrecommend and changedstate/context/provider. No containerlifecycle: existingdurability protocol unchanged; additivegraphschema/singlemutation and freshprocess verified. Allpriorevidence/frozenfixtures/migrations/dependencies preserved; previousliveledgerhistory notreset/altered.
+ 
+ Review docs/evidence/B12-RESULTS.md/B12-COMMANDS.md/B12-FILES.md/B12-changes.patch and backend/PLANNING.md. Humanverify road planDRAFT/version/hash, Road→Waterdependency, ownerEvidence and PROPOSEDcitations, monitoring; inspect freshprocesscheckpoint. Remaining B10 genuine fullacceptance OPEN/PARTIAL; draft-only INSPECTIONscope/source action applicability and synthetic/manualSDKrepair/boundedhistory/DEC-004futuregates. ExactnextB13 approvals/auth/planbinding/idempotentWorkOrder only after newauthorization. STOP afterB12.
++
++
++## DEC-053 — B12-R bounded remediation and rejection feedback (design before code)
++Scope R01/R08/R09/R10/R13/R14/R15/R17; B13 not authorized. Registry ActionTask.action_type is an open string, and no existing normative remedial enum was found. Admit only DRAIN_BLOCKAGE_CLEARANCE (BLOCKAGE, DrainInlet/DrainSegment, Drainage), SUBGRADE_REPAIR (SUBGRADE_FAILURE, RoadSegment, Road), MISSED_PICKUP_RECOVERY (MISSED_PICKUP, WasteCollectionPoint, Sanitation). Retain INSPECTION. New codes are draft policy, not operational states. Require latest addressed SUPPORTED or VERIFIED B09 assessment, reviewed supporting physical report for each target, verified MAINTAINED_BY ownership and exact current B11 procedure citation/action. Documentary authority never supplies physical evidence.
++
++Remediation adds optional typed conditions; absent conditions serialize exactly as old B12 drafts for historical hash compatibility. Supported-now requires MET causal inspection (all cause confirmation codes) and action-specific reviewed safety evidence. Conditional future proposals require explicit UNMET guards; an unmet causal inspection must depend on an INSPECTION task covering the target. Safety remains a typed unresolved gate; no text-only bypass. All proposals remain non-executable, unapproved, simulated DRAFT/PROPOSED. Insufficient/contradicted evidence permits inspection, not remediation. Existing source corpus is inspection guidance, so add exactly three newly authored synthetic demonstration MD policies D019–D021 with separate manifest, explicit author/owner/effective/review/checksum/action provenance. Preserve frozen original sources/manifests. No storage migration or durability mechanism changes.
++
++Feedback: bounded closed schema, static messages/codes/categories, safe schema paths/task IDs, clarification/evidence-capability/operator-recovery distinctions. Never serialize exceptions or Pydantic inputs. Persist safe rejections and pre-write capability failures in workflow observations/state. Lease loss, uncertain writes and checkpoint errors propagate to existing quarantine; no false rejection or model retry. If no safe checkpoint can be written, operator recovery uses the last durable checkpoint, not a fabricated acknowledgment. Committed-acknowledgment loss remains native request-id replay.
++
++Alternatives rejected: universally VERIFIED findings (prevents justified qualified proposals); arbitrary repair strings/free-text guards (unverifiable); rewriting inspection authority (false provenance); new rules/orchestration framework (unnecessary); catching all infrastructure faults as invalid drafts (unsafe). Focused tests only: three-category real SDK/DB remediation, guards, affected DAG/hash/replay/source/ownership cases, actual scripted MCP/LangGraph/Saver fresh-process and feedback, representative recovery/redaction. Both SPEC validators once final. No live provider, full suite, restart, or operational records.
++
++Source refinement during focused verification: B11 intentionally omits Source.review_status=PROPOSED by default. New demo documents receive explicit **automated author self-review for policy/guard consistency**, not independent human review or municipal authority; reviewed_by identifies Codex B12-R automated self-review. Source metadata REVIEWED records that limited curation, while every KnowledgeProcedure/assertion stays PROPOSED. Preserve B11's reviewed-only retrieval and reject relaxing include_candidates to admit arbitrary unreviewed/disputed procedures. This metadata choice does not supply causal evidence or operational approval.
++
++
++## B12-R corrective review gate | 2026-10-18
++
++DEC-053 implementation verified: three specific remedial codes; latest addressed SUPPORTED/VERIFIED plus per-target reviewed physical support and current report/finding hashes; typed conditions, verified ownership, exact B11 source/version. No future dependencies for supported-now; conditional causal gap requires target inspection dependency. No approval/execution. Three new synthetic self-reviewed sources through real SDK, PROPOSED assertions retained. Feedback safely separates draft/evidence/capability from operator recovery, while uncertain writes/lease/checkpoint faults retain quarantine. Old normalized hashes unchanged.61distinct focusedPASS; both SPEC validatorsPASS once; six inherited zero-provider proofs. Initial source metadata and missing road fixture topology failures recorded; no application guard weakened. Alternative/final rationale, source inventory and actual narrow patch in B12R evidence. No migration/dependency/durability change; no lifecycle. Stop before B13.
++
++Review docs/evidence/B12R-RESULTS.md, B12R-COMMANDS.md, B12R-FILES.md and B12R-changes.patch. Human: inspect3category gates/citations, actual native receipt/hash/checkpoint, safe invalid/recovery feedback and zero operational deltas. STOP for review; exact next task B13 only after explicit authorization.
+--- a/docs/backend/07_operations.md
++++ b/docs/backend/07_operations.md
+@@ -43,3 +43,5 @@
+ pointers. Responsibility resolves from verified dated MAINTAINED_BY evidence,
+ separate from B11 document authorship/PROPOSED guidance. No approval, WorkOrder,
+ execution, monitoring worker or event platform is implemented by this foundation.
++
++B12-R adds only the three bounded remedial proposal policies and typed causal/safety conditions in contracts/resolution_planning.json. Latest reviewed causal support and actual B11 citations are independent guards. Conditional proposals expose unmet gates; supported-now still never grants execution authority. Sanitized clarification/capability feedback is durable when checkpoint ownership is safe; uncertain writes/lease/checkpoint failures retain operator quarantine. See backend/PLANNING.md. B13–B15 remain unimplemented.
+--- a/flow.md
++++ b/flow.md
+@@ -808,3 +808,20 @@
+ Review docs/evidence/B12-RESULTS.md/B12-COMMANDS.md/B12-FILES.md/B12-changes.patch and backend/PLANNING.md. Humanverify road planDRAFT/version/hash, Road→Waterdependency, ownerEvidence and PROPOSEDcitations, monitoring; inspect freshprocesscheckpoint. Remaining B10 genuine fullacceptance OPEN/PARTIAL; draft-only INSPECTIONscope/source action applicability and synthetic/manualSDKrepair/boundedhistory/DEC-004futuregates. ExactnextB13 approvals/auth/planbinding/idempotentWorkOrder only after newauthorization. STOP afterB12.
+ 
+ B12 file/control graph: agents.provider → prompts/B12-1 + existingSelection; agents.runtime.action_schemas → services.planning.models → contracts/resolution_planning.json. ResolutionPlanner → PlanningService (trusted analyst) → B09Reader latestassessment/temporalbinding + B03ownership/evidencechecks → B11Memory.retrieve actualSDK/citation/KnowledgeProcedure/currentversion checks → planning.Store under sourcelease → compiledregistrytypednodes/edges + CivicPlanDraft companion via repo._commit → readbackreceipt ID/version/hash → workflowstate → originalCoordinator/AwaitDependency/Saver. Invalid→explicitclarificationpause; legacyrecommend→oldnonbindingpath. PlanMigration0004 creates only additivecompanionindices/constraints/ledger, requires0001checksum and OPERATIONALreadiness; neverautomigratedfrommodel. tests.b12_worker reads originalnativeSaver then validatedStore/hash in freshprocess; resumehasnoextraPlan. External sourcegraph pointers carry provenance insteadofcrossgraphGOV_BY. No calls into approval/WorkOrder/execution/event/API/frontend modules.
++
++
++## B12-R implemented file and control flow
++`planning/models.py` imports strict B09 types and B11 Citation; adds Remediation/Prerequisite while old normalization omits absent additions. `planning/policy.py` imports normative B09 cause rules; service imports it only for remedial tasks. `service.create` -> existing fenced session -> latest assessment/source membership/version -> policy: target/cause/support/current report+finding hashes/typed gate codes and dependency -> existing resolve: dated verified owner + fresh B11 source/version/action -> existing Store.commit one parameterized audited draft mutation. Store/migrations are unchanged. Source/finding snapshots, typed gates and policy proof remain in companion JSON bound by payload and plan hashes.
++
++Separate three-source `data/documents/b12r/manifest.json` -> existing Source.checked_path SHA/authority -> actual GraphRAG SDK ingest/vector/fulltext -> canonical proposed KnowledgeProcedure -> reviewed-only retrieve -> version/chunk citations. `memory/__main__.py` accepts explicit --manifest for trusted operator use; default B11 source setup is preserved. No retained canonical ingestion is automatic.
++
++`planning/feedback.py` imports closed Model, static classifications and known exception types. Agents.models references Feedback with None old-state default. Runtime ResolutionPlanner -> domain create -> valid receipt/ID/version/hash -> human review OR safe feedback state+observation -> explicit pause -> existing Coordinator/Saver. Unsafe ownership/unknown-write/checkpoint exceptions -> sanitized recovery/quarantine, no forged rejected/committed acknowledgment. Supervisor context contains issue-specific action policy/guards and persisted feedback. Later authorized bounded resume sees feedback; no auto rewrite/replan. Actual scripted MCP READ, remedial service write, native Saver checkpoint and fresh-process worker all exercise this flow.
++
++Persistence protocol and migration0004 remain unchanged; source additions use existing SDK and canonical companion journals. Focused repeated ingest/retrieve and fresh-process Saver/source proof cover the new path; no lifecycle operation or database reset is needed or authorized.
++
++
++## B12-R corrective review gate | 2026-10-18
++
++Final runtime evidence:3category source/ownership/gate/provenance native draft records; actual scripted MCP/Saver remedial fresh-process/resume; bounded invalid-DAG and pre-write dependency feedback in state/observations. Unknown failures propagate to existing quarantine with no fabricated feedback persistence.61distinct focusedPASS, both SPEC validatorsPASS,0provider. File graph above and B12R-FILES.md identify actual changed sources. No retained canonical import or lifecycle.
++
++Review docs/evidence/B12R-RESULTS.md, B12R-COMMANDS.md, B12R-FILES.md and B12R-changes.patch. Human: inspect3category gates/citations, actual native receipt/hash/checkpoint, safe invalid/recovery feedback and zero operational deltas. STOP for review; exact next task B13 only after explicit authorization.
+--- a/implementation_status.md
++++ b/implementation_status.md
+@@ -1,4 +1,6 @@
+ # implementation_status.md — Current implementation truth
++
++> **CURRENT B12-R — TECHNICALLY PASS, HUMAN REVIEW PENDING.** Bounded remedial drafts for all3issues, typed causal/safety gates and sanitized durable clarification/capability feedback implemented.61distinctPASS(52unit/9real),0unresolvedFAIL/0SKIP; both SPEC validatorsPASS once;0external Gemini/countTokens. Historical failed attempts retained. Actual SDK/MCP/LangGraph/Saver/fresh-process exercised with scripted model. Original migrations/data/evidence preserved; no B13/lifecycle/live provider. B10 full genuine acceptance remains OPEN/PARTIAL. This summary supersedes historical status below; see docs/evidence/B12R-RESULTS.md.
+ 
+ > **CURRENT B12 — PASS, HUMAN REVIEW PENDING.** Typed persistent DRAFT plans/PROPOSED tasks, verified responsibility + B11 citations, bounded DAG/version/hash/monitoring criteria and compatible planner/Saver path exercised.49distinct focused casesPASS(42unit/7real),0finalFAIL/0SKIP; both finalSPECvalidatorsPASS;0externalGemini/countTokens. Additive0004 tested isolated;0001–0003/retained city/checkpoints/evidence preserved. No approval/WorkOrder/monitoringexecution/API/frontend. B10 full live acceptance OPEN/PARTIAL. B13 not authorized; see docs/evidence/B12-RESULTS.md.
+ 
+@@ -486,3 +488,10 @@
+ No full770/313/accepted7/smoke rerun. Selection covers boundedDAG/hash/monitoring, allthreeissues/crossdept, source/owner/ref denials, version/replay/ackloss, actualMCP/Saver/freshprocess/resume/invaliddraft, legacyrecommend and changedstate/context/provider. No containerlifecycle: existingdurability protocol unchanged; additivegraphschema/singlemutation and freshprocess verified. Allpriorevidence/frozenfixtures/migrations/dependencies preserved; previousliveledgerhistory notreset/altered.
+ 
+ Review docs/evidence/B12-RESULTS.md/B12-COMMANDS.md/B12-FILES.md/B12-changes.patch and backend/PLANNING.md. Humanverify road planDRAFT/version/hash, Road→Waterdependency, ownerEvidence and PROPOSEDcitations, monitoring; inspect freshprocesscheckpoint. Remaining B10 genuine fullacceptance OPEN/PARTIAL; draft-only INSPECTIONscope/source action applicability and synthetic/manualSDKrepair/boundedhistory/DEC-004futuregates. ExactnextB13 approvals/auth/planbinding/idempotentWorkOrder only after newauthorization. STOP afterB12.
++
++
++## B12-R corrective review gate | 2026-10-18
++
++B12-R corrective scope technically complete, pending human review. DRAIN_BLOCKAGE_CLEARANCE/SUBGRADE_REPAIR/MISSED_PICKUP_RECOVERY support qualified SUPPORTED findings with typed causal/safety gates; conditional unmet inspection has native DAG dependency. No operational writes. Three newly authored synthetic source policies use actual B11 SDK; no original version replaced. Bounded feedback persists safe rejections/capability failures; unsafe writes/lease/checkpoint failures retain fail-closed recovery.61distinctPASS(52unit/9real),0final unresolvedFAIL/0SKIP; both SPEC validatorsPASS once. No full regression/live/lifecycle run. Old hashes/versions/evidence retained. B10 full live OPEN/PARTIAL; no B13/product-completion claim.
++
++Review docs/evidence/B12R-RESULTS.md, B12R-COMMANDS.md, B12R-FILES.md and B12R-changes.patch. Human: inspect3category gates/citations, actual native receipt/hash/checkpoint, safe invalid/recovery feedback and zero operational deltas. STOP for review; exact next task B13 only after explicit authorization.
+--- a/scripts/validate_planning.py
++++ b/scripts/validate_planning.py
+@@ -3,9 +3,16 @@
+ from pathlib import Path
+ ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT/'backend'))
+ from app.services.planning.models import PlanDraft,PlanReceipt
++from app.services.planning.feedback import Feedback
++from app.services.planning.policy import ACTIONS
++from app.memory.models import sources
+ c=json.loads((ROOT/'contracts/resolution_planning.json').read_text())
+ assert c['draft_schema']==PlanDraft.model_json_schema() and c['receipt_schema']==PlanReceipt.model_json_schema()
+ p=json.loads((ROOT/'backend/app/graph/migrations/0004_plan_drafts.json').read_text())
+ assert p['requires_0001_sha256']==hashlib.sha256((ROOT/'backend/app/graph/migrations/0001.json').read_bytes()).hexdigest()
+ assert c['execution_authority'] is False
++assert c['feedback_schema']==Feedback.model_json_schema() and c['action_policies']==ACTIONS
++new=sources(ROOT/'data/documents/b12r/manifest.json')
++assert len(new)==3 and {a for s in new for a in s.action_types}==set(ACTIONS)
++for s in new:s.checked_path()
+ print('PASS B12 STATIC: closed plan/task/monitoring schemas, draft-only receipt and compatible0004; not runtime/approval proof')
+--- a/task_board.md
++++ b/task_board.md
+@@ -1,4 +1,6 @@
+ # task_board.md — Human-reviewed task queue
++
++> **CURRENT B12-R — TECHNICALLY PASS, HUMAN REVIEW PENDING.** Bounded remedial drafts for all3issues, typed causal/safety gates and sanitized durable clarification/capability feedback implemented.61distinctPASS(52unit/9real),0unresolvedFAIL/0SKIP; both SPEC validatorsPASS once;0external Gemini/countTokens. Historical failed attempts retained. Actual SDK/MCP/LangGraph/Saver/fresh-process exercised with scripted model. Original migrations/data/evidence preserved; no B13/lifecycle/live provider. B10 full genuine acceptance remains OPEN/PARTIAL. This summary supersedes historical status below; see docs/evidence/B12R-RESULTS.md.
+ 
+ > **CURRENT B12 — PASS, HUMAN REVIEW PENDING.** Typed persistent DRAFT plans/PROPOSED tasks, verified responsibility + B11 citations, bounded DAG/version/hash/monitoring criteria and compatible planner/Saver path exercised.49distinct focused casesPASS(42unit/7real),0finalFAIL/0SKIP; both finalSPECvalidatorsPASS;0externalGemini/countTokens. Additive0004 tested isolated;0001–0003/retained city/checkpoints/evidence preserved. No approval/WorkOrder/monitoringexecution/API/frontend. B10 full live acceptance OPEN/PARTIAL. B13 not authorized; see docs/evidence/B12-RESULTS.md.
+ 
+@@ -414,3 +416,10 @@
+ No full770/313/accepted7/smoke rerun. Selection covers boundedDAG/hash/monitoring, allthreeissues/crossdept, source/owner/ref denials, version/replay/ackloss, actualMCP/Saver/freshprocess/resume/invaliddraft, legacyrecommend and changedstate/context/provider. No containerlifecycle: existingdurability protocol unchanged; additivegraphschema/singlemutation and freshprocess verified. Allpriorevidence/frozenfixtures/migrations/dependencies preserved; previousliveledgerhistory notreset/altered.
+ 
+ Review docs/evidence/B12-RESULTS.md/B12-COMMANDS.md/B12-FILES.md/B12-changes.patch and backend/PLANNING.md. Humanverify road planDRAFT/version/hash, Road→Waterdependency, ownerEvidence and PROPOSEDcitations, monitoring; inspect freshprocesscheckpoint. Remaining B10 genuine fullacceptance OPEN/PARTIAL; draft-only INSPECTIONscope/source action applicability and synthetic/manualSDKrepair/boundedhistory/DEC-004futuregates. ExactnextB13 approvals/auth/planbinding/idempotentWorkOrder only after newauthorization. STOP afterB12.
++
++
++## B12-R corrective review gate | 2026-10-18
++
++B12 accepted by user; B12-R now technically PASS and awaits review. Scope R01/R08–R10/R13–R15/R17: bounded remedial draft types, explicit guards/source provenance, actionable redacted feedback and existing persistence/runtime.61distinctPASS(52unit/9real), both validatorsPASS,0provider. Exact commands/failed attempts/inventory/patch in docs/evidence/B12R-*. Next proposed B13 requires explicit authorization; do not start approvals, dispatch, workers, API or frontend.
++
++Review docs/evidence/B12R-RESULTS.md, B12R-COMMANDS.md, B12R-FILES.md and B12R-changes.patch. Human: inspect3category gates/citations, actual native receipt/hash/checkpoint, safe invalid/recovery feedback and zero operational deltas. STOP for review; exact next task B13 only after explicit authorization.
+--- a/test_log.md
++++ b/test_log.md
+@@ -1,4 +1,6 @@
+ # test_log.md — Append-only verification record
++
++> **CURRENT B12-R — TECHNICALLY PASS, HUMAN REVIEW PENDING.** Bounded remedial drafts for all3issues, typed causal/safety gates and sanitized durable clarification/capability feedback implemented.61distinctPASS(52unit/9real),0unresolvedFAIL/0SKIP; both SPEC validatorsPASS once;0external Gemini/countTokens. Historical failed attempts retained. Actual SDK/MCP/LangGraph/Saver/fresh-process exercised with scripted model. Original migrations/data/evidence preserved; no B13/lifecycle/live provider. B10 full genuine acceptance remains OPEN/PARTIAL. This summary supersedes historical status below; see docs/evidence/B12R-RESULTS.md.
+ 
+ > **CURRENT B12 — PASS, HUMAN REVIEW PENDING.** Typed persistent DRAFT plans/PROPOSED tasks, verified responsibility + B11 citations, bounded DAG/version/hash/monitoring criteria and compatible planner/Saver path exercised.49distinct focused casesPASS(42unit/7real),0finalFAIL/0SKIP; both finalSPECvalidatorsPASS;0externalGemini/countTokens. Additive0004 tested isolated;0001–0003/retained city/checkpoints/evidence preserved. No approval/WorkOrder/monitoringexecution/API/frontend. B10 full live acceptance OPEN/PARTIAL. B13 not authorized; see docs/evidence/B12-RESULTS.md.
+ 
+@@ -1008,3 +1010,10 @@
+ No full770/313/accepted7/smoke rerun. Selection covers boundedDAG/hash/monitoring, allthreeissues/crossdept, source/owner/ref denials, version/replay/ackloss, actualMCP/Saver/freshprocess/resume/invaliddraft, legacyrecommend and changedstate/context/provider. No containerlifecycle: existingdurability protocol unchanged; additivegraphschema/singlemutation and freshprocess verified. Allpriorevidence/frozenfixtures/migrations/dependencies preserved; previousliveledgerhistory notreset/altered.
+ 
+ Review docs/evidence/B12-RESULTS.md/B12-COMMANDS.md/B12-FILES.md/B12-changes.patch and backend/PLANNING.md. Humanverify road planDRAFT/version/hash, Road→Waterdependency, ownerEvidence and PROPOSEDcitations, monitoring; inspect freshprocesscheckpoint. Remaining B10 genuine fullacceptance OPEN/PARTIAL; draft-only INSPECTIONscope/source action applicability and synthetic/manualSDKrepair/boundedhistory/DEC-004futuregates. ExactnextB13 approvals/auth/planbinding/idempotentWorkOrder only after newauthorization. STOP afterB12.
++
++
++## B12-R corrective review gate | 2026-10-18
++
++Final61distinctPASS/0unresolvedFAIL/0SKIP:52unit =29first +34affected -14overlap +3unsafe-recovery;9real distinct =4remediation/insufficient +3MCP(runtime valid,invalid,prewrite dependency) +2existing owner/source/version/replay cases. Initial real6PASS/3FAIL68.73s; corrected real5PASS/1road-fixtureFAIL49.00s; final road1PASS7.11s. Unit29PASS0.86s,34PASS0.82s,3PASS0.81s. Historical failures retained; source metadata refined truthfully and explicit road fixture topology added, no guard weakening. Both SPEC validatorsPASS once via make test-spec after final source/schema edits. Six provider interlock proofs0external/0unexpected. Scripted model and injected errors clearly distinguished from real SDK/FalkorDB/MCP/LangGraph/Saver. No full suites, paid smoke, container lifecycle or retained canonical source setup. Exact commands/raw outputs/deduplicated summary: docs/evidence/B12R-COMMANDS.md/B12R-test-summary.json.
++
++Review docs/evidence/B12R-RESULTS.md, B12R-COMMANDS.md, B12R-FILES.md and B12R-changes.patch. Human: inspect3category gates/citations, actual native receipt/hash/checkpoint, safe invalid/recovery feedback and zero operational deltas. STOP for review; exact next task B13 only after explicit authorization.
+--- /dev/null
++++ b/backend/app/services/planning/feedback.py
+@@ -0,0 +1,44 @@
++"""Static bounded feedback. Never echo exception strings, ctx messages or inputs."""
++import re
++from typing import Literal,Annotated
++from pydantic import Field,ValidationError
++from app.services.evidence.models import Model
++from app.graph.migration import MigrationError
++from app.graph.repository import OutcomeUnknown
++from .service import PlanningBlocked
++class Feedback(Model):
++ code:Literal['PLAN_DAG_INVALID','PLAN_SCHEMA_INVALID','PLAN_ACTION_UNSUPPORTED','PLAN_PREREQUISITE_INVALID','PLAN_EVIDENCE_INSUFFICIENT','PLAN_OWNERSHIP_UNAVAILABLE','PLAN_SOURCE_UNAVAILABLE','PLAN_DEPENDENCY_UNAVAILABLE','PLAN_OPERATOR_RECOVERY','PLAN_REFERENCE_INVALID']
++ category:Literal['DAG','SCHEMA','ACTION','PREREQUISITE','EVIDENCE','OWNERSHIP','SOURCE','DEPENDENCY','RECOVERY','REFERENCE']
++ resolution:Literal['DRAFT_CLARIFICATION','MISSING_EVIDENCE_OR_CAPABILITY','OPERATOR_RECOVERY']
++ task_ids:list[Annotated[str,Field(max_length=64,pattern=r'^[A-Za-z][A-Za-z0-9_.-]*$')]]=Field(default_factory=list,max_length=8)
++ field_paths:list[Annotated[str,Field(max_length=160)]]=Field(default_factory=list,max_length=8)
++ explanation:str=Field(max_length=240)
++ draft_committed:Literal['NO','UNKNOWN']='NO'
++
++def feedback(error):
++ code,category,resolution,message='PLAN_OPERATOR_RECOVERY','RECOVERY','OPERATOR_RECOVERY','Stop and reconcile storage, ownership and the last durable checkpoint before retrying.'
++ paths=[];tasks=[];committed='UNKNOWN'
++ if isinstance(error,ValidationError):
++  code,category,resolution,message='PLAN_SCHEMA_INVALID','SCHEMA','DRAFT_CLARIFICATION','Correct the indicated draft fields without changing evidence or execution authority.';committed='NO'
++  # Known schema property names only; extra-property names may themselves contain secrets.
++  allowed={'tasks','id','action_type','target_ids','department_id','depends_on','assessment_ids','evidence_ids','procedure_citation','remediation','conditions','kind','status','mode','depends_on_task_id','basis','monitoring','version','previous_plan_id','expected_outcome','verification_criteria','prerequisites','risks'}
++  for e in error.errors(include_url=False,include_context=True,include_input=False)[:8]:
++   loc=e['loc'];safe=[str(v) for v in loc if type(v) is int or v in allowed]
++   if safe:paths.append('.'.join(safe)[:160])
++   task=(e.get('ctx') or {}).get('task_id')
++   if isinstance(task,str) and re.fullmatch(r'[A-Za-z][A-Za-z0-9_.-]{0,63}',task):tasks.append(task)
++   if e['type']=='plan_dag':code,category,message='PLAN_DAG_INVALID','DAG','Correct cyclic or unknown task dependencies; retain inspection and evidence gates.'
++   elif e['type']=='plan_prerequisite':code,category,message='PLAN_PREREQUISITE_INVALID','PREREQUISITE','Represent causal inspection and safety gates explicitly; text cannot satisfy a missing gate.'
++   elif loc and loc[-1]=='action_type':code,category,message='PLAN_ACTION_UNSUPPORTED','ACTION','Select an admitted action or request an evidence-grounded inspection.'
++ elif isinstance(error,PlanningBlocked):
++  committed='NO';resolution='MISSING_EVIDENCE_OR_CAPABILITY'
++  c=error.code
++  if c.startswith(('OWNERSHIP','ACCOUNTABLE_DEPARTMENT')):code,category,message='PLAN_OWNERSHIP_UNAVAILABLE','OWNERSHIP','Resolve verified accountable ownership before resubmitting this task.'
++  elif c.startswith('PROCEDURE'):code,category,message='PLAN_SOURCE_UNAVAILABLE','SOURCE','Retrieve a current applicable non-revoked source version through the authorized memory capability.'
++  elif c.startswith('PREREQUISITE'):code,category,message='PLAN_PREREQUISITE_INVALID','PREREQUISITE','Supply valid typed gate evidence or an explicit inspection dependency.';resolution='DRAFT_CLARIFICATION'
++  elif c in {'REMEDIAL_EVIDENCE_INSUFFICIENT','REMEDIAL_EVIDENCE_CHANGED'}:code,category,message='PLAN_EVIDENCE_INSUFFICIENT','EVIDENCE','Remediation lacks reviewed causal support; retain inspection to resolve the evidence gap.'
++  elif c=='ACTION_TARGET_OR_DEPARTMENT':code,category,message='PLAN_ACTION_UNSUPPORTED','ACTION','Use an admitted issue, target subtype and accountable department combination.';resolution='DRAFT_CLARIFICATION'
++  else:code,category,message='PLAN_REFERENCE_INVALID','REFERENCE','Revalidate current investigation, assessment, version and evidence references.';resolution='DRAFT_CLARIFICATION'
++  if error.task_id and re.fullmatch(r'[A-Za-z][A-Za-z0-9_.-]{0,63}',error.task_id):tasks=[error.task_id]
++ elif isinstance(error,MigrationError):code,category,message='PLAN_DEPENDENCY_UNAVAILABLE','DEPENDENCY','Operator must establish ready compatible plan storage before retrying.';committed='NO'
++ return Feedback(code=code,category=category,resolution=resolution,task_ids=list(dict.fromkeys(tasks))[:8],field_paths=list(dict.fromkeys(paths))[:8],explanation=message,draft_committed=committed)
+--- /dev/null
++++ b/backend/app/services/planning/policy.py
+@@ -0,0 +1,44 @@
++"""Three closed demo proposal policies; never approval or physical verification."""
++from app.services.evidence.policies import POLICIES
++ACTIONS={
++ 'DRAIN_BLOCKAGE_CLEARANCE':{'issue':'WATERLOGGING','cause':'BLOCKAGE','labels':['DrainInlet','DrainSegment'],'department':'DEPT-DRAIN','safety_code':'DRAIN_CLEARANCE_SAFETY_REVIEWED'},
++ 'SUBGRADE_REPAIR':{'issue':'ROAD_DAMAGE','cause':'SUBGRADE_FAILURE','labels':['RoadSegment'],'department':'DEPT-ROAD','safety_code':'SUBGRADE_REPAIR_SAFETY_REVIEWED'},
++ 'MISSED_PICKUP_RECOVERY':{'issue':'WASTE_ACCUMULATION','cause':'MISSED_PICKUP','labels':['WasteCollectionPoint'],'department':'DEPT-SAN','safety_code':'PICKUP_RECOVERY_SAFETY_REVIEWED'},
++}
++
++def validate_remediation(task,draft,reader,assessments,blocked):
++ if task.action_type=='INSPECTION':return None
++ policy=ACTIONS[task.action_type]
++ def reject(code):raise blocked(code,task_id=task.id)
++ if draft.issue!=policy['issue'] or task.department_id!=policy['department']:reject('ACTION_TARGET_OR_DEPARTMENT')
++ addressed={b.assessment_id for b in draft.basis if b.addressed}
++ selected=[a for a in assessments if a.id in set(task.assessment_ids)&addressed and a.cause_code==policy['cause']]
++ if not selected or any(a.assessment not in {'SUPPORTED','VERIFIED'} or not a.classification or not a.classification.reviewed_support_ids or a.classification.reviewed_contradiction_ids or a.classification.unreviewed_contradiction_ids for a in selected):reject('REMEDIAL_EVIDENCE_INSUFFICIENT')
++ conditions={c.kind:c for c in task.remediation.conditions};tasks={t.id:t for t in draft.tasks}
++ if task.remediation.mode=='SUPPORTED_NOW' and task.depends_on:reject('PREREQUISITE_FUTURE_DEPENDENCY')
++ supporting={id for a in selected for id in a.classification.reviewed_support_ids}&set(task.evidence_ids)
++ references={id:reader.evidence(id) for id in supporting}
++ for a in selected:
++  prior={ref.id:ref for ref in a.evidence_references}
++  for id in set(a.classification.reviewed_support_ids)&supporting:
++   if id not in prior or prior[id].content_hash!=references[id].content_hash or prior[id].finding_hashes!=references[id].finding_hashes:reject('REMEDIAL_EVIDENCE_CHANGED')
++ reports={id:ref.report for id,ref in references.items()}
++ # Reader verifies original B09 journal, report, findings, source, dates and review.
++ def codes(ids,target):
++  return {ob.code for id in ids if id in reports and reports[id] and reports[id].review for ob in reports[id].observations if ob.asset_id==target and ob.result=='OBSERVED'}
++ confirming=set(POLICIES[draft.issue][policy['cause']]['confirming'])
++ for target in task.target_ids:
++  asset=reader.node(target,'InfrastructureAsset')
++  if not set(asset.labels)&set(policy['labels']):reject('ACTION_TARGET_OR_DEPARTMENT')
++  related=[a for a in selected if target in {e.target for e in reader.edges('CONCERNS',source=a.hypothesis_id)}]
++  related_ids={id for a in related for id in a.classification.reviewed_support_ids}&supporting
++  if not related or not codes(related_ids,target)&confirming:reject('REMEDIAL_EVIDENCE_INSUFFICIENT')
++  for kind,condition in conditions.items():
++   if condition.status=='MET':
++    required=confirming if kind=='CAUSAL_INSPECTION' else {policy['safety_code']}
++    if not set(condition.evidence_ids)<=related_ids or not required<=codes(condition.evidence_ids,target):reject('PREREQUISITE_EVIDENCE_INVALID')
++   elif kind=='CAUSAL_INSPECTION':
++    dependency=tasks.get(condition.depends_on_task_id)
++    if not dependency or dependency.id not in task.depends_on or dependency.action_type!='INSPECTION' or target not in dependency.target_ids:reject('PREREQUISITE_INSPECTION_DEPENDENCY')
++   elif condition.depends_on_task_id is not None:reject('PREREQUISITE_SAFETY_BINDING')
++ return {'mode':task.remediation.mode,'cause_code':policy['cause'],'assessment_ids':[a.id for a in selected],'assessment_statuses':[a.assessment for a in selected],'causal_status':'QUALIFIED_PROPOSAL_ONLY','unmet_guards':[c.kind for c in task.remediation.conditions if c.status=='UNMET'],'execution_authority':False}
+--- /dev/null
++++ b/backend/tests/integration/test_planning_remediation_runtime.py
+@@ -0,0 +1,57 @@
++"""Real FalkorDB + B11 SDK/source pipeline; no model/provider or field execution."""
++import asyncio,copy,json
++from pathlib import Path
++import pytest
++from app.active import active_scope
++from app.services.evidence.models import Actor
++from app.services.planning.service import PlanningBlocked
++from app.services.planning.models import PlanDraft
++from tests.b12_fixtures import prepared,ISSUES
++from tests.integration.test_memory_graphrag import memory
++pytestmark=pytest.mark.integration
++ACTOR=Actor(id='synthetic-b12r-planner',role='ANALYST')
++@pytest.mark.parametrize('issue',ISSUES)
++def test_supported_remediation_conditional_and_guards(db,tmp_path,memory,issue):
++ p,r,clock,path,inv,draft,service=prepared(db,tmp_path,memory,issue,remedial=True)
++ async def run():
++  with active_scope(p):
++   before={kind:r._read(f'MATCH (n:{kind}) RETURN count(n)')[0][0] for kind in ['WorkOrder','Inspection','InspectionReport','InterventionOutcome']}
++   receipt=await service.create(draft,request_id='B12R-remedy',actor=ACTOR)
++   saved=service.store.get(receipt.id);assert saved['draft']==draft.normalized() and not receipt.executable
++   task=draft.tasks[0];proof=saved['proof']['tasks'][task.id]
++   assert proof['remediation']['mode']=='SUPPORTED_NOW' and proof['procedure_status']=='PROPOSED' and not proof['remediation']['unmet_guards']
++   assert saved['draft']['tasks'][0]['procedure_citation']['source_document_id'] in {'D019','D020','D021'}
++   assert await service.create(draft,request_id='B12R-remedy',actor=ACTOR)==receipt
++   # Native previous-version/hash safety used, not a new write path.
++   base={**draft.model_dump(mode='json'),'version':2,'previous_plan_id':receipt.id}
++   bad=copy.deepcopy(base);bad['tasks'][0]['remediation']['conditions'][0]['evidence_ids']=[]
++   from pydantic import ValidationError
++   with pytest.raises(ValidationError):await service.create(bad,request_id='B12R-text-bypass',actor=ACTOR)
++   bad=copy.deepcopy(base);bad['tasks'][0]['remediation']['conditions'][0].update(status='UNMET',evidence_ids=[],depends_on_task_id='missing-inspection');bad['tasks'][0]['remediation']['mode']='CONDITIONAL'
++   with pytest.raises(PlanningBlocked,match='PREREQUISITE_INSPECTION_DEPENDENCY'):await service.create(bad,request_id='B12R-missing-inspection',actor=ACTOR)
++   bad=copy.deepcopy(base);bad['issue']=next(i for i in ISSUES if i!=issue);bad['monitoring']['issue']=bad['issue']
++   # More precise unsupported remediation: incompatible target policy while valid issue/investigation.
++   bad=copy.deepcopy(base);bad['tasks'][0]['action_type']=next(a for a in ['DRAIN_BLOCKAGE_CLEARANCE','SUBGRADE_REPAIR','MISSED_PICKUP_RECOVERY'] if a!=task.action_type)
++   with pytest.raises(PlanningBlocked,match='ACTION_TARGET_OR_DEPARTMENT'):await service.create(bad,request_id='B12R-unsupported',actor=ACTOR)
++   conditional=copy.deepcopy(base);t=conditional['tasks'][0];t['remediation']['mode']='CONDITIONAL'
++   t['remediation']['conditions'][0].update(status='UNMET',evidence_ids=[],depends_on_task_id='inspection-first');t['depends_on']=['inspection-first']
++   inspection=copy.deepcopy(t);inspection.update(id='inspection-first',action_type='INSPECTION',remediation=None,depends_on=[])
++   from app.memory.models import sources
++   source=next(s for s in sources() if s.owner_department_id==t['department_id'] and s.document_id!='D001-PDF')
++   inspection['procedure_citation']=(await memory.retrieve(as_of=clock(),document_id=source.document_id))['citations'][0]
++   conditional['tasks'].append(inspection)
++   second=await service.create(conditional,request_id='B12R-conditional',actor=ACTOR)
++   assert service.store.get(second.id)['proof']['tasks'][task.id]['remediation']['unmet_guards']==['CAUSAL_INSPECTION']
++   assert service.store.get(receipt.id)==saved
++   after={kind:r._read(f'MATCH (n:{kind}) RETURN count(n)')[0][0] for kind in before};assert before==after
++   Path('docs/evidence/B12R-'+issue+'-remedial.json').write_text(json.dumps({'mode':'REAL_FALKORDB_B11_SDK_NO_PROVIDER','graph':p.graph,'supported':saved,'conditional':service.store.get(second.id),'operational_counts_before':before,'operational_counts_after':after},indent=2)+'\n')
++ asyncio.run(run())
++def test_insufficient_causal_support_requires_inspection(db,tmp_path,memory):
++ p,r,clock,path,inv,draft,service=prepared(db,tmp_path,memory,'WATERLOGGING')
++ async def run():
++  with active_scope(p):
++   v=draft.model_dump(mode='json');t=v['tasks'][0];t.update(action_type='DRAIN_BLOCKAGE_CLEARANCE',remediation={'mode':'CONDITIONAL','conditions':[{'kind':k,'status':'UNMET','depends_on_task_id':None,'evidence_ids':[]} for k in ['CAUSAL_INSPECTION','SAFETY_REVIEW']]})
++   with pytest.raises(PlanningBlocked,match='REMEDIAL_EVIDENCE_INSUFFICIENT'):await service.create(v,request_id='B12R-insufficient',actor=ACTOR)
++   assert r._read('MATCH (n:ResolutionPlan) RETURN count(n)')==[[0]]
++   receipt=await service.create(draft,request_id='B12R-inspection-available',actor=ACTOR);assert service.store.get(receipt.id)['draft']['tasks'][0]['action_type']=='INSPECTION'
++ asyncio.run(run())
+--- /dev/null
++++ b/backend/tests/unit/test_planning_remediation.py
+@@ -0,0 +1,57 @@
++"""New closed guards/feedback; pure contract tests, no database success claimed."""
++import copy,json
++from pathlib import Path
++import pytest
++from pydantic import ValidationError
++from app.services.planning.models import PlanDraft
++from app.services.planning.feedback import feedback
++from app.services.planning.service import PlanningBlocked
++from app.graph.migration import MigrationError
++from app.graph.repository import OutcomeUnknown
++from app.agents.checkpoints import RecoveryRequired
++from tests.b12_fixtures import sample
++@pytest.mark.parametrize('damage',['unsupported','text_only','met_without_evidence','conditional_all_met','missing_safety','foreign_gate_evidence'])
++def test_closed_remedial_prerequisite_contract(damage):
++ v=sample();t=v['tasks'][0];t['action_type']='DRAIN_BLOCKAGE_CLEARANCE'
++ t['remediation']={'mode':'SUPPORTED_NOW','conditions':[{'kind':k,'status':'MET','evidence_ids':['EV']} for k in ['CAUSAL_INSPECTION','SAFETY_REVIEW']]}
++ if damage=='unsupported':t['action_type']='ARBITRARY_REPAIR'
++ if damage=='text_only':t.pop('remediation');t['prerequisites']=['subject to inspection']
++ if damage=='met_without_evidence':t['remediation']['conditions'][0]['evidence_ids']=[]
++ if damage=='conditional_all_met':t['remediation']['mode']='CONDITIONAL'
++ if damage=='missing_safety':t['remediation']['conditions'][1]['kind']='CAUSAL_INSPECTION'
++ if damage=='foreign_gate_evidence':t['remediation']['conditions'][0]['evidence_ids']=['FOREIGN']
++ with pytest.raises(ValidationError) as caught:PlanDraft.model_validate(v)
++ f=feedback(caught.value);assert f.resolution=='DRAFT_CLARIFICATION' and f.category in {'ACTION','PREREQUISITE'}
++ assert 'subject to inspection' not in f.model_dump_json()
++@pytest.mark.parametrize('error,category,resolution',[
++ (PlanningBlocked('OWNERSHIP_UNKNOWN_OR_CONFLICTING',task_id='repair'), 'OWNERSHIP','MISSING_EVIDENCE_OR_CAPABILITY'),
++ (PlanningBlocked('PROCEDURE_STALE_REVOKED_OR_UNAVAILABLE'),'SOURCE','MISSING_EVIDENCE_OR_CAPABILITY'),
++ (PlanningBlocked('REMEDIAL_EVIDENCE_INSUFFICIENT'),'EVIDENCE','MISSING_EVIDENCE_OR_CAPABILITY'),
++ (MigrationError('PASSWORD=must-never-appear'),'DEPENDENCY','OPERATOR_RECOVERY'),
++ (OutcomeUnknown('PASSWORD=must-never-appear'),'RECOVERY','OPERATOR_RECOVERY'),
++ (RecoveryRequired('PASSWORD=must-never-appear'),'RECOVERY','OPERATOR_RECOVERY'),
++ (OSError('PASSWORD=must-never-appear'),'RECOVERY','OPERATOR_RECOVERY'),
++])
++def test_static_feedback_redaction_and_recovery(error,category,resolution):
++ f=feedback(error);assert f.category==category and f.resolution==resolution
++ assert 'PASSWORD' not in f.model_dump_json() and 'must-never-appear' not in f.model_dump_json()
++ if category=='RECOVERY':assert f.draft_committed=='UNKNOWN'
++def test_unknown_property_names_are_not_echoed_and_old_hashes_survive():
++ v=sample();v['tasks'][0]['SECRET_PASSWORD_name']='sensitive body'
++ with pytest.raises(ValidationError) as caught:PlanDraft.model_validate(v)
++ f=feedback(caught.value);assert f.field_paths==['tasks.0'] and 'SECRET' not in f.model_dump_json()
++ for path in Path('docs/evidence').glob('B12-*-draft.json'):
++  body=json.loads(path.read_text())['saved'];assert PlanDraft.model_validate(body['draft']).content_hash==body['receipt']['plan_hash']
++
++@pytest.mark.parametrize('error',[OutcomeUnknown('PASSWORD=uncertain'),RecoveryRequired('PASSWORD=lost-lease'),OSError('PASSWORD=storage-fault')])
++def test_planner_does_not_acknowledge_unsafe_failures_as_rejected(error):
++ """Deliberate unit fault injection; no checkpoint/database success claimed."""
++ import asyncio
++ from app.agents.models import InvestigationState,Selection
++ from app.agents.runtime import InvestigationAgent
++ class FailedService:
++  async def create(self,*args,**kwargs):raise error
++ state=InvestigationState(graph='g',investigation_id='INV',thread_id='T',problem_cluster_id='PC',incident_ids=['I'],asset_ids=['D1'],issue='WATERLOGGING',graph_revision=0,inventory_hash='h',as_of='2026-10-18T00:00:00Z',selection=Selection(action='RECOMMEND',summary='Authored test draft',tool_name='',arguments_json=json.dumps({'plan_draft':sample()}),pause_reason='NONE'))
++ agent=object.__new__(InvestigationAgent);agent.decode=lambda c:state;agent.planning_service=FailedService();agent.check=lambda:None
++ with pytest.raises(RecoveryRequired,match='^PLAN_OPERATOR_RECOVERY_REQUIRED$') as caught:asyncio.run(agent.planner({}))
++ assert 'PASSWORD' not in str(caught.value) and state.planning_feedback is None and not state.errors and not state.observations
+--- /dev/null
++++ b/data/documents/b12r/D019_drain_blockage_clearance.md
+@@ -0,0 +1,19 @@
++# Synthetic demonstration drain blockage clearance proposal policy
++
++ID: D019; version: 1; municipality: demo-city.
++Author: Codex B12-R AI-assisted synthetic policy author (newly authored demonstration).
++Owner: Drainage Operations (DEPT-DRAIN). Effective: 2026-10-18T00:00:00Z.
++Review: automated author self-review for consistency of these demo guards only.
++Reviewer: Codex B12-R automated self-review; no independent human review, government approval or recovered history.
++Procedure/assertion status: PROPOSED; source curation is not approved policy.
++Action applicability: DRAIN_BLOCKAGE_CLEARANCE; target: drain inlet or segment; cause: BLOCKAGE.
++
++A latest addressed SUPPORTED or VERIFIED B09 assessment with reviewed physical supporting observations on each target may justify a qualified proposal. Reports, competing explanations and contradictions remain separate. Documentary guidance is not physical causal evidence. Insufficient, unreviewed or contradicted support requires inspection instead.
++
++SUPPORTED_NOW requires typed MET CAUSAL_INSPECTION with all cause confirmation codes from reviewed attributed dated reports, plus MET SAFETY_REVIEW supported by a reviewed target-specific DRAIN_CLEARANCE_SAFETY_REVIEWED observation. Safety review covers: Confined-space and flow isolation, downstream transfer and debris disposal.
++
++CONDITIONAL requires reviewed causal support and explicit typed UNMET gates. An unmet causal inspection must depend on an inspection draft for this target. An unmet safety review remains an unresolved gate. Text such as subject to inspection does not satisfy a gate.
++
++Verified MAINTAINED_BY ownership must resolve to DEPT-DRAIN; retain this exact current source version/hash citation. Procedure authority remains PROPOSED. All plans DRAFT and tasks PROPOSED, simulated, unapproved and non-executable. Later authorization is required for any approval or work.
++
++Expected outcome: address the supported mechanism, subject to declared gates. Verification: Comparable rainfall and follow-up waterlogging; clearance alone never proves resolution.
+--- /dev/null
++++ b/data/documents/b12r/D020_subgrade_repair.md
+@@ -0,0 +1,19 @@
++# Synthetic demonstration subgrade repair proposal policy
++
++ID: D020; version: 1; municipality: demo-city.
++Author: Codex B12-R AI-assisted synthetic policy author (newly authored demonstration).
++Owner: Road Maintenance (DEPT-ROAD). Effective: 2026-10-18T00:00:00Z.
++Review: automated author self-review for consistency of these demo guards only.
++Reviewer: Codex B12-R automated self-review; no independent human review, government approval or recovered history.
++Procedure/assertion status: PROPOSED; source curation is not approved policy.
++Action applicability: SUBGRADE_REPAIR; target: road segment; cause: SUBGRADE_FAILURE.
++
++A latest addressed SUPPORTED or VERIFIED B09 assessment with reviewed physical supporting observations on each target may justify a qualified proposal. Reports, competing explanations and contradictions remain separate. Documentary guidance is not physical causal evidence. Insufficient, unreviewed or contradicted support requires inspection instead.
++
++SUPPORTED_NOW requires typed MET CAUSAL_INSPECTION with all cause confirmation codes from reviewed attributed dated reports, plus MET SAFETY_REVIEW supported by a reviewed target-specific SUBGRADE_REPAIR_SAFETY_REVIEWED observation. Safety review covers: Utility clearance, excavation/traffic isolation and water-infiltration assessment.
++
++CONDITIONAL requires reviewed causal support and explicit typed UNMET gates. An unmet causal inspection must depend on an inspection draft for this target. An unmet safety review remains an unresolved gate. Text such as subject to inspection does not satisfy a gate.
++
++Verified MAINTAINED_BY ownership must resolve to DEPT-ROAD; retain this exact current source version/hash citation. Procedure authority remains PROPOSED. All plans DRAFT and tasks PROPOSED, simulated, unapproved and non-executable. Later authorization is required for any approval or work.
++
++Expected outcome: address the supported mechanism, subject to declared gates. Verification: Follow-up pavement and meaningful wear exposure; resurfacing alone never proves resolution.
+--- /dev/null
++++ b/data/documents/b12r/D021_missed_pickup_recovery.md
+@@ -0,0 +1,19 @@
++# Synthetic demonstration missed pickup recovery proposal policy
++
++ID: D021; version: 1; municipality: demo-city.
++Author: Codex B12-R AI-assisted synthetic policy author (newly authored demonstration).
++Owner: Sanitation Services (DEPT-SAN). Effective: 2026-10-18T00:00:00Z.
++Review: automated author self-review for consistency of these demo guards only.
++Reviewer: Codex B12-R automated self-review; no independent human review, government approval or recovered history.
++Procedure/assertion status: PROPOSED; source curation is not approved policy.
++Action applicability: MISSED_PICKUP_RECOVERY; target: waste collection point; cause: MISSED_PICKUP.
++
++A latest addressed SUPPORTED or VERIFIED B09 assessment with reviewed physical supporting observations on each target may justify a qualified proposal. Reports, competing explanations and contradictions remain separate. Documentary guidance is not physical causal evidence. Insufficient, unreviewed or contradicted support requires inspection instead.
++
++SUPPORTED_NOW requires typed MET CAUSAL_INSPECTION with all cause confirmation codes from reviewed attributed dated reports, plus MET SAFETY_REVIEW supported by a reviewed target-specific PICKUP_RECOVERY_SAFETY_REVIEWED observation. Safety review covers: Crew/route availability, safe waste handling and lawful disposal.
++
++CONDITIONAL requires reviewed causal support and explicit typed UNMET gates. An unmet causal inspection must depend on an inspection draft for this target. An unmet safety review remains an unresolved gate. Text such as subject to inspection does not satisfy a gate.
++
++Verified MAINTAINED_BY ownership must resolve to DEPT-SAN; retain this exact current source version/hash citation. Procedure authority remains PROPOSED. All plans DRAFT and tasks PROPOSED, simulated, unapproved and non-executable. Later authorization is required for any approval or work.
++
++Expected outcome: address the supported mechanism, subject to declared gates. Verification: Compare scheduled versus actual pickups and a reaccumulation window; one pickup never proves resolution.
+--- /dev/null
++++ b/data/documents/b12r/manifest.json
+@@ -0,0 +1,54 @@
++{
++  "version": 2,
++  "owner_mapping": {
++    "Drainage Operations": "DEPT-DRAIN",
++    "Road Maintenance": "DEPT-ROAD",
++    "Water Utilities": "DEPT-WATER",
++    "Sanitation Services": "DEPT-SAN",
++    "Civic Operations Coordination": "DEPT-COORD"
++  },
++  "documents": [
++    {
++      "document_id": "D019",
++      "title": "DRAIN_BLOCKAGE_CLEARANCE synthetic demo proposal",
++      "version": 1,
++      "owner_department_id": "DEPT-DRAIN",
++      "review_status": "REVIEWED",
++      "effective_from": "2026-10-18T00:00:00Z",
++      "file_path": "data/documents/b12r/D019_drain_blockage_clearance.md",
++      "sha256": "15bbe2e22a79c4f39a482afa711c5135eb1b8a13e660c50003c823d723dab261",
++      "action_types": [
++        "DRAIN_BLOCKAGE_CLEARANCE"
++      ],
++      "reviewed_by": "Codex B12-R automated author self-review"
++    },
++    {
++      "document_id": "D020",
++      "title": "SUBGRADE_REPAIR synthetic demo proposal",
++      "version": 1,
++      "owner_department_id": "DEPT-ROAD",
++      "review_status": "REVIEWED",
++      "effective_from": "2026-10-18T00:00:00Z",
++      "file_path": "data/documents/b12r/D020_subgrade_repair.md",
++      "sha256": "71e327f8cebb886a6abf7cd21ccfbb0d7b341e8c453db914f1a7414b6d560de3",
++      "action_types": [
++        "SUBGRADE_REPAIR"
++      ],
++      "reviewed_by": "Codex B12-R automated author self-review"
++    },
++    {
++      "document_id": "D021",
++      "title": "MISSED_PICKUP_RECOVERY synthetic demo proposal",
++      "version": 1,
++      "owner_department_id": "DEPT-SAN",
++      "review_status": "REVIEWED",
++      "effective_from": "2026-10-18T00:00:00Z",
++      "file_path": "data/documents/b12r/D021_missed_pickup_recovery.md",
++      "sha256": "9e3b09e02a89a466051d3ae99f1fc08689246b43822f02fe3e3b9869ec6dc1ce",
++      "action_types": [
++        "MISSED_PICKUP_RECOVERY"
++      ],
++      "reviewed_by": "Codex B12-R automated author self-review"
++    }
++  ]
++}

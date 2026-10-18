@@ -1,0 +1,1039 @@
+--- a/backend/OPERATIONS.md
++++ b/backend/OPERATIONS.md
+@@ -174,3 +174,7 @@
+ remains. Invalid/ambiguous refresh uses existing recovery/quarantine; no automatic
+ wake, historical checkpoint rewrite or caller-injected incident list. See
+ backend/AGENTS_RUNTIME.md and docs/evidence/B14R-RESULTS.md for actual focused proof.
++
++
++## B20-R-UTILITY extension
++Only the two closed synthetic utility actions and their typed persisted-evidence dependencies are added. See [UTILITY.md](UTILITY.md) for D022 authority, exact approval, isolation proof, component verification, road gating and unchanged UNKNOWN recovery. Old draft hashes and B14-2 outcome semantics remain intact.
+--- a/backend/PLANNING.md
++++ b/backend/PLANNING.md
+@@ -146,3 +146,7 @@
+ 
+ ## B13 compatible native lifecycle
+ B13 operations are authenticated through the separate Operations gateway. Native plans may legitimately become PENDING_APPROVAL/APPROVED/REJECTED/SUPERSEDED; immutable B12 draft payload/receipt/hash are retained. Store.get requires a matching B13 hashed lifecycle and operation attestation for these states, and checks an existing attestation even if native state is improperly rolled back to DRAFT. Historical PlanReceipt remains DRAFT/unapproved; it is not a current authorization. Actual saved checkpoint decoding after approval verified under the existing ownership lease. New current-head versions invalidate old approval usability; assignees bind in exact B13 approval scope. See backend/OPERATIONS.md; no B14 execution or live call authorized.
++
++
++## B20-R-UTILITY extension
++Only the two closed synthetic utility actions and their typed persisted-evidence dependencies are added. See [UTILITY.md](UTILITY.md) for D022 authority, exact approval, isolation proof, component verification, road gating and unchanged UNKNOWN recovery. Old draft hashes and B14-2 outcome semantics remain intact.
+--- a/backend/app/services/operations/execution.py
++++ b/backend/app/services/operations/execution.py
+@@ -13,6 +13,7 @@
+ from .service import stable, common, native_hash, execution_gates
+ from .execution_models import COMMANDS, Progress, Inspect, Evaluate, Recur
+ from .verification import VERSION, REQUIRED, CODES, validate_observation, evaluate
++from . import utility
+ 
+ class Execution:
+  def __init__(self,ops):self.ops=ops;self.repo=ops.repo;self.store=ops.store
+@@ -81,13 +82,13 @@
+     id=stable('OUTCOME',opid)
+     node('InterventionOutcome',{'id':id,'municipality_id':'demo-city','schema_version':3,'created_at':at,'evaluated_at':at,'result':result,'assessment_status':status})
+     edge('RESULTED_IN',w.id,id,refs[0].id if refs else None)
+-    metadata={'id':id,'work_order_id':w.id,'plan_id':plan.id,'approval_id':approval.id,'policy_version':VERSION,'assessment_status':status,'result':result,'evidence_references':[r.model_dump(mode='json') for r in refs],'window':window,'gaps':gaps or [],'actor_id':actor.id,'evaluated_at':at,'execution_mode':'SIMULATED','last_operation':opid}
++    metadata={'id':id,'work_order_id':w.id,'plan_id':plan.id,'approval_id':approval.id,'policy_version':utility.VERSION if task.action_type in {'UTILITY_ISOLATION','UTILITY_LEAK_REPAIR'} else VERSION,'assessment_status':status,'result':result,'evidence_references':[r.model_dump(mode='json') for r in refs],'window':window,'gaps':gaps or [],'actor_id':actor.id,'evaluated_at':at,'execution_mode':'SIMULATED','last_operation':opid}
+     states.append(('outcome',id,metadata));return metadata
+    event_type='WORK_ORDER_STATUS_CHANGED';event_subject=w.id;emitter=w.id
+    if isinstance(q,Progress):
+     if plan.properties['status'] not in {'APPROVED','IN_EXECUTION'}:raise PreconditionFailed('PLAN_NOT_EXECUTABLE')
+     if q.action=='START':
+-     execution_gates(task,[self.repo.get_node(saved['task_ids'][id],'ActionTask').properties['status'] for id in task.depends_on])
++     execution_gates(task,[self.repo.get_node(saved['task_ids'][id],'ActionTask').properties['status'] for id in task.depends_on],utility.fulfilled(self.ops,task,saved,at))
+      if q.evidence_ids:raise PreconditionFailed('START_HAS_NO_RESULT')
+      tseq=['QUEUED','IN_PROGRESS'] if task_node.properties['status'] in {'APPROVED','BLOCKED'} else []
+      if not tseq:raise PreconditionFailed('TASK_NOT_STARTABLE')
+@@ -103,6 +104,7 @@
+        for ob in ref.report.observations:
+         if ob.code==code and ob.result=='OBSERVED' and timestamp(ob.observed_at)>=timestamp(w.properties['updated_at']):covered.add(ob.asset_id)
+       if covered!=set(task.target_ids):raise PreconditionFailed('RESULT_EVIDENCE_TARGET_COVERAGE')
++      if q.action=='COMPLETE' and task.action_type=='UTILITY_ISOLATION':utility.isolation_proof(refs,task.target_ids,w.properties['updated_at'])
+       states.append(('completion',w.id,{'at':at,'evidence_ids':q.evidence_ids,'source_records':[ref.source_record_id for ref in refs],'last_operation':opid,'action':q.action}))
+       if q.action=='FAIL':
+        result=outcome('INTERVENTION_FAILED','INCONCLUSIVE',refs,gaps=[q.reason]);event_type='INTERVENTION_OUTCOME_RECORDED'
+@@ -137,6 +139,8 @@
+       from app.services.evidence.policies import POLICIES
+       from app.services.planning.policy import ACTIONS
+       allowed=set(REQUIRED[draft.issue]) if q.purpose=='FOLLOWUP' else {'ACTION_COMPLETED','ACTION_FAILED'}|{code for p in POLICIES[draft.issue].values() for key in ['confirming','falsifying'] for code in p[key]}|{p['safety_code'] for p in ACTIONS.values() if p['issue']==draft.issue}
++      if task.action_type=='UTILITY_ISOLATION' and q.purpose=='COMPLETION':allowed.add(utility.ISOLATION)
++      if task.action_type=='UTILITY_LEAK_REPAIR' and q.purpose=='FOLLOWUP':allowed=set(utility.FOLLOWUP)
+       for ob in c.observations:validate_observation(ob,allowed)
+       c=c.model_copy(update={'review':Review(reviewer_id=reviewer.id,role='ANALYST',reviewed=True,reason=q.review_reason)})
+     jid=evidence_id('EV-JOURNAL',actor.id,c.request_id)
+@@ -152,6 +156,7 @@
+     if isinstance(c,RequestInspection):states.append(('inspection',entity,{'work_order_id':w.id,'purpose':q.purpose,'procedure':task.procedure_citation.model_dump(mode='json'),'last_operation':opid}))
+     result=receipt.model_dump(mode='json');event_type='INSPECTION_RESULT_RECORDED' if isinstance(c,ReportInspection) else 'HYPOTHESIS_ASSESSED' if isinstance(c,Assess) else 'GRAPH_EVIDENCE_CHANGED'
+    else:
++    if task.action_type=='UTILITY_ISOLATION':raise PreconditionFailed('ISOLATION_NOT_CASE_RESOLUTION')
+     if w.properties['status']!='COMPLETED':raise PreconditionFailed('COMPLETED_INTERVENTION_REQUIRED')
+     completion=self.store.get('completion',w.id)
+     if not completion or completion['action']!='COMPLETE':raise PreconditionFailed('COMPLETION_ATTESTATION_REQUIRED')
+@@ -159,7 +164,9 @@
+     for ref in refs:
+      if ref.source_record_id in completion['source_records']:raise PreconditionFailed('INDEPENDENT_FOLLOWUP_SOURCE_REQUIRED')
+      observations.extend(ref.report.observations)
+-    status,gaps=evaluate(draft.issue,task.target_ids,observations,q.window_start,q.window_end,completion['at'],at)
++    utility_component=task.action_type=='UTILITY_LEAK_REPAIR'
++    if utility_component and isinstance(q,Recur):raise PreconditionFailed('UTILITY_COMPONENT_NOT_CASE_RESOLUTION')
++    status,gaps=utility.evaluate(task.target_ids,observations,q.window_start,q.window_end,completion['at'],at) if utility_component else evaluate(draft.issue,task.target_ids,observations,q.window_start,q.window_end,completion['at'],at)
+     if isinstance(q,Recur):
+      prior=self.store.get('outcome',q.verified_outcome_id)
+      if not prior or prior['work_order_id']!=w.id or prior['assessment_status']!='RESOLUTION_VERIFIED' or plan.properties['status']!='COMPLETED':raise PreconditionFailed('PRIOR_VERIFIED_OUTCOME_REQUIRED')
+@@ -195,14 +202,14 @@
+      result.update(investigation_id=inv.id,investigates_relationship_id=scope_link,prior_outcome_id=prior['id'],new_incident_id=intake_result.incident_id,cluster_id=intake_result.cluster_id,classification=intake_result.classification)
+      states[-1]=('outcome',result['id'],result)
+     else:
+-     if plan.properties['status']!='MONITORING':raise PreconditionFailed('PLAN_NOT_MONITORING')
+-     signature=digest({'work_order_id':w.id,'policy':VERSION,'evidence':sorted(q.evidence_ids),'start':q.window_start,'end':q.window_end})
++     if plan.properties['status'] not in ({'IN_EXECUTION','MONITORING'} if utility_component else {'MONITORING'}):raise PreconditionFailed('PLAN_NOT_MONITORING')
++     signature=digest({'work_order_id':w.id,'policy':utility.VERSION if utility_component else VERSION,'evidence':sorted(q.evidence_ids),'start':q.window_start,'end':q.window_end})
+      existing=self.store.get('evaluation',signature)
+      if existing:return existing['receipt']
+      if status=='RESOLUTION_VERIFIED':
+       for id,t in tasks.items():
+        if self.repo.get_node(id,'ActionTask').properties['status']!='COMPLETED':raise PreconditionFailed('OPEN_BLOCKING_TASK')
+-       execution_gates(t,[self.repo.get_node(saved['task_ids'][d],'ActionTask').properties['status'] for d in t.depends_on])
++       execution_gates(t,[self.repo.get_node(saved['task_ids'][d],'ActionTask').properties['status'] for d in t.depends_on],utility.fulfilled(self.ops,t,saved,at))
+       for basis in draft.basis:
+        history=reader.histories(basis.hypothesis_id)
+        if basis.addressed and history and history[-1].assessment in {'CONTRADICTED','INCONCLUSIVE'}:status='INCONCLUSIVE';gaps.append('Latest addressed causal assessment requires revised plan/investigation')
+@@ -211,7 +218,14 @@
+       for id in tasks:
+        if id==task_node.id:continue
+        other=self.store.get('verification',stable('WO',plan.id,id))
+-       if not other or other['assessment_status']!='RESOLUTION_VERIFIED':case_ready=False;gaps.append('Other task follow-up not yet verified: '+id)
++       if tasks[id].action_type=='UTILITY_ISOLATION':
++        # Isolation alone cannot become an independently resolved component.
++        repairs=[other_id for other_id,other_task in tasks.items() if other_task.action_type=='UTILITY_LEAK_REPAIR' and set(other_task.target_ids)==set(tasks[id].target_ids)]
++        if not repairs or any(not (self.store.get('verification',stable('WO',plan.id,repair)) or {}).get('assessment_status')=='UTILITY_VERIFIED' for repair in repairs):
++         case_ready=False;gaps.append('Isolation requires independent utility repair verification: '+id)
++        continue
++       required='UTILITY_VERIFIED' if tasks[id].action_type=='UTILITY_LEAK_REPAIR' else 'RESOLUTION_VERIFIED'
++       if not other or other['assessment_status']!=required:case_ready=False;gaps.append('Other task follow-up not yet verified: '+id)
+      if case_ready:
+       changed(plan,'COMPLETED',graph_revision=session.revision+1);changed(inv,'COMPLETED')
+       for e in reader.edges('INVESTIGATES',source=inv.id):
+@@ -219,7 +233,7 @@
+        if n.kind=='Incident':
+         sequence=['ACTIVE','ENDED'] if n.properties['status']=='REPORTED' else ['ENDED'];changed(n,sequence,ended_at=at)
+        elif n.kind=='ProblemCluster':changed(n,'CONTROLLED')
+-     result=outcome(status,'MITIGATION_VERIFIED' if status=='RESOLUTION_VERIFIED' else 'INCONCLUSIVE',refs,{'start':q.window_start,'end':q.window_end},gaps);event_type='INTERVENTION_OUTCOME_RECORDED'
++     result=outcome(status,'MITIGATION_VERIFIED' if status in {'RESOLUTION_VERIFIED','UTILITY_VERIFIED'} else 'INCONCLUSIVE',refs,{'start':q.window_start,'end':q.window_end},gaps);event_type='INTERVENTION_OUTCOME_RECORDED'
+      result['case_closed']=case_ready
+      states[-1]=('outcome',result['id'],result)
+      states.append(('evaluation',signature,{'receipt':result}))
+--- a/backend/app/services/operations/service.py
++++ b/backend/app/services/operations/service.py
+@@ -12,13 +12,14 @@
+ from .models import Submit,Decide,Order,Update,Binding,OpsRecovery
+ from .storage import Storage
+ from .migration import OperationsMigration
++from .utility import fulfilled as utility_fulfilled
+ 
+ def stable(prefix,*parts):return prefix+'-B13-'+digest(parts)[:32]
+ def common(id,at):return {'id':id,'schema_version':3,'municipality_id':'demo-city','created_at':at,'updated_at':at}
+ def native_hash(kind,props):return digest({'kind':kind,'properties':props})
+ def scope(command):return Binding.model_validate(command.model_dump(include={'plan_id','plan_version','plan_hash','assignments'})).normalized()
+-def execution_gates(task,dependency_statuses):
+- if task.remediation and any(c.status!='MET' for c in task.remediation.conditions):raise PreconditionFailed('UNMET_EXECUTION_GATES')
++def execution_gates(task,dependency_statuses,fulfilled=frozenset()):
++ if task.remediation and any(c.status!='MET' and c.kind not in fulfilled for c in task.remediation.conditions):raise PreconditionFailed('UNMET_EXECUTION_GATES')
+  if any(status!='COMPLETED' for status in dependency_statuses):raise PreconditionFailed('UNMET_TASK_DEPENDENCIES')
+ class Operations:
+  def __init__(self,planning,auth,*,clock=utc_now):
+@@ -157,7 +158,7 @@
+     if not v or v['binding']!=binding or a.properties['status']!='APPROVED' or v.get('decision')!='APPROVED' or v.get('decided_by')!=a.properties.get('decided_by') or plan.properties['status'] not in {'APPROVED','IN_EXECUTION'}:raise PreconditionFailed('VALID_EXACT_APPROVAL_REQUIRED')
+     task=tasks.get(q.task_id)
+     if not task:raise PreconditionFailed('TASK_OUTSIDE_APPROVAL')
+-    execution_gates(task,[self.repo.get_node(saved['task_ids'][id],'ActionTask').properties['status'] for id in task.depends_on])
++    execution_gates(task,[self.repo.get_node(saved['task_ids'][id],'ActionTask').properties['status'] for id in task.depends_on],utility_fulfilled(self,task,saved,at))
+     if self.repo.get_node(q.task_id,'ActionTask').properties['status']!='APPROVED':raise PreconditionFailed('TASK_NOT_APPROVED')
+     assignment=next(a for a in binding['assignments'] if a['task_id']==q.task_id);wid=stable('WO',q.plan_id,q.task_id);prior=self.store.get('order',wid)
+     expected={'binding':binding,'approval_id':q.approval_id,'assignment':assignment}
+@@ -179,7 +180,7 @@
+     saved,draft,tasks,proof=await self.validate(v['binding'],at,progress=True);plan=self.repo.get_node(v['binding']['plan_id'],'ResolutionPlan');a,approval_state=self.approval(v['approval_id'],v['binding'])
+     if plan.properties['status'] not in {'APPROVED','IN_EXECUTION'} or a.properties['status']!='APPROVED':raise PreconditionFailed('APPROVAL_NO_LONGER_VALID')
+     task=tasks[assignment['task_id']]
+-    execution_gates(task,[self.repo.get_node(saved['task_ids'][id],'ActionTask').properties['status'] for id in task.depends_on])
++    execution_gates(task,[self.repo.get_node(saved['task_ids'][id],'ActionTask').properties['status'] for id in task.depends_on],utility_fulfilled(self,task,saved,at))
+     if self.repo.get_node(assignment['task_id'],'ActionTask').properties['status']!='APPROVED':raise PreconditionFailed('TASK_NO_LONGER_APPROVED')
+     if q.new_status not in {'ASSIGNED','CANCELLED'}:raise PreconditionFailed('B14_EXECUTION_NOT_AVAILABLE')
+     updated=changed(w,q.new_status);states.append(('order',w.id,{**v,'last_operation':opid}))
+--- a/backend/app/services/planning/models.py
++++ b/backend/app/services/planning/models.py
+@@ -23,7 +23,7 @@
+   if set(self.required_evidence)!=required or len(self.required_evidence)!=len(required):raise ValueError('Issue-specific monitoring evidence required')
+   return self
+ class Prerequisite(Model):
+- kind:Literal['CAUSAL_INSPECTION','SAFETY_REVIEW']
++ kind:Literal['CAUSAL_INSPECTION','SAFETY_REVIEW','ISOLATION_PROOF','UTILITY_VERIFICATION']
+  status:Literal['MET','UNMET']
+  evidence_ids:list[ID]=Field(default_factory=list,max_length=12)
+  depends_on_task_id:ID|None=None
+@@ -34,15 +34,15 @@
+   return self
+ class Remediation(Model):
+  mode:Literal['SUPPORTED_NOW','CONDITIONAL']
+- conditions:list[Prerequisite]=Field(min_length=2,max_length=2)
++ conditions:list[Prerequisite]=Field(min_length=2,max_length=4)
+  @model_validator(mode='after')
+  def guards(self):
+-  if {c.kind for c in self.conditions}!={'CAUSAL_INSPECTION','SAFETY_REVIEW'} or (self.mode=='SUPPORTED_NOW')!=all(c.status=='MET' for c in self.conditions):
++  if not {'CAUSAL_INSPECTION','SAFETY_REVIEW'}<={c.kind for c in self.conditions} or len({c.kind for c in self.conditions})!=len(self.conditions) or (self.mode=='SUPPORTED_NOW')!=all(c.status=='MET' for c in self.conditions):
+    raise PydanticCustomError('plan_prerequisite','Explicit causal and safety gates required')
+   return self
+ class TaskDraft(Model):
+  id:ID
+- action_type:Literal['INSPECTION','DRAIN_BLOCKAGE_CLEARANCE','SUBGRADE_REPAIR','MISSED_PICKUP_RECOVERY']
++ action_type:Literal['INSPECTION','DRAIN_BLOCKAGE_CLEARANCE','SUBGRADE_REPAIR','MISSED_PICKUP_RECOVERY','UTILITY_ISOLATION','UTILITY_LEAK_REPAIR']
+  remediation:Remediation|None=None
+  target_ids:list[ID]=Field(min_length=1,max_length=5)
+  department_id:ID
+--- a/backend/app/services/planning/policy.py
++++ b/backend/app/services/planning/policy.py
+@@ -1,9 +1,11 @@
+-"""Three closed demo proposal policies; never approval or physical verification."""
++"""Closed demo proposal policies; never approval or physical verification."""
+ from app.services.evidence.policies import POLICIES
+ ACTIONS={
+  'DRAIN_BLOCKAGE_CLEARANCE':{'issue':'WATERLOGGING','cause':'BLOCKAGE','labels':['DrainInlet','DrainSegment'],'department':'DEPT-DRAIN','safety_code':'DRAIN_CLEARANCE_SAFETY_REVIEWED'},
+  'SUBGRADE_REPAIR':{'issue':'ROAD_DAMAGE','cause':'SUBGRADE_FAILURE','labels':['RoadSegment'],'department':'DEPT-ROAD','safety_code':'SUBGRADE_REPAIR_SAFETY_REVIEWED'},
+  'MISSED_PICKUP_RECOVERY':{'issue':'WASTE_ACCUMULATION','cause':'MISSED_PICKUP','labels':['WasteCollectionPoint'],'department':'DEPT-SAN','safety_code':'PICKUP_RECOVERY_SAFETY_REVIEWED'},
++ 'UTILITY_ISOLATION':{'issue':'ROAD_DAMAGE','cause':'UTILITY_LEAK','labels':['WaterPipe'],'department':'DEPT-WATER','safety_code':'UTILITY_SAFETY_REVIEWED'},
++ 'UTILITY_LEAK_REPAIR':{'issue':'ROAD_DAMAGE','cause':'UTILITY_LEAK','labels':['WaterPipe'],'department':'DEPT-WATER','safety_code':'UTILITY_SAFETY_REVIEWED'},
+ }
+ 
+ def validate_remediation(task,draft,reader,assessments,blocked):
+@@ -15,6 +17,8 @@
+  selected=[a for a in assessments if a.id in set(task.assessment_ids)&addressed and a.cause_code==policy['cause']]
+  if not selected or any(a.assessment not in {'SUPPORTED','VERIFIED'} or not a.classification or not a.classification.reviewed_support_ids or a.classification.reviewed_contradiction_ids or a.classification.unreviewed_contradiction_ids for a in selected):reject('REMEDIAL_EVIDENCE_INSUFFICIENT')
+  conditions={c.kind:c for c in task.remediation.conditions};tasks={t.id:t for t in draft.tasks}
++ from .utility import validate_dependencies
++ validate_dependencies(task,draft,reader,reject)
+  if task.remediation.mode=='SUPPORTED_NOW' and task.depends_on:reject('PREREQUISITE_FUTURE_DEPENDENCY')
+  supporting={id for a in selected for id in a.classification.reviewed_support_ids}&set(task.evidence_ids)
+  references={id:reader.evidence(id) for id in supporting}
+@@ -34,6 +38,7 @@
+   related_ids={id for a in related for id in a.classification.reviewed_support_ids}&supporting
+   if not related or not codes(related_ids,target)&confirming:reject('REMEDIAL_EVIDENCE_INSUFFICIENT')
+   for kind,condition in conditions.items():
++   if kind in {'ISOLATION_PROOF','UTILITY_VERIFICATION'}:continue
+    if condition.status=='MET':
+     required=confirming if kind=='CAUSAL_INSPECTION' else {policy['safety_code']}
+     if not set(condition.evidence_ids)<=related_ids or not required<=codes(condition.evidence_ids,target):reject('PREREQUISITE_EVIDENCE_INVALID')
+--- a/blockers.md
++++ b/blockers.md
+@@ -659,3 +659,19 @@
+ Read-only auditPASS:1581pre-task public files retained,1129earlier evidence files byte-identical,119accepted test files unchanged; allsix tracker histories append-only. Original migrations0001–0005/schema registry/city/scenario/evaluator data/dependency files unchanged. B04fullcityhash/858nodes/1246edges/42candidate drainage links, B01probe, B12R2singleplan/quarantine and B19quarantines retained; original candidate/source/submission and draft/receipt/checkpoint hashes intact. Historical2paidrequests exactly unchanged;14guards0external/0unexpected; public-artifact/patchprivate-value scanPASS. ActualFalkorDB6.0.2/Redis8.10.2 and pinnedpackageversions recorded in audit; no dependency changes.
+ 
+ Two audit utility bookkeeping stops retained separately (missing authorized CLI path in allowlist, then concurrentnewfrontend additions). Corrected the task allowlist/exclusion; no application/evidence/data repair. Seven concurrentfrontend files were not created/edited/executed by this task, preserved and excluded from ownership patch/inventory; hashes recorded separately. No frontend work performed here. Final task101distinctPASS100unit/1real,0unresolvedFAIL/0SKIP; full B20PARTIAL/BLOCKED, B10genuineOPEN/PARTIAL. STOPforhumanreview; proposed next B20-R-UTILITY only after separateauthorization, noB21/live/frontend.
++
++
++## CURRENT B20-R-UTILITY — technically passing; human review pending (2026-10-18)
++B20-R-OWNERSHIP is human accepted. Implemented only closed synthetic UTILITY_ISOLATION/UTILITY_LEAK_REPAIR with typed future ISOLATION_PROOF/UTILITY_VERIFICATION dependencies over existing B12–B14 services. Reviewed pipe causal+safety evidence, current independently acquired verified ownership, current D022 PROPOSED procedure, exact approval and assigned operator remain mandatory. Existing B05 verified-only bounded traversal scopes road dependency; no B09 allowlist weakening. Immutable approved prerequisites are fulfilled from persisted attributable independently reviewed completion/follow-up proof, not task/DAG status.
++
++Actual real S04 primary: ownership→sourced approved WATER isolation→reviewed isolation proof→WATER repair→independent UTILITY_VERIFIED→separately sourced/qualified ROAD repair completed. Three completed work orders; plan MONITORING, incident not ENDED, case_closed=false. Utility component outcome never substitutes for road pavement/wear verification. Negative normal-pressure S04 contradicts leak and refuses utility work,0plans/0orders. Additional safety/road surveys are explicit new synthetic observations; original B19 claims/candidate/source bytes retained. D022 author/self-review and PROPOSED authority honest; no physical engineering standard asserted.
++
++Actual committed utility follow-up report plus injected readback ValueError returns409RECOVERY_REQUIRED/UNKNOWN; original request/work/plan/correlation IDs retained, one durable report, exact replay no redispatch, transport intentDISPATCHING. No retry/delete/new version/replacement key/rollback/quarantine clearance. Operator must inspect original domain operation/journal/evidence and obtain supported reconciliation review; safe status reads do not clear intent.
++
++Final75distinctPASS=38newutility+35directcompatibilityunits+2realS04cases;0unresolvedFAIL/0SKIP/0setupERROR. Both specification validatorsPASS once after final source edits. Historical13failedtestexecutions retained:10unit frozen-model fixture errors,3primary failures (B09 read-family restriction twice, then unsupported ProofPath field); corrected without graph repair. Final real primaryPASS27.37s, initial negativePASS retained; passing journey rerun only for final changed completion boundary/road proof, no broad/lifecycle/live tests. Explicit synthetic commands, real DB/GraphRAG SDK/HTTP/CLI; no fake or autonomous model claimed. MCP/Saver unchanged/not rerun. Provider interlocks and children0external/0unexpected; historical paid accounting retained.
++
++Evidence: docs/evidence/B20R-UTILITY-RESULTS.md, COMMANDS.md, FILES.md, changes.patch, primary-proof.json, negative-proof.json, audit.json and WALKTHROUGH.md; operator design backend/UTILITY.md. Old migrations/schema/source/city/earlier evidence/quarantines preserved. BLOCK-B20-02 technically addressed pending this review; BLOCK-B20-03..05 remainOPEN. Full B20PARTIAL/BLOCKED and B10genuineOPEN/PARTIAL. No B21/frontend/other corrective phase/live authorization. STOPforhumanreview; exact next task is review B20-R-UTILITY and separately authorize one remaining B20 correction.
++
++
++### B20-R-UTILITY final read-only retention/security evidence
++AuditPASS: all1642pre-task public files retained;1176earlier evidence files byte-identical;121accepted test files unchanged; allsix tracker histories append-only. Migrations0001–0005/schema registry/city/scenarios/dependencies unchanged. Original B04fullcityhash/858nodes/1246edges/42candidate drainage links and B01probe retained;12previous B20scenario checkpoints, B12R2singleplan/quarantine, B19quarantines, accepted OWNERSHIP sources/checkpoints and UNKNOWN intent retained. Utility graph retains3COMPLETEDorders, MONITORINGplan, UTILITY_VERIFIEDcomponent with case_closedfalse, one actual COMMITTEDreport and original UNKNOWNtransportintent. Historical2paidrequests unchanged/no active sessions or holds;11provider reports0external/0unexpected; publicartifact/patchprivate-value scanPASS. ActualFalkorDB6.0.2/Redis8.10.2, existing pinnedpackages recorded in audit; no dependency changes. FullB20PARTIAL/BLOCKED; STOPforhumanreview.
+--- a/contracts/api_models.json
++++ b/contracts/api_models.json
+@@ -5234,7 +5234,9 @@
+         "kind": {
+           "enum": [
+             "CAUSAL_INSPECTION",
+-            "SAFETY_REVIEW"
++            "SAFETY_REVIEW",
++            "ISOLATION_PROOF",
++            "UTILITY_VERIFICATION"
+           ],
+           "title": "Kind",
+           "type": "string"
+@@ -5491,7 +5493,7 @@
+           "items": {
+             "$ref": "#/$defs/Prerequisite"
+           },
+-          "maxItems": 2,
++          "maxItems": 4,
+           "minItems": 2,
+           "title": "Conditions",
+           "type": "array"
+@@ -6510,7 +6512,9 @@
+             "INSPECTION",
+             "DRAIN_BLOCKAGE_CLEARANCE",
+             "SUBGRADE_REPAIR",
+-            "MISSED_PICKUP_RECOVERY"
++            "MISSED_PICKUP_RECOVERY",
++            "UTILITY_ISOLATION",
++            "UTILITY_LEAK_REPAIR"
+           ],
+           "title": "Action Type",
+           "type": "string"
+--- a/contracts/operations.json
++++ b/contracts/operations.json
+@@ -1306,5 +1306,19 @@
+     ],
+     "maximum_bound_incidents": 3,
+     "checkpoint": "Explicit owned resume only. Validate new graph links, B08 canonical hash/receipt/classification/cluster/episode and reviewed evidence; closed state validation projects active incidents/assets and source hashes with RECURRENCE_SCOPE_REFRESH audit. Preserve prior checkpoint/history and require fresh MCP READ. No automatic delivery."
++  },
++  "utility_policy": {
++    "version": "B20R-UTILITY-1",
++    "isolation_code": "UTILITY_ISOLATION_CONFIRMED",
++    "followup_codes": [
++      "POST_REPAIR_LEAK_ABSENT",
++      "POST_REPAIR_LEAK_PRESENT",
++      "POST_REPAIR_PRESSURE_ABNORMAL",
++      "POST_REPAIR_PRESSURE_NORMAL"
++    ],
++    "verified_status": "UTILITY_VERIFIED",
++    "case_closed": false,
++    "independence": "Authenticated distinct analyst review, separate post-completion report/source and window; pressure/leak observations target-bound; no quantitative inference",
++    "recovery": "Existing fenced0005 operations and HTTP UNKNOWN no-redispatch; no new recovery path"
+   }
+ }
+--- a/contracts/resolution_planning.json
++++ b/contracts/resolution_planning.json
+@@ -218,7 +218,9 @@
+           "kind": {
+             "enum": [
+               "CAUSAL_INSPECTION",
+-              "SAFETY_REVIEW"
++              "SAFETY_REVIEW",
++              "ISOLATION_PROOF",
++              "UTILITY_VERIFICATION"
+             ],
+             "title": "Kind",
+             "type": "string"
+@@ -278,7 +280,7 @@
+             "items": {
+               "$ref": "#/$defs/Prerequisite"
+             },
+-            "maxItems": 2,
++            "maxItems": 4,
+             "minItems": 2,
+             "title": "Conditions",
+             "type": "array"
+@@ -305,7 +307,9 @@
+               "INSPECTION",
+               "DRAIN_BLOCKAGE_CLEARANCE",
+               "SUBGRADE_REPAIR",
+-              "MISSED_PICKUP_RECOVERY"
++              "MISSED_PICKUP_RECOVERY",
++              "UTILITY_ISOLATION",
++              "UTILITY_LEAK_REPAIR"
+             ],
+             "title": "Action Type",
+             "type": "string"
+@@ -745,10 +749,33 @@
+       ],
+       "department": "DEPT-SAN",
+       "safety_code": "PICKUP_RECOVERY_SAFETY_REVIEWED"
++    },
++    "UTILITY_ISOLATION": {
++      "issue": "ROAD_DAMAGE",
++      "cause": "UTILITY_LEAK",
++      "labels": [
++        "WaterPipe"
++      ],
++      "department": "DEPT-WATER",
++      "safety_code": "UTILITY_SAFETY_REVIEWED"
++    },
++    "UTILITY_LEAK_REPAIR": {
++      "issue": "ROAD_DAMAGE",
++      "cause": "UTILITY_LEAK",
++      "labels": [
++        "WaterPipe"
++      ],
++      "department": "DEPT-WATER",
++      "safety_code": "UTILITY_SAFETY_REVIEWED"
+     }
+   },
+   "remediation_rules": "Latest addressed SUPPORTED/VERIFIED with reviewed target-specific causal support, no contradictions. Supported-now requires typed MET full causal confirmation and action-specific safety observations through validated B09 reports. Conditional causal gap requires explicit UNMET and inspection DAG dependency; unmet safety remains unresolved. Procedure source is documentary, PROPOSED, not physical causal evidence. No execution authority.",
+   "hash_compatibility": "Absent remediation omitted from normalized old inspection drafts; existing B12 accepted hashes unchanged. Conditions and their evidence normalize deterministically.",
+   "source_manifest": "data/documents/b12r/manifest.json; three version1 synthetic policies with explicit automated author self-review only; B11 KnowledgeProcedure stays PROPOSED",
+-  "responsibility_acquisition": "Explicit independently reviewed synthetic inventory via contracts/responsibility.json; candidate remains immutable; new drafts bind relationship/evidence hashes, operations reject changed ownership bindings; source/procedure/safety remain independent"
++  "responsibility_acquisition": "Explicit independently reviewed synthetic inventory via contracts/responsibility.json; candidate remains immutable; new drafts bind relationship/evidence hashes, operations reject changed ownership bindings; source/procedure/safety remain independent",
++  "utility_dependencies": {
++    "ISOLATION_PROOF": "Immutable UNMET prerequisite bound to exact utility isolation predecessor; persisted independently reviewed completion required at order/assignment/start",
++    "UTILITY_VERIFICATION": "Immutable UNMET prerequisite bound to exact utility repair predecessor on reviewed UNDERLIES pipe/road topology; independently dated utility verification required at order/assignment/start",
++    "authority": "Synthetic proposed guidance and DAG never authorize execution; current evidence, ownership, procedure, exact approval and assignee required"
++  }
+ }
+--- a/decision.md
++++ b/decision.md
+@@ -1598,3 +1598,22 @@
+ Read-only auditPASS:1581pre-task public files retained,1129earlier evidence files byte-identical,119accepted test files unchanged; allsix tracker histories append-only. Original migrations0001–0005/schema registry/city/scenario/evaluator data/dependency files unchanged. B04fullcityhash/858nodes/1246edges/42candidate drainage links, B01probe, B12R2singleplan/quarantine and B19quarantines retained; original candidate/source/submission and draft/receipt/checkpoint hashes intact. Historical2paidrequests exactly unchanged;14guards0external/0unexpected; public-artifact/patchprivate-value scanPASS. ActualFalkorDB6.0.2/Redis8.10.2 and pinnedpackageversions recorded in audit; no dependency changes.
+ 
+ Two audit utility bookkeeping stops retained separately (missing authorized CLI path in allowlist, then concurrentnewfrontend additions). Corrected the task allowlist/exclusion; no application/evidence/data repair. Seven concurrentfrontend files were not created/edited/executed by this task, preserved and excluded from ownership patch/inventory; hashes recorded separately. No frontend work performed here. Final task101distinctPASS100unit/1real,0unresolvedFAIL/0SKIP; full B20PARTIAL/BLOCKED, B10genuineOPEN/PARTIAL. STOPforhumanreview; proposed next B20-R-UTILITY only after separateauthorization, noB21/live/frontend.
++
++
++## CURRENT B20-R-UTILITY — technically passing; human review pending (2026-10-18)
++B20-R-OWNERSHIP is human accepted. Implemented only closed synthetic UTILITY_ISOLATION/UTILITY_LEAK_REPAIR with typed future ISOLATION_PROOF/UTILITY_VERIFICATION dependencies over existing B12–B14 services. Reviewed pipe causal+safety evidence, current independently acquired verified ownership, current D022 PROPOSED procedure, exact approval and assigned operator remain mandatory. Existing B05 verified-only bounded traversal scopes road dependency; no B09 allowlist weakening. Immutable approved prerequisites are fulfilled from persisted attributable independently reviewed completion/follow-up proof, not task/DAG status.
++
++Actual real S04 primary: ownership→sourced approved WATER isolation→reviewed isolation proof→WATER repair→independent UTILITY_VERIFIED→separately sourced/qualified ROAD repair completed. Three completed work orders; plan MONITORING, incident not ENDED, case_closed=false. Utility component outcome never substitutes for road pavement/wear verification. Negative normal-pressure S04 contradicts leak and refuses utility work,0plans/0orders. Additional safety/road surveys are explicit new synthetic observations; original B19 claims/candidate/source bytes retained. D022 author/self-review and PROPOSED authority honest; no physical engineering standard asserted.
++
++Actual committed utility follow-up report plus injected readback ValueError returns409RECOVERY_REQUIRED/UNKNOWN; original request/work/plan/correlation IDs retained, one durable report, exact replay no redispatch, transport intentDISPATCHING. No retry/delete/new version/replacement key/rollback/quarantine clearance. Operator must inspect original domain operation/journal/evidence and obtain supported reconciliation review; safe status reads do not clear intent.
++
++Final75distinctPASS=38newutility+35directcompatibilityunits+2realS04cases;0unresolvedFAIL/0SKIP/0setupERROR. Both specification validatorsPASS once after final source edits. Historical13failedtestexecutions retained:10unit frozen-model fixture errors,3primary failures (B09 read-family restriction twice, then unsupported ProofPath field); corrected without graph repair. Final real primaryPASS27.37s, initial negativePASS retained; passing journey rerun only for final changed completion boundary/road proof, no broad/lifecycle/live tests. Explicit synthetic commands, real DB/GraphRAG SDK/HTTP/CLI; no fake or autonomous model claimed. MCP/Saver unchanged/not rerun. Provider interlocks and children0external/0unexpected; historical paid accounting retained.
++
++Evidence: docs/evidence/B20R-UTILITY-RESULTS.md, COMMANDS.md, FILES.md, changes.patch, primary-proof.json, negative-proof.json, audit.json and WALKTHROUGH.md; operator design backend/UTILITY.md. Old migrations/schema/source/city/earlier evidence/quarantines preserved. BLOCK-B20-02 technically addressed pending this review; BLOCK-B20-03..05 remainOPEN. Full B20PARTIAL/BLOCKED and B10genuineOPEN/PARTIAL. No B21/frontend/other corrective phase/live authorization. STOPforhumanreview; exact next task is review B20-R-UTILITY and separately authorize one remaining B20 correction.
++
++### DEC-068 — utility component proof, compatible closed extension
++Alternative status-only DAG rejected: task completion cannot prove isolation or resolution. Reuse existing fenced0005 operation/inspection/completion/verification/outcome companions rather than new storage/migrations. Add typed UNMET future gates with exact predecessor identity; revalidate persisted target/operator/citation/review/time/hash proofs at order/assignment/START. Retain old two-condition/hash normalization and old B14-2 outcome semantics. Utility component evaluation during IN_EXECUTION avoids blocking the road dependency on all-tasks-completed monitoring; UTILITY_VERIFIED is MITIGATION_VERIFIED for the component only, case_closedfalse. Isolation cannot independently evaluate/close a case. Closed field codes are qualitative synthetic checks, no numeric units. Additional road survey is explicit; no mandatory road repair without own support. Dependency topology uses actual B05 ProofPath.edge_ids + validated EdgeRecord.kind/directions; no assumed edge_types API. No dependencies or package versions changed. D022 is separately ingested, source REVIEWED means disclosed automated author self-review; canonical procedure remainsPROPOSED. New fields documented in contracts/resolution_planning.json, operations.json and generated api_models.json; no endpoint/CLI inventory change.
++
++
++### B20-R-UTILITY final read-only retention/security evidence
++AuditPASS: all1642pre-task public files retained;1176earlier evidence files byte-identical;121accepted test files unchanged; allsix tracker histories append-only. Migrations0001–0005/schema registry/city/scenarios/dependencies unchanged. Original B04fullcityhash/858nodes/1246edges/42candidate drainage links and B01probe retained;12previous B20scenario checkpoints, B12R2singleplan/quarantine, B19quarantines, accepted OWNERSHIP sources/checkpoints and UNKNOWN intent retained. Utility graph retains3COMPLETEDorders, MONITORINGplan, UTILITY_VERIFIEDcomponent with case_closedfalse, one actual COMMITTEDreport and original UNKNOWNtransportintent. Historical2paidrequests unchanged/no active sessions or holds;11provider reports0external/0unexpected; publicartifact/patchprivate-value scanPASS. ActualFalkorDB6.0.2/Redis8.10.2, existing pinnedpackages recorded in audit; no dependency changes. FullB20PARTIAL/BLOCKED; STOPforhumanreview.
+--- a/flow.md
++++ b/flow.md
+@@ -1047,3 +1047,24 @@
+ Read-only auditPASS:1581pre-task public files retained,1129earlier evidence files byte-identical,119accepted test files unchanged; allsix tracker histories append-only. Original migrations0001–0005/schema registry/city/scenario/evaluator data/dependency files unchanged. B04fullcityhash/858nodes/1246edges/42candidate drainage links, B01probe, B12R2singleplan/quarantine and B19quarantines retained; original candidate/source/submission and draft/receipt/checkpoint hashes intact. Historical2paidrequests exactly unchanged;14guards0external/0unexpected; public-artifact/patchprivate-value scanPASS. ActualFalkorDB6.0.2/Redis8.10.2 and pinnedpackageversions recorded in audit; no dependency changes.
+ 
+ Two audit utility bookkeeping stops retained separately (missing authorized CLI path in allowlist, then concurrentnewfrontend additions). Corrected the task allowlist/exclusion; no application/evidence/data repair. Seven concurrentfrontend files were not created/edited/executed by this task, preserved and excluded from ownership patch/inventory; hashes recorded separately. No frontend work performed here. Final task101distinctPASS100unit/1real,0unresolvedFAIL/0SKIP; full B20PARTIAL/BLOCKED, B10genuineOPEN/PARTIAL. STOPforhumanreview; proposed next B20-R-UTILITY only after separateauthorization, noB21/live/frontend.
++
++
++## CURRENT B20-R-UTILITY — technically passing; human review pending (2026-10-18)
++B20-R-OWNERSHIP is human accepted. Implemented only closed synthetic UTILITY_ISOLATION/UTILITY_LEAK_REPAIR with typed future ISOLATION_PROOF/UTILITY_VERIFICATION dependencies over existing B12–B14 services. Reviewed pipe causal+safety evidence, current independently acquired verified ownership, current D022 PROPOSED procedure, exact approval and assigned operator remain mandatory. Existing B05 verified-only bounded traversal scopes road dependency; no B09 allowlist weakening. Immutable approved prerequisites are fulfilled from persisted attributable independently reviewed completion/follow-up proof, not task/DAG status.
++
++Actual real S04 primary: ownership→sourced approved WATER isolation→reviewed isolation proof→WATER repair→independent UTILITY_VERIFIED→separately sourced/qualified ROAD repair completed. Three completed work orders; plan MONITORING, incident not ENDED, case_closed=false. Utility component outcome never substitutes for road pavement/wear verification. Negative normal-pressure S04 contradicts leak and refuses utility work,0plans/0orders. Additional safety/road surveys are explicit new synthetic observations; original B19 claims/candidate/source bytes retained. D022 author/self-review and PROPOSED authority honest; no physical engineering standard asserted.
++
++Actual committed utility follow-up report plus injected readback ValueError returns409RECOVERY_REQUIRED/UNKNOWN; original request/work/plan/correlation IDs retained, one durable report, exact replay no redispatch, transport intentDISPATCHING. No retry/delete/new version/replacement key/rollback/quarantine clearance. Operator must inspect original domain operation/journal/evidence and obtain supported reconciliation review; safe status reads do not clear intent.
++
++Final75distinctPASS=38newutility+35directcompatibilityunits+2realS04cases;0unresolvedFAIL/0SKIP/0setupERROR. Both specification validatorsPASS once after final source edits. Historical13failedtestexecutions retained:10unit frozen-model fixture errors,3primary failures (B09 read-family restriction twice, then unsupported ProofPath field); corrected without graph repair. Final real primaryPASS27.37s, initial negativePASS retained; passing journey rerun only for final changed completion boundary/road proof, no broad/lifecycle/live tests. Explicit synthetic commands, real DB/GraphRAG SDK/HTTP/CLI; no fake or autonomous model claimed. MCP/Saver unchanged/not rerun. Provider interlocks and children0external/0unexpected; historical paid accounting retained.
++
++Evidence: docs/evidence/B20R-UTILITY-RESULTS.md, COMMANDS.md, FILES.md, changes.patch, primary-proof.json, negative-proof.json, audit.json and WALKTHROUGH.md; operator design backend/UTILITY.md. Old migrations/schema/source/city/earlier evidence/quarantines preserved. BLOCK-B20-02 technically addressed pending this review; BLOCK-B20-03..05 remainOPEN. Full B20PARTIAL/BLOCKED and B10genuineOPEN/PARTIAL. No B21/frontend/other corrective phase/live authorization. STOPforhumanreview; exact next task is review B20-R-UTILITY and separately authorize one remaining B20 correction.
++
++### B20-R-UTILITY actual file/control graph
++planning/models.py imports existing strict Model/Citation; adds two action literals and two prerequisite kinds without new default hash fields. planning/policy.py→planning/utility.py validates exact predecessor/action/target and uses evidence.Reader.topology→B05 GraphAnalysis→parameterized bounded GRAPH.RO_QUERY; unverified/truncated paths never supply dependency scope. PlanningService.resolve remains the authority for current reviewed ownership and retrieved procedure. New D022 manifest→existing memory.sources/Memory.ingest→SDK documents+canonical KnowledgeProcedurePROPOSED→Citation in immutable plan.
++
++operations/service.py order/update and operations/execution.py START call operations/utility.fulfilled→existing Storage/verified_order + Reader.evidence/B09 journal/native finding validation. Isolation COMPLETE checks utility.isolation_proof before fenced batch. Repair FOLLOWUP accepts only closed utility codes; utility.evaluate validates post-completion window/targets and records component outcome through existing native event/operation/verification state. Road gating re-reads completion/verification reports and hashes; original approved task conditions remain UNMET bytes. Existing operations/execution.py final-case gate treats isolation as unresolved unless corresponding repair has independent component verification; legacy road pavement policy remains unchanged. Existing HTTP/CLI delegate unchanged service paths, dispatch intents and sanitized UNKNOWN recovery. No changes to agent/MCP/Saver/worker/data/migrations. New tests/unit/test_utility_intervention.py uses explicit fake readers only; integration/test_utility_intervention_runtime.py reuses b20_fixtures and B19 fresh/release helpers plus real SDK/API/CLI, deterministic authored inspections and actual committed readback-fault injection.
++
++
++### B20-R-UTILITY final read-only retention/security evidence
++AuditPASS: all1642pre-task public files retained;1176earlier evidence files byte-identical;121accepted test files unchanged; allsix tracker histories append-only. Migrations0001–0005/schema registry/city/scenarios/dependencies unchanged. Original B04fullcityhash/858nodes/1246edges/42candidate drainage links and B01probe retained;12previous B20scenario checkpoints, B12R2singleplan/quarantine, B19quarantines, accepted OWNERSHIP sources/checkpoints and UNKNOWN intent retained. Utility graph retains3COMPLETEDorders, MONITORINGplan, UTILITY_VERIFIEDcomponent with case_closedfalse, one actual COMMITTEDreport and original UNKNOWNtransportintent. Historical2paidrequests unchanged/no active sessions or holds;11provider reports0external/0unexpected; publicartifact/patchprivate-value scanPASS. ActualFalkorDB6.0.2/Redis8.10.2, existing pinnedpackages recorded in audit; no dependency changes. FullB20PARTIAL/BLOCKED; STOPforhumanreview.
+--- a/implementation_status.md
++++ b/implementation_status.md
+@@ -620,3 +620,19 @@
+ Read-only auditPASS:1581pre-task public files retained,1129earlier evidence files byte-identical,119accepted test files unchanged; allsix tracker histories append-only. Original migrations0001–0005/schema registry/city/scenario/evaluator data/dependency files unchanged. B04fullcityhash/858nodes/1246edges/42candidate drainage links, B01probe, B12R2singleplan/quarantine and B19quarantines retained; original candidate/source/submission and draft/receipt/checkpoint hashes intact. Historical2paidrequests exactly unchanged;14guards0external/0unexpected; public-artifact/patchprivate-value scanPASS. ActualFalkorDB6.0.2/Redis8.10.2 and pinnedpackageversions recorded in audit; no dependency changes.
+ 
+ Two audit utility bookkeeping stops retained separately (missing authorized CLI path in allowlist, then concurrentnewfrontend additions). Corrected the task allowlist/exclusion; no application/evidence/data repair. Seven concurrentfrontend files were not created/edited/executed by this task, preserved and excluded from ownership patch/inventory; hashes recorded separately. No frontend work performed here. Final task101distinctPASS100unit/1real,0unresolvedFAIL/0SKIP; full B20PARTIAL/BLOCKED, B10genuineOPEN/PARTIAL. STOPforhumanreview; proposed next B20-R-UTILITY only after separateauthorization, noB21/live/frontend.
++
++
++## CURRENT B20-R-UTILITY — technically passing; human review pending (2026-10-18)
++B20-R-OWNERSHIP is human accepted. Implemented only closed synthetic UTILITY_ISOLATION/UTILITY_LEAK_REPAIR with typed future ISOLATION_PROOF/UTILITY_VERIFICATION dependencies over existing B12–B14 services. Reviewed pipe causal+safety evidence, current independently acquired verified ownership, current D022 PROPOSED procedure, exact approval and assigned operator remain mandatory. Existing B05 verified-only bounded traversal scopes road dependency; no B09 allowlist weakening. Immutable approved prerequisites are fulfilled from persisted attributable independently reviewed completion/follow-up proof, not task/DAG status.
++
++Actual real S04 primary: ownership→sourced approved WATER isolation→reviewed isolation proof→WATER repair→independent UTILITY_VERIFIED→separately sourced/qualified ROAD repair completed. Three completed work orders; plan MONITORING, incident not ENDED, case_closed=false. Utility component outcome never substitutes for road pavement/wear verification. Negative normal-pressure S04 contradicts leak and refuses utility work,0plans/0orders. Additional safety/road surveys are explicit new synthetic observations; original B19 claims/candidate/source bytes retained. D022 author/self-review and PROPOSED authority honest; no physical engineering standard asserted.
++
++Actual committed utility follow-up report plus injected readback ValueError returns409RECOVERY_REQUIRED/UNKNOWN; original request/work/plan/correlation IDs retained, one durable report, exact replay no redispatch, transport intentDISPATCHING. No retry/delete/new version/replacement key/rollback/quarantine clearance. Operator must inspect original domain operation/journal/evidence and obtain supported reconciliation review; safe status reads do not clear intent.
++
++Final75distinctPASS=38newutility+35directcompatibilityunits+2realS04cases;0unresolvedFAIL/0SKIP/0setupERROR. Both specification validatorsPASS once after final source edits. Historical13failedtestexecutions retained:10unit frozen-model fixture errors,3primary failures (B09 read-family restriction twice, then unsupported ProofPath field); corrected without graph repair. Final real primaryPASS27.37s, initial negativePASS retained; passing journey rerun only for final changed completion boundary/road proof, no broad/lifecycle/live tests. Explicit synthetic commands, real DB/GraphRAG SDK/HTTP/CLI; no fake or autonomous model claimed. MCP/Saver unchanged/not rerun. Provider interlocks and children0external/0unexpected; historical paid accounting retained.
++
++Evidence: docs/evidence/B20R-UTILITY-RESULTS.md, COMMANDS.md, FILES.md, changes.patch, primary-proof.json, negative-proof.json, audit.json and WALKTHROUGH.md; operator design backend/UTILITY.md. Old migrations/schema/source/city/earlier evidence/quarantines preserved. BLOCK-B20-02 technically addressed pending this review; BLOCK-B20-03..05 remainOPEN. Full B20PARTIAL/BLOCKED and B10genuineOPEN/PARTIAL. No B21/frontend/other corrective phase/live authorization. STOPforhumanreview; exact next task is review B20-R-UTILITY and separately authorize one remaining B20 correction.
++
++
++### B20-R-UTILITY final read-only retention/security evidence
++AuditPASS: all1642pre-task public files retained;1176earlier evidence files byte-identical;121accepted test files unchanged; allsix tracker histories append-only. Migrations0001–0005/schema registry/city/scenarios/dependencies unchanged. Original B04fullcityhash/858nodes/1246edges/42candidate drainage links and B01probe retained;12previous B20scenario checkpoints, B12R2singleplan/quarantine, B19quarantines, accepted OWNERSHIP sources/checkpoints and UNKNOWN intent retained. Utility graph retains3COMPLETEDorders, MONITORINGplan, UTILITY_VERIFIEDcomponent with case_closedfalse, one actual COMMITTEDreport and original UNKNOWNtransportintent. Historical2paidrequests unchanged/no active sessions or holds;11provider reports0external/0unexpected; publicartifact/patchprivate-value scanPASS. ActualFalkorDB6.0.2/Redis8.10.2, existing pinnedpackages recorded in audit; no dependency changes. FullB20PARTIAL/BLOCKED; STOPforhumanreview.
+--- a/scripts/validate_operations.py
++++ b/scripts/validate_operations.py
+@@ -22,4 +22,9 @@
+ from app.services.operations.verification_v1 import VERSION as HISTORICAL_VERSION
+ assert c['historical_verification'][HISTORICAL_VERSION]['version']==HISTORICAL_VERSION
+ assert c['recurrence_scope']['maximum_bound_incidents']==3
++from app.services.operations import utility
++assert c['utility_policy']['version']==utility.VERSION
++assert c['utility_policy']['isolation_code']==utility.ISOLATION
++assert c['utility_policy']['followup_codes']==sorted(utility.FOLLOWUP)
++assert c['utility_policy']['verified_status']=='UTILITY_VERIFIED' and c['utility_policy']['case_closed'] is False
+ print('PASS B14 STATIC: execution schemas/policy parity; B13 STATIC: closed commands, exact seven-account/four-role demo permissions, AUTHORIZED initial state and compatible0005; not execution/provider/runtime proof')
+--- a/scripts/validate_planning.py
++++ b/scripts/validate_planning.py
+@@ -13,6 +13,8 @@
+ assert c['execution_authority'] is False
+ assert c['feedback_schema']==Feedback.model_json_schema() and c['action_policies']==ACTIONS
+ new=sources(ROOT/'data/documents/b12r/manifest.json')
+-assert len(new)==3 and {a for s in new for a in s.action_types}==set(ACTIONS)
++utility=sources(ROOT/'data/documents/b20r_utility/manifest.json')
++assert len(new)==3 and len(utility)==1 and {a for s in new+utility for a in s.action_types}==set(ACTIONS)
++for source in utility:source.checked_path()
+ for s in new:s.checked_path()
+ print('PASS B12 STATIC: closed plan/task/monitoring schemas, draft-only receipt and compatible0004; not runtime/approval proof')
+--- a/task_board.md
++++ b/task_board.md
+@@ -559,3 +559,19 @@
+ Read-only auditPASS:1581pre-task public files retained,1129earlier evidence files byte-identical,119accepted test files unchanged; allsix tracker histories append-only. Original migrations0001–0005/schema registry/city/scenario/evaluator data/dependency files unchanged. B04fullcityhash/858nodes/1246edges/42candidate drainage links, B01probe, B12R2singleplan/quarantine and B19quarantines retained; original candidate/source/submission and draft/receipt/checkpoint hashes intact. Historical2paidrequests exactly unchanged;14guards0external/0unexpected; public-artifact/patchprivate-value scanPASS. ActualFalkorDB6.0.2/Redis8.10.2 and pinnedpackageversions recorded in audit; no dependency changes.
+ 
+ Two audit utility bookkeeping stops retained separately (missing authorized CLI path in allowlist, then concurrentnewfrontend additions). Corrected the task allowlist/exclusion; no application/evidence/data repair. Seven concurrentfrontend files were not created/edited/executed by this task, preserved and excluded from ownership patch/inventory; hashes recorded separately. No frontend work performed here. Final task101distinctPASS100unit/1real,0unresolvedFAIL/0SKIP; full B20PARTIAL/BLOCKED, B10genuineOPEN/PARTIAL. STOPforhumanreview; proposed next B20-R-UTILITY only after separateauthorization, noB21/live/frontend.
++
++
++## CURRENT B20-R-UTILITY — technically passing; human review pending (2026-10-18)
++B20-R-OWNERSHIP is human accepted. Implemented only closed synthetic UTILITY_ISOLATION/UTILITY_LEAK_REPAIR with typed future ISOLATION_PROOF/UTILITY_VERIFICATION dependencies over existing B12–B14 services. Reviewed pipe causal+safety evidence, current independently acquired verified ownership, current D022 PROPOSED procedure, exact approval and assigned operator remain mandatory. Existing B05 verified-only bounded traversal scopes road dependency; no B09 allowlist weakening. Immutable approved prerequisites are fulfilled from persisted attributable independently reviewed completion/follow-up proof, not task/DAG status.
++
++Actual real S04 primary: ownership→sourced approved WATER isolation→reviewed isolation proof→WATER repair→independent UTILITY_VERIFIED→separately sourced/qualified ROAD repair completed. Three completed work orders; plan MONITORING, incident not ENDED, case_closed=false. Utility component outcome never substitutes for road pavement/wear verification. Negative normal-pressure S04 contradicts leak and refuses utility work,0plans/0orders. Additional safety/road surveys are explicit new synthetic observations; original B19 claims/candidate/source bytes retained. D022 author/self-review and PROPOSED authority honest; no physical engineering standard asserted.
++
++Actual committed utility follow-up report plus injected readback ValueError returns409RECOVERY_REQUIRED/UNKNOWN; original request/work/plan/correlation IDs retained, one durable report, exact replay no redispatch, transport intentDISPATCHING. No retry/delete/new version/replacement key/rollback/quarantine clearance. Operator must inspect original domain operation/journal/evidence and obtain supported reconciliation review; safe status reads do not clear intent.
++
++Final75distinctPASS=38newutility+35directcompatibilityunits+2realS04cases;0unresolvedFAIL/0SKIP/0setupERROR. Both specification validatorsPASS once after final source edits. Historical13failedtestexecutions retained:10unit frozen-model fixture errors,3primary failures (B09 read-family restriction twice, then unsupported ProofPath field); corrected without graph repair. Final real primaryPASS27.37s, initial negativePASS retained; passing journey rerun only for final changed completion boundary/road proof, no broad/lifecycle/live tests. Explicit synthetic commands, real DB/GraphRAG SDK/HTTP/CLI; no fake or autonomous model claimed. MCP/Saver unchanged/not rerun. Provider interlocks and children0external/0unexpected; historical paid accounting retained.
++
++Evidence: docs/evidence/B20R-UTILITY-RESULTS.md, COMMANDS.md, FILES.md, changes.patch, primary-proof.json, negative-proof.json, audit.json and WALKTHROUGH.md; operator design backend/UTILITY.md. Old migrations/schema/source/city/earlier evidence/quarantines preserved. BLOCK-B20-02 technically addressed pending this review; BLOCK-B20-03..05 remainOPEN. Full B20PARTIAL/BLOCKED and B10genuineOPEN/PARTIAL. No B21/frontend/other corrective phase/live authorization. STOPforhumanreview; exact next task is review B20-R-UTILITY and separately authorize one remaining B20 correction.
++
++
++### B20-R-UTILITY final read-only retention/security evidence
++AuditPASS: all1642pre-task public files retained;1176earlier evidence files byte-identical;121accepted test files unchanged; allsix tracker histories append-only. Migrations0001–0005/schema registry/city/scenarios/dependencies unchanged. Original B04fullcityhash/858nodes/1246edges/42candidate drainage links and B01probe retained;12previous B20scenario checkpoints, B12R2singleplan/quarantine, B19quarantines, accepted OWNERSHIP sources/checkpoints and UNKNOWN intent retained. Utility graph retains3COMPLETEDorders, MONITORINGplan, UTILITY_VERIFIEDcomponent with case_closedfalse, one actual COMMITTEDreport and original UNKNOWNtransportintent. Historical2paidrequests unchanged/no active sessions or holds;11provider reports0external/0unexpected; publicartifact/patchprivate-value scanPASS. ActualFalkorDB6.0.2/Redis8.10.2, existing pinnedpackages recorded in audit; no dependency changes. FullB20PARTIAL/BLOCKED; STOPforhumanreview.
+--- a/test_log.md
++++ b/test_log.md
+@@ -1164,3 +1164,19 @@
+ Read-only auditPASS:1581pre-task public files retained,1129earlier evidence files byte-identical,119accepted test files unchanged; allsix tracker histories append-only. Original migrations0001–0005/schema registry/city/scenario/evaluator data/dependency files unchanged. B04fullcityhash/858nodes/1246edges/42candidate drainage links, B01probe, B12R2singleplan/quarantine and B19quarantines retained; original candidate/source/submission and draft/receipt/checkpoint hashes intact. Historical2paidrequests exactly unchanged;14guards0external/0unexpected; public-artifact/patchprivate-value scanPASS. ActualFalkorDB6.0.2/Redis8.10.2 and pinnedpackageversions recorded in audit; no dependency changes.
+ 
+ Two audit utility bookkeeping stops retained separately (missing authorized CLI path in allowlist, then concurrentnewfrontend additions). Corrected the task allowlist/exclusion; no application/evidence/data repair. Seven concurrentfrontend files were not created/edited/executed by this task, preserved and excluded from ownership patch/inventory; hashes recorded separately. No frontend work performed here. Final task101distinctPASS100unit/1real,0unresolvedFAIL/0SKIP; full B20PARTIAL/BLOCKED, B10genuineOPEN/PARTIAL. STOPforhumanreview; proposed next B20-R-UTILITY only after separateauthorization, noB21/live/frontend.
++
++
++## CURRENT B20-R-UTILITY — technically passing; human review pending (2026-10-18)
++B20-R-OWNERSHIP is human accepted. Implemented only closed synthetic UTILITY_ISOLATION/UTILITY_LEAK_REPAIR with typed future ISOLATION_PROOF/UTILITY_VERIFICATION dependencies over existing B12–B14 services. Reviewed pipe causal+safety evidence, current independently acquired verified ownership, current D022 PROPOSED procedure, exact approval and assigned operator remain mandatory. Existing B05 verified-only bounded traversal scopes road dependency; no B09 allowlist weakening. Immutable approved prerequisites are fulfilled from persisted attributable independently reviewed completion/follow-up proof, not task/DAG status.
++
++Actual real S04 primary: ownership→sourced approved WATER isolation→reviewed isolation proof→WATER repair→independent UTILITY_VERIFIED→separately sourced/qualified ROAD repair completed. Three completed work orders; plan MONITORING, incident not ENDED, case_closed=false. Utility component outcome never substitutes for road pavement/wear verification. Negative normal-pressure S04 contradicts leak and refuses utility work,0plans/0orders. Additional safety/road surveys are explicit new synthetic observations; original B19 claims/candidate/source bytes retained. D022 author/self-review and PROPOSED authority honest; no physical engineering standard asserted.
++
++Actual committed utility follow-up report plus injected readback ValueError returns409RECOVERY_REQUIRED/UNKNOWN; original request/work/plan/correlation IDs retained, one durable report, exact replay no redispatch, transport intentDISPATCHING. No retry/delete/new version/replacement key/rollback/quarantine clearance. Operator must inspect original domain operation/journal/evidence and obtain supported reconciliation review; safe status reads do not clear intent.
++
++Final75distinctPASS=38newutility+35directcompatibilityunits+2realS04cases;0unresolvedFAIL/0SKIP/0setupERROR. Both specification validatorsPASS once after final source edits. Historical13failedtestexecutions retained:10unit frozen-model fixture errors,3primary failures (B09 read-family restriction twice, then unsupported ProofPath field); corrected without graph repair. Final real primaryPASS27.37s, initial negativePASS retained; passing journey rerun only for final changed completion boundary/road proof, no broad/lifecycle/live tests. Explicit synthetic commands, real DB/GraphRAG SDK/HTTP/CLI; no fake or autonomous model claimed. MCP/Saver unchanged/not rerun. Provider interlocks and children0external/0unexpected; historical paid accounting retained.
++
++Evidence: docs/evidence/B20R-UTILITY-RESULTS.md, COMMANDS.md, FILES.md, changes.patch, primary-proof.json, negative-proof.json, audit.json and WALKTHROUGH.md; operator design backend/UTILITY.md. Old migrations/schema/source/city/earlier evidence/quarantines preserved. BLOCK-B20-02 technically addressed pending this review; BLOCK-B20-03..05 remainOPEN. Full B20PARTIAL/BLOCKED and B10genuineOPEN/PARTIAL. No B21/frontend/other corrective phase/live authorization. STOPforhumanreview; exact next task is review B20-R-UTILITY and separately authorize one remaining B20 correction.
++
++
++### B20-R-UTILITY final read-only retention/security evidence
++AuditPASS: all1642pre-task public files retained;1176earlier evidence files byte-identical;121accepted test files unchanged; allsix tracker histories append-only. Migrations0001–0005/schema registry/city/scenarios/dependencies unchanged. Original B04fullcityhash/858nodes/1246edges/42candidate drainage links and B01probe retained;12previous B20scenario checkpoints, B12R2singleplan/quarantine, B19quarantines, accepted OWNERSHIP sources/checkpoints and UNKNOWN intent retained. Utility graph retains3COMPLETEDorders, MONITORINGplan, UTILITY_VERIFIEDcomponent with case_closedfalse, one actual COMMITTEDreport and original UNKNOWNtransportintent. Historical2paidrequests unchanged/no active sessions or holds;11provider reports0external/0unexpected; publicartifact/patchprivate-value scanPASS. ActualFalkorDB6.0.2/Redis8.10.2, existing pinnedpackages recorded in audit; no dependency changes. FullB20PARTIAL/BLOCKED; STOPforhumanreview.
+--- /dev/null
++++ b/backend/UTILITY.md
+@@ -0,0 +1,17 @@
++# B20-R-UTILITY — synthetic utility intervention
++
++This extends existing B12–B14 planning/operations, B11 document ingestion, B20 responsibility and B16/B18 operator adapters. It is a synthetic demo, not a field operating standard. No new endpoint, role, CLI command, migration, worker or agent is introduced.
++
++`UTILITY_ISOLATION` and `UTILITY_LEAK_REPAIR` apply only to `ROAD_DAMAGE` / `UTILITY_LEAK`, concerned `WaterPipe` targets and `DEPT-WATER`. Both need current reviewed pipe-specific `LEAK_DETECTED` + `INFILTRATION_AT_DAMAGE`, `UTILITY_SAFETY_REVIEWED`, current verified responsibility, a matching retrieved D022 citation and exact human approval/assigned operator. Contradiction, normal pressure, proximity or `UNDERLIES` alone cannot qualify the actions. Source/ownership/assessment/procedure bindings are rechecked before new authority.
++
++A repair task has immutable `CONDITIONAL` remediation with the two current MET causal/safety guards plus `ISOLATION_PROOF` UNMET, `depends_on_task_id` set to the isolation task, and the matching DAG dependency. A draft cannot assert that a future operation already happened. When an approved plan also includes a separately justified `SUBGRADE_REPAIR` on the verified `UNDERLIES` road, that task additionally has `UTILITY_VERIFICATION` UNMET bound to the repair task. Road work still needs its own reviewed subgrade/safety evidence, current road owner, D020 citation and exact approval. An unrelated or unjustified road task is not invented. B05 bounded verified-only traversal establishes dependency scope; truncated topology blocks authority.
++
++Existing order/assignment/START check persisted predecessor completion and reviewed attributable inspection evidence, not just task status. Isolation COMPLETE additionally requires target-bound `UTILITY_ISOLATION_CONFIRMED` and `ACTION_COMPLETED`, independently reviewed and dated after work starts. Its completed inspection must belong to the exact predecessor order, operator and source procedure. Completing isolation alone cannot close a case.
++
++Repair COMPLETE is only `ACTION_COMPLETED` / MONITORING. Through existing work inspection and outcome commands, a distinct authenticated analyst reviews a separate synthetic FOLLOWUP source. A window strictly after completion must contain target-specific `POST_REPAIR_PRESSURE_NORMAL` and `POST_REPAIR_LEAK_ABSENT`. These are qualitative synthetic assertions with no invented numeric units or thresholds. Missing/unknown checks → MONITORING; adverse pressure/leak → PROBLEM_PERSISTS; conflicting checks → INCONCLUSIVE; both positive → UTILITY_VERIFIED under `B20R-UTILITY-1`, `case_closed:false`. Component evaluation is allowed during IN_EXECUTION while road waits. Dependent road authority revalidates stored source/finding hashes, report bindings, completion and verification window. Legacy `B14-2` criteria remain unchanged.
++
++Road completion remains distinct from pavement verification and case closure. Existing independent wear/pavement follow-up is still required; utility verification alone never closes a road incident. Isolation components can count toward final closure only when their corresponding repair has independent utility verification. No B19 scenario, source claim or candidate record was promoted by this change. The primary test adds an explicitly authorized synthetic causal/safety survey to justify road work; this is not additional evidence hidden in the original S04 reveal.
++
++Use existing `plan draft/submit`, `approval decide`, `work create/status/progress/inspect/evaluate/get` and `responsibility submit/review/get` commands with private payload/session files. API bodies use the existing typed routes. D022 is ingested via the existing authorized B11 Memory.ingest mechanism, its manifest checksum is checked, and canonical KnowledgeProcedure remains PROPOSED. Automated author self-review of invented guidance is disclosed; the citation supplies no execution authority.
++
++Source-bound idempotency, exact hashes, fences, durable events, journal and companion integrity, and sanitized UNKNOWN recovery are unchanged. Never redispatch an uncertain key, substitute a new request, delete a record or clear quarantine to finish the workflow. Read the original transport intent/domain operation/journal and retained evidence; obtain supported human reconciliation before any retry. A safe status read does not clear that intent. See `docs/evidence/B20R-UTILITY-WALKTHROUGH.md` for focused reproduction and actual IDs.
+--- /dev/null
++++ b/backend/app/services/operations/utility.py
+@@ -0,0 +1,72 @@
++"""B20-R-UTILITY component proofs over existing fenced operation storage."""
++from app.graph.repository import PreconditionFailed
++from app.graph.schema import timestamp
++from app.services.evidence.reader import Reader
++from app.services.planning.utility import DYNAMIC
++VERSION='B20R-UTILITY-1'
++ISOLATION='UTILITY_ISOLATION_CONFIRMED'
++FOLLOWUP={'POST_REPAIR_PRESSURE_NORMAL','POST_REPAIR_LEAK_ABSENT','POST_REPAIR_PRESSURE_ABNORMAL','POST_REPAIR_LEAK_PRESENT'}
++
++def isolation_proof(refs,targets,started_at):
++ covered=set()
++ for ref in refs:
++  report=ref.report
++  if not report or not report.review or report.source_kind!='SYNTHETIC':raise PreconditionFailed('REVIEWED_ISOLATION_REQUIRED')
++  for ob in report.observations:
++   if ob.code==ISOLATION and ob.result=='OBSERVED' and timestamp(ob.observed_at)>=timestamp(started_at):covered.add(ob.asset_id)
++ if covered!=set(targets):raise PreconditionFailed('REVIEWED_ISOLATION_REQUIRED')
++
++def evaluate(targets,observations,start,end,completed_at,now):
++ from .verification import validate_observation
++ lo,hi,done,at=map(timestamp,[start,end,completed_at,now])
++ if not done<lo<=hi<=at:raise PreconditionFailed('OUTCOME_WINDOW_ORDER')
++ missing=[];contrary=False;conflict=False
++ for target in targets:
++  codes=set()
++  for ob in observations:
++   if ob.asset_id!=target:continue
++   validate_observation(ob,FOLLOWUP)
++   if not lo<=timestamp(ob.observed_at)<=hi:raise PreconditionFailed('OUTCOME_EVIDENCE_OUTSIDE_WINDOW')
++   if ob.result=='OBSERVED':codes.add(ob.code)
++   else:missing.append(target+': unknown '+ob.code)
++  for good,bad in [('POST_REPAIR_PRESSURE_NORMAL','POST_REPAIR_PRESSURE_ABNORMAL'),('POST_REPAIR_LEAK_ABSENT','POST_REPAIR_LEAK_PRESENT')]:
++   conflict |= good in codes and bad in codes
++   contrary |= bad in codes
++   if good not in codes and bad not in codes:missing.append(target+': missing '+good)
++ if conflict:return 'INCONCLUSIVE',['Contradictory post-repair observations retained']+missing
++ if contrary:return 'PROBLEM_PERSISTS',missing
++ if missing:return 'MONITORING',missing
++ return 'UTILITY_VERIFIED',[]
++
++def fulfilled(ops,task,saved,at):
++ """Revalidate exact bound predecessor and immutable report hashes at authority time."""
++ from .service import stable
++ result=set();reader=Reader(ops.repo,at)
++ for c in task.remediation.conditions if task.remediation else []:
++  if c.kind not in DYNAMIC:continue
++  if c.status!='UNMET' or not c.depends_on_task_id:raise PreconditionFailed('UTILITY_DEPENDENCY_BINDING')
++  native=saved['task_ids'][c.depends_on_task_id];wid=stable('WO',saved['receipt']['id'],native)
++  w,bound=ops.verified_order(wid)
++  if w.properties['status']!='COMPLETED' or bound['assignment']['task_id']!=native:raise PreconditionFailed('UTILITY_DEPENDENCY_NOT_COMPLETED')
++  completion=ops.store.get('completion',wid)
++  if not completion or completion['action']!='COMPLETE':raise PreconditionFailed('UTILITY_COMPLETION_PROOF_REQUIRED')
++  origin=ops.store.get('operation',completion['last_operation'])
++  if not origin or origin['command']['work_order_id']!=wid or origin['receipt']['status']!='COMPLETED':raise PreconditionFailed('UTILITY_COMPLETION_PROOF_REQUIRED')
++  refs=[reader.evidence(id) for id in completion['evidence_ids']]
++  for ref in refs:
++   report=ref.report;auth=ops.store.get('inspection',report.inspection_id) if report else None
++   if not auth or auth['work_order_id']!=wid or auth['purpose']!='COMPLETION' or auth['procedure']!=next(t['procedure_citation'] for t in saved['draft']['tasks'] if t['id']==c.depends_on_task_id) or report.inspector_id!=bound['assignment']['assignee_id']:raise PreconditionFailed('UTILITY_REPORT_BINDING')
++  if c.kind=='ISOLATION_PROOF':
++   isolation_proof(refs,bound['assignment']['target_ids'],w.properties['created_at'])
++  else:
++   verified=ops.store.get('verification',wid);out=ops.store.get('outcome',verified['outcome_id']) if verified else None
++   if not out or out['assessment_status']!='UTILITY_VERIFIED' or out['work_order_id']!=wid or out['plan_id']!=saved['receipt']['id'] or out['policy_version']!=VERSION:raise PreconditionFailed('UTILITY_VERIFICATION_REQUIRED')
++   follow=[]
++   for old in out['evidence_references']:
++    ref=reader.evidence(old['id']);report=ref.report;auth=ops.store.get('inspection',report.inspection_id) if report else None
++    if ref.content_hash!=old['content_hash'] or ref.finding_hashes!=old['finding_hashes'] or not report or not report.review or not auth or auth['work_order_id']!=wid or auth['purpose']!='FOLLOWUP' or auth['procedure']!=next(t['procedure_citation'] for t in saved['draft']['tasks'] if t['id']==c.depends_on_task_id) or report.inspector_id!=bound['assignment']['assignee_id'] or ref.source_record_id in completion['source_records']:raise PreconditionFailed('UTILITY_VERIFICATION_CHANGED')
++    follow.extend(report.observations)
++   status,_=evaluate(bound['assignment']['target_ids'],follow,out['window']['start'],out['window']['end'],completion['at'],at)
++   if status!='UTILITY_VERIFIED':raise PreconditionFailed('UTILITY_VERIFICATION_REQUIRED')
++  result.add(c.kind)
++ return result
+--- /dev/null
++++ b/backend/app/services/planning/utility.py
+@@ -0,0 +1,33 @@
++"""Closed utility DAG rules; future evidence cannot be asserted by a draft."""
++DYNAMIC = {'ISOLATION_PROOF','UTILITY_VERIFICATION'}
++
++def underlies(reader,pipe):
++ # Reuse verified-only bounded B05 traversal rather than broaden B09 read families.
++ from app.services.evidence.models import Topology
++ result=reader.topology(Topology(source_id=pipe,target_id=pipe,operation='dependencies',max_hops=6))
++ if result.truncated:
++  from app.graph.repository import PreconditionFailed
++  raise PreconditionFailed('UTILITY_TOPOLOGY_TRUNCATED')
++ edges={e.id:e for e in result.edges}
++ return {p.node_ids[-1] for p in result.paths if len(p.edge_ids)==1 and edges[p.edge_ids[0]].kind=='UNDERLIES' and p.directions==('OUTGOING',)}
++
++def validate_dependencies(task,draft,reader,reject):
++ conditions={c.kind:c for c in task.remediation.conditions}
++ dynamic=set(conditions)&DYNAMIC
++ tasks={t.id:t for t in draft.tasks}
++ expected=set()
++ if task.action_type=='UTILITY_LEAK_REPAIR':expected={'ISOLATION_PROOF'}
++ if task.action_type=='SUBGRADE_REPAIR':
++  # Explicit reviewed topology determines whether this road shares the pipe.
++  linked=[t for t in draft.tasks if t.action_type=='UTILITY_LEAK_REPAIR' and any(set(task.target_ids)&underlies(reader,pipe) for pipe in t.target_ids)]
++  if linked:expected={'UTILITY_VERIFICATION'}
++ if dynamic!=expected:reject('UTILITY_DEPENDENCY_REQUIRED')
++ for kind in dynamic:
++  c=conditions[kind];dep=tasks.get(c.depends_on_task_id)
++  action='UTILITY_ISOLATION' if kind=='ISOLATION_PROOF' else 'UTILITY_LEAK_REPAIR'
++  if c.status!='UNMET' or c.evidence_ids or not dep or dep.id not in task.depends_on or dep.action_type!=action:reject('UTILITY_DEPENDENCY_BINDING')
++  if kind=='ISOLATION_PROOF' and set(dep.target_ids)!=set(task.target_ids):reject('UTILITY_DEPENDENCY_TARGET')
++  if kind=='UTILITY_VERIFICATION' and not all(any(target in underlies(reader,pipe) for pipe in dep.target_ids) for target in task.target_ids):reject('UTILITY_DEPENDENCY_TARGET')
++ if task.action_type in {'UTILITY_ISOLATION','UTILITY_LEAK_REPAIR'} or dynamic:
++  if any(conditions[k].status!='MET' for k in ['CAUSAL_INSPECTION','SAFETY_REVIEW']):reject('UTILITY_CURRENT_EVIDENCE_REQUIRED')
++  if set(task.depends_on)!={conditions[k].depends_on_task_id for k in dynamic}:reject('UTILITY_DEPENDENCY_SCOPE')
+--- /dev/null
++++ b/backend/tests/integration/test_utility_intervention_runtime.py
+@@ -0,0 +1,153 @@
++"""B20-R-UTILITY: real DB/GraphRAG/HTTP/CLI; explicit synthetic observations, no model."""
++import asyncio,copy,json,os,subprocess,sys
++from datetime import datetime
++from pathlib import Path
++import httpx,pytest
++from app.active import load,active_scope
++from app.api.__main__ import configured_app
++from app.graph.repository import GraphRepository,PreconditionFailed
++from app.services.evidence.service import EvidenceService
++from app.services.evidence.reader import Reader
++from app.services.evidence.policies import POLICIES
++from app.services.operations.storage import Storage
++from app.services.operations.execution import Execution
++from app.services.planning.models import PlanDraft
++from app.services.planning.policy import validate_remediation
++from app.services.planning.service import PlanningBlocked
++from app.memory.models import sources
++from tests.b20_fixtures import shared
++from tests.integration.test_demo_runtime import fresh,client_run,headers,inspection,AT
++from tests.b12_fixtures import sample
++from tests.b13_fixtures import binding
++from tests.b14_fixtures import Run
++from tests.b09_fixtures import Clock
++pytestmark=pytest.mark.integration
++T0='2026-10-19T12:00:00.000000Z'
++class HTTPRun(Run):
++ def __init__(self,r,clock,ops,tokens,c,shared):
++  super().__init__(r,clock,ops,tokens,'ROAD_DAMAGE');self.c=c;self.shared=shared;self.lead='OP-WATER-LEAD';self.calls=[]
++ def key(self):self.n+=1;return 'B20RU-work-'+str(self.n)
++ async def call(self,q,operator=None,**kw):
++  op=q['operation'];id=q.get('work_order_id');v={k:v for k,v in q.items() if k not in {'operation','request_id','work_order_id'}}
++  if op=='inspect':v['command']={k:v for k,v in v['command'].items() if k!='request_id'}
++  route={'order':'/api/v1/work-orders','update':f'/api/v1/work-orders/{id}/status','progress':f'/api/v1/work-orders/{id}/progress','inspect':f'/api/v1/work-orders/{id}/inspections','evaluate':f'/api/v1/work-orders/{id}/outcomes'}[op]
++  h=headers(self.shared,operator or self.lead,q['request_id'],reviewer='OP-ANALYST' if kw.get('reviewer_token') else None)
++  res=await self.c.post(route,json=v,headers=h);assert res.status_code==200,res.json();out=res.json()['data'];self.calls.append({'operation':op,'request_key':q['request_id'],'http':res.status_code})
++  return {'entity_id':out['status']} if op=='inspect' else out
++ async def select(self,index):
++  self.assignment_index=index;a=self.b['assignments'][index];self.lead=a['assignee_id']
++  self.w=await self.call({**self.b,'operation':'order','request_id':self.key(),'approval_id':self.approval,'task_id':a['task_id']},'OP-APPROVER')
++  await self.call({'operation':'update','request_id':self.key(),'work_order_id':self.w['id'],'expected_hash':self.hash(),'new_status':'ASSIGNED','reason':'Assigned exact approved synthetic task'})
++  await self.progress('START');return self.w
++
++def test_s04_primary_utility_intervention_and_uncertainty(shared,monkeypatch):
++ asyncio.run(journey(shared,'PRIMARY',monkeypatch))
++def test_s04_negative_pressure_refuses_utility(shared):
++ asyncio.run(journey(shared,'NEGATIVE',None))
++async def journey(shared,variant,monkeypatch):
++ receipt=await fresh(shared,'S04',variant,'B20RU-'+variant+'-setup');path=shared.path.parent/receipt['profile_reference']/'profile.json';p=load(path);case=receipt['scenario']['cases'][0]
++ async def release(c,s):
++  view,lead=await inspection(shared,c,case,'B20RU-'+variant+'-release')
++  response=await c.post('/api/v1/demo/scenarios/S04/advance',json={'expected_current_stage':'BASELINE_VISIBLE','stage':'EVIDENCE_REVEALED','investigation_id':case['investigation_id'],'inspection_id':view['id'],'expected_hash':view['expected_hash']},headers=headers(shared,key='B20RU-'+variant+'-release',field=lead,reviewer='OP-ANALYST'));assert response.status_code==200,response.json();return response.json()['data']['released_evidence_ids']
++ released=await client_run(shared,path,release)
++ clock=Clock();clock.value=datetime.fromisoformat(T0.replace('Z','+00:00'))
++ with active_scope(p):
++  r=GraphRepository(shared.db,p.graph);ev=EvidenceService(r,clock=clock);analyst=shared.auth.resolve(shared.tokens['OP-ANALYST']);lead=shared.auth.resolve(shared.tokens['OP-WATER-LEAD']);hyp={}
++  frozen={e.id:e.content_hash for e in r._edges('MAINTAINED_BY')};original_reports={id:r.get_node(id).content_hash for id in released}
++  for cause,target in [('UTILITY_LEAK','PIPE-100'),('SUBGRADE_FAILURE','ROAD-100')]:
++   rule=POLICIES['ROAD_DAMAGE'][cause]
++   q={'operation':'propose','request_id':'B20RU-'+variant+'-'+cause,'investigation_id':case['investigation_id'],'incident_ids':[case['incident_id']],'asset_ids':[target],'cause_code':cause,'statement':'Explicit synthetic competing mechanism '+cause,'mechanism':'Independently inspect the concerned asset; topology alone is not proof','confirming_codes':rule['confirming'],'falsifying_codes':rule['falsifying']}
++   if cause=='UTILITY_LEAK':q['topology']={'source_id':'PIPE-100','target_id':'ROAD-100','operation':'dependencies','max_hops':3}
++   hyp[cause]=ev.execute(q,analyst).entity_id
++  if variant=='NEGATIVE':
++   assessed=ev.execute({'operation':'assess','request_id':'B20RU-negative-assess','hypothesis_id':hyp['UTILITY_LEAK'],'expected_hash':r.get_node(hyp['UTILITY_LEAK']).content_hash,'evidence_ids':released,'as_of':clock()},analyst).assessment
++   assert assessed.assessment=='CONTRADICTED',assessed
++   from tests.unit.test_utility_intervention import draft
++   d=draft();t=d.tasks[0].model_copy(update={'assessment_ids':[assessed.id]});d=d.model_copy(update={'basis':[d.basis[0].model_copy(update={'assessment_id':assessed.id}),d.basis[1]]})
++   with pytest.raises(PlanningBlocked,match='REMEDIAL_EVIDENCE_INSUFFICIENT'):validate_remediation(t,d,Reader(r,clock()),[assessed],PlanningBlocked)
++   assert r._read('MATCH (w:WorkOrder) RETURN count(w)')==[[0]] and r._read('MATCH (p:ResolutionPlan) RETURN count(p)')==[[0]]
++   Path('docs/evidence/B20R-UTILITY-negative-proof.json').write_text(json.dumps({'source_graph':p.graph,'case':case,'released_ids':released,'assessment':assessed.model_dump(mode='json'),'utility_actions_blocked':True,'work_orders':0,'provider_requests':0},indent=2)+'\n');return
++  # Additional explicitly authorized attributed survey, separate from B19 reveal.
++  reports=[];assessments=[]
++  for cause,target,dept,who,codes in [('UTILITY_LEAK','PIPE-100','DEPT-WATER','OP-WATER-LEAD',['LEAK_DETECTED','INFILTRATION_AT_DAMAGE','UTILITY_SAFETY_REVIEWED']),('SUBGRADE_FAILURE','ROAD-100','DEPT-ROAD','OP-ROAD-LEAD',['SUBGRADE_FAILURE_OBSERVED','STRUCTURAL_TEST_FAILED','SUBGRADE_REPAIR_SAFETY_REVIEWED'])]:
++   actor=shared.auth.resolve(shared.tokens[who]);iid=ev.execute({'operation':'request_inspection','request_id':'B20RU-'+cause+'-survey','investigation_id':case['investigation_id'],'asset_ids':[target],'department_id':dept,'inspection_type':'EXPLICIT_SYNTHETIC_CAUSAL_SAFETY_SURVEY'},analyst).entity_id
++   for status in ['REQUESTED','SCHEDULED','IN_PROGRESS']:
++    ev.execute({'operation':'transition_inspection','request_id':'B20RU-'+cause+'-'+status,'inspection_id':iid,'expected_hash':r.get_node(iid).content_hash,'status':status,**({'scheduled_at':clock()} if status=='SCHEDULED' else {})},actor)
++   rid=ev.execute({'operation':'report_inspection','request_id':'B20RU-'+cause+'-report','inspection_id':iid,'expected_hash':r.get_node(iid).content_hash,'source_id':'B20RU-explicit-synthetic-survey','record_id':cause,'observations':[{'asset_id':target,'code':code,'statement':'Explicit authorized synthetic observation '+code,'method':'DIRECT_SYNTHETIC_FIELD_TEST','observed_at':clock()} for code in codes],'review':{'reviewer_id':analyst.id,'role':analyst.role,'reviewed':True,'reason':'Independent review of explicit synthetic causal and safety survey'},'attribution':{'incident_ids':[case['incident_id']],'rationale':'Explicit current episode target observation'}},actor).entity_id;reports.append(rid)
++   a=ev.execute({'operation':'assess','request_id':'B20RU-'+cause+'-assessment','hypothesis_id':hyp[cause],'expected_hash':r.get_node(hyp[cause]).content_hash,'evidence_ids':[rid]+(released if cause=='UTILITY_LEAK' else []),'as_of':clock()},analyst).assessment;assert a.assessment=='SUPPORTED',a;assessments.append(a)
++  citations={}
++  for manifest in ['data/documents/b20r_utility/manifest.json','data/documents/b12r/manifest.json']:
++   source=next(s for s in sources(Path(manifest)) if s.document_id in {'D022','D020'});await shared.memory.ingest(source);citations[source.owner_department_id]=(await shared.memory.retrieve(as_of=clock(),document_id=source.document_id))['citations'][0]
++  app=configured_app(path,shared.auth.path,path.parent/'memory.json',T0)
++  async with app.router.lifespan_context(app),httpx.AsyncClient(transport=httpx.ASGITransport(app=app,raise_app_exceptions=False),base_url='http://local') as c:
++   s=app.state.services;s.clock=clock;s.ops.clock=clock;s.ops.planning.clock=clock;s.delivery.clock=clock;s.reads.clock=clock
++   for target,dept,who in [('PIPE-100','DEPT-WATER','OP-WATER-LEAD'),('ROAD-100','DEPT-ROAD','OP-ROAD-LEAD')]:
++    sub=await c.post('/api/v1/responsibilities',json={'asset_id':target,'department_id':dept,'source_id':'B20RU-synthetic-inventory','source_record_id':target,'source_kind':'SYNTHETIC','observed_at':AT,'valid_from':T0},headers=headers(shared,who,'B20RU-own-'+target));assert sub.status_code==200,sub.json();v=sub.json()['data']
++    reviewed=await c.post('/api/v1/responsibilities/'+v['id']+'/review',json={'expected_hash':v['expected_hash'],'reviewed':True,'reason':'Independent review of explicit synthetic responsibility record'},headers=headers(shared,'OP-ANALYST','B20RU-own-review-'+target));assert reviewed.status_code==200,reviewed.json()
++   value=sample();value.update(investigation_id=case['investigation_id'],issue='ROAD_DAMAGE',basis=[{'hypothesis_id':a.hypothesis_id,'assessment_id':a.id,'reason':'Reviewed distinct causal mechanism; retain alternative','addressed':True} for a in assessments],evidence_ids=reports+released)
++   value['monitoring'].update(issue='ROAD_DAMAGE',required_evidence=['WEAR_EXPOSURE','FOLLOWUP_PAVEMENT'])
++   base=value['tasks'][0];base.update(evidence_ids=reports,assessment_ids=[a.id for a in assessments])
++   value['tasks']=[]
++   for id,action,target,dept,index,dependency,guard in [('isolate','UTILITY_ISOLATION','PIPE-100','DEPT-WATER',0,None,None),('repair','UTILITY_LEAK_REPAIR','PIPE-100','DEPT-WATER',0,'isolate','ISOLATION_PROOF'),('road','SUBGRADE_REPAIR','ROAD-100','DEPT-ROAD',1,'repair','UTILITY_VERIFICATION')]:
++    t=copy.deepcopy(base);t.update(id=id,action_type=action,target_ids=[target],department_id=dept,assessment_ids=[assessments[index].id],procedure_citation=citations[dept],depends_on=[dependency] if dependency else [],remediation={'mode':'CONDITIONAL' if guard else 'SUPPORTED_NOW','conditions':[{'kind':k,'status':'MET','evidence_ids':[reports[index]]} for k in ['CAUSAL_INSPECTION','SAFETY_REVIEW']]})
++    if guard:t['remediation']['conditions'].append({'kind':guard,'status':'UNMET','depends_on_task_id':dependency})
++    value['tasks'].append(t)
++   # Retain an independently recorded scope/extent uncertainty using an existing
++   # cause code. This is a hypothesis, not another asserted physical fact.
++   alternative=ev.execute({'operation':'propose','request_id':'B20RU-alternative','investigation_id':case['investigation_id'],'incident_ids':[case['incident_id']],'asset_ids':['ROAD-100'],'cause_code':'SUBGRADE_FAILURE','statement':'Alternative extent of road damage remains uncertain','mechanism':'Possible independently unsupported extent; do not authorize extra work','confirming_codes':POLICIES['ROAD_DAMAGE']['SUBGRADE_FAILURE']['confirming'],'falsifying_codes':POLICIES['ROAD_DAMAGE']['SUBGRADE_FAILURE']['falsifying']},analyst).entity_id
++   alt=ev.execute({'operation':'assess','request_id':'B20RU-alternative-assessment','hypothesis_id':alternative,'expected_hash':r.get_node(alternative).content_hash,'evidence_ids':[],'as_of':clock()},analyst).assessment
++   value['basis'].append({'hypothesis_id':alt.hypothesis_id,'assessment_id':alt.id,'reason':'Retain assessed scope uncertainty without asserting new facts','addressed':False})
++   checked=PlanDraft.model_validate(value)
++   for task in checked.tasks:
++    validate_remediation(task,checked,Reader(r,clock()),assessments,PlanningBlocked)
++    await s.ops.planning.resolve(task,Reader(r,clock()),clock())
++   made=await c.post('/api/v1/plans',json={'draft':value},headers=headers(shared,'OP-ANALYST','B20RU-plan'));assert made.status_code==200,made.json();pid=made.json()['data']['plan_id'];saved=s.ops.planning.store.get(pid);b=binding(saved)
++   pending=await c.post('/api/v1/plans/'+pid+'/submit-approval',json={k:v for k,v in b.items() if k!='plan_id'},headers=headers(shared,'OP-ANALYST','B20RU-submit'));assert pending.status_code==200,pending.json();pending=pending.json()['data']
++   decision=await c.post('/api/v1/approvals/'+pending['id']+'/decision',json={**b,'expected_hash':pending['expected_hash'],'decision':'APPROVED','reason':'Independent exact synthetic utility and justified road DAG approval'},headers=headers(shared,'OP-APPROVER','B20RU-approve'));assert decision.status_code==200,decision.json()
++   runner=HTTPRun(r,clock,s.ops,shared.tokens,c,shared);runner.b=b;runner.saved=saved;runner.approval=pending['id'];indices={t['id']:i for i,t in enumerate(saved['draft']['tasks'])};blocked=[]
++   async def premature(which,key):
++    a=b['assignments'][indices[which]];res=await c.post('/api/v1/work-orders',json={**b,'approval_id':pending['id'],'task_id':a['task_id']},headers=headers(shared,'OP-APPROVER',key));assert res.status_code==409,res.json();blocked.append({'task':which,'error':res.json()['error']})
++   await premature('repair','B20RU-before-isolation');await premature('road','B20RU-before-repair')
++   isolation_order=await runner.select(indices['isolate'])
++   _,bad=await runner.report('COMPLETION',lambda at:[runner.observation('ACTION_COMPLETED',at)])
++   with pytest.raises(PreconditionFailed,match='REVIEWED_ISOLATION_REQUIRED'):
++    await s.ops.execute({'operation':'progress','request_id':'B20RU-status-alone','work_order_id':runner.w['id'],'expected_hash':runner.hash(),'action':'COMPLETE','reason':'Crew status alone must not prove isolation','evidence_ids':[bad['entity_id']]},token=shared.tokens['OP-WATER-LEAD'])
++   _,isorep=await runner.report('COMPLETION',lambda at:[runner.observation(code,at) for code in ['ACTION_COMPLETED','UTILITY_ISOLATION_CONFIRMED']]);_,isocomp=await runner.progress('COMPLETE',[isorep['entity_id']]);assert isocomp['status']=='COMPLETED'
++   repair_order=await runner.select(indices['repair']);_,repairrep,_,repaircomp=await runner.complete();assert repaircomp['latest_assessment_status']=='MONITORING'
++   await premature('road','B20RU-before-independent-verification')
++   clock.advance();start=clock();_,follow=await runner.report('FOLLOWUP',lambda at:[runner.observation(code,at) for code in ['POST_REPAIR_PRESSURE_NORMAL','POST_REPAIR_LEAK_ABSENT']]);clock.advance()
++   q={'operation':'evaluate','request_id':runner.key(),'work_order_id':runner.w['id'],'expected_hash':runner.hash(),'evidence_ids':[follow['entity_id']],'window_start':start,'window_end':clock()}
++   verified=await runner.call(q,'OP-ANALYST');assert verified['assessment_status']=='UTILITY_VERIFIED' and not verified['case_closed'];assert await runner.call(q,'OP-ANALYST')==verified
++   # Record actual CLI service read, not a fabricated CLI response.
++   from cli.private import write_private,scope
++   session=path.parent/'utility-session.json';write_private(session,{'version':1,'scope':scope(p,shared.auth.path),'token':shared.tokens['OP-WATER-LEAD'],'operator_id':'OP-WATER-LEAD','login_key':'B20RU-session'})
++   command=[sys.executable,'-m','cli','--profile',str(path),'--auth-store',str(shared.auth.path),'--memory-profile',str(path.parent/'memory.json'),'--session',str(session),'--at',clock(),'work','get','--id',repair_order['id']]
++   cli=subprocess.run(command,capture_output=True,text=True,env={**os.environ,'PYTHONPATH':str(Path('backend/test_guards').resolve())+os.pathsep+str(Path('backend').resolve())},timeout=60);assert cli.returncode==0,cli.stdout;cliout=json.loads(cli.stdout);assert cliout['data']['latest_assessment_status']=='UTILITY_VERIFIED'
++   road_order=await runner.select(indices['road']);assert road_order['department_id']=='DEPT-ROAD'
++   _,roadreport,_,roadcompletion=await runner.complete();assert roadcompletion['status']=='COMPLETED' and not roadcompletion['resolution_verified']
++   # Actual new utility follow-up report commit; injected readback uncertainty.
++   runner.assignment_index=indices['repair'];runner.lead='OP-WATER-LEAD';runner.w=repair_order
++   real_get=Storage.get;real_execute=Execution.execute;invocations=[];captured={}
++   async def counted(self,*a,**kw):invocations.append(a[0]);return await real_execute(self,*a,**kw)
++   def fault(self,kind,id):
++    out=real_get(self,kind,id)
++    if kind=='operation' and out and out.get('command',{}).get('command',{}).get('record_id')=='uncertain-followup':raise ValueError('PRIVATE_INJECTED_UTILITY_ACK_READBACK')
++    return out
++   # Prepare normal report request/transitions using existing helper, intercept only
++   # final report's response to preserve UNKNOWN without trying another mutation.
++   call=runner.call
++   async def uncertain_call(q,operator=None,**kw):
++    if q['operation']=='inspect' and q['command']['operation']=='report_inspection':
++     q['command']['record_id']='uncertain-followup';monkeypatch.setattr(Storage,'get',fault);monkeypatch.setattr(Execution,'execute',counted)
++     v={k:v for k,v in q.items() if k not in {'operation','request_id','work_order_id'}};v['command']={k:v for k,v in v['command'].items() if k!='request_id'};h=headers(shared,'OP-WATER-LEAD',q['request_id'],reviewer='OP-ANALYST');route='/api/v1/work-orders/'+repair_order['id']+'/inspections'
++     res=await c.post(route,json=v,headers=h);assert res.status_code==409,res.json();error=res.json()['error'];assert error['code']=='RECOVERY_REQUIRED' and error['details']['commitment']=='UNKNOWN'
++     monkeypatch.setattr(Storage,'get',real_get)
++     replay=await c.post(route,json=v,headers=h);assert replay.status_code==409 and replay.json()['error']['details']==error['details'];assert len(invocations)==1
++     op=next(x for x in invocations);request=op['request_id'];persisted=s.ops.store.get('operation',__import__('app.services.operations.service',fromlist=['stable']).stable('OP',request));rid=persisted['receipt']['entity_id'];assert r._read('MATCH (e:Evidence {id:$id}) RETURN count(e)',{'id':rid})==[[1]];assert s.delivery.store.get('api_request',error['details']['request_id'])['status']=='DISPATCHING'
++     captured.update(error=error,evidence_id=rid,domain_request_id=request,journal_state='COMMITTED',one_effect_no_redispatch=True);return {'entity_id':rid}
++    return await call(q,operator,**kw)
++   runner.call=uncertain_call
++   await runner.report('FOLLOWUP',lambda at:[runner.observation(code,at) for code in ['POST_REPAIR_PRESSURE_NORMAL','POST_REPAIR_LEAK_ABSENT']])
++   assert all(r.get_relationship(id).content_hash==hash for id,hash in frozen.items());assert all(r.get_node(id).content_hash==hash for id,hash in original_reports.items());assert s.ops.planning.store.get(pid)==saved
++   assert r._read('MATCH (w:WorkOrder) RETURN count(w)')==[[3]];assert r.get_node(pid).properties['status']=='MONITORING' and r.get_node(case['incident_id']).properties['status']!='ENDED'
++   Path('docs/evidence/B20R-UTILITY-primary-proof.json').write_text(json.dumps({'mode':'REAL_FALKORDB_GRAPHRAG_HTTP_CLI_EXPLICIT_SYNTHETIC_OBSERVATIONS_NO_MODEL','source_graph':p.graph,'profile_reference':receipt['profile_reference'],'case':case,'released_ids':released,'additional_survey_ids':reports,'draft':saved['draft'],'plan_id':pid,'binding':b,'approval':decision.json()['data'],'premature_denials':blocked,'isolation_order':isolation_order,'isolation_report_id':isorep['entity_id'],'repair_order':repair_order,'repair_completion':repaircomp,'utility_verification':verified,'utility_followup_id':follow['entity_id'],'road_order':road_order,'road_completion':roadcompletion,'road_completion_report_id':roadreport['entity_id'],'road_status':r.get_node(road_order['id']).properties['status'],'plan_status':r.get_node(pid).properties['status'],'recovery':captured,'cli_verification':cliout['data'],'http_calls':runner.calls,'original_sources_retained':True,'provider_requests':0},indent=2)+'\n')
+--- /dev/null
++++ b/backend/tests/unit/test_utility_intervention.py
+@@ -0,0 +1,88 @@
++"""Closed utility policy tests; fake reader only, no runtime claims."""
++from types import SimpleNamespace as NS
++from copy import deepcopy
++import pytest
++from pydantic import ValidationError
++from app.services.planning.models import PlanDraft
++from app.services.planning.utility import validate_dependencies
++from app.services.planning.policy import validate_remediation
++from app.services.planning.service import PlanningBlocked
++from app.services.operations.service import execution_gates
++from app.services.operations import utility
++from app.services.evidence.models import Observation
++from app.graph.repository import PreconditionFailed
++from tests.b12_fixtures import sample
++T0='2026-10-19T12:00:00.000000Z';T1='2026-10-19T12:01:00.000000Z';T2='2026-10-19T12:02:00.000000Z'
++def draft():
++ value=sample();value['issue']='ROAD_DAMAGE';value['monitoring'].update(issue='ROAD_DAMAGE',required_evidence=['WEAR_EXPOSURE','FOLLOWUP_PAVEMENT'])
++ t=value['tasks'][0];t.update(id='isolate',action_type='UTILITY_ISOLATION',target_ids=['P'],department_id='DEPT-WATER',remediation={'mode':'SUPPORTED_NOW','conditions':[{'kind':k,'status':'MET','evidence_ids':['EV']} for k in ['CAUSAL_INSPECTION','SAFETY_REVIEW']]})
++ repair=deepcopy(t);repair.update(id='repair',action_type='UTILITY_LEAK_REPAIR',depends_on=['isolate']);repair['remediation']['mode']='CONDITIONAL';repair['remediation']['conditions'].append({'kind':'ISOLATION_PROOF','status':'UNMET','depends_on_task_id':'isolate'})
++ value['tasks'].append(repair);return PlanDraft.model_validate(value)
++def reject(code):raise PreconditionFailed(code)
++@pytest.mark.parametrize('change,code',[(None,None),('missing','UTILITY_DEPENDENCY_REQUIRED'),('met','UTILITY_DEPENDENCY_BINDING'),('wrong_action','UTILITY_DEPENDENCY_BINDING'),('wrong_target','UTILITY_DEPENDENCY_TARGET'),('unmet_safety','UTILITY_CURRENT_EVIDENCE_REQUIRED'),('extra_dependency','UTILITY_DEPENDENCY_SCOPE')])
++def test_closed_dependency(change,code):
++ d=draft();t=d.tasks[1]
++ if change=='missing':t.remediation.conditions.pop()
++ if change=='met':t.remediation.conditions[-1]=t.remediation.conditions[-1].model_copy(update={'status':'MET'})
++ if change=='wrong_action':d.tasks[0]=d.tasks[0].model_copy(update={'action_type':'INSPECTION'})
++ if change=='wrong_target':d.tasks[0]=d.tasks[0].model_copy(update={'target_ids':['OTHER']})
++ if change=='unmet_safety':t.remediation.conditions[1]=t.remediation.conditions[1].model_copy(update={'status':'UNMET'})
++ if change=='extra_dependency':t.depends_on.append('another')
++ if code:
++  with pytest.raises(PreconditionFailed,match=code):validate_dependencies(t,d,NS(),reject)
++ else:validate_dependencies(t,d,NS(),reject)
++@pytest.mark.parametrize('fulfilled,status,ok',[(set(),'COMPLETED',False),({'ISOLATION_PROOF'},'IN_PROGRESS',False),({'ISOLATION_PROOF'},'COMPLETED',True)])
++def test_execution_proof(fulfilled,status,ok):
++ if ok:execution_gates(draft().tasks[1],[status],fulfilled)
++ else:
++  with pytest.raises(PreconditionFailed):execution_gates(draft().tasks[1],[status],fulfilled)
++@pytest.mark.parametrize('assessment,reviewed,contradiction',[('CONTRADICTED',[],['EV']),('SUPPORTED',['EV'],['EV']),('POSSIBLE',[],[]),('INCONCLUSIVE',[],[])])
++def test_negative_causal_evidence(assessment,reviewed,contradiction):
++ d=draft();a=NS(id='A1',cause_code='UTILITY_LEAK',assessment=assessment,classification=NS(reviewed_support_ids=reviewed,reviewed_contradiction_ids=contradiction,unreviewed_contradiction_ids=[]))
++ with pytest.raises(PlanningBlocked,match='REMEDIAL_EVIDENCE_INSUFFICIENT'):validate_remediation(d.tasks[0],d,NS(),[a],PlanningBlocked)
++def ob(code,at=T1,result='OBSERVED',asset='P'):
++ return Observation.model_validate({'asset_id':asset,'code':code,'statement':'Explicit synthetic check','method':'DIRECT_SYNTHETIC_FIELD_TEST','observed_at':at,'result':result})
++@pytest.mark.parametrize('codes,status',[(list(utility.FOLLOWUP),'INCONCLUSIVE'),(['POST_REPAIR_PRESSURE_NORMAL','POST_REPAIR_LEAK_ABSENT'],'UTILITY_VERIFIED'),(['POST_REPAIR_PRESSURE_ABNORMAL','POST_REPAIR_LEAK_ABSENT'],'PROBLEM_PERSISTS'),(['POST_REPAIR_PRESSURE_NORMAL','POST_REPAIR_LEAK_PRESENT'],'PROBLEM_PERSISTS'),(['POST_REPAIR_PRESSURE_NORMAL'],'MONITORING'),([],'MONITORING')])
++def test_postrepair_component(codes,status):
++ actual,_=utility.evaluate(['P'],[ob(c) for c in codes],T1,T2,T0,T2);assert actual==status
++@pytest.mark.parametrize('kind',['unknown','other_target','early','unreviewed','missing'])
++def test_missing_isolation_proof(kind):
++ observations=[] if kind=='missing' else [ob(utility.ISOLATION,at=T0 if kind=='early' else T1,result='UNKNOWN' if kind=='unknown' else 'OBSERVED',asset='OTHER' if kind=='other_target' else 'P')]
++ refs=[NS(report=NS(review=None if kind=='unreviewed' else True,source_kind='SYNTHETIC',observations=observations))]
++ with pytest.raises(PreconditionFailed,match='REVIEWED_ISOLATION_REQUIRED'):utility.isolation_proof(refs,['P'],T1)
++@pytest.mark.parametrize('linked,guard,ok',[(True,False,False),(True,True,True),(False,True,False),(False,False,True)])
++def test_road_dependency(linked,guard,ok):
++ d=draft();t=d.tasks[0].model_copy(deep=True,update={'id':'road','action_type':'SUBGRADE_REPAIR','target_ids':['R'],'depends_on':[]})
++ if guard:t.depends_on.append('repair');t.remediation.conditions.append(NS(kind='UTILITY_VERIFICATION',status='UNMET',evidence_ids=[],depends_on_task_id='repair'))
++ d.tasks.append(t);reader=NS(topology=lambda *a,**kw:NS(truncated=False,edges=[NS(id='EDGE',kind='UNDERLIES')],paths=[NS(node_ids=('P','R'),edge_ids=('EDGE',),directions=('OUTGOING',))] if linked else []))
++ if ok:validate_dependencies(t,d,reader,reject)
++ else:
++  with pytest.raises(PreconditionFailed):validate_dependencies(t,d,reader,reject)
++def test_legacy_hash_and_unknown_action():
++ value=sample();old=PlanDraft.model_validate(value).content_hash
++ assert old=='b2c0f93a682d2eae59ced8c4102fe087d146bfacb40c9f601148ea70d8126d29' # Accepted B12 inspection-only normalization.
++ value['tasks'][0]['action_type']='ARBITRARY_REPAIR'
++ with pytest.raises(ValidationError):PlanDraft.model_validate(value)
++
++@pytest.mark.parametrize('kind',['duplicate','unknown','met_dynamic','no_dynamic_reference'])
++def test_closed_prerequisite_input(kind):
++ value=draft().model_dump(mode='json');conditions=value['tasks'][1]['remediation']['conditions']
++ if kind=='duplicate':conditions.append(dict(conditions[0]))
++ if kind=='unknown':conditions[-1]['kind']='UNRESTRICTED_CLEARANCE'
++ if kind=='met_dynamic':conditions[-1].update(status='MET',evidence_ids=['EV'])
++ if kind=='no_dynamic_reference':conditions[-1]['depends_on_task_id']=None
++ if kind in {'duplicate','unknown','met_dynamic'}:
++  with pytest.raises(ValidationError):PlanDraft.model_validate(value)
++ else:
++  d=PlanDraft.model_validate(value)
++  with pytest.raises(PreconditionFailed):validate_dependencies(d.tasks[1],d,NS(),reject)
++@pytest.mark.parametrize('damage',['unknown','old','other_target','numeric'])
++def test_utility_outcome_not_inferred(damage):
++ rows=[ob('POST_REPAIR_PRESSURE_NORMAL'),ob('POST_REPAIR_LEAK_ABSENT')]
++ if damage=='unknown':rows[0]=ob('POST_REPAIR_PRESSURE_NORMAL',result='UNKNOWN')
++ if damage=='old':rows[0]=ob('POST_REPAIR_PRESSURE_NORMAL',at=T0)
++ if damage=='other_target':rows[0]=ob('POST_REPAIR_PRESSURE_NORMAL',asset='OTHER')
++ if damage=='numeric':rows[0]=rows[0].model_copy(update={'value':1.0,'unit':'bar'})
++ if damage in {'old','numeric'}:
++  with pytest.raises(PreconditionFailed):utility.evaluate(['P'],rows,T1,T2,T0,T2)
++ else:assert utility.evaluate(['P'],rows,T1,T2,T0,T2)[0]=='MONITORING'
+--- /dev/null
++++ b/data/documents/b20r_utility/D022_utility_isolation_repair.md
+@@ -0,0 +1,14 @@
++# Synthetic utility isolation and leak repair proposal — D022 v1
++
++Author: Codex, B20-R-UTILITY synthetic demonstration author.
++Review: automated author self-review; not an independent engineering review.
++Owner: Water Utilities / DEPT-WATER. Canonical authority: PROPOSED.
++This invented demo guidance is not a field operating procedure or permission to manipulate real water infrastructure.
++
++UTILITY_ISOLATION and UTILITY_LEAK_REPAIR are limited to the exact WaterPipe target. Reviewed pipe-targeted LEAK_DETECTED and INFILTRATION_AT_DAMAGE evidence and UTILITY_SAFETY_REVIEWED are required. Normal pressure/contradiction or proximity alone cannot justify either action. Acquire current VERIFIED responsibility with a separately authenticated analyst review. Exact plan approval, assigned departmental operator, current source citation and source bindings remain required.
++
++The isolation task precedes repair. Its completion requires an attributable independently reviewed synthetic UTILITY_ISOLATION_CONFIRMED observation and ACTION_COMPLETED. An approved DAG or crew status is insufficient. Repair starts only after those persisted proofs are validated. This document supplies no real valve instructions, measurement thresholds or safe-field-work certification.
++
++Repair completion means only ACTION_COMPLETED. Independent later synthetic target observations POST_REPAIR_PRESSURE_NORMAL and POST_REPAIR_LEAK_ABSENT may establish UTILITY_VERIFIED; POST_REPAIR_PRESSURE_ABNORMAL or POST_REPAIR_LEAK_PRESENT prevents that result. Missing, unknown or contradictory checks stay unresolved. No measurements are fabricated. Utility verification does not close a road case.
++
++Where reviewed topology and a separately qualified SUBGRADE_REPAIR justify road restoration, its immutable task depends on utility repair and UTILITY_VERIFICATION. Road work additionally requires its own reviewed causal/safety evidence, verified owner, matching road procedure, exact human approval and later pavement/wear verification. No road task is required without that evidence. Existing source-bound replay, fencing, durable events and UNKNOWN recovery are mandatory; never retry an uncertain request or clear quarantine automatically.
+--- /dev/null
++++ b/data/documents/b20r_utility/manifest.json
+@@ -0,0 +1,27 @@
++{
++  "version": 2,
++  "owner_mapping": {
++    "Drainage Operations": "DEPT-DRAIN",
++    "Road Maintenance": "DEPT-ROAD",
++    "Water Utilities": "DEPT-WATER",
++    "Sanitation Services": "DEPT-SAN",
++    "Civic Operations Coordination": "DEPT-COORD"
++  },
++  "documents": [
++    {
++      "document_id": "D022",
++      "title": "Synthetic utility isolation and leak repair proposal",
++      "version": 1,
++      "owner_department_id": "DEPT-WATER",
++      "review_status": "REVIEWED",
++      "effective_from": "2026-10-18T00:00:00Z",
++      "file_path": "data/documents/b20r_utility/D022_utility_isolation_repair.md",
++      "sha256": "8a3cdb1a535051c9d5ebe8a295144b5c15599c4fb592ee2bfbb4b394aed8edb7",
++      "action_types": [
++        "UTILITY_ISOLATION",
++        "UTILITY_LEAK_REPAIR"
++      ],
++      "reviewed_by": "Codex B20-R-UTILITY automated author self-review"
++    }
++  ]
++}
+--- /dev/null
++++ b/docs/evidence/B20R-UTILITY-COMMANDS.md
+@@ -0,0 +1,24 @@
++# B20-R-UTILITY exact verification commands
++
++All commands ran from `/Users/vikashkumar/Desktop/Civicly`, using existing Python3.12 isolated dependencies. Every ordinary pytest invocation installs the Gemini/countTokens interlock and passes it to children. Real DB commands used authorized local networking and the existing bounded10second socket override; broker/query limits were unchanged. No lifecycle/live/provider commands ran.
++
++| Evidence file | Exact command prefix and test selection | Observed |
++|---|---|---|
++| units-initial.txt | CIVICLY_TEST_REQUEST_LOG=/tmp/B20R-UTILITY-units-provider.jsonl backend/.venv/bin/python -m pytest backend/tests/unit/test_utility_intervention.py -q |22PASS/8FAIL; test attempted mutation of frozen models |
++| units-second.txt | CIVICLY_TEST_REQUEST_LOG=/tmp/B20R-UTILITY-units-final-provider.jsonl backend/.venv/bin/python -m pytest backend/tests/unit/test_utility_intervention.py -q |28PASS/2FAIL; two remaining frozen-model test assignments |
++| units-third.txt | CIVICLY_TEST_REQUEST_LOG=/tmp/B20R-UTILITY-units-third-provider.jsonl backend/.venv/bin/python -m pytest backend/tests/unit/test_utility_intervention.py -q |30PASS |
++| focused-compat.txt | CIVICLY_TEST_REQUEST_LOG=/tmp/B20R-UTILITY-compat-provider.jsonl backend/.venv/bin/python -m pytest backend/tests/unit/test_utility_intervention.py backend/tests/unit/test_planning_remediation.py backend/tests/unit/test_execution_policy.py -q |65PASS |
++| final-units.txt | CIVICLY_TEST_REQUEST_LOG=/tmp/B20R-UTILITY-final-units-provider.jsonl backend/.venv/bin/python -m pytest backend/tests/unit/test_utility_intervention.py backend/tests/unit/test_planning_remediation.py backend/tests/unit/test_execution_policy.py -q |73PASS in1.17s;38new+35direct compatibility |
++| real-initial.txt | FALKORDB_SOCKET_TIMEOUT_SECONDS=10 CIVICLY_TEST_REQUEST_LOG=/tmp/B20R-UTILITY-real-provider.jsonl backend/.venv/bin/python -m pytest backend/tests/integration/test_utility_intervention_runtime.py -q |1PASS negative/1FAIL primary; bounded B09 read family rejected UNDERLIES |
++| real-second.txt | FALKORDB_SOCKET_TIMEOUT_SECONDS=10 CIVICLY_TEST_REQUEST_LOG=/tmp/B20R-UTILITY-real-second-provider.jsonl backend/.venv/bin/python -m pytest backend/tests/integration/test_utility_intervention_runtime.py::test_s04_primary_utility_intervention_and_uncertainty -q |1FAIL; precise preflight identifies same read-family error |
++| real-third.txt | FALKORDB_SOCKET_TIMEOUT_SECONDS=10 CIVICLY_TEST_REQUEST_LOG=/tmp/B20R-UTILITY-real-third-provider.jsonl backend/.venv/bin/python -m pytest backend/tests/integration/test_utility_intervention_runtime.py::test_s04_primary_utility_intervention_and_uncertainty -q |1FAIL; actual ProofPath has edge_ids/directions, no edge_types |
++| real-fourth.txt | FALKORDB_SOCKET_TIMEOUT_SECONDS=10 CIVICLY_TEST_REQUEST_LOG=/tmp/B20R-UTILITY-real-fourth-provider.jsonl backend/.venv/bin/python -m pytest backend/tests/integration/test_utility_intervention_runtime.py::test_s04_primary_utility_intervention_and_uncertainty -q |1PASS in24.26s; primary-first-passing-proof.json retained |
++| real-final.txt | FALKORDB_SOCKET_TIMEOUT_SECONDS=10 CIVICLY_TEST_REQUEST_LOG=/tmp/B20R-UTILITY-real-final-provider.jsonl backend/.venv/bin/python -m pytest backend/tests/integration/test_utility_intervention_runtime.py::test_s04_primary_utility_intervention_and_uncertainty -q |1PASS in27.37s; after isolation-only closure guard and extended road completion assertion |
++| spec.txt | CIVICLY_TEST_NO_LIVE=1 CIVICLY_REQUEST_AUDIT_FILE=/tmp/B20R-UTILITY-spec-provider.jsonl PYTHONPATH=backend/test_guards:backend make test-spec |both validate_blueprint.py and validate_handoff.py PASS, once after final source/schema edits |
++
++Each command's stdout/stderr was redirected to `docs/evidence/B20R-UTILITY-<evidence file> 2>&1`. Earlier failed attempts and their isolated graphs were retained. Initial/second units were corrected with immutable model_copy/list mutation in test setup; production models remain frozen. No broad historical suite, waste/remedial scenario, lifecycle, network-server journey or live smoke ran. Primary is real DB/GraphRAG SDK/HTTP ASGI/CLI subprocess, explicit authored synthetic observations, no fake model. MCP/Saver are unchanged and were not re-exercised. Provider guard reports distinguish intercepted calls from actual external requests; there were none.
++
++Final distinct acceptance count75PASS =73unit +2real (negative initial pass retained; only failed/changed primary rerun).0unresolvedFAIL/0SKIP/0setupERROR. Historical failed test executions13 =10unit fixture mistakes +3primary failures, all retained; do not add repeated successes to distinct count. Existing third-party SDK already-indexed diagnostics and deprecation warnings are retained, not application failure or a skipped test.
++
++Read-only final audit command:
++`FALKORDB_SOCKET_TIMEOUT_SECONDS=10 CIVICLY_TEST_NO_LIVE=1 CIVICLY_REQUEST_AUDIT_FILE=/tmp/B20R-UTILITY-audit-provider.jsonl PYTHONPATH=backend/test_guards:backend backend/.venv/bin/python docs/evidence/B20R-UTILITY-audit-script.py > docs/evidence/B20R-UTILITY-audit.txt 2>&1`
+--- /dev/null
++++ b/docs/evidence/B20R-UTILITY-DESIGN.md
+@@ -0,0 +1,18 @@
++# B20-R-UTILITY — before implementation
++
++Only B20-R-UTILITY is authorized. R01–R18 remain binding; directly exercises R04/R05/R08/R09/R10/R11/R14/R15/R16/R17/R18 through evidence-grounded coordination, approval, independent verification, durable graph provenance and operator access; R06/R07/R13 agent/MCP/Saver behavior remains unchanged. No claim of full product acceptance.
++
++Smallest closed extension: UTILITY_ISOLATION and UTILITY_LEAK_REPAIR for ROAD_DAMAGE / UTILITY_LEAK / WaterPipe / DEPT-WATER. Keep reviewed causal and safety gates; add future ISOLATION_PROOF and UTILITY_VERIFICATION prerequisites bound to exact predecessor tasks. Conditions remain immutable in approved drafts. Dynamic fulfillment is checked from existing persisted completion/inspection/verification companions and validated evidence, never just DAG/status. Existing source-bound mutation commands, exact approvals, assignment and fenced storage are reused. Road SUBGRADE_REPAIR remains evidence-qualified separately; when tied to a utility intervention its verification dependency must be explicit. Utility verification is a component outcome, never case closure.
++
++Synthetic D022 guidance is new, honestly authored/self-reviewed, canonical PROPOSED, ingested by existing GraphRAG. New qualitative field codes assert only explicit synthetic observations, no invented physical measurements. Earlier policies, migration bytes and source records remain unchanged. Utility evaluation may run while a dependent road task remains pending, avoiding a monitoring/dependency deadlock.
++
++Expected touched paths: planning models/policy; operations service/execution plus narrow utility policy helper; resolution_planning, operations and generated API schemas; existing static schema validators; new D022 document/manifest; new utility units and shared S04 real integration; backend utility operator guide; six append-only trackers; B20R-UTILITY evidence/inventory/patch. No new routes, CLI commands, storage subsystem, migrations, provider or agent behavior.
++
++Risks: immutable hash compatibility; a completed task mistaken for isolation or resolution; future gates bypassed by fabricated MET; stale report/source/owner; road prerequisite deadlock; uncertain committed-write redispatch. Preserve existing failures and quarantines. Fail closed on missing/mismatched/changed persisted proofs.
++
++Exact planned verification (root; existing backend virtual environment):
++- CIVICLY_TEST_REQUEST_LOG=/tmp/B20R-UTILITY-units-provider.jsonl backend/.venv/bin/python -m pytest backend/tests/unit/test_utility_intervention.py -q
++- FALKORDB_SOCKET_TIMEOUT_SECONDS=10 CIVICLY_TEST_REQUEST_LOG=/tmp/B20R-UTILITY-real-provider.jsonl backend/.venv/bin/python -m pytest backend/tests/integration/test_utility_intervention_runtime.py -q
++- CIVICLY_TEST_NO_LIVE=1 CIVICLY_REQUEST_AUDIT_FILE=/tmp/B20R-UTILITY-spec-provider.jsonl PYTHONPATH=backend/test_guards:backend make test-spec
++
++Real integration: reuse one shared B19 setup with S04 PRIMARY and NEGATIVE targets; actual release and accepted ownership acquisition, explicit additional safety/road survey, sourced draft/exact approval, rejected premature repair/road orders, independently reviewed isolation completion, repair completion and independent utility follow-up, justified road gate, exact replay and committed-readback uncertainty with one durable effect. Exercise API and CLI service paths. No changed MCP/Saver/agent behavior, no scripted model or live requests needed. Human checks returned IDs/citations/departments, retained records, separate completion/component/case statuses and blocked uncertain replay. Do not rerun unrelated historical suites or lifecycle tests.
+--- /dev/null
++++ b/docs/evidence/B20R-UTILITY-RESULTS.md
+@@ -0,0 +1,28 @@
++# B20-R-UTILITY results — technically passing, human review pending
++
++Only the utility correction was implemented.75distinctPASS:38new utility units+35directly affected compatibility units+2real S04 PRIMARY/NEGATIVE cases;0unresolvedFAIL/0SKIP. Both final specification validators PASS. No live requests; no fake/autonomous model claimed. Earlier failures and their graphs remain retained; see COMMANDS.md for exact per-attempt counts.
++
++Root gap: planning admitted three remedial actions, none covering a reviewed utility leak. Status-only dependencies and whole-plan monitoring could not safely represent isolation→repair→independent utility verification→separately justified road restoration. The correction adds two closed actions and immutable typed future prerequisites, fulfilled through existing persisted reviewed reports/companions. No new storage/workflow/routes/migrations/roles/dependencies or agent behavior.
++
++| Acceptance | Expected | Actual observed |
++|---|---|---|
++| Review/cause/owner/source | Pipe-specific reviewed leak evidence + safety + independently acquired current owner + D022 | Actual S04 primary release, explicit extra survey, accepted responsibility workflow; D022 SDK ingestion/retrieval and canonical PROPOSED procedure; exact saved proof/citation |
++| Approved DAG | isolation→repair→justified road, exact approval/assignee | Three native ActionTasks and assignments; WATER isolation/repair, ROAD restoration; matching immutable plan hash and independent approval |
++| Isolation proof | Crew status and DAG insufficient | Early repair/road orders409; isolation COMPLETE without isolation observation rejected; reviewed dated isolation proof accepted |
++| Repair | Only after reviewed isolation completion | Actual authorized/assigned/started/completed utility repair, one order per task |
++| Utility outcome | Independent post-completion target checks | UTILITY_VERIFIED, policy B20R-UTILITY-1, case_closed=false; duplicate evaluation exact replay identical |
++| Road gate | Own cause/safety/owner/D020 plus utility verification | Order denied before repair and after repair before independent utility outcome; subsequently authorized/started/completed |
++| Case distinction | Road task completion does not close case | Road COMPLETED, plan MONITORING, incident retained/not ENDED; pavement/wear independent follow-up remains required |
++| Negative S04 | Normal pressure cannot authorize utility work | Actual reviewed PRESSURE_TEST_NORMAL → CONTRADICTED; real-assessment repository policy refuses action,0plans/0orders |
++| Uncertain committed report | Truthful UNKNOWN and blocked exact replay | Actual utility FOLLOWUP report persisted; injected acknowledgement-readback ValueError →409RECOVERY_REQUIRED/UNKNOWN; exact replay no second service invocation; one report, durable original operation/intent |
++| Preservation | No baseline/candidate/data/history repair | Original B19 source/candidate hashes checked in journey; old draft bytes unchanged; final read-only retention audit covers historical files, city/probe/quarantines/accounting |
++
++Actual plan `PLAN-B12-1bcc22ee8c062b85552355fd1b2213ad`; utility order `WO-B13-13625fddbdeda5e2f9603c5087afbb42`; utility outcome `OUTCOME-B13-bc4b2aee12c65717e12e7e90d680580e`; road order `WO-B13-02ebde25ee83616ad4f2fa17f194a4fe`. Detailed sanitized IDs, source citations, assignments, dependency ordering, department actors, outcomes and recovery identities are in primary-proof.json. Negative source graph and classification evidence are in negative-proof.json.
++
++Recovery retains request `HTTP-B16-4927bc9e47fc63ab45635562c57bb4aa`, report `EV-REPORT-B09-1d242e11ce7537c62252319d076b8b74`, work-order/plan/correlation IDs from the existing envelope. Transport intent remains DISPATCHING, not REJECTED/DONE. No retry/new version/replacement key/delete/rollback/clearance performed. An independently validated safe status/evidence read does not resolve or clear that intent. Operator must examine the original request/domain operation/journal and receive supported reconciliation approval before retry. There is no new automatic reconciler.
++
++The primary test explicitly adds attributed synthetic utility safety and road causal/safety observations; they are not claims added to B19's original scenario. Independent document author self-review is not engineering certification. All code remains synthetic and bounded; no real valves/pressure standards or quantitative confidence are invented. No agent/MCP/Saver behavior changed, so those runtimes were not rerun. Road pavement verification/final case closure is deliberately not asserted by this focused test.
++
++B20 remains PARTIAL/BLOCKED for capacity, route/capacity, dumping-specific interventions and pickup/dumping chronology. B10 genuine-provider gate remains OPEN/PARTIAL. All18requirements bind. STOP for human review; B21/other B20 corrections/frontend/live calls are unauthorized in this task.
++
++Final read-only auditPASS: 1642pre-task public files retained, 1176earlier evidence byte-identical, 121accepted test files unchanged, append-only tracker histories. City/probe/quarantines/checkpoints/accepted ownership data and UNKNOWN intent preserved;2historicalpaidrequestsunchanged. 11guards0external/0unexpected. Secret scanPASS including patch. Runtime FalkorDB6.0.2/Redis8.10.2; package versions in audit.json; no version changes.
+--- /dev/null
++++ b/docs/evidence/B20R-UTILITY-WALKTHROUGH.md
+@@ -0,0 +1,21 @@
++# B20-R-UTILITY human verification
++
++Use the retained isolated profile identified in primary-proof.json (`profile_reference`: demo-runs/HTTP-B16-a71625af14a0a7b7a6e67d69469d45c2, graph `civicly_b10_test_927efc195d8e4c05b7b3f4a95f7ddb93`). Keep its auth store, memory profile and session files private. No credentials are in this walkthrough. Run from project root; no live calls.
++
++Copy/paste read-only verification with an existing appropriately authorized CLI session:
++
++```sh
++export CIVICLY_TEST_NO_LIVE=1
++export PYTHONPATH=backend/test_guards:backend
++# Set PROFILE, AUTH_STORE, MEMORY_PROFILE and SESSION to the retained private files.
++backend/.venv/bin/python -m cli --profile "$PROFILE" --auth-store "$AUTH_STORE" --memory-profile "$MEMORY_PROFILE" --session "$SESSION" --at 2026-10-19T12:00:30.000000Z work get --id WO-B13-13625fddbdeda5e2f9603c5087afbb42
++backend/.venv/bin/python -m cli --profile "$PROFILE" --auth-store "$AUTH_STORE" --memory-profile "$MEMORY_PROFILE" --session "$SESSION" --at 2026-10-19T12:00:30.000000Z plan get --id PLAN-B12-1bcc22ee8c062b85552355fd1b2213ad
++```
++
++Expected: utility work COMPLETED with latest_assessment_status UTILITY_VERIFIED and resolution_verifiedfalse; plan MONITORING. Use the ROAD lead or ANALYST session to inspect road work `WO-B13-02ebde25ee83616ad4f2fa17f194a4fe`: COMPLETED is not road/case resolution. Read `primary-proof.json` for exact approval, immutable assignments, citations, prerequisite task IDs and source evidence. The approved future guards remain UNMET bytes; persisted reviewed proofs fulfill them at authority checks.
++
++For a fresh focused reproduction (writes only new isolated test graphs; retains evidence), use the exact real pytest command in COMMANDS.md. It creates S04 through accepted B19 setup/release, explicitly records additional attributed observations, acquires ownership with lead submission/distinct analyst review, ingests D022 via real SDK, drafts/approves the exact DAG, verifies rejected premature work and status-only isolation, then executes reviewed isolation→repair→independent utility verification→justified road completion. This is explicit synthetic operator behavior, no model solver/live provider.
++
++The retained uncertainty is intentional: original HTTP/domain request `HTTP-B16-4927bc9e47fc63ab45635562c57bb4aa`, report `EV-REPORT-B09-1d242e11ce7537c62252319d076b8b74`, plan `PLAN-B12-1bcc22ee8c062b85552355fd1b2213ad`, utility order `WO-B13-13625fddbdeda5e2f9603c5087afbb42`. The existing HTTP intent is DISPATCHING and exact replay returns RECOVERY_REQUIRED/UNKNOWN without another service call. Inspect original operation/B09 COMMITTED journal/report and source-bound receipt under the supported operator recovery procedure. Do not replace the key, redispatch, delete a report or clear quarantine/intent. A read-only successful read is evidence for reconciliation, not authorization to repair the intent automatically.
++
++Negative proof retains reviewed normal pressure→CONTRADICTED with zero plan/orders. Both validators are static checks, separate from runtime evidence. B20 other gaps and B10 genuine-provider acceptance remain open; STOP for review.

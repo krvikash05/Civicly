@@ -1,0 +1,60 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+___ test_actual_b12_checkpoint_survives_approval_and_rejects_native_rollback ___
+
+db = <falkordb.falkordb.FalkorDB object at 0x11e996540>
+tmp_path = PosixPath('/private/var/folders/ng/nxnstkjs7tn9dbx9nhvtvmzw0000gn/T/pytest-of-vikashkumar/pytest-132/test_actual_b12_checkpoint_sur0')
+memory = <app.memory.service.Memory object at 0x12c183ce0>
+
+    def test_actual_b12_checkpoint_survives_approval_and_rejects_native_rollback(db,tmp_path,memory):
+     from uuid import uuid4
+     from app.agents.models import InvestigationState
+     from app.agents.mcp import brokers
+     from app.agents.runtime import InvestigationAgent
+     from app.agents.checkpoints import saver
+     from app.services.evidence.reader import Reader
+     from tests.b10_fixtures import ScriptedModel,choose
+>    p,r,clock,path,inv,draft,planning,auth,tokens,ops=setup(db,tmp_path,memory)
+                                                       ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+backend/tests/integration/test_operations_runtime.py:142: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+backend/tests/b13_fixtures.py:15: in setup
+    ops=Operations(planning,auth,clock=clock)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <app.services.operations.service.Operations object at 0x12a5ebd40>
+planning = <app.services.planning.service.PlanningService object at 0x1283f4500>
+auth = <app.services.operations.auth.Auth object at 0x12c183e60>
+clock = <tests.b09_fixtures.Clock object at 0x12c0f5e20>
+
+    def __init__(self,planning,auth,*,clock=utc_now):
+     self.planning,self.repo,self.auth,self.clock=planning,planning.repo,auth,clock;self.store=Storage(self.repo)
+     from app.active import is_shared_target
+>    if self.repo.graph.name!='civicly_knowledge' and not self.repo.graph.name.startswith('civicly_b13_test_') and not is_shared_target(self.repo.graph.name):raise PreconditionFailed('OPERATIONS_TARGET_NOT_AUTHORIZED')
+                                                                                                                                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E    app.graph.repository.PreconditionFailed: OPERATIONS_TARGET_NOT_AUTHORIZED
+
+backend/app/services/operations/service.py:27: PreconditionFailed
+=============================== warnings summary ===============================
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyPacked has no __module__ attribute
+
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyObject has no __module__ attribute
+
+backend/.venv/lib/python3.12/site-packages/graphrag_sdk/core/models.py:19
+  /Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/graphrag_sdk/core/models.py:19: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.14/migration/
+    class DataModel(BaseModel):
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+============================= slowest 5 durations ==============================
+6.42s call     tests/integration/test_operations_runtime.py::test_actual_b12_checkpoint_survives_approval_and_rejects_native_rollback
+2.95s setup    tests/integration/test_operations_runtime.py::test_actual_b12_checkpoint_survives_approval_and_rejects_native_rollback
+
+(1 durations < 0.005s hidden.  Use -vv to show these durations.)
+=========================== short test summary info ============================
+FAILED backend/tests/integration/test_operations_runtime.py::test_actual_b12_checkpoint_survives_approval_and_rejects_native_rollback
+1 failed, 3 warnings in 10.92s
+sys:1: DeprecationWarning: builtin type swigvarlink has no __module__ attribute

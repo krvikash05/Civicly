@@ -1,0 +1,465 @@
+{
+  "version": 1,
+  "microtask": "B20-R-OWNERSHIP",
+  "municipality_id": "demo-city",
+  "models": {
+    "ResponsibilitySubmission": {
+      "additionalProperties": false,
+      "properties": {
+        "asset_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Asset Id",
+          "type": "string"
+        },
+        "department_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Department Id",
+          "type": "string"
+        },
+        "source_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Source Id",
+          "type": "string"
+        },
+        "source_record_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Source Record Id",
+          "type": "string"
+        },
+        "source_version": {
+          "default": 1,
+          "maximum": 100,
+          "minimum": 1,
+          "title": "Source Version",
+          "type": "integer"
+        },
+        "source_kind": {
+          "const": "SYNTHETIC",
+          "default": "SYNTHETIC",
+          "title": "Source Kind",
+          "type": "string"
+        },
+        "observed_at": {
+          "title": "Observed At",
+          "type": "string"
+        },
+        "valid_from": {
+          "title": "Valid From",
+          "type": "string"
+        },
+        "valid_to": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Valid To"
+        }
+      },
+      "required": [
+        "asset_id",
+        "department_id",
+        "source_id",
+        "source_record_id",
+        "observed_at",
+        "valid_from"
+      ],
+      "title": "ResponsibilitySubmission",
+      "type": "object"
+    },
+    "ResponsibilityReview": {
+      "additionalProperties": false,
+      "properties": {
+        "expected_hash": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Expected Hash",
+          "type": "string"
+        },
+        "reviewed": {
+          "const": true,
+          "title": "Reviewed",
+          "type": "boolean"
+        },
+        "reason": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "expected_hash",
+        "reviewed",
+        "reason"
+      ],
+      "title": "ResponsibilityReview",
+      "type": "object"
+    },
+    "ResponsibilityDTO": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Id",
+          "type": "string"
+        },
+        "asset_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Asset Id",
+          "type": "string"
+        },
+        "department_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Department Id",
+          "type": "string"
+        },
+        "source_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Source Id",
+          "type": "string"
+        },
+        "source_record_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Source Record Id",
+          "type": "string"
+        },
+        "source_version": {
+          "title": "Source Version",
+          "type": "integer"
+        },
+        "source_kind": {
+          "const": "SYNTHETIC",
+          "default": "SYNTHETIC",
+          "title": "Source Kind",
+          "type": "string"
+        },
+        "observed_at": {
+          "title": "Observed At",
+          "type": "string"
+        },
+        "valid_from": {
+          "title": "Valid From",
+          "type": "string"
+        },
+        "valid_to": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Valid To"
+        },
+        "submitted_by": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Submitted By",
+          "type": "string"
+        },
+        "reviewed_by": {
+          "anyOf": [
+            {
+              "maxLength": 200,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Reviewed By"
+        },
+        "status": {
+          "enum": [
+            "SUBMITTED",
+            "VERIFIED"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "applicability": {
+          "enum": [
+            "UNREVIEWED",
+            "HISTORICAL",
+            "FUTURE",
+            "CURRENT"
+          ],
+          "title": "Applicability",
+          "type": "string"
+        },
+        "expected_hash": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Expected Hash",
+          "type": "string"
+        },
+        "source_evidence_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Source Evidence Id",
+          "type": "string"
+        },
+        "review_evidence_id": {
+          "anyOf": [
+            {
+              "maxLength": 200,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Review Evidence Id"
+        },
+        "relationship_id": {
+          "anyOf": [
+            {
+              "maxLength": 200,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Relationship Id"
+        },
+        "event_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Event Id",
+          "type": "string"
+        },
+        "as_of": {
+          "title": "As Of",
+          "type": "string"
+        },
+        "simulation_mode": {
+          "const": true,
+          "default": true,
+          "title": "Simulation Mode",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "asset_id",
+        "department_id",
+        "source_id",
+        "source_record_id",
+        "source_version",
+        "observed_at",
+        "valid_from",
+        "valid_to",
+        "submitted_by",
+        "reviewed_by",
+        "status",
+        "applicability",
+        "expected_hash",
+        "source_evidence_id",
+        "review_evidence_id",
+        "relationship_id",
+        "event_id",
+        "as_of"
+      ],
+      "title": "ResponsibilityDTO",
+      "type": "object"
+    },
+    "SubmissionRecord": {
+      "$defs": {
+        "ResponsibilitySubmission": {
+          "additionalProperties": false,
+          "properties": {
+            "asset_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Asset Id",
+              "type": "string"
+            },
+            "department_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Department Id",
+              "type": "string"
+            },
+            "source_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Source Id",
+              "type": "string"
+            },
+            "source_record_id": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Source Record Id",
+              "type": "string"
+            },
+            "source_version": {
+              "default": 1,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Source Version",
+              "type": "integer"
+            },
+            "source_kind": {
+              "const": "SYNTHETIC",
+              "default": "SYNTHETIC",
+              "title": "Source Kind",
+              "type": "string"
+            },
+            "observed_at": {
+              "title": "Observed At",
+              "type": "string"
+            },
+            "valid_from": {
+              "title": "Valid From",
+              "type": "string"
+            },
+            "valid_to": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Valid To"
+            }
+          },
+          "required": [
+            "asset_id",
+            "department_id",
+            "source_id",
+            "source_record_id",
+            "observed_at",
+            "valid_from"
+          ],
+          "title": "ResponsibilitySubmission",
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "properties": {
+        "format_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Format Version",
+          "type": "integer"
+        },
+        "command": {
+          "$ref": "#/$defs/ResponsibilitySubmission"
+        },
+        "submitted_by": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Submitted By",
+          "type": "string"
+        },
+        "submitted_at": {
+          "title": "Submitted At",
+          "type": "string"
+        },
+        "command_hash": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Command Hash",
+          "type": "string"
+        }
+      },
+      "required": [
+        "command",
+        "submitted_by",
+        "submitted_at",
+        "command_hash"
+      ],
+      "title": "SubmissionRecord",
+      "type": "object"
+    },
+    "ReviewRecord": {
+      "additionalProperties": false,
+      "properties": {
+        "format_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Format Version",
+          "type": "integer"
+        },
+        "submission_id": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Submission Id",
+          "type": "string"
+        },
+        "submission_hash": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Submission Hash",
+          "type": "string"
+        },
+        "reviewed_by": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Reviewed By",
+          "type": "string"
+        },
+        "reviewed_at": {
+          "title": "Reviewed At",
+          "type": "string"
+        },
+        "reviewed": {
+          "const": true,
+          "default": true,
+          "title": "Reviewed",
+          "type": "boolean"
+        },
+        "reason": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "submission_id",
+        "submission_hash",
+        "reviewed_by",
+        "reviewed_at",
+        "reason"
+      ],
+      "title": "ReviewRecord",
+      "type": "object"
+    }
+  },
+  "authority": {
+    "submit": "Authenticated DEPARTMENT_LEAD in asserted department",
+    "review": "Distinct authenticated ANALYST with explicit reviewed=true and submission hash",
+    "admin_bypass": false
+  },
+  "storage": "Existing immutable Evidence + sourced MAINTAINED_BY + hashed0005companions + atomic DomainEvent;0001 unchanged",
+  "cardinality": "Candidate claims coexist with verified responsibility; verified intervals exclusive and half-open; no automatic termination or promotion",
+  "source_identity": [
+    "source_graph",
+    "source_id",
+    "source_record_id",
+    "source_version"
+  ],
+  "source_integrity": "Server canonical command hash, immutable submission native hash and reviewed source/relationship hashes; no caller verification labels",
+  "approval": "Exact ownership source/edge bindings retained in draft proof and checked before new approval/work; compatible historical proof IDs preserved",
+  "recovery": "Existing HTTP DISPATCHING and OpsRecovery UNKNOWN; exact uncertain replay blocked; no auto retry or reconciliation",
+  "public_tools": "API/CLI only; MCP write inventory unchanged"
+}

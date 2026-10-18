@@ -1,0 +1,14 @@
+Traceback (most recent call last):
+  File "/Users/vikashkumar/Desktop/Civicly/docs/evidence/B15-audit-script.py", line 69, in <module>
+    captured=capture(GraphRepository(db,CITY_GRAPH),AnalysisLimits(max_nodes=2000,max_edges=3000))
+                                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/pydantic/main.py", line 280, in __init__
+    validated_self = self.__pydantic_validator__.validate_python(data, self_instance=self)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+pydantic_core._pydantic_core.ValidationError: 2 validation errors for AnalysisLimits
+max_nodes
+  Input should be less than or equal to 120 [type=less_than_equal, input_value=2000, input_type=int]
+    For further information visit https://errors.pydantic.dev/2.14/v/less_than_equal
+max_edges
+  Input should be less than or equal to 200 [type=less_than_equal, input_value=3000, input_type=int]
+    For further information visit https://errors.pydantic.dev/2.14/v/less_than_equal

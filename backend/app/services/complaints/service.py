@@ -98,7 +98,7 @@ class ComplaintService:
         _,actual=self.load(jid,norm.request_hash)
         if actual.state!='COMMITTED':raise PreconditionFailed('Intake commit did not persist receipt')
         return self.receipt(actual)
-    def plan(self,q,norm,now,revision,preview=False):
+    def plan(self,q,norm,now,revision,preview=False,*,planned_journal=None):
         reader=Reader(self.repo,now);reader.references(q);contexts=reader.candidates(q);assessment=reader.assessment(q)
         same=[c for c in contexts.values() if same_event(q,c)]
         uncertainty=['Reported associations and grouping are context, not verified causes or resolution.',
@@ -161,8 +161,12 @@ class ComplaintService:
         context_paths=list(unique_paths.values())[:90]
         source_ids=set(assessment.source_evidence_ids)|{id for p in context_paths for id in p.evidence_ids}|(set(chain_evidence) if not preview else set())
         references=[]
+        if planned_journal is not None:
+            self.repo.registry.validate_node('Evidence',planned_journal)
+            expected=Journal(operation='INTAKE',original=norm.original,canonical=norm.canonical,request_hash=norm.request_hash)
+            if planned_journal['id']!=jid or planned_journal['evidence_type']!='COMPLAINT_INTAKE' or planned_journal['summary']!=expected.serialized() or planned_journal['reliability']!='UNVERIFIED' or planned_journal['source_kind']!=q.source_kind or planned_journal['source_record_id']!=q.source_id+':'+q.external_record_id or planned_journal['recorded_at']!=now:raise PreconditionFailed('Planned intake journal binding mismatch')
         for id in sorted(source_ids):
-            ev=reader.node(id,'Evidence').properties
+            ev=planned_journal if id==jid and planned_journal is not None else reader.node(id,'Evidence').properties
             references.append(EvidenceRef(id=id,recorded_at=ev['recorded_at'],observed_at=ev.get('observed_at'),source_kind=ev['source_kind'],reliability=ev['reliability']))
         explanations=['Same-event start gap is at most24 hours unless source+event reference matches; declared intervals must overlap.',
             'Matched by explicit issue/subtype/location/assets and occurrence intervals, never report count or spatial proximity.',

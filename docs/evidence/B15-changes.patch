@@ -1,0 +1,1498 @@
+diff --git a/backend/EVENTS.md b/backend/EVENTS.md
+new file mode 100644
+--- /dev/null
++++ b/backend/EVENTS.md
+@@ -0,0 +1,71 @@
++# B15 — bounded durable local delivery
++
++B15 implements local deterministic delivery only. All R01–R18 remain binding; B10 full genuine Gemini acceptance remains OPEN/PARTIAL. There is no live-provider authority, HTTP/SSE route, municipal execution or backend-completion claim.
++
++## Prerequisites and authorization
++
++Use Python3.12 and the locked backend environment, running local FalkorDB6.0.2 and the accepted B06 official/B07 domain MCP integrations. An existing private `ActiveProfile` must authorize the **exact** source graph, graph-read account and separate Saver graph. Existing immutable migrations0001/0004/0005 must be READY. Delivery never installs migrations, creates profiles, enumerates proof graphs, adopts `civicly_knowledge`, rotates credentials or activates historical datasets automatically. No new dependency or migration.
++
++Explicit activation stores current source repository revision, existing source identities, operator/reason and optional <=20 selected original event IDs. Later committed facts are admitted; older events require that explicit selection. Activation is immutable/idempotent, not an implicit rewind. Undelivered older events remain in their original stores. A PREPARED journal is not treated as COMMITTED; later completion above the cutover revision is discovered. Source scans are bounded (500 native events,500 accepted journals,100 plan drafts); exceeding a bound fails visibly and requires scoped operator reconciliation, never silent truncation or deletion. This is a finite demo, not an unlimited event broker.
++
++## Actual file/import and control flow
++
++`app.events.__main__` → private `app.active.load/active_scope` → Settings/connect → GraphRepository → Delivery(Store,Sources) → Worker(Runtime).
++
++`models.py` imports canonical event inventory and strict B09 ID/time/model types, defines event validation/routing/backoff/coalesced identity/public projection. `sources.py` uses fixed bounded RO reads and accepted B08/B09/B12/B13/B14 readback services. `store.py` reuses OperationsMigration readiness and Operations.Storage. `service.py` owns activation/discovery/registration/claims/consumer receipts/public cursor/monitoring/operator controls. `worker.py` owns dispatch/recovery/heartbeat/bounded polling. `runtime.py` uses existing brokers, InvestigationAgent, ownership and public FalkorDBSaver.
++
++Committed domain record → validate original envelope or derive supported journal fact → delivery companion + optional native DomainEvent + public cursor in one source-graph fenced write → case claim → RUNNING → release source writer fence → existing agent ownership/MCP/Saver execution → checkpoint host completion marker → receipt/DONE under a new short source fence.
++
++Every companion transition includes fresh `Evidence(B15_DELIVERY_AUDIT)` as the existing repository mutation-intent subject. This prevents companion-only ambiguous writes being mistaken for unchanged subjects. Native DomainEvent delivery_status is a mirror; original payload_ref/envelope identity is immutable. Audit evidence contains transition hash/keys, not source text/model reasoning. No generic runtime Cypher write tool is exposed.
++
++## Durable source adapters and trigger matrix
++
++- **B08 INTAKE**: read back COMMITTED journal/receipt; deterministic new `ADAPT-B15-*` facts COMPLAINT_ACCEPTED and INCIDENT_LINKED. **B08 REGROUP**: committed receipt yields informational GRAPH_EVIDENCE_CHANGED because rebinding needs explicit review.
++- **B09**: read back committed journal plus native nodes/edges; open→CASE_OPENED; report_inspection→INSPECTION_RESULT_RECORDED; assess→HYPOTHESIS_ASSESSED; other analytical facts→GRAPH_EVIDENCE_CHANGED. Agent actor `civicly-b10-analyst` is informational to prevent self-wake loops. Proposal/pending inspection/transition is informational; a completed external report can wake.
++- **B10**: accepted analytical writes use B09 journals; no fabricated decision history. AGENT_DECISION_RECORDED remains informational. Existing checkpoints retain original identity/bytes.
++- **B12**: verified draft companion/native plan yields a new informational GRAPH_EVIDENCE_CHANGED fact; creation alone confers no approval authority.
++- **B13/B14 native DomainEvent**: resolve exact original event in hashed operation payload, check type/entity/time/idempotency against native record. Preserve original event ID, actor, revision, source and payload. The B09 journal and a B14 native event can describe distinct provenance views of one report; they retain different identities and compatible pending wakes may coalesce. No claim of a historic event that was never emitted.
++- **Explicit local resume**: authorized idempotent AGENT_RESUME_REQUESTED, stable ID from investigation/request, source `explicit-resume:*`; never impersonates human approval. A failed/corrupt thread still fails closed.
++- **MONITORING_DUE**: persisted controlled intent produces a single native event/consumer receipt `FOLLOWUP_REQUESTED_NO_OBSERVATION_OPPORTUNITY_ESTABLISHED`. No fabricated evidence, elapsed opportunity or resolution.
++
++With a uniquely validated investigation, COMPLAINT_ACCEPTED/INCIDENT_LINKED/CASE_OPENED/GRAPH_EVIDENCE_CHANGED/INSPECTION_RESULT_RECORDED/PLAN_APPROVED/PLAN_REJECTED/INTERVENTION_OUTCOME_RECORDED/RECURRENCE_DETECTED/AGENT_RESUME_REQUESTED route to bounded WAKE unless an informational override applies. See machine-readable inventory for exact names. AGENT_TOOL_EXECUTED/PLAN_DRAFTED/PLAN_SUBMITTED/WORK_ORDER_CREATED/WORK_ORDER_STATUS_CHANGED/HYPOTHESIS_ASSESSED/AGENT_DECISION_RECORDED/SOURCE_DOCUMENT_UPDATED/EVENT_DELIVERY_FAILED are informational with durable reason. Unbound/ambiguous case is informational, never guessed. Agent-origin facts are informational. No handler approves plans, creates orders, operates departments or synthesizes findings.
++
++Default model is authored `ReadPause`: one actual approved MCP read of current active incident then pause; explicitly not autonomous LLM reasoning. Tests may inject ScriptedModel in trusted Python construction only. CLI has no live model/provider configuration or reusable paid permit. Existing runtime budgets, source revision checks, schema/evidence validation, same-thread fresh-read barrier and B14-R2 recurrence proofs remain authoritative.
++
++## Consistency, retries and recovery
++
++At-least-once delivery and idempotent consumers; **not exactly-once**, no source/Saver cross-graph transaction. Source writes use existing Redis writer lease, repository owner/epoch/revision CAS and single parameterized graph mutation. A <=4-event compatible case batch is claimed atomically with a random owner token, expiry and monotonic attempts. Competing owners cannot claim that active case. Agent execution holds existing thread ownership, not the source writer lock. Delivery heartbeat renews every10seconds to60seconds; existing agent heartbeat retains independent90second ownership. Source/receipt transitions validate claim token and lease. SIGINT/SIGTERM requests bounded shutdown after current handler, before next poll.
++
++PENDING→CLAIMED→RUNNING→DONE. Expired **CLAIMED** may be reclaimed (no dispatch began). Expired **RUNNING** must reconcile exact coalesced batch key with durable consumer receipt or host `B15_DELIVERY_CONSUMED` in an integrity-validated, non-recovery public Saver checkpoint under original thread ownership. No redispatch to obtain that proof. No proof, malformed checkpoint, existing quarantine, lost ownership or uncertain transport/write→RECOVERY_REQUIRED; case remains blocked. Checkpoint/plan recovery/dependency-unavailable pauses cannot emit completion markers. Fresh markers are appended only to new safe checkpoints; old checkpoint bytes are not rewritten.
++
++Only an established pre-dispatch unavailable failure is retryable: delays1,2,4seconds at initial ceiling3. Explicit operator replay of FAILED with valid envelope can raise total ceiling to<=8 without resetting attempts/history; invalid records and RECOVERY_REQUIRED cannot replay this way. Unknown write outcomes preserve last durable state; the existing repository pending intent and agent quarantine require operator reconciliation. A failed checkpoint cannot guarantee a new durable feedback record. No exception text/source/provider body is emitted by CLI failure output.
++
++**Operator recovery:** stop old worker and investigate its exact graph/event IDs, case key, batch key, owner, original thread/checkpoint and source repository pending intent. `inspect` shows bounded status/attempt/history/receipt; `reconcile CASE_KEY` only checks existing proof and acknowledges it. It does not rerun, redraft, reset counters, clear quarantine or fabricate completion. If quarantined, use the already accepted manual checkpoint reconciliation procedure; leave the graph/quarantine intact until integrity is independently established. Missing proof stays recovery-required. This package adds no automatic repair command.
++
++## Public event replay
++
++`Delivery.public(after=0,limit=50)` returns <=100 redacted committed events, next_cursor and has_more. Cursor is an atomic source-local registration sequence, **not** domain event ID or attempt number. Order is registration cursor, original occurred_at and aggregate revision retained; late discovered events therefore do not disappear behind a time cursor. Read/reconnect is independent of delivery status and does not mutate data. Invalid events have an inspectable failure record but no unvalidated public projection. Source/identity/case references, schema version and allowlisted compact metadata only; no raw payload, private reasoning, provider bodies, tokens or authorization capabilities. Existing500-record scan limit is explicit/fail-closed. HTTP/SSE belongs to B16+, not implemented here.
++
++## Reproduce tests and local demonstration
++
++Run from repository root; `.env` and private profiles stay local/ignored. All ordinary tests/children activate the existing Gemini/countTokens interlock.
++
++```sh
++CIVICLY_TEST_REQUEST_LOG=/tmp/b15-unit.jsonl backend/.venv/bin/python -m pytest backend/tests/unit/test_events.py -q --tb=short
++CIVICLY_TEST_REQUEST_LOG=/tmp/b15-db.jsonl backend/.venv/bin/python -m pytest backend/tests/integration/test_event_delivery.py -q --tb=short
++CIVICLY_TEST_REQUEST_LOG=/tmp/b15-runtime.jsonl backend/.venv/bin/python -m pytest backend/tests/integration/test_event_runtime.py -q --tb=short
++CIVICLY_TEST_REQUEST_LOG=/tmp/b15-legacy.jsonl backend/.venv/bin/python -m pytest backend/tests/integration/test_agent_safety.py::test_concurrent_lease_denial_and_corrupt_checkpoint -q --tb=short
++backend/.venv/bin/python scripts/validate_blueprint.py
++backend/.venv/bin/python scripts/validate_handoff.py
++```
++
++Choose an explicitly approved existing private profile with0005 READY and a paused investigation; shell examples use `PROFILE` and `INVESTIGATION` placeholders, never credential strings. `PYTHONPATH=backend` enables root module invocation. Controlled `--at` accepts canonical UTC timestamps; use nondecreasing simulated time.
++
++```sh
++PYTHONPATH=backend backend/.venv/bin/python -m app.events --profile "$PROFILE" activate --operator demo-operator --reason 'B15 isolated demonstration only' --authorize
++PYTHONPATH=backend backend/.venv/bin/python -m app.events --profile "$PROFILE" resume "$INVESTIGATION" --request-id demo-b15-1 --operator demo-operator --reason 'Explicit deterministic refresh' --authorize
++PYTHONPATH=backend backend/.venv/bin/python -m app.events --profile "$PROFILE" run --owner local-b15-1 --batches 10 --poll-seconds 1
++PYTHONPATH=backend backend/.venv/bin/python -m app.events --profile "$PROFILE" public --after 0 --limit 10
++```
++
++Ctrl-C/SIGTERM requests clean bounded stop; restart the same command/profile under a new owner. Forceful process death after claim is reproduced in `tests.b15_process` (exit71), then deterministic clock advances61seconds; replacement uses same graph/request IDs. Mid-handler death instead requires checkpoint proof/reconciliation and may remain RECOVERY_REQUIRED. Never delete volumes/graphs or clear quarantine to make a demonstration pass. Review exact observed commands/results in docs/evidence/B15-COMMANDS.md and B15-RESULTS.md.
+diff --git a/backend/app/agents/runtime.py b/backend/app/agents/runtime.py
+--- a/backend/app/agents/runtime.py
++++ b/backend/app/agents/runtime.py
+@@ -239,6 +239,8 @@
+             try:await self.domain_action(s,'request_inspection');s.pause_reason='MISSING_EVIDENCE'
+             except Exception as e:s.errors.append(getattr(e,'code','INSPECTION_REQUEST_REJECTED'));s.pause_reason='DEPENDENCY_UNAVAILABLE'
+         s.pause_reason=s.pause_reason or s.selection.pause_reason or 'HUMAN_REVIEW'
++        starts=[o['delivery_key'] for o in s.observations if o.get('operation')=='B15_DELIVERY_STARTED' and o.get('host_generated') is True]
++        if starts and s.pause_reason not in {'RECOVERY_REQUIRED','PLAN_OPERATOR_RECOVERY_REQUIRED','DEPENDENCY_UNAVAILABLE'} and not any(o.get('operation')=='B15_DELIVERY_CONSUMED' and o.get('delivery_key')==starts[-1] for o in s.observations):s.observations.append({'operation':'B15_DELIVERY_CONSUMED','host_generated':True,'delivery_key':starts[-1]})
+         return self.output(s,'Coordinator')
+     async def await_dependency(self,channel):
+         s=self.decode(channel)
+@@ -247,6 +249,7 @@
+         if isinstance(recovery,dict) and recovery.get('budget_increase'):
+             old=s.budget.model_dump(mode='json');s.budget=__import__('app.agents.models',fromlist=['Budget']).Budget.model_validate(recovery['budget_increase'])
+             s.observations.append({'operation':'AUTHORIZED_BUDGET_INCREASE','host_generated':True,'previous':old,'current':s.budget.model_dump(mode='json'),'reason':recovery['operator_reason']})
++        if isinstance(recovery,dict) and recovery.get('delivery_key'):s.observations.append({'operation':'B15_DELIVERY_STARTED','host_generated':True,'delivery_key':recovery['delivery_key']})
+         s.wakes+=1;s.pause_reason=None;s.as_of=self.clock()
+         current=self.revision();changed=current!=s.graph_revision or any(self.repo.get_node(id).content_hash!=h for id,h in s.evidence.items())
+         s.refresh_required=changed;s.graph_revision=current
+@@ -255,7 +258,8 @@
+             s=refresh(self.repo,s)
+             s.errors.append('SOURCE_CHANGED_REFRESH_REQUIRED')
+         return self.output(s,'AwaitDependency')
+-    async def run(self,initial=None,*,thread_id,resume=False,budget_increase=None,authorized=False,operator_reason=None):
++    async def run(self,initial=None,*,thread_id,resume=False,budget_increase=None,authorized=False,operator_reason=None,delivery_key=None):
++        if delivery_key is not None and (not isinstance(delivery_key,str) or not delivery_key.startswith('BATCH-B15-') or len(delivery_key)!=42):raise RecoveryRequired('INVALID_HOST_DELIVERY_KEY')
+         if budget_increase is not None and (authorized is not True or not isinstance(operator_reason,str) or not operator_reason.strip() or len(operator_reason)>512):raise RecoveryRequired('BUDGET_INCREASE_REQUIRES_OPERATOR_AUTHORIZATION')
+         self.started=time.monotonic();config={'configurable':{'thread_id':thread_id},'recursion_limit':150}
+         # Operator input errors must not quarantine an otherwise valid paused thread.
+@@ -281,6 +285,7 @@
+                     state=self.decode(snapshot.values)
+                     if state.wakes>=(candidate.max_wakes if budget_increase is not None else state.budget.max_wakes):raise RecoveryRequired('WAKE_BUDGET_EXHAUSTED')
+                     recovery={'host_resume':True}
++                    if delivery_key:recovery['delivery_key']=delivery_key
+                     if budget_increase is not None:
+                         from .models import Budget
+                         if authorized is not True or not isinstance(operator_reason,str) or not operator_reason.strip() or len(operator_reason)>512:raise RecoveryRequired('BUDGET_INCREASE_REQUIRES_OPERATOR_AUTHORIZATION')
+@@ -291,7 +296,9 @@
+                 else:
+                     if snapshot.values:raise RecoveryRequired('THREAD_ALREADY_EXISTS; resume explicitly')
+                     if not isinstance(initial,InvestigationState) or initial.thread_id!=thread_id:raise ValueError('Initial thread mismatch')
+-                    self.control.bind(initial.investigation_id,thread_id);value={'data':initial.model_dump(mode='json')}
++                    self.control.bind(initial.investigation_id,thread_id)
++                    if delivery_key:initial=initial.model_copy(update={'observations':[*initial.observations,{'operation':'B15_DELIVERY_STARTED','host_generated':True,'delivery_key':delivery_key}]})
++                    value={'data':initial.model_dump(mode='json')}
+                 budget=initial.budget if initial is not None else (increased if budget_increase is not None else state.budget)
+                 async with asyncio.timeout(budget.max_seconds+65):
+                     if hasattr(self.model,'execution_scope'):
+diff --git a/backend/app/events/__init__.py b/backend/app/events/__init__.py
+new file mode 100644
+--- /dev/null
++++ b/backend/app/events/__init__.py
+@@ -0,0 +1 @@
++"""B15 local durable event delivery; no HTTP or live-provider authority."""
+diff --git a/backend/app/events/__main__.py b/backend/app/events/__main__.py
+new file mode 100644
+--- /dev/null
++++ b/backend/app/events/__main__.py
+@@ -0,0 +1,50 @@
++"""Trusted local profile CLI; never enables a paid provider or public listener."""
++import argparse,asyncio,json,signal
++from app.active import load,active_scope
++from app.config import Settings
++from app.graph.connection import connect
++from app.graph.repository import GraphRepository
++from app.graph.schema import utc_now
++from .service import Delivery
++from .runtime import Runtime
++from .worker import Worker
++
++def main():
++ p=argparse.ArgumentParser();p.add_argument('--profile',required=True);p.add_argument('--at');sub=p.add_subparsers(dest='command',required=True)
++ a=sub.add_parser('activate');a.add_argument('--operator',required=True);a.add_argument('--reason',required=True);a.add_argument('--event-id',action='append',default=[]);a.add_argument('--authorize',action='store_true')
++ a=sub.add_parser('run');a.add_argument('--owner',required=True);a.add_argument('--batches',type=int,default=10);a.add_argument('--poll-seconds',type=float,default=1)
++ a=sub.add_parser('public');a.add_argument('--after',type=int,default=0);a.add_argument('--limit',type=int,default=50)
++ a=sub.add_parser('inspect');a.add_argument('event_id')
++ a=sub.add_parser('reconcile');a.add_argument('case_key')
++ a=sub.add_parser('replay');a.add_argument('event_id');a.add_argument('--operator',required=True);a.add_argument('--reason',required=True);a.add_argument('--ceiling',type=int,required=True);a.add_argument('--authorize',action='store_true')
++ a=sub.add_parser('resume');a.add_argument('investigation_id');a.add_argument('--request-id',required=True);a.add_argument('--operator',required=True);a.add_argument('--reason',required=True);a.add_argument('--authorize',action='store_true')
++ a=sub.add_parser('monitor');a.add_argument('investigation_id');a.add_argument('--due',required=True);a.add_argument('--request-id',required=True);a.add_argument('--authorize',action='store_true')
++ args=p.parse_args();profile=load(args.profile);clock=(lambda:args.at) if args.at else utc_now
++ with connect(Settings(_env_file='.env')) as db,active_scope(profile):
++  repo=GraphRepository(db,profile.graph);d=Delivery(repo,clock);worker=Worker(d,Runtime(profile,args.profile,repo,clock),'local-cli')
++  if args.command=='activate':value=d.activate(operator=args.operator,reason=args.reason,event_ids=args.event_id,authorize=args.authorize)
++  elif args.command=='public':value=d.public(after=args.after,limit=args.limit)
++  elif args.command=='inspect':
++   row=d.store.get('delivery',args.event_id);value={k:v for k,v in (row or {}).items() if k in {'id','status','attempts','ceiling','owner','lease_until','batch','history','receipt','source_ref','reason','case_id'}}
++  elif args.command=='replay':value=d.replay(args.event_id,operator=args.operator,reason=args.reason,ceiling=args.ceiling,authorize=args.authorize)
++  elif args.command=='reconcile':
++   claim=d.store.get('delivery_case',args.case_key)
++   value={'reconciled':asyncio.run(worker.reconcile(claim))} if claim else {'reconciled':False}
++  elif args.command=='resume':
++   row=d.request_resume(args.investigation_id,args.request_id,operator=args.operator,reason=args.reason,authorize=args.authorize);value={k:row[k] for k in ['id','status','attempts','case_id']}
++  elif args.command=='monitor':value=d.monitor(args.investigation_id,args.due,args.request_id,authorize=args.authorize)
++  else:
++   worker.owner=args.owner
++   async def run():
++    loop=asyncio.get_running_loop()
++    for sig in [signal.SIGINT,signal.SIGTERM]:loop.add_signal_handler(sig,lambda:setattr(worker,'stopping',True))
++    await worker.run(poll_seconds=args.poll_seconds,max_batches=args.batches)
++   asyncio.run(run());value={'stopped':True,'mode':'DETERMINISTIC_NO_PROVIDER','graph':profile.graph}
++  # Closed public projections only; activation never includes profile credentials.
++  if args.command=='replay':value={k:value[k] for k in ['id','status','attempts','ceiling']}
++  print(json.dumps(value,indent=2))
++if __name__=='__main__':
++ try:main()
++ except Exception:
++  print(json.dumps({'error':'DELIVERY_COMMAND_FAILED_REQUIRES_INSPECTION','detail':'No raw exception exported; inspect durable delivery and repository recovery state'}))
++  raise SystemExit(1)
+diff --git a/backend/app/events/models.py b/backend/app/events/models.py
+new file mode 100644
+--- /dev/null
++++ b/backend/app/events/models.py
+@@ -0,0 +1,46 @@
++import json
++from pathlib import Path
++from typing import Literal
++from pydantic import Field,model_validator
++from app.services.evidence.models import Model,ID,Time
++from app.graph.models import digest
++TYPES=json.loads((Path(__file__).resolve().parents[3]/'contracts/event_types.json').read_text())['types']
++
++class Event(Model):
++ id:ID
++ type:ID
++ entity_id:ID
++ aggregate_revision:int=Field(ge=0)
++ occurred_at:Time
++ payload_schema_version:Literal[1]
++ source_kind:Literal['SYNTHETIC','PUBLIC','MUNICIPAL','USER','AGENT']
++ idempotency_key:ID
++ actor_id:ID|None=None
++ actor_role:Literal['ANALYST','DEPARTMENT_LEAD','APPROVER','ADMIN','SYSTEM']|None=None
++ payload:dict=Field(default_factory=dict)
++ @model_validator(mode='after')
++ def valid(self):
++  if self.type not in TYPES or len(json.dumps(self.payload).encode())>150000:raise ValueError('EVENT_TYPE_OR_SIZE')
++  if TYPES[self.type]['actor_audit_required'] and (not self.actor_id or not self.actor_role):raise ValueError('EVENT_ACTOR_REQUIRED')
++  return self
++
++def route(event,case):
++ if event.actor_id=='civicly-b10-analyst' or event.source_kind=='AGENT':return 'INFO','SELF_GENERATED_ANALYTICAL'
++ if event.payload.get('operation') in {'draft','propose','request_inspection','transition_inspection','regroup'}:return 'INFO','DRAFT_OR_PENDING_INSPECTION_OR_REBIND_REQUIRED'
++ if event.type=='MONITORING_DUE':return 'MONITOR','FOLLOWUP_REQUESTED_NO_OBSERVATION_INVENTED'
++ if event.type in {'AGENT_TOOL_EXECUTED','PLAN_DRAFTED','PLAN_SUBMITTED','WORK_ORDER_CREATED','WORK_ORDER_STATUS_CHANGED','HYPOTHESIS_ASSESSED','AGENT_DECISION_RECORDED','SOURCE_DOCUMENT_UPDATED','EVENT_DELIVERY_FAILED'}:return 'INFO','HUMAN_OR_INFORMATIONAL_ONLY'
++ if not case:return 'INFO','EXPLICIT_CASE_BINDING_REQUIRED'
++ return 'WAKE','BOUNDED_INVESTIGATION_WAKE'
++
++def backoff(attempt):
++ if not 1<=attempt<=8:raise ValueError('ATTEMPT_BOUND')
++ return min(60,2**(attempt-1))
++
++def batch_key(ids):return 'BATCH-B15-'+digest(sorted(ids))[:32]
++
++def public(event,case,cursor,source):
++ # Never export arbitrary source text, command bodies, actor capabilities or model output.
++ return {'cursor':cursor,'id':event.id,'event_type':event.type,'entity_id':event.entity_id,'investigation_id':case,
++  'revision':event.aggregate_revision,'occurred_at':event.occurred_at,'source_kind':event.source_kind,'simulation_mode':'SIMULATED',
++  'payload_schema_version':1,'payload':{k:v for k,v in event.payload.items() if k in {'plan_id','plan_version','approval_id','task_id','new_incident_id','cluster_id','prior_outcome_id','investigates_relationship_id'} and (isinstance(v,int) or isinstance(v,str) and len(v)<=200)},
++  'source_ref':source}
+diff --git a/backend/app/events/runtime.py b/backend/app/events/runtime.py
+new file mode 100644
+--- /dev/null
++++ b/backend/app/events/runtime.py
+@@ -0,0 +1,50 @@
++"""Offline development runtime; no provider client/permit and no human powers."""
++from uuid import uuid4
++from app.agents.models import InvestigationState,Selection
++from app.agents.runtime import InvestigationAgent
++from app.agents.checkpoints import saver,ownership,RecoveryRequired
++from app.agents.mcp import brokers
++from app.services.evidence.reader import Reader
++
++class ReadPause:
++ mode='B15_DETERMINISTIC_DEVELOPMENT_NO_PROVIDER'
++ def __init__(self):self.read=False
++ async def choose(self,context,remaining_tokens):
++  if not self.read:
++   self.read=True
++   return Selection(action='READ',summary='Deterministic development worker refreshes current active episode; not autonomous model reasoning',tool_name='official::query_graph_readonly',arguments_json=__import__('json').dumps({'template':'node','id':context['state']['incident_ids'][0]}),pause_reason='NONE'),0
++  return Selection(action='PAUSE',summary='Deterministic development wake complete; no human authority or invented findings',tool_name='',arguments_json='{}',pause_reason='HUMAN_REVIEW'),0
++
++class Runtime:
++ def __init__(self,profile,path,repo,clock,*,model_factory=ReadPause):self.profile,self.path,self.repo,self.clock,self.model_factory=profile,path,repo,clock,model_factory
++ def thread(self,inv):return self.repo.get_node(inv,'Investigation').properties.get('thread_id') or 'B15-'+__import__('app.graph.models',fromlist=['digest']).digest(inv)[:32]
++ async def probe(self,inv,key):
++  thread=self.thread(inv)
++  async with ownership(self.repo.client,self.profile,thread):
++   try:
++    saved=saver(self.profile).get_tuple({'configurable':{'thread_id':thread}})
++    if not saved:return None
++    state=InvestigationState.model_validate(saved.checkpoint['channel_values']['data'])
++    if state.graph!=self.profile.graph or state.investigation_id!=inv or state.thread_id!=thread:raise RecoveryRequired('CONSUMER_CHECKPOINT_BINDING')
++    if state.pause_reason in {'RECOVERY_REQUIRED','PLAN_OPERATOR_RECOVERY_REQUIRED','DEPENDENCY_UNAVAILABLE'}:raise RecoveryRequired('CONSUMER_RECOVERY_REQUIRED')
++    if not any(o.get('operation')=='B15_DELIVERY_CONSUMED' and o.get('host_generated') is True and o.get('delivery_key')==key for o in state.observations):return None
++    return {'kind':'CHECKPOINT_CONFIRMED','thread_id':thread,'investigation_id':inv,'delivery_key':key,'checkpoint_id':saved.config['configurable']['checkpoint_id'],'pause_reason':state.pause_reason,'active_incident_ids':state.incident_ids,'tool_calls':state.tool_calls}
++   except RecoveryRequired:raise
++   except Exception:raise RecoveryRequired('CONSUMER_CHECKPOINT_VERIFICATION_FAILED') from None
++ async def handle(self,claim):
++  inv=claim['case_id'];thread=self.thread(inv);saved=saver(self.profile).get_tuple({'configurable':{'thread_id':thread}})
++  if not saved and self.repo.get_node(inv,'Investigation').properties.get('thread_id'):raise RecoveryRequired('BOUND_CHECKPOINT_MISSING_REQUIRES_OPERATOR')
++  async with brokers(self.profile,self.path,timeout=10) as tools:
++   agent=InvestigationAgent(self.profile,self.repo,tools,self.model_factory(),saver(self.profile),clock=self.clock)
++   if saved:await agent.run(thread_id=thread,resume=True,delivery_key=claim['key'])
++   else:
++    r=Reader(self.repo,self.clock());links=r.edges('INVESTIGATES',source=inv)
++    incidents=[r.node(e.target) for e in links if r.node(e.target).kind=='Incident'];active=[n for n in incidents if n.properties['status'] in {'REPORTED','ACTIVE','MITIGATED'}]
++    clusters=[e.target for e in links if r.node(e.target).kind=='ProblemCluster']
++    issues={n.properties['issue_type'] for n in active}
++    if len(issues)!=1 or len(clusters)!=1:raise RecoveryRequired('INITIAL_CASE_SCOPE_REQUIRES_OPERATOR')
++    assets=sorted({e.target for n in active for e in r.edges('AFFECTS',source=n.id)})
++    revision=agent.revision()
++    state=InvestigationState(graph=self.profile.graph,investigation_id=inv,thread_id=thread,problem_cluster_id=clusters[0],incident_ids=[n.id for n in active],asset_ids=assets,issue=next(iter(issues)),graph_revision=revision,inventory_hash=tools.inventory_hash,as_of=self.clock())
++    await agent.run(state,thread_id=thread,delivery_key=claim['key'])
++  return await self.probe(inv,claim['key'])
+diff --git a/backend/app/events/service.py b/backend/app/events/service.py
+new file mode 100644
+--- /dev/null
++++ b/backend/app/events/service.py
+@@ -0,0 +1,171 @@
++"""Durable activation, discovery, claims, receipts and redacted public replay."""
++from datetime import timedelta
++from uuid import uuid4
++from app.graph.models import digest
++from app.graph.schema import timestamp
++from app.graph.repository import Conflict,PreconditionFailed,RepositoryError
++from app.services.operations.service import common
++from .store import Store
++from .sources import Sources
++from .models import Event,route,public,batch_key,backoff
++
++def later(at,seconds):return (timestamp(at)+timedelta(seconds=seconds)).isoformat().replace('+00:00','Z')
++class Delivery:
++ def __init__(self,repo,clock):self.repo=repo;self.clock=clock;self.store=Store(repo,clock);self.sources=Sources(repo)
++ def active(self):
++  a=self.store.get('delivery_activation','root')
++  if not a or a['graph']!=self.repo.graph.name:raise PreconditionFailed('EXPLICIT_DELIVERY_ACTIVATION_REQUIRED')
++  return a
++ def activate(self,*,operator,reason,event_ids=None,authorize=False):
++  if authorize is not True or not operator or not reason or len(operator)>200 or len(reason)>512 or len(event_ids or [])>20:raise PreconditionFailed('EXPLICIT_ACTIVATION_REQUIRED')
++  with self.repo._session() as s:
++   old=self.store.get('delivery_activation','root')
++   if old:return old
++   sources=self.sources.scan();a={'graph':self.repo.graph.name,'floor_revision':s.revision,'existing_sources':[kind+':'+id for kind,id,_ in sources],'event_ids':sorted(set(event_ids or [])),'operator':operator,'reason':reason,'at':self.clock()}
++   self.store.write(s,[('delivery_activation','root',a),('delivery_stream','root',{'cursor':0})]);return a
++ def discover(self):
++  a=self.active();registered=[]
++  for kind,id,props in self.sources.scan():
++   source=kind+':'+id
++   try:
++    candidates=list(self.sources.events(kind,id,props))
++    for event in candidates:self.sources.case(event)
++   except (ValueError,KeyError,TypeError,RepositoryError):
++    if source not in a['existing_sources'] or id in a['event_ids'] or self.store.get('delivery',id):
++     self.invalid(id,source);registered.append(id)
++    continue
++   for event in candidates:
++    if event.aggregate_revision<=a['floor_revision'] and event.id not in a['event_ids']:continue
++    if self.store.get('delivery',event.id):continue
++    self.register(event,source);registered.append(event.id)
++  return registered
++ def register(self,event,source,extra=None):
++  self.active();event=Event.model_validate(event.model_dump(mode='json'));case=self.sources.case(event);action,reason=route(event,case)
++  with self.repo._session() as s:
++   old=self.store.get('delivery',event.id)
++   if old:
++    if old['event']!=event.model_dump(mode='json'):raise Conflict('EVENT_ID_REUSED')
++    return old
++   stream=self.store.get('delivery_stream','root');cursor=stream['cursor']+1
++   row={'id':event.id,'event':event.model_dump(mode='json'),'source_ref':source,'case_id':case,'action':action,'reason':reason,'status':'PENDING','attempts':0,'ceiling':3,'due_at':self.clock(),'owner':None,'lease_until':None,'batch':None,'history':[],'public':public(event,case,cursor,source),'receipt':None}
++   nodes=[]
++   if self.repo._node_optional(event.id) is None:
++    nodes=[('DomainEvent',{**common(event.id,self.clock()),'event_type':event.type,'subject_id':event.entity_id,'occurred_at':event.occurred_at,'delivery_status':'PENDING','idempotency_key':event.idempotency_key,'payload_ref':'delivery:'+event.id})]
++   self.store.write(s,[('delivery',event.id,row),('delivery_stream','root',{'cursor':cursor}),*(extra or [])],nodes=nodes)
++   return row
++ def invalid(self,id,source):
++  with self.repo._session() as s:
++   old=self.store.get('delivery',id)
++   if old:
++    if old['status'] in {'FAILED','RECOVERY_REQUIRED'}:return
++    status='RECOVERY_REQUIRED' if old['status'] in {'RUNNING','CLAIMED'} else 'DONE' if old['status']=='DONE' else 'FAILED'
++    value={**old,'status':status,'history':[*old['history'],{'at':self.clock(),'code':'INVALID_COMMITTED_SOURCE'}]}
++   else:value={'id':id,'event':None,'source_ref':source,'status':'FAILED','attempts':0,'ceiling':3,'history':[{'at':self.clock(),'code':'INVALID_COMMITTED_EVENT'}],'receipt':None,'public':None}
++   states=[('delivery',id,value)]
++   if old and old.get('batch') and value['status']=='RECOVERY_REQUIRED':
++    key=old['case_id'] if old['action']=='WAKE' else 'event:'+id
++    c=self.store.get('delivery_case',key)
++    if c and c['key']==old['batch']:states.append(('delivery_case',key,{**c,'status':'RECOVERY_REQUIRED'}))
++   self.store.write(s,states,updates=self.native_status(value,value['status']))
++ def public(self,*,after=0,limit=50):
++  self.active()
++  if type(after) is not int or after<0 or type(limit) is not int or not 1<=limit<=100:raise ValueError('PUBLIC_CURSOR_LIMIT')
++  rows=sorted([r['public'] for r in self.store.rows('delivery') if r.get('public') and r['public']['cursor']>after],key=lambda r:r['cursor'])
++  page=rows[:limit]
++  return {'events':page,'next_cursor':page[-1]['cursor'] if page else after,'has_more':len(rows)>limit,'ordering':'source registration cursor; occurred_at/revision are original facts','graph':self.repo.graph.name}
++ def native_status(self,row,status):
++  old=self.repo._node_optional(row['id'])
++  if old and old.kind=='DomainEvent':return [(old,{**old.properties,'updated_at':self.clock(),'delivery_status':status,**({'processed_at':self.clock()} if status=='DONE' else {})})]
++  return []
++ def claim(self,owner,*,limit=4,lease_seconds=60):
++  self.active()
++  if not owner or len(owner)>200 or not 1<=limit<=4 or not 1<=lease_seconds<=120:raise ValueError('CLAIM_BOUND')
++  with self.repo._session() as s:
++   now=self.clock();rows=sorted([r for r in self.store.rows('delivery') if r.get('event')],key=lambda r:r['public']['cursor'])
++   eligible=[r for r in rows if (r['status'] in {'PENDING','RETRY'} and timestamp(r['due_at'])<=timestamp(now)) or (r['status']=='CLAIMED' and timestamp(r['lease_until'])<=timestamp(now))]
++   for head in eligible:
++    if head['attempts']>=head['ceiling']:
++     failed={**head,'status':'FAILED','history':[*head['history'],{'at':now,'code':'CLAIM_RETRY_EXHAUSTED'}]}
++     self.store.write(s,[('delivery',head['id'],failed)],updates=self.native_status(failed,'FAILED'));return None
++    case=head['case_id'] if head['action']=='WAKE' else 'event:'+head['id']
++    prior=self.store.get('delivery_case',case)
++    if prior and prior['status'] in {'CLAIMED','RUNNING','RECOVERY_REQUIRED'}:
++     if prior['status']!='CLAIMED' or timestamp(prior['lease_until'])>timestamp(now):continue
++    group=[r for r in eligible if r['action']==head['action'] and (r['case_id']==head['case_id'] if head['action']=='WAKE' else r['id']==head['id'])][:limit]
++    ids=[r['id'] for r in group];key=batch_key(ids);token=uuid4().hex;updates=[];states=[]
++    for r in group:
++     if r['attempts']>=r['ceiling']:continue
++     r={**r,'status':'CLAIMED','attempts':r['attempts']+1,'owner':owner,'token':token,'lease_until':later(now,lease_seconds),'batch':key,'history':[*r['history'],{'at':now,'status':'CLAIMED','owner':owner,'attempt':r['attempts']+1}]}
++     states.append(('delivery',r['id'],r));updates+=self.native_status(r,'CLAIMED')
++    if not states:continue
++    ids=[v['id'] for _,_,v in states];key=batch_key(ids)
++    claim={'key':key,'ids':ids,'case_id':head['case_id'],'case_key':case,'action':head['action'],'owner':owner,'token':token,'status':'CLAIMED','lease_until':later(now,lease_seconds)}
++    for _,_,v in states:v['batch']=key
++    self.store.write(s,[*states,('delivery_case',case,claim)],updates=updates);return claim
++  return None
++ def current(self,claim,*,allow_expired=False):
++  c=self.store.get('delivery_case',claim['case_key'])
++  if not c or c['token']!=claim['token'] or c['key']!=claim['key'] or c['status'] not in {'CLAIMED','RUNNING','RECOVERY_REQUIRED'}:raise Conflict('STALE_DELIVERY_CLAIM')
++  if not allow_expired and timestamp(c['lease_until'])<=timestamp(self.clock()):raise Conflict('DELIVERY_LEASE_EXPIRED')
++  return c
++ def renew(self,claim):
++  with self.repo._session() as s:
++   c=self.current(claim);c={**c,'lease_until':later(self.clock(),60)}
++   states=[('delivery_case',c['case_key'],c)]
++   for id in c['ids']:
++    r=self.store.get('delivery',id);states.append(('delivery',id,{**r,'lease_until':c['lease_until']}))
++   self.store.write(s,states)
++ def running(self,claim):
++  with self.repo._session() as s:
++   c=self.current(claim)
++   if c['status']!='CLAIMED':raise Conflict('ALREADY_DISPATCHED')
++   c={**c,'status':'RUNNING'};states=[('delivery_case',c['case_key'],c)];updates=[]
++   for id in c['ids']:
++    r=self.store.get('delivery',id);r={**r,'status':'RUNNING'};states.append(('delivery',id,r));updates+=self.native_status(r,'RUNNING')
++   self.store.write(s,states,updates=updates);return c
++ def finish(self,claim,receipt,*,reconciled=False):
++  with self.repo._session() as s:
++   c=self.current(claim,allow_expired=reconciled)
++   if c['status']!='RUNNING' and not (reconciled and c['status']=='RECOVERY_REQUIRED'):raise Conflict('NO_RUNNING_CONSUMER')
++   states=[('delivery_consumer',c['key'],{'key':c['key'],'ids':c['ids'],'case_id':c['case_id'],'receipt':receipt,'at':self.clock()}),('delivery_case',c['case_key'],{**c,'status':'DONE'})];updates=[]
++   for id in c['ids']:
++    r=self.store.get('delivery',id);r={**r,'status':'DONE','receipt':receipt,'history':[*r['history'],{'at':self.clock(),'status':'DONE','batch':c['key']} ]};states.append(('delivery',id,r));updates+=self.native_status(r,'DONE')
++   self.store.write(s,states,updates=updates)
++ def failed(self,claim,code,*,safe_retry=False):
++  with self.repo._session() as s:
++   c=self.current(claim,allow_expired=True);states=[];updates=[];status='RECOVERY_REQUIRED'
++   for id in c['ids']:
++    r=self.store.get('delivery',id);status=('RETRY' if r['attempts']<r['ceiling'] else 'FAILED') if safe_retry else 'RECOVERY_REQUIRED'
++    r={**r,'status':status,'due_at':later(self.clock(),backoff(r['attempts'])),'history':[*r['history'],{'at':self.clock(),'status':status,'code':code}]};states.append(('delivery',id,r));updates+=self.native_status(r,status)
++   states.append(('delivery_case',c['case_key'],{**c,'status':status}));self.store.write(s,states,updates=updates)
++ def replay(self,id,*,operator,reason,ceiling,authorize=False):
++  if not authorize or not operator or not reason or len(reason)>512 or not 1<=ceiling<=8:raise ValueError('EXPLICIT_REPLAY_REQUIRED')
++  with self.repo._session() as s:
++   r=self.store.get('delivery',id)
++   if not r or r['status']!='FAILED' or not r.get('event') or ceiling<=r['attempts'] or ceiling<r['ceiling']:raise PreconditionFailed('REPLAY_NOT_SAFE_OR_BUDGET_NOT_INCREASED')
++   r={**r,'status':'RETRY','ceiling':ceiling,'due_at':self.clock(),'history':[*r['history'],{'at':self.clock(),'status':'OPERATOR_REPLAY','operator':operator,'reason':reason}]}
++   self.store.write(s,[('delivery',id,r)],updates=self.native_status(r,'RETRY'));return r
++ def request_resume(self,inv,request_id,*,operator,reason,authorize=False):
++  if authorize is not True or not operator or not reason or len(reason)>512:raise PreconditionFailed('EXPLICIT_RESUME_REQUIRED')
++  self.repo.get_node(inv,'Investigation');id='RESUME-B15-'+digest([inv,request_id])[:32]
++  old=self.store.get('delivery',id)
++  if old:return old
++  revision=self.repo._read("MATCH (m:CivicSchemaMigration {id:'0001'}) RETURN m.repo_revision")[0][0]
++  e=Event(id=id,type='AGENT_RESUME_REQUESTED',entity_id=inv,aggregate_revision=revision,occurred_at=self.clock(),payload_schema_version=1,source_kind='SYNTHETIC',idempotency_key=request_id,actor_id=operator,actor_role='SYSTEM',payload={'investigation_id':inv})
++  return self.register(e,'explicit-resume:'+id)
++ def monitor(self,inv,due_at,request_id,*,authorize=False):
++  if authorize is not True or timestamp(due_at)<timestamp(self.clock()):raise ValueError('EXPLICIT_MONITOR_INTENT_REQUIRED')
++  self.repo.get_node(inv,'Investigation');id='MONITOR-B15-'+digest([inv,request_id])[:32]
++  with self.repo._session() as s:
++   old=self.store.get('delivery_monitor',id)
++   value={'id':id,'investigation_id':inv,'due_at':due_at,'request_id':request_id,'status':'PENDING'}
++   if old:
++    if any(old[k]!=value[k] for k in ['investigation_id','due_at','request_id']):raise Conflict('MONITOR_REQUEST_REUSED')
++    return old
++   self.store.write(s,[('delivery_monitor',id,value)]);return value
++ def due(self):
++  for m in self.store.rows('delivery_monitor',100):
++   if m['status']=='PENDING' and timestamp(m['due_at'])<=timestamp(self.clock()):
++    revision=self.repo._read("MATCH (m:CivicSchemaMigration {id:'0001'}) RETURN m.repo_revision")[0][0]
++    e=Event(id=m['id'],type='MONITORING_DUE',entity_id=m['investigation_id'],aggregate_revision=revision,occurred_at=m['due_at'],payload_schema_version=1,source_kind='SYNTHETIC',idempotency_key=m['request_id'],actor_id='civicly-monitor',actor_role='SYSTEM',payload={'investigation_id':m['investigation_id']})
++    self.register(e,'monitor:'+m['id'],extra=[('delivery_monitor',m['id'],{**m,'status':'FIRED'})])
+diff --git a/backend/app/events/sources.py b/backend/app/events/sources.py
+new file mode 100644
+--- /dev/null
++++ b/backend/app/events/sources.py
+@@ -0,0 +1,80 @@
++"""Bounded adapters from committed accepted records, never reconstructed executions."""
++import json
++from app.graph.models import digest
++from app.graph.repository import PreconditionFailed
++from app.services.operations.storage import Storage
++from .models import Event
++
++class Sources:
++ def __init__(self,repo):self.repo=repo;self.store=Storage(repo)
++ def scan(self):
++  # One explicitly activated source graph only. Incomplete journals remain visible
++  # and will be reconsidered when their actual COMMITTED receipt becomes available.
++  native=self.repo._read('MATCH (e:DomainEvent) RETURN properties(e) ORDER BY e.id LIMIT 501')
++  legacy=self.repo._read('MATCH (e:Evidence) WHERE e.evidence_type IN $types RETURN properties(e) ORDER BY e.id LIMIT 501',{'types':['COMPLAINT_INTAKE','GROUPING_CORRECTION','B09_OPERATION']})
++  drafts=self.repo._read('MATCH (d:CivicPlanDraft) RETURN d.id ORDER BY d.id LIMIT 101')
++  if len(native)>500 or len(legacy)>500 or len(drafts)>100:raise PreconditionFailed('SOURCE_SCAN_BOUND_RECONCILIATION_REQUIRED')
++  return [('native',p[0]['id'],p[0]) for p in native]+[('journal',p[0]['id'],p[0]) for p in legacy]+[('draft',p[0],{}) for p in drafts]
++ def case(self,event):
++  entity=self.repo.get_node(event.entity_id)
++  if entity.kind=='Investigation':return entity.id
++  rows=[]
++  queries=[
++   'MATCH (i:Investigation)-[:INVESTIGATES]->(n:CivicEntity {id:$id}) RETURN i.id LIMIT 2',
++   'MATCH (i:Investigation)-[:PRODUCED_PLAN]->(p:ResolutionPlan {id:$id}) RETURN i.id LIMIT 2',
++   'MATCH (i:Investigation)-[:PRODUCED_PLAN]->(:ResolutionPlan)-[:HAS_TASK]->(:ActionTask)<-[:IMPLEMENTS]-(w:WorkOrder {id:$id}) RETURN i.id LIMIT 2']
++  for query in queries:rows.extend(self.repo._read(query,{'id':entity.id}))
++  inv=event.payload.get('investigation_id')
++  if inv:
++   self.repo.get_node(inv,'Investigation');rows.append([inv])
++  ids={r[0] for r in rows}
++  return next(iter(ids)) if len(ids)==1 else None
++ def events(self,kind,id,p):
++  if kind=='native':
++   ref=p.get('payload_ref','')
++   if ref.startswith('operation:'):
++    value=self.store.get('operation',ref.removeprefix('operation:'))
++    rows=[e for e in value['events'] if e['id']==id] if value else []
++   elif ref=='delivery:'+id:
++    old=self.store.get('delivery',id);rows=[old['event']] if old and old['event'] else []
++   else:rows=[]
++   if len(rows)!=1:raise ValueError('NATIVE_EVENT_ENVELOPE_UNAVAILABLE')
++   e=Event.model_validate(rows[0])
++   if (e.type,e.entity_id,e.occurred_at,e.idempotency_key)!=(p['event_type'],p['subject_id'],p['occurred_at'],p['idempotency_key']):raise ValueError('NATIVE_EVENT_BINDING')
++   yield e;return
++  if kind=='draft':
++   from app.services.planning.storage import Store
++   saved=Store(self.repo).get(id)
++   props=self.repo.get_node(id,'ResolutionPlan').properties
++   yield self.derived(id,'GRAPH_EVIDENCE_CHANGED',id,saved['proof']['source_graph_revision']+1,props['created_at'],'SYNTHETIC',saved['proof']['actor_id'],saved['proof']['actor_role'],{'investigation_id':saved['draft']['investigation_id'],'plan_id':id,'operation':'draft'})
++   return
++  raw=json.loads(p['summary'])
++  if raw.get('state')!='COMMITTED':return
++  if p['evidence_type']=='B09_OPERATION':
++   from app.services.evidence.models import Journal
++   from app.services.evidence.service import EvidenceService
++   j=Journal.model_validate(raw);service=EvidenceService(self.repo)
++   _,checked=service.load(id,j.request_hash);receipt=service.readback(checked.receipt)
++   typ={'open':'CASE_OPENED','assess':'HYPOTHESIS_ASSESSED','report_inspection':'INSPECTION_RESULT_RECORDED'}.get(j.command['operation'],'GRAPH_EVIDENCE_CHANGED')
++   inv=j.command.get('investigation_id')
++   if j.command['operation']=='open':inv=receipt.entity_id
++   elif j.command.get('inspection_id'):
++    from app.services.evidence.reader import Reader
++    inv=service.inspection_source(Reader(self.repo,receipt.recorded_at),j.command['inspection_id'])[0]['investigation_id']
++   elif j.command.get('hypothesis_id'):
++    rows=self.repo._read('MATCH (i:Investigation)-[:PROPOSES]->(h:Hypothesis {id:$id}) RETURN i.id LIMIT 2',{'id':j.command['hypothesis_id']});inv=rows[0][0] if len(rows)==1 else None
++   yield self.derived(id,typ,receipt.entity_id,receipt.graph_revision,receipt.recorded_at,'USER',j.actor.id,j.actor.role,{'investigation_id':inv,'operation':j.command['operation'],'source_journal_id':id})
++  else:
++   from app.services.complaints.models import Journal
++   from app.services.complaints.service import ComplaintService
++   j=Journal.model_validate(raw);service=ComplaintService(self.repo);_,checked=service.load(id,j.request_hash,j.operation)
++   if j.operation!='INTAKE':
++    r=checked.receipt
++    yield self.derived(id,'GRAPH_EVIDENCE_CHANGED',r['incident_id'],r['graph_revision'],p['updated_at'],p['source_kind'],j.canonical['reviewer_id'],j.canonical['role'],{'operation':'regroup','source_journal_id':id})
++    return
++   result=service.receipt(checked)
++   for typ,entity in [('COMPLAINT_ACCEPTED',result.complaint_id),('INCIDENT_LINKED',result.incident_id)]:
++    yield self.derived(id,typ,entity,result.graph_revision,result.as_of,p['source_kind'],None,None,{'cluster_id':result.cluster_id,'source_journal_id':id})
++ def derived(self,source,typ,entity,revision,at,origin,actor,role,payload):
++  id='ADAPT-B15-'+digest([source,typ,entity])[:32]
++  return Event(id=id,type=typ,entity_id=entity,aggregate_revision=revision,occurred_at=at,payload_schema_version=1,source_kind=origin,idempotency_key=id,actor_id=actor,actor_role=role,payload=payload)
+diff --git a/backend/app/events/store.py b/backend/app/events/store.py
+new file mode 100644
+--- /dev/null
++++ b/backend/app/events/store.py
+@@ -0,0 +1,26 @@
++"""Delivery companions through existing short fence and an immutable intent marker."""
++import json
++from uuid import uuid4
++from app.active import is_shared_target
++from app.graph.models import digest
++from app.graph.repository import PreconditionFailed
++from app.services.operations.storage import Storage
++from app.services.operations.migration import OperationsMigration
++
++class Store(Storage):
++ def __init__(self,repo,clock):
++  super().__init__(repo);self.clock=clock
++  if not is_shared_target(repo.graph.name) or not OperationsMigration(repo.client,repo.graph.name).status()['ready']:raise PreconditionFailed('DELIVERY_EXACT_PROFILE_AND_0005_REQUIRED')
++ def rows(self,kind,limit=500):
++  rows=self.repo._read('MATCH (s:CivicOperationState {kind:$kind}) RETURN s.id,s.payload_json,s.payload_sha256 ORDER BY s.id LIMIT $limit',{'kind':kind,'limit':limit+1})
++  if len(rows)>limit:raise PreconditionFailed('DELIVERY_SCAN_BOUND_RECONCILIATION_REQUIRED')
++  out=[]
++  for _,raw,sha in rows:
++   value=json.loads(raw)
++   if digest(value)!=sha:raise PreconditionFailed('DELIVERY_INTEGRITY')
++   out.append(value)
++  return out
++ def write(self,session,states,*,nodes=None,updates=None):
++  at=self.clock();id='EV-B15-AUDIT-'+uuid4().hex
++  marker={'id':id,'schema_version':3,'municipality_id':'demo-city','created_at':at,'updated_at':at,'recorded_at':at,'source_kind':'SYNTHETIC','source_record_id':id,'evidence_type':'B15_DELIVERY_AUDIT','reliability':'UNVERIFIED','summary':json.dumps({'transition_hash':digest(states),'keys':[kind+':'+key for kind,key,_ in states]},sort_keys=True)}
++  self.commit(session,id,[('Evidence',marker),*(nodes or [])],updates or [],[],states)
+diff --git a/backend/app/events/worker.py b/backend/app/events/worker.py
+new file mode 100644
+--- /dev/null
++++ b/backend/app/events/worker.py
+@@ -0,0 +1,59 @@
++"""One bounded local polling loop. Unknown wakes are never blindly repeated."""
++import asyncio
++from app.agents.checkpoints import RecoveryRequired
++from app.graph.repository import OutcomeUnknown
++from app.graph.schema import timestamp
++
++class PreDispatchUnavailable(RuntimeError):pass
++class Worker:
++ def __init__(self,delivery,runtime,owner):self.delivery,self.runtime,self.owner=delivery,runtime,owner;self.stopping=False
++ async def reconcile(self,claim):
++  d=self.delivery;receipt=d.store.get('delivery_consumer',claim['key'])
++  if receipt:receipt=receipt['receipt']
++  elif claim['action']=='WAKE':receipt=await self.runtime.probe(claim['case_id'],claim['key'])
++  else:receipt=None
++  if receipt:d.finish(claim,receipt,reconciled=True);return True
++  if claim['status']=='RUNNING':d.failed(claim,'UNCERTAIN_DISPATCH_OPERATOR_RECONCILIATION')
++  return False
++ async def recover_expired(self):
++  for claim in self.delivery.store.rows('delivery_case'):
++   if claim['status']=='RUNNING' and timestamp(claim['lease_until'])<=timestamp(self.delivery.clock()):
++    try:await self.reconcile(claim)
++    except RecoveryRequired:self.delivery.failed(claim,'CHECKPOINT_QUARANTINE_OR_OWNERSHIP_REQUIRES_OPERATOR')
++ async def once(self,*,fault=None,discover=True):
++  d=self.delivery
++  if discover:d.discover();d.due()
++  await self.recover_expired()
++  claim=d.claim(self.owner)
++  if not claim:return None
++  if fault=='after_claim':return claim # Test process may terminate here; no handler started.
++  heartbeat=None
++  async def renew():
++   while True:
++    await asyncio.sleep(10);await asyncio.to_thread(d.renew,claim)
++  try:
++   # Only the explicit known pre-dispatch hook is safe to retry.
++   if fault=='pre_dispatch_unavailable':raise PreDispatchUnavailable()
++   claim=d.running(claim);heartbeat=asyncio.create_task(renew())
++   if claim['action']=='WAKE':
++    receipt=await self.runtime.handle(claim)
++    if not receipt:raise RecoveryRequired('CONSUMER_COMPLETION_NOT_ESTABLISHED')
++   else:receipt={'kind':claim['action'],'classification':'FOLLOWUP_REQUESTED_NO_OBSERVATION_OPPORTUNITY_ESTABLISHED' if claim['action']=='MONITOR' else 'INFORMATIONAL_NO_OPERATIONAL_AUTHORITY','event_ids':claim['ids']}
++   if fault=='after_handler':return claim # Persisted handler checkpoint, no acknowledgment yet.
++   d.finish(claim,receipt);return claim
++  except PreDispatchUnavailable:d.failed(claim,'PRE_DISPATCH_UNAVAILABLE',safe_retry=True)
++  except (RecoveryRequired,OutcomeUnknown):d.failed(claim,'RECOVERY_REQUIRED_NO_AUTOMATIC_RETRY')
++  except Exception:d.failed(claim,'UNCERTAIN_HANDLER_OR_TRANSPORT_NO_AUTOMATIC_RETRY')
++  finally:
++   if heartbeat:
++    heartbeat.cancel()
++    try:await heartbeat
++    except asyncio.CancelledError:pass
++  return claim
++ async def run(self,*,poll_seconds=1,max_batches=100):
++  if not .01<=poll_seconds<=5 or not 1<=max_batches<=100:raise ValueError('WORKER_LOOP_BOUND')
++  for _ in range(max_batches):
++   if self.stopping:break
++   await self.once()
++   try:await asyncio.sleep(poll_seconds)
++   except asyncio.CancelledError:self.stopping=True;break
+diff --git a/backend/app/services/operations/storage.py b/backend/app/services/operations/storage.py
+--- a/backend/app/services/operations/storage.py
++++ b/backend/app/services/operations/storage.py
+@@ -5,7 +5,7 @@
+ from app.graph.repository import Conflict,PreconditionFailed
+ from .models import OpsRecovery
+ NODES={'Approval','WorkOrder','DomainEvent','StatusEvent','InterventionOutcome','Evidence','Finding','Inspection','HypothesisAssessment','Complaint','Incident','ProblemCluster'}
+-UPDATES={'ResolutionPlan','ActionTask','Approval','WorkOrder','Inspection','Hypothesis','Incident','Investigation','ProblemCluster'}
++UPDATES={'DomainEvent','ResolutionPlan','ActionTask','Approval','WorkOrder','Inspection','Hypothesis','Incident','Investigation','ProblemCluster'}
+ EDGES={'INVESTIGATES','IMPLEMENTS','AUTHORIZED_BY','HAS_EVENT','EMITTED_EVENT','RESULTED_IN','INSPECTS','PRODUCED','ESTABLISHES','HAS_ASSESSMENT','SUPPORTED_BY','CONTRADICTED_BY','REPORTS','OCCURRED_AT','AFFECTS','PART_OF'}
+ class Storage:
+  def __init__(self,repo):self.repo=repo
+@@ -24,7 +24,7 @@
+    self.repo.registry.validate_node(kind,props);records[props['id']]=(kind,props)
+   for old,props in updates:
+    if old.kind not in UPDATES or props['id']!=old.id:raise PreconditionFailed('OPERATIONS_UPDATE_SCOPE')
+-   allowed={'status','updated_at','graph_revision','decided_at','decided_by'}
++   allowed={'updated_at','delivery_status','processed_at'} if old.kind=='DomainEvent' else {'status','updated_at','graph_revision','decided_at','decided_by'}
+    allowed |= {'scheduled_at','completed_at'} if old.kind=='Inspection' else {'ended_at'} if old.kind=='Incident' else {'pattern_type','first_seen_at'} if old.kind=='ProblemCluster' else set()
+    if any(props.get(k)!=v for k,v in old.properties.items() if k not in allowed) or set(props)-set(old.properties)-allowed:raise PreconditionFailed('OPERATIONS_IMMUTABLE_FIELDS')
+    if timestamp(props['updated_at'])<timestamp(old.properties['updated_at']):raise PreconditionFailed('OPERATIONS_TIME_ROLLBACK')
+diff --git a/backend/tests/b15_process.py b/backend/tests/b15_process.py
+new file mode 100644
+--- /dev/null
++++ b/backend/tests/b15_process.py
+@@ -0,0 +1,18 @@
++"""Fresh-process delivery proof. Inherits the ordinary provider interlock."""
++import asyncio,json,os,sys
++from app.active import load,active_scope
++from app.config import Settings
++from app.graph.connection import connect
++from app.graph.repository import GraphRepository
++from app.events.service import Delivery
++from app.events.runtime import Runtime
++from app.events.worker import Worker
++path,at,mode=sys.argv[1:4];p=load(path)
++with connect(Settings(_env_file='.env')) as db,active_scope(p):
++ r=GraphRepository(db,p.graph);d=Delivery(r,lambda:at)
++ if mode=='public':print(json.dumps(d.public(after=int(sys.argv[4]),limit=1)))
++ else:
++  w=Worker(d,Runtime(p,path,r,lambda:at),'fresh-process-'+mode)
++  asyncio.run(w.once(fault='after_claim' if mode=='claim-exit' else None))
++  if mode=='claim-exit':os._exit(71)
++  print(json.dumps({'status':'RESTARTED','graph':p.graph}))
+diff --git a/backend/tests/b15_runtime.py b/backend/tests/b15_runtime.py
+new file mode 100644
+--- /dev/null
++++ b/backend/tests/b15_runtime.py
+@@ -0,0 +1,53 @@
++"""Scripted model choices; actual committed recurrence, broker, agent and Saver."""
++import copy
++from app.events.service import Delivery
++from app.events.runtime import Runtime
++from app.events.worker import Worker
++from app.agents.checkpoints import saver
++from app.agents.models import InvestigationState
++from tests.b10_fixtures import ScriptedModel,choose
++
++async def consume(p,r,clock,path,inv,f,planning,before,reopened,report):
++ events=r._read('MATCH (e:DomainEvent {event_type:$type}) RETURN e.id ORDER BY e.id',{'type':'RECURRENCE_DETECTED'})
++ assert len(events)==1;event_id=events[0][0]
++ d=Delivery(r,clock);d.activate(operator='B15-proof',reason='Explicitly admit only the committed recurrence; leave older evidence unchanged',event_ids=[event_id],authorize=True)
++ registered=d.discover();assert registered==[event_id]
++ row=d.store.get('delivery',event_id);assert row['case_id']==inv and row['action']=='WAKE'
++ assert d.discover()==[]
++ models=[]
++ def factory():
++  m=ScriptedModel([choose('READ',{'template':'node','id':reopened['new_incident_id']},'official::query_graph_readonly'),choose('READ',{'template':'node','id':report['entity_id']},'official::query_graph_readonly'),choose()]);models.append(m);return m
++ runtime=Runtime(p,path,r,clock,model_factory=factory);w=Worker(d,runtime,'B15-first-process')
++ def saved():return saver(p).get_tuple({'configurable':{'thread_id':before['thread_id']}})
++ initial=saved();assert initial.checkpoint['channel_values']['data']==before['values']['data']
++ scope='MATCH (i:Investigation {id:$id})-[e:INVESTIGATES]->(n:Incident) RETURN n.id,e.id,n.status ORDER BY n.id'
++ scope_before=r._read(scope,{'id':inv});work_before=r._read('MATCH (w:WorkOrder) RETURN count(w)');outcomes_before=r._read('MATCH (o:InterventionOutcome) RETURN count(o)')
++ claim=await w.once(fault='after_handler');assert claim and d.store.get('delivery',event_id)['status']=='RUNNING'
++ first=saved();state=InvestigationState.model_validate(first.checkpoint['channel_values']['data'])
++ assert state.wakes==1 and state.incident_ids==[reopened['new_incident_id']] and state.tool_calls==2 and not state.refresh_required
++ assert report['entity_id'] in state.evidence and models[0].contexts[0]['state']['refresh_required'] is True
++ assert any(o.get('operation')=='B15_DELIVERY_CONSUMED' and o.get('delivery_key')==claim['key'] for o in state.observations)
++ # A genuinely new worker instance reconciles the exact persisted batch checkpoint.
++ clock.advance(61);replacement=Worker(d,Runtime(p,path,r,clock,model_factory=lambda:(_ for _ in ()).throw(AssertionError('Recovery must not redispatch'))),'B15-replacement')
++ await replacement.recover_expired()
++ done=d.store.get('delivery',event_id);assert done['status']=='DONE' and done['attempts']==1
++ assert saved().checkpoint==first.checkpoint and len(models)==1
++ # A later explicit source update and two compatible requests coalesce into one wake.
++ clock.advance();source='EV-B15-SOURCE-UPDATE'
++ r.create_node('Evidence',{'id':source,'municipality_id':'demo-city','schema_version':3,'created_at':clock(),'updated_at':clock(),'recorded_at':clock(),'source_kind':'SYNTHETIC','source_record_id':'B15:explicit-source-update','evidence_type':'CONTEXT','summary':'Authored additional context, no causal assertion','reliability':'UNVERIFIED'})
++ req=d.request_resume(inv,'B15-repeat-refresh-1',operator='proof',reason='Explicit new context',authorize=True)
++ other=d.request_resume(inv,'B15-repeat-refresh-2',operator='proof',reason='Compatible refresh',authorize=True)
++ assert d.request_resume(inv,'B15-repeat-refresh-1',operator='proof',reason='Replay same request',authorize=True)['id']==req['id']
++ next_model=ScriptedModel([choose('READ',{'template':'node','id':source},'official::query_graph_readonly'),choose()])
++ second_worker=Worker(d,Runtime(p,path,r,clock,model_factory=lambda:next_model),'B15-second-wake')
++ second_claim=await second_worker.once();assert set(second_claim['ids'])=={req['id'],other['id']}
++ second=saved();s=InvestigationState.model_validate(second.checkpoint['channel_values']['data'])
++ assert s.wakes==2 and s.incident_ids==state.incident_ids and s.tool_calls==3 and not s.refresh_required
++ assert next_model.contexts[0]['state']['refresh_required'] is True
++ assert len([o for o in s.observations if o.get('operation')=='RECURRENCE_SCOPE_REFRESH'])==1
++ old=saver(p).get_tuple(before['config']);assert old.checkpoint==initial.checkpoint
++ retained=saver(p).get_tuple(first.config);assert retained.checkpoint==first.checkpoint
++ assert r._read(scope,{'id':inv})==scope_before and r._read('MATCH (w:WorkOrder) RETURN count(w)')==work_before and r._read('MATCH (o:InterventionOutcome) RETURN count(o)')==outcomes_before
++ assert all(d.store.get('delivery',i)['status']=='DONE' for i in second_claim['ids'])
++ assert await second_worker.once() is None
++ return {'mode':'SCRIPTED_MODEL_REAL_FALKORDB_MCP_SAVER','graph':p.graph,'thread_id':before['thread_id'],'native_event_id':event_id,'original_checkpoint_id':before['config']['configurable']['checkpoint_id'],'first_checkpoint_id':first.config['configurable']['checkpoint_id'],'second_checkpoint_id':second.config['configurable']['checkpoint_id'],'checkpoint_before_ack_status':'RUNNING','recovered_status':done['status'],'recovery_redispatches':0,'original_checkpoint_unchanged':True,'first_checkpoint_unchanged':True,'active_incident_ids':s.incident_ids,'wakes':s.wakes,'fresh_mcp_executions':s.executions,'coalesced_ids':second_claim['ids'],'old_ended_incident_and_scope_preserved':True,'work_orders_unchanged':work_before,'outcomes_unchanged':outcomes_before,'provider_calls':0}
+diff --git a/backend/tests/integration/test_event_delivery.py b/backend/tests/integration/test_event_delivery.py
+new file mode 100644
+--- /dev/null
++++ b/backend/tests/integration/test_event_delivery.py
+@@ -0,0 +1,115 @@
++"""B15 real FalkorDB claims/restart/replay; no mock DB completion."""
++import asyncio,json,os,subprocess,sys
++from pathlib import Path
++import pytest
++from app.active import active_scope
++from app.events.service import Delivery,later
++from app.events.runtime import Runtime
++from app.events.worker import Worker
++from app.events.models import Event
++from app.services.planning.storage import PlanMigration
++from app.services.operations.migration import OperationsMigration
++from app.graph.repository import PreconditionFailed,Conflict
++from tests.b10_fixtures import create
++pytestmark=pytest.mark.integration
++
++def setup(db,tmp_path):
++ path=tmp_path/'active.json';p,r,clock,receipt,inv=create(db,path)
++ PlanMigration(db,p.graph).apply();OperationsMigration(db,p.graph).apply()
++ return p,r,clock,path,inv
++
++def proof(name,value):Path('docs/evidence/B15-'+name+'.json').write_text(json.dumps(value,indent=2)+'\n')
++def child(path,clock,mode,*args):
++ env={**os.environ,'PYTHONPATH':str(Path('backend/test_guards').resolve())+os.pathsep+str(Path('backend').resolve())}
++ return subprocess.run([sys.executable,'-m','tests.b15_process',str(path),clock(),mode,*map(str,args)],env=env,capture_output=True,text=True,timeout=45)
++
++def wake(d,inv,id):
++ # Authored operator resume request, not fabricated environmental evidence.
++ return d.request_resume(inv,id,operator='B15-test-operator',reason='Explicit deterministic verification',authorize=True)
++
++def test_committed_monitor_claim_process_death_restart_public_cursor(db,tmp_path):
++ p,r,clock,path,inv=setup(db,tmp_path)
++ with active_scope(p):
++  d=Delivery(r,clock)
++  with pytest.raises(PreconditionFailed):d.discover()
++  d.activate(operator='test',reason='Only this fresh profile',authorize=True)
++  m=d.monitor(inv,later(clock(),1),'monitor-1',authorize=True);clock.advance();d.due()
++  assert d.store.get('delivery_monitor',m['id'])['status']=='FIRED'
++  assert d.store.get('delivery',m['id'])['status']=='PENDING'
++  crashed=child(path,clock,'claim-exit');assert crashed.returncode==71,crashed.stderr[-600:]
++  claimed=d.store.get('delivery',m['id']);assert claimed['status']=='CLAIMED' and claimed['attempts']==1
++  clock.advance(61);restarted=child(path,clock,'restart');assert restarted.returncode==0,restarted.stderr[-600:]
++  done=d.store.get('delivery',m['id']);assert done['status']=='DONE' and done['attempts']==2
++  assert 'NO_OBSERVATION_OPPORTUNITY' in done['receipt']['classification']
++  assert r.get_node(inv).properties['status']!='COMPLETED'
++  assert d.discover()==[] and asyncio.run(Worker(d,Runtime(p,path,r,clock),'duplicate').once()) is None
++  assert r._read('MATCH (e:DomainEvent {id:$id}) RETURN count(e)',{'id':m['id']})==[[1]]
++  page=child(path,clock,'public',0);assert page.returncode==0,page.stderr[-600:]
++  page=json.loads(page.stdout);assert len(page['events'])==1 and page['next_cursor']==1
++  after=child(path,clock,'public',1);assert after.returncode==0,after.stderr[-600:]
++  assert json.loads(after.stdout)['events']==[]
++  assert d.public(limit=1)==page
++  for kw in [{'after':-1},{'limit':101},{'after':True}]:
++   with pytest.raises(ValueError):d.public(**kw)
++  proof('process-restart',{'graph':p.graph,'process_exit':71,'initial_status':claimed['status'],'final_status':done['status'],'attempts':done['attempts'],'receipt':done['receipt'],'public':page,'fresh_process_cursor_stable':True,'duplicate_domain_events':0,'invented_observations':0})
++
++def test_claim_case_fencing_retries_invalid_and_uncertain_dispatch(db,tmp_path):
++ p,r,clock,path,inv=setup(db,tmp_path)
++ with active_scope(p):
++  d=Delivery(r,clock);d.activate(operator='test',reason='Explicit fresh graph',authorize=True)
++  first=wake(d,inv,'first');second=wake(d,inv,'second')
++  a=d.claim('owner-1',limit=1);assert a and d.claim('owner-2',limit=1) is None
++  before=d.store.get('delivery',first['id']);clock.advance(61)
++  b=d.claim('owner-2',limit=1);assert b and b['token']!=a['token']
++  with pytest.raises(Conflict):d.running(a)
++  d.running(b);clock.advance(61)
++  # No checkpoint proves consumption: never blindly resume this uncertain case.
++  w=Worker(d,Runtime(p,path,r,clock),'owner-3');asyncio.run(w.recover_expired())
++  assert d.store.get('delivery',first['id'])['status']=='RECOVERY_REQUIRED'
++  assert d.claim('owner-3') is None # Second event cannot bypass case recovery.
++  with pytest.raises(PreconditionFailed):d.replay(first['id'],operator='test',reason='Not safe',ceiling=4,authorize=True)
++  # Independent informational monitoring event exercises only known pre-dispatch retry.
++  m=d.monitor(inv,clock(),'retry-monitor',authorize=True);d.due()
++  for attempt in range(1,4):
++   asyncio.run(w.once(fault='pre_dispatch_unavailable',discover=False))
++   row=d.store.get('delivery',m['id']);assert row['attempts']==attempt
++   clock.advance(10)
++  assert row['status']=='FAILED'
++  with pytest.raises(PreconditionFailed):d.replay(m['id'],operator='test',reason='No budget increase',ceiling=3,authorize=True)
++  replay=d.replay(m['id'],operator='test',reason='Known pre-dispatch outage resolved',ceiling=4,authorize=True)
++  assert replay['attempts']==3 and any(h.get('status')=='OPERATOR_REPLAY' for h in replay['history'])
++  asyncio.run(w.once(discover=False));done=d.store.get('delivery',m['id']);assert done['status']=='DONE' and done['attempts']==4
++  # Actual malformed committed native source remains inspectable, not silently dropped.
++  from tests.schema_examples import common
++  r.create_node('DomainEvent',{**common('BAD-B15'), 'created_at':clock(),'updated_at':clock(),'event_type':'GRAPH_EVIDENCE_CHANGED','subject_id':inv,'occurred_at':clock(),'delivery_status':'PENDING','idempotency_key':'BAD-B15','payload_ref':'missing:committed-envelope'})
++  d.discover();bad=d.store.get('delivery','BAD-B15');assert bad['status']=='FAILED' and bad['event'] is None
++  with pytest.raises(PreconditionFailed):d.replay('BAD-B15',operator='test',reason='Cannot replay invalid source',ceiling=4,authorize=True)
++  assert all(e['id']!='BAD-B15' for e in d.public()['events'])
++  proof('claims-failures',{'graph':p.graph,'stale_owner_denied':True,'second_case_claim_denied':True,'expired_unproven_dispatch':d.store.get('delivery',first['id'])['status'],'attempts':done['attempts'],'retry_history':done['history'],'invalid':bad,'automatic_recovery_replay_denied':True})
++
++def test_real_racing_claims_and_existing_quarantine(db,tmp_path):
++ from concurrent.futures import ThreadPoolExecutor
++ from threading import Barrier
++ from app.graph.repository import GraphRepository
++ from app.agents.checkpoints import ownership,RecoveryRequired,saver
++ from app.graph.models import digest
++ p,r,clock,path,inv=setup(db,tmp_path)
++ with active_scope(p):
++  d=Delivery(r,clock);d.activate(operator='proof',reason='Exact profile',authorize=True)
++  a=wake(d,inv,'race-a');b=wake(d,inv,'race-b');barrier=Barrier(2)
++  def compete(owner):
++   with active_scope(p):
++    separate=Delivery(GraphRepository(db,p.graph),clock);barrier.wait();return separate.claim(owner,limit=1)
++  with ThreadPoolExecutor(max_workers=2) as pool:claims=list(pool.map(compete,['race-1','race-2']))
++  assert sum(c is not None for c in claims)==1
++  runtime=Runtime(p,path,r,clock);thread=runtime.thread(inv);key='civicly:b10:'+p.graph+':'+digest(thread)+':quarantine'
++  async def quarantine():
++   with pytest.raises(RecoveryRequired):
++    async with ownership(db,p,thread):raise RecoveryRequired('Authored uncertain checkpoint fault; no repair')
++  asyncio.run(quarantine());original=db.connection.get(key);assert original
++  clock.advance(61);asyncio.run(Worker(d,runtime,'replacement').once(discover=False))
++  active=[d.store.get('delivery',i) for i in [a['id'],b['id']]]
++  assert all(row['status']=='RECOVERY_REQUIRED' for row in active)
++  assert db.connection.get(key)==original and saver(p).get_tuple({'configurable':{'thread_id':thread}}) is None
++  assert r._read('MATCH (d:AgentDecision) RETURN count(d)')==[[0]]
++  proof('quarantine-race',{'graph':p.graph,'simultaneous_claimants':2,'successful_claims':1,'states':[x['status'] for x in active],'quarantine_preserved':True,'checkpoint_created':False,'agent_decisions':0,'operator_reconciliation_required':True})
+diff --git a/backend/tests/integration/test_event_runtime.py b/backend/tests/integration/test_event_runtime.py
+new file mode 100644
+--- /dev/null
++++ b/backend/tests/integration/test_event_runtime.py
+@@ -0,0 +1,12 @@
++"""Reuse one accepted B14 fixture; extend only the recurrence resume for B15."""
++import pytest
++from tests.integration.test_memory_graphrag import memory
++pytestmark=pytest.mark.integration
++
++def test_event_recurrence_actual_mcp_saver(db,tmp_path,memory,monkeypatch):
++ from tests import b14r_runtime,b15_runtime
++ from tests.integration.test_execution_runtime import test_actual_three_issue_completion_verification_and_water_recurrence
++ monkeypatch.setenv('CIVICLY_B14R_CHECKPOINT_PROOF','1')
++ monkeypatch.setenv('CIVICLY_OPERATIONS_EVIDENCE_PREFIX','B15')
++ monkeypatch.setattr(b14r_runtime,'resume',b15_runtime.consume)
++ test_actual_three_issue_completion_verification_and_water_recurrence(db,tmp_path,memory,'WATERLOGGING')
+diff --git a/backend/tests/unit/test_events.py b/backend/tests/unit/test_events.py
+new file mode 100644
+--- /dev/null
++++ b/backend/tests/unit/test_events.py
+@@ -0,0 +1,61 @@
++"""Pure event/routing/backoff/redaction tests, no simulated DB success."""
++import pytest
++from pydantic import ValidationError
++from app.events.models import Event,route,public,backoff,batch_key
++
++def event(**kw):return Event.model_validate({'id':'E','type':'RECURRENCE_DETECTED','entity_id':'INV','aggregate_revision':3,'occurred_at':'2026-10-18T00:00:00Z','payload_schema_version':1,'source_kind':'SYNTHETIC','idempotency_key':'R',**kw})
++@pytest.mark.parametrize('changes',[{'type':'UNKNOWN'},{'aggregate_revision':-1},{'occurred_at':'tomorrow'},{'payload_schema_version':2},{'password':'private'},{'type':'INSPECTION_RESULT_RECORDED'}])
++def test_event_contract_denials(changes):
++ with pytest.raises((ValueError,ValidationError)):event(**changes)
++@pytest.mark.parametrize('typ,case,action',[('RECURRENCE_DETECTED','INV','WAKE'),('CASE_OPENED',None,'INFO'),('PLAN_SUBMITTED','INV','INFO'),('PLAN_DRAFTED','INV','INFO'),('AGENT_TOOL_EXECUTED','INV','INFO'),('WORK_ORDER_STATUS_CHANGED','INV','INFO'),('MONITORING_DUE','INV','MONITOR')])
++def test_routes(typ,case,action):
++ value=event(type=typ,actor_id='OP',actor_role='ANALYST');assert route(value,case)[0]==action
++ assert route(value.model_copy(update={'actor_id':'civicly-b10-analyst'}),case)[0]=='INFO'
++def test_backoff_bounds_and_coalescing_identity():
++ assert [backoff(i) for i in range(1,9)]==[1,2,4,8,16,32,60,60]
++ for i in [0,9]:
++  with pytest.raises(ValueError):backoff(i)
++ assert batch_key(['A','B'])==batch_key(['B','A']) and batch_key(['A'])!=batch_key(['A','B'])
++def test_public_payload_redaction_and_distinct_cursor():
++ e=event(payload={'plan_id':'P','source_text':'untrusted private source','password':'secret','provider_body':{},'reasoning':'private'})
++ p=public(e,'INV',9,'native:E');assert p['payload']=={'plan_id':'P'} and p['cursor']==9 and p['id']=='E'
++ assert not {'actor_id','idempotency_key','source_text','reasoning'}&set(p)
++
++def test_safe_stop_finishes_inflight_before_next_poll():
++ import asyncio
++ from app.events.worker import Worker
++ async def run():
++  w=Worker(None,None,'unit');calls=[]
++  async def once():
++   calls.append('handler-start');w.stopping=True;await asyncio.sleep(0);calls.append('handler-finished')
++  w.once=once
++  await w.run(poll_seconds=.01,max_batches=3)
++  assert calls==['handler-start','handler-finished']
++  for kw in [{'max_batches':101},{'poll_seconds':0}]:
++   with pytest.raises(ValueError):await w.run(**kw)
++ asyncio.run(run())
++
++@pytest.mark.parametrize('pause,consumed',[('RECOVERY_REQUIRED',False),('PLAN_OPERATOR_RECOVERY_REQUIRED',False),('DEPENDENCY_UNAVAILABLE',False),('HUMAN_REVIEW',True)])
++def test_only_safe_checkpoint_pause_can_record_consumption(pause,consumed):
++ import asyncio
++ from types import SimpleNamespace
++ from app.agents.runtime import InvestigationAgent
++ agent=object.__new__(InvestigationAgent)
++ state=SimpleNamespace(selection=SimpleNamespace(action='PAUSE',pause_reason=pause),pause_reason=pause,observations=[{'operation':'B15_DELIVERY_STARTED','host_generated':True,'delivery_key':batch_key(['E'])}])
++ agent.decode=lambda channel:channel;agent.output=lambda s,node:s
++ result=asyncio.run(agent.coordinator(state))
++ assert any(o.get('operation')=='B15_DELIVERY_CONSUMED' for o in result.observations)==consumed
++
++def test_probe_corrupt_checkpoint_is_sanitized_recovery(monkeypatch):
++ import asyncio
++ from contextlib import asynccontextmanager
++ from app.events import runtime
++ from app.agents.checkpoints import RecoveryRequired
++ @asynccontextmanager
++ async def owned(*args):yield lambda:None
++ monkeypatch.setattr(runtime,'ownership',owned)
++ monkeypatch.setattr(runtime,'saver',lambda profile:object())
++ r=runtime.Runtime(None,None,type('Repo',(),{'client':None})(),lambda:'2026-10-18T00:00:00Z')
++ r.thread=lambda inv:'thread'
++ with pytest.raises(RecoveryRequired,match='^CONSUMER_CHECKPOINT_VERIFICATION_FAILED$'):
++  asyncio.run(r.probe('INV',batch_key(['E'])))
+diff --git a/blockers.md b/blockers.md
+--- a/blockers.md
++++ b/blockers.md
+@@ -1,4 +1,7 @@
+ # blockers.md — Current blockers and verification spikes
++
++> **CURRENT B15 — TECHNICALLY PASS, HUMAN REVIEW PENDING.** B14/R/R2 accepted.26distinct focusedPASS(21unit/5real FalkorDB integrations),0unresolvedFAIL/0SKIP; both finalSPECvalidatorsPASS after final source change. Durable source adapters/explicit cutover, fenced case claims, bounded deterministic worker, checkpoint-before-ack reconciliation, persisted monitoring/public cursor exercised; actual process restart, simultaneous claims, quarantine and two real MCP/Saver recurrence resumes.7retained pytest/child guard proofs0external Gemini/countTokens; B10 full genuine acceptance OPEN/PARTIAL. No B16/API/frontend/live or backend-completion claim. This summary takes precedence over all historical status headers. See docs/evidence/B15-RESULTS.md.
++
+ 
+ > **CURRENT B14-R — TECHNICALLY PASS, HUMAN REVIEW PENDING.** Corrected waste B14-2 anchors24hours to latest actual pickup; B14-1 outcomes/implementation preserved. Recurrence includes original investigation/new incident sourced link and validated explicit same-thread active-episode refresh; old checkpoints retained, actual MCP/Saver reads exercised.14distinctPASS(11unit/3real),0unresolvedFAIL/0SKIP; both SPEC validatorsPASS once;5pytest/child guards0provider. B10 full genuine acceptance OPEN/PARTIAL. All18requirements binding; no B15/live/full-suite/lifecycle. This summary supersedes historical headers; docs/evidence/B14R-RESULTS.md.
+ 
+@@ -566,3 +569,9 @@
+ CURRENT B14-R2 focused correction technicallyPASS; no unresolved failure. Invalid proof/new scope still fails closed through existing recovery/quarantine; previously failed graphs/quarantines not repaired or cleared. Three-incident bound and B14-R policy/provenance limits unchanged. B10 full genuine acceptance OPEN/PARTIAL; B15 unauthorized. No new live calls, storage, event delivery or backend-complete claim.
+ 
+ Review docs/evidence/B14R2-RESULTS.md, B14R2-COMMANDS.md, B14R2-FILES.md and B14R2-changes.patch. STOP for review.
++
++## B15 remaining limitations and review boundary — 2026-10-18
++
++No unresolved B15 acceptance failure in focused exercised paths. TechnicalPASS waits human review. At-least-once only; source/Saver no cross-graph transaction. Original/exercised quarantine and uncertain dispatch require explicit operator integrity reconciliation; no reset, retry/redraft or automatic clearance. Retained B15 fault graph quarantines are intentional proof, not graphs to repair for a green test. Replay only known FAILED valid events with increased finite budget; missing proof remains blocked. A failed checkpoint cannot promise new feedback persistence.
++
++Only exact existing private ActiveProfile graphs are supported (accepted B10 demo authorization model); canonical source promotion is not implicit. Activation is mandatory/cutover-based; no historical/all-proof auto-processing. Finite scan caps500events/500journals/100drafts/100monitor intents, <=4batch/100polls, repository audit10000entries. Exceeding limits visibly requires reviewed bounded reconciliation/capacity work; no deletion or untested bulk shortcut. Missing observation opportunity remains unresolved. No municipal automation/human authority, HTTP/SSE/API/frontend, paid authorization or full genuine AI acceptance. B10 full Gemini gate remains OPEN/PARTIAL; all18requirements and remaining historical DEC-004 limitations remain. Frozen legacy55numeric defects retained as history; accepted B04 conversion unchanged. Proposed next B16 typed API only after review; no implementation now.
+diff --git a/contracts/event_delivery.json b/contracts/event_delivery.json
+new file mode 100644
+--- /dev/null
++++ b/contracts/event_delivery.json
+@@ -0,0 +1,375 @@
++{
++  "schema_version": 1,
++  "microtask": "B15",
++  "municipality_scope": {
++    "field": "municipality_id",
++    "value": "demo-city"
++  },
++  "delivery_semantics": "AT_LEAST_ONCE_IDEMPOTENT_CONSUMERS_NO_CROSS_GRAPH_ACID",
++  "source_authorization": "Exact private ActiveProfile plus explicit source-graph activation; no graph enumeration",
++  "cutover": "Current source revision with optional at-most20 explicitly selected original event IDs; no automatic old proof graph admission",
++  "event_schema": {
++    "additionalProperties": false,
++    "properties": {
++      "id": {
++        "maxLength": 200,
++        "minLength": 1,
++        "title": "Id",
++        "type": "string"
++      },
++      "type": {
++        "maxLength": 200,
++        "minLength": 1,
++        "title": "Type",
++        "type": "string"
++      },
++      "entity_id": {
++        "maxLength": 200,
++        "minLength": 1,
++        "title": "Entity Id",
++        "type": "string"
++      },
++      "aggregate_revision": {
++        "minimum": 0,
++        "title": "Aggregate Revision",
++        "type": "integer"
++      },
++      "occurred_at": {
++        "title": "Occurred At",
++        "type": "string"
++      },
++      "payload_schema_version": {
++        "const": 1,
++        "title": "Payload Schema Version",
++        "type": "integer"
++      },
++      "source_kind": {
++        "enum": [
++          "SYNTHETIC",
++          "PUBLIC",
++          "MUNICIPAL",
++          "USER",
++          "AGENT"
++        ],
++        "title": "Source Kind",
++        "type": "string"
++      },
++      "idempotency_key": {
++        "maxLength": 200,
++        "minLength": 1,
++        "title": "Idempotency Key",
++        "type": "string"
++      },
++      "actor_id": {
++        "anyOf": [
++          {
++            "maxLength": 200,
++            "minLength": 1,
++            "type": "string"
++          },
++          {
++            "type": "null"
++          }
++        ],
++        "default": null,
++        "title": "Actor Id"
++      },
++      "actor_role": {
++        "anyOf": [
++          {
++            "enum": [
++              "ANALYST",
++              "DEPARTMENT_LEAD",
++              "APPROVER",
++              "ADMIN",
++              "SYSTEM"
++            ],
++            "type": "string"
++          },
++          {
++            "type": "null"
++          }
++        ],
++        "default": null,
++        "title": "Actor Role"
++      },
++      "payload": {
++        "additionalProperties": true,
++        "title": "Payload",
++        "type": "object"
++      }
++    },
++    "required": [
++      "id",
++      "type",
++      "entity_id",
++      "aggregate_revision",
++      "occurred_at",
++      "payload_schema_version",
++      "source_kind",
++      "idempotency_key"
++    ],
++    "title": "Event",
++    "type": "object"
++  },
++  "routing_defaults": {
++    "COMPLAINT_ACCEPTED": {
++      "bound_case": [
++        "WAKE",
++        "BOUNDED_INVESTIGATION_WAKE"
++      ],
++      "unbound_case": [
++        "INFO",
++        "EXPLICIT_CASE_BINDING_REQUIRED"
++      ]
++    },
++    "INCIDENT_LINKED": {
++      "bound_case": [
++        "WAKE",
++        "BOUNDED_INVESTIGATION_WAKE"
++      ],
++      "unbound_case": [
++        "INFO",
++        "EXPLICIT_CASE_BINDING_REQUIRED"
++      ]
++    },
++    "CASE_OPENED": {
++      "bound_case": [
++        "WAKE",
++        "BOUNDED_INVESTIGATION_WAKE"
++      ],
++      "unbound_case": [
++        "INFO",
++        "EXPLICIT_CASE_BINDING_REQUIRED"
++      ]
++    },
++    "GRAPH_EVIDENCE_CHANGED": {
++      "bound_case": [
++        "WAKE",
++        "BOUNDED_INVESTIGATION_WAKE"
++      ],
++      "unbound_case": [
++        "INFO",
++        "EXPLICIT_CASE_BINDING_REQUIRED"
++      ]
++    },
++    "INSPECTION_RESULT_RECORDED": {
++      "bound_case": [
++        "WAKE",
++        "BOUNDED_INVESTIGATION_WAKE"
++      ],
++      "unbound_case": [
++        "INFO",
++        "EXPLICIT_CASE_BINDING_REQUIRED"
++      ]
++    },
++    "HYPOTHESIS_ASSESSED": {
++      "bound_case": [
++        "INFO",
++        "HUMAN_OR_INFORMATIONAL_ONLY"
++      ],
++      "unbound_case": [
++        "INFO",
++        "HUMAN_OR_INFORMATIONAL_ONLY"
++      ]
++    },
++    "AGENT_TOOL_EXECUTED": {
++      "bound_case": [
++        "INFO",
++        "HUMAN_OR_INFORMATIONAL_ONLY"
++      ],
++      "unbound_case": [
++        "INFO",
++        "HUMAN_OR_INFORMATIONAL_ONLY"
++      ]
++    },
++    "AGENT_DECISION_RECORDED": {
++      "bound_case": [
++        "INFO",
++        "HUMAN_OR_INFORMATIONAL_ONLY"
++      ],
++      "unbound_case": [
++        "INFO",
++        "HUMAN_OR_INFORMATIONAL_ONLY"
++      ]
++    },
++    "PLAN_DRAFTED": {
++      "bound_case": [
++        "INFO",
++        "HUMAN_OR_INFORMATIONAL_ONLY"
++      ],
++      "unbound_case": [
++        "INFO",
++        "HUMAN_OR_INFORMATIONAL_ONLY"
++      ]
++    },
++    "PLAN_SUBMITTED": {
++      "bound_case": [
++        "INFO",
++        "HUMAN_OR_INFORMATIONAL_ONLY"
++      ],
++      "unbound_case": [
++        "INFO",
++        "HUMAN_OR_INFORMATIONAL_ONLY"
++      ]
++    },
++    "PLAN_APPROVED": {
++      "bound_case": [
++        "WAKE",
++        "BOUNDED_INVESTIGATION_WAKE"
++      ],
++      "unbound_case": [
++        "INFO",
++        "EXPLICIT_CASE_BINDING_REQUIRED"
++      ]
++    },
++    "PLAN_REJECTED": {
++      "bound_case": [
++        "WAKE",
++        "BOUNDED_INVESTIGATION_WAKE"
++      ],
++      "unbound_case": [
++        "INFO",
++        "EXPLICIT_CASE_BINDING_REQUIRED"
++      ]
++    },
++    "WORK_ORDER_CREATED": {
++      "bound_case": [
++        "INFO",
++        "HUMAN_OR_INFORMATIONAL_ONLY"
++      ],
++      "unbound_case": [
++        "INFO",
++        "HUMAN_OR_INFORMATIONAL_ONLY"
++      ]
++    },
++    "WORK_ORDER_STATUS_CHANGED": {
++      "bound_case": [
++        "INFO",
++        "HUMAN_OR_INFORMATIONAL_ONLY"
++      ],
++      "unbound_case": [
++        "INFO",
++        "HUMAN_OR_INFORMATIONAL_ONLY"
++      ]
++    },
++    "INTERVENTION_OUTCOME_RECORDED": {
++      "bound_case": [
++        "WAKE",
++        "BOUNDED_INVESTIGATION_WAKE"
++      ],
++      "unbound_case": [
++        "INFO",
++        "EXPLICIT_CASE_BINDING_REQUIRED"
++      ]
++    },
++    "MONITORING_DUE": {
++      "bound_case": [
++        "MONITOR",
++        "FOLLOWUP_REQUESTED_NO_OBSERVATION_INVENTED"
++      ],
++      "unbound_case": [
++        "MONITOR",
++        "FOLLOWUP_REQUESTED_NO_OBSERVATION_INVENTED"
++      ]
++    },
++    "RECURRENCE_DETECTED": {
++      "bound_case": [
++        "WAKE",
++        "BOUNDED_INVESTIGATION_WAKE"
++      ],
++      "unbound_case": [
++        "INFO",
++        "EXPLICIT_CASE_BINDING_REQUIRED"
++      ]
++    },
++    "AGENT_RESUME_REQUESTED": {
++      "bound_case": [
++        "WAKE",
++        "BOUNDED_INVESTIGATION_WAKE"
++      ],
++      "unbound_case": [
++        "INFO",
++        "EXPLICIT_CASE_BINDING_REQUIRED"
++      ]
++    },
++    "SOURCE_DOCUMENT_UPDATED": {
++      "bound_case": [
++        "INFO",
++        "HUMAN_OR_INFORMATIONAL_ONLY"
++      ],
++      "unbound_case": [
++        "INFO",
++        "HUMAN_OR_INFORMATIONAL_ONLY"
++      ]
++    },
++    "EVENT_DELIVERY_FAILED": {
++      "bound_case": [
++        "INFO",
++        "HUMAN_OR_INFORMATIONAL_ONLY"
++      ],
++      "unbound_case": [
++        "INFO",
++        "HUMAN_OR_INFORMATIONAL_ONLY"
++      ]
++    }
++  },
++  "overrides": {
++    "agent_origin": "INFO SELF_GENERATED_ANALYTICAL",
++    "draft_propose_pending_inspection_transition_regroup": "INFO DRAFT_OR_PENDING_INSPECTION_OR_REBIND_REQUIRED"
++  },
++  "bounds": {
++    "batch": 4,
++    "default_attempt_ceiling": 3,
++    "maximum_attempt_ceiling": 8,
++    "lease_seconds": 60,
++    "renew_seconds": 10,
++    "worker_batches": 100,
++    "public_limit": 100,
++    "delivery_scan": 500,
++    "native_source_scan": 500,
++    "legacy_source_scan": 500,
++    "draft_scan": 100,
++    "monitor_scan": 100
++  },
++  "states": [
++    "PENDING",
++    "CLAIMED",
++    "RUNNING",
++    "RETRY",
++    "DONE",
++    "FAILED",
++    "RECOVERY_REQUIRED"
++  ],
++  "retry": "Known pre-dispatch only; attempts never reset; unknown dispatch requires reconciliation",
++  "completion": "Durable validated receipt or exact batch marker in non-recovery public Saver checkpoint under existing ownership; no redispatch to recover",
++  "public_projection": [
++    "cursor",
++    "id",
++    "event_type",
++    "entity_id",
++    "investigation_id",
++    "revision",
++    "occurred_at",
++    "source_kind",
++    "simulation_mode",
++    "payload_schema_version",
++    "payload",
++    "source_ref"
++  ],
++  "public_payload_allowlist": [
++    "plan_id",
++    "plan_version",
++    "approval_id",
++    "task_id",
++    "new_incident_id",
++    "cluster_id",
++    "prior_outcome_id",
++    "investigates_relationship_id"
++  ],
++  "public_cursor": "Source-local monotonic registration sequence, independent of event ID, occurred_at and attempt number",
++  "storage": "Existing immutable0005 CivicOperationState plus immutable B15_DELIVERY_AUDIT intent subject; DomainEvent status mirror",
++  "no_live_provider": true,
++  "no_http_sse": true,
++  "no_automatic_quarantine_clearance": true
++}
+diff --git a/decision.md b/decision.md
+--- a/decision.md
++++ b/decision.md
+@@ -1441,3 +1441,18 @@
+ DEC-058 implemented: recognize history only through retained host refresh proof, live scoped link/journal hash/B08 receipt hash+related IDs, issue/cluster and ended-before-adopted temporal checks. Subtract proven history from genuinely new additions; original new-episode validation retained. Unknown/ENDED additions not exempt. No state/storage/contract expansion. Real two-resume path and malformed/history-proof units PASS.
+ 
+ Review docs/evidence/B14R2-RESULTS.md, B14R2-COMMANDS.md, B14R2-FILES.md and B14R2-changes.patch. STOP for review.
++
++## DEC-059 — B15 bounded durable delivery and explicit activation (before code)
++R03/R07/R09/R12/R13/R15/R16/R17; all18 binding; B14/R/R2 human accepted, B10 full genuine acceptance OPEN/PARTIAL. Reuse0005 unique/hashed CivicOperationState companion with delivery/consumer/activation/monitor keys, plus immutable attributed B15 audit Evidence marker in every fenced transition (marker is repository intent subject; companion-only uncertain writes must not be mistaken for unchanged). No new migration/dependency/storage engine. Native DomainEvent statuses mirror authoritative delivery companion; operation payload identity/provenance stays unchanged. Legacy B08/B09 committed journals and B12 draft receipts become explicitly derived facts with deterministic new adapter IDs, never claims of a previously emitted event. Native B13/B14 identities preserved. Validate all envelopes/source bindings; invalid rows terminal/inspectable, never raw payload public.
++
++Only explicit private exact ActiveProfile activation with operator/reason and current-revision cutover by default; optional bounded explicit historical event selection. Never enumerate/process retained proof graphs. Bounded source/delivery scans fail closed rather than silently truncate. Public event cursor is per-source monotonic registration sequence, distinct from domain identity and attempt number; redacted allowlisted projection persisted at registration for replay, no HTTP/SSE routes.
++
++Claims + case serialization ledger use existing short repository fence, durable owner/expiry/attempt/CAS and immutable audit. No writer lock during dispatch. CLAIMED expiry before RUNNING can reclaim; RUNNING expiry is uncertain unless durable consumer receipt or host delivery-key checkpoint marker proves completion. Existing agent ownership/lease/quarantine remains authoritative and never cleared. Host delivery marker commits at safe paused checkpoint; coalesced event set digest binds one bounded wake. Crash after checkpoint before outbox ack reconciles from public Saver marker, not a guessed no-op. Unknown wake quarantines/recovery; no blind model retry. Known pre-dispatch unavailable errors alone retry finite exponential backoff; explicit replay increases bounded ceiling without resetting attempts/history. Deterministic READ→PAUSE local worker only, no reused live permit or human operational authority.
++
++Monitoring intent uses controlled due time, deterministic FOLLOWUP_REQUESTED/missing-opportunity receipt; never fabricates observations/resolution. Informational classifications are durable with reason; self-generated analytical events do not trigger wake loops. One local worker, finite batches/coalescing and safe bounded stop/restart; B16/API/frontend/paid calls excluded. Minimal meaningful tests include actual process restart, claims/concurrency, committed discovery/ACK-loss/unknown recovery, actual MCP/Saver event/recurrence resumes, public cursor fresh-process read, invalid/exhausted/replay, unit validation/redaction/routing/backoff; both validators once final.
++
++## B15 — DEC-059 implementation and verification, 2026-10-18
++
++TechnicallyPASS, human review pending. Existing0005 companions chosen over new queue/migration; fresh immutable audit subject avoids ambiguous companion-write misclassification. Exact private profile + immutable activation cutover, optional20historical IDs, no all-graph scan. Original native events preserved; legacy committed facts carry new deterministic adapter IDs, not invented original event history. Short fenced/CAS source writes, <=4compatible wake coalescing, separate existing agent ownership/Saver, host exact-batch completion proof before durable receipt. Unknown wakes remain recovery-required/quarantined, no automatic retry or clearance; only proven pre-dispatch failures retry. Default authored READ→PAUSE, no live permit. Monitoring means requested follow-up/missing opportunity, not invented observations. Public registration cursor separate from event identity/attempts.
++
++Actual26distinctPASS(21unit/5real), final both validatorsPASS; earlier localhost sandbox denial and two fixture-only assertion errors preserved in B15 logs/commands. Seven retained guard proofs0provider; no dependency/migration/registry/MCP/business policy change except narrow DomainEvent delivery-status update permission and optional host runtime markers. Newest source guard normalizes malformed Saver read to sanitized recovery inside ownership; directly affected real path rechecked1PASS27.55s. Existing request/plan/data/quarantines remain; accepted B10 full genuine Gemini gate OPEN/PARTIAL. Exact implementation, tradeoffs/limits, imports/consistency/recovery: backend/EVENTS.md; inventory/patch/evidence: docs/evidence/B15-*. STOP before B16.
+diff --git a/flow.md b/flow.md
+--- a/flow.md
++++ b/flow.md
+@@ -943,3 +943,11 @@
+ Actual flow: AwaitDependency detects source revision change → recurrence.refresh revalidates persisted RECURRENCE_SCOPE_REFRESH against current INVESTIGATES/source journal/B08 receipt → validated historical set excluded from additions → existing strict validator handles only genuinely new episodes. Repeat refresh returns existing active state; caller retains mandatory MCP READ. Same thread creates new checkpoint; original and first-adoption checkpoints remain unchanged. Files: agents/recurrence.py + two existing test files; no new subsystem.
+ 
+ Review docs/evidence/B14R2-RESULTS.md, B14R2-COMMANDS.md, B14R2-FILES.md and B14R2-changes.patch. STOP for review.
++
++## B15 actual file and data/control flow — 2026-10-18
++
++app.events.__main__ imports active profile/Settings/connect/GraphRepository → Delivery(service.py) → Store(store.py), Sources(sources.py), Event/routing/public(models.py) → Worker(worker.py) → Runtime(runtime.py) → existing brokers/InvestigationAgent/ownership/FalkorDBSaver. Reuses Operations.Storage and immutable0005. Full paths/commands/handler matrix/recovery in backend/EVENTS.md.
++
++B08/B09 committed journals+B12 verified draft or B13/B14 native operation event → strict envelope and native identity/readback → explicit active-profile revision cutover/selected historical IDs → companion+optional native event+stable public cursor in one fenced source write → owner/token/expiry/attempt+case claim → RUNNING → release writer fence → actual MCP+same-thread LangGraph/Saver → host STARTED/CONSUMED exact batch marker at safe paused checkpoint → consumer receipt+DONE/source status mirror under short fence. Every transition adds hashed B15_DELIVERY_AUDIT evidence as repository intent subject. No cross-graph ACID claim. Heartbeats/finite budgets preserve source writer availability; source revision updates retain fresh-read barrier.
++
++Claimed-before-dispatch death: lease expiry reclaims original event (attempt2). Running-after-checkpoint death: replacement validates saved batch marker under original ownership, acknowledges without redispatch (wakes unchanged1). Missing/corrupt/quarantined proof: recovery-required, no plan/order duplication or reset. Later explicit source update+two compatible requests: one second wake, active recurring incident correct, old ENDED link and both old checkpoints intact. Monitor intent at controlled due time→FOLLOWUP_REQUESTED/missing-opportunity receipt, no synthetic observation. Public committed registration cursor persists across fresh process, bounded allowlist/redaction; no HTTP/SSE.26distinctPASS, final2SPECvalidatorsPASS,0provider. STOP before B16.
+diff --git a/implementation_status.md b/implementation_status.md
+--- a/implementation_status.md
++++ b/implementation_status.md
+@@ -1,4 +1,7 @@
+ # implementation_status.md — Current implementation truth
++
++> **CURRENT B15 — TECHNICALLY PASS, HUMAN REVIEW PENDING.** B14/R/R2 accepted.26distinct focusedPASS(21unit/5real FalkorDB integrations),0unresolvedFAIL/0SKIP; both finalSPECvalidatorsPASS after final source change. Durable source adapters/explicit cutover, fenced case claims, bounded deterministic worker, checkpoint-before-ack reconciliation, persisted monitoring/public cursor exercised; actual process restart, simultaneous claims, quarantine and two real MCP/Saver recurrence resumes.7retained pytest/child guard proofs0external Gemini/countTokens; B10 full genuine acceptance OPEN/PARTIAL. No B16/API/frontend/live or backend-completion claim. This summary takes precedence over all historical status headers. See docs/evidence/B15-RESULTS.md.
++
+ 
+ > **CURRENT B14-R — TECHNICALLY PASS, HUMAN REVIEW PENDING.** Corrected waste B14-2 anchors24hours to latest actual pickup; B14-1 outcomes/implementation preserved. Recurrence includes original investigation/new incident sourced link and validated explicit same-thread active-episode refresh; old checkpoints retained, actual MCP/Saver reads exercised.14distinctPASS(11unit/3real),0unresolvedFAIL/0SKIP; both SPEC validatorsPASS once;5pytest/child guards0provider. B10 full genuine acceptance OPEN/PARTIAL. All18requirements binding; no B15/live/full-suite/lifecycle. This summary supersedes historical headers; docs/evidence/B14R-RESULTS.md.
+ 
+@@ -537,3 +540,7 @@
+ CURRENT B14-R2 technicallyPASS, human review pending; this latest entry supersedes historical status headers.8distinctPASS(7unit/1real),0FAIL/0SKIP, both SPEC validatorsPASS once. Real first adoption→source update→second explicit same-thread resume/fresh MCP READ; both earlier checkpoints/history/links retained, no duplicate recurrence effects. Scripted model distinct from real DB/MCP/Saver. B10 full genuine acceptance OPEN/PARTIAL; all18 binding; B15 not authorized.
+ 
+ Review docs/evidence/B14R2-RESULTS.md, B14R2-COMMANDS.md, B14R2-FILES.md and B14R2-changes.patch. STOP for review.
++
++## B15 implementation evidence — 2026-10-18
++
++26distinctPASS:21unit (pure validation/routing/redaction/backoff/coalesced identity/stop, direct mocked checkpoint guards) +5real (3delivery DB cases,1extended recurrence/MCP/Saver,1existing concurrency/corrupt-checkpoint recovery). No unresolvedFAIL/SKIP; broader suites/lifecycle/live not run. Earlier2setupERROR from sandbox and2fixtureFAIL corrected/preserved, not passing evidence. Final source change rechecked via actual corrected runtime path1PASS27.55s; both final spec validatorsPASS.7retained ordinary pytest/child interlocks0provider; historical paid ledger unchanged. No dependencies/migrations/public ontology changed, no old tests/evidence removed. Full inventory, exact commands, architecture, failures, recovery proof and limitations: docs/evidence/B15-FILES.md, B15-COMMANDS.md, B15-RESULTS.md, B15-changes.patch, backend/EVENTS.md. B15 technicallypassing only; all18requirements binding. B16 typed API is proposed next, unauthorized pending review.
+diff --git a/scripts/validate_blueprint.py b/scripts/validate_blueprint.py
+--- a/scripts/validate_blueprint.py
++++ b/scripts/validate_blueprint.py
+@@ -224,4 +224,6 @@
+     if result:raise SystemExit(result)
+     result=subprocess.call([sys.executable,str(ROOT/'scripts/validate_planning.py')])
+     if result:raise SystemExit(result)
+-    raise SystemExit(subprocess.call([sys.executable,str(ROOT/'scripts/validate_operations.py')]))
++    result=subprocess.call([sys.executable,str(ROOT/'scripts/validate_operations.py')])
++    if result:raise SystemExit(result)
++    raise SystemExit(subprocess.call([sys.executable,str(ROOT/'scripts/validate_events.py')]))
+diff --git a/scripts/validate_events.py b/scripts/validate_events.py
+new file mode 100644
+--- /dev/null
++++ b/scripts/validate_events.py
+@@ -0,0 +1,17 @@
++"""B15 static contract parity only; no claim of runtime or delivery verification."""
++import json,sys
++from pathlib import Path
++ROOT=Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT/'backend'))
++from app.events.models import Event,TYPES,route,public,backoff
++c=json.loads((ROOT/'contracts/event_delivery.json').read_text())
++assert c['event_schema']==Event.model_json_schema()
++assert set(c['routing_defaults'])==set(TYPES)
++for typ in TYPES:
++ e=Event(id='EXAMPLE',type=typ,entity_id='INV',aggregate_revision=1,occurred_at='2026-10-18T00:00:00Z',payload_schema_version=1,source_kind='SYNTHETIC',idempotency_key='EXAMPLE',actor_id='operator',actor_role='SYSTEM',payload={k:'VALUE' for k in c['public_payload_allowlist']})
++ assert c['routing_defaults'][typ]=={'bound_case':list(route(e,'INV')),'unbound_case':list(route(e,None))}
++ assert set(public(e,'INV',1,'native:EXAMPLE'))==set(c['public_projection'])
++ assert set(public(e,'INV',1,'native:EXAMPLE')['payload'])==set(c['public_payload_allowlist'])
++assert [backoff(i) for i in range(1,9)]==[1,2,4,8,16,32,60,60]
++assert c['municipality_scope']=={'field':'municipality_id','value':'demo-city'}
++assert c['no_live_provider'] and c['no_http_sse'] and c['no_automatic_quarantine_clearance']
++print('PASS B15 STATIC: strict event schema,20-type handler matrix, bounded public redaction/cursor contract; not runtime/ACID/provider proof')
+diff --git a/scripts/validate_handoff.py b/scripts/validate_handoff.py
+--- a/scripts/validate_handoff.py
++++ b/scripts/validate_handoff.py
+@@ -129,4 +129,6 @@
+ if result:raise SystemExit(result)
+ result=subprocess.call([sys.executable,str(ROOT/'scripts/validate_planning.py')])
+ if result:raise SystemExit(result)
+-raise SystemExit(subprocess.call([sys.executable,str(ROOT/'scripts/validate_operations.py')]))
++result=subprocess.call([sys.executable,str(ROOT/'scripts/validate_operations.py')])
++if result:raise SystemExit(result)
++raise SystemExit(subprocess.call([sys.executable,str(ROOT/'scripts/validate_events.py')]))
+diff --git a/task_board.md b/task_board.md
+--- a/task_board.md
++++ b/task_board.md
+@@ -1,4 +1,7 @@
+ # task_board.md — Human-reviewed task queue
++
++> **CURRENT B15 — TECHNICALLY PASS, HUMAN REVIEW PENDING.** B14/R/R2 accepted.26distinct focusedPASS(21unit/5real FalkorDB integrations),0unresolvedFAIL/0SKIP; both finalSPECvalidatorsPASS after final source change. Durable source adapters/explicit cutover, fenced case claims, bounded deterministic worker, checkpoint-before-ack reconciliation, persisted monitoring/public cursor exercised; actual process restart, simultaneous claims, quarantine and two real MCP/Saver recurrence resumes.7retained pytest/child guard proofs0external Gemini/countTokens; B10 full genuine acceptance OPEN/PARTIAL. No B16/API/frontend/live or backend-completion claim. This summary takes precedence over all historical status headers. See docs/evidence/B15-RESULTS.md.
++
+ 
+ > **CURRENT B14-R — TECHNICALLY PASS, HUMAN REVIEW PENDING.** Corrected waste B14-2 anchors24hours to latest actual pickup; B14-1 outcomes/implementation preserved. Recurrence includes original investigation/new incident sourced link and validated explicit same-thread active-episode refresh; old checkpoints retained, actual MCP/Saver reads exercised.14distinctPASS(11unit/3real),0unresolvedFAIL/0SKIP; both SPEC validatorsPASS once;5pytest/child guards0provider. B10 full genuine acceptance OPEN/PARTIAL. All18requirements binding; no B15/live/full-suite/lifecycle. This summary supersedes historical headers; docs/evidence/B14R-RESULTS.md.
+ 
+@@ -469,3 +472,9 @@
+ CURRENT B14-R2 completed technically, waits human review; latest entry takes precedence over historical headers.8focusedPASS/both validatorsPASS/0provider. Only repeat-safe recurrence refresh implemented. Proposed next B15 remains unauthorized; STOP after B14-R2.
+ 
+ Review docs/evidence/B14R2-RESULTS.md, B14R2-COMMANDS.md, B14R2-FILES.md and B14R2-changes.patch. STOP for review.
++
++## B15 — technically complete, human review pending (2026-10-18)
++
++B14/R/R2 human accepted per authorization. Only B15 implemented/exercised: committed adapters/cutover, one bounded deterministic worker, fenced claims/case serialization/retries/reconciliation, persisted monitoring/public history.26distinctPASS(21unit/5real), final bothSPECvalidatorsPASS,0provider. Actual process restart, competing claims, uncertain checkpoint/quarantine, two same-thread actual MCP/Saver recurrence wakes and retained history verified. Current summary above supersedes historical B15-unimplemented/unauthorized text without deleting audit history.
++
++Review backend/EVENTS.md and docs/evidence/B15-RESULTS.md/B15-COMMANDS.md/B15-FILES.md/B15-changes.patch/B15-audit.json. Human reproduce one isolated event test or inspect process/reconciliation proofs; private profiles never shared. Exact next proposed task B16 typed authenticated FastAPI route groups using accepted services and bounded event read contract; no API/SSE/frontend or live calls authorized until separate review. STOP after B15.
+diff --git a/test_log.md b/test_log.md
+--- a/test_log.md
++++ b/test_log.md
+@@ -1,4 +1,7 @@
+ # test_log.md — Append-only verification record
++
++> **CURRENT B15 — TECHNICALLY PASS, HUMAN REVIEW PENDING.** B14/R/R2 accepted.26distinct focusedPASS(21unit/5real FalkorDB integrations),0unresolvedFAIL/0SKIP; both finalSPECvalidatorsPASS after final source change. Durable source adapters/explicit cutover, fenced case claims, bounded deterministic worker, checkpoint-before-ack reconciliation, persisted monitoring/public cursor exercised; actual process restart, simultaneous claims, quarantine and two real MCP/Saver recurrence resumes.7retained pytest/child guard proofs0external Gemini/countTokens; B10 full genuine acceptance OPEN/PARTIAL. No B16/API/frontend/live or backend-completion claim. This summary takes precedence over all historical status headers. See docs/evidence/B15-RESULTS.md.
++
+ 
+ > **CURRENT B14-R — TECHNICALLY PASS, HUMAN REVIEW PENDING.** Corrected waste B14-2 anchors24hours to latest actual pickup; B14-1 outcomes/implementation preserved. Recurrence includes original investigation/new incident sourced link and validated explicit same-thread active-episode refresh; old checkpoints retained, actual MCP/Saver reads exercised.14distinctPASS(11unit/3real),0unresolvedFAIL/0SKIP; both SPEC validatorsPASS once;5pytest/child guards0provider. B10 full genuine acceptance OPEN/PARTIAL. All18requirements binding; no B15/live/full-suite/lifecycle. This summary supersedes historical headers; docs/evidence/B14R-RESULTS.md.
+ 
+@@ -1059,3 +1062,11 @@
+ Exact focused unit command (B14R2-COMMANDS.md): recurrence_scope.py7PASS0.44s (5new repeat/malformed/proof branches+2retained mock cases). One real existing recurrence/MCP/Saver case extended to two resumes1PASS21.52s. Both specification validatorsPASS once after final code/test change. Final8PASS/0FAIL/0SKIP;2pytest/child guards0external Gemini/countTokens/0unexpected. No waste/remedial/full-suite/live/lifecycle reruns. Evidence B14R2-outcome-WATERLOGGING.json includes second_resume proof.
+ 
+ Review docs/evidence/B14R2-RESULTS.md, B14R2-COMMANDS.md, B14R2-FILES.md and B14R2-changes.patch. STOP for review.
++
++## B15 focused observed results — 2026-10-18
++
++26distinctPASS(21unit/5real),0unresolvedFAIL/0SKIP. Exact commands, per-invocation counts/durations and corrected fixture failures: docs/evidence/B15-COMMANDS.md. Initial unit13PASS; initial sandbox2setupERROR; authorized DB1PASS/1fixtureFAIL; affected selection2PASS/1checkpoint-view fixtureFAIL; corrected selection16PASS; final unit20PASS; sanitized SDK-read unit1PASS; final actual runtime recheck1PASS27.55s. Both finalSPECvalidatorsPASS once after last source change (an earlier static pass before that guard change is also retained, not hidden).
++
++Real process os._exit(71) after persisted CLAIMED→fresh process after controlled61seconds→DONE attempt2/same native ID; reconnect cursor1 stable. Simultaneous two DB claimants→one succeeds; stale owner denied; unknown RUNNING→RECOVERY_REQUIRED, no blind wake; explicit replay preserves prior3attempts thenDONE at4; malformed native envelopeFAILED inspectable/not public. Existing quarantine unchanged, no new checkpoint/AgentDecision. Real committed recurrence→actual MCP/Saver same-thread wake→faultbeforeack leavesRUNNING→replacement reads same completion checkpoint, acknowledges without second model/wake→new source+coalesced2requests→wakes2,3cumulative actual MCP executions, correct new episode; old checkpoint/scope/orders/outcomes retained. Default/test choices deterministic, not genuine model acceptance.
++
++Seven archived interlock proofs0external Gemini/countTokens/0unexpected; paid ledger read-only equal accepted historical2requests. Full suites/other waste/remedial scenarios/container lifecycle/live smoke deliberately NOT RUN, not counted as skips. Prior evidence/migrations/data preserved. Review B15 audit/patch; STOP before B16.

@@ -1,0 +1,1104 @@
+{
+  "status": "PASS",
+  "authorization": {
+    "task": "B11-LIVE-SMOKE",
+    "status": "READY",
+    "recorded_at": "2026-10-18T06:16:17.993Z",
+    "profile_path": ".runtime/b11-live-smoke-agent.json",
+    "memory_profile_path": ".runtime/b11-live-smoke-memory.json",
+    "graph": "civicly_b10_test_9099c5d03dfd45559ffcaa7b70e9ec31",
+    "checkpoint_graph": "civicly_b10_checkpoints_e05f9201988146b1aa043078f208e240",
+    "investigation_id": "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+    "thread_id": "ae94b094ee9f4ad599f88789df4d959e",
+    "model": "gemini-3.8-flash",
+    "pricing_version": "google-gemini-standard-text-2026-10-18",
+    "max_total_usd": ".15",
+    "max_generation_attempts": 2,
+    "transient_retries": 0,
+    "max_count_per_generation": 1,
+    "max_provider_selections": 1,
+    "max_live_wakes": 1,
+    "output_tokens": 2048,
+    "budget": {
+      "max_iterations": 2,
+      "max_tools": 1,
+      "max_tokens": 60000,
+      "max_seconds": 120,
+      "max_wakes": 1
+    },
+    "initial_generation_reservation_nusd": 33953250,
+    "default_ledger_first_initialization": true,
+    "ledger": ".runtime/ai-spend.sqlite3",
+    "graph_interrupts": {
+      "before": [
+        "RootCauseAnalyst",
+        "ResolutionPlanner",
+        "Coordinator"
+      ],
+      "after": [
+        "Investigator"
+      ]
+    },
+    "original_prompt_sha256": "17cd8692a02855bfa4a3ea88fc4cd635193de01749b4887bcf7e3423f678b105",
+    "prompt_limitation": "B10-3 still excludes organizational tools; preserved; graph-only success is not live organizational proof",
+    "profile_sha256": "cb65981a987006f6574cc9016bddba3ba2207b8d4ceba24e207ccceec41124d4",
+    "memory_profile_sha256": "840a08e82ef406c065ca8203470cc2102ec1e9795f7b680370a43e8b0524dc9e",
+    "initial_state_sha256": "fddbd6b7152efabd875bb5f90e89669b6b807abc38a7ec19acd9a3839f0d12cc"
+  },
+  "model_key_present_not_logged": true,
+  "actual_mcp_catalog": [
+    {
+      "name": "official::get_graph_schema",
+      "description": "Approved fixed templates only; Get the schema of a graph including node labels, relationship types, and (optionally) the connection topology between them, to understand the graph structure before executing a query. Connection topology is derived from a bounded sample of relationships and can be disabled via includeConnections on very large graphs.",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "template": {
+            "anyOf": [
+              {
+                "enum": [
+                  "node",
+                  "drainage_edges"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Template"
+          },
+          "id": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Id"
+          },
+          "as_of": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "As Of"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Label"
+          },
+          "relationship_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Relationship Type"
+          },
+          "sample_size": {
+            "default": 20,
+            "maximum": 100,
+            "minimum": 1,
+            "title": "Sample Size",
+            "type": "integer"
+          }
+        },
+        "required": [],
+        "title": "Request",
+        "type": "object"
+      }
+    },
+    {
+      "name": "official::get_node_schema",
+      "description": "Approved fixed templates only; Sample up to N nodes of a given label and aggregate their property keys by how many nodes carry each one (descending). Interpret each property's frequency relative to the returned sampledCount (the actual number of nodes sampled, which may be less than requestedSampleSize) to detect naming drift \u2014 e.g. a property present on only a few of many sampled nodes likely duplicates another under a slightly different name. Especially valuable in schemaless graphs where property naming can drift across subsets of nodes.",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "template": {
+            "anyOf": [
+              {
+                "enum": [
+                  "node",
+                  "drainage_edges"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Template"
+          },
+          "id": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Id"
+          },
+          "as_of": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "As Of"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Label"
+          },
+          "relationship_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Relationship Type"
+          },
+          "sample_size": {
+            "default": 20,
+            "maximum": 100,
+            "minimum": 1,
+            "title": "Sample Size",
+            "type": "integer"
+          }
+        },
+        "required": [],
+        "title": "Request",
+        "type": "object"
+      }
+    },
+    {
+      "name": "official::get_relationship_schema",
+      "description": "Approved fixed templates only; Sample up to N relationships of a given type and aggregate their property keys by how many relationships carry each one (descending). Interpret each property's frequency relative to the returned sampledCount (the actual number of relationships sampled, which may be less than requestedSampleSize) to detect naming drift \u2014 e.g. a property present on only a few of many sampled relationships likely duplicates another under a slightly different name. Especially valuable in schemaless graphs where property naming can drift across subsets of relationships.",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "template": {
+            "anyOf": [
+              {
+                "enum": [
+                  "node",
+                  "drainage_edges"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Template"
+          },
+          "id": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Id"
+          },
+          "as_of": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "As Of"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Label"
+          },
+          "relationship_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Relationship Type"
+          },
+          "sample_size": {
+            "default": 20,
+            "maximum": 100,
+            "minimum": 1,
+            "title": "Sample Size",
+            "type": "integer"
+          }
+        },
+        "required": [],
+        "title": "Request",
+        "type": "object"
+      }
+    },
+    {
+      "name": "official::query_graph_readonly",
+      "description": "Approved fixed templates only; Run a read-only OpenCypher query on a graph using GRAPH.RO_QUERY. This ensures no write operations are performed and is ideal for replica instances.",
+      "input_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "template": {
+            "anyOf": [
+              {
+                "enum": [
+                  "node",
+                  "drainage_edges"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Template"
+          },
+          "id": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Id"
+          },
+          "as_of": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "As Of"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Label"
+          },
+          "relationship_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Relationship Type"
+          },
+          "sample_size": {
+            "default": 20,
+            "maximum": 100,
+            "minimum": 1,
+            "title": "Sample Size",
+            "type": "integer"
+          }
+        },
+        "required": [],
+        "title": "Request",
+        "type": "object"
+      }
+    },
+    {
+      "name": "civicly::find_related_incidents",
+      "description": "Find incident candidates by verified asset and chronological/spatial match; explain why each is related",
+      "input_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "incident_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "max_results": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "minLength": 1,
+            "maxLength": 512,
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+          },
+          "include_candidates": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "incident_id",
+          "max_results"
+        ]
+      }
+    },
+    {
+      "name": "civicly::get_decision_evidence_path",
+      "description": "Return bounded FalkorDB justification graph path for a decision",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "decision_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "max_hops": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 6
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "minLength": 1,
+            "maxLength": 512,
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+          },
+          "include_candidates": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "decision_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "civicly::get_maintenance_history",
+      "description": "Read inspections, interventions and past failures of one asset",
+      "input_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "asset_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "from_time": {
+            "type": "string",
+            "format": "date-time",
+            "minLength": 1,
+            "maxLength": 512,
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+          },
+          "to_time": {
+            "type": "string",
+            "format": "date-time",
+            "minLength": 1,
+            "maxLength": 512,
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "minLength": 1,
+            "maxLength": 512,
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+          },
+          "include_candidates": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "asset_id",
+          "from_time",
+          "to_time"
+        ]
+      }
+    },
+    {
+      "name": "civicly::get_monitoring_status",
+      "description": "Return condition-specific monitoring and verification status",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "problem_cluster_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "minLength": 1,
+            "maxLength": 512,
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+          },
+          "include_candidates": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "problem_cluster_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "civicly::get_organizational_procedures",
+      "description": "Get applicable versioned municipal procedures",
+      "input_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "department_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "action_type": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "minLength": 1,
+            "maxLength": 512,
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+          },
+          "include_candidates": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "department_id",
+          "action_type"
+        ]
+      }
+    },
+    {
+      "name": "civicly::get_pickup_execution_history",
+      "description": "Review actual vs scheduled waste collection for location or route",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "collection_point_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "days": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 180
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "minLength": 1,
+            "maxLength": 512,
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+          },
+          "include_candidates": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "collection_point_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "civicly::get_road_condition_history",
+      "description": "Retrieve evidence-linked chronological road conditions and repair attempts",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "road_segment_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "days": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 730
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "minLength": 1,
+            "maxLength": 512,
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+          },
+          "include_candidates": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "road_segment_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "civicly::get_source_document_excerpt",
+      "description": "Read cited versioned municipal procedure passage by document ID",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "document_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "minLength": 1,
+            "maxLength": 512,
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+          },
+          "include_candidates": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "document_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "civicly::get_work_order_status",
+      "description": "Read latest work status and blockers",
+      "input_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "work_order_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "minLength": 1,
+            "maxLength": 512,
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+          },
+          "include_candidates": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "work_order_id"
+        ]
+      }
+    },
+    {
+      "name": "civicly::retrieve_case_memory",
+      "description": "Find previous investigations and verified outcomes using graph links then semantic candidates",
+      "input_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "investigation_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "max_results": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "minLength": 1,
+            "maxLength": 512,
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+          },
+          "include_candidates": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "investigation_id",
+          "max_results"
+        ]
+      }
+    },
+    {
+      "name": "civicly::retrieve_external_evidence",
+      "description": "Acquire real or synthetic external evidence, with explicit unavailable mode",
+      "input_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "location_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "evidence_type": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "from_time": {
+            "type": "string",
+            "format": "date-time",
+            "minLength": 1,
+            "maxLength": 512,
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+          },
+          "to_time": {
+            "type": "string",
+            "format": "date-time",
+            "minLength": 1,
+            "maxLength": 512,
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "minLength": 1,
+            "maxLength": 512,
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+          },
+          "include_candidates": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "location_id",
+          "evidence_type",
+          "from_time",
+          "to_time"
+        ]
+      }
+    },
+    {
+      "name": "civicly::trace_infrastructure_dependencies",
+      "description": "Follow bounded B05 directed drainage reachability, or explicit forward typed DRAINS_TO/UNDERLIES/COLLECTED_BY dependencies; preserve candidate qualifications",
+      "input_schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "investigation_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "asset_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "direction": {
+            "type": "string",
+            "enum": [
+              "UPSTREAM",
+              "DOWNSTREAM",
+              "BOTH"
+            ],
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "max_hops": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 6
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date-time",
+            "minLength": 1,
+            "maxLength": 512,
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+          },
+          "include_candidates": {
+            "type": "boolean"
+          },
+          "network": {
+            "type": "string",
+            "enum": [
+              "DRAINAGE",
+              "TYPED_DEPENDENCIES"
+            ],
+            "default": "DRAINAGE"
+          }
+        },
+        "required": [
+          "investigation_id",
+          "asset_id",
+          "direction",
+          "max_hops"
+        ],
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "network": {
+                  "const": "TYPED_DEPENDENCIES"
+                }
+              },
+              "required": [
+                "network"
+              ]
+            },
+            "then": {
+              "properties": {
+                "direction": {
+                  "const": "DOWNSTREAM"
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "non_model_selected_source_result": {
+    "status": "PARTIAL",
+    "trace_id": "ae94b094ee9f4ad599f88789df4d959e",
+    "execution_id": "PREFLIGHT-ee06cbb57d254120884c5e5e842c241c",
+    "context": {
+      "trace_id": "ae94b094ee9f4ad599f88789df4d959e",
+      "execution_id": "PREFLIGHT-ee06cbb57d254120884c5e5e842c241c",
+      "parent_execution_id": null,
+      "investigation_id": "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+      "municipality_id": "demo-city",
+      "source_graph": "civicly_b10_test_9099c5d03dfd45559ffcaa7b70e9ec31",
+      "caller_role": "READ_ONLY",
+      "invocation_origin": "APPLICATION"
+    },
+    "server_id": "civicly-domain",
+    "tool_name": "get_organizational_procedures",
+    "schema_version": 3,
+    "inventory_version": "49904935610e6fa1f9ea88070851e7a905e74594f1d764c3a500aaa294833119",
+    "source_evidence_ids": [],
+    "simulation_mode": true,
+    "graph_revision": 20,
+    "truncated": false,
+    "search_limited": true,
+    "error": null,
+    "procedures": [
+      {
+        "procedure_id": "ORGPROC:D001-PDF:1",
+        "version": 1,
+        "rule_summary": "SYNTHETIC DEMONSTRATION - PDF DERIVATIVE\n# Drain blockage inspection\n**DOCUMENT ID:** D001\n**SOURCE KIND:** SYNTHETIC\n**ORGANIZATION:** Fictional Civicly Demo City\n**OWNER:** Drainage Operations\n**VERSION:** 1\n**EFFECTIVE FROM:** 2026-09-01\n## Procedure / lesson\nBefore recommending drain cleaning, verify upstream inlet and downstream segment; log debris\ndepth, flow direction, source, photos and date. Do not infer obstruction from nearby litter alone.\nThese are invented demonstration records and do not claim to be official policies of any real\nmunicipality.\nDerived from authorized repository source: data/documents/D001_drain_blockage_inspection.md\nOriginal SHA256: b8a0f22665d1c961c0c96ad861d9576b433cea490adb82f8f86f98b21aeb4b86\n",
+        "citation": {
+          "source_document_id": "D001-PDF",
+          "source_version": 1,
+          "canonical_document_id": "ORG:D001-PDF:1",
+          "owner_department_id": "DEPT-DRAIN",
+          "source_uri": "data/documents/b11/D001_v1_derivative.pdf",
+          "content_checksum": "a72a4d12167e15a59ecbca32040324bfafcd59ca497dd645fd8de61fb61bcebb",
+          "quote_excerpt": "SYNTHETIC DEMONSTRATION - PDF DERIVATIVE\n# Drain blockage inspection\n**DOCUMENT ID:** D001\n**SOURCE KIND:** SYNTHETIC\n**ORGANIZATION:** Fictional Civicly Demo City\n**OWNER:** Drainage Operations\n**VERSION:** 1\n**EFFECTIVE FROM:** 2026-09-01\n## Procedure / lesson\nBefore recommending drain cleaning, verify upstream inlet and downstream segment; log debris\ndepth, flow direction, source, photos and date. Do not infer obstruction from nearby litter alone.\nThese are invented demonstration records and do not claim to be official policies of any real\nmunicipality.\nDerived from authorized repository source: data/documents/D001_drain_blockage_inspection.md\nOriginal SHA256: b8a0f22665d1c961c0c96ad861d9576b433cea490adb82f8f86f98b21aeb4b86\n",
+          "passage_location": "chunk:0:9584461c-6fa0-4637-be43-78ddafcb0b90",
+          "chunk_sha256": "831b15cd509d01a50aa63a329ebd4ac341bad9090f3474e6ac040f8bc86486ff",
+          "confidence_label": "SOURCE_REVIEWED_SYNTHETIC",
+          "assertion_status": "PROPOSED",
+          "retrieved_at": "2026-10-18T06:16:17.679Z",
+          "effective_from": "2026-09-01T00:00:00Z",
+          "derived_from": "ORG:D001:1",
+          "trusted_as_instructions": false
+        }
+      },
+      {
+        "procedure_id": "ORGPROC:D001:1",
+        "version": 1,
+        "rule_summary": "# Drain blockage inspection\n\n**DOCUMENT ID:** D001\n**SOURCE KIND:** SYNTHETIC\n**ORGANIZATION:** Fictional Civicly Demo City\n**OWNER:** Drainage Operations\n**VERSION:** 1\n**EFFECTIVE FROM:** 2026-09-01\n\n## Procedure / lesson\n\nBefore recommending drain cleaning, verify upstream inlet and downstream segment; log debris depth, flow direction, source, photos and date. Do not infer obstruction from nearby litter alone.\n\nThese are invented demonstration records and do not claim to be official policies of any real municipality.\n",
+        "citation": {
+          "source_document_id": "D001",
+          "source_version": 1,
+          "canonical_document_id": "ORG:D001:1",
+          "owner_department_id": "DEPT-DRAIN",
+          "source_uri": "data/documents/D001_drain_blockage_inspection.md",
+          "content_checksum": "b8a0f22665d1c961c0c96ad861d9576b433cea490adb82f8f86f98b21aeb4b86",
+          "quote_excerpt": "# Drain blockage inspection\n\n**DOCUMENT ID:** D001\n**SOURCE KIND:** SYNTHETIC\n**ORGANIZATION:** Fictional Civicly Demo City\n**OWNER:** Drainage Operations\n**VERSION:** 1\n**EFFECTIVE FROM:** 2026-09-01\n\n## Procedure / lesson\n\nBefore recommending drain cleaning, verify upstream inlet and downstream segment; log debris depth, flow direction, source, photos and date. Do not infer obstruction from nearby litter alone.\n\nThese are invented demonstration records and do not claim to be official policies of any real municipality.\n",
+          "passage_location": "chunk:0:a456c97f-ebf1-48f0-92f5-0bdc78a7446f",
+          "chunk_sha256": "b8a0f22665d1c961c0c96ad861d9576b433cea490adb82f8f86f98b21aeb4b86",
+          "confidence_label": "SOURCE_REVIEWED_SYNTHETIC",
+          "assertion_status": "PROPOSED",
+          "retrieved_at": "2026-10-18T06:16:17.681Z",
+          "effective_from": "2026-09-01T00:00:00Z",
+          "derived_from": null,
+          "trusted_as_instructions": false
+        }
+      },
+      {
+        "procedure_id": "ORGPROC:D002:1",
+        "version": 1,
+        "rule_summary": "# Drain capacity and storm comparison\n\n**DOCUMENT ID:** D002\n**SOURCE KIND:** SYNTHETIC\n**ORGANIZATION:** Fictional Civicly Demo City\n**OWNER:** Drainage Operations\n**VERSION:** 1\n**EFFECTIVE FROM:** 2026-09-01\n\n## Procedure / lesson\n\nCompare rainfall accumulation and time period against recorded drain capacity. A clear drain can still be undersized. Exceptional rain does not establish routine blockage.\n\nThese are invented demonstration records and do not claim to be official policies of any real municipality.\n",
+        "citation": {
+          "source_document_id": "D002",
+          "source_version": 1,
+          "canonical_document_id": "ORG:D002:1",
+          "owner_department_id": "DEPT-DRAIN",
+          "source_uri": "data/documents/D002_drain_capacity_and_storm_comparison.md",
+          "content_checksum": "fc684008634e5608d1cdd381552168d552576ae9cb186168cf8b14367522b57c",
+          "quote_excerpt": "# Drain capacity and storm comparison\n\n**DOCUMENT ID:** D002\n**SOURCE KIND:** SYNTHETIC\n**ORGANIZATION:** Fictional Civicly Demo City\n**OWNER:** Drainage Operations\n**VERSION:** 1\n**EFFECTIVE FROM:** 2026-09-01\n\n## Procedure / lesson\n\nCompare rainfall accumulation and time period against recorded drain capacity. A clear drain can still be undersized. Exceptional rain does not establish routine blockage.\n\nThese are invented demonstration records and do not claim to be official policies of any real municipality.\n",
+          "passage_location": "chunk:0:311bd0e8-181c-4ef3-a8b5-fe5ad65a6584",
+          "chunk_sha256": "fc684008634e5608d1cdd381552168d552576ae9cb186168cf8b14367522b57c",
+          "confidence_label": "SOURCE_REVIEWED_SYNTHETIC",
+          "assertion_status": "PROPOSED",
+          "retrieved_at": "2026-10-18T06:16:17.684Z",
+          "effective_from": "2026-09-01T00:00:00Z",
+          "derived_from": null,
+          "trusted_as_instructions": false
+        }
+      },
+      {
+        "procedure_id": "ORGPROC:D003:1",
+        "version": 1,
+        "rule_summary": "# Pumping station safety\n\n**DOCUMENT ID:** D003\n**SOURCE KIND:** SYNTHETIC\n**ORGANIZATION:** Fictional Civicly Demo City\n**OWNER:** Drainage Operations\n**VERSION:** 1\n**EFFECTIVE FROM:** 2026-09-01\n\n## Procedure / lesson\n\nInspect pump status, backup power and downstream discharge constraints. A failed pump requires authorized maintenance and safety controls.\n\nThese are invented demonstration records and do not claim to be official policies of any real municipality.\n",
+        "citation": {
+          "source_document_id": "D003",
+          "source_version": 1,
+          "canonical_document_id": "ORG:D003:1",
+          "owner_department_id": "DEPT-DRAIN",
+          "source_uri": "data/documents/D003_pumping_station_safety.md",
+          "content_checksum": "a5f8868d23782c338843e45c2a9f051cdfc5d5e26a268aebfa75141371d79fe6",
+          "quote_excerpt": "# Pumping station safety\n\n**DOCUMENT ID:** D003\n**SOURCE KIND:** SYNTHETIC\n**ORGANIZATION:** Fictional Civicly Demo City\n**OWNER:** Drainage Operations\n**VERSION:** 1\n**EFFECTIVE FROM:** 2026-09-01\n\n## Procedure / lesson\n\nInspect pump status, backup power and downstream discharge constraints. A failed pump requires authorized maintenance and safety controls.\n\nThese are invented demonstration records and do not claim to be official policies of any real municipality.\n",
+          "passage_location": "chunk:0:09e5bcfc-3a24-4a95-8cd1-67eed3824402",
+          "chunk_sha256": "a5f8868d23782c338843e45c2a9f051cdfc5d5e26a268aebfa75141371d79fe6",
+          "confidence_label": "SOURCE_REVIEWED_SYNTHETIC",
+          "assertion_status": "PROPOSED",
+          "retrieved_at": "2026-10-18T06:16:17.686Z",
+          "effective_from": "2026-09-01T00:00:00Z",
+          "derived_from": null,
+          "trusted_as_instructions": false
+        }
+      },
+      {
+        "procedure_id": "ORGPROC:D012:1",
+        "version": 1,
+        "rule_summary": "# Follow-up waterlogging verification\n\n**DOCUMENT ID:** D012\n**SOURCE KIND:** SYNTHETIC\n**ORGANIZATION:** Fictional Civicly Demo City\n**OWNER:** Drainage Operations\n**VERSION:** 1\n**EFFECTIVE FROM:** 2026-09-01\n\n## Procedure / lesson\n\nAfter drainage work, monitor comparable rainfall conditions before verifying recurrent waterlogging as resolved.\n\nThese are invented demonstration records and do not claim to be official policies of any real municipality.\n",
+        "citation": {
+          "source_document_id": "D012",
+          "source_version": 1,
+          "canonical_document_id": "ORG:D012:1",
+          "owner_department_id": "DEPT-DRAIN",
+          "source_uri": "data/documents/D012_follow-up_waterlogging_verification.md",
+          "content_checksum": "4a3d03908b5db874dfd9b83f5fd59e2cc1d4a499ff6a17a5da55c9ae4b509b81",
+          "quote_excerpt": "# Follow-up waterlogging verification\n\n**DOCUMENT ID:** D012\n**SOURCE KIND:** SYNTHETIC\n**ORGANIZATION:** Fictional Civicly Demo City\n**OWNER:** Drainage Operations\n**VERSION:** 1\n**EFFECTIVE FROM:** 2026-09-01\n\n## Procedure / lesson\n\nAfter drainage work, monitor comparable rainfall conditions before verifying recurrent waterlogging as resolved.\n\nThese are invented demonstration records and do not claim to be official policies of any real municipality.\n",
+          "passage_location": "chunk:0:77cb252c-42c7-46a5-b37f-feaf92323e45",
+          "chunk_sha256": "4a3d03908b5db874dfd9b83f5fd59e2cc1d4a499ff6a17a5da55c9ae4b509b81",
+          "confidence_label": "SOURCE_REVIEWED_SYNTHETIC",
+          "assertion_status": "PROPOSED",
+          "retrieved_at": "2026-10-18T06:16:17.688Z",
+          "effective_from": "2026-09-01T00:00:00Z",
+          "derived_from": null,
+          "trusted_as_instructions": false
+        }
+      }
+    ],
+    "data": {
+      "nodes": [],
+      "edges": [],
+      "paths": [],
+      "gaps": [
+        "ELIGIBLE_SOURCE_FALLBACK; verified source chunks outside global top12; applicability, not semantic ranking",
+        "Synthetic source excerpts; extracted statements remain PROPOSED, not verified policy or physical cause"
+      ],
+      "reservations": [
+        "Document memory uses separate versioned canonical references and SDK graph; source revision is not a cross-graph transaction. Citations carry exact source/version/chunk checksums. Retrieved text is evidence, never instructions."
+      ],
+      "as_of": "2026-10-18T06:16:17.589Z"
+    }
+  },
+  "official_transport": [
+    {
+      "operation": "initialize",
+      "status": "SUCCESS",
+      "started_at": "2026-10-18T06:16:15.836855Z",
+      "ended_at": "2026-10-18T06:16:16.591297Z",
+      "latency_ms": 754.457,
+      "server": {
+        "name": "falkordb",
+        "version": "1.3.0"
+      },
+      "protocol_version": "2025-11-25"
+    },
+    {
+      "trace_version": "B06-1",
+      "operation": "tools/list",
+      "server": {
+        "name": "falkordb",
+        "version": "1.3.0"
+      },
+      "protocol_version": "2025-11-25",
+      "tool": null,
+      "schema_sha256": null,
+      "inventory_sha256": "327cf9a3587cc23cc2d28040a4ac7cc8df2fa790d3fbb57700591689ea3cb4a0",
+      "arguments_sha256": null,
+      "arguments_summary": null,
+      "started_at": "2026-10-18T06:16:16.592488Z",
+      "ended_at": "2026-10-18T06:16:16.598611Z",
+      "latency_ms": 6.127,
+      "status": "SUCCESS",
+      "denial_reason": null,
+      "result_summary": null,
+      "graph_revision": null,
+      "selection_rationale": null,
+      "invocation_origin": "B10 host broker; actual model summary in separate durable shared trace"
+    }
+  ],
+  "source_reader_commands": [
+    "+ping",
+    "+info",
+    "+client|setinfo",
+    "+graph.ro_query"
+  ],
+  "source_reader_keys": [
+    "~civicly_b10_test_9099c5d03dfd45559ffcaa7b70e9ec31"
+  ],
+  "ledger_before": {
+    "currency": "USD",
+    "unit": "nanodollars",
+    "configuration": {
+      "id": 1,
+      "project_cap": 8000000000,
+      "case_cap": 500000000,
+      "max_concurrent": 1,
+      "complex_cap": 1500000000
+    },
+    "project_cap": 8000000000,
+    "project_accounted": 0,
+    "project_remaining": 8000000000,
+    "case_cap": null,
+    "case_accounted": null,
+    "uncertain_requests": 0,
+    "holds": [],
+    "sessions": [],
+    "warnings": [],
+    "accounting_scope": "Managed requests since B10-O; historical/external billing unknown; not a Google hard cap"
+  },
+  "ledger_after_case_allocation": {
+    "currency": "USD",
+    "unit": "nanodollars",
+    "configuration": {
+      "id": 1,
+      "project_cap": 8000000000,
+      "case_cap": 500000000,
+      "max_concurrent": 1,
+      "complex_cap": 1500000000
+    },
+    "project_cap": 8000000000,
+    "project_accounted": 0,
+    "project_remaining": 8000000000,
+    "case_cap": 150000000,
+    "case_accounted": 0,
+    "uncertain_requests": 0,
+    "holds": [],
+    "sessions": [],
+    "warnings": [],
+    "accounting_scope": "Managed requests since B10-O; historical/external billing unknown; not a Google hard cap"
+  },
+  "provider_calls": 0,
+  "token_plan": {
+    "serialized_utf8_bytes": 23767,
+    "local_proxy_tokens": 7632,
+    "tokenizer_version": "gemma3-proxy-3.8-v1",
+    "provider_count_tokens": null,
+    "method": "LOCAL_PROXY_ESTIMATE_25_PERCENT_PLUS_256",
+    "input_allowance_tokens": 9796,
+    "output_allowance_tokens": 2048,
+    "total_allowance_tokens": 11844,
+    "uncertainty": "Gemma3 is not verified exact for Gemini3.8; live mode additionally counts full request with provider. Framing/model accounting may differ; actual usage is authoritative."
+  }
+}

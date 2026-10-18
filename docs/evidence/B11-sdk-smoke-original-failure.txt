@@ -1,0 +1,38 @@
+Query attempt 1/3 failed: Received 2 arguments to procedure 'db.idx.fulltext.createNodeIndex', expected at most 1
+Query attempt 2/3 failed: Received 2 arguments to procedure 'db.idx.fulltext.createNodeIndex', expected at most 1
+Query attempt 3/3 failed: Received 2 arguments to procedure 'db.idx.fulltext.createNodeIndex', expected at most 1
+FalkorDB query failed after 3 attempts: ResponseError: Received 2 arguments to procedure 'db.idx.fulltext.createNodeIndex', expected at most 1
+Could not create fulltext index on Chunk(text): FalkorDB query failed after 3 attempts: Received 2 arguments to procedure 'db.idx.fulltext.createNodeIndex', expected at most 1
+Query attempt 1/3 failed: Received 3 arguments to procedure 'db.idx.fulltext.createNodeIndex', expected at most 1
+Query attempt 2/3 failed: Received 3 arguments to procedure 'db.idx.fulltext.createNodeIndex', expected at most 1
+FalkorDB query failed after 3 attempts: ResponseError: Received 3 arguments to procedure 'db.idx.fulltext.createNodeIndex', expected at most 1
+Could not create fulltext index on __Entity__(name, description): FalkorDB query failed after 3 attempts: Received 3 arguments to procedure 'db.idx.fulltext.createNodeIndex', expected at most 1
+Traceback (most recent call last):
+  File "/tmp/civicly_b11_sdk_smoke.py", line 35, in <module>
+    asyncio.run(main())
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/base_events.py", line 684, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/tmp/civicly_b11_sdk_smoke.py", line 27, in main
+    result=await rag.ingest(src,document_id=id,chunker=FixedSizeChunking(800,0),extractor=Extract())
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/private/tmp/civicly-b11-sdk-spike/lib/python3.12/site-packages/graphrag_sdk/api/main.py", line 1456, in ingest
+    return await self._ingest_single(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/private/tmp/civicly-b11-sdk-spike/lib/python3.12/site-packages/graphrag_sdk/api/main.py", line 1552, in _ingest_single
+    await self._phase0_recover_prior_operations(resolved_id, ctx)
+  File "/private/tmp/civicly-b11-sdk-spike/lib/python3.12/site-packages/graphrag_sdk/api/main.py", line 1876, in _phase0_recover_prior_operations
+    if await self._graph_store.has_pending_delete(resolved_id):
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/private/tmp/civicly-b11-sdk-spike/lib/python3.12/site-packages/graphrag_sdk/storage/graph_store.py", line 922, in has_pending_delete
+    result = await self._conn.query(
+             ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/private/tmp/civicly-b11-sdk-spike/lib/python3.12/site-packages/graphrag_sdk/core/connection.py", line 186, in query
+    raise DatabaseUnavailableError(
+graphrag_sdk.core.exceptions.DatabaseUnavailableError: Circuit breaker is open — FalkorDB connection is unhealthy. Requests will resume after recovery timeout.

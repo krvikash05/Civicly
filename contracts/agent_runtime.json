@@ -32,7 +32,7 @@
     "civicly::"
   ],
   "mcp_compatibility": "Source reference syntax permits retained city or validated B10 UUID; exact trusted server/broker binding is still required. Optional rationale_summary defaults null on historical records and records actual public model summary on host observations only. Schema version 3 retained as additive compatible envelope widening; discovered inventory hashes change.",
-  "domain_writes": "B09 typed narrow services only for hypothesis/assessment/inspection request. B10 Control writes only AgentDecision, B10_OPERATION Evidence and Investigation thread binding through B03 integrity/CAS.",
+  "domain_writes": "B09 typed narrow services for hypothesis/assessment/inspection request; B12 PlanningService for validated DRAFT ResolutionPlan/PROPOSED ActionTask and provenance companion only. B10 Control retains AgentDecision/B10_OPERATION/thread binding through B03 integrity/CAS. No approval/WorkOrder/execution.",
   "read_guarantees": [
     "Actual initialize and tools/list before model context",
     "Actual tools/call through validated broker",
@@ -50,13 +50,14 @@
     "Committed operation result replay without repeating calls",
     "Unknown prepared read outcome pauses for reconciliation",
     "Uncertain checkpoint failures quarantine thread; no automatic reset",
-    "Explicit operator-authorized monotonic Budget increase, preserving cumulative known/unknown token exposure and decision/action history"
+    "Explicit operator-authorized monotonic Budget increase, preserving cumulative known/unknown token exposure and decision/action history",
+    "B14-R explicit recurrence-scope refresh validates sourced INVESTIGATES/B08 AFTER_RECORDED_END receipt and reviewed evidence before projecting active episode; old checkpoint retained, finite 3-incident bound and fresh MCP READ required"
   ],
   "reasoning_guarantees": [
     "Model cannot self-grant VERIFIED",
     "B09-R classification and episode rules remain unchanged",
     "Recommendations nonbinding and require human review",
-    "No Plan, approval, WorkOrder, task dispatch or monitoring implementation"
+    "B12 draft-only plans; no approval, WorkOrder, task dispatch or monitoring execution"
   ],
   "defaults": {
     "max_iterations": 16,
@@ -71,12 +72,12 @@
   "not_claimed": [
     "Final canonical-city deployment",
     "Full S01-S12 evaluation",
-    "B11 GraphRAG or multi-layer organizational memory",
-    "B12-B15 operational workflows",
+    "Learned GraphRAG semantic/model quality or comprehensive organizational knowledge",
+    "B13-B15 approval/execution/monitoring/event workflows",
     "In-process malicious Python sandbox",
     "Atomic vendor multi-query checkpoint writes"
   ],
-  "prompt_version": "B10-3",
+  "prompt_version": "B12-1",
   "optimization_contract": "agent_optimization.json",
   "token_accounting_contract": "agent_optimization.json#token_accounting",
   "provider_contract": "gemini_provider.json",
@@ -84,5 +85,7 @@
     "standard": 400000,
     "complex": 800000,
     "maximum": 2000000
-  }
+  },
+  "planning_contract": "resolution_planning.json",
+  "plan_state_compatibility": "Optional current_plan_id/version/hash defaultNone on historical checkpoints; when present validate saved investigation/version/hash. Legacy recommendation retained; invalid structured draft explicitly pauses."
 }

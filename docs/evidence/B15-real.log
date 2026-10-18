@@ -1,0 +1,10 @@
+.F                                                                       [100%]
+=================================== FAILURES ===================================
+________ test_claim_case_fencing_retries_invalid_and_uncertain_dispatch ________
+backend/tests/integration/test_event_delivery.py:84: in test_claim_case_fencing_retries_invalid_and_uncertain_dispatch
+    r.create_node('DomainEvent',{**common('BAD-B15',clock()),'event_type':'GRAPH_EVIDENCE_CHANGED','subject_id':inv,'occurred_at':clock(),'delivery_status':'PENDING','idempotency_key':'BAD-B15','payload_ref':'missing:committed-envelope'})
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+E   TypeError: common() takes 1 positional argument but 2 were given
+=========================== short test summary info ============================
+FAILED backend/tests/integration/test_event_delivery.py::test_claim_case_fencing_retries_invalid_and_uncertain_dispatch
+1 failed, 1 passed in 11.67s
