@@ -11,6 +11,7 @@ from .models import Selection
 from .tokens import plan,total_usage
 from .policy import LiveDenied
 from .spending import Ledger,Pricing,SpendError
+from .limits import INPUT_LIMIT,OUTPUT_LIMIT,MAX_COUNT_RESPONSE,MAX_RECEIPT_TOKENS,MAX_CUMULATIVE_TOKENS,CountBillingPolicy
 
 PROMPT_VERSION='B10-3'
 PROMPT=(Path(__file__).parent/'prompts/B10-3.txt').read_text()
@@ -25,6 +26,8 @@ class ProviderSettings(BaseSettings):
     retry_wait_budget:float=Field(default=8,ge=0,le=30,validation_alias='CIVICLY_LLM_RETRY_WAIT_BUDGET')
     pricing_file:Path|None=Field(default=None,validation_alias='CIVICLY_AI_PRICING_FILE')
     project_limit:str|None=Field(default=None,validation_alias='CIVICLY_AI_PROJECT_LIMIT_USD')
+    max_input_tokens:int=Field(default=INPUT_LIMIT,ge=1024,le=INPUT_LIMIT,validation_alias='CIVICLY_LLM_MAX_INPUT_TOKENS')
+    max_output_tokens:int=Field(default=4096,ge=256,le=OUTPUT_LIMIT,validation_alias='CIVICLY_LLM_MAX_OUTPUT_TOKENS')
 
 class ProviderError(RuntimeError):
     def __init__(self,code,category=None):self.code=code;self.category=category or code;super().__init__(code)
@@ -60,9 +63,10 @@ def classify(response):
 
 class Gemini:
     mode='LIVE_GEMINI'
-    def __init__(self,settings,*,permit=None,ledger=None,pricing=None,transport=None,verify_tokens=None):
+    def __init__(self,settings,*,permit=None,ledger=None,pricing=None,transport=None,verify_tokens=None,count_policy=None):
         if settings.provider!='gemini':raise ValueError('Unsupported provider; no automatic paid fallback')
         self.settings,self.permit,self.transport=settings,permit,transport
+        self.count_policy=count_policy or CountBillingPolicy()
         if permit is not None and permit.mode=='MOCK_HTTP':self.mode='MOCK_GEMINI_HTTP'
         self.verify_tokens=(permit is not None and permit.mode=='LIVE') if verify_tokens is None else verify_tokens
         if permit is not None and permit.mode=='LIVE' and not self.verify_tokens:raise ValueError('Live generation requires provider token verification')
@@ -114,13 +118,16 @@ class Gemini:
                 async with self.execution_scope(self.permit.thread_id,self.permit.investigation_id):return await self._choose(context,remaining_tokens)
             return await self._choose(context,remaining_tokens)
         except TimeoutError:
-            self.last_usage={**self.last_usage,'provider':self.settings.provider,'model':self.settings.model,'prompt_version':PROMPT_VERSION,'pricing_version':self.pricing.version,'attempts':self.requests_sent,'usage_status':'UNCERTAIN' if self.requests_sent else 'NOT_SENT','spending':self.spending()}
-            self.last_failure={'category':'NETWORK_TIMEOUT','reservation_retained':self.requests_sent>0}
+            requests=self.last_usage.get('requests',[]);generation=any(r['kind']=='GENERATE' for r in requests)
+            retained=any((r['kind']=='COUNT_TOKENS' and r['billing']=='UNCERTAIN_RESERVATION_HELD') or (r['kind']=='GENERATE' and (r.get('actual_nusd') is None or r.get('unknown_tokens_held',False))) for r in requests)
+            self.last_usage={**self.last_usage,'provider':self.settings.provider,'model':self.settings.model,'prompt_version':PROMPT_VERSION,'pricing_version':self.pricing.version,'attempts':self.requests_sent,'usage_status':'UNCERTAIN' if generation else ('NOT_GENERATED' if self.requests_sent else 'NOT_SENT'),'spending':self.spending()}
+            self.last_failure={'category':'NETWORK_TIMEOUT','reservation_retained':retained}
             raise ProviderError('PROVIDER_TIMEOUT','NETWORK_TIMEOUT') from None
     async def _choose(self,context,remaining_tokens):
-        if type(remaining_tokens)is not int or not 0<=remaining_tokens<=1_000_000:raise ProviderError('INVALID_TOKEN_ALLOWANCE')
+        if type(remaining_tokens)is not int or not 0<=remaining_tokens<=MAX_CUMULATIVE_TOKENS:raise ProviderError('INVALID_TOKEN_ALLOWANCE')
         state=context.get('state',{});base=state.get('tokens',0)
-        if type(base)is not int or not 0<=base<=1_000_000:raise ProviderError('INVALID_TOKEN_BASELINE')
+        if type(base)is not int or not 0<=base<=MAX_CUMULATIVE_TOKENS:raise ProviderError('INVALID_TOKEN_BASELINE')
+        if base+remaining_tokens>MAX_CUMULATIVE_TOKENS:raise ProviderError('INVALID_TOKEN_ALLOWANCE')
         ceiling=base+remaining_tokens;used_total=0;waited=0.;attempts=[];counts={}
         text=PROMPT+'\nCONTEXT_JSON:\n'+json.dumps(context,sort_keys=True,separators=(',',':'),allow_nan=False)
         group=digest([self.permit.thread_id,state.get('iterations'),state.get('wakes'),'provider-decision'])
@@ -128,35 +135,49 @@ class Gemini:
         def metadata():
             self.last_usage={**self.last_usage,'total_tokens':used_total,'accounted_tokens':max(0,self.ledger.thread_tokens(self.permit.thread_id)-base),
                 'provider':self.settings.provider,'model':self.settings.model,'model_version':self.last_usage.get('model_version','UNAVAILABLE'),
+                'investigation_token_ceiling':ceiling,'provider_input_limit':INPUT_LIMIT,'provider_output_limit':OUTPUT_LIMIT,
+                'configured_input_limit':self.settings.max_input_tokens,'configured_output_allowance':self.settings.max_output_tokens,
                 'prompt_version':PROMPT_VERSION,'pricing_version':self.pricing.version,'attempts':self.requests_sent,'requests':attempts,'spending':self.spending()}
         async with httpx.AsyncClient(timeout=self.settings.timeout,follow_redirects=False,transport=self.transport) as client:
             async with asyncio.timeout(2*self.settings.timeout+self.settings.retry_wait_budget):
                 try:
                     for repair in range(2):
-                        body={'contents':[{'role':'user','parts':[{'text':text}]}],'generationConfig':{'responseMimeType':'application/json','responseJsonSchema':Selection.model_json_schema(),'maxOutputTokens':4096,'thinkingConfig':{'thinkingLevel':'LOW'}}}
+                        body={'contents':[{'role':'user','parts':[{'text':text}]}],'generationConfig':{'responseMimeType':'application/json','responseJsonSchema':Selection.model_json_schema(),'maxOutputTokens':self.settings.max_output_tokens,'thinkingConfig':{'thinkingLevel':'LOW'}}}
                         estimate=plan(body);count_key=digest(body)
-                        if ceiling-exposure()<4096:raise ProviderError('TOKEN_BUDGET')
+                        if ceiling-exposure()<self.settings.max_output_tokens:raise ProviderError('TOKEN_BUDGET')
                         if self.verify_tokens and count_key not in counts:
-                            # Counting is a real authorized/accounted RPC, not free billing metadata.
+                            # External access remains authorized/reserved even for a nonbillable endpoint.
                             cid='AI-COUNT-'+digest([group,repair,count_key])
                             self.ledger.reserve(cid,self.permit.case_key,self.permit.thread_id,self.settings.model,self.permit.milestone,self.pricing.version,self.pricing.estimate(estimate['serialized_utf8_bytes'],0),self.owner)
                             self.requests_sent+=1
+                            count=None;outcome='COMPLETION_UNCONFIRMED'
                             try:
                                 counted=await client.post('https://generativelanguage.googleapis.com/v1beta/models/'+self.settings.model+':countTokens',headers={'x-goog-api-key':self.settings.key.get_secret_value()},json={'generateContentRequest':{'model':'models/'+self.settings.model,**body}})
-                                value=counted.json()
+                                outcome='HTTP_'+str(counted.status_code);value=counted.json()
                                 if counted.status_code!=200:raise ProviderError('COUNT_HTTP_'+str(counted.status_code),classify(counted)[0])
                                 count=value.get('totalTokens') if isinstance(value,dict) else None
-                                if type(count)is not int or not 0<=count<=1_000_000:raise ProviderError('INVALID_PROVIDER_COUNT')
+                                if type(count)is not int or not 0<=count<=MAX_COUNT_RESPONSE:
+                                    count=None;raise ProviderError('INVALID_PROVIDER_COUNT')
                                 counts[count_key]=count
-                            except (httpx.HTTPError,ValueError,TimeoutError):raise ProviderError('COUNT_TRANSPORT_OR_PAYLOAD','COUNT_UNAVAILABLE') from None
+                                outcome='COMPLETED'
+                            except ProviderError as e:
+                                if outcome=='HTTP_200':outcome=e.code
+                                raise
+                            except (httpx.HTTPError,ValueError,TimeoutError) as e:
+                                if isinstance(e,ValueError):outcome='INVALID_RESPONSE'
+                                raise ProviderError('COUNT_TRANSPORT_OR_PAYLOAD','COUNT_UNAVAILABLE') from None
                             finally:
-                                self.ledger.reconcile(cid,None,{},'COUNT_BILLING_UNCONFIRMED')
-                                attempts.append({'request_id':cid,'kind':'COUNT_TOKENS','billing':'UNCERTAIN_RESERVATION_HELD','count_is_not_consumed_generation_tokens':True})
+                                billing=self.ledger.reconcile_count(cid,counted_input_tokens=count,outcome=outcome,
+                                    policy_id=self.count_policy.version,nonbillable=self.count_policy.nonbillable(self.settings.model,self.pricing.clock()))
+                                attempts.append({'request_id':cid,'kind':'COUNT_TOKENS','billing':billing,'outcome':outcome,
+                                    'provider_count_tokens':count,'billing_policy':self.count_policy.version,'count_is_not_consumed_generation_tokens':True})
                         allocation=plan(body,provider_count=counts.get(count_key))
                         allocation['provider_count_origin']='SIMULATED_PROVIDER_RESPONSE' if self.mode=='MOCK_GEMINI_HTTP' and self.verify_tokens else ('PROVIDER_COUNT_API' if self.verify_tokens else 'NO_PROVIDER_COUNT')
+                        request_input=allocation['provider_count_tokens'] if allocation['provider_count_tokens'] is not None else allocation['input_allowance_tokens']
+                        if request_input>self.settings.max_input_tokens:raise ProviderError('PROVIDER_INPUT_LIMIT')
                         for retry in range(self.settings.transient_retries+1):
                             request_id='AI-'+digest([group,repair,retry]);self.pricing.validate(self.settings.model)
-                            reserve=self.pricing.estimate(allocation['serialized_utf8_bytes'],4096)
+                            reserve=self.pricing.estimate(allocation['serialized_utf8_bytes'],self.settings.max_output_tokens,input_tokens=allocation['input_allowance_tokens'])
                             self.ledger.reserve(request_id,self.permit.case_key,self.permit.thread_id,self.settings.model,self.permit.milestone,self.pricing.version,reserve,self.owner,
                                 token_reservation=allocation['total_allowance_tokens'],token_limit=ceiling,base_tokens=base)
                             self.requests_sent+=1
@@ -171,7 +192,7 @@ class Gemini:
                             try:
                                 parsed=response.json();value=parsed if isinstance(parsed,dict) else {}
                                 raw_usage=value.get('usageMetadata',{})
-                                if isinstance(raw_usage,dict):usage={k:v for k,v in raw_usage.items() if k in {'promptTokenCount','candidatesTokenCount','thoughtsTokenCount','totalTokenCount','cachedContentTokenCount','toolUsePromptTokenCount'} and type(v)is int and 0<=v<=1_000_000}
+                                if isinstance(raw_usage,dict):usage={k:v for k,v in raw_usage.items() if k in {'promptTokenCount','candidatesTokenCount','thoughtsTokenCount','totalTokenCount','cachedContentTokenCount','toolUsePromptTokenCount'} and type(v)is int and 0<=v<=MAX_RECEIPT_TOKENS}
                             except ValueError:pass
                             actual=self.pricing.actual(usage);used=total_usage(usage);category=None
                             if response.status_code!=200:category,hint,retryable=classify(response)

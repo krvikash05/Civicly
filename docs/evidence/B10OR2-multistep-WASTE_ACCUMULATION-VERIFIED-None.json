@@ -1,0 +1,1865 @@
+{
+  "mode": "SIMULATED_GEMINI_HTTP_REAL_MCP_B09_SAVER",
+  "issue": "WASTE_ACCUMULATION",
+  "topology": "VERIFIED",
+  "fault": null,
+  "result": {
+    "data": {
+      "version": 1,
+      "graph": "civicly_b10_test_707a3cd99dc34e1f81c0c6b216f2b2ec",
+      "investigation_id": "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+      "thread_id": "052fd8b334ba4f74857f1626c372ef03",
+      "problem_cluster_id": "PC-B08-95e2eeb74ab8d2ee79cbbee5ccfd57bc",
+      "discovered_tool_names": [
+        "official::get_graph_schema",
+        "official::get_node_schema",
+        "official::get_relationship_schema",
+        "official::query_graph_readonly",
+        "civicly::find_related_incidents",
+        "civicly::get_decision_evidence_path",
+        "civicly::get_maintenance_history",
+        "civicly::get_monitoring_status",
+        "civicly::get_organizational_procedures",
+        "civicly::get_pickup_execution_history",
+        "civicly::get_road_condition_history",
+        "civicly::get_source_document_excerpt",
+        "civicly::get_work_order_status",
+        "civicly::retrieve_case_memory",
+        "civicly::retrieve_external_evidence",
+        "civicly::trace_infrastructure_dependencies"
+      ],
+      "missing_evidence": [
+        "Source pickup local-clock/service alias warnings remain; no schedule reinterpretation"
+      ],
+      "current_plan_id": null,
+      "incident_ids": [
+        "INC-B08-7f3b4ae6bcdc030eebab3a150e330143"
+      ],
+      "asset_ids": [
+        "D1",
+        "D2",
+        "P1",
+        "R1",
+        "W1"
+      ],
+      "issue": "WASTE_ACCUMULATION",
+      "graph_revision": 111,
+      "phase": "Coordinator",
+      "hypotheses": [
+        "HYP-B09-21ddd5f91e62c68fe556529762144190",
+        "HYP-B09-34b13de5762e8bfdd1bd765c8bc58144"
+      ],
+      "evidence": {
+        "EV": "ea59025ba1a656bb97074ae1921a3d3e4624edb20a9ef62ee3346b1fdce4247b",
+        "EV-REPORT-B09-d3d2d841e4cc8e143c9676042909ae77": "5146f9a9040cd2835f90b0badb86478b85a75873d7c155aaea0380b0a63be6f3",
+        "EV-REPORT-B09-57af3c6bb2622b7fe611324241ef2c89": "dabc6645b35567a0eca74a95a08d7601b8af3d16f12ba24a604916e354eb18ae"
+      },
+      "inventory_hash": "60e6cc345311a3446a1aedb713b945a2cfdd16b594fa40d2ae50a196dca57ebd",
+      "selection": {
+        "action": "INSPECT",
+        "summary": "Authored deterministic model test selection",
+        "tool_name": "",
+        "arguments_json": "{\"asset_ids\": [\"W1\"], \"department_id\": \"DEP\", \"inspection_type\": \"CAPACITY_TEST\"}",
+        "pause_reason": "NONE"
+      },
+      "decisions": [
+        "DEC-B10-0bf6971ed927cf0e89ce4070568f09a3",
+        "DEC-B10-0f8ae4be424f4514abce5675e49837ea",
+        "DEC-B10-4591472bb44ebb9352fc61226eeec32d",
+        "DEC-B10-55fb8b928460ce8d79fe147383a8eb30",
+        "DEC-B10-5334ba06761177b181f2a4470cd54b08",
+        "DEC-B10-ef6e8f251329d91f1eb3d95e65f85515"
+      ],
+      "executions": [
+        "MCP-B10-0bf6971ed927cf0e89ce4070568f09a3",
+        "MCP-B10-55fb8b928460ce8d79fe147383a8eb30"
+      ],
+      "pending_inspections": [
+        "INS-B09-654f43d1b9cd73d91fe2e4b0e896a480"
+      ],
+      "pending_approval": null,
+      "errors": [],
+      "observations": [
+        {
+          "status": "PARTIAL",
+          "trace_id": "052fd8b334ba4f74857f1626c372ef03",
+          "execution_id": "d3ef5fafe6ae43d4a362adaf3aab6b60",
+          "context": {
+            "trace_id": "052fd8b334ba4f74857f1626c372ef03",
+            "execution_id": "d3ef5fafe6ae43d4a362adaf3aab6b60",
+            "parent_execution_id": null,
+            "investigation_id": "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+            "municipality_id": "demo-city",
+            "source_graph": "civicly_b10_test_707a3cd99dc34e1f81c0c6b216f2b2ec",
+            "caller_role": "READ_ONLY",
+            "invocation_origin": "APPLICATION"
+          },
+          "server_id": "civicly-domain",
+          "tool_name": "get_pickup_execution_history",
+          "schema_version": 3,
+          "inventory_version": "da1f25b2f8174ec96b4213038b92eb8600c24e8b362697f63f85b5d143790b42",
+          "source_evidence_ids": [
+            "EV"
+          ],
+          "simulation_mode": true,
+          "graph_revision": 80,
+          "truncated": false,
+          "search_limited": true,
+          "error": null,
+          "pickup_executions": [
+            {
+              "id": "PICKUP-MISSED",
+              "properties": {
+                "id": "PICKUP-MISSED",
+                "updated_at": "2026-10-17T00:00:00Z",
+                "municipality_id": "demo-city",
+                "status": "MISSED",
+                "created_at": "2026-10-17T00:00:00Z",
+                "schema_version": 3,
+                "route_id": "ROUTE",
+                "scheduled_at": "2026-10-18T03:00:00Z",
+                "source_record_id": "SYNTHETIC-PICKUP-MISSED"
+              }
+            },
+            {
+              "id": "PICKUP-PARTIAL",
+              "properties": {
+                "id": "PICKUP-PARTIAL",
+                "updated_at": "2026-10-17T00:00:00Z",
+                "municipality_id": "demo-city",
+                "status": "PARTIAL",
+                "created_at": "2026-10-17T00:00:00Z",
+                "schema_version": 3,
+                "route_id": "ROUTE",
+                "scheduled_at": "2026-10-18T03:01:00Z",
+                "source_record_id": "SYNTHETIC-PICKUP-PARTIAL",
+                "actual_at": "2026-10-18T03:01:00Z"
+              }
+            },
+            {
+              "id": "PICKUP-COMPLETED",
+              "properties": {
+                "id": "PICKUP-COMPLETED",
+                "updated_at": "2026-10-17T00:00:00Z",
+                "municipality_id": "demo-city",
+                "status": "COMPLETED",
+                "created_at": "2026-10-17T00:00:00Z",
+                "schema_version": 3,
+                "route_id": "ROUTE",
+                "scheduled_at": "2026-10-18T03:02:00Z",
+                "source_record_id": "SYNTHETIC-PICKUP-COMPLETED",
+                "actual_at": "2026-10-18T03:02:00Z"
+              }
+            }
+          ],
+          "data": {
+            "nodes": [
+              {
+                "id": "PICKUP-MISSED",
+                "kind": "PickupExecution",
+                "labels": [
+                  "PickupExecution"
+                ],
+                "properties": {
+                  "id": "PICKUP-MISSED",
+                  "updated_at": "2026-10-17T00:00:00Z",
+                  "municipality_id": "demo-city",
+                  "status": "MISSED",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "schema_version": 3,
+                  "route_id": "ROUTE",
+                  "scheduled_at": "2026-10-18T03:00:00Z",
+                  "source_record_id": "SYNTHETIC-PICKUP-MISSED"
+                }
+              },
+              {
+                "id": "W1",
+                "kind": "WasteCollectionPoint",
+                "labels": [
+                  "InfrastructureAsset",
+                  "WasteCollectionPoint"
+                ],
+                "properties": {
+                  "id": "W1",
+                  "updated_at": "2026-10-17T00:00:00Z",
+                  "municipality_id": "demo-city",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "schema_version": 3,
+                  "operational_status": "ACTIVE",
+                  "name": "Synthetic asset",
+                  "asset_type": "WASTE_COLLECTION_POINT"
+                }
+              },
+              {
+                "id": "EV",
+                "kind": "Evidence",
+                "labels": [
+                  "Evidence"
+                ],
+                "properties": {
+                  "id": "EV",
+                  "updated_at": "2026-10-17T00:00:00Z",
+                  "municipality_id": "demo-city",
+                  "observed_at": "2026-10-17T00:00:00Z",
+                  "recorded_at": "2026-10-17T00:00:00Z",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "schema_version": 3,
+                  "summary": "Synthetic inspection",
+                  "source_kind": "SYNTHETIC",
+                  "evidence_type": "INSPECTION_REPORT",
+                  "reliability": "VERIFIED",
+                  "source_record_id": "test-record"
+                }
+              },
+              {
+                "id": "PICKUP-PARTIAL",
+                "kind": "PickupExecution",
+                "labels": [
+                  "PickupExecution"
+                ],
+                "properties": {
+                  "id": "PICKUP-PARTIAL",
+                  "updated_at": "2026-10-17T00:00:00Z",
+                  "municipality_id": "demo-city",
+                  "status": "PARTIAL",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "schema_version": 3,
+                  "route_id": "ROUTE",
+                  "scheduled_at": "2026-10-18T03:01:00Z",
+                  "source_record_id": "SYNTHETIC-PICKUP-PARTIAL",
+                  "actual_at": "2026-10-18T03:01:00Z"
+                }
+              },
+              {
+                "id": "PICKUP-COMPLETED",
+                "kind": "PickupExecution",
+                "labels": [
+                  "PickupExecution"
+                ],
+                "properties": {
+                  "id": "PICKUP-COMPLETED",
+                  "updated_at": "2026-10-17T00:00:00Z",
+                  "municipality_id": "demo-city",
+                  "status": "COMPLETED",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "schema_version": 3,
+                  "route_id": "ROUTE",
+                  "scheduled_at": "2026-10-18T03:02:00Z",
+                  "source_record_id": "SYNTHETIC-PICKUP-COMPLETED",
+                  "actual_at": "2026-10-18T03:02:00Z"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "FOR-PICKUP-MISSED",
+                "kind": "PICKUP_FOR",
+                "source": "PICKUP-MISSED",
+                "target": "W1",
+                "properties": {
+                  "id": "FOR-PICKUP-MISSED",
+                  "municipality_id": "demo-city",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "source_evidence_id": "EV"
+                }
+              },
+              {
+                "id": "FOR-PICKUP-PARTIAL",
+                "kind": "PICKUP_FOR",
+                "source": "PICKUP-PARTIAL",
+                "target": "W1",
+                "properties": {
+                  "id": "FOR-PICKUP-PARTIAL",
+                  "municipality_id": "demo-city",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "source_evidence_id": "EV"
+                }
+              },
+              {
+                "id": "FOR-PICKUP-COMPLETED",
+                "kind": "PICKUP_FOR",
+                "source": "PICKUP-COMPLETED",
+                "target": "W1",
+                "properties": {
+                  "id": "FOR-PICKUP-COMPLETED",
+                  "municipality_id": "demo-city",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "source_evidence_id": "EV"
+                }
+              }
+            ],
+            "paths": [],
+            "gaps": [
+              "Source pickup local-clock/service alias warnings remain; no schedule reinterpretation"
+            ],
+            "reservations": [
+              "History window inclusive; chronological UTC ascending, stable event ID then relationship ID;100 records plus one lookahead, before export graph caps. Truncation is not absence."
+            ],
+            "as_of": "2026-10-18T12:00:16.000000Z"
+          }
+        },
+        {
+          "status": "PARTIAL",
+          "trace_id": "052fd8b334ba4f74857f1626c372ef03",
+          "execution_id": "4e5adfc27efd43a9af444fb636de670d",
+          "context": {
+            "trace_id": "052fd8b334ba4f74857f1626c372ef03",
+            "execution_id": "4e5adfc27efd43a9af444fb636de670d",
+            "parent_execution_id": null,
+            "investigation_id": "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+            "municipality_id": "demo-city",
+            "source_graph": "civicly_b10_test_707a3cd99dc34e1f81c0c6b216f2b2ec",
+            "caller_role": "READ_ONLY",
+            "invocation_origin": "APPLICATION"
+          },
+          "server_id": "civicly-domain",
+          "tool_name": "get_pickup_execution_history",
+          "schema_version": 3,
+          "inventory_version": "da1f25b2f8174ec96b4213038b92eb8600c24e8b362697f63f85b5d143790b42",
+          "source_evidence_ids": [
+            "EV"
+          ],
+          "simulation_mode": true,
+          "graph_revision": 80,
+          "truncated": false,
+          "search_limited": true,
+          "error": null,
+          "pickup_executions": [
+            {
+              "id": "PICKUP-MISSED",
+              "properties": {
+                "id": "PICKUP-MISSED",
+                "updated_at": "2026-10-17T00:00:00Z",
+                "municipality_id": "demo-city",
+                "status": "MISSED",
+                "created_at": "2026-10-17T00:00:00Z",
+                "schema_version": 3,
+                "route_id": "ROUTE",
+                "scheduled_at": "2026-10-18T03:00:00Z",
+                "source_record_id": "SYNTHETIC-PICKUP-MISSED"
+              }
+            },
+            {
+              "id": "PICKUP-PARTIAL",
+              "properties": {
+                "id": "PICKUP-PARTIAL",
+                "updated_at": "2026-10-17T00:00:00Z",
+                "municipality_id": "demo-city",
+                "status": "PARTIAL",
+                "created_at": "2026-10-17T00:00:00Z",
+                "schema_version": 3,
+                "route_id": "ROUTE",
+                "scheduled_at": "2026-10-18T03:01:00Z",
+                "source_record_id": "SYNTHETIC-PICKUP-PARTIAL",
+                "actual_at": "2026-10-18T03:01:00Z"
+              }
+            },
+            {
+              "id": "PICKUP-COMPLETED",
+              "properties": {
+                "id": "PICKUP-COMPLETED",
+                "updated_at": "2026-10-17T00:00:00Z",
+                "municipality_id": "demo-city",
+                "status": "COMPLETED",
+                "created_at": "2026-10-17T00:00:00Z",
+                "schema_version": 3,
+                "route_id": "ROUTE",
+                "scheduled_at": "2026-10-18T03:02:00Z",
+                "source_record_id": "SYNTHETIC-PICKUP-COMPLETED",
+                "actual_at": "2026-10-18T03:02:00Z"
+              }
+            }
+          ],
+          "data": {
+            "nodes": [
+              {
+                "id": "PICKUP-MISSED",
+                "kind": "PickupExecution",
+                "labels": [
+                  "PickupExecution"
+                ],
+                "properties": {
+                  "id": "PICKUP-MISSED",
+                  "updated_at": "2026-10-17T00:00:00Z",
+                  "municipality_id": "demo-city",
+                  "status": "MISSED",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "schema_version": 3,
+                  "route_id": "ROUTE",
+                  "scheduled_at": "2026-10-18T03:00:00Z",
+                  "source_record_id": "SYNTHETIC-PICKUP-MISSED"
+                }
+              },
+              {
+                "id": "W1",
+                "kind": "WasteCollectionPoint",
+                "labels": [
+                  "InfrastructureAsset",
+                  "WasteCollectionPoint"
+                ],
+                "properties": {
+                  "id": "W1",
+                  "updated_at": "2026-10-17T00:00:00Z",
+                  "municipality_id": "demo-city",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "schema_version": 3,
+                  "operational_status": "ACTIVE",
+                  "name": "Synthetic asset",
+                  "asset_type": "WASTE_COLLECTION_POINT"
+                }
+              },
+              {
+                "id": "EV",
+                "kind": "Evidence",
+                "labels": [
+                  "Evidence"
+                ],
+                "properties": {
+                  "id": "EV",
+                  "updated_at": "2026-10-17T00:00:00Z",
+                  "municipality_id": "demo-city",
+                  "observed_at": "2026-10-17T00:00:00Z",
+                  "recorded_at": "2026-10-17T00:00:00Z",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "schema_version": 3,
+                  "summary": "Synthetic inspection",
+                  "source_kind": "SYNTHETIC",
+                  "evidence_type": "INSPECTION_REPORT",
+                  "reliability": "VERIFIED",
+                  "source_record_id": "test-record"
+                }
+              },
+              {
+                "id": "PICKUP-PARTIAL",
+                "kind": "PickupExecution",
+                "labels": [
+                  "PickupExecution"
+                ],
+                "properties": {
+                  "id": "PICKUP-PARTIAL",
+                  "updated_at": "2026-10-17T00:00:00Z",
+                  "municipality_id": "demo-city",
+                  "status": "PARTIAL",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "schema_version": 3,
+                  "route_id": "ROUTE",
+                  "scheduled_at": "2026-10-18T03:01:00Z",
+                  "source_record_id": "SYNTHETIC-PICKUP-PARTIAL",
+                  "actual_at": "2026-10-18T03:01:00Z"
+                }
+              },
+              {
+                "id": "PICKUP-COMPLETED",
+                "kind": "PickupExecution",
+                "labels": [
+                  "PickupExecution"
+                ],
+                "properties": {
+                  "id": "PICKUP-COMPLETED",
+                  "updated_at": "2026-10-17T00:00:00Z",
+                  "municipality_id": "demo-city",
+                  "status": "COMPLETED",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "schema_version": 3,
+                  "route_id": "ROUTE",
+                  "scheduled_at": "2026-10-18T03:02:00Z",
+                  "source_record_id": "SYNTHETIC-PICKUP-COMPLETED",
+                  "actual_at": "2026-10-18T03:02:00Z"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "FOR-PICKUP-MISSED",
+                "kind": "PICKUP_FOR",
+                "source": "PICKUP-MISSED",
+                "target": "W1",
+                "properties": {
+                  "id": "FOR-PICKUP-MISSED",
+                  "municipality_id": "demo-city",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "source_evidence_id": "EV"
+                }
+              },
+              {
+                "id": "FOR-PICKUP-PARTIAL",
+                "kind": "PICKUP_FOR",
+                "source": "PICKUP-PARTIAL",
+                "target": "W1",
+                "properties": {
+                  "id": "FOR-PICKUP-PARTIAL",
+                  "municipality_id": "demo-city",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "source_evidence_id": "EV"
+                }
+              },
+              {
+                "id": "FOR-PICKUP-COMPLETED",
+                "kind": "PICKUP_FOR",
+                "source": "PICKUP-COMPLETED",
+                "target": "W1",
+                "properties": {
+                  "id": "FOR-PICKUP-COMPLETED",
+                  "municipality_id": "demo-city",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "source_evidence_id": "EV"
+                }
+              }
+            ],
+            "paths": [],
+            "gaps": [
+              "Source pickup local-clock/service alias warnings remain; no schedule reinterpretation"
+            ],
+            "reservations": [
+              "History window inclusive; chronological UTC ascending, stable event ID then relationship ID;100 records plus one lookahead, before export graph caps. Truncation is not absence."
+            ],
+            "as_of": "2026-10-18T12:00:16.000000Z"
+          }
+        },
+        {
+          "status": "PARTIAL",
+          "trace_id": "052fd8b334ba4f74857f1626c372ef03",
+          "execution_id": "401951695a554144b5b8c70ac09a0cdc",
+          "context": {
+            "trace_id": "052fd8b334ba4f74857f1626c372ef03",
+            "execution_id": "401951695a554144b5b8c70ac09a0cdc",
+            "parent_execution_id": null,
+            "investigation_id": "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+            "municipality_id": "demo-city",
+            "source_graph": "civicly_b10_test_707a3cd99dc34e1f81c0c6b216f2b2ec",
+            "caller_role": "READ_ONLY",
+            "invocation_origin": "APPLICATION"
+          },
+          "server_id": "civicly-domain",
+          "tool_name": "get_pickup_execution_history",
+          "schema_version": 3,
+          "inventory_version": "da1f25b2f8174ec96b4213038b92eb8600c24e8b362697f63f85b5d143790b42",
+          "source_evidence_ids": [
+            "EV"
+          ],
+          "simulation_mode": true,
+          "graph_revision": 80,
+          "truncated": false,
+          "search_limited": true,
+          "error": null,
+          "pickup_executions": [
+            {
+              "id": "PICKUP-MISSED",
+              "properties": {
+                "id": "PICKUP-MISSED",
+                "updated_at": "2026-10-17T00:00:00Z",
+                "municipality_id": "demo-city",
+                "status": "MISSED",
+                "created_at": "2026-10-17T00:00:00Z",
+                "schema_version": 3,
+                "route_id": "ROUTE",
+                "scheduled_at": "2026-10-18T03:00:00Z",
+                "source_record_id": "SYNTHETIC-PICKUP-MISSED"
+              }
+            },
+            {
+              "id": "PICKUP-PARTIAL",
+              "properties": {
+                "id": "PICKUP-PARTIAL",
+                "updated_at": "2026-10-17T00:00:00Z",
+                "municipality_id": "demo-city",
+                "status": "PARTIAL",
+                "created_at": "2026-10-17T00:00:00Z",
+                "schema_version": 3,
+                "route_id": "ROUTE",
+                "scheduled_at": "2026-10-18T03:01:00Z",
+                "source_record_id": "SYNTHETIC-PICKUP-PARTIAL",
+                "actual_at": "2026-10-18T03:01:00Z"
+              }
+            },
+            {
+              "id": "PICKUP-COMPLETED",
+              "properties": {
+                "id": "PICKUP-COMPLETED",
+                "updated_at": "2026-10-17T00:00:00Z",
+                "municipality_id": "demo-city",
+                "status": "COMPLETED",
+                "created_at": "2026-10-17T00:00:00Z",
+                "schema_version": 3,
+                "route_id": "ROUTE",
+                "scheduled_at": "2026-10-18T03:02:00Z",
+                "source_record_id": "SYNTHETIC-PICKUP-COMPLETED",
+                "actual_at": "2026-10-18T03:02:00Z"
+              }
+            }
+          ],
+          "data": {
+            "nodes": [
+              {
+                "id": "PICKUP-MISSED",
+                "kind": "PickupExecution",
+                "labels": [
+                  "PickupExecution"
+                ],
+                "properties": {
+                  "id": "PICKUP-MISSED",
+                  "updated_at": "2026-10-17T00:00:00Z",
+                  "municipality_id": "demo-city",
+                  "status": "MISSED",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "schema_version": 3,
+                  "route_id": "ROUTE",
+                  "scheduled_at": "2026-10-18T03:00:00Z",
+                  "source_record_id": "SYNTHETIC-PICKUP-MISSED"
+                }
+              },
+              {
+                "id": "W1",
+                "kind": "WasteCollectionPoint",
+                "labels": [
+                  "InfrastructureAsset",
+                  "WasteCollectionPoint"
+                ],
+                "properties": {
+                  "id": "W1",
+                  "updated_at": "2026-10-17T00:00:00Z",
+                  "municipality_id": "demo-city",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "schema_version": 3,
+                  "operational_status": "ACTIVE",
+                  "name": "Synthetic asset",
+                  "asset_type": "WASTE_COLLECTION_POINT"
+                }
+              },
+              {
+                "id": "EV",
+                "kind": "Evidence",
+                "labels": [
+                  "Evidence"
+                ],
+                "properties": {
+                  "id": "EV",
+                  "updated_at": "2026-10-17T00:00:00Z",
+                  "municipality_id": "demo-city",
+                  "observed_at": "2026-10-17T00:00:00Z",
+                  "recorded_at": "2026-10-17T00:00:00Z",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "schema_version": 3,
+                  "summary": "Synthetic inspection",
+                  "source_kind": "SYNTHETIC",
+                  "evidence_type": "INSPECTION_REPORT",
+                  "reliability": "VERIFIED",
+                  "source_record_id": "test-record"
+                }
+              },
+              {
+                "id": "PICKUP-PARTIAL",
+                "kind": "PickupExecution",
+                "labels": [
+                  "PickupExecution"
+                ],
+                "properties": {
+                  "id": "PICKUP-PARTIAL",
+                  "updated_at": "2026-10-17T00:00:00Z",
+                  "municipality_id": "demo-city",
+                  "status": "PARTIAL",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "schema_version": 3,
+                  "route_id": "ROUTE",
+                  "scheduled_at": "2026-10-18T03:01:00Z",
+                  "source_record_id": "SYNTHETIC-PICKUP-PARTIAL",
+                  "actual_at": "2026-10-18T03:01:00Z"
+                }
+              },
+              {
+                "id": "PICKUP-COMPLETED",
+                "kind": "PickupExecution",
+                "labels": [
+                  "PickupExecution"
+                ],
+                "properties": {
+                  "id": "PICKUP-COMPLETED",
+                  "updated_at": "2026-10-17T00:00:00Z",
+                  "municipality_id": "demo-city",
+                  "status": "COMPLETED",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "schema_version": 3,
+                  "route_id": "ROUTE",
+                  "scheduled_at": "2026-10-18T03:02:00Z",
+                  "source_record_id": "SYNTHETIC-PICKUP-COMPLETED",
+                  "actual_at": "2026-10-18T03:02:00Z"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "FOR-PICKUP-MISSED",
+                "kind": "PICKUP_FOR",
+                "source": "PICKUP-MISSED",
+                "target": "W1",
+                "properties": {
+                  "id": "FOR-PICKUP-MISSED",
+                  "municipality_id": "demo-city",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "source_evidence_id": "EV"
+                }
+              },
+              {
+                "id": "FOR-PICKUP-PARTIAL",
+                "kind": "PICKUP_FOR",
+                "source": "PICKUP-PARTIAL",
+                "target": "W1",
+                "properties": {
+                  "id": "FOR-PICKUP-PARTIAL",
+                  "municipality_id": "demo-city",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "source_evidence_id": "EV"
+                }
+              },
+              {
+                "id": "FOR-PICKUP-COMPLETED",
+                "kind": "PICKUP_FOR",
+                "source": "PICKUP-COMPLETED",
+                "target": "W1",
+                "properties": {
+                  "id": "FOR-PICKUP-COMPLETED",
+                  "municipality_id": "demo-city",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "source_evidence_id": "EV"
+                }
+              }
+            ],
+            "paths": [],
+            "gaps": [
+              "Source pickup local-clock/service alias warnings remain; no schedule reinterpretation"
+            ],
+            "reservations": [
+              "History window inclusive; chronological UTC ascending, stable event ID then relationship ID;100 records plus one lookahead, before export graph caps. Truncation is not absence."
+            ],
+            "as_of": "2026-10-18T12:00:16.000000Z"
+          }
+        },
+        {
+          "graph": "civicly_b10_test_707a3cd99dc34e1f81c0c6b216f2b2ec",
+          "tool": "query_graph_readonly",
+          "template": "node",
+          "graph_revision": 80,
+          "rows": [
+            {
+              "labels": [
+                "CivicEntity",
+                "ServiceSchedule"
+              ],
+              "properties": {
+                "id": "SCHEDULE",
+                "updated_at": "2026-10-17T00:00:00Z",
+                "municipality_id": "demo-city",
+                "valid_from": "2026-10-17T00:00:00Z",
+                "created_at": "2026-10-17T00:00:00Z",
+                "schema_version": 3,
+                "schedule_spec": "local07:00; source alias retained",
+                "service_type": "WASTE",
+                "timezone": "Asia/Kolkata"
+              }
+            }
+          ],
+          "schema_data": null,
+          "truncated": false,
+          "search_limited": true,
+          "semantics": "Raw recorded synthetic facts; no causal finding. Schema samples are incomplete; node lookup is current-state, edge validity is half-open with unknown/open dates."
+        },
+        {
+          "status": "PARTIAL",
+          "trace_id": "052fd8b334ba4f74857f1626c372ef03",
+          "execution_id": "MCP-B10-0bf6971ed927cf0e89ce4070568f09a3",
+          "context": {
+            "trace_id": "052fd8b334ba4f74857f1626c372ef03",
+            "execution_id": "MCP-B10-0bf6971ed927cf0e89ce4070568f09a3",
+            "parent_execution_id": "DEC-B10-0bf6971ed927cf0e89ce4070568f09a3",
+            "investigation_id": "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+            "municipality_id": "demo-city",
+            "source_graph": "civicly_b10_test_707a3cd99dc34e1f81c0c6b216f2b2ec",
+            "caller_role": "READ_ONLY",
+            "invocation_origin": "APPLICATION"
+          },
+          "server_id": "civicly-domain",
+          "tool_name": "get_pickup_execution_history",
+          "schema_version": 3,
+          "inventory_version": "da1f25b2f8174ec96b4213038b92eb8600c24e8b362697f63f85b5d143790b42",
+          "source_evidence_ids": [
+            "EV"
+          ],
+          "simulation_mode": true,
+          "graph_revision": 83,
+          "truncated": false,
+          "search_limited": true,
+          "error": null,
+          "pickup_executions": [
+            {
+              "id": "PICKUP-MISSED",
+              "properties": {
+                "id": "PICKUP-MISSED",
+                "updated_at": "2026-10-17T00:00:00Z",
+                "municipality_id": "demo-city",
+                "status": "MISSED",
+                "created_at": "2026-10-17T00:00:00Z",
+                "schema_version": 3,
+                "route_id": "ROUTE",
+                "scheduled_at": "2026-10-18T03:00:00Z",
+                "source_record_id": "SYNTHETIC-PICKUP-MISSED"
+              }
+            },
+            {
+              "id": "PICKUP-PARTIAL",
+              "properties": {
+                "id": "PICKUP-PARTIAL",
+                "updated_at": "2026-10-17T00:00:00Z",
+                "municipality_id": "demo-city",
+                "status": "PARTIAL",
+                "created_at": "2026-10-17T00:00:00Z",
+                "schema_version": 3,
+                "route_id": "ROUTE",
+                "scheduled_at": "2026-10-18T03:01:00Z",
+                "source_record_id": "SYNTHETIC-PICKUP-PARTIAL",
+                "actual_at": "2026-10-18T03:01:00Z"
+              }
+            },
+            {
+              "id": "PICKUP-COMPLETED",
+              "properties": {
+                "id": "PICKUP-COMPLETED",
+                "updated_at": "2026-10-17T00:00:00Z",
+                "municipality_id": "demo-city",
+                "status": "COMPLETED",
+                "created_at": "2026-10-17T00:00:00Z",
+                "schema_version": 3,
+                "route_id": "ROUTE",
+                "scheduled_at": "2026-10-18T03:02:00Z",
+                "source_record_id": "SYNTHETIC-PICKUP-COMPLETED",
+                "actual_at": "2026-10-18T03:02:00Z"
+              }
+            }
+          ],
+          "data": {
+            "nodes": [
+              {
+                "id": "PICKUP-MISSED",
+                "kind": "PickupExecution",
+                "labels": [
+                  "PickupExecution"
+                ],
+                "properties": {
+                  "id": "PICKUP-MISSED",
+                  "updated_at": "2026-10-17T00:00:00Z",
+                  "municipality_id": "demo-city",
+                  "status": "MISSED",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "schema_version": 3,
+                  "route_id": "ROUTE",
+                  "scheduled_at": "2026-10-18T03:00:00Z",
+                  "source_record_id": "SYNTHETIC-PICKUP-MISSED"
+                }
+              },
+              {
+                "id": "W1",
+                "kind": "WasteCollectionPoint",
+                "labels": [
+                  "InfrastructureAsset",
+                  "WasteCollectionPoint"
+                ],
+                "properties": {
+                  "id": "W1",
+                  "updated_at": "2026-10-17T00:00:00Z",
+                  "municipality_id": "demo-city",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "schema_version": 3,
+                  "operational_status": "ACTIVE",
+                  "name": "Synthetic asset",
+                  "asset_type": "WASTE_COLLECTION_POINT"
+                }
+              },
+              {
+                "id": "EV",
+                "kind": "Evidence",
+                "labels": [
+                  "Evidence"
+                ],
+                "properties": {
+                  "id": "EV",
+                  "updated_at": "2026-10-17T00:00:00Z",
+                  "municipality_id": "demo-city",
+                  "observed_at": "2026-10-17T00:00:00Z",
+                  "recorded_at": "2026-10-17T00:00:00Z",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "schema_version": 3,
+                  "summary": "Synthetic inspection",
+                  "source_kind": "SYNTHETIC",
+                  "evidence_type": "INSPECTION_REPORT",
+                  "reliability": "VERIFIED",
+                  "source_record_id": "test-record"
+                }
+              },
+              {
+                "id": "PICKUP-PARTIAL",
+                "kind": "PickupExecution",
+                "labels": [
+                  "PickupExecution"
+                ],
+                "properties": {
+                  "id": "PICKUP-PARTIAL",
+                  "updated_at": "2026-10-17T00:00:00Z",
+                  "municipality_id": "demo-city",
+                  "status": "PARTIAL",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "schema_version": 3,
+                  "route_id": "ROUTE",
+                  "scheduled_at": "2026-10-18T03:01:00Z",
+                  "source_record_id": "SYNTHETIC-PICKUP-PARTIAL",
+                  "actual_at": "2026-10-18T03:01:00Z"
+                }
+              },
+              {
+                "id": "PICKUP-COMPLETED",
+                "kind": "PickupExecution",
+                "labels": [
+                  "PickupExecution"
+                ],
+                "properties": {
+                  "id": "PICKUP-COMPLETED",
+                  "updated_at": "2026-10-17T00:00:00Z",
+                  "municipality_id": "demo-city",
+                  "status": "COMPLETED",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "schema_version": 3,
+                  "route_id": "ROUTE",
+                  "scheduled_at": "2026-10-18T03:02:00Z",
+                  "source_record_id": "SYNTHETIC-PICKUP-COMPLETED",
+                  "actual_at": "2026-10-18T03:02:00Z"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "FOR-PICKUP-MISSED",
+                "kind": "PICKUP_FOR",
+                "source": "PICKUP-MISSED",
+                "target": "W1",
+                "properties": {
+                  "id": "FOR-PICKUP-MISSED",
+                  "municipality_id": "demo-city",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "source_evidence_id": "EV"
+                }
+              },
+              {
+                "id": "FOR-PICKUP-PARTIAL",
+                "kind": "PICKUP_FOR",
+                "source": "PICKUP-PARTIAL",
+                "target": "W1",
+                "properties": {
+                  "id": "FOR-PICKUP-PARTIAL",
+                  "municipality_id": "demo-city",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "source_evidence_id": "EV"
+                }
+              },
+              {
+                "id": "FOR-PICKUP-COMPLETED",
+                "kind": "PICKUP_FOR",
+                "source": "PICKUP-COMPLETED",
+                "target": "W1",
+                "properties": {
+                  "id": "FOR-PICKUP-COMPLETED",
+                  "municipality_id": "demo-city",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "source_evidence_id": "EV"
+                }
+              }
+            ],
+            "paths": [],
+            "gaps": [
+              "Source pickup local-clock/service alias warnings remain; no schedule reinterpretation"
+            ],
+            "reservations": [
+              "History window inclusive; chronological UTC ascending, stable event ID then relationship ID;100 records plus one lookahead, before export graph caps. Truncation is not absence."
+            ],
+            "as_of": "2026-10-18T12:00:16.000000Z"
+          }
+        },
+        {
+          "operation": "propose",
+          "journal_id": "EV-JOURNAL-B09-4b0be12acdb8e611dbf17fdba2e828f2",
+          "entity_id": "HYP-B09-34b13de5762e8bfdd1bd765c8bc58144",
+          "graph": "civicly_b10_test_707a3cd99dc34e1f81c0c6b216f2b2ec",
+          "graph_revision": 89,
+          "recorded_at": "2026-10-18T12:00:18.000000Z",
+          "created_ids": [
+            "HYP-B09-34b13de5762e8bfdd1bd765c8bc58144"
+          ],
+          "relationship_ids": [
+            "REL-B09-8a9647d084fbe21cd9f65a992e8250d4",
+            "REL-B09-9718ecd1ef33b54624352e4cc3c0ede1",
+            "REL-B09-371879ed07580c40fbcbd51db28ecd61"
+          ],
+          "updated_ids": [],
+          "assessment": null,
+          "replayed": false,
+          "historical_receipt": true,
+          "simulation_mode": true
+        },
+        {
+          "operation": "assess",
+          "journal_id": "EV-JOURNAL-B09-a05ced13e2b64c2f40c612f82c7af8cd",
+          "entity_id": "ASSESS-B09-2cfd51835eb1400398ef1810392e8bc6",
+          "graph": "civicly_b10_test_707a3cd99dc34e1f81c0c6b216f2b2ec",
+          "graph_revision": 95,
+          "recorded_at": "2026-10-18T12:00:19.000000Z",
+          "created_ids": [
+            "ASSESS-B09-2cfd51835eb1400398ef1810392e8bc6"
+          ],
+          "relationship_ids": [
+            "REL-B09-409be01765956e1536373797633c2327",
+            "REL-B09-4fd05a5064ff4f832b307d3d12164e39"
+          ],
+          "updated_ids": [
+            "HYP-B09-21ddd5f91e62c68fe556529762144190"
+          ],
+          "assessment": {
+            "format_version": 2,
+            "id": "ASSESS-B09-2cfd51835eb1400398ef1810392e8bc6",
+            "hypothesis_id": "HYP-B09-21ddd5f91e62c68fe556529762144190",
+            "previous_assessment_id": "ASSESS-B09-0ddd3eb5d6b5af88921497bad0a037d4",
+            "assessment": "INCONCLUSIVE",
+            "rule_version": 2,
+            "classification": {
+              "uses": [
+                {
+                  "evidence_id": "EV-REPORT-B09-57af3c6bb2622b7fe611324241ef2c89",
+                  "observation_index": 0,
+                  "category": "REVIEWED_CONTRADICTION",
+                  "incident_ids": [
+                    "INC-B08-7f3b4ae6bcdc030eebab3a150e330143"
+                  ],
+                  "reason": "Inspection request and observation fall within named occurrence interval",
+                  "basis_evidence_ids": []
+                },
+                {
+                  "evidence_id": "EV-REPORT-B09-d3d2d841e4cc8e143c9676042909ae77",
+                  "observation_index": 0,
+                  "category": "UNREVIEWED_SUPPORT",
+                  "incident_ids": [
+                    "INC-B08-7f3b4ae6bcdc030eebab3a150e330143"
+                  ],
+                  "reason": "Inspection request and observation fall within named occurrence interval",
+                  "basis_evidence_ids": []
+                }
+              ],
+              "reviewed_support_ids": [],
+              "unreviewed_support_ids": [
+                "EV-REPORT-B09-d3d2d841e4cc8e143c9676042909ae77"
+              ],
+              "reviewed_contradiction_ids": [
+                "EV-REPORT-B09-57af3c6bb2622b7fe611324241ef2c89"
+              ],
+              "unreviewed_contradiction_ids": [],
+              "contextual_evidence_ids": [],
+              "excluded_evidence_ids": []
+            },
+            "cause_code": "MISSED_PICKUP",
+            "mechanism": "Authored physical/operational mechanism under inspection, not asserted truth",
+            "confirming_codes": [
+              "PICKUP_MISSED_CONFIRMED",
+              "WASTE_PERSISTED_AFTER_SCHEDULE"
+            ],
+            "falsifying_codes": [
+              "PICKUP_COMPLETED_CONFIRMED"
+            ],
+            "supporting_evidence_ids": [],
+            "contradicting_evidence_ids": [
+              "EV-REPORT-B09-57af3c6bb2622b7fe611324241ef2c89"
+            ],
+            "evidence_references": [
+              {
+                "id": "EV-REPORT-B09-57af3c6bb2622b7fe611324241ef2c89",
+                "content_hash": "dabc6645b35567a0eca74a95a08d7601b8af3d16f12ba24a604916e354eb18ae",
+                "source_kind": "SYNTHETIC",
+                "source_record_id": "independent-source-r2-reviewed-contradiction:field-record-r2-reviewed-contradiction",
+                "reliability": "VERIFIED",
+                "observed_at": "2026-10-18T12:00:04.000000Z",
+                "recorded_at": "2026-10-18T12:00:04.000000Z",
+                "basis": "OBSERVED",
+                "report": {
+                  "format_version": 1,
+                  "inspection_id": "INS-B09-95b82bef9d57e6560c19af5a9b406c09",
+                  "inspector_id": "synthetic-inspector-r2-reviewed-contradiction",
+                  "department_id": "DEP",
+                  "source_id": "independent-source-r2-reviewed-contradiction",
+                  "record_id": "field-record-r2-reviewed-contradiction",
+                  "source_kind": "SYNTHETIC",
+                  "observed_at": "2026-10-18T12:00:04.000000Z",
+                  "recorded_at": "2026-10-18T12:00:04.000000Z",
+                  "observations": [
+                    {
+                      "asset_id": "W1",
+                      "code": "PICKUP_COMPLETED_CONFIRMED",
+                      "statement": "Authored synthetic field observation PICKUP_COMPLETED_CONFIRMED",
+                      "method": "DIRECT_SYNTHETIC_FIELD_TEST",
+                      "observed_at": "2026-10-18T12:00:04.000000Z",
+                      "result": "OBSERVED",
+                      "value": null,
+                      "unit": null
+                    }
+                  ],
+                  "finding_ids": [
+                    "FINDING-B09-e94cb76d47dd0b9a0866d111015edbf5"
+                  ],
+                  "review": {
+                    "reviewer_id": "synthetic-reviewer",
+                    "role": "ANALYST",
+                    "reviewed": true,
+                    "reason": "Reviewed authored methods and attributed observations"
+                  }
+                },
+                "finding_hashes": {
+                  "FINDING-B09-e94cb76d47dd0b9a0866d111015edbf5": "7c488527a85e0042c263f37d5347c474d1f581125141f8a4af4fa302894f542d"
+                }
+              },
+              {
+                "id": "EV-REPORT-B09-d3d2d841e4cc8e143c9676042909ae77",
+                "content_hash": "5146f9a9040cd2835f90b0badb86478b85a75873d7c155aaea0380b0a63be6f3",
+                "source_kind": "SYNTHETIC",
+                "source_record_id": "independent-source-r2-unreviewed-support:field-record-r2-unreviewed-support",
+                "reliability": "UNVERIFIED",
+                "observed_at": "2026-10-18T12:00:08.000000Z",
+                "recorded_at": "2026-10-18T12:00:08.000000Z",
+                "basis": "OBSERVED",
+                "report": {
+                  "format_version": 1,
+                  "inspection_id": "INS-B09-27a394a1c209cdb757eface41bc21702",
+                  "inspector_id": "synthetic-inspector-r2-unreviewed-support",
+                  "department_id": "DEP",
+                  "source_id": "independent-source-r2-unreviewed-support",
+                  "record_id": "field-record-r2-unreviewed-support",
+                  "source_kind": "SYNTHETIC",
+                  "observed_at": "2026-10-18T12:00:08.000000Z",
+                  "recorded_at": "2026-10-18T12:00:08.000000Z",
+                  "observations": [
+                    {
+                      "asset_id": "W1",
+                      "code": "PICKUP_MISSED_CONFIRMED",
+                      "statement": "Authored synthetic field observation PICKUP_MISSED_CONFIRMED",
+                      "method": "DIRECT_SYNTHETIC_FIELD_TEST",
+                      "observed_at": "2026-10-18T12:00:08.000000Z",
+                      "result": "OBSERVED",
+                      "value": null,
+                      "unit": null
+                    }
+                  ],
+                  "finding_ids": [
+                    "FINDING-B09-21e3cdf0f16fc5d0bfd777c8fd9f97bb"
+                  ],
+                  "review": null
+                },
+                "finding_hashes": {
+                  "FINDING-B09-21e3cdf0f16fc5d0bfd777c8fd9f97bb": "574e4931181a7b86d3d25d74d51641a1dd50bcd2b80eac507f7f23f8c5e81e52"
+                }
+              }
+            ],
+            "excluded_evidence_ids": [],
+            "missing_evidence": [
+              "Unreviewed finding is a qualified claim, not definitive support/rejection: EV-REPORT-B09-d3d2d841e4cc8e143c9676042909ae77",
+              "Missing reviewed confirming observations for INC-B08-7f3b4ae6bcdc030eebab3a150e330143: PICKUP_MISSED_CONFIRMED,WASTE_PERSISTED_AFTER_SCHEDULE",
+              "Two independent reviewed inspections/inspectors/source records required for INC-B08-7f3b4ae6bcdc030eebab3a150e330143",
+              "Conflicting evidence retained; no automatic source arbitration"
+            ],
+            "graph": "civicly_b10_test_707a3cd99dc34e1f81c0c6b216f2b2ec",
+            "source_graph_revision": 94,
+            "graph_revision": 95,
+            "as_of": "2026-10-18T12:00:18.000000Z",
+            "assessed_at": "2026-10-18T12:00:19.000000Z",
+            "paths": [],
+            "path_ids": [],
+            "search_limited": true,
+            "truncated": false,
+            "state_transitions": [
+              "INCONCLUSIVE",
+              "UNDER_REVIEW",
+              "INCONCLUSIVE"
+            ],
+            "reservations": [
+              "Observed findings and connectivity are distinct from causal criteria.",
+              "Verification uses explicit reviewed synthetic-domain rulev2 with per-occurrence coverage; not hydraulic prediction or resolution verification.",
+              "Attribution-based independence is a conservative demo rule, not proof against colluding sources.",
+              "Current versions only; future-updated evidence excluded, historical source versions not reconstructed."
+            ]
+          },
+          "replayed": false,
+          "historical_receipt": true,
+          "simulation_mode": true
+        },
+        {
+          "status": "PARTIAL",
+          "trace_id": "052fd8b334ba4f74857f1626c372ef03",
+          "execution_id": "MCP-B10-55fb8b928460ce8d79fe147383a8eb30",
+          "context": {
+            "trace_id": "052fd8b334ba4f74857f1626c372ef03",
+            "execution_id": "MCP-B10-55fb8b928460ce8d79fe147383a8eb30",
+            "parent_execution_id": "DEC-B10-55fb8b928460ce8d79fe147383a8eb30",
+            "investigation_id": "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+            "municipality_id": "demo-city",
+            "source_graph": "civicly_b10_test_707a3cd99dc34e1f81c0c6b216f2b2ec",
+            "caller_role": "READ_ONLY",
+            "invocation_origin": "APPLICATION"
+          },
+          "server_id": "civicly-domain",
+          "tool_name": "trace_infrastructure_dependencies",
+          "schema_version": 3,
+          "inventory_version": "da1f25b2f8174ec96b4213038b92eb8600c24e8b362697f63f85b5d143790b42",
+          "source_evidence_ids": [
+            "EV"
+          ],
+          "simulation_mode": true,
+          "graph_revision": 98,
+          "truncated": false,
+          "search_limited": true,
+          "error": null,
+          "paths": [
+            {
+              "asset_ids": [
+                "W1"
+              ],
+              "relationship": "COLLECTED_BY",
+              "verification_status": "VERIFIED",
+              "source_evidence_ids": [
+                "EV"
+              ]
+            }
+          ],
+          "data": {
+            "nodes": [
+              {
+                "id": "EV",
+                "kind": "Evidence",
+                "labels": [
+                  "Evidence"
+                ],
+                "properties": {
+                  "id": "EV",
+                  "updated_at": "2026-10-17T00:00:00Z",
+                  "municipality_id": "demo-city",
+                  "observed_at": "2026-10-17T00:00:00Z",
+                  "recorded_at": "2026-10-17T00:00:00Z",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "schema_version": 3,
+                  "summary": "Synthetic inspection",
+                  "source_kind": "SYNTHETIC",
+                  "evidence_type": "INSPECTION_REPORT",
+                  "reliability": "VERIFIED",
+                  "source_record_id": "test-record"
+                }
+              },
+              {
+                "id": "ROUTE",
+                "kind": "CollectionRoute",
+                "labels": [
+                  "CollectionRoute"
+                ],
+                "properties": {
+                  "id": "ROUTE",
+                  "updated_at": "2026-10-17T00:00:00Z",
+                  "municipality_id": "demo-city",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "schema_version": 3,
+                  "operational_status": "ACTIVE",
+                  "route_code": "SYNTHETIC"
+                }
+              },
+              {
+                "id": "W1",
+                "kind": "WasteCollectionPoint",
+                "labels": [
+                  "InfrastructureAsset",
+                  "WasteCollectionPoint"
+                ],
+                "properties": {
+                  "id": "W1",
+                  "updated_at": "2026-10-17T00:00:00Z",
+                  "municipality_id": "demo-city",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "schema_version": 3,
+                  "operational_status": "ACTIVE",
+                  "name": "Synthetic asset",
+                  "asset_type": "WASTE_COLLECTION_POINT"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "ROUTE-W1",
+                "kind": "COLLECTED_BY",
+                "source": "W1",
+                "target": "ROUTE",
+                "properties": {
+                  "id": "ROUTE-W1",
+                  "municipality_id": "demo-city",
+                  "valid_from": "2026-10-17T00:00:00Z",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "source_evidence_id": "EV",
+                  "association_status": "VERIFIED"
+                }
+              }
+            ],
+            "paths": [
+              {
+                "node_ids": [
+                  "W1",
+                  "ROUTE"
+                ],
+                "edge_ids": [
+                  "ROUTE-W1"
+                ],
+                "directions": [
+                  "OUTGOING"
+                ],
+                "evidence_ids": [
+                  "EV"
+                ],
+                "context": {
+                  "template": "dependencies",
+                  "classification": "Connectivity/evidence context, not causal proof"
+                },
+                "id": "PATH-05ec0ff5432af3116da51ba6902cb85f"
+              }
+            ],
+            "gaps": [],
+            "reservations": [
+              "Connectivity and count-based criticality are not root-cause or hydraulic proof.",
+              "No result is a bounded negative, not proof of global disconnection.",
+              "Historical node versions are not reconstructed; future-updated records are excluded.",
+              "Open relationship validity bounds remain unknown, not manufactured dates."
+            ],
+            "as_of": "2026-10-18T12:00:19.000000Z"
+          }
+        },
+        {
+          "operation": "assess",
+          "journal_id": "EV-JOURNAL-B09-98f072aff82a4b5ee130fb342ec8b307",
+          "entity_id": "ASSESS-B09-3b71ea2e15783a63d863f825752f5e63",
+          "graph": "civicly_b10_test_707a3cd99dc34e1f81c0c6b216f2b2ec",
+          "graph_revision": 104,
+          "recorded_at": "2026-10-18T12:00:21.000000Z",
+          "created_ids": [
+            "ASSESS-B09-3b71ea2e15783a63d863f825752f5e63"
+          ],
+          "relationship_ids": [
+            "REL-B09-743b2edf34208884f60acbef0d58aa05"
+          ],
+          "updated_ids": [
+            "HYP-B09-34b13de5762e8bfdd1bd765c8bc58144"
+          ],
+          "assessment": {
+            "format_version": 2,
+            "id": "ASSESS-B09-3b71ea2e15783a63d863f825752f5e63",
+            "hypothesis_id": "HYP-B09-34b13de5762e8bfdd1bd765c8bc58144",
+            "previous_assessment_id": null,
+            "assessment": "INCONCLUSIVE",
+            "rule_version": 2,
+            "classification": {
+              "uses": [
+                {
+                  "evidence_id": "EV-REPORT-B09-57af3c6bb2622b7fe611324241ef2c89",
+                  "observation_index": 0,
+                  "category": "CONTEXT",
+                  "incident_ids": [
+                    "INC-B08-7f3b4ae6bcdc030eebab3a150e330143"
+                  ],
+                  "reason": "No approved discriminating observation for this mechanism",
+                  "basis_evidence_ids": []
+                },
+                {
+                  "evidence_id": "EV-REPORT-B09-d3d2d841e4cc8e143c9676042909ae77",
+                  "observation_index": 0,
+                  "category": "CONTEXT",
+                  "incident_ids": [
+                    "INC-B08-7f3b4ae6bcdc030eebab3a150e330143"
+                  ],
+                  "reason": "No approved discriminating observation for this mechanism",
+                  "basis_evidence_ids": []
+                }
+              ],
+              "reviewed_support_ids": [],
+              "unreviewed_support_ids": [],
+              "reviewed_contradiction_ids": [],
+              "unreviewed_contradiction_ids": [],
+              "contextual_evidence_ids": [
+                "EV-REPORT-B09-57af3c6bb2622b7fe611324241ef2c89",
+                "EV-REPORT-B09-d3d2d841e4cc8e143c9676042909ae77"
+              ],
+              "excluded_evidence_ids": []
+            },
+            "cause_code": "CAPACITY_SHORTFALL",
+            "mechanism": "Unverified alternative requiring discriminating observations",
+            "confirming_codes": [
+              "BIN_CAPACITY_EXCEEDED",
+              "EXPECTED_PICKUPS_COMPLETED"
+            ],
+            "falsifying_codes": [
+              "CAPACITY_ADEQUATE"
+            ],
+            "supporting_evidence_ids": [],
+            "contradicting_evidence_ids": [],
+            "evidence_references": [
+              {
+                "id": "EV-REPORT-B09-57af3c6bb2622b7fe611324241ef2c89",
+                "content_hash": "dabc6645b35567a0eca74a95a08d7601b8af3d16f12ba24a604916e354eb18ae",
+                "source_kind": "SYNTHETIC",
+                "source_record_id": "independent-source-r2-reviewed-contradiction:field-record-r2-reviewed-contradiction",
+                "reliability": "VERIFIED",
+                "observed_at": "2026-10-18T12:00:04.000000Z",
+                "recorded_at": "2026-10-18T12:00:04.000000Z",
+                "basis": "OBSERVED",
+                "report": {
+                  "format_version": 1,
+                  "inspection_id": "INS-B09-95b82bef9d57e6560c19af5a9b406c09",
+                  "inspector_id": "synthetic-inspector-r2-reviewed-contradiction",
+                  "department_id": "DEP",
+                  "source_id": "independent-source-r2-reviewed-contradiction",
+                  "record_id": "field-record-r2-reviewed-contradiction",
+                  "source_kind": "SYNTHETIC",
+                  "observed_at": "2026-10-18T12:00:04.000000Z",
+                  "recorded_at": "2026-10-18T12:00:04.000000Z",
+                  "observations": [
+                    {
+                      "asset_id": "W1",
+                      "code": "PICKUP_COMPLETED_CONFIRMED",
+                      "statement": "Authored synthetic field observation PICKUP_COMPLETED_CONFIRMED",
+                      "method": "DIRECT_SYNTHETIC_FIELD_TEST",
+                      "observed_at": "2026-10-18T12:00:04.000000Z",
+                      "result": "OBSERVED",
+                      "value": null,
+                      "unit": null
+                    }
+                  ],
+                  "finding_ids": [
+                    "FINDING-B09-e94cb76d47dd0b9a0866d111015edbf5"
+                  ],
+                  "review": {
+                    "reviewer_id": "synthetic-reviewer",
+                    "role": "ANALYST",
+                    "reviewed": true,
+                    "reason": "Reviewed authored methods and attributed observations"
+                  }
+                },
+                "finding_hashes": {
+                  "FINDING-B09-e94cb76d47dd0b9a0866d111015edbf5": "7c488527a85e0042c263f37d5347c474d1f581125141f8a4af4fa302894f542d"
+                }
+              },
+              {
+                "id": "EV-REPORT-B09-d3d2d841e4cc8e143c9676042909ae77",
+                "content_hash": "5146f9a9040cd2835f90b0badb86478b85a75873d7c155aaea0380b0a63be6f3",
+                "source_kind": "SYNTHETIC",
+                "source_record_id": "independent-source-r2-unreviewed-support:field-record-r2-unreviewed-support",
+                "reliability": "UNVERIFIED",
+                "observed_at": "2026-10-18T12:00:08.000000Z",
+                "recorded_at": "2026-10-18T12:00:08.000000Z",
+                "basis": "OBSERVED",
+                "report": {
+                  "format_version": 1,
+                  "inspection_id": "INS-B09-27a394a1c209cdb757eface41bc21702",
+                  "inspector_id": "synthetic-inspector-r2-unreviewed-support",
+                  "department_id": "DEP",
+                  "source_id": "independent-source-r2-unreviewed-support",
+                  "record_id": "field-record-r2-unreviewed-support",
+                  "source_kind": "SYNTHETIC",
+                  "observed_at": "2026-10-18T12:00:08.000000Z",
+                  "recorded_at": "2026-10-18T12:00:08.000000Z",
+                  "observations": [
+                    {
+                      "asset_id": "W1",
+                      "code": "PICKUP_MISSED_CONFIRMED",
+                      "statement": "Authored synthetic field observation PICKUP_MISSED_CONFIRMED",
+                      "method": "DIRECT_SYNTHETIC_FIELD_TEST",
+                      "observed_at": "2026-10-18T12:00:08.000000Z",
+                      "result": "OBSERVED",
+                      "value": null,
+                      "unit": null
+                    }
+                  ],
+                  "finding_ids": [
+                    "FINDING-B09-21e3cdf0f16fc5d0bfd777c8fd9f97bb"
+                  ],
+                  "review": null
+                },
+                "finding_hashes": {
+                  "FINDING-B09-21e3cdf0f16fc5d0bfd777c8fd9f97bb": "574e4931181a7b86d3d25d74d51641a1dd50bcd2b80eac507f7f23f8c5e81e52"
+                }
+              }
+            ],
+            "excluded_evidence_ids": [],
+            "missing_evidence": [
+              "No approved discriminating observation for this mechanism: EV-REPORT-B09-57af3c6bb2622b7fe611324241ef2c89",
+              "No approved discriminating observation for this mechanism: EV-REPORT-B09-d3d2d841e4cc8e143c9676042909ae77",
+              "Missing reviewed confirming observations for INC-B08-7f3b4ae6bcdc030eebab3a150e330143: BIN_CAPACITY_EXCEEDED,EXPECTED_PICKUPS_COMPLETED",
+              "Two independent reviewed inspections/inspectors/source records required for INC-B08-7f3b4ae6bcdc030eebab3a150e330143",
+              "Reviewed discriminating inspection evidence missing or insufficient; no completed inspection invented"
+            ],
+            "graph": "civicly_b10_test_707a3cd99dc34e1f81c0c6b216f2b2ec",
+            "source_graph_revision": 103,
+            "graph_revision": 104,
+            "as_of": "2026-10-18T12:00:20.000000Z",
+            "assessed_at": "2026-10-18T12:00:21.000000Z",
+            "paths": [],
+            "path_ids": [],
+            "search_limited": true,
+            "truncated": false,
+            "state_transitions": [
+              "PROPOSED",
+              "UNDER_REVIEW",
+              "INCONCLUSIVE"
+            ],
+            "reservations": [
+              "Observed findings and connectivity are distinct from causal criteria.",
+              "Verification uses explicit reviewed synthetic-domain rulev2 with per-occurrence coverage; not hydraulic prediction or resolution verification.",
+              "Attribution-based independence is a conservative demo rule, not proof against colluding sources.",
+              "Current versions only; future-updated evidence excluded, historical source versions not reconstructed."
+            ]
+          },
+          "replayed": false,
+          "historical_receipt": true,
+          "simulation_mode": true
+        },
+        {
+          "operation": "request_inspection",
+          "journal_id": "EV-JOURNAL-B09-7f2b1fc0585f0589211ce1bc38ab72f7",
+          "entity_id": "INS-B09-654f43d1b9cd73d91fe2e4b0e896a480",
+          "graph": "civicly_b10_test_707a3cd99dc34e1f81c0c6b216f2b2ec",
+          "graph_revision": 110,
+          "recorded_at": "2026-10-18T12:00:22.000000Z",
+          "created_ids": [
+            "INS-B09-654f43d1b9cd73d91fe2e4b0e896a480"
+          ],
+          "relationship_ids": [
+            "REL-B09-de02b852febe54277ce893d8e44344f4"
+          ],
+          "updated_ids": [],
+          "assessment": null,
+          "replayed": false,
+          "historical_receipt": true,
+          "simulation_mode": true
+        }
+      ],
+      "nodes": [
+        "Supervisor",
+        "Investigator",
+        "Supervisor",
+        "RootCauseAnalyst",
+        "Supervisor",
+        "RootCauseAnalyst",
+        "Supervisor",
+        "Investigator",
+        "Supervisor",
+        "RootCauseAnalyst",
+        "Supervisor",
+        "Coordinator"
+      ],
+      "pause_reason": "MISSING_EVIDENCE",
+      "recommendation": null,
+      "budget": {
+        "max_iterations": 16,
+        "max_tools": 8,
+        "max_tokens": 400000,
+        "max_seconds": 240,
+        "max_wakes": 5
+      },
+      "iterations": 6,
+      "tool_calls": 6,
+      "tokens": 228429,
+      "wakes": 0,
+      "refresh_required": false,
+      "as_of": "2026-10-18T12:00:21.000000Z"
+    },
+    "__interrupt__": [
+      "Interrupt(value={'investigation_id': 'INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f', 'thread_id': '052fd8b334ba4f74857f1626c372ef03', 'pause_reason': 'MISSING_EVIDENCE', 'pending_inspections': ['INS-B09-654f43d1b9cd73d91fe2e4b0e896a480'], 'graph_revision': 111}, id='043e8b13cfdbd802a2b1a1d1710320f8', response_schema=None)"
+    ]
+  },
+  "token_plans": [
+    {
+      "serialized_utf8_bytes": 76907,
+      "local_proxy_tokens": 31443,
+      "tokenizer_version": "gemma3-proxy-3.8-v1",
+      "provider_count_tokens": 33016,
+      "method": "PROVIDER_COUNT_WITH_16_FRAMING_ALLOWANCE",
+      "input_allowance_tokens": 33032,
+      "output_allowance_tokens": 4096,
+      "total_allowance_tokens": 37128,
+      "uncertainty": "Gemma3 is not verified exact for Gemini3.8; live mode additionally counts full request with provider. Framing/model accounting may differ; actual usage is authoritative."
+    },
+    {
+      "serialized_utf8_bytes": 78843,
+      "local_proxy_tokens": 32518,
+      "tokenizer_version": "gemma3-proxy-3.8-v1",
+      "provider_count_tokens": 34144,
+      "method": "PROVIDER_COUNT_WITH_16_FRAMING_ALLOWANCE",
+      "input_allowance_tokens": 34160,
+      "output_allowance_tokens": 4096,
+      "total_allowance_tokens": 38256,
+      "uncertainty": "Gemma3 is not verified exact for Gemini3.8; live mode additionally counts full request with provider. Framing/model accounting may differ; actual usage is authoritative."
+    },
+    {
+      "serialized_utf8_bytes": 80156,
+      "local_proxy_tokens": 33256,
+      "tokenizer_version": "gemma3-proxy-3.8-v1",
+      "provider_count_tokens": 34919,
+      "method": "PROVIDER_COUNT_WITH_16_FRAMING_ALLOWANCE",
+      "input_allowance_tokens": 34935,
+      "output_allowance_tokens": 4096,
+      "total_allowance_tokens": 39031,
+      "uncertainty": "Gemma3 is not verified exact for Gemini3.8; live mode additionally counts full request with provider. Framing/model accounting may differ; actual usage is authoritative."
+    },
+    {
+      "serialized_utf8_bytes": 81199,
+      "local_proxy_tokens": 34364,
+      "tokenizer_version": "gemma3-proxy-3.8-v1",
+      "provider_count_tokens": 36083,
+      "method": "PROVIDER_COUNT_WITH_16_FRAMING_ALLOWANCE",
+      "input_allowance_tokens": 36099,
+      "output_allowance_tokens": 4096,
+      "total_allowance_tokens": 40195,
+      "uncertainty": "Gemma3 is not verified exact for Gemini3.8; live mode additionally counts full request with provider. Framing/model accounting may differ; actual usage is authoritative."
+    },
+    {
+      "serialized_utf8_bytes": 85739,
+      "local_proxy_tokens": 36078,
+      "tokenizer_version": "gemma3-proxy-3.8-v1",
+      "provider_count_tokens": 37882,
+      "method": "PROVIDER_COUNT_WITH_16_FRAMING_ALLOWANCE",
+      "input_allowance_tokens": 37898,
+      "output_allowance_tokens": 4096,
+      "total_allowance_tokens": 41994,
+      "uncertainty": "Gemma3 is not verified exact for Gemini3.8; live mode additionally counts full request with provider. Framing/model accounting may differ; actual usage is authoritative."
+    },
+    {
+      "serialized_utf8_bytes": 90474,
+      "local_proxy_tokens": 38187,
+      "tokenizer_version": "gemma3-proxy-3.8-v1",
+      "provider_count_tokens": 40097,
+      "method": "PROVIDER_COUNT_WITH_16_FRAMING_ALLOWANCE",
+      "input_allowance_tokens": 40113,
+      "output_allowance_tokens": 4096,
+      "total_allowance_tokens": 44209,
+      "uncertainty": "Gemma3 is not verified exact for Gemini3.8; live mode additionally counts full request with provider. Framing/model accounting may differ; actual usage is authoritative."
+    }
+  ],
+  "simulated_usage": [
+    {
+      "promptTokenCount": 33016,
+      "candidatesTokenCount": 512,
+      "thoughtsTokenCount": 1536,
+      "totalTokenCount": 35064
+    },
+    {
+      "promptTokenCount": 34144,
+      "candidatesTokenCount": 512,
+      "thoughtsTokenCount": 1536,
+      "totalTokenCount": 36192
+    },
+    {
+      "promptTokenCount": 34919,
+      "candidatesTokenCount": 512,
+      "thoughtsTokenCount": 1536,
+      "totalTokenCount": 36967
+    },
+    {
+      "promptTokenCount": 36083,
+      "candidatesTokenCount": 512,
+      "thoughtsTokenCount": 1536,
+      "totalTokenCount": 38131
+    },
+    {
+      "promptTokenCount": 37882,
+      "candidatesTokenCount": 512,
+      "thoughtsTokenCount": 1536,
+      "totalTokenCount": 39930
+    },
+    {
+      "promptTokenCount": 40097,
+      "candidatesTokenCount": 512,
+      "thoughtsTokenCount": 1536,
+      "totalTokenCount": 42145
+    }
+  ],
+  "count_tokens": [
+    33016,
+    34144,
+    34919,
+    36083,
+    37882,
+    40097
+  ],
+  "ledger_requests": [
+    {
+      "id": "AI-COUNT-07201612a0fa156a89e1b567afb25c362e106b71755e02c7ab86b9d14232f807",
+      "case_id": "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+      "thread": "052fd8b334ba4f74857f1626c372ef03",
+      "model": "gemini-3.8-flash",
+      "milestone": "B10OR2-SIMULATED",
+      "pricing": "google-gemini-standard-text-2026-10-18",
+      "reserved": 58448250,
+      "charged": 0,
+      "status": "SETTLED",
+      "usage": "{\"billing_policy\": \"google-developer-countTokens-nonbillable-2026-10-18\", \"count_is_not_generation_usage\": true, \"operation\": \"COUNT_TOKENS\", \"outcome\": \"COMPLETED\", \"provider_count_tokens\": 33016}",
+      "error": "COUNT_NONBILLABLE_COMPLETED",
+      "created": 1792295564.9221609
+    },
+    {
+      "id": "AI-d0c78a0a77e5bc7bbd76f9fdcd06cc99fd92198bca0baff5f3ded416d1b5ab13",
+      "case_id": "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+      "thread": "052fd8b334ba4f74857f1626c372ef03",
+      "model": "gemini-3.8-flash",
+      "milestone": "B10OR2-SIMULATED",
+      "pricing": "google-gemini-standard-text-2026-10-18",
+      "reserved": 89168250,
+      "charged": 32442000,
+      "status": "SETTLED",
+      "usage": "{\"candidatesTokenCount\": 512, \"promptTokenCount\": 33016, \"thoughtsTokenCount\": 1536, \"totalTokenCount\": 35064}",
+      "error": null,
+      "created": 1792295564.993282
+    },
+    {
+      "id": "AI-COUNT-70db1cc188b8464b09c1d93b4d7ecc87f2c03bd8b1a1fd6cbc82c693b87eff8b",
+      "case_id": "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+      "thread": "052fd8b334ba4f74857f1626c372ef03",
+      "model": "gemini-3.8-flash",
+      "milestone": "B10OR2-SIMULATED",
+      "pricing": "google-gemini-standard-text-2026-10-18",
+      "reserved": 59900250,
+      "charged": 0,
+      "status": "SETTLED",
+      "usage": "{\"billing_policy\": \"google-developer-countTokens-nonbillable-2026-10-18\", \"count_is_not_generation_usage\": true, \"operation\": \"COUNT_TOKENS\", \"outcome\": \"COMPLETED\", \"provider_count_tokens\": 34144}",
+      "error": "COUNT_NONBILLABLE_COMPLETED",
+      "created": 1792295565.4524748
+    },
+    {
+      "id": "AI-e87f316e2c0b0177eb24108e0f426d9a5f8eb50178cd9641d5300c3d99873308",
+      "case_id": "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+      "thread": "052fd8b334ba4f74857f1626c372ef03",
+      "model": "gemini-3.8-flash",
+      "milestone": "B10OR2-SIMULATED",
+      "pricing": "google-gemini-standard-text-2026-10-18",
+      "reserved": 90620250,
+      "charged": 33288000,
+      "status": "SETTLED",
+      "usage": "{\"candidatesTokenCount\": 512, \"promptTokenCount\": 34144, \"thoughtsTokenCount\": 1536, \"totalTokenCount\": 36192}",
+      "error": null,
+      "created": 1792295565.5258398
+    },
+    {
+      "id": "AI-COUNT-60f345c669b69eb7f1740aa8a9fbeb41a4f663e572a8ab27d5ab3bdd72b9e5ef",
+      "case_id": "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+      "thread": "052fd8b334ba4f74857f1626c372ef03",
+      "model": "gemini-3.8-flash",
+      "milestone": "B10OR2-SIMULATED",
+      "pricing": "google-gemini-standard-text-2026-10-18",
+      "reserved": 60885000,
+      "charged": 0,
+      "status": "SETTLED",
+      "usage": "{\"billing_policy\": \"google-developer-countTokens-nonbillable-2026-10-18\", \"count_is_not_generation_usage\": true, \"operation\": \"COUNT_TOKENS\", \"outcome\": \"COMPLETED\", \"provider_count_tokens\": 34919}",
+      "error": "COUNT_NONBILLABLE_COMPLETED",
+      "created": 1792295565.773586
+    },
+    {
+      "id": "AI-ce7b9961db38c454c3e6d2d594081a070fe7ebedbb0a6b6fbea30d93dafc5932",
+      "case_id": "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+      "thread": "052fd8b334ba4f74857f1626c372ef03",
+      "model": "gemini-3.8-flash",
+      "milestone": "B10OR2-SIMULATED",
+      "pricing": "google-gemini-standard-text-2026-10-18",
+      "reserved": 91605000,
+      "charged": 33869250,
+      "status": "SETTLED",
+      "usage": "{\"candidatesTokenCount\": 512, \"promptTokenCount\": 34919, \"thoughtsTokenCount\": 1536, \"totalTokenCount\": 36967}",
+      "error": null,
+      "created": 1792295565.8489048
+    },
+    {
+      "id": "AI-COUNT-5c8b53a1fad6767810deaff92e6292a076e541aa7199fc789a0e244b2970a17f",
+      "case_id": "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+      "thread": "052fd8b334ba4f74857f1626c372ef03",
+      "model": "gemini-3.8-flash",
+      "milestone": "B10OR2-SIMULATED",
+      "pricing": "google-gemini-standard-text-2026-10-18",
+      "reserved": 61667250,
+      "charged": 0,
+      "status": "SETTLED",
+      "usage": "{\"billing_policy\": \"google-developer-countTokens-nonbillable-2026-10-18\", \"count_is_not_generation_usage\": true, \"operation\": \"COUNT_TOKENS\", \"outcome\": \"COMPLETED\", \"provider_count_tokens\": 36083}",
+      "error": "COUNT_NONBILLABLE_COMPLETED",
+      "created": 1792295566.147542
+    },
+    {
+      "id": "AI-7c1a327647ebee0c65b9887a841c2796621a385808dabf57f63a73f47a1ad9db",
+      "case_id": "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+      "thread": "052fd8b334ba4f74857f1626c372ef03",
+      "model": "gemini-3.8-flash",
+      "milestone": "B10OR2-SIMULATED",
+      "pricing": "google-gemini-standard-text-2026-10-18",
+      "reserved": 92387250,
+      "charged": 34742250,
+      "status": "SETTLED",
+      "usage": "{\"candidatesTokenCount\": 512, \"promptTokenCount\": 36083, \"thoughtsTokenCount\": 1536, \"totalTokenCount\": 38131}",
+      "error": null,
+      "created": 1792295566.226437
+    },
+    {
+      "id": "AI-COUNT-0fca72320db48c35c18aca653e730a23bf308b2a09e9ebf26124d2b882b333ad",
+      "case_id": "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+      "thread": "052fd8b334ba4f74857f1626c372ef03",
+      "model": "gemini-3.8-flash",
+      "milestone": "B10OR2-SIMULATED",
+      "pricing": "google-gemini-standard-text-2026-10-18",
+      "reserved": 65072250,
+      "charged": 0,
+      "status": "SETTLED",
+      "usage": "{\"billing_policy\": \"google-developer-countTokens-nonbillable-2026-10-18\", \"count_is_not_generation_usage\": true, \"operation\": \"COUNT_TOKENS\", \"outcome\": \"COMPLETED\", \"provider_count_tokens\": 37882}",
+      "error": "COUNT_NONBILLABLE_COMPLETED",
+      "created": 1792295566.572456
+    },
+    {
+      "id": "AI-90eeea231710db8fa9e3fc05a618e17ae3caedc28088da8a9abd27cc7ef0886f",
+      "case_id": "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+      "thread": "052fd8b334ba4f74857f1626c372ef03",
+      "model": "gemini-3.8-flash",
+      "milestone": "B10OR2-SIMULATED",
+      "pricing": "google-gemini-standard-text-2026-10-18",
+      "reserved": 95792250,
+      "charged": 36091500,
+      "status": "SETTLED",
+      "usage": "{\"candidatesTokenCount\": 512, \"promptTokenCount\": 37882, \"thoughtsTokenCount\": 1536, \"totalTokenCount\": 39930}",
+      "error": null,
+      "created": 1792295566.658039
+    },
+    {
+      "id": "AI-COUNT-db16d7979bcc9f0d17e780b3c180b7804ef46d98987dfaa3146afb43227e57dd",
+      "case_id": "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+      "thread": "052fd8b334ba4f74857f1626c372ef03",
+      "model": "gemini-3.8-flash",
+      "milestone": "B10OR2-SIMULATED",
+      "pricing": "google-gemini-standard-text-2026-10-18",
+      "reserved": 68623500,
+      "charged": 0,
+      "status": "SETTLED",
+      "usage": "{\"billing_policy\": \"google-developer-countTokens-nonbillable-2026-10-18\", \"count_is_not_generation_usage\": true, \"operation\": \"COUNT_TOKENS\", \"outcome\": \"COMPLETED\", \"provider_count_tokens\": 40097}",
+      "error": "COUNT_NONBILLABLE_COMPLETED",
+      "created": 1792295566.962081
+    },
+    {
+      "id": "AI-d6cd874aea7645cb08ec4491b7aa6cd4c35b6b2730c4e110b45ec7fbd23e2a65",
+      "case_id": "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+      "thread": "052fd8b334ba4f74857f1626c372ef03",
+      "model": "gemini-3.8-flash",
+      "milestone": "B10OR2-SIMULATED",
+      "pricing": "google-gemini-standard-text-2026-10-18",
+      "reserved": 99343500,
+      "charged": 37752750,
+      "status": "SETTLED",
+      "usage": "{\"candidatesTokenCount\": 512, \"promptTokenCount\": 40097, \"thoughtsTokenCount\": 1536, \"totalTokenCount\": 42145}",
+      "error": null,
+      "created": 1792295567.044723
+    }
+  ],
+  "actual_external_gemini_requests": 0
+}

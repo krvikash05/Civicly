@@ -1118,3 +1118,55 @@ verifies an exact1100000 counter, no action or further HTTP, and durable pause.
 DEC-044 final acceptance basis:740 complete cases, not an aggregate of focused runs. The only post-suite compatibility addition is standalone evidence parsing for pytest warning fields; application logic and all prior tests remain unchanged after final source freeze. The old verifier's graph/history assertions are reused intact. No fabricated normalized success log or live-model closure. Baseline and exact source audit/patch are c16346a-relative. STOP for human review.
 
 Final B10-O-R scope/security audit PASS:61 prior test files unchanged, all prior evidence byte-identical, actual private credential values/patterns absent, no leaked MCP children. No push or ZIP. Exact source inventory/patch is against c16346a; subsequent human review and separately authorized B10 live acceptance remain required.
+
+## DEC-045 — B10-O-R2 pre-code scope and verification plan (2026-10-18)
+
+Accepted B10-O-R baseline af42149 is a clean local commit, audited against the
+740-pass/zero-external-call record; no push. This corrective pass supports
+R01/R04–R09/R13/R15/R18; all18 requirements remain binding. No B11 or ZIP/live API.
+
+Touch only provider/token/model/runtime/CLI/spending budget interfaces as needed,
+versioned provider policy, affected tests, two agent contracts, README/runtime guide,
+six trackers and R2 evidence tooling. Preserve graph services, migrations, city data,
+source histories, original ledger rows/audits and all earlier evidence. Existing
+assertions of count-uncertainty and obsolete numeric token ceilings require explicit
+compatible adjustment, not removal of tests.
+
+Google's current billing FAQ plus Firebase Count Tokens guide establish nonbilling
+for this exact Google countTokens endpoint/model; generation remains billed. Record
+endpoint-specific outcome/count/policy evidence and immutable settlement, zeroing
+only new known-nonbillable count reservations. Unknown/expired billing policy remains
+conservative; do not retroactively rewrite historical unknown rows. Count calls still
+require live opt-in. No arbitrary endpoint-free assumption.
+
+Separate published request capacity (1048576input/65536output for Gemini3.8 Flash),
+configured output allowance, proxy/provider count, cumulative tokens and independent
+integer dollar caps. Size new cumulative defaults using eight largest accepted real
+B10-O-R complete-request plans, rounded upward to50000; complex profile twice that
+allowance, finite configurable maximum. Preserve existing checkpoint Budget values;
+explicit authorized increases retain counters and same thread. Dollar8/.50/1.50,
+iteration/tool/time/wake defaults remain unchanged.
+
+Risks: counting billing vs completion certainty; overrun storage; price/token
+unit conflation; checkpoint decoding legacy defaults; source refresh and duplicate
+actions after pause. Tests: Stage1 only affected provider/token/spending/model unit
+cases, then exact failed case reruns; Stage2 real MCP/B09/LangGraph/Saver with >=3
+consecutive realistic receipts per category, topology/evidence revisions, retries,
+repair, money/token pauses and fresh-process resume. Stable final full pytest
+--run-persistence --durations=25 exactly once, both SPEC validators, retained
+fingerprints/accounting/secret and zero-provider checks. Human review: verify
+endpoint-specific zero settlement and unchanged legacy accounting, benchmark-based
+new defaults, real calls/checkpoints, pause/resume counters and separate live gates.
+
+
+DEC-045 verification refinement: first full attempt deliberately interrupted after148PASS/688.36s when review identified an old count-only outer-deadline summary incorrectly inferring retained reservation/uncertain generation from any HTTP call. Ledger zero settlement was already correct. Derive summary from exact count-policy settlements/generation holds; count-only status NOT_GENERATED. Add two cancellation cases (known/unknown policy), retain all original generation-timeout tests; focused14PASS4.57s. Recheck actual MCP/Saver and specs, then restart final acceptance. Preserve interrupted raw log/exit2 guard separately; no completed regression discarded for harness comparison.
+
+
+## B10-O-R2 final corrective verification | 2026-10-18
+
+- **CURRENT B10-O-R2 STATUS — PASS, HUMAN REVIEW PENDING.** Final **770 PASS /0 FAIL /0 SKIP** in1206.63s (488 unit/282 real integration), both specification validators PASS;740 baseline cases retained plus30 new. Zero external Gemini,2 intentional blocked probes,0 unexpected attempts. Real MCP/B09/LangGraph/Saver, fresh-process token/dollar resume and retained-volume lifecycle PASS. Endpoint-specific count settlement zero; standard400000/complex800000 tokens with independent dollars and saved-setting preservation. B10 genuine live gates remain OPEN/PARTIAL; no B11, push or ZIP. Review: docs/evidence/B10OR2-RESULTS.md. This current summary supersedes historical headings.
+- Root causes: count requests were left uncertain despite verified endpoint nonbilling;60000 cumulative tokens admitted only one or two realistic decisions. New endpoint-specific count audit/zero reconciliation, independent capacity/cumulative controls and safe explicit pause reasons; no historical ledger rewrite. Existing60000 checkpoints and money caps require explicit authorized upgrade; profiles do not grant money.
+- Six-decision actual B09/MCP/Saver simulations cover allthree categories, competing hypotheses/dated contradiction, pipe+drain and candidate/verified topology, older incidents, pickup/schedule history, source revisions,503 and output repair. Plausible prompt counts/output/thinking receipts are simulations, not billed Gemini usage. Token and dollar limits each pause then resume the same checkpoint in two real processes, retaining counters/native writes.
+- Compatible old-test changes limited to two unit files: new finite maximum bounds and known count billing zero. No previous test removed; all other tests and all prior evidence unchanged. New22 unit/8 integration cases. Focused/targeted overlapping batches and one sandbox setup error are documented without inflating totals. One completed final run after interrupted timeout-metadata correction, with --durations=25/--run-persistence; application/test code fixed throughout.
+- Retention: original city858/1246 revision2104/all42 drain links CANDIDATE, B01 probe, B08/B09 source/history,101 accepted trace observations, B09R v1/v2 audit, B10 revision103/80nodes/47edges and all6 SDK threads/12 executions match; private ledger witnesses remain row-identical with5120 accounted tokens. Registryv3/migrations0001/0002 and dependency lock unchanged. Fresh rolling proofs retained separately before restoring accepted bytes.
+- Exact source inventory/patch, raw tests, slowest25 durations, zero-provider interlock, simulated request/ledger histories and commands: docs/evidence/B10OR2-*. Remaining: genuine Gemini three-category/contradiction/topology/B10-3 gates, proxy/expiry/historical billing limits, existing SDK recovery/canonical activation and future DEC-004 findings. No product capability is declared complete. STOP for review, no B11.

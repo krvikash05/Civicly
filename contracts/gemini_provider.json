@@ -1,0 +1,44 @@
+{
+  "version": "B10-O-R2-1",
+  "provider": "gemini",
+  "model": "gemini-3.8-flash",
+  "api": "Google Gemini Developer API v1beta generateContent/countTokens; no Vertex/Live/Interactions assumption",
+  "verified_on": "2026-10-18",
+  "reverify_before": "2027-01-01T00:00:00Z",
+  "source_urls": [
+    "https://ai.google.dev/gemini-api/docs/models/gemini-3.8-flash",
+    "https://ai.google.dev/gemini-api/docs/billing",
+    "https://firebase.google.com/docs/ai-logic/count-tokens",
+    "https://ai.google.dev/api/tokens"
+  ],
+  "per_request": {
+    "published_input_tokens": 1048576,
+    "published_output_tokens": 65536,
+    "default_output_allowance": 4096,
+    "count_input_framing_margin_for_cumulative_plan": 16,
+    "input_check": "Verified count compared to configured input cap; local uncertain input allowance when no provider count. Framing margin is not a lower model capacity.",
+    "generation_usage_total_bound": 1114112
+  },
+  "count_billing": {
+    "policy_id": "google-developer-countTokens-nonbillable-2026-10-18",
+    "host": "generativelanguage.googleapis.com",
+    "path": "/v1beta/models/gemini-3.8-flash:countTokens",
+    "verified_nonbillable": true,
+    "confirmed_success": "SETTLED zero; retain request/count/outcome and immutable reconciliation events",
+    "failure_timeout": "Known nonbillable contract still zero cost; completion/count may remain unknown. No automatic retry.",
+    "unknown_policy": "Full conservative reservation retained; never automatically declare endpoint free",
+    "billable_count": "Not supported by current verified contract; future billable/unknown policy needs explicit verification, no blanket zero settlement",
+    "generation_usage": "Counting result stored as provider_count_tokens, never totalTokenCount; no generation token row",
+    "authorization": "External call still requires exact-case live permit; ordinary tests use explicit MockTransport only",
+    "historical_rows": "No automatic reclassification, deletion or release of historical unknown reservations"
+  },
+  "cumulative": {
+    "standard_tokens": 400000,
+    "complex_tokens": 800000,
+    "maximum_tokens": 2000000,
+    "checkpoint_storage_ceiling": 4000000,
+    "sizing": "8 * max accepted actual B10OR request plan46721 =373768 rounded up to50000 ->400000; complex=2x,16 representative decisions. Validate with real B09 multi-step contexts and plausible simulated receipts.",
+    "existing_saved_settings": "Explicit max_tokens60000 remains60000 on decode; explicit monotonic operator upgrade only",
+    "dollar_authority": "Token profile changes grant no money;8 project/.50 default case/1.50 explicitly authorized complex allocation unchanged"
+  }
+}

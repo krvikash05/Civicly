@@ -12,6 +12,7 @@ from .checkpoints import saver
 from .models import InvestigationState,Budget
 from .provider import Gemini,ProviderSettings
 from .policy import Permit
+from .limits import TOKEN_PROFILES
 
 async def execute(args):
     profile=load(args.profile)
@@ -33,6 +34,7 @@ async def execute(args):
                 initial=InvestigationState(graph=profile.graph,investigation_id=args.investigation,thread_id=args.thread,
                     problem_cluster_id=cluster[0],discovered_tool_names=[t['name'] for t in tools.catalog()],incident_ids=ids,asset_ids=assets,issue=issues.pop(),graph_revision=agent.revision(),inventory_hash=tools.inventory_hash,as_of=utc_now())
             changes={key:getattr(args,key,None) for key in ['max_tokens','max_iterations','max_tools','max_seconds','max_wakes'] if getattr(args,key,None) is not None}
+            if args.budget_profile is not None:changes['max_tokens']=TOKEN_PROFILES[args.budget_profile]
             increase=None
             if changes:
                 if args.resume:
@@ -46,7 +48,8 @@ async def execute(args):
 def main():
     parser=argparse.ArgumentParser();parser.add_argument('--profile',required=True);parser.add_argument('--thread',required=True)
     parser.add_argument('--live',action='store_true',help='Explicitly authorize only this investigation/thread');parser.add_argument('--max-cost-usd',default=None);parser.add_argument('--budget-reason');
-    for flag in ['max-tokens','max-iterations','max-tools','max-seconds','max-wakes']:parser.add_argument('--'+flag,type=int)
+    group=parser.add_mutually_exclusive_group();group.add_argument('--max-tokens',type=int);group.add_argument('--budget-profile',choices=list(TOKEN_PROFILES))
+    for flag in ['max-iterations','max-tools','max-seconds','max-wakes']:parser.add_argument('--'+flag,type=int)
     parser.add_argument('--investigation');parser.add_argument('--resume',action='store_true');args=parser.parse_args()
     try:asyncio.run(execute(args))
     except Exception as exc:

@@ -25,7 +25,7 @@ def test_profile_requires_exact_context(tmp_path):
 def test_profile_rejects_unapproved_names(changes):
     with pytest.raises(ValidationError):type(new_profile()).model_validate({**new_profile().model_dump(),**changes})
 
-@pytest.mark.parametrize('changes',[{'max_iterations':100},{'max_tools':0},{'max_tokens':1000000},{'max_seconds':1000},{'max_wakes':100}])
+@pytest.mark.parametrize('changes',[{'max_iterations':100},{'max_tools':0},{'max_tokens':2000001},{'max_seconds':1000},{'max_wakes':100}])
 def test_finite_budgets(changes):
     with pytest.raises(ValidationError):Budget(**changes)
 

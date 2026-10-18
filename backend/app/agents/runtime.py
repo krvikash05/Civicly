@@ -93,6 +93,7 @@ class InvestigationAgent:
             if type(e).__name__=='ProviderError' and not accounted:s.tokens+=getattr(self.model,'last_usage',{}).get('accounted_tokens',getattr(self.model,'last_usage',{}).get('total_tokens',0))
             if type(e).__name__=='ProviderError':
                 s.observations.append({'provider_failure':getattr(self.model,'last_failure',None),'provider_usage':getattr(self.model,'last_usage',{}),'status':'ERROR','host_generated':True})
+                if e.code in {'TOKEN_BUDGET','PROJECT_SPENDING_CAP','INVESTIGATION_SPENDING_CAP','LEDGER_RECONCILIATION_REQUIRED','PROVIDER_INPUT_LIMIT'}:s.pause_reason=e.code
             s.errors.append(getattr(e,'code',str(e) if type(e).__name__=='ProviderError' else 'INVALID_MODEL_SELECTION'))
             s.selection=Selection(action='PAUSE',summary='Model or resume validation failed; no action executed',tool_name='',arguments_json='{}',pause_reason='DEPENDENCY_UNAVAILABLE')
         s.graph_revision=self.revision();return self.output(s,'Supervisor')

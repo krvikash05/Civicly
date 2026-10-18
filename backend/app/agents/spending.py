@@ -28,9 +28,9 @@ class Pricing:
         at=self.clock()
         if model!=self.data['model'] or self.data['tier']!='standard' or self.data['modality']!='text':raise SpendError('PRICING_MODEL_UNSUPPORTED')
         if not datetime.fromisoformat(self.data['valid_from'].replace('Z','+00:00'))<=at<datetime.fromisoformat(self.data['valid_until'].replace('Z','+00:00')):raise SpendError('PRICING_EXPIRED')
-    def estimate(self,input_bytes,max_output):
-        # UTF8 bytes + fixed framing allowance, double output ceiling for safety.
-        return (input_bytes+1024)*self.rates['input']+2*max_output*max(self.rates['output'],self.rates['thinking'])
+    def estimate(self,input_bytes,max_output,*,input_tokens=None):
+        # Financial fence only; a known token count may require a larger reservation.
+        return max(input_bytes+1024,input_tokens or 0)*self.rates['input']+2*max_output*max(self.rates['output'],self.rates['thinking'])
     def actual(self,usage):
         usage=dict(usage);usage.setdefault('thoughtsTokenCount',0)
         keys=['promptTokenCount','candidatesTokenCount','thoughtsTokenCount','totalTokenCount']
@@ -153,6 +153,14 @@ class Ledger:
             db.execute('UPDATE token_usage SET consumed=? WHERE request_id=?',(total_usage(usage),id))
             self.event(db,id,'RECONCILE','PROVIDER',category or status,{'charged':actual,'usage':usage,'status':status})
             db.execute('UPDATE requests SET charged=?,status=?,usage=?,error=? WHERE id=?',(actual,status,encoded,category,id))
+    def reconcile_count(self,id,*,counted_input_tokens,outcome,policy_id,nonbillable):
+        # This is a host-only accounting interface, not an agent tool or hold-clear API.
+        if not id.startswith('AI-COUNT-') or type(nonbillable)is not bool or not policy_id or not outcome:raise SpendError('COUNT_ACCOUNTING_BINDING_REQUIRED')
+        if counted_input_tokens is not None and (type(counted_input_tokens)is not int or counted_input_tokens<0):raise SpendError('INVALID_PROVIDER_COUNT')
+        usage={'operation':'COUNT_TOKENS','provider_count_tokens':counted_input_tokens,'outcome':outcome,
+            'billing_policy':policy_id,'count_is_not_generation_usage':True}
+        self.reconcile(id,0 if nonbillable else None,usage,'COUNT_NONBILLABLE_'+outcome if nonbillable else 'COUNT_BILLING_UNCONFIRMED')
+        return 'NONBILLABLE_SETTLED_ZERO' if nonbillable else 'UNCERTAIN_RESERVATION_HELD'
     def summary(self,case=None):
         with self.db() as db:
             cap=db.execute('SELECT project_cap FROM config').fetchone()[0];total=self.spent(db)

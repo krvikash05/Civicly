@@ -2,6 +2,7 @@
 import asyncio,json
 import httpx,pytest
 from app.agents.tokens import plan,tokenizer
+from app.agents.limits import MAX_COUNT_RESPONSE,MAX_CUMULATIVE_TOKENS,MAX_RECEIPT_TOKENS
 from app.agents.provider import Gemini,ProviderSettings,ProviderError,PROMPT
 from app.agents.spending import Ledger,Pricing
 from app.agents.policy import Permit
@@ -40,7 +41,7 @@ def test_exact_token_boundaries(tmp_path,delta,verified):
         assert not any(path.endswith(':generateContent') for path in seen)
     else:assert asyncio.run(m.choose(c,allocation['total_allowance_tokens']+delta))[1]==130
     if verified:
-        assert m.ledger.summary()['uncertain_requests']==1  # Count result isn't a billing receipt.
+        assert m.ledger.summary()['uncertain_requests']==0  # Verified endpoint policy settles counting to zero.
 
 
 def test_unknown_retry_token_allowance_survives_reopen(tmp_path):
@@ -49,15 +50,15 @@ def test_unknown_retry_token_allowance_survives_reopen(tmp_path):
     assert m.last_usage['accounted_tokens']==n and m.last_usage['total_tokens']==0
     assert Ledger(tmp_path/'ledger').thread_tokens(m.permit.thread_id)==n
 
-@pytest.mark.parametrize('value',[-1,True,1.5,1_000_001])
+@pytest.mark.parametrize('value',[-1,True,1.5,MAX_COUNT_RESPONSE+1])
 def test_invalid_provider_counts_fail_without_generation(tmp_path,value):
     seen=[]
     def handle(req):seen.append(req.url.path);return httpx.Response(200,json={'totalTokens':value})
     m=make(tmp_path,handle,verify=True)
     with pytest.raises(ProviderError,match='INVALID_PROVIDER_COUNT'):asyncio.run(m.choose({},60000))
-    assert len(seen)==1 and m.ledger.summary()['uncertain_requests']==1
+    assert len(seen)==1 and m.ledger.summary()['uncertain_requests']==0 and m.ledger.summary()['project_accounted']==0
 
-@pytest.mark.parametrize('value',[-1,True,1.5,1_000_001])
+@pytest.mark.parametrize('value',[-1,True,1.5,MAX_CUMULATIVE_TOKENS+1])
 def test_invalid_budget_never_calls_http(tmp_path,value):
     seen=[];m=make(tmp_path,lambda r:seen.append(r))
     with pytest.raises(ProviderError,match='INVALID_TOKEN_ALLOWANCE'):asyncio.run(m.choose({},value))
@@ -80,7 +81,7 @@ def test_cumulative_actual_and_unknown_allowance_cannot_reset_on_reopen(tmp_path
     with pytest.raises(ProviderError,match='TOKEN_BUDGET'):asyncio.run(again.choose(c,plan(body(c))['total_allowance_tokens']))
     assert not seen and again.ledger.thread_tokens(m.permit.thread_id)==230
 
-@pytest.mark.parametrize('value',[-1,True,1_000_001])
+@pytest.mark.parametrize('value',[-1,True,MAX_RECEIPT_TOKENS+1])
 def test_invalid_usage_total_never_resets_unknown_allowance(tmp_path,value):
     def handle(req):return httpx.Response(200,json={'usageMetadata':{'totalTokenCount':value},'candidates':[{'content':{'parts':[{'text':json.dumps(choose())}]}}]})
     m=make(tmp_path,handle)

@@ -1,5 +1,5 @@
 {
-  "version": "B10-O-R-1",
+  "version": "B10-O-R2-1",
   "extends": "agent_runtime.json",
   "scope": "B10 corrective token/accounting pass only; B10 live gates OPEN, no B11",
   "execution": {
@@ -44,7 +44,7 @@
       95,
       100
     ],
-    "reserve": "Dollar fence only: complete serialized input UTF8 bytes plus framing and doubled output price allowance; NOT token units. Counting RPC separately financially reserved; count result is not billing receipt.",
+    "reserve": "Each external attempt atomically reserved before send. Known nonbillable count operation settles zero with endpoint-policy/outcome/count audit. Generation financial fence uses the greater of byte-based price allowance and counted/planned input tokens plus doubled output price allowance; money units remain separate.",
     "unknown_billing": "Retain full reservation, do not treat as free; reconcile only from verified metadata",
     "over_reservation": "Exact request hold; bound verified stored usage/pricing, operator/reason/evidence, repricing and cap checks, immutable recovery audit; no blanket clear",
     "idempotency": "Thread/wake/decision/repair/retry ID, duplicate reservation denied, no blind rebilling after crash",
@@ -61,7 +61,8 @@
     ],
     "scope_limit": "New managed requests only; historical/external billing unknown, not Google account billing hard cap",
     "explicit_complex_investigation_ceiling_usd": "1.50",
-    "existing_ledgers": "Persisted caps, charges, unknown reservations and cases unchanged unless explicit audited operator action"
+    "existing_ledgers": "Persisted caps, charges, unknown reservations and cases unchanged unless explicit audited operator action",
+    "count_billing": "See gemini_provider.json: known endpoint nonbillable, completion uncertainty separate from billing certainty; unknown policy held, generation independently billed/reserved; historical records untouched."
   },
   "provider_recovery": {
     "transient_retries_default": 2,
@@ -93,10 +94,11 @@
       "integer_nanodollars"
     ],
     "offline": "Pinned official Gemma3 SentencePiece vocabulary: proxy for Gemini3.8, never exact; ceil(local count*1.25)+256 input margin plus4096 output",
-    "live": "Requires explicit permit, accounted countTokens with full generateContentRequest and response schema; verified count+16 framing plus4096 output. Ordinary tests use no external counting. Result not billing proof.",
+    "live": "Requires explicit permit, accounted countTokens with full generateContentRequest and response schema; Verified input count plus16 framing and configured output for cumulative admission; published input capacity uses input alone. Known nonbillable count policy reconciles dollar reservation to zero, independently of generation receipts. Ordinary tests use no external counting.",
     "unknown": "Token allowance remains held until verified usage; durable per-thread floor prevents stale checkpoint reset",
     "retry_repair": "Each generation attempt independently reserves complete current-body input/output; actual usage replaces its allowance; bounded repair recounts changed body",
     "resume": "Trusted explicit reason and validated monotonic Budget increase on same paused thread; counters and source refresh retained",
-    "limits": "Defaults unchanged60000tokens/16iterations/8tools/240seconds/5wakes; configurable within existing model bounds; StateGraph recursion150 bounds32iteration wakes"
-  }
+    "limits": "New state standard400000/complex800000, configurable maximum2000000 cumulative. Independent provider1048576 input/65536 output with default4096 output. Same16 iterations/8tools/240seconds/5wakes and recursion150. Existing checkpoints retain saved budgets until explicit authorized upgrade."
+  },
+  "provider_contract": "gemini_provider.json"
 }

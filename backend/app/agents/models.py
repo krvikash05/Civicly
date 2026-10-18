@@ -2,6 +2,7 @@
 import json
 from typing import Literal
 from pydantic import BaseModel,ConfigDict,Field,model_validator
+from .limits import DEFAULT_CUMULATIVE_TOKENS,MAX_CUMULATIVE_TOKENS,MAX_CHECKPOINT_TOKENS
 
 class Model(BaseModel):
     model_config=ConfigDict(extra='forbid',strict=True,hide_input_in_errors=True)
@@ -26,7 +27,7 @@ class Selection(Model):
 class Budget(Model):
     max_iterations: int=Field(default=16,ge=2,le=32)
     max_tools: int=Field(default=8,ge=1,le=16)
-    max_tokens: int=Field(default=60000,ge=2000,le=150000)
+    max_tokens: int=Field(default=DEFAULT_CUMULATIVE_TOKENS,ge=2000,le=MAX_CUMULATIVE_TOKENS)
     max_seconds: int=Field(default=240,ge=10,le=600)
     max_wakes: int=Field(default=5,ge=1,le=10)
 
@@ -60,7 +61,7 @@ class InvestigationState(Model):
     budget: Budget=Field(default_factory=Budget)
     iterations: int=Field(default=0,ge=0,le=200)
     tool_calls: int=Field(default=0,ge=0,le=80)
-    tokens: int=Field(default=0,ge=0,le=2000000)
+    tokens: int=Field(default=0,ge=0,le=MAX_CHECKPOINT_TOKENS)
     wakes: int=Field(default=0,ge=0,le=10)
     refresh_required: bool=False
     as_of: str

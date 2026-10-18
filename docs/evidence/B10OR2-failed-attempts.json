@@ -1,0 +1,37 @@
+{
+  "scope": "B10-O-R2 only; historical B10OR failures remain in their own evidence",
+  "attempts": [
+    {
+      "command": "CIVICLY_TEST_REQUEST_LOG=/tmp/civicly-b10or2-assert-final-provider.jsonl backend/.venv/bin/python -m pytest 'backend/tests/integration/test_agent_multistep_budget.py::test_six_real_context_decisions_with_plausible_usage[ROAD_DAMAGE-VERIFIED-None]' -q --durations=25",
+      "environment": "desktop filesystem sandbox; no local socket permission",
+      "observed": "Redis local connection errored in fixture setup",
+      "result": "1 ERROR / 0 application tests executed; 2 warnings;1.12s",
+      "correction": "Exact command rerun with local database access; no source change",
+      "rerun_result": "1 PASS /0 FAIL /0 SKIP;2 warnings;13.46s",
+      "raw_log_note": "Original path was reused by successful rerun; observed failure summary and stack prefix were retained in tool output, this JSON is a sanitized record, not fabricated raw output"
+    },
+    {
+      "command": "PYTHONPATH=backend backend/.venv/bin/python docs/evidence/B10OR2-reproduce.py",
+      "observed": "Evidence-only event export used nonexistent seq column; SQLite OperationalError, after simulated adapter steps completed",
+      "correction": "Inspected actual immutable ledger schema; sort accounting_events by existing id column",
+      "scope": "Only standalone evidence export changed; application/tests/ledger schema untouched; no full-regression invalidation"
+    },
+    {
+      "command": "python3 /tmp/civicly_b10or2_finalize.py",
+      "observed": "Evidence summary glob also matched its own list-valued prior summary; export stopped before tracking-file updates",
+      "correction": "Restrict aggregation to individual runtime proof objects; preserve and regenerate summary",
+      "scope": "Temporary documentation/export helper only; tested sources unchanged"
+    }
+  ],
+  "focused_application_failures": 0,
+  "full_regressions_started": 2,
+  "actual_external_gemini_requests": 0,
+  "deliberately_interrupted_attempts": 1,
+  "interruption": {
+    "passed_before_stop": 148,
+    "failed": 0,
+    "seconds": 688.36,
+    "exitstatus": 2,
+    "reason": "Genuine count-only outer-deadline summary correction; ledger already correct; not a harness comparison"
+  }
+}

@@ -4,6 +4,7 @@ from functools import lru_cache
 from pathlib import Path
 import sentencepiece as spm
 from app.active import ROOT
+from .limits import MAX_COUNT_RESPONSE,MAX_RECEIPT_TOKENS
 
 ASSET=ROOT/'.runtime/tokenizers/gemma3.model'
 SHA256='1299c11d7cf632ef3b4e11937501358ada021bbdf7c47638d13c0ee982f2e79c'
@@ -22,7 +23,7 @@ def plan(body,*,provider_count=None):
     encoded=json.dumps(body,sort_keys=True,separators=(',',':'),ensure_ascii=False)
     local=len(tokenizer().encode(encoded,out_type=int))
     if provider_count is not None:
-        if type(provider_count)is not int or not 0<=provider_count<=1_000_000:raise ValueError('INVALID_PROVIDER_COUNT')
+        if type(provider_count)is not int or not 0<=provider_count<=MAX_COUNT_RESPONSE:raise ValueError('INVALID_PROVIDER_COUNT')
         allowance=provider_count+16;method='PROVIDER_COUNT_WITH_16_FRAMING_ALLOWANCE'
     else:
         allowance=math.ceil(local*1.25)+256;method='LOCAL_PROXY_ESTIMATE_25_PERCENT_PLUS_256'
@@ -33,4 +34,4 @@ def plan(body,*,provider_count=None):
 
 def total_usage(usage):
     value=usage.get('totalTokenCount')
-    return value if type(value)is int and 0<=value<=1_000_000 else None
+    return value if type(value)is int and 0<=value<=MAX_RECEIPT_TOKENS else None

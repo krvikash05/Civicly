@@ -1,0 +1,267 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.1, pytest-9.1.1, pluggy-1.7.0 -- /Users/vikashkumar/Desktop/Civicly/backend/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/vikashkumar/Desktop/Civicly/backend
+configfile: pyproject.toml
+plugins: langsmith-0.14.11, anyio-4.15.1
+collecting ... collected 768 items
+
+backend/tests/integration/test_agent_accounting.py::test_http_graph_contradiction_changes_inspection PASSED
+backend/tests/integration/test_agent_accounting.py::test_http_topology_selection[VERIFIED-P1] PASSED
+backend/tests/integration/test_agent_accounting.py::test_http_topology_selection[CANDIDATE-R1] PASSED
+backend/tests/integration/test_agent_accounting.py::test_http_topology_selection[DISCONNECTED-R1] PASSED
+backend/tests/integration/test_agent_accounting.py::test_http_failure_recovery_no_duplicate_actions[503] PASSED
+backend/tests/integration/test_agent_accounting.py::test_http_failure_recovery_no_duplicate_actions[429] PASSED
+backend/tests/integration/test_agent_accounting.py::test_http_failure_recovery_no_duplicate_actions[invalid] PASSED
+backend/tests/integration/test_agent_accounting.py::test_http_failure_recovery_no_duplicate_actions[timeout] PASSED
+backend/tests/integration/test_agent_accounting.py::test_http_failure_recovery_no_duplicate_actions[quota] PASSED
+backend/tests/integration/test_agent_accounting.py::test_token_budget_checkpoint_authorized_increase_preserves_counters PASSED
+backend/tests/integration/test_agent_accounting.py::test_mock_http_real_process_restart PASSED
+backend/tests/integration/test_agent_accounting.py::test_complex_real_context_token_boundaries[WATERLOGGING-BLOCKAGE] PASSED
+backend/tests/integration/test_agent_accounting.py::test_complex_real_context_token_boundaries[ROAD_DAMAGE-SUBGRADE_FAILURE] PASSED
+backend/tests/integration/test_agent_accounting.py::test_complex_real_context_token_boundaries[WASTE_ACCUMULATION-MISSED_PICKUP] PASSED
+backend/tests/integration/test_agent_accounting.py::test_reported_usage_overrun_persists_without_counter_overflow PASSED
+backend/tests/integration/test_agent_active.py::test_real_shared_graph_boundary PASSED
+backend/tests/integration/test_agent_multistep_budget.py::test_six_real_context_decisions_with_plausible_usage[WATERLOGGING-VERIFIED-None] PASSED
+backend/tests/integration/test_agent_multistep_budget.py::test_six_real_context_decisions_with_plausible_usage[ROAD_DAMAGE-VERIFIED-None] PASSED
+backend/tests/integration/test_agent_multistep_budget.py::test_six_real_context_decisions_with_plausible_usage[ROAD_DAMAGE-CANDIDATE-None] PASSED
+backend/tests/integration/test_agent_multistep_budget.py::test_six_real_context_decisions_with_plausible_usage[WASTE_ACCUMULATION-VERIFIED-None] PASSED
+backend/tests/integration/test_agent_multistep_budget.py::test_six_real_context_decisions_with_plausible_usage[WATERLOGGING-VERIFIED-503] PASSED
+backend/tests/integration/test_agent_multistep_budget.py::test_six_real_context_decisions_with_plausible_usage[WATERLOGGING-VERIFIED-invalid] PASSED
+backend/tests/integration/test_agent_multistep_budget.py::test_realistic_pause_fresh_process_explicit_increase_same_checkpoint[token] PASSED
+backend/tests/integration/test_agent_multistep_budget.py::test_realistic_pause_fresh_process_explicit_increase_same_checkpoint[dollar] PASSED
+backend/tests/integration/test_agent_optimization.py::test_real_mcp_read_cache_scope_time_and_revision_invalidation PASSED
+backend/tests/integration/test_agent_optimization.py::test_budget_pause_real_checkpoint_and_fresh_ledger_resume PASSED
+backend/tests/integration/test_agent_optimization.py::test_compact_real_b09_history_preserves_reviewed_contradiction_and_unreviewed_support[WATERLOGGING-BLOCKAGE] PASSED
+backend/tests/integration/test_agent_optimization.py::test_compact_real_b09_history_preserves_reviewed_contradiction_and_unreviewed_support[ROAD_DAMAGE-SUBGRADE_FAILURE] PASSED
+backend/tests/integration/test_agent_optimization.py::test_compact_real_b09_history_preserves_reviewed_contradiction_and_unreviewed_support[WASTE_ACCUMULATION-MISSED_PICKUP] PASSED
+backend/tests/integration/test_agent_reasoning.py::test_contradiction_changes_actual_b09_assessment_and_next_inspection PASSED
+backend/tests/integration/test_agent_reasoning.py::test_planner_is_nonbinding_no_operational_nodes PASSED
+backend/tests/integration/test_agent_reasoning.py::test_topology_controls_next_inspection_without_causal_promotion[VERIFIED-P1] PASSED
+backend/tests/integration/test_agent_reasoning.py::test_topology_controls_next_inspection_without_causal_promotion[CANDIDATE-R1] PASSED
+backend/tests/integration/test_agent_reasoning.py::test_topology_controls_next_inspection_without_causal_promotion[DISCONNECTED-R1] PASSED
+backend/tests/integration/test_agent_reasoning.py::test_topology_controls_next_inspection_without_causal_promotion[EXPIRED-R1] PASSED
+backend/tests/integration/test_agent_runtime.py::test_real_graph_pause_resume[WATERLOGGING-BLOCKAGE] PASSED
+backend/tests/integration/test_agent_runtime.py::test_real_graph_pause_resume[ROAD_DAMAGE-SUBGRADE_FAILURE] PASSED
+backend/tests/integration/test_agent_runtime.py::test_real_graph_pause_resume[WASTE_ACCUMULATION-MISSED_PICKUP] PASSED
+backend/tests/integration/test_agent_runtime.py::test_actual_python_process_restart_resume PASSED
+backend/tests/integration/test_agent_safety.py::test_invalid_model_tool_or_args_pauses[official::query_graph-args0] PASSED
+backend/tests/integration/test_agent_safety.py::test_invalid_model_tool_or_args_pauses[civicly::create_plan-args1] PASSED
+backend/tests/integration/test_agent_safety.py::test_invalid_model_tool_or_args_pauses[official::query_graph_readonly-args2] PASSED
+backend/tests/integration/test_agent_safety.py::test_invalid_model_tool_or_args_pauses[civicly::get_maintenance_history-args3] PASSED
+backend/tests/integration/test_agent_safety.py::test_concurrent_lease_denial_and_corrupt_checkpoint PASSED
+backend/tests/integration/test_agent_safety.py::test_actual_mcp_timeout_and_fresh_session_recovery owned B10 server count 1
+timeout result DEPENDENCY_UNAVAILABLE [{'status': 'ERROR', 'error': {'code': 'TIMEOUT'}, 'source_evidence_ids': [], 'gaps': ['MCP failed closed; reconnect at next wake']}]
+PASSED
+backend/tests/integration/test_agent_safety.py::test_agent_rejects_future_knowledge_before_model_context[future-cutoff] PASSED
+backend/tests/integration/test_agent_safety.py::test_agent_rejects_future_knowledge_before_model_context[future-raw-fact] PASSED
+backend/tests/integration/test_browser.py::test_browser_http_available PASSED
+backend/tests/integration/test_civicly_mcp.py::test_actual_twelve_handlers_provenance_and_source_unchanged PASSED
+backend/tests/integration/test_civicly_mcp.py::test_actual_candidate_temporal_and_bounded_negative_semantics PASSED
+backend/tests/integration/test_civicly_mcp.py::test_real_server_does_not_register_or_execute_write_admin_tools[record_hypothesis_assessment] PASSED
+backend/tests/integration/test_civicly_mcp.py::test_real_server_does_not_register_or_execute_write_admin_tools[propose_inspection] PASSED
+backend/tests/integration/test_civicly_mcp.py::test_real_server_does_not_register_or_execute_write_admin_tools[propose_resolution_plan] PASSED
+backend/tests/integration/test_civicly_mcp.py::test_real_server_does_not_register_or_execute_write_admin_tools[request_plan_approval] PASSED
+backend/tests/integration/test_civicly_mcp.py::test_real_server_does_not_register_or_execute_write_admin_tools[create_work_order] PASSED
+backend/tests/integration/test_civicly_mcp.py::test_real_server_does_not_register_or_execute_write_admin_tools[record_intervention_outcome] PASSED
+backend/tests/integration/test_civicly_mcp.py::test_real_server_does_not_register_or_execute_write_admin_tools[query_graph] PASSED
+backend/tests/integration/test_civicly_mcp.py::test_real_server_does_not_register_or_execute_write_admin_tools[delete_graph] PASSED
+backend/tests/integration/test_civicly_mcp.py::test_broker_denies_unknown_arguments_and_graphs[extra0] PASSED
+backend/tests/integration/test_civicly_mcp.py::test_broker_denies_unknown_arguments_and_graphs[extra1] PASSED
+backend/tests/integration/test_civicly_mcp.py::test_broker_denies_unknown_arguments_and_graphs[extra2] PASSED
+backend/tests/integration/test_civicly_mcp.py::test_broker_denies_unknown_arguments_and_graphs[extra3] PASSED
+backend/tests/integration/test_civicly_mcp.py::test_broker_denies_unknown_arguments_and_graphs[extra4] PASSED
+backend/tests/integration/test_civicly_mcp.py::test_actual_server_rejects_forged_scope_and_role[changes0] PASSED
+backend/tests/integration/test_civicly_mcp.py::test_actual_server_rejects_forged_scope_and_role[changes1] PASSED
+backend/tests/integration/test_civicly_mcp.py::test_actual_server_rejects_forged_scope_and_role[changes2] PASSED
+backend/tests/integration/test_civicly_mcp.py::test_namespace_router_keeps_official_and_domain_runtime_working PASSED
+backend/tests/integration/test_civicly_mcp.py::test_trace_nodes_persist_after_session_shutdown_and_idempotence PASSED
+backend/tests/integration/test_civicly_mcp.py::test_separate_database_capabilities_cannot_write_or_cross_graphs PASSED
+backend/tests/integration/test_civicly_mcp.py::test_actual_stalled_domain_server_timeout_persists_host_trace_and_recovers PASSED
+backend/tests/integration/test_civicly_mcp.py::test_actual_process_downtime_and_clean_reconnect PASSED
+backend/tests/integration/test_civicly_mcp.py::test_after_real_result_corruption_is_rejected_and_retains_server_trace PASSED
+backend/tests/integration/test_civicly_mcp.py::test_compatible_trace_migration_operational_rerun_and_checksum_guard PASSED
+backend/tests/integration/test_civicly_mcp.py::test_invalid_dates_and_client_call_budget_are_denied PASSED
+backend/tests/integration/test_civicly_mcp.py::test_trace_constraint_failure_retains_records_and_failed_ledger PASSED
+backend/tests/integration/test_civicly_mcp.py::test_partial_trace_migration_can_finish_additively PASSED
+backend/tests/integration/test_civicly_mcp.py::test_unavailable_custom_server_fails_closed PASSED
+backend/tests/integration/test_civicly_mcp.py::test_trace_write_failure_prevents_acknowledged_success handler for 'tools/call' raised
+Traceback (most recent call last):
+  File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/mcp/shared/jsonrpc_dispatcher.py", line 740, in _handle_request
+    result = await on_request(dctx, req.method, req.params)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/mcp/server/runner.py", line 747, in on_request
+    return await runner.on_request(dctx, method, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/mcp/server/runner.py", line 230, in _on_request
+    result = _dump_result(await call(ctx))
+                          ^^^^^^^^^^^^^^^
+  File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/mcp/server/_otel.py", line 44, in __call__
+    result = await call_next(ctx)
+             ^^^^^^^^^^^^^^^^^^^^
+  File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/mcp/server/runner.py", line 217, in _inner
+    result = await entry.handler(ctx, typed_params)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/vikashkumar/Desktop/Civicly/backend/app/mcp/civicly/server.py", line 65, in call
+    return await execute(request,params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/vikashkumar/Desktop/Civicly/backend/app/mcp/civicly/server.py", line 54, in execute
+    await asyncio.to_thread(store.append,record)
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/threads.py", line 25, in to_thread
+    return await loop.run_in_executor(None, func_call)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/vikashkumar/Desktop/Civicly/backend/app/mcp/civicly/storage.py", line 95, in append
+    with self.repo._session() as session:
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py", line 137, in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+  File "/Users/vikashkumar/Desktop/Civicly/backend/app/graph/repository.py", line 168, in _session
+    if not lock.acquire(blocking=True):
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/redis/lock.py", line 227, in acquire
+    if self.do_acquire(token):
+       ^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/redis/lock.py", line 243, in do_acquire
+    if self.redis.set(self.name, token, nx=True, px=timeout):
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/redis/utils.py", line 523, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/redis/commands/core.py", line 4457, in set
+    return self.execute_command("SET", *pieces, **options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/redis/client.py", line 867, in execute_command
+    return self._execute_command(*args, **options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/redis/client.py", line 889, in _execute_command
+    result = conn.retry.call_with_retry(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/redis/retry.py", line 120, in call_with_retry
+    return do()
+           ^^^^
+  File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/redis/client.py", line 890, in <lambda>
+    lambda: self._send_command_parse_response(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/redis/client.py", line 819, in _send_command_parse_response
+    return self.parse_response(conn, command_name, **options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/redis/client.py", line 935, in parse_response
+    response = connection.read_response()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/redis/connection.py", line 1437, in read_response
+    raise response
+redis.exceptions.NoPermissionError: User civicly_mcp_trace_b07 has no permissions to run the 'set' command
+PASSED
+backend/tests/integration/test_civicly_mcp.py::test_existing_b05_typed_cross_category_dependencies_exposed[WASTE-W03-COLLECTED_BY] PASSED
+backend/tests/integration/test_civicly_mcp.py::test_existing_b05_typed_cross_category_dependencies_exposed[PIPE-P02-UNDERLIES] PASSED
+backend/tests/integration/test_civicly_mcp_review.py::test_maintenance_records_keep_independent_evidence PASSED
+backend/tests/integration/test_civicly_mcp_review.py::test_history_window_and_stable_order_precede_cap[pickup] PASSED
+backend/tests/integration/test_civicly_mcp_review.py::test_history_window_and_stable_order_precede_cap[condition] PASSED
+backend/tests/integration/test_civicly_mcp_review.py::test_existing_work_order_reports_operational_retrieval_gaps PASSED
+backend/tests/integration/test_civicly_mcp_review.py::test_history_exact_lookahead_boundary[101-eligible-pickup] PASSED
+backend/tests/integration/test_civicly_mcp_review.py::test_history_exact_lookahead_boundary[101-eligible-condition] PASSED
+backend/tests/integration/test_civicly_mcp_review.py::test_history_exact_lookahead_boundary[100-eligible-pickup] PASSED
+backend/tests/integration/test_civicly_mcp_review.py::test_history_exact_lookahead_boundary[100-eligible-condition] PASSED
+backend/tests/integration/test_civicly_mcp_review.py::test_absent_work_order_keeps_explicit_operational_gaps PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_same_report_stable_retry_and_raw_source_preservation PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_changed_source_version_or_content_conflicts PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_independent_reports_share_ongoing_incident_not_complaint_identity PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_distinct_explicit_occurrences_and_continued_unresolved_context PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_persistent_duration_does_not_require_report_count PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_after_recorded_end_is_recurrent_with_separate_incident PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_missing_end_date_is_explicit_unknown_not_invented_recurrence PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_nearby_disconnected_assets_do_not_merge PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_cross_category_topology_qualification_keeps_incidents_distinct[VERIFIED-True-False] PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_cross_category_topology_qualification_keeps_incidents_distinct[VERIFIED-True-True] PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_cross_category_topology_qualification_keeps_incidents_distinct[CANDIDATE-False-False] PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_cross_category_topology_qualification_keeps_incidents_distinct[CANDIDATE-False-True] PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_all_issue_validators_histories_claims_and_measurements PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_invalid_references_do_not_prepare_journal[change0] PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_invalid_references_do_not_prepare_journal[change1] PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_invalid_references_do_not_prepare_journal[change2] PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_invalid_references_do_not_prepare_journal[change3] PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_concurrent_external_retry_and_same_event_intake PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_real_uncertain_response_recovery_without_duplicate_batches[False] PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_real_uncertain_response_recovery_without_duplicate_batches[True] PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_real_native_batch_failure_rolls_back_and_resumes PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_reviewed_regroup_preserves_old_interval_and_rejects_stale_review PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_city_readonly_preview_preserves_all_source_fingerprints PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_claimed_end_and_completed_work_do_not_verify_resolution PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_same_location_different_infrastructure_and_claim_conflict PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_measurement_units_and_rainfall_attribution_real_intake PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_incomplete_journal_can_resume_after_application_interruption PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_concurrent_conflicting_external_identity_fails_closed PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_b03_b05_and_actual_mcp_broker_read_new_incidents PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_conflicting_measurements_retained_without_arbitrary_choice PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_missing_asset_context_does_not_merge_location_only_reports PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_multiple_eligible_clusters_require_review_instead_of_arbitrary_assignment PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_prepared_equivalent_unit_retry_preserves_first_raw_measurement PASSED
+backend/tests/integration/test_complaint_intelligence.py::test_issue_primary_asset_allows_secondary_cross_category_infrastructure PASSED
+backend/tests/integration/test_evidence_domain.py::test_two_competing_hypotheses_supported_and_contradicted PASSED
+backend/tests/integration/test_evidence_domain.py::test_missing_inspection_is_inconclusive_and_request_never_fabricates_completion PASSED
+backend/tests/integration/test_evidence_domain.py::test_real_independent_reviewed_findings_verify_each_issue[WATERLOGGING-BLOCKAGE-D1] PASSED
+backend/tests/integration/test_evidence_domain.py::test_real_independent_reviewed_findings_verify_each_issue[ROAD_DAMAGE-SUBGRADE_FAILURE-R1] PASSED
+backend/tests/integration/test_evidence_domain.py::test_real_independent_reviewed_findings_verify_each_issue[WASTE_ACCUMULATION-MISSED_PICKUP-W1] PASSED
+backend/tests/integration/test_evidence_domain.py::test_second_inspection_corrects_assessment_and_preserves_immutable_history PASSED
+backend/tests/integration/test_evidence_domain.py::test_corroboration_cannot_be_copied_or_unreviewed_or_unknown[same-None-True-OBSERVED] PASSED
+backend/tests/integration/test_evidence_domain.py::test_corroboration_cannot_be_copied_or_unreviewed_or_unknown[None-same-source-True-OBSERVED] PASSED
+backend/tests/integration/test_evidence_domain.py::test_corroboration_cannot_be_copied_or_unreviewed_or_unknown[None-None-False-OBSERVED] PASSED
+backend/tests/integration/test_evidence_domain.py::test_corroboration_cannot_be_copied_or_unreviewed_or_unknown[None-None-True-UNKNOWN] PASSED
+backend/tests/integration/test_evidence_domain.py::test_future_evidence_does_not_influence_prior_cutoff PASSED
+backend/tests/integration/test_evidence_domain.py::test_topology_candidate_boundary_and_actual_path_provenance[CANDIDATE] PASSED
+backend/tests/integration/test_evidence_domain.py::test_topology_candidate_boundary_and_actual_path_provenance[VERIFIED] PASSED
+backend/tests/integration/test_evidence_domain.py::test_verified_link_uses_actual_dated_inspection_report_and_topology_change_revises PASSED
+backend/tests/integration/test_evidence_domain.py::test_nearby_unrelated_infrastructure_is_not_a_cause PASSED
+backend/tests/integration/test_evidence_domain.py::test_inspection_machine_chronology_and_department_checks PASSED
+backend/tests/integration/test_evidence_domain.py::test_idempotence_concurrent_equal_commands_and_payload_conflict PASSED
+backend/tests/integration/test_evidence_domain.py::test_concurrent_stale_assessments_rejected_not_overwritten PASSED
+backend/tests/integration/test_evidence_domain.py::test_real_lost_response_recovery_preserves_one_assessment[False] PASSED
+backend/tests/integration/test_evidence_domain.py::test_real_lost_response_recovery_preserves_one_assessment[True] PASSED
+backend/tests/integration/test_evidence_domain.py::test_actual_constraint_failure_rolls_back_domain_and_recovers PASSED
+backend/tests/integration/test_evidence_domain.py::test_retained_city_readonly_context_and_mutation_denied PASSED
+backend/tests/integration/test_evidence_domain.py::test_role_and_direct_state_assessment_fields_denied PASSED
+backend/tests/integration/test_evidence_domain.py::test_omitted_known_contradiction_cannot_reverify_and_prior_sources_survive PASSED
+backend/tests/integration/test_evidence_domain.py::test_unknown_cause_and_llm_claims_never_verify PASSED
+backend/tests/integration/test_evidence_domain.py::test_inspection_failure_retry_cancel_and_no_report_for_pending 
+
+=============================== warnings summary ===============================
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyPacked has no __module__ attribute
+
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyObject has no __module__ attribute
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+============================= slowest 25 durations =============================
+19.68s call     tests/integration/test_agent_multistep_budget.py::test_realistic_pause_fresh_process_explicit_increase_same_checkpoint[dollar]
+19.46s call     tests/integration/test_agent_multistep_budget.py::test_realistic_pause_fresh_process_explicit_increase_same_checkpoint[token]
+16.28s call     tests/integration/test_agent_accounting.py::test_mock_http_real_process_restart
+15.20s call     tests/integration/test_civicly_mcp.py::test_actual_twelve_handlers_provenance_and_source_unchanged
+14.98s call     tests/integration/test_agent_runtime.py::test_actual_python_process_restart_resume
+13.69s call     tests/integration/test_evidence_domain.py::test_retained_city_readonly_context_and_mutation_denied
+13.49s call     tests/integration/test_complaint_intelligence.py::test_city_readonly_preview_preserves_all_source_fingerprints
+11.62s call     tests/integration/test_agent_accounting.py::test_http_graph_contradiction_changes_inspection
+10.28s call     tests/integration/test_agent_multistep_budget.py::test_six_real_context_decisions_with_plausible_usage[ROAD_DAMAGE-CANDIDATE-None]
+9.98s call     tests/integration/test_agent_multistep_budget.py::test_six_real_context_decisions_with_plausible_usage[WATERLOGGING-VERIFIED-503]
+9.86s call     tests/integration/test_agent_multistep_budget.py::test_six_real_context_decisions_with_plausible_usage[ROAD_DAMAGE-VERIFIED-None]
+9.75s call     tests/integration/test_agent_multistep_budget.py::test_six_real_context_decisions_with_plausible_usage[WATERLOGGING-VERIFIED-invalid]
+9.60s call     tests/integration/test_agent_multistep_budget.py::test_six_real_context_decisions_with_plausible_usage[WATERLOGGING-VERIFIED-None]
+9.45s call     tests/integration/test_agent_multistep_budget.py::test_six_real_context_decisions_with_plausible_usage[WASTE_ACCUMULATION-VERIFIED-None]
+8.87s call     tests/integration/test_agent_safety.py::test_actual_mcp_timeout_and_fresh_session_recovery
+7.62s call     tests/integration/test_agent_accounting.py::test_http_topology_selection[DISCONNECTED-R1]
+7.45s call     tests/integration/test_agent_accounting.py::test_complex_real_context_token_boundaries[WASTE_ACCUMULATION-MISSED_PICKUP]
+7.40s call     tests/integration/test_agent_accounting.py::test_complex_real_context_token_boundaries[ROAD_DAMAGE-SUBGRADE_FAILURE]
+7.18s call     tests/integration/test_agent_accounting.py::test_complex_real_context_token_boundaries[WATERLOGGING-BLOCKAGE]
+6.93s call     tests/integration/test_agent_accounting.py::test_http_failure_recovery_no_duplicate_actions[timeout]
+6.74s call     tests/integration/test_agent_accounting.py::test_http_failure_recovery_no_duplicate_actions[quota]
+6.65s call     tests/integration/test_agent_accounting.py::test_http_topology_selection[CANDIDATE-R1]
+6.60s call     tests/integration/test_agent_reasoning.py::test_contradiction_changes_actual_b09_assessment_and_next_inspection
+6.58s call     tests/integration/test_agent_accounting.py::test_http_topology_selection[VERIFIED-P1]
+6.58s call     tests/integration/test_agent_accounting.py::test_http_failure_recovery_no_duplicate_actions[invalid]
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! KeyboardInterrupt !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/redis/_parsers/socket.py:112: KeyboardInterrupt
+(to show a full traceback on KeyboardInterrupt use --full-trace)
+================= 148 passed, 2 warnings in 688.36s (0:11:28) ==================

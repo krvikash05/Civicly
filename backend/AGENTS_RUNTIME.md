@@ -1,4 +1,14 @@
-# B10 investigation runtime — B10-O-R controls, B10 live acceptance OPEN
+# B10 investigation runtime — B10-O-R2 controls, B10 live acceptance OPEN
+
+> **Current B10-O-R2 contract:** See [provider/spending guide](PROVIDER_ACCOUNTING.md).
+> New standard400000 /complex800000 cumulative tokens (maximum2000000), independent
+> of1048576 input/65536 output capacity and default4096 output. Money8/.50/1.50 and
+> other safeguards unchanged. Known nonbillable count requests settle zero with
+> count/outcome/policy audit; unknown billing remains held. Saved60000-token
+> checkpoints require explicit monotonic operator upgrade. R2 real-runtime and
+> final results are in docs/evidence/B10OR2-RESULTS.md. B10 genuine live gates OPEN.
+> The B10-O/B10-O-R sections below retain their historical implementation decisions;
+> this current R2 contract supersedes their old token defaults/count-billing policy.
 
 B10 only. `contracts/agent_runtime.json` defines the compatible runtime boundary. All 18 product objectives remain mandatory; this foundation does not complete GraphRAG, municipal operations, API or frontend. Final status and exact counts are in `docs/evidence/B10-RESULTS.md` and current tracking summaries.
 

@@ -1,8 +1,8 @@
 # Civicly — Backend-First Codex Build System (v2.0)
 
-> **B10-O verified, review pending:** fail-closed live opt-in, compact source-aware context, revision-scoped read caching and durable spending controls. B10 genuine live acceptance remains OPEN; no B11. Ordinary tests block Gemini, including Python child processes. 691 regression tests and both specification validators passed; zero external Gemini calls. Current results and reproduction: [B10-O evidence](docs/evidence/B10O-RESULTS.md), [runtime guide](backend/AGENTS_RUNTIME.md).
+> **B10-O-R2 — PASS, human review pending:** **770 PASS /0 FAIL /0 SKIP** (1206.63s), both specification validators PASS; zero external Gemini. New standard400000/complex800000 cumulative tokens and endpoint-specific zero count settlement; existing settings/history preserved. B10 genuine live acceptance remains OPEN/PARTIAL; no B11. [Results](docs/evidence/B10OR2-RESULTS.md), [provider/spending guide](backend/PROVIDER_ACCOUNTING.md), [runtime guide](backend/AGENTS_RUNTIME.md).
 
-**Current status:** B09-R accepted (617-test baseline). B10 runtime is implemented with partial acceptance: live provider 503/429 and outstanding live reasoning controls block full B10 completion. B11 has not started. The full civic AI application remains unimplemented. Current truth is in the engineering tracking files.
+**Current status:** B10-O-R main corrections accepted at local baseline af42149. B10-O-R2 technical verification PASS; human review pending; B10 remains PARTIAL pending separately authorized genuine Gemini investigations. B11 has not started. All18 product requirements remain binding; this is not backend completion.
 See [complaint intelligence guide](backend/COMPLAINTS.md), [algorithm guide](backend/ALGORITHMS.md) and [official MCP guide](backend/MCP.md) and [Civicly domain MCP guide](backend/CIVICLY_MCP.md) for scope and real evidence.
 
 For the current Python 3.12/Docker setup, CLI health and verified persistence tests,

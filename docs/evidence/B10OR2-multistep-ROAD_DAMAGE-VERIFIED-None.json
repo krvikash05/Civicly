@@ -1,0 +1,1946 @@
+{
+  "mode": "SIMULATED_GEMINI_HTTP_REAL_MCP_B09_SAVER",
+  "issue": "ROAD_DAMAGE",
+  "topology": "VERIFIED",
+  "fault": null,
+  "result": {
+    "data": {
+      "version": 1,
+      "graph": "civicly_b10_test_072da4908c304a01976cfed76bc30137",
+      "investigation_id": "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+      "thread_id": "8bf15d72c2a343b392d46b5ff28ad3a8",
+      "problem_cluster_id": "PC-B08-cce2eb941019b700b3f4f518ea9b9ff6",
+      "discovered_tool_names": [
+        "official::get_graph_schema",
+        "official::get_node_schema",
+        "official::get_relationship_schema",
+        "official::query_graph_readonly",
+        "civicly::find_related_incidents",
+        "civicly::get_decision_evidence_path",
+        "civicly::get_maintenance_history",
+        "civicly::get_monitoring_status",
+        "civicly::get_organizational_procedures",
+        "civicly::get_pickup_execution_history",
+        "civicly::get_road_condition_history",
+        "civicly::get_source_document_excerpt",
+        "civicly::get_work_order_status",
+        "civicly::retrieve_case_memory",
+        "civicly::retrieve_external_evidence",
+        "civicly::trace_infrastructure_dependencies"
+      ],
+      "missing_evidence": [
+        "Asset-linked history is contextual; absent repair/decision chains are not proof of resolution"
+      ],
+      "current_plan_id": null,
+      "incident_ids": [
+        "INC-B08-acf134fea71ed9b7db39b8c1201d4fe4"
+      ],
+      "asset_ids": [
+        "D1",
+        "D2",
+        "P1",
+        "R1",
+        "W1"
+      ],
+      "issue": "ROAD_DAMAGE",
+      "graph_revision": 113,
+      "phase": "Coordinator",
+      "hypotheses": [
+        "HYP-B09-21ddd5f91e62c68fe556529762144190",
+        "HYP-B09-3dc916e34c5ebb9db4378c7d2fe8c857"
+      ],
+      "evidence": {
+        "EV-JOURNAL-B09-f3ad7ad8101554f8881b84220cb8b1a4": "3f7987fb8c44aa4b2b9df46ddbafdb72020bc12bb8fa092a02689237dc6c0aea",
+        "EV-REPORT-B09-57af3c6bb2622b7fe611324241ef2c89": "cccccbd2b27681793c5a2bcbdece484558c5d841d51289aed1d85bfdfdb3b5fd",
+        "EV-JOURNAL-B09-bb6e56726c50430f469d75eecf35010a": "f5f4a5a18be5ca595094fe2477cf86348b7ffba4fa3cd9237cda2b07845b9c54",
+        "EV": "ea59025ba1a656bb97074ae1921a3d3e4624edb20a9ef62ee3346b1fdce4247b",
+        "EV-JOURNAL-B09-793165bfae7eb97ad3a36d502363024d": "14370a1d0598baa524150fc29f6675d74b32b15fde8fb6c8c471e676a57be802",
+        "EV-INS": "d3653e1bf4c4001ee9b04ab1ac7face346293e29670d2bf4a1680227e475972f",
+        "EV-JOURNAL-B09-50c1ce78ba9a33f050caa2f9a43f2170": "6caa5e8316a0574aff33a52ab416d63361b22a09eb7c850bad9acbbef7e1c300",
+        "EV-REPORT-B09-d3d2d841e4cc8e143c9676042909ae77": "d88cf43bab6c718546f0eec5b49791592c52f62c88e16ee0206dffc76d7184c5"
+      },
+      "inventory_hash": "60e6cc345311a3446a1aedb713b945a2cfdd16b594fa40d2ae50a196dca57ebd",
+      "selection": {
+        "action": "INSPECT",
+        "summary": "Authored deterministic model test selection",
+        "tool_name": "",
+        "arguments_json": "{\"asset_ids\": [\"P1\"], \"department_id\": \"DEP\", \"inspection_type\": \"CAPACITY_TEST\"}",
+        "pause_reason": "NONE"
+      },
+      "decisions": [
+        "DEC-B10-c1fcd4f0b4c103b03c3830379286b042",
+        "DEC-B10-4a30343e4f85f2cbe4e4e027d70b7b10",
+        "DEC-B10-23e895a6767956f6310a62242ba14d38",
+        "DEC-B10-d06783574568cfa135ee333996f2dbca",
+        "DEC-B10-5ec15606905acf3a4cf63e79cbbd6567",
+        "DEC-B10-283c2e8bf3c61b9c785aeb02b73e5457"
+      ],
+      "executions": [
+        "MCP-B10-c1fcd4f0b4c103b03c3830379286b042",
+        "MCP-B10-d06783574568cfa135ee333996f2dbca"
+      ],
+      "pending_inspections": [
+        "INS-B09-5d4b86c520af36127149a8d439392035"
+      ],
+      "pending_approval": null,
+      "errors": [],
+      "observations": [
+        {
+          "status": "PARTIAL",
+          "trace_id": "8bf15d72c2a343b392d46b5ff28ad3a8",
+          "execution_id": "bafebeecd7e44dde8babc746ad071963",
+          "context": {
+            "trace_id": "8bf15d72c2a343b392d46b5ff28ad3a8",
+            "execution_id": "bafebeecd7e44dde8babc746ad071963",
+            "parent_execution_id": null,
+            "investigation_id": "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+            "municipality_id": "demo-city",
+            "source_graph": "civicly_b10_test_072da4908c304a01976cfed76bc30137",
+            "caller_role": "READ_ONLY",
+            "invocation_origin": "APPLICATION"
+          },
+          "server_id": "civicly-domain",
+          "tool_name": "trace_infrastructure_dependencies",
+          "schema_version": 3,
+          "inventory_version": "da1f25b2f8174ec96b4213038b92eb8600c24e8b362697f63f85b5d143790b42",
+          "source_evidence_ids": [
+            "EV"
+          ],
+          "simulation_mode": true,
+          "graph_revision": 82,
+          "truncated": false,
+          "search_limited": true,
+          "error": null,
+          "paths": [
+            {
+              "asset_ids": [
+                "P1",
+                "R1"
+              ],
+              "relationship": "UNDERLIES",
+              "verification_status": "VERIFIED",
+              "source_evidence_ids": [
+                "EV"
+              ]
+            }
+          ],
+          "data": {
+            "nodes": [
+              {
+                "id": "EV",
+                "kind": "Evidence",
+                "labels": [
+                  "Evidence"
+                ],
+                "properties": {
+                  "id": "EV",
+                  "updated_at": "2026-10-17T00:00:00Z",
+                  "municipality_id": "demo-city",
+                  "observed_at": "2026-10-17T00:00:00Z",
+                  "recorded_at": "2026-10-17T00:00:00Z",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "schema_version": 3,
+                  "summary": "Synthetic inspection",
+                  "source_kind": "SYNTHETIC",
+                  "evidence_type": "INSPECTION_REPORT",
+                  "reliability": "VERIFIED",
+                  "source_record_id": "test-record"
+                }
+              },
+              {
+                "id": "P1",
+                "kind": "WaterPipe",
+                "labels": [
+                  "InfrastructureAsset",
+                  "WaterPipe"
+                ],
+                "properties": {
+                  "id": "P1",
+                  "updated_at": "2026-10-17T00:00:00Z",
+                  "municipality_id": "demo-city",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "schema_version": 3,
+                  "operational_status": "ACTIVE",
+                  "name": "Synthetic asset",
+                  "asset_type": "WATER_PIPE"
+                }
+              },
+              {
+                "id": "R1",
+                "kind": "RoadSegment",
+                "labels": [
+                  "InfrastructureAsset",
+                  "RoadSegment"
+                ],
+                "properties": {
+                  "id": "R1",
+                  "updated_at": "2026-10-17T00:00:00Z",
+                  "municipality_id": "demo-city",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "schema_version": 3,
+                  "operational_status": "ACTIVE",
+                  "name": "Synthetic asset",
+                  "asset_type": "ROAD_SEGMENT"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "R2-PIPE-ROAD",
+                "kind": "UNDERLIES",
+                "source": "P1",
+                "target": "R1",
+                "properties": {
+                  "id": "R2-PIPE-ROAD",
+                  "municipality_id": "demo-city",
+                  "valid_from": "2026-10-17T00:00:00Z",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "source_evidence_id": "EV",
+                  "association_status": "VERIFIED"
+                }
+              }
+            ],
+            "paths": [
+              {
+                "node_ids": [
+                  "P1",
+                  "R1"
+                ],
+                "edge_ids": [
+                  "R2-PIPE-ROAD"
+                ],
+                "directions": [
+                  "OUTGOING"
+                ],
+                "evidence_ids": [
+                  "EV"
+                ],
+                "context": {
+                  "template": "dependencies",
+                  "classification": "Connectivity/evidence context, not causal proof"
+                },
+                "id": "PATH-8640f655ce1d69afdbcb2b38512fe3e2"
+              }
+            ],
+            "gaps": [],
+            "reservations": [
+              "Connectivity and count-based criticality are not root-cause or hydraulic proof.",
+              "No result is a bounded negative, not proof of global disconnection.",
+              "Historical node versions are not reconstructed; future-updated records are excluded.",
+              "Open relationship validity bounds remain unknown, not manufactured dates.",
+              "Exploratory topology includes explicit CANDIDATE and REPORTED claims as well as VERIFIED; not established connectivity."
+            ],
+            "as_of": "2026-10-18T12:00:16.000000Z"
+          }
+        },
+        {
+          "status": "PARTIAL",
+          "trace_id": "8bf15d72c2a343b392d46b5ff28ad3a8",
+          "execution_id": "b7e5f55136314869a6f390d360df8ea1",
+          "context": {
+            "trace_id": "8bf15d72c2a343b392d46b5ff28ad3a8",
+            "execution_id": "b7e5f55136314869a6f390d360df8ea1",
+            "parent_execution_id": null,
+            "investigation_id": "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+            "municipality_id": "demo-city",
+            "source_graph": "civicly_b10_test_072da4908c304a01976cfed76bc30137",
+            "caller_role": "READ_ONLY",
+            "invocation_origin": "APPLICATION"
+          },
+          "server_id": "civicly-domain",
+          "tool_name": "trace_infrastructure_dependencies",
+          "schema_version": 3,
+          "inventory_version": "da1f25b2f8174ec96b4213038b92eb8600c24e8b362697f63f85b5d143790b42",
+          "source_evidence_ids": [
+            "EV"
+          ],
+          "simulation_mode": true,
+          "graph_revision": 82,
+          "truncated": false,
+          "search_limited": true,
+          "error": null,
+          "paths": [
+            {
+              "asset_ids": [
+                "D1",
+                "D2"
+              ],
+              "relationship": "DRAINS_TO",
+              "verification_status": "VERIFIED",
+              "source_evidence_ids": [
+                "EV"
+              ]
+            }
+          ],
+          "data": {
+            "nodes": [
+              {
+                "id": "D1",
+                "kind": "DrainSegment",
+                "labels": [
+                  "DrainSegment",
+                  "InfrastructureAsset"
+                ],
+                "properties": {
+                  "id": "D1",
+                  "updated_at": "2026-10-17T00:00:00Z",
+                  "municipality_id": "demo-city",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "schema_version": 3,
+                  "operational_status": "ACTIVE",
+                  "name": "Synthetic asset",
+                  "asset_type": "DRAIN_SEGMENT"
+                }
+              },
+              {
+                "id": "D2",
+                "kind": "DrainSegment",
+                "labels": [
+                  "DrainSegment",
+                  "InfrastructureAsset"
+                ],
+                "properties": {
+                  "id": "D2",
+                  "updated_at": "2026-10-17T00:00:00Z",
+                  "municipality_id": "demo-city",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "schema_version": 3,
+                  "operational_status": "ACTIVE",
+                  "name": "Synthetic asset",
+                  "asset_type": "DRAIN_SEGMENT"
+                }
+              },
+              {
+                "id": "EV",
+                "kind": "Evidence",
+                "labels": [
+                  "Evidence"
+                ],
+                "properties": {
+                  "id": "EV",
+                  "updated_at": "2026-10-17T00:00:00Z",
+                  "municipality_id": "demo-city",
+                  "observed_at": "2026-10-17T00:00:00Z",
+                  "recorded_at": "2026-10-17T00:00:00Z",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "schema_version": 3,
+                  "summary": "Synthetic inspection",
+                  "source_kind": "SYNTHETIC",
+                  "evidence_type": "INSPECTION_REPORT",
+                  "reliability": "VERIFIED",
+                  "source_record_id": "test-record"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "R2-FLOW",
+                "kind": "DRAINS_TO",
+                "source": "D1",
+                "target": "D2",
+                "properties": {
+                  "id": "R2-FLOW",
+                  "municipality_id": "demo-city",
+                  "valid_from": "2026-10-17T00:00:00Z",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "source_evidence_id": "EV",
+                  "association_status": "VERIFIED"
+                }
+              }
+            ],
+            "paths": [
+              {
+                "node_ids": [
+                  "D1",
+                  "D2"
+                ],
+                "edge_ids": [
+                  "R2-FLOW"
+                ],
+                "directions": [
+                  "OUTGOING"
+                ],
+                "evidence_ids": [
+                  "EV"
+                ],
+                "context": {
+                  "template": "dependencies",
+                  "classification": "Connectivity/evidence context, not causal proof"
+                },
+                "id": "PATH-08915add513eb83b83dca70eb9ad6327"
+              }
+            ],
+            "gaps": [],
+            "reservations": [
+              "Connectivity and count-based criticality are not root-cause or hydraulic proof.",
+              "No result is a bounded negative, not proof of global disconnection.",
+              "Historical node versions are not reconstructed; future-updated records are excluded.",
+              "Open relationship validity bounds remain unknown, not manufactured dates."
+            ],
+            "as_of": "2026-10-18T12:00:16.000000Z"
+          }
+        },
+        {
+          "graph": "civicly_b10_test_072da4908c304a01976cfed76bc30137",
+          "tool": "query_graph_readonly",
+          "template": "node",
+          "graph_revision": 82,
+          "rows": [
+            {
+              "labels": [
+                "CivicEntity",
+                "Incident"
+              ],
+              "properties": {
+                "id": "INC-B08-acf134fea71ed9b7db39b8c1201d4fe4",
+                "started_at": "2026-10-18T04:00:00.000000Z",
+                "updated_at": "2026-10-18T12:00:00.000000Z",
+                "municipality_id": "demo-city",
+                "status": "REPORTED",
+                "issue_type": "ROAD_DAMAGE",
+                "created_at": "2026-10-18T12:00:00.000000Z",
+                "schema_version": 3,
+                "severity": "MODERATE",
+                "subtype": "UNSPECIFIED"
+              }
+            }
+          ],
+          "schema_data": null,
+          "truncated": false,
+          "search_limited": true,
+          "semantics": "Raw recorded synthetic facts; no causal finding. Schema samples are incomplete; node lookup is current-state, edge validity is half-open with unknown/open dates."
+        },
+        {
+          "graph": "civicly_b10_test_072da4908c304a01976cfed76bc30137",
+          "tool": "query_graph_readonly",
+          "template": "node",
+          "graph_revision": 82,
+          "rows": [
+            {
+              "labels": [
+                "CivicEntity",
+                "Incident"
+              ],
+              "properties": {
+                "id": "INC-B08-bef7cd9ef9ae59b444c5aa532f775e1a",
+                "started_at": "2026-09-01T04:00:00.000000Z",
+                "updated_at": "2026-10-18T12:00:00.000000Z",
+                "municipality_id": "demo-city",
+                "status": "REPORTED",
+                "issue_type": "ROAD_DAMAGE",
+                "created_at": "2026-10-18T12:00:00.000000Z",
+                "schema_version": 3,
+                "severity": "MODERATE",
+                "subtype": "UNSPECIFIED"
+              }
+            }
+          ],
+          "schema_data": null,
+          "truncated": false,
+          "search_limited": true,
+          "semantics": "Raw recorded synthetic facts; no causal finding. Schema samples are incomplete; node lookup is current-state, edge validity is half-open with unknown/open dates."
+        },
+        {
+          "status": "PARTIAL",
+          "trace_id": "8bf15d72c2a343b392d46b5ff28ad3a8",
+          "execution_id": "MCP-B10-c1fcd4f0b4c103b03c3830379286b042",
+          "context": {
+            "trace_id": "8bf15d72c2a343b392d46b5ff28ad3a8",
+            "execution_id": "MCP-B10-c1fcd4f0b4c103b03c3830379286b042",
+            "parent_execution_id": "DEC-B10-c1fcd4f0b4c103b03c3830379286b042",
+            "investigation_id": "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+            "municipality_id": "demo-city",
+            "source_graph": "civicly_b10_test_072da4908c304a01976cfed76bc30137",
+            "caller_role": "READ_ONLY",
+            "invocation_origin": "APPLICATION"
+          },
+          "server_id": "civicly-domain",
+          "tool_name": "get_maintenance_history",
+          "schema_version": 3,
+          "inventory_version": "da1f25b2f8174ec96b4213038b92eb8600c24e8b362697f63f85b5d143790b42",
+          "source_evidence_ids": [
+            "EV",
+            "EV-INS",
+            "EV-JOURNAL-B09-50c1ce78ba9a33f050caa2f9a43f2170",
+            "EV-JOURNAL-B09-793165bfae7eb97ad3a36d502363024d",
+            "EV-JOURNAL-B09-bb6e56726c50430f469d75eecf35010a",
+            "EV-JOURNAL-B09-f3ad7ad8101554f8881b84220cb8b1a4",
+            "EV-REPORT-B09-57af3c6bb2622b7fe611324241ef2c89",
+            "EV-REPORT-B09-d3d2d841e4cc8e143c9676042909ae77"
+          ],
+          "simulation_mode": true,
+          "graph_revision": 85,
+          "truncated": false,
+          "search_limited": false,
+          "error": null,
+          "records": [
+            {
+              "record_id": "INS",
+              "event_type": "Inspection",
+              "occurred_at": "2026-10-17T00:00:00Z",
+              "evidence_ids": [
+                "EV-INS"
+              ]
+            },
+            {
+              "record_id": "INS-B09-95b82bef9d57e6560c19af5a9b406c09",
+              "event_type": "Inspection",
+              "occurred_at": "2026-10-18T12:00:04.000000Z",
+              "evidence_ids": [
+                "EV-JOURNAL-B09-bb6e56726c50430f469d75eecf35010a",
+                "EV-JOURNAL-B09-f3ad7ad8101554f8881b84220cb8b1a4",
+                "EV-REPORT-B09-57af3c6bb2622b7fe611324241ef2c89"
+              ]
+            },
+            {
+              "record_id": "INS-B09-27a394a1c209cdb757eface41bc21702",
+              "event_type": "Inspection",
+              "occurred_at": "2026-10-18T12:00:08.000000Z",
+              "evidence_ids": [
+                "EV-JOURNAL-B09-50c1ce78ba9a33f050caa2f9a43f2170",
+                "EV-JOURNAL-B09-793165bfae7eb97ad3a36d502363024d",
+                "EV-REPORT-B09-d3d2d841e4cc8e143c9676042909ae77"
+              ]
+            },
+            {
+              "record_id": "ORDER",
+              "event_type": "WorkOrder",
+              "occurred_at": "2026-10-17T00:00:00Z",
+              "evidence_ids": [
+                "EV"
+              ]
+            },
+            {
+              "record_id": "OUTCOME",
+              "event_type": "InterventionOutcome",
+              "occurred_at": "2026-10-17T00:00:00Z",
+              "evidence_ids": [
+                "EV"
+              ]
+            }
+          ],
+          "data": {
+            "nodes": [
+              {
+                "id": "R1",
+                "kind": "RoadSegment",
+                "labels": [
+                  "InfrastructureAsset",
+                  "RoadSegment"
+                ],
+                "properties": {
+                  "id": "R1",
+                  "updated_at": "2026-10-17T00:00:00Z",
+                  "municipality_id": "demo-city",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "schema_version": 3,
+                  "operational_status": "ACTIVE",
+                  "name": "Synthetic asset",
+                  "asset_type": "ROAD_SEGMENT"
+                }
+              },
+              {
+                "id": "INS",
+                "kind": "Inspection",
+                "labels": [
+                  "Inspection"
+                ],
+                "properties": {
+                  "id": "INS",
+                  "updated_at": "2026-10-17T00:00:00Z",
+                  "municipality_id": "demo-city",
+                  "status": "COMPLETED",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "schema_version": 3,
+                  "requested_at": "2026-10-17T00:00:00Z",
+                  "inspection_type": "ROAD",
+                  "completed_at": "2026-10-17T00:00:00Z"
+                }
+              },
+              {
+                "id": "INS-B09-95b82bef9d57e6560c19af5a9b406c09",
+                "kind": "Inspection",
+                "labels": [
+                  "Inspection"
+                ],
+                "properties": {
+                  "id": "INS-B09-95b82bef9d57e6560c19af5a9b406c09",
+                  "updated_at": "2026-10-18T12:00:04.000000Z",
+                  "municipality_id": "demo-city",
+                  "status": "COMPLETED",
+                  "created_at": "2026-10-18T12:00:00.000000Z",
+                  "schema_version": 3,
+                  "requested_at": "2026-10-18T12:00:00.000000Z",
+                  "inspection_type": "SYNTHETIC_FIELD_TEST",
+                  "scheduled_at": "2026-10-18T12:00:02.000000Z",
+                  "completed_at": "2026-10-18T12:00:04.000000Z"
+                }
+              },
+              {
+                "id": "INS-B09-27a394a1c209cdb757eface41bc21702",
+                "kind": "Inspection",
+                "labels": [
+                  "Inspection"
+                ],
+                "properties": {
+                  "id": "INS-B09-27a394a1c209cdb757eface41bc21702",
+                  "updated_at": "2026-10-18T12:00:08.000000Z",
+                  "municipality_id": "demo-city",
+                  "status": "COMPLETED",
+                  "created_at": "2026-10-18T12:00:04.000000Z",
+                  "schema_version": 3,
+                  "requested_at": "2026-10-18T12:00:04.000000Z",
+                  "inspection_type": "SYNTHETIC_FIELD_TEST",
+                  "scheduled_at": "2026-10-18T12:00:06.000000Z",
+                  "completed_at": "2026-10-18T12:00:08.000000Z"
+                }
+              },
+              {
+                "id": "EV-INS",
+                "kind": "Evidence",
+                "labels": [
+                  "Evidence"
+                ],
+                "properties": {
+                  "id": "EV-INS",
+                  "updated_at": "2026-10-17T00:00:00Z",
+                  "municipality_id": "demo-city",
+                  "observed_at": "2026-10-17T00:00:00Z",
+                  "recorded_at": "2026-10-17T00:00:00Z",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "schema_version": 3,
+                  "summary": "Synthetic inspection",
+                  "source_kind": "SYNTHETIC",
+                  "evidence_type": "INSPECTION_REPORT",
+                  "reliability": "VERIFIED",
+                  "source_record_id": "test-record"
+                }
+              },
+              {
+                "id": "EV-REPORT-B09-57af3c6bb2622b7fe611324241ef2c89",
+                "kind": "Evidence",
+                "labels": [
+                  "Evidence"
+                ],
+                "properties": {
+                  "id": "EV-REPORT-B09-57af3c6bb2622b7fe611324241ef2c89",
+                  "updated_at": "2026-10-18T12:00:04.000000Z",
+                  "municipality_id": "demo-city",
+                  "observed_at": "2026-10-18T12:00:04.000000Z",
+                  "recorded_at": "2026-10-18T12:00:04.000000Z",
+                  "created_at": "2026-10-18T12:00:04.000000Z",
+                  "schema_version": 3,
+                  "summary": "{\"format_version\":1,\"inspection_id\":\"INS-B09-95b82bef9d57e6560c19af5a9b406c09\",\"inspector_id\":\"synthetic-inspector-r2-reviewed-contradiction\",\"department_id\":\"DEP\",\"source_id\":\"independent-source-r2-reviewed-contradiction\",\"record_id\":\"field-record-r2-reviewed-contradiction\",\"source_kind\":\"SYNTHETIC\",\"observed_at\":\"2026-10-18T12:00:04.000000Z\",\"recorded_at\":\"2026-10-18T12:00:04.000000Z\",\"observations\":[{\"asset_id\":\"R1\",\"code\":\"SUBGRADE_TEST_NORMAL\",\"statement\":\"Authored synthetic field observation SUBGRADE_TEST_NORMAL\",\"method\":\"DIRECT_SYNTHETIC_FIELD_TEST\",\"observed_at\":\"2026-10-18T12:00:04.000000Z\",\"result\":\"OBSERVED\",\"value\":null,\"unit\":null}],\"finding_ids\":[\"FINDING-B09-e94cb76d47dd0b9a0866d111015edbf5\"],\"review\":{\"reviewer_id\":\"synthetic-reviewer\",\"role\":\"ANALYST\",\"reviewed\":true,\"reason\":\"Reviewed authored methods and attributed observations\"}}",
+                  "source_kind": "SYNTHETIC",
+                  "evidence_type": "INSPECTION_REPORT",
+                  "reliability": "VERIFIED",
+                  "source_record_id": "independent-source-r2-reviewed-contradiction:field-record-r2-reviewed-contradiction",
+                  "basis": "OBSERVED",
+                  "content_hash": "6b7569693bd0526957759d7844ade197ed786cd95b0d922f702bb88b97416e8a",
+                  "review_status": "REVIEWED"
+                }
+              },
+              {
+                "id": "EV-REPORT-B09-d3d2d841e4cc8e143c9676042909ae77",
+                "kind": "Evidence",
+                "labels": [
+                  "Evidence"
+                ],
+                "properties": {
+                  "id": "EV-REPORT-B09-d3d2d841e4cc8e143c9676042909ae77",
+                  "updated_at": "2026-10-18T12:00:08.000000Z",
+                  "municipality_id": "demo-city",
+                  "observed_at": "2026-10-18T12:00:08.000000Z",
+                  "recorded_at": "2026-10-18T12:00:08.000000Z",
+                  "created_at": "2026-10-18T12:00:08.000000Z",
+                  "schema_version": 3,
+                  "summary": "{\"format_version\":1,\"inspection_id\":\"INS-B09-27a394a1c209cdb757eface41bc21702\",\"inspector_id\":\"synthetic-inspector-r2-unreviewed-support\",\"department_id\":\"DEP\",\"source_id\":\"independent-source-r2-unreviewed-support\",\"record_id\":\"field-record-r2-unreviewed-support\",\"source_kind\":\"SYNTHETIC\",\"observed_at\":\"2026-10-18T12:00:08.000000Z\",\"recorded_at\":\"2026-10-18T12:00:08.000000Z\",\"observations\":[{\"asset_id\":\"R1\",\"code\":\"SUBGRADE_FAILURE_OBSERVED\",\"statement\":\"Authored synthetic field observation SUBGRADE_FAILURE_OBSERVED\",\"method\":\"DIRECT_SYNTHETIC_FIELD_TEST\",\"observed_at\":\"2026-10-18T12:00:08.000000Z\",\"result\":\"OBSERVED\",\"value\":null,\"unit\":null}],\"finding_ids\":[\"FINDING-B09-21e3cdf0f16fc5d0bfd777c8fd9f97bb\"],\"review\":null}",
+                  "source_kind": "SYNTHETIC",
+                  "evidence_type": "INSPECTION_REPORT",
+                  "reliability": "UNVERIFIED",
+                  "source_record_id": "independent-source-r2-unreviewed-support:field-record-r2-unreviewed-support",
+                  "basis": "OBSERVED",
+                  "content_hash": "8df87221904305b0bbb66841125d02e562b8888224022a353432cd439fa5ec51",
+                  "review_status": "UNREVIEWED"
+                }
+              },
+              {
+                "id": "TASK",
+                "kind": "ActionTask",
+                "labels": [
+                  "ActionTask"
+                ],
+                "properties": {
+                  "id": "TASK",
+                  "updated_at": "2026-10-17T00:00:00Z",
+                  "municipality_id": "demo-city",
+                  "status": "COMPLETED",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "schema_version": 3,
+                  "action_type": "HISTORICAL_TEST",
+                  "priority": "HIGH"
+                }
+              },
+              {
+                "id": "ORDER",
+                "kind": "WorkOrder",
+                "labels": [
+                  "WorkOrder"
+                ],
+                "properties": {
+                  "id": "ORDER",
+                  "updated_at": "2026-10-17T00:00:00Z",
+                  "municipality_id": "demo-city",
+                  "status": "COMPLETED",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "schema_version": 3,
+                  "plan_version": 1,
+                  "idempotency_key": "AUTHORED-HISTORY",
+                  "execution_mode": "SIMULATED"
+                }
+              },
+              {
+                "id": "OUTCOME",
+                "kind": "InterventionOutcome",
+                "labels": [
+                  "InterventionOutcome"
+                ],
+                "properties": {
+                  "id": "OUTCOME",
+                  "municipality_id": "demo-city",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "schema_version": 3,
+                  "assessment_status": "HISTORICAL",
+                  "evaluated_at": "2026-10-17T00:00:00Z",
+                  "result": "ACTION_COMPLETED"
+                }
+              },
+              {
+                "id": "EV-JOURNAL-B09-bb6e56726c50430f469d75eecf35010a",
+                "kind": "Evidence",
+                "labels": [
+                  "Evidence"
+                ],
+                "properties": {
+                  "id": "EV-JOURNAL-B09-bb6e56726c50430f469d75eecf35010a",
+                  "updated_at": "2026-10-18T12:00:00.000000Z",
+                  "municipality_id": "demo-city",
+                  "recorded_at": "2026-10-18T12:00:00.000000Z",
+                  "created_at": "2026-10-18T12:00:00.000000Z",
+                  "schema_version": 3,
+                  "summary": "{\"format_version\":1,\"state\":\"COMMITTED\",\"request_hash\":\"0b1eaaff9464ad5d90d2a2250cb3e914786c91ed151faaea08fbb26c8aaada8f\",\"actor\":{\"id\":\"synthetic-analyst\",\"role\":\"ANALYST\",\"department_id\":null},\"command\":{\"request_id\":\"request-r2-reviewed-contradiction\",\"operation\":\"request_inspection\",\"investigation_id\":\"INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f\",\"asset_ids\":[\"R1\"],\"department_id\":\"DEP\",\"inspection_type\":\"SYNTHETIC_FIELD_TEST\"},\"receipt\":{\"operation\":\"request_inspection\",\"journal_id\":\"EV-JOURNAL-B09-bb6e56726c50430f469d75eecf35010a\",\"entity_id\":\"INS-B09-95b82bef9d57e6560c19af5a9b406c09\",\"graph\":\"civicly_b10_test_072da4908c304a01976cfed76bc30137\",\"graph_revision\":48,\"recorded_at\":\"2026-10-18T12:00:00.000000Z\",\"created_ids\":[\"INS-B09-95b82bef9d57e6560c19af5a9b406c09\"],\"relationship_ids\":[\"REL-B09-4f81df512da21954d10a89684f24fbaa\"],\"updated_ids\":[],\"assessment\":null,\"replayed\":false,\"historical_receipt\":true,\"simulation_mode\":true}}",
+                  "source_kind": "USER",
+                  "evidence_type": "B09_OPERATION",
+                  "reliability": "UNVERIFIED",
+                  "source_record_id": "synthetic-analyst:request-r2-reviewed-contradiction"
+                }
+              },
+              {
+                "id": "EV-JOURNAL-B09-50c1ce78ba9a33f050caa2f9a43f2170",
+                "kind": "Evidence",
+                "labels": [
+                  "Evidence"
+                ],
+                "properties": {
+                  "id": "EV-JOURNAL-B09-50c1ce78ba9a33f050caa2f9a43f2170",
+                  "updated_at": "2026-10-18T12:00:04.000000Z",
+                  "municipality_id": "demo-city",
+                  "recorded_at": "2026-10-18T12:00:04.000000Z",
+                  "created_at": "2026-10-18T12:00:04.000000Z",
+                  "schema_version": 3,
+                  "summary": "{\"format_version\":1,\"state\":\"COMMITTED\",\"request_hash\":\"c653e8c76ef5e981fa018c6eefd3f425ff73f2e91ef935321d811316c779cab1\",\"actor\":{\"id\":\"synthetic-analyst\",\"role\":\"ANALYST\",\"department_id\":null},\"command\":{\"request_id\":\"request-r2-unreviewed-support\",\"operation\":\"request_inspection\",\"investigation_id\":\"INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f\",\"asset_ids\":[\"R1\"],\"department_id\":\"DEP\",\"inspection_type\":\"SYNTHETIC_FIELD_TEST\"},\"receipt\":{\"operation\":\"request_inspection\",\"journal_id\":\"EV-JOURNAL-B09-50c1ce78ba9a33f050caa2f9a43f2170\",\"entity_id\":\"INS-B09-27a394a1c209cdb757eface41bc21702\",\"graph\":\"civicly_b10_test_072da4908c304a01976cfed76bc30137\",\"graph_revision\":58,\"recorded_at\":\"2026-10-18T12:00:04.000000Z\",\"created_ids\":[\"INS-B09-27a394a1c209cdb757eface41bc21702\"],\"relationship_ids\":[\"REL-B09-6db56229771380396ef62b45b65fdfcb\"],\"updated_ids\":[],\"assessment\":null,\"replayed\":false,\"historical_receipt\":true,\"simulation_mode\":true}}",
+                  "source_kind": "USER",
+                  "evidence_type": "B09_OPERATION",
+                  "reliability": "UNVERIFIED",
+                  "source_record_id": "synthetic-analyst:request-r2-unreviewed-support"
+                }
+              },
+              {
+                "id": "EV-JOURNAL-B09-f3ad7ad8101554f8881b84220cb8b1a4",
+                "kind": "Evidence",
+                "labels": [
+                  "Evidence"
+                ],
+                "properties": {
+                  "id": "EV-JOURNAL-B09-f3ad7ad8101554f8881b84220cb8b1a4",
+                  "updated_at": "2026-10-18T12:00:04.000000Z",
+                  "municipality_id": "demo-city",
+                  "recorded_at": "2026-10-18T12:00:04.000000Z",
+                  "created_at": "2026-10-18T12:00:04.000000Z",
+                  "schema_version": 3,
+                  "summary": "{\"format_version\":1,\"state\":\"COMMITTED\",\"request_hash\":\"7c5fabf1d602b6c3c68ebb98cd21ecc92368dd6656238e689bf4883baba4a538\",\"actor\":{\"id\":\"synthetic-inspector-r2-reviewed-contradiction\",\"role\":\"DEPARTMENT_LEAD\",\"department_id\":\"DEP\"},\"command\":{\"request_id\":\"report-r2-reviewed-contradiction\",\"operation\":\"report_inspection\",\"inspection_id\":\"INS-B09-95b82bef9d57e6560c19af5a9b406c09\",\"expected_hash\":\"a95fae9becf7aed645c313828e3cb55736d263429b38f1edbc87c1991feae516\",\"source_id\":\"independent-source-r2-reviewed-contradiction\",\"record_id\":\"field-record-r2-reviewed-contradiction\",\"source_kind\":\"SYNTHETIC\",\"observations\":[{\"asset_id\":\"R1\",\"code\":\"SUBGRADE_TEST_NORMAL\",\"statement\":\"Authored synthetic field observation SUBGRADE_TEST_NORMAL\",\"method\":\"DIRECT_SYNTHETIC_FIELD_TEST\",\"observed_at\":\"2026-10-18T12:00:04.000000Z\",\"result\":\"OBSERVED\",\"value\":null,\"unit\":null}],\"review\":{\"reviewer_id\":\"synthetic-reviewer\",\"role\":\"ANALYST\",\"reviewed\":true,\"reason\":\"Reviewed authored methods and attributed observations\"}},\"receipt\":{\"operation\":\"report_inspection\",\"journal_id\":\"EV-JOURNAL-B09-f3ad7ad8101554f8881b84220cb8b1a4\",\"entity_id\":\"EV-REPORT-B09-57af3c6bb2622b7fe611324241ef2c89\",\"graph\":\"civicly_b10_test_072da4908c304a01976cfed76bc30137\",\"graph_revision\":56,\"recorded_at\":\"2026-10-18T12:00:04.000000Z\",\"created_ids\":[\"EV-REPORT-B09-57af3c6bb2622b7fe611324241ef2c89\",\"FINDING-B09-e94cb76d47dd0b9a0866d111015edbf5\"],\"relationship_ids\":[\"REL-B09-12fa2fb4afd0e05cd3dfff8dbd002401\",\"REL-B09-36590ccd37fc18c4d29dde1648cbd017\"],\"updated_ids\":[\"INS-B09-95b82bef9d57e6560c19af5a9b406c09\"],\"assessment\":null,\"replayed\":false,\"historical_receipt\":true,\"simulation_mode\":true}}",
+                  "source_kind": "USER",
+                  "evidence_type": "B09_OPERATION",
+                  "reliability": "UNVERIFIED",
+                  "source_record_id": "synthetic-inspector-r2-reviewed-contradiction:report-r2-reviewed-contradiction"
+                }
+              },
+              {
+                "id": "EV-JOURNAL-B09-793165bfae7eb97ad3a36d502363024d",
+                "kind": "Evidence",
+                "labels": [
+                  "Evidence"
+                ],
+                "properties": {
+                  "id": "EV-JOURNAL-B09-793165bfae7eb97ad3a36d502363024d",
+                  "updated_at": "2026-10-18T12:00:08.000000Z",
+                  "municipality_id": "demo-city",
+                  "recorded_at": "2026-10-18T12:00:08.000000Z",
+                  "created_at": "2026-10-18T12:00:08.000000Z",
+                  "schema_version": 3,
+                  "summary": "{\"format_version\":1,\"state\":\"COMMITTED\",\"request_hash\":\"8a6c02ee517aed1afdab05956b75f7156b17391382c62ab1cd4fd73c7bbca21c\",\"actor\":{\"id\":\"synthetic-inspector-r2-unreviewed-support\",\"role\":\"DEPARTMENT_LEAD\",\"department_id\":\"DEP\"},\"command\":{\"request_id\":\"report-r2-unreviewed-support\",\"operation\":\"report_inspection\",\"inspection_id\":\"INS-B09-27a394a1c209cdb757eface41bc21702\",\"expected_hash\":\"03c066ac7bea253d6ce0a07a6c22b674463eb808f4e28df32e861271b337bafe\",\"source_id\":\"independent-source-r2-unreviewed-support\",\"record_id\":\"field-record-r2-unreviewed-support\",\"source_kind\":\"SYNTHETIC\",\"observations\":[{\"asset_id\":\"R1\",\"code\":\"SUBGRADE_FAILURE_OBSERVED\",\"statement\":\"Authored synthetic field observation SUBGRADE_FAILURE_OBSERVED\",\"method\":\"DIRECT_SYNTHETIC_FIELD_TEST\",\"observed_at\":\"2026-10-18T12:00:08.000000Z\",\"result\":\"OBSERVED\",\"value\":null,\"unit\":null}],\"review\":null},\"receipt\":{\"operation\":\"report_inspection\",\"journal_id\":\"EV-JOURNAL-B09-793165bfae7eb97ad3a36d502363024d\",\"entity_id\":\"EV-REPORT-B09-d3d2d841e4cc8e143c9676042909ae77\",\"graph\":\"civicly_b10_test_072da4908c304a01976cfed76bc30137\",\"graph_revision\":66,\"recorded_at\":\"2026-10-18T12:00:08.000000Z\",\"created_ids\":[\"EV-REPORT-B09-d3d2d841e4cc8e143c9676042909ae77\",\"FINDING-B09-21e3cdf0f16fc5d0bfd777c8fd9f97bb\"],\"relationship_ids\":[\"REL-B09-11cdd14e26aff43610c86bd56be9b9b4\",\"REL-B09-525ba59a6ffa3e8c62c05a8f6fc08587\"],\"updated_ids\":[\"INS-B09-27a394a1c209cdb757eface41bc21702\"],\"assessment\":null,\"replayed\":false,\"historical_receipt\":true,\"simulation_mode\":true}}",
+                  "source_kind": "USER",
+                  "evidence_type": "B09_OPERATION",
+                  "reliability": "UNVERIFIED",
+                  "source_record_id": "synthetic-inspector-r2-unreviewed-support:report-r2-unreviewed-support"
+                }
+              },
+              {
+                "id": "EV",
+                "kind": "Evidence",
+                "labels": [
+                  "Evidence"
+                ],
+                "properties": {
+                  "id": "EV",
+                  "updated_at": "2026-10-17T00:00:00Z",
+                  "municipality_id": "demo-city",
+                  "observed_at": "2026-10-17T00:00:00Z",
+                  "recorded_at": "2026-10-17T00:00:00Z",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "schema_version": 3,
+                  "summary": "Synthetic inspection",
+                  "source_kind": "SYNTHETIC",
+                  "evidence_type": "INSPECTION_REPORT",
+                  "reliability": "VERIFIED",
+                  "source_record_id": "test-record"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "INS-R1",
+                "kind": "INSPECTS",
+                "source": "INS",
+                "target": "R1",
+                "properties": {
+                  "id": "INS-R1",
+                  "municipality_id": "demo-city",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "source_evidence_id": "EV-INS"
+                }
+              },
+              {
+                "id": "REL-B09-4f81df512da21954d10a89684f24fbaa",
+                "kind": "INSPECTS",
+                "source": "INS-B09-95b82bef9d57e6560c19af5a9b406c09",
+                "target": "R1",
+                "properties": {
+                  "id": "REL-B09-4f81df512da21954d10a89684f24fbaa",
+                  "municipality_id": "demo-city",
+                  "valid_from": "2026-10-18T12:00:00.000000Z",
+                  "created_at": "2026-10-18T12:00:00.000000Z",
+                  "source_evidence_id": "EV-JOURNAL-B09-bb6e56726c50430f469d75eecf35010a"
+                }
+              },
+              {
+                "id": "REL-B09-6db56229771380396ef62b45b65fdfcb",
+                "kind": "INSPECTS",
+                "source": "INS-B09-27a394a1c209cdb757eface41bc21702",
+                "target": "R1",
+                "properties": {
+                  "id": "REL-B09-6db56229771380396ef62b45b65fdfcb",
+                  "municipality_id": "demo-city",
+                  "valid_from": "2026-10-18T12:00:04.000000Z",
+                  "created_at": "2026-10-18T12:00:04.000000Z",
+                  "source_evidence_id": "EV-JOURNAL-B09-50c1ce78ba9a33f050caa2f9a43f2170"
+                }
+              },
+              {
+                "id": "PRODUCED-EV",
+                "kind": "PRODUCED",
+                "source": "INS",
+                "target": "EV-INS",
+                "properties": {
+                  "id": "PRODUCED-EV",
+                  "municipality_id": "demo-city",
+                  "created_at": "2026-10-17T00:00:00Z"
+                }
+              },
+              {
+                "id": "REL-B09-12fa2fb4afd0e05cd3dfff8dbd002401",
+                "kind": "PRODUCED",
+                "source": "INS-B09-95b82bef9d57e6560c19af5a9b406c09",
+                "target": "EV-REPORT-B09-57af3c6bb2622b7fe611324241ef2c89",
+                "properties": {
+                  "id": "REL-B09-12fa2fb4afd0e05cd3dfff8dbd002401",
+                  "municipality_id": "demo-city",
+                  "valid_from": "2026-10-18T12:00:04.000000Z",
+                  "created_at": "2026-10-18T12:00:04.000000Z",
+                  "source_evidence_id": "EV-JOURNAL-B09-f3ad7ad8101554f8881b84220cb8b1a4"
+                }
+              },
+              {
+                "id": "REL-B09-11cdd14e26aff43610c86bd56be9b9b4",
+                "kind": "PRODUCED",
+                "source": "INS-B09-27a394a1c209cdb757eface41bc21702",
+                "target": "EV-REPORT-B09-d3d2d841e4cc8e143c9676042909ae77",
+                "properties": {
+                  "id": "REL-B09-11cdd14e26aff43610c86bd56be9b9b4",
+                  "municipality_id": "demo-city",
+                  "valid_from": "2026-10-18T12:00:08.000000Z",
+                  "created_at": "2026-10-18T12:00:08.000000Z",
+                  "source_evidence_id": "EV-JOURNAL-B09-793165bfae7eb97ad3a36d502363024d"
+                }
+              },
+              {
+                "id": "TARGET",
+                "kind": "TARGETS",
+                "source": "TASK",
+                "target": "R1",
+                "properties": {
+                  "id": "TARGET",
+                  "municipality_id": "demo-city",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "source_evidence_id": "EV"
+                }
+              },
+              {
+                "id": "IMPL",
+                "kind": "IMPLEMENTS",
+                "source": "ORDER",
+                "target": "TASK",
+                "properties": {
+                  "id": "IMPL",
+                  "municipality_id": "demo-city",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "source_evidence_id": "EV"
+                }
+              },
+              {
+                "id": "OUT",
+                "kind": "RESULTED_IN",
+                "source": "ORDER",
+                "target": "OUTCOME",
+                "properties": {
+                  "id": "OUT",
+                  "municipality_id": "demo-city",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "source_evidence_id": "EV"
+                }
+              }
+            ],
+            "paths": [
+              {
+                "id": "474b8786b8df231784f8ebcc16070b56ef1014a4ca079a01825efe862aed6cbb",
+                "node_ids": [
+                  "R1",
+                  "INS"
+                ],
+                "edge_ids": [
+                  "INS-R1"
+                ],
+                "directions": [
+                  "INCOMING"
+                ],
+                "evidence_ids": [
+                  "EV-INS"
+                ],
+                "context": {}
+              },
+              {
+                "id": "e663adc77214af8cb3827393e0b0d999a23798fe0290c8f5f10384e4d7e9d483",
+                "node_ids": [
+                  "R1",
+                  "INS-B09-95b82bef9d57e6560c19af5a9b406c09"
+                ],
+                "edge_ids": [
+                  "REL-B09-4f81df512da21954d10a89684f24fbaa"
+                ],
+                "directions": [
+                  "INCOMING"
+                ],
+                "evidence_ids": [
+                  "EV-JOURNAL-B09-bb6e56726c50430f469d75eecf35010a"
+                ],
+                "context": {}
+              },
+              {
+                "id": "c4c52b2ec0f7882a1c660f113d3ec59718e5bd221153d649f9ce2d83977dfbca",
+                "node_ids": [
+                  "R1",
+                  "INS-B09-27a394a1c209cdb757eface41bc21702"
+                ],
+                "edge_ids": [
+                  "REL-B09-6db56229771380396ef62b45b65fdfcb"
+                ],
+                "directions": [
+                  "INCOMING"
+                ],
+                "evidence_ids": [
+                  "EV-JOURNAL-B09-50c1ce78ba9a33f050caa2f9a43f2170"
+                ],
+                "context": {}
+              },
+              {
+                "id": "8f67f6ce0654aee2be88c35f7bd0de02e3cb5a8204591b520315362d7ab72a91",
+                "node_ids": [
+                  "R1",
+                  "INS",
+                  "EV-INS"
+                ],
+                "edge_ids": [
+                  "INS-R1",
+                  "PRODUCED-EV"
+                ],
+                "directions": [
+                  "INCOMING",
+                  "OUTGOING"
+                ],
+                "evidence_ids": [
+                  "EV-INS"
+                ],
+                "context": {}
+              },
+              {
+                "id": "893da818b76306bbeae0e06ab89949f89dcb83debaabcbb97eaf4735a61c4096",
+                "node_ids": [
+                  "R1",
+                  "INS-B09-95b82bef9d57e6560c19af5a9b406c09",
+                  "EV-REPORT-B09-57af3c6bb2622b7fe611324241ef2c89"
+                ],
+                "edge_ids": [
+                  "REL-B09-4f81df512da21954d10a89684f24fbaa",
+                  "REL-B09-12fa2fb4afd0e05cd3dfff8dbd002401"
+                ],
+                "directions": [
+                  "INCOMING",
+                  "OUTGOING"
+                ],
+                "evidence_ids": [
+                  "EV-JOURNAL-B09-bb6e56726c50430f469d75eecf35010a",
+                  "EV-JOURNAL-B09-f3ad7ad8101554f8881b84220cb8b1a4",
+                  "EV-REPORT-B09-57af3c6bb2622b7fe611324241ef2c89"
+                ],
+                "context": {}
+              },
+              {
+                "id": "4bcdffbc79f9fc7a7f329ef2470b5be4ece73c1556b36170470b451eb46b64fe",
+                "node_ids": [
+                  "R1",
+                  "INS-B09-27a394a1c209cdb757eface41bc21702",
+                  "EV-REPORT-B09-d3d2d841e4cc8e143c9676042909ae77"
+                ],
+                "edge_ids": [
+                  "REL-B09-6db56229771380396ef62b45b65fdfcb",
+                  "REL-B09-11cdd14e26aff43610c86bd56be9b9b4"
+                ],
+                "directions": [
+                  "INCOMING",
+                  "OUTGOING"
+                ],
+                "evidence_ids": [
+                  "EV-JOURNAL-B09-50c1ce78ba9a33f050caa2f9a43f2170",
+                  "EV-JOURNAL-B09-793165bfae7eb97ad3a36d502363024d",
+                  "EV-REPORT-B09-d3d2d841e4cc8e143c9676042909ae77"
+                ],
+                "context": {}
+              },
+              {
+                "id": "767350f30622dbef8c9c9f6657a95923a3ae1207bfecd717214a14c41b10264a",
+                "node_ids": [
+                  "R1",
+                  "TASK",
+                  "ORDER"
+                ],
+                "edge_ids": [
+                  "TARGET",
+                  "IMPL"
+                ],
+                "directions": [
+                  "INCOMING",
+                  "INCOMING"
+                ],
+                "evidence_ids": [
+                  "EV"
+                ],
+                "context": {}
+              },
+              {
+                "id": "9f28084dbcc3ae0273127e299786bf8bfa27699e522719c8976a0b38011a20d3",
+                "node_ids": [
+                  "R1",
+                  "TASK",
+                  "ORDER",
+                  "OUTCOME"
+                ],
+                "edge_ids": [
+                  "TARGET",
+                  "IMPL",
+                  "OUT"
+                ],
+                "directions": [
+                  "INCOMING",
+                  "INCOMING",
+                  "OUTGOING"
+                ],
+                "evidence_ids": [
+                  "EV"
+                ],
+                "context": {}
+              }
+            ],
+            "gaps": [
+              "Asset-linked history is contextual; absent repair/decision chains are not proof of resolution"
+            ],
+            "reservations": [
+              "Graph connections are evidence context, not verified physical causation.",
+              "Historical node versions are not reconstructed; future-updated records are excluded.",
+              "Some relationship validity start dates are unknown."
+            ],
+            "as_of": "2026-10-18T12:00:16.000000Z"
+          }
+        },
+        {
+          "operation": "propose",
+          "journal_id": "EV-JOURNAL-B09-a1ad189b1f1fbe6ff7d19c4a6797b143",
+          "entity_id": "HYP-B09-3dc916e34c5ebb9db4378c7d2fe8c857",
+          "graph": "civicly_b10_test_072da4908c304a01976cfed76bc30137",
+          "graph_revision": 91,
+          "recorded_at": "2026-10-18T12:00:18.000000Z",
+          "created_ids": [
+            "HYP-B09-3dc916e34c5ebb9db4378c7d2fe8c857"
+          ],
+          "relationship_ids": [
+            "REL-B09-55f28f062546cad6d88e0620ece428e2",
+            "REL-B09-6cb9b1bd3cd5c96fe9c59840d6c2f827",
+            "REL-B09-80fbe7db41f99e4870bba624724379e7"
+          ],
+          "updated_ids": [],
+          "assessment": null,
+          "replayed": false,
+          "historical_receipt": true,
+          "simulation_mode": true
+        },
+        {
+          "operation": "assess",
+          "journal_id": "EV-JOURNAL-B09-532fae2d4b4589a8f80487a5e9d440c8",
+          "entity_id": "ASSESS-B09-384c541c8e5e91092e735c6f0a9467e3",
+          "graph": "civicly_b10_test_072da4908c304a01976cfed76bc30137",
+          "graph_revision": 97,
+          "recorded_at": "2026-10-18T12:00:19.000000Z",
+          "created_ids": [
+            "ASSESS-B09-384c541c8e5e91092e735c6f0a9467e3"
+          ],
+          "relationship_ids": [
+            "REL-B09-cd2e656120c286c9cb0546aeb826a909",
+            "REL-B09-cb6b094721bc4a3b8f828d261b849f5b"
+          ],
+          "updated_ids": [
+            "HYP-B09-21ddd5f91e62c68fe556529762144190"
+          ],
+          "assessment": {
+            "format_version": 2,
+            "id": "ASSESS-B09-384c541c8e5e91092e735c6f0a9467e3",
+            "hypothesis_id": "HYP-B09-21ddd5f91e62c68fe556529762144190",
+            "previous_assessment_id": "ASSESS-B09-0ddd3eb5d6b5af88921497bad0a037d4",
+            "assessment": "INCONCLUSIVE",
+            "rule_version": 2,
+            "classification": {
+              "uses": [
+                {
+                  "evidence_id": "EV-INS",
+                  "observation_index": null,
+                  "category": "CONTEXT",
+                  "incident_ids": [],
+                  "reason": "Non-inspection source is context only",
+                  "basis_evidence_ids": []
+                },
+                {
+                  "evidence_id": "EV-REPORT-B09-57af3c6bb2622b7fe611324241ef2c89",
+                  "observation_index": 0,
+                  "category": "REVIEWED_CONTRADICTION",
+                  "incident_ids": [
+                    "INC-B08-acf134fea71ed9b7db39b8c1201d4fe4"
+                  ],
+                  "reason": "Inspection request and observation fall within named occurrence interval",
+                  "basis_evidence_ids": []
+                },
+                {
+                  "evidence_id": "EV-REPORT-B09-d3d2d841e4cc8e143c9676042909ae77",
+                  "observation_index": 0,
+                  "category": "UNREVIEWED_SUPPORT",
+                  "incident_ids": [
+                    "INC-B08-acf134fea71ed9b7db39b8c1201d4fe4"
+                  ],
+                  "reason": "Inspection request and observation fall within named occurrence interval",
+                  "basis_evidence_ids": []
+                }
+              ],
+              "reviewed_support_ids": [],
+              "unreviewed_support_ids": [
+                "EV-REPORT-B09-d3d2d841e4cc8e143c9676042909ae77"
+              ],
+              "reviewed_contradiction_ids": [
+                "EV-REPORT-B09-57af3c6bb2622b7fe611324241ef2c89"
+              ],
+              "unreviewed_contradiction_ids": [],
+              "contextual_evidence_ids": [
+                "EV-INS"
+              ],
+              "excluded_evidence_ids": []
+            },
+            "cause_code": "SUBGRADE_FAILURE",
+            "mechanism": "Authored physical/operational mechanism under inspection, not asserted truth",
+            "confirming_codes": [
+              "STRUCTURAL_TEST_FAILED",
+              "SUBGRADE_FAILURE_OBSERVED"
+            ],
+            "falsifying_codes": [
+              "SUBGRADE_TEST_NORMAL"
+            ],
+            "supporting_evidence_ids": [],
+            "contradicting_evidence_ids": [
+              "EV-REPORT-B09-57af3c6bb2622b7fe611324241ef2c89"
+            ],
+            "evidence_references": [
+              {
+                "id": "EV-INS",
+                "content_hash": "d3653e1bf4c4001ee9b04ab1ac7face346293e29670d2bf4a1680227e475972f",
+                "source_kind": "SYNTHETIC",
+                "source_record_id": "test-record",
+                "reliability": "VERIFIED",
+                "observed_at": "2026-10-17T00:00:00Z",
+                "recorded_at": "2026-10-17T00:00:00Z",
+                "basis": null,
+                "report": null,
+                "finding_hashes": {}
+              },
+              {
+                "id": "EV-REPORT-B09-57af3c6bb2622b7fe611324241ef2c89",
+                "content_hash": "cccccbd2b27681793c5a2bcbdece484558c5d841d51289aed1d85bfdfdb3b5fd",
+                "source_kind": "SYNTHETIC",
+                "source_record_id": "independent-source-r2-reviewed-contradiction:field-record-r2-reviewed-contradiction",
+                "reliability": "VERIFIED",
+                "observed_at": "2026-10-18T12:00:04.000000Z",
+                "recorded_at": "2026-10-18T12:00:04.000000Z",
+                "basis": "OBSERVED",
+                "report": {
+                  "format_version": 1,
+                  "inspection_id": "INS-B09-95b82bef9d57e6560c19af5a9b406c09",
+                  "inspector_id": "synthetic-inspector-r2-reviewed-contradiction",
+                  "department_id": "DEP",
+                  "source_id": "independent-source-r2-reviewed-contradiction",
+                  "record_id": "field-record-r2-reviewed-contradiction",
+                  "source_kind": "SYNTHETIC",
+                  "observed_at": "2026-10-18T12:00:04.000000Z",
+                  "recorded_at": "2026-10-18T12:00:04.000000Z",
+                  "observations": [
+                    {
+                      "asset_id": "R1",
+                      "code": "SUBGRADE_TEST_NORMAL",
+                      "statement": "Authored synthetic field observation SUBGRADE_TEST_NORMAL",
+                      "method": "DIRECT_SYNTHETIC_FIELD_TEST",
+                      "observed_at": "2026-10-18T12:00:04.000000Z",
+                      "result": "OBSERVED",
+                      "value": null,
+                      "unit": null
+                    }
+                  ],
+                  "finding_ids": [
+                    "FINDING-B09-e94cb76d47dd0b9a0866d111015edbf5"
+                  ],
+                  "review": {
+                    "reviewer_id": "synthetic-reviewer",
+                    "role": "ANALYST",
+                    "reviewed": true,
+                    "reason": "Reviewed authored methods and attributed observations"
+                  }
+                },
+                "finding_hashes": {
+                  "FINDING-B09-e94cb76d47dd0b9a0866d111015edbf5": "f573611a100aadb3a5d4427cff6468a2e9b25b3af715dd186466c429d8047d49"
+                }
+              },
+              {
+                "id": "EV-REPORT-B09-d3d2d841e4cc8e143c9676042909ae77",
+                "content_hash": "d88cf43bab6c718546f0eec5b49791592c52f62c88e16ee0206dffc76d7184c5",
+                "source_kind": "SYNTHETIC",
+                "source_record_id": "independent-source-r2-unreviewed-support:field-record-r2-unreviewed-support",
+                "reliability": "UNVERIFIED",
+                "observed_at": "2026-10-18T12:00:08.000000Z",
+                "recorded_at": "2026-10-18T12:00:08.000000Z",
+                "basis": "OBSERVED",
+                "report": {
+                  "format_version": 1,
+                  "inspection_id": "INS-B09-27a394a1c209cdb757eface41bc21702",
+                  "inspector_id": "synthetic-inspector-r2-unreviewed-support",
+                  "department_id": "DEP",
+                  "source_id": "independent-source-r2-unreviewed-support",
+                  "record_id": "field-record-r2-unreviewed-support",
+                  "source_kind": "SYNTHETIC",
+                  "observed_at": "2026-10-18T12:00:08.000000Z",
+                  "recorded_at": "2026-10-18T12:00:08.000000Z",
+                  "observations": [
+                    {
+                      "asset_id": "R1",
+                      "code": "SUBGRADE_FAILURE_OBSERVED",
+                      "statement": "Authored synthetic field observation SUBGRADE_FAILURE_OBSERVED",
+                      "method": "DIRECT_SYNTHETIC_FIELD_TEST",
+                      "observed_at": "2026-10-18T12:00:08.000000Z",
+                      "result": "OBSERVED",
+                      "value": null,
+                      "unit": null
+                    }
+                  ],
+                  "finding_ids": [
+                    "FINDING-B09-21e3cdf0f16fc5d0bfd777c8fd9f97bb"
+                  ],
+                  "review": null
+                },
+                "finding_hashes": {
+                  "FINDING-B09-21e3cdf0f16fc5d0bfd777c8fd9f97bb": "5d934f2f31c5dea84d0215e90fa3e76e7b84b5ed834eb84726b614ecf362900f"
+                }
+              }
+            ],
+            "excluded_evidence_ids": [],
+            "missing_evidence": [
+              "Non-inspection evidence is context only: EV-INS",
+              "Unreviewed finding is a qualified claim, not definitive support/rejection: EV-REPORT-B09-d3d2d841e4cc8e143c9676042909ae77",
+              "Missing reviewed confirming observations for INC-B08-acf134fea71ed9b7db39b8c1201d4fe4: STRUCTURAL_TEST_FAILED,SUBGRADE_FAILURE_OBSERVED",
+              "Two independent reviewed inspections/inspectors/source records required for INC-B08-acf134fea71ed9b7db39b8c1201d4fe4",
+              "Conflicting evidence retained; no automatic source arbitration"
+            ],
+            "graph": "civicly_b10_test_072da4908c304a01976cfed76bc30137",
+            "source_graph_revision": 96,
+            "graph_revision": 97,
+            "as_of": "2026-10-18T12:00:18.000000Z",
+            "assessed_at": "2026-10-18T12:00:19.000000Z",
+            "paths": [],
+            "path_ids": [],
+            "search_limited": true,
+            "truncated": false,
+            "state_transitions": [
+              "INCONCLUSIVE",
+              "UNDER_REVIEW",
+              "INCONCLUSIVE"
+            ],
+            "reservations": [
+              "Observed findings and connectivity are distinct from causal criteria.",
+              "Verification uses explicit reviewed synthetic-domain rulev2 with per-occurrence coverage; not hydraulic prediction or resolution verification.",
+              "Attribution-based independence is a conservative demo rule, not proof against colluding sources.",
+              "Current versions only; future-updated evidence excluded, historical source versions not reconstructed."
+            ]
+          },
+          "replayed": false,
+          "historical_receipt": true,
+          "simulation_mode": true
+        },
+        {
+          "status": "PARTIAL",
+          "trace_id": "8bf15d72c2a343b392d46b5ff28ad3a8",
+          "execution_id": "MCP-B10-d06783574568cfa135ee333996f2dbca",
+          "context": {
+            "trace_id": "8bf15d72c2a343b392d46b5ff28ad3a8",
+            "execution_id": "MCP-B10-d06783574568cfa135ee333996f2dbca",
+            "parent_execution_id": "DEC-B10-d06783574568cfa135ee333996f2dbca",
+            "investigation_id": "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+            "municipality_id": "demo-city",
+            "source_graph": "civicly_b10_test_072da4908c304a01976cfed76bc30137",
+            "caller_role": "READ_ONLY",
+            "invocation_origin": "APPLICATION"
+          },
+          "server_id": "civicly-domain",
+          "tool_name": "trace_infrastructure_dependencies",
+          "schema_version": 3,
+          "inventory_version": "da1f25b2f8174ec96b4213038b92eb8600c24e8b362697f63f85b5d143790b42",
+          "source_evidence_ids": [
+            "EV"
+          ],
+          "simulation_mode": true,
+          "graph_revision": 100,
+          "truncated": false,
+          "search_limited": true,
+          "error": null,
+          "paths": [
+            {
+              "asset_ids": [
+                "P1",
+                "R1"
+              ],
+              "relationship": "UNDERLIES",
+              "verification_status": "VERIFIED",
+              "source_evidence_ids": [
+                "EV"
+              ]
+            }
+          ],
+          "data": {
+            "nodes": [
+              {
+                "id": "EV",
+                "kind": "Evidence",
+                "labels": [
+                  "Evidence"
+                ],
+                "properties": {
+                  "id": "EV",
+                  "updated_at": "2026-10-17T00:00:00Z",
+                  "municipality_id": "demo-city",
+                  "observed_at": "2026-10-17T00:00:00Z",
+                  "recorded_at": "2026-10-17T00:00:00Z",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "schema_version": 3,
+                  "summary": "Synthetic inspection",
+                  "source_kind": "SYNTHETIC",
+                  "evidence_type": "INSPECTION_REPORT",
+                  "reliability": "VERIFIED",
+                  "source_record_id": "test-record"
+                }
+              },
+              {
+                "id": "P1",
+                "kind": "WaterPipe",
+                "labels": [
+                  "InfrastructureAsset",
+                  "WaterPipe"
+                ],
+                "properties": {
+                  "id": "P1",
+                  "updated_at": "2026-10-17T00:00:00Z",
+                  "municipality_id": "demo-city",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "schema_version": 3,
+                  "operational_status": "ACTIVE",
+                  "name": "Synthetic asset",
+                  "asset_type": "WATER_PIPE"
+                }
+              },
+              {
+                "id": "R1",
+                "kind": "RoadSegment",
+                "labels": [
+                  "InfrastructureAsset",
+                  "RoadSegment"
+                ],
+                "properties": {
+                  "id": "R1",
+                  "updated_at": "2026-10-17T00:00:00Z",
+                  "municipality_id": "demo-city",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "schema_version": 3,
+                  "operational_status": "ACTIVE",
+                  "name": "Synthetic asset",
+                  "asset_type": "ROAD_SEGMENT"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "R2-PIPE-ROAD",
+                "kind": "UNDERLIES",
+                "source": "P1",
+                "target": "R1",
+                "properties": {
+                  "id": "R2-PIPE-ROAD",
+                  "municipality_id": "demo-city",
+                  "valid_from": "2026-10-17T00:00:00Z",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "source_evidence_id": "EV",
+                  "association_status": "VERIFIED"
+                }
+              }
+            ],
+            "paths": [
+              {
+                "node_ids": [
+                  "P1",
+                  "R1"
+                ],
+                "edge_ids": [
+                  "R2-PIPE-ROAD"
+                ],
+                "directions": [
+                  "OUTGOING"
+                ],
+                "evidence_ids": [
+                  "EV"
+                ],
+                "context": {
+                  "template": "dependencies",
+                  "classification": "Connectivity/evidence context, not causal proof"
+                },
+                "id": "PATH-8640f655ce1d69afdbcb2b38512fe3e2"
+              }
+            ],
+            "gaps": [],
+            "reservations": [
+              "Connectivity and count-based criticality are not root-cause or hydraulic proof.",
+              "No result is a bounded negative, not proof of global disconnection.",
+              "Historical node versions are not reconstructed; future-updated records are excluded.",
+              "Open relationship validity bounds remain unknown, not manufactured dates."
+            ],
+            "as_of": "2026-10-18T12:00:19.000000Z"
+          }
+        },
+        {
+          "operation": "assess",
+          "journal_id": "EV-JOURNAL-B09-d299d7083d9ff035a9f52a64979c24dc",
+          "entity_id": "ASSESS-B09-a99b2326bc1b60dae84e1d372f2d6212",
+          "graph": "civicly_b10_test_072da4908c304a01976cfed76bc30137",
+          "graph_revision": 106,
+          "recorded_at": "2026-10-18T12:00:21.000000Z",
+          "created_ids": [
+            "ASSESS-B09-a99b2326bc1b60dae84e1d372f2d6212"
+          ],
+          "relationship_ids": [
+            "REL-B09-64588c6200b9fbb0b76aa052a2efd92a"
+          ],
+          "updated_ids": [
+            "HYP-B09-3dc916e34c5ebb9db4378c7d2fe8c857"
+          ],
+          "assessment": {
+            "format_version": 2,
+            "id": "ASSESS-B09-a99b2326bc1b60dae84e1d372f2d6212",
+            "hypothesis_id": "HYP-B09-3dc916e34c5ebb9db4378c7d2fe8c857",
+            "previous_assessment_id": null,
+            "assessment": "INCONCLUSIVE",
+            "rule_version": 2,
+            "classification": {
+              "uses": [
+                {
+                  "evidence_id": "EV",
+                  "observation_index": null,
+                  "category": "CONTEXT",
+                  "incident_ids": [],
+                  "reason": "Verified path provenance is connectivity context, not an inspected causal observation",
+                  "basis_evidence_ids": []
+                }
+              ],
+              "reviewed_support_ids": [],
+              "unreviewed_support_ids": [],
+              "reviewed_contradiction_ids": [],
+              "unreviewed_contradiction_ids": [],
+              "contextual_evidence_ids": [
+                "EV"
+              ],
+              "excluded_evidence_ids": []
+            },
+            "cause_code": "UTILITY_LEAK",
+            "mechanism": "Unverified alternative requiring discriminating observations",
+            "confirming_codes": [
+              "INFILTRATION_AT_DAMAGE",
+              "LEAK_DETECTED"
+            ],
+            "falsifying_codes": [
+              "PRESSURE_TEST_NORMAL"
+            ],
+            "supporting_evidence_ids": [],
+            "contradicting_evidence_ids": [],
+            "evidence_references": [
+              {
+                "id": "EV",
+                "content_hash": "ea59025ba1a656bb97074ae1921a3d3e4624edb20a9ef62ee3346b1fdce4247b",
+                "source_kind": "SYNTHETIC",
+                "source_record_id": "test-record",
+                "reliability": "VERIFIED",
+                "observed_at": "2026-10-17T00:00:00Z",
+                "recorded_at": "2026-10-17T00:00:00Z",
+                "basis": null,
+                "report": null,
+                "finding_hashes": {}
+              }
+            ],
+            "excluded_evidence_ids": [],
+            "missing_evidence": [
+              "Missing reviewed confirming observations for INC-B08-acf134fea71ed9b7db39b8c1201d4fe4: INFILTRATION_AT_DAMAGE,LEAK_DETECTED",
+              "Two independent reviewed inspections/inspectors/source records required for INC-B08-acf134fea71ed9b7db39b8c1201d4fe4",
+              "Reviewed discriminating inspection evidence missing or insufficient; no completed inspection invented"
+            ],
+            "graph": "civicly_b10_test_072da4908c304a01976cfed76bc30137",
+            "source_graph_revision": 105,
+            "graph_revision": 106,
+            "as_of": "2026-10-18T12:00:20.000000Z",
+            "assessed_at": "2026-10-18T12:00:21.000000Z",
+            "paths": [
+              {
+                "node_ids": [
+                  "P1",
+                  "R1"
+                ],
+                "edge_ids": [
+                  "R2-PIPE-ROAD"
+                ],
+                "directions": [
+                  "OUTGOING"
+                ],
+                "evidence_ids": [
+                  "EV"
+                ],
+                "context": {
+                  "template": "dependencies",
+                  "classification": "Connectivity/evidence context, not causal proof",
+                  "path_id": "PATH-8640f655ce1d69afdbcb2b38512fe3e2"
+                }
+              }
+            ],
+            "path_ids": [
+              "PATH-8640f655ce1d69afdbcb2b38512fe3e2"
+            ],
+            "search_limited": true,
+            "truncated": false,
+            "state_transitions": [
+              "PROPOSED",
+              "UNDER_REVIEW",
+              "INCONCLUSIVE"
+            ],
+            "reservations": [
+              "Observed findings and connectivity are distinct from causal criteria.",
+              "Verification uses explicit reviewed synthetic-domain rulev2 with per-occurrence coverage; not hydraulic prediction or resolution verification.",
+              "Attribution-based independence is a conservative demo rule, not proof against colluding sources.",
+              "Current versions only; future-updated evidence excluded, historical source versions not reconstructed."
+            ]
+          },
+          "replayed": false,
+          "historical_receipt": true,
+          "simulation_mode": true
+        },
+        {
+          "operation": "request_inspection",
+          "journal_id": "EV-JOURNAL-B09-f8ddbd4b3459970e183aff8b397ed3b3",
+          "entity_id": "INS-B09-5d4b86c520af36127149a8d439392035",
+          "graph": "civicly_b10_test_072da4908c304a01976cfed76bc30137",
+          "graph_revision": 112,
+          "recorded_at": "2026-10-18T12:00:22.000000Z",
+          "created_ids": [
+            "INS-B09-5d4b86c520af36127149a8d439392035"
+          ],
+          "relationship_ids": [
+            "REL-B09-912bffcfe2b2285192b179cc82ad862f"
+          ],
+          "updated_ids": [],
+          "assessment": null,
+          "replayed": false,
+          "historical_receipt": true,
+          "simulation_mode": true
+        }
+      ],
+      "nodes": [
+        "Supervisor",
+        "Investigator",
+        "Supervisor",
+        "RootCauseAnalyst",
+        "Supervisor",
+        "RootCauseAnalyst",
+        "Supervisor",
+        "Investigator",
+        "Supervisor",
+        "RootCauseAnalyst",
+        "Supervisor",
+        "Coordinator"
+      ],
+      "pause_reason": "MISSING_EVIDENCE",
+      "recommendation": null,
+      "budget": {
+        "max_iterations": 16,
+        "max_tools": 8,
+        "max_tokens": 400000,
+        "max_seconds": 240,
+        "max_wakes": 5
+      },
+      "iterations": 6,
+      "tool_calls": 6,
+      "tokens": 325009,
+      "wakes": 0,
+      "refresh_required": false,
+      "as_of": "2026-10-18T12:00:21.000000Z"
+    },
+    "__interrupt__": [
+      "Interrupt(value={'investigation_id': 'INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f', 'thread_id': '8bf15d72c2a343b392d46b5ff28ad3a8', 'pause_reason': 'MISSING_EVIDENCE', 'pending_inspections': ['INS-B09-5d4b86c520af36127149a8d439392035'], 'graph_revision': 113}, id='58d71c8c86fb85fb17691ff5dfca7557', response_schema=None)"
+    ]
+  },
+  "token_plans": [
+    {
+      "serialized_utf8_bytes": 75850,
+      "local_proxy_tokens": 30213,
+      "tokenizer_version": "gemma3-proxy-3.8-v1",
+      "provider_count_tokens": 31724,
+      "method": "PROVIDER_COUNT_WITH_16_FRAMING_ALLOWANCE",
+      "input_allowance_tokens": 31740,
+      "output_allowance_tokens": 4096,
+      "total_allowance_tokens": 35836,
+      "uncertainty": "Gemma3 is not verified exact for Gemini3.8; live mode additionally counts full request with provider. Framing/model accounting may differ; actual usage is authoritative."
+    },
+    {
+      "serialized_utf8_bytes": 127988,
+      "local_proxy_tokens": 57303,
+      "tokenizer_version": "gemma3-proxy-3.8-v1",
+      "provider_count_tokens": 60169,
+      "method": "PROVIDER_COUNT_WITH_16_FRAMING_ALLOWANCE",
+      "input_allowance_tokens": 60185,
+      "output_allowance_tokens": 4096,
+      "total_allowance_tokens": 64281,
+      "uncertainty": "Gemma3 is not verified exact for Gemini3.8; live mode additionally counts full request with provider. Framing/model accounting may differ; actual usage is authoritative."
+    },
+    {
+      "serialized_utf8_bytes": 129365,
+      "local_proxy_tokens": 58038,
+      "tokenizer_version": "gemma3-proxy-3.8-v1",
+      "provider_count_tokens": 60940,
+      "method": "PROVIDER_COUNT_WITH_16_FRAMING_ALLOWANCE",
+      "input_allowance_tokens": 60956,
+      "output_allowance_tokens": 4096,
+      "total_allowance_tokens": 65052,
+      "uncertainty": "Gemma3 is not verified exact for Gemini3.8; live mode additionally counts full request with provider. Framing/model accounting may differ; actual usage is authoritative."
+    },
+    {
+      "serialized_utf8_bytes": 111536,
+      "local_proxy_tokens": 49548,
+      "tokenizer_version": "gemma3-proxy-3.8-v1",
+      "provider_count_tokens": 52026,
+      "method": "PROVIDER_COUNT_WITH_16_FRAMING_ALLOWANCE",
+      "input_allowance_tokens": 52042,
+      "output_allowance_tokens": 4096,
+      "total_allowance_tokens": 56138,
+      "uncertainty": "Gemma3 is not verified exact for Gemini3.8; live mode additionally counts full request with provider. Framing/model accounting may differ; actual usage is authoritative."
+    },
+    {
+      "serialized_utf8_bytes": 114896,
+      "local_proxy_tokens": 50733,
+      "tokenizer_version": "gemma3-proxy-3.8-v1",
+      "provider_count_tokens": 53270,
+      "method": "PROVIDER_COUNT_WITH_16_FRAMING_ALLOWANCE",
+      "input_allowance_tokens": 53286,
+      "output_allowance_tokens": 4096,
+      "total_allowance_tokens": 57382,
+      "uncertainty": "Gemma3 is not verified exact for Gemini3.8; live mode additionally counts full request with provider. Framing/model accounting may differ; actual usage is authoritative."
+    },
+    {
+      "serialized_utf8_bytes": 118283,
+      "local_proxy_tokens": 51992,
+      "tokenizer_version": "gemma3-proxy-3.8-v1",
+      "provider_count_tokens": 54592,
+      "method": "PROVIDER_COUNT_WITH_16_FRAMING_ALLOWANCE",
+      "input_allowance_tokens": 54608,
+      "output_allowance_tokens": 4096,
+      "total_allowance_tokens": 58704,
+      "uncertainty": "Gemma3 is not verified exact for Gemini3.8; live mode additionally counts full request with provider. Framing/model accounting may differ; actual usage is authoritative."
+    }
+  ],
+  "simulated_usage": [
+    {
+      "promptTokenCount": 31724,
+      "candidatesTokenCount": 512,
+      "thoughtsTokenCount": 1536,
+      "totalTokenCount": 33772
+    },
+    {
+      "promptTokenCount": 60169,
+      "candidatesTokenCount": 512,
+      "thoughtsTokenCount": 1536,
+      "totalTokenCount": 62217
+    },
+    {
+      "promptTokenCount": 60940,
+      "candidatesTokenCount": 512,
+      "thoughtsTokenCount": 1536,
+      "totalTokenCount": 62988
+    },
+    {
+      "promptTokenCount": 52026,
+      "candidatesTokenCount": 512,
+      "thoughtsTokenCount": 1536,
+      "totalTokenCount": 54074
+    },
+    {
+      "promptTokenCount": 53270,
+      "candidatesTokenCount": 512,
+      "thoughtsTokenCount": 1536,
+      "totalTokenCount": 55318
+    },
+    {
+      "promptTokenCount": 54592,
+      "candidatesTokenCount": 512,
+      "thoughtsTokenCount": 1536,
+      "totalTokenCount": 56640
+    }
+  ],
+  "count_tokens": [
+    31724,
+    60169,
+    60940,
+    52026,
+    53270,
+    54592
+  ],
+  "ledger_requests": [
+    {
+      "id": "AI-COUNT-af4512d38f825cb4308af8444b895982360097b94151e1534a708d5a57b9ef9b",
+      "case_id": "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+      "thread": "8bf15d72c2a343b392d46b5ff28ad3a8",
+      "model": "gemini-3.8-flash",
+      "milestone": "B10OR2-SIMULATED",
+      "pricing": "google-gemini-standard-text-2026-10-18",
+      "reserved": 57655500,
+      "charged": 0,
+      "status": "SETTLED",
+      "usage": "{\"billing_policy\": \"google-developer-countTokens-nonbillable-2026-10-18\", \"count_is_not_generation_usage\": true, \"operation\": \"COUNT_TOKENS\", \"outcome\": \"COMPLETED\", \"provider_count_tokens\": 31724}",
+      "error": "COUNT_NONBILLABLE_COMPLETED",
+      "created": 1792295545.111105
+    },
+    {
+      "id": "AI-00fca9aa1dabae9e2c7694b853188859551c862ac37c4e666ef415866b336b9f",
+      "case_id": "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+      "thread": "8bf15d72c2a343b392d46b5ff28ad3a8",
+      "model": "gemini-3.8-flash",
+      "milestone": "B10OR2-SIMULATED",
+      "pricing": "google-gemini-standard-text-2026-10-18",
+      "reserved": 88375500,
+      "charged": 31473000,
+      "status": "SETTLED",
+      "usage": "{\"candidatesTokenCount\": 512, \"promptTokenCount\": 31724, \"thoughtsTokenCount\": 1536, \"totalTokenCount\": 33772}",
+      "error": null,
+      "created": 1792295545.1751401
+    },
+    {
+      "id": "AI-COUNT-cb47ada7a22b41dd7bf64abfdc7fa58d05dee27bd4750b34396bcb3607e937c6",
+      "case_id": "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+      "thread": "8bf15d72c2a343b392d46b5ff28ad3a8",
+      "model": "gemini-3.8-flash",
+      "milestone": "B10OR2-SIMULATED",
+      "pricing": "google-gemini-standard-text-2026-10-18",
+      "reserved": 96759000,
+      "charged": 0,
+      "status": "SETTLED",
+      "usage": "{\"billing_policy\": \"google-developer-countTokens-nonbillable-2026-10-18\", \"count_is_not_generation_usage\": true, \"operation\": \"COUNT_TOKENS\", \"outcome\": \"COMPLETED\", \"provider_count_tokens\": 60169}",
+      "error": "COUNT_NONBILLABLE_COMPLETED",
+      "created": 1792295545.53924
+    },
+    {
+      "id": "AI-9d0ada0ec8c2f5ca84c99cb49146fd3f4d8c050186ba52487e70e1183c03d97f",
+      "case_id": "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+      "thread": "8bf15d72c2a343b392d46b5ff28ad3a8",
+      "model": "gemini-3.8-flash",
+      "milestone": "B10OR2-SIMULATED",
+      "pricing": "google-gemini-standard-text-2026-10-18",
+      "reserved": 127479000,
+      "charged": 52806750,
+      "status": "SETTLED",
+      "usage": "{\"candidatesTokenCount\": 512, \"promptTokenCount\": 60169, \"thoughtsTokenCount\": 1536, \"totalTokenCount\": 62217}",
+      "error": null,
+      "created": 1792295545.650034
+    },
+    {
+      "id": "AI-COUNT-dc3e3c0cb3cfb2907ec4b70339bcf25421ddc88bd2fdb2000184362a595af25f",
+      "case_id": "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+      "thread": "8bf15d72c2a343b392d46b5ff28ad3a8",
+      "model": "gemini-3.8-flash",
+      "milestone": "B10OR2-SIMULATED",
+      "pricing": "google-gemini-standard-text-2026-10-18",
+      "reserved": 97791750,
+      "charged": 0,
+      "status": "SETTLED",
+      "usage": "{\"billing_policy\": \"google-developer-countTokens-nonbillable-2026-10-18\", \"count_is_not_generation_usage\": true, \"operation\": \"COUNT_TOKENS\", \"outcome\": \"COMPLETED\", \"provider_count_tokens\": 60940}",
+      "error": "COUNT_NONBILLABLE_COMPLETED",
+      "created": 1792295545.964288
+    },
+    {
+      "id": "AI-3bdeaced881024ebaa8a5c127cf73085b3cc6b0829dded448190381a26f6d445",
+      "case_id": "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+      "thread": "8bf15d72c2a343b392d46b5ff28ad3a8",
+      "model": "gemini-3.8-flash",
+      "milestone": "B10OR2-SIMULATED",
+      "pricing": "google-gemini-standard-text-2026-10-18",
+      "reserved": 128511750,
+      "charged": 53385000,
+      "status": "SETTLED",
+      "usage": "{\"candidatesTokenCount\": 512, \"promptTokenCount\": 60940, \"thoughtsTokenCount\": 1536, \"totalTokenCount\": 62988}",
+      "error": null,
+      "created": 1792295546.0701811
+    },
+    {
+      "id": "AI-COUNT-cdffd9b2790f059120f816856f7d2e6bae37231d3a666aad7437545f8eeb959c",
+      "case_id": "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+      "thread": "8bf15d72c2a343b392d46b5ff28ad3a8",
+      "model": "gemini-3.8-flash",
+      "milestone": "B10OR2-SIMULATED",
+      "pricing": "google-gemini-standard-text-2026-10-18",
+      "reserved": 84420000,
+      "charged": 0,
+      "status": "SETTLED",
+      "usage": "{\"billing_policy\": \"google-developer-countTokens-nonbillable-2026-10-18\", \"count_is_not_generation_usage\": true, \"operation\": \"COUNT_TOKENS\", \"outcome\": \"COMPLETED\", \"provider_count_tokens\": 52026}",
+      "error": "COUNT_NONBILLABLE_COMPLETED",
+      "created": 1792295546.441532
+    },
+    {
+      "id": "AI-a43d7a23a51496d8960aeb18430784dfce37c978c10bcd1aab7c31ba5232a743",
+      "case_id": "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+      "thread": "8bf15d72c2a343b392d46b5ff28ad3a8",
+      "model": "gemini-3.8-flash",
+      "milestone": "B10OR2-SIMULATED",
+      "pricing": "google-gemini-standard-text-2026-10-18",
+      "reserved": 115140000,
+      "charged": 46699500,
+      "status": "SETTLED",
+      "usage": "{\"candidatesTokenCount\": 512, \"promptTokenCount\": 52026, \"thoughtsTokenCount\": 1536, \"totalTokenCount\": 54074}",
+      "error": null,
+      "created": 1792295546.54123
+    },
+    {
+      "id": "AI-COUNT-1547ed82c8e9ebcca19db45a069cdbbc73f3e430dcccf12e4b949e76b53e7f08",
+      "case_id": "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+      "thread": "8bf15d72c2a343b392d46b5ff28ad3a8",
+      "model": "gemini-3.8-flash",
+      "milestone": "B10OR2-SIMULATED",
+      "pricing": "google-gemini-standard-text-2026-10-18",
+      "reserved": 86940000,
+      "charged": 0,
+      "status": "SETTLED",
+      "usage": "{\"billing_policy\": \"google-developer-countTokens-nonbillable-2026-10-18\", \"count_is_not_generation_usage\": true, \"operation\": \"COUNT_TOKENS\", \"outcome\": \"COMPLETED\", \"provider_count_tokens\": 53270}",
+      "error": "COUNT_NONBILLABLE_COMPLETED",
+      "created": 1792295546.874433
+    },
+    {
+      "id": "AI-c640b6a62e6de9c3dc7b8bc868b81eed8a0e97cf6c7a713e674d1ea9968f376a",
+      "case_id": "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+      "thread": "8bf15d72c2a343b392d46b5ff28ad3a8",
+      "model": "gemini-3.8-flash",
+      "milestone": "B10OR2-SIMULATED",
+      "pricing": "google-gemini-standard-text-2026-10-18",
+      "reserved": 117660000,
+      "charged": 47632500,
+      "status": "SETTLED",
+      "usage": "{\"candidatesTokenCount\": 512, \"promptTokenCount\": 53270, \"thoughtsTokenCount\": 1536, \"totalTokenCount\": 55318}",
+      "error": null,
+      "created": 1792295546.966121
+    },
+    {
+      "id": "AI-COUNT-9fcd3e648e01f4fc78e305139a153533d65d269eb0c3b0f09572ebea01459a7d",
+      "case_id": "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+      "thread": "8bf15d72c2a343b392d46b5ff28ad3a8",
+      "model": "gemini-3.8-flash",
+      "milestone": "B10OR2-SIMULATED",
+      "pricing": "google-gemini-standard-text-2026-10-18",
+      "reserved": 89480250,
+      "charged": 0,
+      "status": "SETTLED",
+      "usage": "{\"billing_policy\": \"google-developer-countTokens-nonbillable-2026-10-18\", \"count_is_not_generation_usage\": true, \"operation\": \"COUNT_TOKENS\", \"outcome\": \"COMPLETED\", \"provider_count_tokens\": 54592}",
+      "error": "COUNT_NONBILLABLE_COMPLETED",
+      "created": 1792295547.2643461
+    },
+    {
+      "id": "AI-c56ebf0f5649a87b40bccf45e4a1d106e2f4ea99e87691593c145ff7d2be3b03",
+      "case_id": "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+      "thread": "8bf15d72c2a343b392d46b5ff28ad3a8",
+      "model": "gemini-3.8-flash",
+      "milestone": "B10OR2-SIMULATED",
+      "pricing": "google-gemini-standard-text-2026-10-18",
+      "reserved": 120200250,
+      "charged": 48624000,
+      "status": "SETTLED",
+      "usage": "{\"candidatesTokenCount\": 512, \"promptTokenCount\": 54592, \"thoughtsTokenCount\": 1536, \"totalTokenCount\": 56640}",
+      "error": null,
+      "created": 1792295547.372302
+    }
+  ],
+  "actual_external_gemini_requests": 0
+}

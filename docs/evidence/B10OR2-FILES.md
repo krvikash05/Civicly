@@ -1,0 +1,85 @@
+# B10-O-R2 changed-file inventory
+
+Against local accepted B10-O-R baseline af42149; no push or ZIP. Two existing test files have compatible assertion/bound updates; all other prior tests and all prior evidence unchanged.
+
+## Modified
+
+- `.env.example`
+- `README.md`
+- `backend/AGENTS_RUNTIME.md`
+- `backend/app/agents/__main__.py`
+- `backend/app/agents/models.py`
+- `backend/app/agents/provider.py`
+- `backend/app/agents/runtime.py`
+- `backend/app/agents/spending.py`
+- `backend/app/agents/tokens.py`
+- `backend/tests/unit/test_agent_models.py`
+- `backend/tests/unit/test_agent_token_accounting.py`
+- `blockers.md`
+- `contracts/agent_optimization.json`
+- `contracts/agent_runtime.json`
+- `decision.md`
+- `flow.md`
+- `implementation_status.md`
+- `task_board.md`
+- `test_log.md`
+
+## Added
+
+- `backend/PROVIDER_ACCOUNTING.md`
+- `backend/app/agents/limits.py`
+- `backend/tests/b10or2_fixtures.py`
+- `backend/tests/b10or2_worker.py`
+- `backend/tests/integration/test_agent_multistep_budget.py`
+- `backend/tests/unit/test_agent_count_billing.py`
+- `contracts/gemini_provider.json`
+- `docs/evidence/B10OR2-COMMANDS.md`
+- `docs/evidence/B10OR2-FILES.md`
+- `docs/evidence/B10OR2-RESULTS.md`
+- `docs/evidence/B10OR2-after-reproduction.json`
+- `docs/evidence/B10OR2-assert-final.txt`
+- `docs/evidence/B10OR2-before-cost-reproduction.json`
+- `docs/evidence/B10OR2-before-lifecycle.json`
+- `docs/evidence/B10OR2-before-reproduction.json`
+- `docs/evidence/B10OR2-budget-sizing.json`
+- `docs/evidence/B10OR2-changes.patch`
+- `docs/evidence/B10OR2-context-final.txt`
+- `docs/evidence/B10OR2-deadline.txt`
+- `docs/evidence/B10OR2-durations.txt`
+- `docs/evidence/B10OR2-failed-attempts.json`
+- `docs/evidence/B10OR2-final-source-lock.json`
+- `docs/evidence/B10OR2-final-tests.txt`
+- `docs/evidence/B10OR2-focused-final.txt`
+- `docs/evidence/B10OR2-integration-final.txt`
+- `docs/evidence/B10OR2-interrupted-regression.txt`
+- `docs/evidence/B10OR2-interrupted-zero-live-proof.json`
+- `docs/evidence/B10OR2-multistep-ROAD_DAMAGE-CANDIDATE-None.json`
+- `docs/evidence/B10OR2-multistep-ROAD_DAMAGE-VERIFIED-None.json`
+- `docs/evidence/B10OR2-multistep-WASTE_ACCUMULATION-VERIFIED-None.json`
+- `docs/evidence/B10OR2-multistep-WATERLOGGING-VERIFIED-503.json`
+- `docs/evidence/B10OR2-multistep-WATERLOGGING-VERIFIED-None.json`
+- `docs/evidence/B10OR2-multistep-WATERLOGGING-VERIFIED-invalid.json`
+- `docs/evidence/B10OR2-multistep-summary.json`
+- `docs/evidence/B10OR2-post-B01-B09-B01-B07.json`
+- `docs/evidence/B10OR2-post-B01-B09.json`
+- `docs/evidence/B10OR2-post-B09-retained.json`
+- `docs/evidence/B10OR2-post-B09R-history.json`
+- `docs/evidence/B10OR2-post-deadline.txt`
+- `docs/evidence/B10OR2-post-retained.json`
+- `docs/evidence/B10OR2-regression-B07R-runtime-proof.json`
+- `docs/evidence/B10OR2-regression-B08-runtime-proof.json`
+- `docs/evidence/B10OR2-regression-B09-runtime-proof.json`
+- `docs/evidence/B10OR2-regression-B09R-runtime-proof.json`
+- `docs/evidence/B10OR2-reproduce.py`
+- `docs/evidence/B10OR2-resume-dollar.json`
+- `docs/evidence/B10OR2-resume-token.json`
+- `docs/evidence/B10OR2-source-audit.json`
+- `docs/evidence/B10OR2-spec.txt`
+- `docs/evidence/B10OR2-spending-after.json`
+- `docs/evidence/B10OR2-stage1.txt`
+- `docs/evidence/B10OR2-stage2.txt`
+- `docs/evidence/B10OR2-test-summary.json`
+- `docs/evidence/B10OR2-versions.json`
+- `docs/evidence/B10OR2-zero-live-proof.json`
+- `scripts/audit_b10or2.py`
+- `scripts/verify_b10or2_retained.py`
