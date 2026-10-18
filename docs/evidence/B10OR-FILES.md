@@ -1,0 +1,82 @@
+# B10-O-R changed-file inventory
+
+Against local baseline c16346a; no push or ZIP. All prior tests and evidence unchanged.
+
+## Modified
+
+- `.env.example`
+- `backend/AGENTS_RUNTIME.md`
+- `backend/app/agents/__main__.py`
+- `backend/app/agents/models.py`
+- `backend/app/agents/policy.py`
+- `backend/app/agents/provider.py`
+- `backend/app/agents/runtime.py`
+- `backend/app/agents/spending.py`
+- `backend/pyproject.toml`
+- `backend/uv.lock`
+- `blockers.md`
+- `contracts/agent_optimization.json`
+- `contracts/agent_runtime.json`
+- `decision.md`
+- `flow.md`
+- `implementation_status.md`
+- `task_board.md`
+- `test_log.md`
+
+## Added
+
+- `backend/app/agents/spending_cli.py`
+- `backend/app/agents/tokens.py`
+- `backend/tests/b10or_context.py`
+- `backend/tests/b10or_http.py`
+- `backend/tests/b10or_worker.py`
+- `backend/tests/integration/test_agent_accounting.py`
+- `backend/tests/unit/test_agent_ledger_recovery.py`
+- `backend/tests/unit/test_agent_token_accounting.py`
+- `docs/evidence/B10OR-COMMANDS.md`
+- `docs/evidence/B10OR-FILES.md`
+- `docs/evidence/B10OR-RESULTS.md`
+- `docs/evidence/B10OR-baseline.json`
+- `docs/evidence/B10OR-before-lifecycle.json`
+- `docs/evidence/B10OR-boundary-provider-proof.json`
+- `docs/evidence/B10OR-boundary.txt`
+- `docs/evidence/B10OR-changes.patch`
+- `docs/evidence/B10OR-dependencies.json`
+- `docs/evidence/B10OR-dependency-install.txt`
+- `docs/evidence/B10OR-dependency-lock-check.txt`
+- `docs/evidence/B10OR-dependency-lock.txt`
+- `docs/evidence/B10OR-dependency-sync.txt`
+- `docs/evidence/B10OR-extra-provider-proof.json`
+- `docs/evidence/B10OR-extra.txt`
+- `docs/evidence/B10OR-http-contradiction.json`
+- `docs/evidence/B10OR-minimal-reproduction.json`
+- `docs/evidence/B10OR-post-B01-B09-B01-B07.json`
+- `docs/evidence/B10OR-post-B01-B09.json`
+- `docs/evidence/B10OR-post-B09-retained.json`
+- `docs/evidence/B10OR-post-B09R-history.json`
+- `docs/evidence/B10OR-post-retained.json`
+- `docs/evidence/B10OR-process-proof.json`
+- `docs/evidence/B10OR-regression-B07R-runtime-proof.json`
+- `docs/evidence/B10OR-regression-B08-runtime-proof.json`
+- `docs/evidence/B10OR-regression-B09-runtime-proof.json`
+- `docs/evidence/B10OR-regression-B09R-runtime-proof.json`
+- `docs/evidence/B10OR-regression-tests.txt`
+- `docs/evidence/B10OR-retention-parser-compatibility.json`
+- `docs/evidence/B10OR-source-audit.json`
+- `docs/evidence/B10OR-spec-validation.txt`
+- `docs/evidence/B10OR-spending-after.json`
+- `docs/evidence/B10OR-spending-before.json`
+- `docs/evidence/B10OR-stage1-first.txt`
+- `docs/evidence/B10OR-stage1-provider-proof.json`
+- `docs/evidence/B10OR-stage1-second.txt`
+- `docs/evidence/B10OR-stage2-final-provider-proof.json`
+- `docs/evidence/B10OR-stage2-final.txt`
+- `docs/evidence/B10OR-stage2-first.txt`
+- `docs/evidence/B10OR-stage2-provider-proof.json`
+- `docs/evidence/B10OR-stage2-second.txt`
+- `docs/evidence/B10OR-token-benchmark.json`
+- `docs/evidence/B10OR-zero-live-proof.json`
+- `scripts/audit_b10or.py`
+- `scripts/configure_tokenizer.py`
+- `scripts/verify_b10or_retained.py`
+- `scripts/verify_b10or_spending.py`

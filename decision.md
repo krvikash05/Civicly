@@ -1061,3 +1061,60 @@ Small actual two-assessment cases changed by+28/+10/-2 bytes; no universal reduc
 - Preserved genuine failed attempt: after first recreation dynamic shared MCP trace-writer ACL was unavailable.24 authentication failures/1 Browser pass, interrupted72.93s; unexecuted remainder is NOT RUN for that attempt. Existing trusted configure/exact-key provisioning restored authorization without changing domain records. All6 retained threads/source matched before lifecycle; final full691 run then passed. Runtime guide now states configure before pytest. Raw failure/counters retained in B10O-auth-failed-*; no test weakened or removed.
 - Four rolling proofs saved as B10O-regression-* before exact pre-task copies were restored. Previous B10 evidence remains byte-identical. B10O-FILES.md/source-audit.json and incremental B10O-changes.patch identify exact changes against frozen B10O-baseline.json, not a misleading HEAD-only diff.
 - **STOP for human review.** B10-O verified; B10 remains PARTIAL pending separately authorized genuine three-issue/contradiction/topology/B10-3 acceptance. B11 cited GraphRAG/memory is proposed only after the B10 gate and explicit authorization, not implemented. All18 objectives remain binding.
+
+
+## DEC-044 — B10-O-R pre-code plan
+Reviewed baseline c16346a: B10-O691 PASS/0 FAIL/0 SKIP and zero external Gemini requests confirmed in recorded logs/counters. Clean local commit created after secret/source audit; ignored credentials/runtime/env/caches excluded, no push. Scope only token accounting, budget configuration/recovery, compatible runtime resume and controlled tests. R01/R04–R09/R13/R15/R18 remain binding with all18 objectives; no B11 or live request authorized.
+
+Files: provider/token helper, spending/policy/CLI, runtime/models for additive token exposure and explicit budget resume, relevant configuration/contracts, tests, runtime guide and six trackers/evidence. Risks: unsupported exact3.8 local tokenizer, counted vs billed tokens, unknown retry consumption, old ledger migration and duplicate actions after resume. Use Stage1 focused units, Stage2 real MCP/B09/LangGraph/Saver with simulated Gemini HTTP, Stage3 one stable full regression with both validators and real lifecycle. Review exact boundary cases, old ledger immutability, per-request hold audit, all16 tool schemas/source evidence, zero external requests and retained fingerprints.
+
+Official countTokens accepts full generateContentRequest including steering: https://ai.google.dev/api/tokens . Official local loader https://github.com/googleapis/python-genai/blob/main/google/genai/_local_tokenizer_loader.py does NOT map gemini-3.8-flash. Therefore local SentencePiece/Gemma3 counts are explicitly proxy ESTIMATES (not verified3.8 tokens), with a stated planning margin and complete prompt/schema text. Pinned public vocabulary/hash from Google's loader; no runtime auto-download. Authorized LIVE mode additionally requires separately accounted countTokens before generation; no counting endpoint called in ordinary tests. Count calls use the same exact-case permit and conservative dollar reservation; unknown counting billing is held, not declared free. Mock mode uses offline local counts unless explicitly exercising mocked countTokens. No claim of exact live tokenizer compatibility without later authorized evidence.
+
+New ledger defaults8/.50/concurrency1 with configurable explicitly authorized case ceiling1.50; existing configurations/charges/reservations remain untouched. Add per-request token exposure and request-linked holds/reconciliation audit through additive private SQLite schema migration, never graph migration changes. Holds can be resolved only for exact settled requests after usage/pricing verification and cap checks with stopped sessions/operator reason; unknowns remain held. No blanket reset.
+
+DEC-044 implementation choices: retain default60000-token Budget and B10-3 prompt,
+use pinned SentencePiece0.2.1 with Google's published Gemma3 vocabulary as an
+explicitly uncertain Gemini3.8 proxy (local SDK mappings do not establish3.8
+compatibility), rather than reuse byte length or claim a guessed exact mapping.
+Proxy input plan=ceil(tokens×1.25)+256 plus4096 output. LIVE mode requires a separately
+permitted/accounted full-request countTokens check; ordinary tests never call it.
+A count result is not billed usage, so its conservative dollar reservation remains
+held pending verified reconciliation. Actual generation usage replaces only its
+own token allowance; unknown attempts retain their own allowances. Integer dollar
+reservations and cumulative token exposure are distinct ledgers/units. Legacy
+checkpoint floors prevent resets. Compatible auxiliary SQLite tables only; no
+FalkorDB schema, migration, causal or temporal policy changes.
+
+New defaults8/.50/concurrency1/complex ceiling1.50 apply only to new accounting.
+Existing caps/history stay intact; explicit config changes and single-request
+settled-overage recovery are audited with immutable rows. No blanket clear exists.
+Recovery requires exact usage hash/tariff/repriced charge/evidence/operator/reason
+and cap checks; unknown billing fails closed. Authorized monotonic operational
+Budget increases resume the same checkpoint and retain counters and source refresh.
+Bad operator input is rejected before ownership instead of quarantining a valid
+thread. No runtime budget default or global recursion limit increased.
+
+DEC-044 compatible overrun representation: a valid reported usage total up to1M
+plus a prior configured-budget baseline could exceed the previous1M checkpoint
+counter validation ceiling. Increase only `InvestigationState.tokens` storage
+ceiling to2M so an unexpectedly large receipt can be recorded exactly and paused
+without failing checkpoint validation. Operational Budget.max_tokens remains at
+most150000 (default60000); this adds no spending or inference allowance. Provider
+usage fields above1M are invalid/unknown and retain reserved exposure. A real
+Saver integration test simulates a1M-token receipt plus100000 prior tokens and
+verifies an exact1100000 counter, no action or further HTTP, and durable pause.
+
+
+## B10-O-R final observed verification | 2026-10-18
+
+- Local reviewed baseline c16346a; no push. Final **740 PASS/0 FAIL/0 SKIP** in1249.98s:466 unit/274 actual FalkorDB/MCP integration; all691 original cases unchanged plus34 unit/15 integration. Actual Gemini outputs/counts/costs **NOT RUN**; HTTP responses and returned usage are simulated. Both specification validators PASS; frozen offline lock75 packages, only SentencePiece0.2.1 added.
+- Whole-suite external-request interlock:0 Gemini requests,2 intentional parent/child probes blocked,0 ordinary unexpected attempts. All new tests and original real official/domain MCP, B09 authority/episode rules, LangGraph/Saver and actual Docker restart/recreation/Browser checks passed. Targeted overlapping batches58/76/10/29 passed; do not sum overlapping totals. Initial unit1-failure and authored integration-fixture failures are preserved in B10OR-COMMANDS.md/raw logs.
+- Bytes/token minimal reproduction: old byte+output guard127331 vs corrected proxy allowance30394 tokens under60000. Three real complex contexts preserve8 assessment versions/4 observations/2 alternatives/all16 schemas: complete request bytes66234/73621/81990; proxy input+output allowances37476/41089/46721. Exact/-1/+1 cases reject/pass/pass. These estimates and mock130-token receipts are not genuine Gemini usage or billed savings. Model mapping/framing uncertainty is explicit; LIVE requires separately authorized/accounted counting.
+- New-ledger8/.50/concurrency1/explicit complex ceiling1.50; existing6/.15 history and reservations unchanged. Explicit audited upgrade demonstrated on a private SQLite backup, not the original. Exact-request hold recovery binds known usage/tariff/hash/evidence/operator/reason and caps, retains immutable audit, and cannot clear unknown billing. Reopen/fresh-process/lifecycle witness retains5120 token exposure. Same-thread authorized Budget increases preserve counters/source refresh; operational defaults unchanged. Only checkpoint counter storage widens to2M to retain an unexpected1100000-token simulated overrun exactly and pause.
+- Retained B10 source revision103/80nodes/47edges/content/audit/writer state and all6 public SDK threads/12 executions match accepted evidence. B01 probe, B04 city858/1246 revision2104, B05/B08/B09 sources and B09R original v1/v2 history preserved;101 accepted trace observations checked43+27+31. Registryv3/0001/0002 and all prior evidence unchanged. Four fresh rolling proofs saved as B10OR-regression-* before restoring accepted bytes. No graph/volume deletion to pass tests.
+- Supplemental legacy verifier rejected only pytest's ',2 warnings' summary formatting after real data assertions. New B10OR evidence adapter validates the untouched raw740-pass log, lifecycle markers and successful guard, then runs every unchanged original B09 graph/history assertion. PASS; no old tests or logs normalized. This genuine compatibility adjustment/failure is recorded in B10OR-retention-parser-compatibility.json.
+- Current source inventory, actual patch, dependency/retention/financial/zero-request proofs and commands live under docs/evidence/B10OR-*. Final source/security audit checks exact accepted files, actual private values without printing them, secret patterns and leaked MCP children. Human review required; no ZIP or later milestone.
+
+DEC-044 final acceptance basis:740 complete cases, not an aggregate of focused runs. The only post-suite compatibility addition is standalone evidence parsing for pytest warning fields; application logic and all prior tests remain unchanged after final source freeze. The old verifier's graph/history assertions are reused intact. No fabricated normalized success log or live-model closure. Baseline and exact source audit/patch are c16346a-relative. STOP for human review.
+
+Final B10-O-R scope/security audit PASS:61 prior test files unchanged, all prior evidence byte-identical, actual private credential values/patterns absent, no leaked MCP children. No push or ZIP. Exact source inventory/patch is against c16346a; subsequent human review and separately authorized B10 live acceptance remain required.

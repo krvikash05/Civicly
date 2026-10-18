@@ -60,7 +60,7 @@ class InvestigationState(Model):
     budget: Budget=Field(default_factory=Budget)
     iterations: int=Field(default=0,ge=0,le=200)
     tool_calls: int=Field(default=0,ge=0,le=80)
-    tokens: int=Field(default=0,ge=0,le=1000000)
+    tokens: int=Field(default=0,ge=0,le=2000000)
     wakes: int=Field(default=0,ge=0,le=10)
     refresh_required: bool=False
     as_of: str

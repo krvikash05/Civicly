@@ -1,0 +1,1652 @@
+--- a/.env.example
++++ b/.env.example
+@@ -16,8 +16,12 @@
+ GEMINI_API_KEY=
+ 
+ # B10-O: credentials never grant permission. CLI --live for one exact case is required.
+-CIVICLY_AI_PROJECT_LIMIT_USD=6
++# New ledgers default $8; leave unset to preserve existing caps. Explicit mismatch fails.
++# CIVICLY_AI_PROJECT_LIMIT_USD=8
+ CIVICLY_LLM_TRANSIENT_RETRIES=2
+ CIVICLY_LLM_RETRY_WAIT_BUDGET=8
+ # Optional verified pricing schedule: CIVICLY_AI_PRICING_FILE=/absolute/path/to/schedule.json
+-# Per-investigation default $.15; explicit CLI --max-cost-usd raises a particular approved case.
++# New cases default $.50; explicitly approved --max-cost-usd up to $1.50 complex ceiling.
++# Existing ledgers/cases require explicit audited configuration; no automatic increase.
++# Offline tokenizer setup (public static asset, no Gemini endpoint):
++# PYTHONPATH=backend backend/.venv/bin/python scripts/configure_tokenizer.py
+--- a/backend/AGENTS_RUNTIME.md
++++ b/backend/AGENTS_RUNTIME.md
+@@ -1,4 +1,4 @@
+-# B10 investigation runtime — B10-O controls, B10 live acceptance OPEN
++# B10 investigation runtime — B10-O-R controls, B10 live acceptance OPEN
+ 
+ B10 only. `contracts/agent_runtime.json` defines the compatible runtime boundary. All 18 product objectives remain mandatory; this foundation does not complete GraphRAG, municipal operations, API or frontend. Final status and exact counts are in `docs/evidence/B10-RESULTS.md` and current tracking summaries.
+ 
+@@ -88,3 +88,50 @@
+ Dependency/API sources: [FalkorDB LangGraph](https://docs.falkordb.com/genai-tools/langgraph), [vendor integration](https://pypi.org/project/langchain-falkordb/), [LangGraph persistence](https://docs.langchain.com/oss/python/langgraph/persistence), [interrupts](https://docs.langchain.com/oss/python/langgraph/interrupts), [Gemini structured outputs](https://ai.google.dev/gemini-api/docs/structured-output), [thinking levels](https://ai.google.dev/gemini-api/docs/generate-content/thinking).
+ 
+ B11 requires separate human authorization: isolated GraphRAG source graph, versioned documents/citations, prompt-injection/stale-document tests and episodic/semantic/procedural memory. No B11 work is included here.
++
++## B10-O-R current accounting and recovery contract (supersedes B10-O defaults)
++
++New ledgers allocate **$8 project / $.50 new investigation / one concurrent investigation**. A trusted invocation can explicitly allocate up to the persisted complex-case ceiling, initially **$1.50**, subject to remaining project/case funds. Approximately $4 of the user's stated credit remains outside this allocation. These are application safeguards, not a guaranteed Google billing cutoff. Existing ledgers keep their limits, case allocations, charges and unknown reservations. The upgrade below is a deliberate operator action; B10-O-R only exercised it on a private copy of the retained accounting witness.
++
++`agents.tokens` loads a pinned Google Gemma3 SentencePiece vocabulary. It is **a proxy estimate for Gemini 3.8**, whose exact mapping is not published in the checked local-tokenizer implementation. It never labels a proxy count provider-confirmed. The complete serialized generation request includes prompt B10-3, current context, all16 tool schemas, controlled-action schemas, Selection response schema and generation settings. Its input allowance is ceil(proxy tokens×1.25)+256 framing/uncertainty margin, with4096 output tokens. This margin is a planning policy, not a mathematical upper bound for Gemini3.8. Bytes are recorded separately. Dollar reservations retain the earlier conservative byte/price fence; that financial heuristic is never used as a model-token count.
++
++Authorized LIVE mode additionally requires an explicitly permitted and financially reserved `countTokens` RPC with `generateContentRequest`, including response constraints. Its verified input count+16 framing margin replaces the proxy input allowance; framing can differ from final generation usage. A count result is not a billing receipt: its dollar reservation remains held until separately verified accounting is available. No generation fallback bypasses unavailable/invalid counting. No provider counting or generation endpoint was contacted in B10-O-R. Mock counts, returned usage and charges in tests are explicitly simulated.
++
++Each generation retry and structured-output repair reserves its own complete input/output allowance atomically with its dollar reservation. Actual validated `totalTokenCount` replaces that attempt's token allowance, while input/output/thinking/cached counts separately determine known cost. Unknown token use retains the full token allowance; unknown billing retains the dollar reservation. Durable `token_usage` and per-thread legacy floors prevent a stale checkpoint or process restart from resetting exposure. Checkpoint `tokens` now represents cumulative **accounted exposure** (known usage plus unknown held allowances); metadata separately records actual returned counts, bytes, estimates, provider counts and dollar exposure. If actual service usage exceeds the remaining plan, the host pauses and records it rather than hiding the overrun. Existing global max_tokens60000 was not raised. Checkpoint token-counter storage widens to2M only to retain an unexpectedly large receipt plus prior exposure; operational max_tokens remains bounded by150000. A1M-token simulated overrun plus100000 prior tokens checkpoints exactly1100000 and pauses, with no selected action.
++
++Setup, ordinary development (public asset download only; no Gemini API):
++
++```sh
++UV_CACHE_DIR=/tmp/civicly-b10or-uv-cache backend/.venv/bin/uv sync --project backend --frozen
++PYTHONPATH=backend backend/.venv/bin/python scripts/configure_tokenizer.py
++```
++
++The explicit setup command downloads the pinned4,689,074-byte vocabulary into ignored `.runtime/tokenizers/gemma3.model`, mode0600, SHA256 `1299c11d7cf632ef3b4e11937501358ada021bbdf7c47638d13c0ee982f2e79c`. Runtime never downloads it; missing/changed assets fail closed with setup guidance. `sentencepiece==0.2.1` is locked. Official local tokenizer smoke phrase “What is your name?” produces5 tokens. Sources: [Google token counting API](https://ai.google.dev/api/tokens), [Google local vocabulary mappings](https://github.com/googleapis/python-genai/blob/main/google/genai/_local_tokenizer_loader.py), [pinned vocabulary](https://raw.githubusercontent.com/google/gemma_pytorch/014acb7ac4563a5f77c76d7ff98f31b568c16508/tokenizer/gemma3_cleaned_262144_v2.spiece.model).
++
++Stop all live processes/sessions, use SQLite backup API for a private consistent backup, inspect current accounting, then deliberately upgrade existing limits:
++
++```sh
++PYTHONPATH=backend backend/.venv/bin/python -m app.agents.spending
++PYTHONPATH=backend backend/.venv/bin/python -m app.agents.spending configure --project-usd 8 --case-usd .50 --complex-usd 1.50 --max-concurrent 1 --operator OPERATOR_ID --reason 'Reviewed allocation increase; preserve all historical usage' --authorize
++```
++
++Do not run the second command merely to install this code. `config_changes` keeps previous/current caps and actor/reason; immutable update/delete triggers protect configuration and accounting audit rows. Existing case limits do not automatically rise. A later separately authorized invocation's `--max-cost-usd .50` or1.50 explicitly increases that case; it cannot reset usage. An explicit conflicting `CIVICLY_AI_PROJECT_LIMIT_USD` fails reopening instead of silently overwriting persisted caps. Remove stale explicit configuration or perform the approved upgrade first.
++
++Exact settled-over-reservation recovery, after stopping the previous process and all sessions:
++
++```sh
++PYTHONPATH=backend backend/.venv/bin/python -m app.agents.spending hold EXACT_REQUEST_ID
++PYTHONPATH=backend backend/.venv/bin/python -m app.agents.spending resolve-hold EXACT_REQUEST_ID --operator OPERATOR_ID --reason 'Verified receipt and tariff; available funds checked' --verified-pricing STORED_PRICING_VERSION --usage-sha256 SHA256_OF_EXACT_STORED_USAGE_TEXT --evidence-ref PRIVATE_ACCOUNTING_RECEIPT_REFERENCE --authorize
++```
++
++Inspection includes exact request, reservation, charged cost, usage, pricing, hold reason and current caps. Resolution requires stored usage hash, exact tariff version, reprice-equals-charge, known settled billing, explicit actor/reason/evidence, no active session, and project/case cap checks. The immutable audit retains the original request and verification binding; only that request hold becomes RESOLVED. Old charges/reservations and legacy hold history remain. Other open holds continue to block. Subsequent reservations recheck all caps. Custom pricing users may call `Ledger.resolve_hold(..., pricing=Pricing(verified_path))` with their retained exact tariff. Unknown billing cannot be cleared by this command; verified usage must first be reconciled for the exact request. Unattributable legacy holds remain blocked for manual accounting investigation. No reset/clear-all or automatic stale-session takeover exists.
++
++Runtime budgets remain16 iterations/8tools/60000tokens/240seconds/5wakes, configurable within existing strict Budget bounds. At most32 Supervisor selections per wake fit recursion_limit150 (read/action cycles plus pause/resume helper nodes). Limits are cumulative except per-wake wall time. A genuine budget failure checkpoints a pause, never a causal conclusion. A trusted resumed CLI can pass an increased `--max-tokens`, `--max-iterations`, `--max-tools`, `--max-seconds` or `--max-wakes` and `--budget-reason`; explicit `--live` is still required. The complete new Budget must be monotonic and validated; counters, same thread, native action IDs and source-refresh requirements remain. Budget-input denials occur before ownership and do not quarantine a valid paused thread. A host-generated audit observation records prior/new budgets and reason. A model cannot invoke this recovery interface.
++
++### Separate final-stage LIVE acceptance procedure — NOT AUTHORIZED / NOT RUN
++
++1. Obtain explicit human approval for a selected three-category case suite and exact dollar allocations (default$.50, explicitly complex up to$1.50 each, cumulative project≤$8). Confirm remaining Google credit independently, current supported model/generation/counting API and unexpired pricing. Inspect ledger/session/holds; record a private consistent backup. Do not assume application accounting includes historical/external Google charges.
++2. Verify scoped profile,16 MCP tools, current synthetic timestamps, source revision, checkpoint and evidence anchors. Use small authored WATERLOGGING conflicting-inspection, ROAD_DAMAGE verified/candidate/disconnected, and WASTE pickup-history cases. Do not expose hidden scenario answers. Enable no fallback provider.
++3. Under that **separate approval only**, invoke `python -m app.agents` with the exact profile/investigation/thread, `--live`, and approved `--max-cost-usd`. Observe both countTokens and generateContent request reservations and genuine usage/cost. Verify at least one multi-step tool-selected investigation, actual tools/list/call, native hypothesis/assessment/inspection actions, source evidence and durable decision/rationale/trace/checkpoint IDs. Stop at cap/unknown billing rather than reset accounting.
++4. Submit a contradictory reviewed inspection through B09, then explicitly resume the same approved thread. Compare genuine model-selected next action and preserved historical classifications; repeat the selected road topology variants and waste explanation test. Distinguish topology from causal evidence and retain candidate/negative limits. Exercise provider interruption recovery only where feasible without blind duplicate billing/actions.
++5. Reopen checkpoints/ledger in a fresh process, inspect actual usage receipts and persisted outputs, compare retained data fingerprints, and publish sanitized proof. Mark a live gate green only for behavior directly observed. B10 live three-category/contradiction/topology/structured-output gates remain OPEN until this succeeds. B10-O-R mock HTTP cannot close them. B11 requires separate review/authorization.
+--- a/backend/app/agents/__main__.py
++++ b/backend/app/agents/__main__.py
+@@ -9,7 +9,7 @@
+ from .mcp import brokers
+ from .runtime import InvestigationAgent
+ from .checkpoints import saver
+-from .models import InvestigationState
++from .models import InvestigationState,Budget
+ from .provider import Gemini,ProviderSettings
+ from .policy import Permit
+ 
+@@ -32,13 +32,22 @@
+                 assets=sorted({e.target for id in ids for e in reader.edges('AFFECTS',source=id)})
+                 initial=InvestigationState(graph=profile.graph,investigation_id=args.investigation,thread_id=args.thread,
+                     problem_cluster_id=cluster[0],discovered_tool_names=[t['name'] for t in tools.catalog()],incident_ids=ids,asset_ids=assets,issue=issues.pop(),graph_revision=agent.revision(),inventory_hash=tools.inventory_hash,as_of=utc_now())
+-            result=await agent.run(initial,thread_id=args.thread,resume=args.resume)
++            changes={key:getattr(args,key,None) for key in ['max_tokens','max_iterations','max_tools','max_seconds','max_wakes'] if getattr(args,key,None) is not None}
++            increase=None
++            if changes:
++                if args.resume:
++                    snapshot=await agent.graph.aget_state({'configurable':{'thread_id':args.thread}})
++                    increase={**snapshot.values['data']['budget'],**changes}
++                else:initial.budget=Budget.model_validate({**initial.budget.model_dump(),**changes})
++            result=await agent.run(initial,thread_id=args.thread,resume=args.resume,budget_increase=increase,authorized=args.live,operator_reason=args.budget_reason)
+             # Public state only, no model private reasoning or credentials.
+             print(json.dumps(result,default=str))
+ 
+ def main():
+     parser=argparse.ArgumentParser();parser.add_argument('--profile',required=True);parser.add_argument('--thread',required=True)
+-    parser.add_argument('--live',action='store_true',help='Explicitly authorize only this investigation/thread');parser.add_argument('--max-cost-usd',default='.15');parser.add_argument('--investigation');parser.add_argument('--resume',action='store_true');args=parser.parse_args()
++    parser.add_argument('--live',action='store_true',help='Explicitly authorize only this investigation/thread');parser.add_argument('--max-cost-usd',default=None);parser.add_argument('--budget-reason');
++    for flag in ['max-tokens','max-iterations','max-tools','max-seconds','max-wakes']:parser.add_argument('--'+flag,type=int)
++    parser.add_argument('--investigation');parser.add_argument('--resume',action='store_true');args=parser.parse_args()
+     try:asyncio.run(execute(args))
+     except Exception as exc:
+         print(json.dumps({'status':'RECOVERY_REQUIRED','code':type(exc).__name__,'detail':'Wake failed closed; reconcile private runtime configuration and public checkpoint. No implicit retry.'}));raise SystemExit(1)
+--- a/backend/app/agents/models.py
++++ b/backend/app/agents/models.py
+@@ -60,7 +60,7 @@
+     budget: Budget=Field(default_factory=Budget)
+     iterations: int=Field(default=0,ge=0,le=200)
+     tool_calls: int=Field(default=0,ge=0,le=80)
+-    tokens: int=Field(default=0,ge=0,le=1000000)
++    tokens: int=Field(default=0,ge=0,le=2000000)
+     wakes: int=Field(default=0,ge=0,le=10)
+     refresh_required: bool=False
+     as_of: str
+--- a/backend/app/agents/policy.py
++++ b/backend/app/agents/policy.py
+@@ -10,12 +10,12 @@
+     investigation_id:str
+     thread_id:str
+     milestone:str='B10'
+-    max_usd:str='.15'
++    max_usd:str|None=None
+     mode:str='LIVE'
+     @classmethod
+-    def explicit_live(cls,*,approved,investigation_id,thread_id,max_usd='.15',milestone='B10'):
++    def explicit_live(cls,*,approved,investigation_id,thread_id,max_usd=None,milestone='B10'):
+         if approved is not True or not investigation_id or not thread_id:raise LiveDenied('EXPLICIT_INVOCATION_OPT_IN_REQUIRED')
+-        return cls(investigation_id,thread_id,milestone,str(max_usd),'LIVE')
++        return cls(investigation_id,thread_id,milestone,None if max_usd is None else str(max_usd),'LIVE')
+     @classmethod
+     def mocked(cls,investigation_id='TEST_INV',thread_id=None):
+         return cls(investigation_id,thread_id or uuid4().hex,'B10-O-TEST','.15','MOCK_HTTP')
+--- a/backend/app/agents/provider.py
++++ b/backend/app/agents/provider.py
+@@ -8,6 +8,7 @@
+ from pydantic_settings import BaseSettings,SettingsConfigDict
+ from app.graph.models import digest
+ from .models import Selection
++from .tokens import plan,total_usage
+ from .policy import LiveDenied
+ from .spending import Ledger,Pricing,SpendError
+ 
+@@ -23,7 +24,7 @@
+     transient_retries:int=Field(default=2,ge=0,le=4,validation_alias='CIVICLY_LLM_TRANSIENT_RETRIES')
+     retry_wait_budget:float=Field(default=8,ge=0,le=30,validation_alias='CIVICLY_LLM_RETRY_WAIT_BUDGET')
+     pricing_file:Path|None=Field(default=None,validation_alias='CIVICLY_AI_PRICING_FILE')
+-    project_limit:str=Field(default='6',validation_alias='CIVICLY_AI_PROJECT_LIMIT_USD')
++    project_limit:str|None=Field(default=None,validation_alias='CIVICLY_AI_PROJECT_LIMIT_USD')
+ 
+ class ProviderError(RuntimeError):
+     def __init__(self,code,category=None):self.code=code;self.category=category or code;super().__init__(code)
+@@ -59,10 +60,12 @@
+ 
+ class Gemini:
+     mode='LIVE_GEMINI'
+-    def __init__(self,settings,*,permit=None,ledger=None,pricing=None,transport=None):
++    def __init__(self,settings,*,permit=None,ledger=None,pricing=None,transport=None,verify_tokens=None):
+         if settings.provider!='gemini':raise ValueError('Unsupported provider; no automatic paid fallback')
+         self.settings,self.permit,self.transport=settings,permit,transport
+         if permit is not None and permit.mode=='MOCK_HTTP':self.mode='MOCK_GEMINI_HTTP'
++        self.verify_tokens=(permit is not None and permit.mode=='LIVE') if verify_tokens is None else verify_tokens
++        if permit is not None and permit.mode=='LIVE' and not self.verify_tokens:raise ValueError('Live generation requires provider token verification')
+         self._ledger=ledger;self.pricing=pricing or Pricing(settings.pricing_file);self.owner=None;self.last_usage={};self.last_failure=None;self.requests_sent=0
+     @property
+     def ledger(self):
+@@ -115,65 +118,88 @@
+             self.last_failure={'category':'NETWORK_TIMEOUT','reservation_retained':self.requests_sent>0}
+             raise ProviderError('PROVIDER_TIMEOUT','NETWORK_TIMEOUT') from None
+     async def _choose(self,context,remaining_tokens):
++        if type(remaining_tokens)is not int or not 0<=remaining_tokens<=1_000_000:raise ProviderError('INVALID_TOKEN_ALLOWANCE')
++        state=context.get('state',{});base=state.get('tokens',0)
++        if type(base)is not int or not 0<=base<=1_000_000:raise ProviderError('INVALID_TOKEN_BASELINE')
++        ceiling=base+remaining_tokens;used_total=0;waited=0.;attempts=[];counts={}
+         text=PROMPT+'\nCONTEXT_JSON:\n'+json.dumps(context,sort_keys=True,separators=(',',':'),allow_nan=False)
+-        if len(text.encode())+4096>remaining_tokens:raise ProviderError('TOKEN_BUDGET')
+-        used_total=0;waited=0.;attempts=[];state=context.get('state',{})
+         group=digest([self.permit.thread_id,state.get('iterations'),state.get('wakes'),'provider-decision'])
++        def exposure():return max(base,self.ledger.thread_tokens(self.permit.thread_id))
++        def metadata():
++            self.last_usage={**self.last_usage,'total_tokens':used_total,'accounted_tokens':max(0,self.ledger.thread_tokens(self.permit.thread_id)-base),
++                'provider':self.settings.provider,'model':self.settings.model,'model_version':self.last_usage.get('model_version','UNAVAILABLE'),
++                'prompt_version':PROMPT_VERSION,'pricing_version':self.pricing.version,'attempts':self.requests_sent,'requests':attempts,'spending':self.spending()}
+         async with httpx.AsyncClient(timeout=self.settings.timeout,follow_redirects=False,transport=self.transport) as client:
+             async with asyncio.timeout(2*self.settings.timeout+self.settings.retry_wait_budget):
+-                for repair in range(2):
+-                    for retry in range(self.settings.transient_retries+1):
+-                        if used_total+len(text.encode())+4096>remaining_tokens:
+-                            self.last_failure={'category':'TOKEN_BUDGET'}
+-                            raise ProviderError('TOKEN_BUDGET')
++                try:
++                    for repair in range(2):
+                         body={'contents':[{'role':'user','parts':[{'text':text}]}],'generationConfig':{'responseMimeType':'application/json','responseJsonSchema':Selection.model_json_schema(),'maxOutputTokens':4096,'thinkingConfig':{'thinkingLevel':'LOW'}}}
+-                        request_id='AI-'+digest([group,repair,retry])
+-                        self.pricing.validate(self.settings.model)
+-                        reserve=self.pricing.estimate(len(json.dumps(body,ensure_ascii=False).encode()),4096)
+-                        try:self.ledger.reserve(request_id,self.permit.case_key,self.permit.thread_id,self.settings.model,self.permit.milestone,self.pricing.version,reserve,self.owner)
+-                        except SpendError as e:
+-                            self.last_failure={'category':'SPENDING_CONTROL','code':str(e)}
+-                            raise ProviderError(str(e),'SPENDING_CONTROL') from None
+-                        self.requests_sent+=1
++                        estimate=plan(body);count_key=digest(body)
++                        if ceiling-exposure()<4096:raise ProviderError('TOKEN_BUDGET')
++                        if self.verify_tokens and count_key not in counts:
++                            # Counting is a real authorized/accounted RPC, not free billing metadata.
++                            cid='AI-COUNT-'+digest([group,repair,count_key])
++                            self.ledger.reserve(cid,self.permit.case_key,self.permit.thread_id,self.settings.model,self.permit.milestone,self.pricing.version,self.pricing.estimate(estimate['serialized_utf8_bytes'],0),self.owner)
++                            self.requests_sent+=1
++                            try:
++                                counted=await client.post('https://generativelanguage.googleapis.com/v1beta/models/'+self.settings.model+':countTokens',headers={'x-goog-api-key':self.settings.key.get_secret_value()},json={'generateContentRequest':{'model':'models/'+self.settings.model,**body}})
++                                value=counted.json()
++                                if counted.status_code!=200:raise ProviderError('COUNT_HTTP_'+str(counted.status_code),classify(counted)[0])
++                                count=value.get('totalTokens') if isinstance(value,dict) else None
++                                if type(count)is not int or not 0<=count<=1_000_000:raise ProviderError('INVALID_PROVIDER_COUNT')
++                                counts[count_key]=count
++                            except (httpx.HTTPError,ValueError,TimeoutError):raise ProviderError('COUNT_TRANSPORT_OR_PAYLOAD','COUNT_UNAVAILABLE') from None
++                            finally:
++                                self.ledger.reconcile(cid,None,{},'COUNT_BILLING_UNCONFIRMED')
++                                attempts.append({'request_id':cid,'kind':'COUNT_TOKENS','billing':'UNCERTAIN_RESERVATION_HELD','count_is_not_consumed_generation_tokens':True})
++                        allocation=plan(body,provider_count=counts.get(count_key))
++                        allocation['provider_count_origin']='SIMULATED_PROVIDER_RESPONSE' if self.mode=='MOCK_GEMINI_HTTP' and self.verify_tokens else ('PROVIDER_COUNT_API' if self.verify_tokens else 'NO_PROVIDER_COUNT')
++                        for retry in range(self.settings.transient_retries+1):
++                            request_id='AI-'+digest([group,repair,retry]);self.pricing.validate(self.settings.model)
++                            reserve=self.pricing.estimate(allocation['serialized_utf8_bytes'],4096)
++                            self.ledger.reserve(request_id,self.permit.case_key,self.permit.thread_id,self.settings.model,self.permit.milestone,self.pricing.version,reserve,self.owner,
++                                token_reservation=allocation['total_allowance_tokens'],token_limit=ceiling,base_tokens=base)
++                            self.requests_sent+=1
++                            entry={'request_id':request_id,'kind':'GENERATE','token_plan':allocation,'reserved_nusd':reserve};attempts.append(entry)
++                            try:
++                                response=await client.post('https://generativelanguage.googleapis.com/v1beta/models/'+self.settings.model+':generateContent',headers={'x-goog-api-key':self.settings.key.get_secret_value()},json=body)
++                            except (httpx.HTTPError,TimeoutError) as e:
++                                category='NETWORK_TIMEOUT' if isinstance(e,(httpx.TimeoutException,TimeoutError)) else 'NETWORK_TRANSPORT'
++                                self.ledger.reconcile(request_id,None,{},category);entry['category']=category
++                                raise ProviderError('PROVIDER_TIMEOUT' if category=='NETWORK_TIMEOUT' else 'PROVIDER_TRANSPORT',category) from None
++                            value={};usage={}
++                            try:
++                                parsed=response.json();value=parsed if isinstance(parsed,dict) else {}
++                                raw_usage=value.get('usageMetadata',{})
++                                if isinstance(raw_usage,dict):usage={k:v for k,v in raw_usage.items() if k in {'promptTokenCount','candidatesTokenCount','thoughtsTokenCount','totalTokenCount','cachedContentTokenCount','toolUsePromptTokenCount'} and type(v)is int and 0<=v<=1_000_000}
++                            except ValueError:pass
++                            actual=self.pricing.actual(usage);used=total_usage(usage);category=None
++                            if response.status_code!=200:category,hint,retryable=classify(response)
++                            self.ledger.reconcile(request_id,actual,usage,category or ('USAGE_UNCERTAIN' if actual is None else None))
++                            if used is not None:used_total+=used
++                            version=value.get('modelVersion',self.settings.model)
++                            self.last_usage['model_version']=version if isinstance(version,str) and re.fullmatch(r'[A-Za-z0-9._-]{1,100}',version) else 'UNAVAILABLE'
++                            entry.update({'status':response.status_code,'category':category,'usage':usage,'actual_nusd':actual,'consumed_tokens':used,'unknown_tokens_held':used is None})
++                            metadata()
++                            if exposure()>ceiling:raise ProviderError('TOKEN_BUDGET')
++                            if response.status_code==200:break
++                            delay=hint if hint is not None else min(2**retry,4)
++                            can_retry=retryable and retry<self.settings.transient_retries and delay<=self.settings.retry_wait_budget-waited
++                            self.last_failure={'category':category,'status_code':response.status_code,'request_id':request_id,'retry_after_seconds':hint,'retry_possible':can_retry}
++                            if not can_retry:raise ProviderError('PROVIDER_HTTP_'+str(response.status_code),category)
++                            await asyncio.sleep(delay);waited+=delay
++                        if used is None or used==0:raise ProviderError('PROVIDER_USAGE_MISSING')
+                         try:
+-                            response=await client.post('https://generativelanguage.googleapis.com/v1beta/models/'+self.settings.model+':generateContent',headers={'x-goog-api-key':self.settings.key.get_secret_value()},json=body)
+-                        except (httpx.HTTPError,TimeoutError) as e:
+-                            category='NETWORK_TIMEOUT' if isinstance(e,(httpx.TimeoutException,TimeoutError)) else 'NETWORK_TRANSPORT'
+-                            self.ledger.reconcile(request_id,None,{},category)
+-                            self.last_usage={'total_tokens':used_total,'provider':self.settings.provider,'model':self.settings.model,'model_version':'UNAVAILABLE','prompt_version':PROMPT_VERSION,'pricing_version':self.pricing.version,'attempts':self.requests_sent,'usage_status':'UNCERTAIN','spending':self.spending()}
+-                            self.last_failure={'category':category,'request_id':request_id}
+-                            raise ProviderError('PROVIDER_TIMEOUT' if category=='NETWORK_TIMEOUT' else 'PROVIDER_TRANSPORT',category) from None
+-                        value={};usage={}
+-                        try:
+-                            value=response.json()
+-                            usage={k:v for k,v in value.get('usageMetadata',{}).items() if k in {'promptTokenCount','candidatesTokenCount','thoughtsTokenCount','totalTokenCount','cachedContentTokenCount','toolUsePromptTokenCount'} and type(v)is int and v>=0}
+-                        except Exception:pass
+-                        actual=self.pricing.actual(usage)
+-                        category=None
+-                        if response.status_code!=200:category,hint,retryable=classify(response)
+-                        self.ledger.reconcile(request_id,actual,usage,category or ('USAGE_UNCERTAIN' if actual is None else None))
+-                        used=usage.get('totalTokenCount',0)
+-                        if type(used)is not int or used<0:used=0
+-                        used_total+=used
+-                        attempts.append({'request_id':request_id,'status':response.status_code,'category':category,'usage':usage,'reserved_nusd':reserve,'actual_nusd':actual})
+-                        self.last_usage={'total_tokens':used_total,'provider':self.settings.provider,'model':self.settings.model,'model_version':value.get('modelVersion',self.settings.model) if re.fullmatch(r'[A-Za-z0-9._-]{1,100}',str(value.get('modelVersion',self.settings.model))) else self.settings.model,
+-                            'prompt_version':PROMPT_VERSION,'pricing_version':self.pricing.version,'attempts':self.requests_sent,'requests':attempts,'spending':self.spending()}
+-                        if response.status_code==200:break
+-                        delay=hint if hint is not None else min(2**retry,4)
+-                        can_retry=retryable and retry<self.settings.transient_retries and delay<=self.settings.retry_wait_budget-waited
+-                        self.last_failure={'category':category,'status_code':response.status_code,'request_id':request_id,'retry_after_seconds':hint,'retry_possible':can_retry}
+-                        if not can_retry:raise ProviderError('PROVIDER_HTTP_'+str(response.status_code),category)
+-                        await asyncio.sleep(delay);waited+=delay
+-                    try:
+-                        if used_total>remaining_tokens:raise ProviderError('TOKEN_BUDGET')
+-                        if not used:raise ProviderError('PROVIDER_USAGE_MISSING')
+-                        raw=''.join(p.get('text','') for p in value['candidates'][0]['content']['parts'] if not p.get('thought'))
+-                        selection=Selection.model_validate_json(raw)
+-                        self.last_failure=None
+-                        return selection,used_total
+-                    except ProviderError:raise
+-                    except Exception:
+-                        self.last_failure={'category':'INVALID_STRUCTURED_OUTPUT','request_id':request_id}
+-                        if repair or used_total+len(text.encode())+4096>remaining_tokens:raise ProviderError('INVALID_MODEL_OUTPUT','INVALID_STRUCTURED_OUTPUT') from None
+-                        text+='\nPrevious output failed strict validation. Return exactly the supplied schema; no additional fields.'
++                            raw=''.join(p.get('text','') for p in value['candidates'][0]['content']['parts'] if not p.get('thought'))
++                            selection=Selection.model_validate_json(raw);self.last_failure=None
++                            return selection,self.last_usage['accounted_tokens']
++                        except Exception:
++                            if repair:raise ProviderError('INVALID_MODEL_OUTPUT','INVALID_STRUCTURED_OUTPUT') from None
++                            text+='\nPrevious output failed strict validation. Return exactly the supplied schema; no additional fields.'
++                except SpendError as e:
++                    category='SPENDING_CONTROL' if str(e)!='TOKEN_BUDGET' else 'TOKEN_BUDGET';self.last_failure={'category':category,'code':str(e)}
++                    raise ProviderError(str(e),category) from None
++                except ProviderError as e:
++                    self.last_failure={**(self.last_failure or {}),'category':e.category,'code':e.code};raise
++                finally:metadata()
+         raise ProviderError('INVALID_MODEL_OUTPUT','INVALID_STRUCTURED_OUTPUT')
+--- a/backend/app/agents/runtime.py
++++ b/backend/app/agents/runtime.py
+@@ -77,6 +77,7 @@
+             s.selection=Selection(action='PAUSE',summary='Runtime budget exhausted; operator review required',tool_name='',arguments_json='{}',pause_reason='DEPENDENCY_UNAVAILABLE')
+             s.pause_reason='BUDGET_EXHAUSTED';return self.output(s,'Supervisor')
+         id=identity('DEC',s.thread_id,s.iterations,s.wakes);saved=self.control.selected(id)
++        accounted=False
+         try:
+             if saved:selection,metadata=saved;used=metadata['tokens']
+             else:
+@@ -85,11 +86,11 @@
+                 metadata={'mode':self.model.mode,'tokens':used,'inventory_hash':s.inventory_hash,'graph_revision':self.revision(),'as_of':s.as_of,
+                           'usage':getattr(self.model,'last_usage',{}),'provider_failure':getattr(self.model,'last_failure',None),'prompt_sha256':hashlib.sha256(__import__('app.agents.provider',fromlist=['PROMPT']).PROMPT.encode()).hexdigest(),'investigation_id':s.investigation_id,'thread_id':s.thread_id}
+                 self.check();self.control.decision(id,selection,metadata)
+-            s.tokens+=used;s.selection=selection
++            s.tokens+=used;accounted=True;s.selection=selection
+             if id not in s.decisions:s.decisions.append(id)
+             if s.refresh_required and selection.action not in {'READ','PAUSE'}:raise ValueError('Fresh MCP read required after revision change')
+         except Exception as e:
+-            if type(e).__name__=='ProviderError':s.tokens+=getattr(self.model,'last_usage',{}).get('total_tokens',0)
++            if type(e).__name__=='ProviderError' and not accounted:s.tokens+=getattr(self.model,'last_usage',{}).get('accounted_tokens',getattr(self.model,'last_usage',{}).get('total_tokens',0))
+             if type(e).__name__=='ProviderError':
+                 s.observations.append({'provider_failure':getattr(self.model,'last_failure',None),'provider_usage':getattr(self.model,'last_usage',{}),'status':'ERROR','host_generated':True})
+             s.errors.append(getattr(e,'code',str(e) if type(e).__name__=='ProviderError' else 'INVALID_MODEL_SELECTION'))
+@@ -193,15 +194,33 @@
+         return self.output(s,'Coordinator')
+     async def await_dependency(self,channel):
+         s=self.decode(channel)
+-        interrupt({'investigation_id':s.investigation_id,'thread_id':s.thread_id,'pause_reason':s.pause_reason,'pending_inspections':s.pending_inspections,'graph_revision':s.graph_revision})
++        recovery=interrupt({'investigation_id':s.investigation_id,'thread_id':s.thread_id,'pause_reason':s.pause_reason,'pending_inspections':s.pending_inspections,'graph_revision':s.graph_revision})
+         # Reexecuted on resume: no pre-interrupt side effect.
++        if isinstance(recovery,dict) and recovery.get('budget_increase'):
++            old=s.budget.model_dump(mode='json');s.budget=__import__('app.agents.models',fromlist=['Budget']).Budget.model_validate(recovery['budget_increase'])
++            s.observations.append({'operation':'AUTHORIZED_BUDGET_INCREASE','host_generated':True,'previous':old,'current':s.budget.model_dump(mode='json'),'reason':recovery['operator_reason']})
+         s.wakes+=1;s.pause_reason=None;s.as_of=self.clock()
+         current=self.revision();changed=current!=s.graph_revision or any(self.repo.get_node(id).content_hash!=h for id,h in s.evidence.items())
+         s.refresh_required=changed;s.graph_revision=current
+         if changed:s.errors.append('SOURCE_CHANGED_REFRESH_REQUIRED')
+         return self.output(s,'AwaitDependency')
+-    async def run(self,initial=None,*,thread_id,resume=False):
++    async def run(self,initial=None,*,thread_id,resume=False,budget_increase=None,authorized=False,operator_reason=None):
++        if budget_increase is not None and (authorized is not True or not isinstance(operator_reason,str) or not operator_reason.strip() or len(operator_reason)>512):raise RecoveryRequired('BUDGET_INCREASE_REQUIRES_OPERATOR_AUTHORIZATION')
+         self.started=time.monotonic();config={'configurable':{'thread_id':thread_id},'recursion_limit':150}
++        # Operator input errors must not quarantine an otherwise valid paused thread.
++        if budget_increase is not None:
++            from .models import Budget
++            candidate=Budget.model_validate(budget_increase)
++            snapshot=await self.graph.aget_state(config)
++            if not resume or not snapshot.values or not snapshot.next:raise RecoveryRequired('NO_PAUSED_THREAD')
++            prior=Budget.model_validate(snapshot.values['data']['budget'])
++            if any(getattr(candidate,k)<getattr(prior,k) for k in type(prior).model_fields):raise RecoveryRequired('BUDGET_DECREASE_OR_RESET_DENIED')
++        elif resume:
++            snapshot=await self.graph.aget_state(config)
++            if snapshot.values and snapshot.next:
++                from .models import Budget
++                prior=Budget.model_validate(snapshot.values['data']['budget'])
++                if snapshot.values['data']['wakes']>=prior.max_wakes:raise RecoveryRequired('WAKE_BUDGET_EXHAUSTED')
+         with active_scope(self.profile):
+             async with ownership(self.repo.client,self.profile,thread_id) as check:
+                 self.check=check
+@@ -209,13 +228,20 @@
+                 if resume:
+                     if not snapshot.values or not snapshot.next:raise RecoveryRequired('NO_PAUSED_THREAD')
+                     state=self.decode(snapshot.values)
+-                    if state.wakes>=state.budget.max_wakes:raise RecoveryRequired('WAKE_BUDGET_EXHAUSTED')
+-                    value=Command(resume={'host_resume':True})
++                    if state.wakes>=(candidate.max_wakes if budget_increase is not None else state.budget.max_wakes):raise RecoveryRequired('WAKE_BUDGET_EXHAUSTED')
++                    recovery={'host_resume':True}
++                    if budget_increase is not None:
++                        from .models import Budget
++                        if authorized is not True or not isinstance(operator_reason,str) or not operator_reason.strip() or len(operator_reason)>512:raise RecoveryRequired('BUDGET_INCREASE_REQUIRES_OPERATOR_AUTHORIZATION')
++                        increased=Budget.model_validate(budget_increase)
++                        if any(getattr(increased,k)<getattr(state.budget,k) for k in type(state.budget).model_fields):raise RecoveryRequired('BUDGET_DECREASE_OR_RESET_DENIED')
++                        recovery.update(budget_increase=increased.model_dump(mode='json'),operator_reason=operator_reason)
++                    value=Command(resume=recovery)
+                 else:
+                     if snapshot.values:raise RecoveryRequired('THREAD_ALREADY_EXISTS; resume explicitly')
+                     if not isinstance(initial,InvestigationState) or initial.thread_id!=thread_id:raise ValueError('Initial thread mismatch')
+                     self.control.bind(initial.investigation_id,thread_id);value={'data':initial.model_dump(mode='json')}
+-                budget=initial.budget if initial is not None else state.budget
++                budget=initial.budget if initial is not None else (increased if budget_increase is not None else state.budget)
+                 async with asyncio.timeout(budget.max_seconds+65):
+                     if hasattr(self.model,'execution_scope'):
+                         selected=initial if initial is not None else state
+--- a/backend/app/agents/spending.py
++++ b/backend/app/agents/spending.py
+@@ -41,7 +41,7 @@
+         return (usage['promptTokenCount']-cached)*self.rates['input']+cached*self.rates['cached_input']+usage['candidatesTokenCount']*self.rates['output']+usage['thoughtsTokenCount']*self.rates['thinking']
+ 
+ class Ledger:
+-    def __init__(self,path=DEFAULT_LEDGER,*,project_limit=None,default_case_limit=None,max_concurrent=None):
++    def __init__(self,path=DEFAULT_LEDGER,*,project_limit=None,default_case_limit=None,max_concurrent=None,complex_case_limit=None):
+         self.path=Path(path);self.path.parent.mkdir(parents=True,mode=0o700,exist_ok=True)
+         if self.path.is_symlink():raise SpendError('UNSAFE_LEDGER_FILE')
+         fd=os.open(self.path,os.O_CREAT|os.O_RDWR,0o600);os.close(fd)
+@@ -54,9 +54,27 @@
+             CREATE TABLE IF NOT EXISTS holds(id INTEGER PRIMARY KEY,reason TEXT);
+             CREATE TABLE IF NOT EXISTS config_changes(id INTEGER PRIMARY KEY,previous TEXT,current TEXT,reason TEXT,created REAL);
+             CREATE TABLE IF NOT EXISTS warnings(scope TEXT,threshold INTEGER,created REAL,PRIMARY KEY(scope,threshold));''')
+-            db.execute('INSERT OR IGNORE INTO config VALUES(1,?,?,?)',(dollars(project_limit if project_limit is not None else 6),dollars(default_case_limit if default_case_limit is not None else '.15'),max_concurrent if max_concurrent is not None else 1))
++            columns={r[1] for r in db.execute('PRAGMA table_info(config)')}
++            if 'complex_cap' not in columns:db.execute('ALTER TABLE config ADD COLUMN complex_cap INTEGER NOT NULL DEFAULT 1500000000')
++            db.execute('INSERT OR IGNORE INTO config VALUES(1,?,?,?,?)',(dollars(project_limit if project_limit is not None else 8),dollars(default_case_limit if default_case_limit is not None else '.50'),max_concurrent if max_concurrent is not None else 1,dollars(complex_case_limit if complex_case_limit is not None else '1.50')))
+             row=db.execute('SELECT * FROM config WHERE id=1').fetchone()
+-            if any(value is not None and row[column]!=expected for column,value,expected in [('project_cap',project_limit,dollars(project_limit) if project_limit is not None else None),('case_cap',default_case_limit,dollars(default_case_limit) if default_case_limit is not None else None),('max_concurrent',max_concurrent,max_concurrent)]):raise SpendError('PERSISTED_PROJECT_LIMIT_MISMATCH; explicit operator migration required')
++            if any(value is not None and row[column]!=expected for column,value,expected in [('project_cap',project_limit,dollars(project_limit) if project_limit is not None else None),('case_cap',default_case_limit,dollars(default_case_limit) if default_case_limit is not None else None),('max_concurrent',max_concurrent,max_concurrent),('complex_cap',complex_case_limit,dollars(complex_case_limit) if complex_case_limit is not None else None)]):raise SpendError('PERSISTED_PROJECT_LIMIT_MISMATCH; explicit operator migration required')
++            db.executescript("""CREATE TABLE IF NOT EXISTS request_holds(request_id TEXT PRIMARY KEY,reason TEXT,status TEXT NOT NULL DEFAULT 'OPEN',created REAL);
++            CREATE TABLE IF NOT EXISTS legacy_hold_links(id INTEGER PRIMARY KEY,mapped_at REAL);
++            CREATE TABLE IF NOT EXISTS accounting_events(id INTEGER PRIMARY KEY,request_id TEXT,operation TEXT,operator TEXT,reason TEXT,payload TEXT,created REAL);
++            CREATE TRIGGER IF NOT EXISTS immutable_accounting_update BEFORE UPDATE ON accounting_events BEGIN SELECT RAISE(ABORT,'IMMUTABLE_ACCOUNTING_AUDIT'); END;
++            CREATE TRIGGER IF NOT EXISTS immutable_accounting_delete BEFORE DELETE ON accounting_events BEGIN SELECT RAISE(ABORT,'IMMUTABLE_ACCOUNTING_AUDIT'); END;
++            CREATE TRIGGER IF NOT EXISTS immutable_config_update BEFORE UPDATE ON config_changes BEGIN SELECT RAISE(ABORT,'IMMUTABLE_ACCOUNTING_AUDIT'); END;
++            CREATE TRIGGER IF NOT EXISTS immutable_config_delete BEFORE DELETE ON config_changes BEGIN SELECT RAISE(ABORT,'IMMUTABLE_ACCOUNTING_AUDIT'); END;
++            CREATE TABLE IF NOT EXISTS token_usage(request_id TEXT PRIMARY KEY,thread TEXT,reserved INTEGER,consumed INTEGER);
++            CREATE TABLE IF NOT EXISTS token_floors(thread TEXT PRIMARY KEY,baseline INTEGER);""")
++            # Legacy global hold retained as history; link every offending request once.
++            for old_hold in db.execute('SELECT * FROM holds').fetchall():
++                if db.execute('SELECT 1 FROM legacy_hold_links WHERE id=?',(old_hold['id'],)).fetchone():continue
++                offenders=db.execute("SELECT id FROM requests WHERE status='SETTLED_OVER_RESERVATION'").fetchall()
++                for request in offenders or [{'id':'LEGACY-UNATTRIBUTED-'+str(old_hold['id'])}]:
++                    db.execute('INSERT OR IGNORE INTO request_holds VALUES(?,?,?,?)',(request['id'],old_hold['reason'],'OPEN',time.time()))
++                db.execute('INSERT OR IGNORE INTO legacy_hold_links VALUES(?,?)',(old_hold['id'],time.time()))
+     @contextmanager
+     def db(self):
+         db=sqlite3.connect(self.path,timeout=5,isolation_level=None);db.row_factory=sqlite3.Row
+@@ -71,14 +89,17 @@
+             except BaseException:db.execute('ROLLBACK');raise
+     def configure_case(self,case_id,limit=None):
+         with self.transaction() as db:
+-            default=db.execute('SELECT case_cap,project_cap FROM config').fetchone();cap=dollars(limit) if limit is not None else default[0]
+-            if cap>default[1]:raise SpendError('CASE_CAP_EXCEEDS_PROJECT')
++            default=db.execute('SELECT case_cap,project_cap,complex_cap FROM config').fetchone();old=db.execute('SELECT cap FROM cases WHERE id=?',(case_id,)).fetchone()
++            if old and limit is None:return
++            cap=dollars(limit) if limit is not None else default[0]
++            if cap>min(default[1],default[2]):raise SpendError('CASE_CAP_EXCEEDS_PROJECT')
+             old=db.execute('SELECT cap FROM cases WHERE id=?',(case_id,)).fetchone()
+             if old and old[0]!=cap:
+                 # A particular explicitly opted-in invocation may raise, never erase usage.
+                 if limit is None or cap<old[0]:raise SpendError('CASE_LIMIT_CHANGE_REQUIRES_EXPLICIT_INCREASE')
+                 db.execute('UPDATE cases SET cap=? WHERE id=?',(cap,case_id))
+             else:db.execute('INSERT OR IGNORE INTO cases VALUES(?,?)',(case_id,cap))
++            self.event(db,case_id,'CASE_ALLOCATION','TRUSTED_HOST','Explicit allocation or new-case default',{'previous':old[0] if old else None,'current':cap})
+     def acquire(self,case_id,thread,owner):
+         with self.transaction() as db:
+             maximum=db.execute('SELECT max_concurrent FROM config').fetchone()[0]
+@@ -94,10 +115,10 @@
+     def spent(db,case=None):
+         sql='SELECT coalesce(sum(CASE WHEN charged IS NULL THEN reserved ELSE charged END),0) FROM requests'
+         return db.execute(sql+(' WHERE case_id=?' if case else ''),(case,) if case else ()).fetchone()[0]
+-    def reserve(self,id,case,thread,model,milestone,pricing,amount,owner):
++    def reserve(self,id,case,thread,model,milestone,pricing,amount,owner,*,token_reservation=None,token_limit=None,base_tokens=0):
+         if type(amount)is not int or amount<=0:raise SpendError('INVALID_RESERVATION')
+         with self.transaction() as db:
+-            if db.execute('SELECT count(*) FROM holds').fetchone()[0]:raise SpendError('LEDGER_RECONCILIATION_REQUIRED')
++            if db.execute("SELECT count(*) FROM request_holds WHERE status='OPEN'").fetchone()[0]:raise SpendError('LEDGER_RECONCILIATION_REQUIRED')
+             session=db.execute('SELECT * FROM sessions WHERE owner=?',(owner,)).fetchone()
+             if not session or (session['case_id'],session['thread'])!=(case,thread):raise SpendError('LIVE_SESSION_REQUIRED')
+             if db.execute('SELECT id FROM requests WHERE id=?',(id,)).fetchone():raise SpendError('REQUEST_ALREADY_RESERVED; reconcile, never blindly rebill')
+@@ -107,6 +128,14 @@
+                 if total+amount>limit:raise SpendError('PROJECT_SPENDING_CAP' if scope=='project' else 'INVESTIGATION_SPENDING_CAP')
+                 for threshold in [50,80,95,100]:
+                     if (total+amount)*100>=limit*threshold:db.execute('INSERT OR IGNORE INTO warnings VALUES(?,?,?)',(scope,threshold,time.time()))
++            if token_reservation is not None:
++                if type(token_reservation)is not int or token_reservation<0 or type(token_limit)is not int or type(base_tokens)is not int or base_tokens<0:raise SpendError('INVALID_TOKEN_ACCOUNTING')
++                current=self.token_total(db,thread);floor=max(0,base_tokens-current)
++                if max(base_tokens,current)+token_reservation>token_limit:raise SpendError('TOKEN_BUDGET')
++                db.execute('INSERT OR IGNORE INTO token_floors VALUES(?,0)',(thread,))
++                db.execute('UPDATE token_floors SET baseline=baseline+? WHERE thread=?',(floor,thread))
++                db.execute('INSERT INTO token_usage VALUES(?,?,?,NULL)',(id,thread,token_reservation))
++            self.event(db,id,'RESERVE','PROVIDER','Atomic request reservation',{'nanodollars':amount,'token_allowance':token_reservation})
+             db.execute('INSERT INTO requests VALUES(?,?,?,?,?,?,?,?,?,?,?,?)',(id,case,thread,model,milestone,pricing,amount,None,'RESERVED',None,None,time.time()))
+     def reconcile(self,id,actual,usage,category=None):
+         if actual is not None and (type(actual)is not int or actual<0):raise SpendError('INVALID_RECONCILIATION_AMOUNT')
+@@ -119,32 +148,68 @@
+                 return
+             status='SETTLED' if actual is not None else 'UNCERTAIN'
+             if actual is not None and actual>old['reserved']:
+-                status='SETTLED_OVER_RESERVATION';db.execute('INSERT OR REPLACE INTO holds VALUES(1,?)',('Provider usage exceeded conservative reservation; review pricing and limits',))
++                status='SETTLED_OVER_RESERVATION';db.execute('INSERT OR IGNORE INTO request_holds VALUES(?,?,?,?)',(id,'Actual cost exceeds reservation; verify pricing/usage and caps','OPEN',time.time()))
++            from .tokens import total_usage
++            db.execute('UPDATE token_usage SET consumed=? WHERE request_id=?',(total_usage(usage),id))
++            self.event(db,id,'RECONCILE','PROVIDER',category or status,{'charged':actual,'usage':usage,'status':status})
+             db.execute('UPDATE requests SET charged=?,status=?,usage=?,error=? WHERE id=?',(actual,status,encoded,category,id))
+     def summary(self,case=None):
+         with self.db() as db:
+             cap=db.execute('SELECT project_cap FROM config').fetchone()[0];total=self.spent(db)
+             case_row=db.execute('SELECT cap FROM cases WHERE id=?',(case,)).fetchone() if case else None
+-            return {'currency':'USD','unit':'nanodollars','project_cap':cap,'project_accounted':total,'project_remaining':max(0,cap-total),
++            return {'currency':'USD','unit':'nanodollars','configuration':dict(db.execute('SELECT * FROM config').fetchone()),'project_cap':cap,'project_accounted':total,'project_remaining':max(0,cap-total),
+                 'case_cap':case_row[0] if case_row else None,'case_accounted':self.spent(db,case) if case else None,
+-                'uncertain_requests':db.execute("SELECT count(*) FROM requests WHERE status!='SETTLED'").fetchone()[0],
+-                'holds':[dict(row) for row in db.execute('SELECT * FROM holds')],'sessions':[dict(row) for row in db.execute('SELECT * FROM sessions')],
++                'uncertain_requests':db.execute("SELECT count(*) FROM requests WHERE status IN ('RESERVED','UNCERTAIN')").fetchone()[0],
++                'holds':[dict(row) for row in db.execute("SELECT * FROM request_holds WHERE status='OPEN'")],'sessions':[dict(row) for row in db.execute('SELECT * FROM sessions')],
+                 'warnings':[dict(row) for row in db.execute('SELECT * FROM warnings ORDER BY scope,threshold')],
+                 'accounting_scope':'Managed requests since B10-O; historical/external billing unknown; not a Google hard cap'}
+ 
+-    def update_limits(self,*,reason,project_limit=None,default_case_limit=None,max_concurrent=None):
++    def update_limits(self,*,reason,project_limit=None,default_case_limit=None,max_concurrent=None,complex_case_limit=None):
+         if not isinstance(reason,str) or not reason.strip():raise SpendError('OPERATOR_REASON_REQUIRED')
+         with self.transaction() as db:
+             if db.execute('SELECT count(*) FROM sessions').fetchone()[0]:raise SpendError('STOP_LIVE_SESSIONS_BEFORE_CONFIG_CHANGE')
+             old=dict(db.execute('SELECT * FROM config WHERE id=1').fetchone());new=dict(old)
+             if project_limit is not None:new['project_cap']=dollars(project_limit)
+             if default_case_limit is not None:new['case_cap']=dollars(default_case_limit)
++            if complex_case_limit is not None:new['complex_cap']=dollars(complex_case_limit)
+             if max_concurrent is not None:
+                 if type(max_concurrent)is not int or not 1<=max_concurrent<=4:raise SpendError('INVALID_CONCURRENCY_LIMIT')
+                 new['max_concurrent']=max_concurrent
+             if new['project_cap']<self.spent(db) or new['case_cap']>new['project_cap']:raise SpendError('LIMIT_BELOW_ACCOUNTED_USAGE')
+-            db.execute('UPDATE config SET project_cap=?,case_cap=?,max_concurrent=? WHERE id=1',(new['project_cap'],new['case_cap'],new['max_concurrent']))
++            db.execute('UPDATE config SET project_cap=?,case_cap=?,max_concurrent=?,complex_cap=? WHERE id=1',(new['project_cap'],new['case_cap'],new['max_concurrent'],new['complex_cap']))
+             db.execute('INSERT INTO config_changes(previous,current,reason,created) VALUES(?,?,?,?)',(json.dumps(old),json.dumps(new),reason,time.time()))
+ 
++    @staticmethod
++    def event(db,id,operation,operator,reason,payload):
++        db.execute('INSERT INTO accounting_events(request_id,operation,operator,reason,payload,created) VALUES(?,?,?,?,?,?)',(id,operation,operator,reason,json.dumps(payload,sort_keys=True),time.time()))
++    @staticmethod
++    def token_total(db,thread):
++        floor=db.execute('SELECT baseline FROM token_floors WHERE thread=?',(thread,)).fetchone()
++        return (floor[0] if floor else 0)+db.execute('SELECT coalesce(sum(coalesce(consumed,reserved)),0) FROM token_usage WHERE thread=?',(thread,)).fetchone()[0]
++    def thread_tokens(self,thread):
++        with self.db() as db:return self.token_total(db,thread)
++    def inspect_hold(self,id):
++        with self.db() as db:
++            hold=db.execute('SELECT * FROM request_holds WHERE request_id=?',(id,)).fetchone()
++            request=db.execute('SELECT * FROM requests WHERE id=?',(id,)).fetchone()
++            return {'hold':dict(hold) if hold else None,'request':dict(request) if request else None,'caps':dict(db.execute('SELECT * FROM config').fetchone()),'project_accounted':self.spent(db),'case_accounted':self.spent(db,request['case_id']) if request else None}
++    def resolve_hold(self,id,*,authorized,operator,reason,verified_pricing,usage_sha256,evidence_ref,pricing=None):
++        import hashlib
++        if authorized is not True or not all(isinstance(v,str) and v.strip() for v in [operator,reason,evidence_ref]):raise SpendError('EXPLICIT_OPERATOR_AUTHORIZATION_REQUIRED')
++        with self.transaction() as db:
++            if db.execute('SELECT count(*) FROM sessions').fetchone()[0]:raise SpendError('STOP_LIVE_SESSIONS_BEFORE_RECONCILIATION')
++            hold=db.execute("SELECT * FROM request_holds WHERE request_id=? AND status='OPEN'",(id,)).fetchone()
++            request=db.execute('SELECT * FROM requests WHERE id=?',(id,)).fetchone()
++            if not hold or not request:raise SpendError('EXACT_OPEN_HOLD_AND_REQUEST_REQUIRED')
++            if request['status']!='SETTLED_OVER_RESERVATION' or request['charged'] is None or not request['usage']:raise SpendError('BILLING_UNRESOLVED')
++            if request['pricing']!=verified_pricing or hashlib.sha256(request['usage'].encode()).hexdigest()!=usage_sha256:raise SpendError('VERIFIED_ACCOUNTING_BINDING_REQUIRED')
++            tariff=pricing or Pricing()
++            if tariff.version!=verified_pricing or tariff.data['model']!=request['model'] or tariff.actual(json.loads(request['usage']))!=request['charged']:raise SpendError('SETTLED_USAGE_REPRICING_REQUIRED')
++            config=db.execute('SELECT * FROM config').fetchone();case=db.execute('SELECT cap FROM cases WHERE id=?',(request['case_id'],)).fetchone()
++            if self.spent(db)>config['project_cap'] or self.spent(db,request['case_id'])>case[0]:raise SpendError('CAP_RECONCILIATION_REQUIRED')
++            self.event(db,id,'RESOLVE_HOLD',operator,reason,{'request':dict(request),'evidence_ref':evidence_ref,'verified_pricing':verified_pricing,'usage_sha256':usage_sha256,'caps':dict(config)})
++            db.execute("UPDATE request_holds SET status='RESOLVED' WHERE request_id=?",(id,))
++
+ if __name__=='__main__':
+-    print(json.dumps(Ledger().summary(),indent=2))
++    from .spending_cli import main
++    main()
+--- /dev/null
++++ b/backend/app/agents/spending_cli.py
+@@ -0,0 +1,18 @@
++"""Trusted local operator accounting; no network, no blanket hold clearing."""
++import argparse,json
++from .spending import Ledger
++
++def main():
++    p=argparse.ArgumentParser();p.add_argument('--ledger');sub=p.add_subparsers(dest='command')
++    cfg=sub.add_parser('configure');cfg.add_argument('--project-usd',required=True);cfg.add_argument('--case-usd',required=True);cfg.add_argument('--complex-usd',default='1.50');cfg.add_argument('--operator',required=True);cfg.add_argument('--reason',required=True);cfg.add_argument('--authorize',action='store_true');cfg.add_argument('--max-concurrent',type=int,default=1)
++    inspect=sub.add_parser('hold');inspect.add_argument('request_id')
++    resolve=sub.add_parser('resolve-hold');resolve.add_argument('request_id')
++    for flag in ['operator','reason','verified-pricing','usage-sha256','evidence-ref']:resolve.add_argument('--'+flag,required=True)
++    resolve.add_argument('--authorize',action='store_true')
++    args=p.parse_args();ledger=Ledger(args.ledger) if args.ledger else Ledger()
++    if args.command=='configure':
++        if not args.authorize:p.error('Explicit --authorize required')
++        ledger.update_limits(reason=args.operator+': '+args.reason,project_limit=args.project_usd,default_case_limit=args.case_usd,complex_case_limit=args.complex_usd,max_concurrent=args.max_concurrent)
++    elif args.command=='resolve-hold':ledger.resolve_hold(args.request_id,authorized=args.authorize,operator=args.operator,reason=args.reason,verified_pricing=args.verified_pricing,usage_sha256=args.usage_sha256,evidence_ref=args.evidence_ref)
++    print(json.dumps(ledger.inspect_hold(args.request_id) if args.command in ['hold','resolve-hold'] else ledger.summary(),indent=2))
++if __name__=='__main__':main()
+--- /dev/null
++++ b/backend/app/agents/tokens.py
+@@ -0,0 +1,36 @@
++"""Offline tokenizer proxy estimates, never byte counts or provider-confirmed tokens."""
++import hashlib,json,math
++from functools import lru_cache
++from pathlib import Path
++import sentencepiece as spm
++from app.active import ROOT
++
++ASSET=ROOT/'.runtime/tokenizers/gemma3.model'
++SHA256='1299c11d7cf632ef3b4e11937501358ada021bbdf7c47638d13c0ee982f2e79c'
++URL='https://raw.githubusercontent.com/google/gemma_pytorch/014acb7ac4563a5f77c76d7ff98f31b568c16508/tokenizer/gemma3_cleaned_262144_v2.spiece.model'
++VERSION='gemma3-proxy-3.8-v1'
++
++@lru_cache(maxsize=1)
++def tokenizer():
++    if not ASSET.is_file():raise ValueError('OFFLINE_TOKENIZER_MISSING: run scripts/configure_tokenizer.py')
++    data=ASSET.read_bytes()
++    if hashlib.sha256(data).hexdigest()!=SHA256:raise ValueError('OFFLINE_TOKENIZER_HASH_MISMATCH')
++    return spm.SentencePieceProcessor(model_proto=data)
++
++def plan(body,*,provider_count=None):
++    """Count complete steering JSON as well as prompt; no chars/bytes-to-token ratio."""
++    encoded=json.dumps(body,sort_keys=True,separators=(',',':'),ensure_ascii=False)
++    local=len(tokenizer().encode(encoded,out_type=int))
++    if provider_count is not None:
++        if type(provider_count)is not int or not 0<=provider_count<=1_000_000:raise ValueError('INVALID_PROVIDER_COUNT')
++        allowance=provider_count+16;method='PROVIDER_COUNT_WITH_16_FRAMING_ALLOWANCE'
++    else:
++        allowance=math.ceil(local*1.25)+256;method='LOCAL_PROXY_ESTIMATE_25_PERCENT_PLUS_256'
++    output=body['generationConfig']['maxOutputTokens']
++    return {'serialized_utf8_bytes':len(encoded.encode()),'local_proxy_tokens':local,'tokenizer_version':VERSION,
++        'provider_count_tokens':provider_count,'method':method,'input_allowance_tokens':allowance,'output_allowance_tokens':output,
++        'total_allowance_tokens':allowance+output,'uncertainty':'Gemma3 is not verified exact for Gemini3.8; live mode additionally counts full request with provider. Framing/model accounting may differ; actual usage is authoritative.'}
++
++def total_usage(usage):
++    value=usage.get('totalTokenCount')
++    return value if type(value)is int and 0<=value<=1_000_000 else None
+--- a/backend/pyproject.toml
++++ b/backend/pyproject.toml
+@@ -16,6 +16,7 @@
+     "mcp==2.3.0",
+     "jsonschema==4.26.0",
+     "httpx==0.28.1",
++    "sentencepiece==0.2.1",
+     "langgraph==1.2.16",
+     "langchain-falkordb[langgraph]==0.2.0",
+ ]
+--- /dev/null
++++ b/backend/tests/b10or_context.py
+@@ -0,0 +1,97 @@
++"""Real registry/B09 history/MCP catalog context benchmark, no model/provider calls."""
++import asyncio,json,tempfile
++from pathlib import Path
++from uuid import uuid4
++from app.active import active_scope
++from app.config import Settings
++from app.graph.connection import connect
++from app.graph.queries import GraphQueries
++from app.agents.mcp import brokers
++from app.agents.runtime import InvestigationAgent
++from app.agents.checkpoints import saver
++from app.agents.spending import Pricing
++from app.agents.provider import Gemini,ProviderSettings
++from app.agents.policy import Permit
++from app.agents.spending import Ledger
++from app.agents.tokens import plan
++from tests.unit.test_agent_token_accounting import body,response
++from tests.b08_fixtures import populate_history,payload
++from tests.schema_examples import edge,NOW
++from app.services.complaints import ComplaintService
++import httpx,pytest
++from app.mcp.civicly.contracts import Context
++from app.services.evidence.policies import POLICIES
++from tests.b10_fixtures import create,state,ScriptedModel
++from tests.b09_fixtures import Fixture,propose,report,assess
++
++
++async def measure(db,issue,cause):
++    with tempfile.TemporaryDirectory(prefix='civicly-b10o-benchmark-') as directory:
++        path=Path(directory)/'profile.json';p,r,clock,receipt,inv=create(db,path,issue)
++        try:
++            with active_scope(p):
++                f=Fixture(r,clock,{issue:receipt},p.graph,{})
++                populate_history(r)
++                h=propose(f,inv,issue,cause);rule=POLICIES[issue][cause]
++                other={'WATERLOGGING':'CAPACITY_DEFICIT','ROAD_DAMAGE':'UTILITY_LEAK','WASTE_ACCUMULATION':'CAPACITY_SHORTFALL'}[issue]
++                changes={}
++                if issue=='ROAD_DAMAGE':
++                    r.create_relationship('UNDERLIES','P1','R1',{**edge('B10OR-DEPENDENCY'),'valid_from':NOW,'association_status':'VERIFIED','source_evidence_id':'EV'})
++                    changes={'asset_ids':['P1'],'topology':{'source_id':'P1','target_id':'R1','operation':'dependencies','max_hops':3}}
++                    older=ComplaintService(r,clock=clock).intake(payload(issue,ref='older-episode',occurred_at='2026-09-01T04:00:00Z',reported_at='2026-09-01T05:00:00Z'))
++                    assert older.incident_id!=receipt.incident_id
++                h2=propose(f,inv,issue,other,ref='alternative',**changes)
++                asset={'WATERLOGGING':'D1','ROAD_DAMAGE':'R1','WASTE_ACCUMULATION':'W1'}[issue]
++                report(f,inv,'negative',codes=rule['falsifying'][:1],assets=[asset])
++                report(f,inv,'unreviewed',codes=rule['confirming'][:1],assets=[asset],reviewed=False)
++                for index in range(8):assess(f,h,ref='benchmark-assessment-'+str(index))
++                async with brokers(p,path) as tools:
++                    s=state(p,r,tools,clock,receipt,inv,issue);s.hypotheses=[h,h2];s.iterations=13
++                    agent=InvestigationAgent(p,r,tools,ScriptedModel([]),saver(p),clock=clock)
++                    cached=0
++                    for index in range(4):
++                        ctx=Context(trace_id=s.thread_id,execution_id=uuid4().hex,investigation_id=inv,source_graph=p.graph,caller_role='READ_ONLY',invocation_origin='APPLICATION')
++                        name='civicly::get_pickup_execution_history' if issue=='WASTE_ACCUMULATION' else 'official::query_graph_readonly'
++                        args={'collection_point_id':'W1','days':30,'as_of':clock()} if issue=='WASTE_ACCUMULATION' else {'template':'node','id':receipt.incident_id}
++                        if issue=='ROAD_DAMAGE':
++                            if index==1:
++                                name='civicly::trace_infrastructure_dependencies';args={'investigation_id':inv,'asset_id':'P1','network':'TYPED_DEPENDENCIES','direction':'DOWNSTREAM','max_hops':3,'as_of':clock(),'include_candidates':False}
++                            elif index==2:args={'template':'node','id':older.incident_id}
++                        result=await tools.call(name,args,ctx,'Operator benchmark, no model selected rationale',cutoff=s.as_of)
++                        if tools.last_cache_receipt:cached+=1;result={**result,'host_read_cache':tools.last_cache_receipt}
++                        s.observations.append(result)
++                    s.tool_calls=4
++                    history=agent.service.history(h,clock());original=[a.model_dump(mode='json') for a in history]
++                    s.evidence={ref.id:ref.content_hash for a in history for ref in a.evidence_references}
++                    old={'state':s.model_dump(mode='json'),'catalog':tools.catalog(),'policies':POLICIES[issue],'controlled_action_schemas':agent.action_schemas(),
++                        'hypotheses':[{'id':h,'definition':r.get_node(h).properties,'assessments':original},{'id':h2,'definition':r.get_node(h2).properties,'assessments':[]}],
++                        'departments':r._read('MATCH (d:Department {municipality_id:$scope}) RETURN d.id LIMIT 10',{'scope':'demo-city'}),'budget_notice':'Missing/history/candidate/negative results never prove causation; B09 assessments authoritative.'}
++                    new=agent.context(s)
++                    assert len(history)==8 and len(new['catalog'])==16 and [v.model_dump(mode='json') for v in agent.service.history(h,clock())]==original
++                    for a,b in zip(original[:-1],new['hypotheses'][0]['historical_material']):assert a['classification']==b['classification'] and a['paths']==b['paths']
++                    sizes={key:len(json.dumps(value,separators=(',',':')).encode()) for key,value in [('before',old),('after',new)]}
++                    assert sizes['after']<sizes['before']
++                    before_plan,after_plan=plan(body(old)),plan(body(new))
++                    assert before_plan['serialized_utf8_bytes']+4096>60000
++                    assert after_plan['total_allowance_tokens']<60000
++                    assert new['hypotheses'][0]['assessments'][0]['classification']['reviewed_contradiction_ids']
++                    assert new['hypotheses'][0]['assessments'][0]['classification']['unreviewed_support_ids']
++                    if issue=='WASTE_ACCUMULATION':assert len(s.observations[0]['pickup_executions'])==3
++                    boundaries=[]
++                    for delta in [-1,0,1]:
++                        seen=[]
++                        m=Gemini(ProviderSettings(GEMINI_API_KEY='synthetic-test-key'),permit=Permit.mocked(),ledger=Ledger(Path(directory)/('budget'+str(delta))),transport=httpx.MockTransport(lambda req:(seen.append(1),response())[1]))
++                        if delta<0:
++                            with pytest.raises(__import__('app.agents.provider',fromlist=['ProviderError']).ProviderError,match='TOKEN_BUDGET'):await m.choose(new,after_plan['total_allowance_tokens']+delta)
++                            assert not seen
++                        else:assert (await m.choose(new,after_plan['total_allowance_tokens']+delta))[1]==130
++                        boundaries.append({'delta':delta,'generation_requests':len(seen),'simulated_consumed_tokens':130 if seen else 0})
++                    return {'token_plans':{'before':before_plan,'after':after_plan},'boundary_cases':boundaries,'episode_ids':[receipt.incident_id,older.incident_id] if issue=='ROAD_DAMAGE' else [receipt.incident_id],'competing_hypotheses':[cause,other],'issue':issue,'mode':'REAL_B09_GRAPH_AND_MCP_NO_MODEL','assessment_versions':8,'observations':4,'actual_mcp_read_calls':4-cached,'cached_original_execution_references':cached,
++                        'json_utf8_bytes':sizes,'reduction_fraction':1-sizes['after']/sizes['before'],
++                        'simulated_context_allocation_nusd':{k:Pricing().estimate(v,4096) for k,v in sizes.items()},
++                        'estimate_scope':'Context JSON plus framing/output allowance, excludes prompt/selection schema. Not tokenizer or billed savings',
++                        'classification_and_paths_preserved':True,'full_history_unchanged':True,'all_actual_tool_names':[v['name'] for v in tools.catalog()],'actual_gemini_requests':0}
++        finally:
++            for name in [p.graph,p.checkpoints]:
++                if name in db.list_graphs():db.select_graph(name).delete()
++            db.connection.execute_command('ACL','DELUSER',p.read_user,p.checkpoint_user)
+--- /dev/null
++++ b/backend/tests/b10or_http.py
+@@ -0,0 +1,49 @@
++"""TEST ONLY graph-reactive simulated Gemini transport; never a model-quality claim."""
++import json
++import httpx
++from app.agents.provider import PROMPT
++from app.agents.models import Selection
++from tests.b10_fixtures import choose
++
++class ReactiveHTTP:
++    def __init__(self,selector,*,fault=None):self.selector=selector;self.fault=fault;self.contexts=[];self.calls=0
++    async def __call__(self,request):
++        assert request.url.path.endswith(':generateContent')
++        self.calls+=1;body=json.loads(request.content)
++        assert body['generationConfig']['responseJsonSchema']==Selection.model_json_schema()
++        assert body['generationConfig']['thinkingConfig']=={'thinkingLevel':'LOW'}
++        text=body['contents'][0]['parts'][0]['text'];assert text.startswith(PROMPT+'\nCONTEXT_JSON:\n')
++        raw=text.split('\nCONTEXT_JSON:\n',1)[1].split('\nPrevious output failed strict validation.',1)[0]
++        context=json.loads(raw);self.contexts.append(context)
++        if self.calls==1 and self.fault:
++            if self.fault=='timeout':raise httpx.ReadTimeout('SIMULATED',request=request)
++            if self.fault in {'503','429','quota'}:
++                code=503 if self.fault=='503' else 429
++                payload={'error':{'details':[{'@type':'type.googleapis.com/google.rpc.QuotaFailure','violations':[{'quotaId':'requestsPerDay'}]}]}} if self.fault=='quota' else {}
++                return httpx.Response(code,headers={'retry-after':'0'},json=payload)
++            if self.fault=='invalid':return self.response({'bad':'SIMULATED_INVALID_OUTPUT'})
++        selection,_=await self.selector.choose(context,context['state']['remaining']['tokens'])
++        return self.response(selection.model_dump(mode='json'))
++    @staticmethod
++    def response(value):
++        return httpx.Response(200,json={'modelVersion':'gemini-3.8-flash','usageMetadata':{'promptTokenCount':100,'candidatesTokenCount':20,'thoughtsTokenCount':10,'totalTokenCount':130},'candidates':[{'content':{'parts':[{'text':json.dumps(value)}]}}]})
++
++class ReadPause:
++    async def choose(self,c,remaining):
++        s=c['state']
++        last=s['observations'][-1] if s['observations'] else {}
++        # Each resumed wake gets another real read, using persisted graph-backed results.
++        if s['refresh_required'] or not last or last.get('host_generated') or getattr(self,'wake',None)!=s['wakes']:
++            self.wake=s['wakes'];return Selection.model_validate(choose('READ',{'template':'node','id':s['incident_ids'][0]},'official::query_graph_readonly')),0
++        return Selection.model_validate(choose()),0
++
++class HistoryReactive:
++    """Test selector responds to actual B09 contradiction, including CONTESTED cases."""
++    async def choose(self,c,remaining):
++        from tests.integration.test_agent_reasoning import EvidenceReactiveFake
++        selection,used=await EvidenceReactiveFake().choose(c,remaining)
++        if selection.action=='INSPECT':
++            latest=c['hypotheses'][0]['assessments'][-1]
++            if latest['classification']['reviewed_contradiction_ids']:
++                return Selection.model_validate(choose('INSPECT',{'asset_ids':['D1'],'department_id':'DEP','inspection_type':'CAPACITY_TEST'})),used
++        return selection,used
+--- /dev/null
++++ b/backend/tests/b10or_worker.py
+@@ -0,0 +1,23 @@
++"""TEST ONLY fresh Python process with mock HTTP and real MCP/FalkorDBSaver."""
++import asyncio,json,sys
++from pathlib import Path
++from app.active import load,active_scope
++from app.config import Settings
++from app.graph.connection import connect
++from app.graph.repository import GraphRepository
++from app.agents.mcp import brokers
++from app.agents.runtime import InvestigationAgent
++from app.agents.checkpoints import saver
++from app.agents.models import InvestigationState
++from tests.b09_fixtures import Clock
++from tests.b10or_http import ReactiveHTTP,ReadPause
++from tests.integration.test_agent_accounting import model
++async def main():
++    path,phase,src,out=sys.argv[1:];p=load(path);s=InvestigationState.model_validate_json(Path(src).read_text());clock=Clock()
++    with connect(Settings(_env_file='.env')) as db,active_scope(p):
++        r=GraphRepository(db,p.graph,lease_seconds=30)
++        async with brokers(p,path) as tools:
++            a=InvestigationAgent(p,r,tools,model(s,Path(src).parent,ReactiveHTTP(ReadPause())),saver(p),clock=clock)
++            result=await a.run(s if phase=='create' else None,thread_id=s.thread_id,resume=phase!='create')
++            Path(out).write_text(json.dumps(result,default=str))
++if __name__=='__main__':asyncio.run(main())
+--- /dev/null
++++ b/backend/tests/integration/test_agent_accounting.py
+@@ -0,0 +1,145 @@
++"""Simulated Gemini HTTP, actual FalkorDB/B09/MCP/LangGraph/Saver and SQLite."""
++import asyncio,json,os,subprocess
++from pathlib import Path
++import httpx,pytest
++from app.active import active_scope
++from app.agents.provider import Gemini,ProviderSettings
++from app.agents.policy import Permit
++from app.agents.spending import Ledger
++from app.agents.runtime import InvestigationAgent
++from app.agents.checkpoints import saver,RecoveryRequired
++from app.agents.mcp import brokers
++from app.agents.models import Budget
++from tests.b10_fixtures import create,state
++from tests.b10or_http import ReactiveHTTP,ReadPause,HistoryReactive
++from tests.integration.test_agent_reasoning import EvidenceReactiveFake,TopologyReactiveFake
++from tests.integration.test_agent_optimization import cleanup
++from tests.b09_fixtures import Fixture,report
++from tests.schema_examples import edge,NOW
++pytestmark=pytest.mark.integration
++
++def model(initial,tmp,handler):
++    return Gemini(ProviderSettings(GEMINI_API_KEY='synthetic-test-key',CIVICLY_LLM_RETRY_WAIT_BUDGET=0),permit=Permit(initial.investigation_id,initial.thread_id,'B10OR-TEST','.50','MOCK_HTTP'),ledger=Ledger(tmp/'ledger'),transport=httpx.MockTransport(handler))
++
++def test_http_graph_contradiction_changes_inspection(db,tmp_path):
++    path=tmp_path/'profile.json';p,r,clock,receipt,inv=create(db,path)
++    async def run():
++        with active_scope(p):
++            async with brokers(p,path) as tools:
++                s=state(p,r,tools,clock,receipt,inv);http=ReactiveHTTP(HistoryReactive());m=model(s,tmp_path,http)
++                first=await InvestigationAgent(p,r,tools,m,saver(p),clock=clock).run(s,thread_id=s.thread_id)
++                assert len(first['data']['hypotheses'])==2 and first['data']['executions']
++                f=Fixture(r,clock,{'WATERLOGGING':receipt},p.graph,{})
++                report(f,inv,'reviewed-clear',codes=['DRAIN_CLEAR'],assets=['D1'])
++                report(f,inv,'context-only',codes=['GENERAL_DRAIN_NOTE'],assets=['D1'])
++                report(f,inv,'unreviewed-blockage',codes=['OBSTRUCTION_OBSERVED'],assets=['D1'],reviewed=False)
++                clock.advance()
++                resumed=await InvestigationAgent(p,r,tools,model(s,tmp_path,http),saver(p),clock=clock).run(thread_id=s.thread_id,resume=True)
++                a,b=[v['data']['pending_inspections'][-1] for v in [first,resumed]]
++                assert r.get_node(a).properties['inspection_type']=='BLOCKAGE_INSPECTION'
++                assert r.get_node(b).properties['inspection_type']=='CAPACITY_TEST'
++                assert resumed['data']['tokens']>first['data']['tokens']>0
++                assert len(http.contexts[-1]['catalog'])==16
++                classification=http.contexts[-1]['hypotheses'][0]['assessments'][0]['classification']
++                assert classification['reviewed_contradiction_ids'] and classification['unreviewed_support_ids'] and classification['contextual_evidence_ids']
++                Path('/tmp/civicly-b10or-http-contradiction.json').write_text(json.dumps({'mode':'SIMULATED_GEMINI_HTTP_REAL_MCP_B09_SAVER','requests':http.calls,'classification':classification,'first':first,'resumed':resumed},default=str,indent=2))
++    try:asyncio.run(run())
++    finally:cleanup(db,p)
++
++@pytest.mark.parametrize('topology,target',[('VERIFIED','P1'),('CANDIDATE','R1'),('DISCONNECTED','R1')])
++def test_http_topology_selection(db,tmp_path,topology,target):
++    path=tmp_path/'profile.json';p,r,clock,receipt,inv=create(db,path,'ROAD_DAMAGE')
++    async def run():
++        with active_scope(p):
++            if topology!='DISCONNECTED':r.create_relationship('UNDERLIES','P1','R1',{**edge('B10OR-PIPE'),'valid_from':NOW,'association_status':topology,'source_evidence_id':'EV'})
++            async with brokers(p,path) as tools:
++                s=state(p,r,tools,clock,receipt,inv,'ROAD_DAMAGE');s.asset_ids=['P1','R1'];h=ReactiveHTTP(TopologyReactiveFake())
++                result=await InvestigationAgent(p,r,tools,model(s,tmp_path,h),saver(p),clock=clock).run(s,thread_id=s.thread_id)
++                assert r._read('MATCH (:Inspection {id:$id})-[:INSPECTS]->(n) RETURN n.id',{'id':result['data']['pending_inspections'][-1]})==[[target]]
++                assert result['data']['observations'][0]['search_limited'] is True
++                assert result['data']['tokens']==130*h.calls
++    try:asyncio.run(run())
++    finally:cleanup(db,p)
++
++@pytest.mark.parametrize('fault',['503','429','invalid','timeout','quota'])
++def test_http_failure_recovery_no_duplicate_actions(db,tmp_path,fault):
++    path=tmp_path/'profile.json';p,r,clock,receipt,inv=create(db,path)
++    async def run():
++        with active_scope(p):
++            async with brokers(p,path) as tools:
++                s=state(p,r,tools,clock,receipt,inv);h=ReactiveHTTP(ReadPause(),fault=fault)
++                first=await InvestigationAgent(p,r,tools,model(s,tmp_path,h),saver(p),clock=clock).run(s,thread_id=s.thread_id)
++                assert first['__interrupt__']
++                if fault in {'timeout','quota'}:
++                    assert h.calls==1 and not first['data']['executions']
++                    clock.advance();first=await InvestigationAgent(p,r,tools,model(s,tmp_path,h),saver(p),clock=clock).run(thread_id=s.thread_id,resume=True)
++                assert len(first['data']['executions'])==1 and len(set(first['data']['decisions']))==2
++                assert len(first['data']['hypotheses'])==len(first['data']['pending_inspections'])==0
++                assert first['data']['tokens']>=130*len(first['data']['decisions'])
++                assert h.calls<=4
++    try:asyncio.run(run())
++    finally:cleanup(db,p)
++
++def test_token_budget_checkpoint_authorized_increase_preserves_counters(db,tmp_path):
++    path=tmp_path/'profile.json';p,r,clock,receipt,inv=create(db,path)
++    async def run():
++        with active_scope(p):
++            async with brokers(p,path) as tools:
++                s=state(p,r,tools,clock,receipt,inv);s.budget=Budget(max_tokens=2000,max_wakes=1);h=ReactiveHTTP(ReadPause())
++                first=await InvestigationAgent(p,r,tools,model(s,tmp_path,h),saver(p),clock=clock).run(s,thread_id=s.thread_id)
++                assert first['__interrupt__'] and 'TOKEN_BUDGET' in first['data']['errors'] and h.calls==0
++                a=InvestigationAgent(p,r,tools,model(s,tmp_path,h),saver(p),clock=clock)
++                with pytest.raises(RecoveryRequired,match='AUTHORIZATION'):await a.run(thread_id=s.thread_id,resume=True,budget_increase=Budget().model_dump())
++                with pytest.raises(RecoveryRequired,match='DECREASE'):await a.run(thread_id=s.thread_id,resume=True,budget_increase=Budget(max_tokens=2000,max_tools=1).model_dump(),authorized=True,operator_reason='Invalid reduction')
++                clock.advance();result=await a.run(thread_id=s.thread_id,resume=True,budget_increase=Budget(max_wakes=1).model_dump(),authorized=True,operator_reason='Approved synthetic complex-case allowance')
++                assert result['data']['wakes']==1 and result['data']['tokens']==260 and len(result['data']['executions'])==1
++                assert result['data']['iterations']>first['data']['iterations']
++                assert any(o.get('operation')=='AUTHORIZED_BUDGET_INCREASE' for o in result['data']['observations'])
++                with pytest.raises(RecoveryRequired,match='WAKE_BUDGET'):await a.run(thread_id=s.thread_id,resume=True)
++                clock.advance();again=await a.run(thread_id=s.thread_id,resume=True,budget_increase=Budget(max_wakes=2).model_dump(),authorized=True,operator_reason='Approve one more wake; preserve all counters')
++                assert again['data']['wakes']==2 and again['data']['tokens']==520
++    try:asyncio.run(run())
++    finally:cleanup(db,p)
++
++def test_mock_http_real_process_restart(db,tmp_path):
++    path=tmp_path/'profile.json';p,r,clock,receipt,inv=create(db,path)
++    try:
++        async def prepare():
++            with active_scope(p):
++                async with brokers(p,path) as tools:return state(p,r,tools,clock,receipt,inv)
++        s=asyncio.run(prepare());src=tmp_path/'state.json';src.write_text(s.model_dump_json());results=[]
++        for phase in ['create','resume']:
++            out=tmp_path/(phase+'.json')
++            proc=subprocess.run([str(Path('backend/.venv/bin/python').absolute()),'-m','tests.b10or_worker',str(path),phase,str(src),str(out)],env={**os.environ,'PYTHONPATH':'backend'},capture_output=True,timeout=90)
++            assert proc.returncode==0,proc.stderr.decode()[-2000:]
++            results.append(json.loads(out.read_text()))
++        assert results[0]['data']['tokens']==260 and results[1]['data']['tokens']==520
++        assert results[1]['data']['wakes']==1 and len(results[1]['data']['executions'])==2
++        assert Ledger(tmp_path/'ledger').thread_tokens(s.thread_id)==520
++        Path('/tmp/civicly-b10or-process-proof.json').write_text(json.dumps({'mode':'SIMULATED_HTTP_TWO_REAL_PROCESSES','results':results},default=str,indent=2))
++    finally:cleanup(db,p)
++
++@pytest.mark.parametrize('issue,cause',[('WATERLOGGING','BLOCKAGE'),('ROAD_DAMAGE','SUBGRADE_FAILURE'),('WASTE_ACCUMULATION','MISSED_PICKUP')])
++def test_complex_real_context_token_boundaries(db,issue,cause):
++    from tests.b10or_context import measure
++    value=asyncio.run(measure(db,issue,cause))
++    Path('/tmp/civicly-b10or-context-'+issue+'.json').write_text(json.dumps(value,indent=2))
++
++
++def test_reported_usage_overrun_persists_without_counter_overflow(db,tmp_path):
++    path=tmp_path/'profile.json';p,r,clock,receipt,inv=create(db,path)
++    async def run():
++        with active_scope(p):
++            async with brokers(p,path) as tools:
++                s=state(p,r,tools,clock,receipt,inv);s.budget=Budget(max_tokens=150000);s.tokens=100000;seen=[]
++                def oversized(req):
++                    seen.append(1);v=ReactiveHTTP.response(__import__('tests.b10_fixtures',fromlist=['choose']).choose()).json()
++                    v['usageMetadata']={'promptTokenCount':999980,'candidatesTokenCount':20,'totalTokenCount':1000000}
++                    return httpx.Response(200,json=v)
++                m=model(s,tmp_path,oversized)
++                result=await InvestigationAgent(p,r,tools,m,saver(p),clock=clock).run(s,thread_id=s.thread_id)
++                assert result['__interrupt__'] and result['data']['tokens']==1100000 and 'TOKEN_BUDGET' in result['data']['errors']
++                assert len(seen)==1 and not result['data']['executions']
++                assert Ledger(tmp_path/'ledger').thread_tokens(s.thread_id)==1100000
++    try:asyncio.run(run())
++    finally:cleanup(db,p)
+--- /dev/null
++++ b/backend/tests/unit/test_agent_ledger_recovery.py
+@@ -0,0 +1,75 @@
++"""Actual SQLite history/migration/operator recovery; simulated usage only."""
++import hashlib,json,sqlite3
++from pathlib import Path
++import pytest
++from app.agents.spending import Ledger,Pricing,SpendError,dollars
++
++USAGE={'promptTokenCount':100,'candidatesTokenCount':20,'thoughtsTokenCount':0,'totalTokenCount':120}
++
++def hold(path):
++    l=Ledger(path);l.configure_case('I');l.acquire('I','T','O');p=Pricing()
++    l.reserve('R','I','T',p.data['model'],'B10-O-R',p.version,1000,'O')
++    l.reconcile('R',p.actual(USAGE),USAGE);l.release('O');return l
++
++def resolve(l,**changes):
++    info=l.inspect_hold('R');args=dict(authorized=True,operator='synthetic-operator',reason='Verified exact usage/pricing and available caps',verified_pricing=Pricing().version,usage_sha256=hashlib.sha256(info['request']['usage'].encode()).hexdigest(),evidence_ref='SYNTHETIC-RECEIPT-1');args.update(changes);l.resolve_hold('R',**args)
++
++def test_new_defaults_and_explicit_existing_config_upgrade(tmp_path):
++    l=Ledger(tmp_path/'new');assert l.summary()['configuration']['project_cap']==dollars(8)
++    l.configure_case('new');assert l.summary('new')['case_cap']==dollars('.50')
++    old=Ledger(tmp_path/'old',project_limit=6,default_case_limit='.15');old.configure_case('old');old.acquire('old','T','O');old.reserve('U','old','T','gemini-3.8-flash','B10','old',1000,'O');old.release('O')
++    assert Ledger(tmp_path/'old').summary('old')['case_cap']==dollars('.15')
++    old.update_limits(reason='Operator explicitly authorized8/.50',project_limit=8,default_case_limit='.50',complex_case_limit='1.50')
++    assert old.summary('old')['project_accounted']==1000 and old.summary('old')['case_cap']==dollars('.15')
++    old.configure_case('complex','1.50')
++    with pytest.raises(SpendError):old.configure_case('too-large','1.51')
++
++
++def test_hold_recovers_after_reopen_without_changing_request(tmp_path):
++    path=tmp_path/'l';l=hold(path);before=l.inspect_hold('R')['request'];resolve(Ledger(path));new=Ledger(path)
++    assert new.inspect_hold('R')['request']==before and new.inspect_hold('R')['hold']['status']=='RESOLVED'
++    new.acquire('I','T','N');new.reserve('NEXT','I','T','gemini-3.8-flash','B10-O-R','TEST',1000,'N')
++    with new.db() as db:
++        assert db.execute("SELECT count(*) FROM accounting_events WHERE operation='RESOLVE_HOLD'").fetchone()[0]==1
++        with pytest.raises(sqlite3.IntegrityError,match='IMMUTABLE'):db.execute('DELETE FROM accounting_events')
++
++@pytest.mark.parametrize('change',[{'authorized':False},{'reason':''},{'usage_sha256':'bad'},{'verified_pricing':'wrong'}])
++def test_no_unbound_hold_clear(tmp_path,change):
++    l=hold(tmp_path/'l')
++    with pytest.raises(SpendError):resolve(l,**change)
++    assert l.summary()['holds']
++
++
++def test_unresolved_billing_cannot_clear_and_caps_rechecked(tmp_path):
++    l=hold(tmp_path/'l');l.configure_case('I','.50')
++    with l.db() as db:db.execute("UPDATE cases SET cap=1 WHERE id='I'") # Deliberate stale-cap fault.
++    with pytest.raises(SpendError,match='CAP_RECONCILIATION'):resolve(l)
++    l.configure_case('I','.50');resolve(l)
++    l.acquire('I','T','O');l.reserve('U','I','T','gemini-3.8-flash','B10','TEST',1000,'O');l.reconcile('U',None,{});l.release('O')
++    with l.db() as db:db.execute("INSERT INTO request_holds VALUES('U','Uncertain billing','OPEN',0)")
++    with pytest.raises(SpendError,match='BILLING_UNRESOLVED'):l.resolve_hold('U',authorized=True,operator='op',reason='cannot clear',verified_pricing='TEST',usage_sha256='?',evidence_ref='?')
++
++
++def test_legacy_hold_mapping_is_repeatable_and_non_destructive(tmp_path):
++    path=tmp_path/'l';l=hold(path)
++    with l.db() as db:
++        db.execute('DROP TABLE request_holds');db.execute('DROP TABLE legacy_hold_links');db.execute("INSERT INTO holds VALUES(1,'Original overage')")
++    reopened=Ledger(path);assert len(reopened.summary()['holds'])==1
++    with reopened.db() as db:assert db.execute('SELECT reason FROM holds').fetchone()[0]=='Original overage'
++    resolve(reopened);assert not Ledger(path).summary()['holds']
++
++
++def test_exact_hold_resolution_in_fresh_operator_process(tmp_path):
++    import os,subprocess,sys
++    path=tmp_path/'ledger';l=hold(path);before=l.inspect_hold('R')['request']
++    proc=subprocess.run([sys.executable,'-m','app.agents.spending','--ledger',str(path),'resolve-hold','R','--operator','synthetic-restarted-operator','--reason','Verified simulated receipt after restart','--verified-pricing',Pricing().version,'--usage-sha256',hashlib.sha256(before['usage'].encode()).hexdigest(),'--evidence-ref','SIMULATED-RECEIPT','--authorize'],env={**os.environ,'PYTHONPATH':'backend'},capture_output=True,text=True,timeout=15)
++    assert proc.returncode==0 and json.loads(proc.stdout)['hold']['status']=='RESOLVED'
++    reopened=Ledger(path);assert not reopened.summary()['holds'] and reopened.inspect_hold('R')['request']==before
++    with reopened.db() as db:assert db.execute("SELECT operator FROM accounting_events WHERE operation='RESOLVE_HOLD'").fetchone()[0]=='synthetic-restarted-operator'
++
++
++def test_configuration_history_cannot_be_rewritten(tmp_path):
++    l=Ledger(tmp_path/'ledger');l.update_limits(reason='Reviewed allocation',project_limit=8,default_case_limit='.50')
++    with l.db() as db:
++        for sql in ['DELETE FROM config_changes',"UPDATE config_changes SET reason='rewritten'"]:
++            with pytest.raises(sqlite3.IntegrityError,match='IMMUTABLE'):db.execute(sql)
+--- /dev/null
++++ b/backend/tests/unit/test_agent_token_accounting.py
+@@ -0,0 +1,88 @@
++"""Real offline SentencePiece, mocked Gemini only; no provider-confirmed live counts."""
++import asyncio,json
++import httpx,pytest
++from app.agents.tokens import plan,tokenizer
++from app.agents.provider import Gemini,ProviderSettings,ProviderError,PROMPT
++from app.agents.spending import Ledger,Pricing
++from app.agents.policy import Permit
++from app.agents.models import Selection
++from tests.b10_fixtures import choose
++
++def body(context):
++    return {'contents':[{'role':'user','parts':[{'text':PROMPT+'\nCONTEXT_JSON:\n'+json.dumps(context,sort_keys=True,separators=(',',':'),allow_nan=False)}]}],'generationConfig':{'responseMimeType':'application/json','responseJsonSchema':Selection.model_json_schema(),'maxOutputTokens':4096,'thinkingConfig':{'thinkingLevel':'LOW'}}}
++
++def response():return httpx.Response(200,json={'modelVersion':'gemini-3.8-flash','usageMetadata':{'promptTokenCount':100,'candidatesTokenCount':20,'thoughtsTokenCount':10,'totalTokenCount':130},'candidates':[{'content':{'parts':[{'text':json.dumps(choose())}]}}]})
++
++def make(tmp_path,handler,*,verify=False):
++    return Gemini(ProviderSettings(GEMINI_API_KEY='synthetic-test-key',CIVICLY_LLM_RETRY_WAIT_BUDGET=0),permit=Permit.mocked(),ledger=Ledger(tmp_path/'ledger'),transport=httpx.MockTransport(handler),verify_tokens=verify)
++
++def test_official_vocab_smoke_and_byte_false_rejection_fixed(tmp_path):
++    assert len(tokenizer().encode('What is your name?'))==5
++    context={'source':'water '*20000};p=plan(body(context));seen=[]
++    assert p['serialized_utf8_bytes']>60000>p['total_allowance_tokens']
++    model=make(tmp_path,lambda r:(seen.append(r),response())[1]);result,used=asyncio.run(model.choose(context,60000))
++    assert result.action=='PAUSE' and used==130 and len(seen)==1
++    assert model.last_usage['requests'][0]['token_plan']['provider_count_tokens'] is None
++
++@pytest.mark.parametrize('delta',[-1,0,1])
++@pytest.mark.parametrize('verified',[False,True])
++def test_exact_token_boundaries(tmp_path,delta,verified):
++    c={'source':'water '*1000};allocation=plan(body(c),provider_count=1000 if verified else None);seen=[]
++    def handle(req):
++        seen.append(req.url.path)
++        if req.url.path.endswith(':countTokens'):
++            sent=json.loads(req.content);assert sent['generateContentRequest']['generationConfig']['responseJsonSchema']==Selection.model_json_schema()
++            return httpx.Response(200,json={'totalTokens':1000})
++        return response()
++    m=make(tmp_path,handle,verify=verified)
++    if delta<0:
++        with pytest.raises(ProviderError,match='TOKEN_BUDGET'):asyncio.run(m.choose(c,allocation['total_allowance_tokens']+delta))
++        assert not any(path.endswith(':generateContent') for path in seen)
++    else:assert asyncio.run(m.choose(c,allocation['total_allowance_tokens']+delta))[1]==130
++    if verified:
++        assert m.ledger.summary()['uncertain_requests']==1  # Count result isn't a billing receipt.
++
++
++def test_unknown_retry_token_allowance_survives_reopen(tmp_path):
++    m=make(tmp_path,lambda r:httpx.Response(503,headers={'retry-after':'0'}));n=plan(body({}))['total_allowance_tokens']
++    with pytest.raises(ProviderError,match='TOKEN_BUDGET'):asyncio.run(m.choose({},n))
++    assert m.last_usage['accounted_tokens']==n and m.last_usage['total_tokens']==0
++    assert Ledger(tmp_path/'ledger').thread_tokens(m.permit.thread_id)==n
++
++@pytest.mark.parametrize('value',[-1,True,1.5,1_000_001])
++def test_invalid_provider_counts_fail_without_generation(tmp_path,value):
++    seen=[]
++    def handle(req):seen.append(req.url.path);return httpx.Response(200,json={'totalTokens':value})
++    m=make(tmp_path,handle,verify=True)
++    with pytest.raises(ProviderError,match='INVALID_PROVIDER_COUNT'):asyncio.run(m.choose({},60000))
++    assert len(seen)==1 and m.ledger.summary()['uncertain_requests']==1
++
++@pytest.mark.parametrize('value',[-1,True,1.5,1_000_001])
++def test_invalid_budget_never_calls_http(tmp_path,value):
++    seen=[];m=make(tmp_path,lambda r:seen.append(r))
++    with pytest.raises(ProviderError,match='INVALID_TOKEN_ALLOWANCE'):asyncio.run(m.choose({},value))
++    assert not seen
++
++@pytest.mark.parametrize('payload',[[],None,'bad',{'usageMetadata':[]}])
++def test_malformed_provider_envelopes_hold_cost_and_tokens(tmp_path,payload):
++    m=make(tmp_path,lambda r:httpx.Response(200,json=payload))
++    with pytest.raises(ProviderError,match='PROVIDER_USAGE_MISSING'):asyncio.run(m.choose({},60000))
++    assert m.last_usage['accounted_tokens']>0 and m.ledger.summary()['uncertain_requests']==1
++
++
++def test_cumulative_actual_and_unknown_allowance_cannot_reset_on_reopen(tmp_path):
++    m=make(tmp_path,lambda r:response());c={'state':{'tokens':100,'iterations':1,'wakes':0}}
++    assert asyncio.run(m.choose(c,60000))[1]==130
++    assert Ledger(tmp_path/'ledger').thread_tokens(m.permit.thread_id)==230
++    # A stale checkpoint with a lower counter cannot erase durable exposure.
++    c['state'].update(tokens=0,iterations=2);seen=[]
++    again=Gemini(m.settings,permit=m.permit,ledger=Ledger(tmp_path/'ledger'),transport=httpx.MockTransport(lambda r:(seen.append(r),response())[1]))
++    with pytest.raises(ProviderError,match='TOKEN_BUDGET'):asyncio.run(again.choose(c,plan(body(c))['total_allowance_tokens']))
++    assert not seen and again.ledger.thread_tokens(m.permit.thread_id)==230
++
++@pytest.mark.parametrize('value',[-1,True,1_000_001])
++def test_invalid_usage_total_never_resets_unknown_allowance(tmp_path,value):
++    def handle(req):return httpx.Response(200,json={'usageMetadata':{'totalTokenCount':value},'candidates':[{'content':{'parts':[{'text':json.dumps(choose())}]}}]})
++    m=make(tmp_path,handle)
++    with pytest.raises(ProviderError,match='PROVIDER_USAGE_MISSING'):asyncio.run(m.choose({},60000))
++    assert m.ledger.thread_tokens(m.permit.thread_id)==plan(body({}))['total_allowance_tokens']
+--- a/backend/uv.lock
++++ b/backend/uv.lock
+@@ -130,6 +130,7 @@
+     { name = "pydantic" },
+     { name = "pydantic-settings" },
+     { name = "redis" },
++    { name = "sentencepiece" },
+ ]
+ 
+ [package.dev-dependencies]
+@@ -151,6 +152,7 @@
+     { name = "pydantic", specifier = "==2.14.1" },
+     { name = "pydantic-settings", specifier = "==2.16.0" },
+     { name = "redis", specifier = "==8.1.0" },
++    { name = "sentencepiece", specifier = "==0.2.1" },
+ ]
+ 
+ [package.metadata.requires-dev]
+@@ -919,6 +921,22 @@
+ ]
+ 
+ [[package]]
++name = "sentencepiece"
++version = "0.2.1"
++source = { registry = "https://pypi.org/simple" }
++sdist = { url = "https://files.pythonhosted.org/packages/15/15/2e7a025fc62d764b151ae6d0f2a92f8081755ebe8d4a64099accc6f77ba6/sentencepiece-0.2.1.tar.gz", hash = "sha256:8138cec27c2f2282f4a34d9a016e3374cd40e5c6e9cb335063db66a0a3b71fad", size = 3228515, upload-time = "2025-08-12T07:00:51.718Z" }
++wheels = [
++    { url = "https://files.pythonhosted.org/packages/4a/be/32ce495aa1d0e0c323dcb1ba87096037358edee539cac5baf8755a6bd396/sentencepiece-0.2.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:57cae326c8727de58c85977b175af132a7138d84c764635d7e71bbee7e774133", size = 1943152, upload-time = "2025-08-12T06:59:40.048Z" },
++    { url = "https://files.pythonhosted.org/packages/88/7e/ff23008899a58678e98c6ff592bf4d368eee5a71af96d0df6b38a039dd4f/sentencepiece-0.2.1-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:56dd39a3c4d6493db3cdca7e8cc68c6b633f0d4195495cbadfcf5af8a22d05a6", size = 1325651, upload-time = "2025-08-12T06:59:41.536Z" },
++    { url = "https://files.pythonhosted.org/packages/19/84/42eb3ce4796777a1b5d3699dfd4dca85113e68b637f194a6c8d786f16a04/sentencepiece-0.2.1-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:d9381351182ff9888cc80e41c632e7e274b106f450de33d67a9e8f6043da6f76", size = 1253645, upload-time = "2025-08-12T06:59:42.903Z" },
++    { url = "https://files.pythonhosted.org/packages/89/fa/d3d5ebcba3cb9e6d3775a096251860c41a6bc53a1b9461151df83fe93255/sentencepiece-0.2.1-cp312-cp312-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:99f955df238021bf11f0fc37cdb54fd5e5b5f7fd30ecc3d93fb48b6815437167", size = 1316273, upload-time = "2025-08-12T06:59:44.476Z" },
++    { url = "https://files.pythonhosted.org/packages/04/88/14f2f4a2b922d8b39be45bf63d79e6cd3a9b2f248b2fcb98a69b12af12f5/sentencepiece-0.2.1-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:0cdfecef430d985f1c2bcbfff3defd1d95dae876fbd0173376012d2d7d24044b", size = 1387881, upload-time = "2025-08-12T06:59:46.09Z" },
++    { url = "https://files.pythonhosted.org/packages/fd/b8/903e5ccb77b4ef140605d5d71b4f9e0ad95d456d6184688073ed11712809/sentencepiece-0.2.1-cp312-cp312-win32.whl", hash = "sha256:a483fd29a34c3e34c39ac5556b0a90942bec253d260235729e50976f5dba1068", size = 999540, upload-time = "2025-08-12T06:59:48.023Z" },
++    { url = "https://files.pythonhosted.org/packages/2d/81/92df5673c067148c2545b1bfe49adfd775bcc3a169a047f5a0e6575ddaca/sentencepiece-0.2.1-cp312-cp312-win_amd64.whl", hash = "sha256:4cdc7c36234fda305e85c32949c5211faaf8dd886096c7cea289ddc12a2d02de", size = 1054671, upload-time = "2025-08-12T06:59:49.895Z" },
++    { url = "https://files.pythonhosted.org/packages/fe/02/c5e3bc518655d714622bec87d83db9cdba1cd0619a4a04e2109751c4f47f/sentencepiece-0.2.1-cp312-cp312-win_arm64.whl", hash = "sha256:daeb5e9e9fcad012324807856113708614d534f596d5008638eb9b40112cd9e4", size = 1033923, upload-time = "2025-08-12T06:59:51.952Z" },
++]
++
++[[package]]
+ name = "six"
+ version = "1.17.0"
+ source = { registry = "https://pypi.org/simple" }
+--- a/blockers.md
++++ b/blockers.md
+@@ -1,4 +1,6 @@
+ # blockers.md — Current blockers and verification spikes
++
++> **CURRENT B10-O-R STATUS — 2026-10-18: PASS, HUMAN REVIEW PENDING; B10 LIVE ACCEPTANCE REMAINS OPEN.** Final full regression: **740 PASS / 0 FAIL / 0 SKIP**,1249.98s (466 unit,274 real integration), both specification validators PASS. All691 accepted tests retained unchanged;49 new cases. Zero external Gemini requests,2 intentional blocked probes,0 unexpected attempts. Real FalkorDB/MCP/Saver, restart/recreation/Browser, retained city/history/101 trace observations/all6 B10 checkpoint threads and accounting witnesses PASS. Local baseline c16346a; no push, ZIP or B11. Exact inventory/patch/commands/results: docs/evidence/B10OR-RESULTS.md. Proxy estimates and simulated usage are distinct from genuine Gemini acceptance, which was NOT RUN. This summary supersedes historical headings; audit history retained.
+ 
+ > **CURRENT B10-O STATUS — 2026-10-18: PASS, HUMAN REVIEW PENDING; B10 LIVE ACCEPTANCE STILL PARTIAL/OPEN.** Final complete suite: **691 PASS / 0 FAIL / 0 SKIP** in951.17s (432 unit,259 real integration); both specification validators PASS. Zero external Gemini requests,2 intentional blocked probes,0 unexpected attempts. Real graph/MCP/Saver, retained source/all6 checkpoint threads, original evidence and spending restart/recreation checks PASS. Real complex context reductions9.52–9.80%; estimates are not billed savings. One earlier post-recreation ACL setup attempt failed24 tests/1 passed and was interrupted; preflight restored exact authorization, then final full run passed. Details/inventory/patch: docs/evidence/B10O-RESULTS.md. No B11 or ZIP. This summary supersedes every historical status heading; audit history retained.
+ 
+@@ -396,3 +398,18 @@
+ - Preserved genuine failed attempt: after first recreation dynamic shared MCP trace-writer ACL was unavailable.24 authentication failures/1 Browser pass, interrupted72.93s; unexecuted remainder is NOT RUN for that attempt. Existing trusted configure/exact-key provisioning restored authorization without changing domain records. All6 retained threads/source matched before lifecycle; final full691 run then passed. Runtime guide now states configure before pytest. Raw failure/counters retained in B10O-auth-failed-*; no test weakened or removed.
+ - Four rolling proofs saved as B10O-regression-* before exact pre-task copies were restored. Previous B10 evidence remains byte-identical. B10O-FILES.md/source-audit.json and incremental B10O-changes.patch identify exact changes against frozen B10O-baseline.json, not a misleading HEAD-only diff.
+ - **STOP for human review.** B10-O verified; B10 remains PARTIAL pending separately authorized genuine three-issue/contradiction/topology/B10-3 acceptance. B11 cited GraphRAG/memory is proposed only after the B10 gate and explicit authorization, not implemented. All18 objectives remain binding.
++
++
++## B10-O-R final observed verification | 2026-10-18
++
++- Local reviewed baseline c16346a; no push. Final **740 PASS/0 FAIL/0 SKIP** in1249.98s:466 unit/274 actual FalkorDB/MCP integration; all691 original cases unchanged plus34 unit/15 integration. Actual Gemini outputs/counts/costs **NOT RUN**; HTTP responses and returned usage are simulated. Both specification validators PASS; frozen offline lock75 packages, only SentencePiece0.2.1 added.
++- Whole-suite external-request interlock:0 Gemini requests,2 intentional parent/child probes blocked,0 ordinary unexpected attempts. All new tests and original real official/domain MCP, B09 authority/episode rules, LangGraph/Saver and actual Docker restart/recreation/Browser checks passed. Targeted overlapping batches58/76/10/29 passed; do not sum overlapping totals. Initial unit1-failure and authored integration-fixture failures are preserved in B10OR-COMMANDS.md/raw logs.
++- Bytes/token minimal reproduction: old byte+output guard127331 vs corrected proxy allowance30394 tokens under60000. Three real complex contexts preserve8 assessment versions/4 observations/2 alternatives/all16 schemas: complete request bytes66234/73621/81990; proxy input+output allowances37476/41089/46721. Exact/-1/+1 cases reject/pass/pass. These estimates and mock130-token receipts are not genuine Gemini usage or billed savings. Model mapping/framing uncertainty is explicit; LIVE requires separately authorized/accounted counting.
++- New-ledger8/.50/concurrency1/explicit complex ceiling1.50; existing6/.15 history and reservations unchanged. Explicit audited upgrade demonstrated on a private SQLite backup, not the original. Exact-request hold recovery binds known usage/tariff/hash/evidence/operator/reason and caps, retains immutable audit, and cannot clear unknown billing. Reopen/fresh-process/lifecycle witness retains5120 token exposure. Same-thread authorized Budget increases preserve counters/source refresh; operational defaults unchanged. Only checkpoint counter storage widens to2M to retain an unexpected1100000-token simulated overrun exactly and pause.
++- Retained B10 source revision103/80nodes/47edges/content/audit/writer state and all6 public SDK threads/12 executions match accepted evidence. B01 probe, B04 city858/1246 revision2104, B05/B08/B09 sources and B09R original v1/v2 history preserved;101 accepted trace observations checked43+27+31. Registryv3/0001/0002 and all prior evidence unchanged. Four fresh rolling proofs saved as B10OR-regression-* before restoring accepted bytes. No graph/volume deletion to pass tests.
++- Supplemental legacy verifier rejected only pytest's ',2 warnings' summary formatting after real data assertions. New B10OR evidence adapter validates the untouched raw740-pass log, lifecycle markers and successful guard, then runs every unchanged original B09 graph/history assertion. PASS; no old tests or logs normalized. This genuine compatibility adjustment/failure is recorded in B10OR-retention-parser-compatibility.json.
++- Current source inventory, actual patch, dependency/retention/financial/zero-request proofs and commands live under docs/evidence/B10OR-*. Final source/security audit checks exact accepted files, actual private values without printing them, secret patterns and leaked MCP children. Human review required; no ZIP or later milestone.
++
++No remaining B10-O-R code/regression/retention blocker. B10 remains PARTIAL: genuine Gemini3.8/B10-3 multi-step three-category/contradiction/topology and provider-count compatibility require separate authorization and live evidence. Offline Gemma3 is a proxy, not an exact3.8 tokenizer; real framing/usage can differ. Count requests retain conservative dollar reservations until verified billing; unknown billing cannot be cleared. Application caps exclude historical/external Google billing and are not a hard provider cutoff. Existing Saver multi-query/crash quarantine, final canonical activation, native-cache-disabled and DEC-004 future-phase limits remain. All42 drainage links CANDIDATE, history gaps and original55 legacy defects preserved alongside accepted B04 conversion. All18 requirements remain mandatory. Next action: human B10-O-R review, then separately approved B10 live gate; no B11.
++
++Final B10-O-R scope/security audit PASS:61 prior test files unchanged, all prior evidence byte-identical, actual private credential values/patterns absent, no leaked MCP children. No push or ZIP. Exact source inventory/patch is against c16346a; subsequent human review and separately authorized B10 live acceptance remain required.
+--- a/contracts/agent_optimization.json
++++ b/contracts/agent_optimization.json
+@@ -1,7 +1,7 @@
+ {
+-  "version": "B10-O-1",
++  "version": "B10-O-R-1",
+   "extends": "agent_runtime.json",
+-  "scope": "B10 optimization only; B10 live acceptance remains OPEN, no B11",
++  "scope": "B10 corrective token/accounting pass only; B10 live gates OPEN, no B11",
+   "execution": {
+     "default_live": false,
+     "opt_in": "Trusted explicit permit bound to one investigation and thread; CLI --live required even on resume",
+@@ -19,7 +19,15 @@
+     "native_provider_cache": "Disabled, no paid spike or claimed measured savings"
+   },
+   "read_cache": {
+-    "key": ["source_graph", "graph_revision", "as_of/cutoff", "arguments", "tool_identity", "inventory_schema_hash", "invocation_permission_scope"],
++    "key": [
++      "source_graph",
++      "graph_revision",
++      "as_of/cutoff",
++      "arguments",
++      "tool_identity",
++      "inventory_schema_hash",
++      "invocation_permission_scope"
++    ],
+     "max_entries": 32,
+     "reuse": "Return original validated result and original ToolExecution reference; no fabricated new execution",
+     "invalidation": "Any graph revision change, including host audit writes; stable revision required before and after call",
+@@ -27,24 +35,68 @@
+   },
+   "spending": {
+     "store": "Private auxiliary SQLite WAL/FULL ledger, BEGIN IMMEDIATE; domain/evidence/checkpoints remain FalkorDB",
+-    "project_usd": "6.00",
+-    "initial_investigation_usd": "0.15",
++    "project_usd": "8.00",
++    "initial_investigation_usd": "0.50",
+     "concurrent_live_investigations": 1,
+-    "warning_percentages": [50, 80, 95, 100],
+-    "reserve": "Before every HTTP attempt including retry/repair; UTF8 serialized input bytes plus framing allowance and twice output ceiling at maximum output/thinking price",
++    "warning_percentages": [
++      50,
++      80,
++      95,
++      100
++    ],
++    "reserve": "Dollar fence only: complete serialized input UTF8 bytes plus framing and doubled output price allowance; NOT token units. Counting RPC separately financially reserved; count result is not billing receipt.",
+     "unknown_billing": "Retain full reservation, do not treat as free; reconcile only from verified metadata",
+-    "over_reservation": "Record actual greater cost and hold further requests for operator review",
++    "over_reservation": "Exact request hold; bound verified stored usage/pricing, operator/reason/evidence, repricing and cap checks, immutable recovery audit; no blanket clear",
+     "idempotency": "Thread/wake/decision/repair/retry ID, duplicate reservation denied, no blind rebilling after crash",
+     "session_recovery": "No automatic expiry takeover; stop old process, reconcile and release exact owner explicitly",
+-    "tracking": ["model", "thread", "request", "investigation", "milestone", "pricing_version", "input/output/thinking/cached tokens", "project"],
+-    "scope_limit": "New managed requests only; historical/external billing unknown, not Google account billing hard cap"
++    "tracking": [
++      "model",
++      "thread",
++      "request",
++      "investigation",
++      "milestone",
++      "pricing_version",
++      "input/output/thinking/cached tokens",
++      "project"
++    ],
++    "scope_limit": "New managed requests only; historical/external billing unknown, not Google account billing hard cap",
++    "explicit_complex_investigation_ceiling_usd": "1.50",
++    "existing_ledgers": "Persisted caps, charges, unknown reservations and cases unchanged unless explicit audited operator action"
+   },
+   "provider_recovery": {
+     "transient_retries_default": 2,
+     "wait_budget_seconds_default": 8,
+     "schema_repairs": 1,
+-    "retry": ["503 service unavailable", "structured short-term 429", "408/500/502/504 within bounds"],
+-    "no_blind_retry": ["daily/project quota exhaustion", "unknown 429", "auth/configuration", "unavailable model", "network timeout with uncertain billing"],
++    "retry": [
++      "503 service unavailable",
++      "structured short-term 429",
++      "408/500/502/504 within bounds"
++    ],
++    "no_blind_retry": [
++      "daily/project quota exhaustion",
++      "unknown 429",
++      "auth/configuration",
++      "unavailable model",
++      "network timeout with uncertain billing"
++    ],
+     "trace": "Sanitized category, model/prompt/pricing versions, actual usage or uncertainty and durable reservation; never provider body/key or thought text"
++  },
++  "token_accounting": {
++    "units": [
++      "serialized_utf8_bytes",
++      "local_proxy_tokens",
++      "provider_count_tokens",
++      "input_allowance_tokens",
++      "output_allowance_tokens",
++      "actual_total_tokens",
++      "cumulative_accounted_tokens",
++      "integer_nanodollars"
++    ],
++    "offline": "Pinned official Gemma3 SentencePiece vocabulary: proxy for Gemini3.8, never exact; ceil(local count*1.25)+256 input margin plus4096 output",
++    "live": "Requires explicit permit, accounted countTokens with full generateContentRequest and response schema; verified count+16 framing plus4096 output. Ordinary tests use no external counting. Result not billing proof.",
++    "unknown": "Token allowance remains held until verified usage; durable per-thread floor prevents stale checkpoint reset",
++    "retry_repair": "Each generation attempt independently reserves complete current-body input/output; actual usage replaces its allowance; bounded repair recounts changed body",
++    "resume": "Trusted explicit reason and validated monotonic Budget increase on same paused thread; counters and source refresh retained",
++    "limits": "Defaults unchanged60000tokens/16iterations/8tools/240seconds/5wakes; configurable within existing model bounds; StateGraph recursion150 bounds32iteration wakes"
+   }
+ }
+--- a/contracts/agent_runtime.json
++++ b/contracts/agent_runtime.json
+@@ -49,7 +49,8 @@
+     "Durable decision and operation IDs",
+     "Committed operation result replay without repeating calls",
+     "Unknown prepared read outcome pauses for reconciliation",
+-    "Uncertain checkpoint failures quarantine thread; no automatic reset"
++    "Uncertain checkpoint failures quarantine thread; no automatic reset",
++    "Explicit operator-authorized monotonic Budget increase, preserving cumulative known/unknown token exposure and decision/action history"
+   ],
+   "reasoning_guarantees": [
+     "Model cannot self-grant VERIFIED",
+@@ -76,5 +77,6 @@
+     "Atomic vendor multi-query checkpoint writes"
+   ],
+   "prompt_version": "B10-3",
+-  "optimization_contract": "agent_optimization.json"
++  "optimization_contract": "agent_optimization.json",
++  "token_accounting_contract": "agent_optimization.json#token_accounting"
+ }
+--- a/decision.md
++++ b/decision.md
+@@ -1061,3 +1061,60 @@
+ - Preserved genuine failed attempt: after first recreation dynamic shared MCP trace-writer ACL was unavailable.24 authentication failures/1 Browser pass, interrupted72.93s; unexecuted remainder is NOT RUN for that attempt. Existing trusted configure/exact-key provisioning restored authorization without changing domain records. All6 retained threads/source matched before lifecycle; final full691 run then passed. Runtime guide now states configure before pytest. Raw failure/counters retained in B10O-auth-failed-*; no test weakened or removed.
+ - Four rolling proofs saved as B10O-regression-* before exact pre-task copies were restored. Previous B10 evidence remains byte-identical. B10O-FILES.md/source-audit.json and incremental B10O-changes.patch identify exact changes against frozen B10O-baseline.json, not a misleading HEAD-only diff.
+ - **STOP for human review.** B10-O verified; B10 remains PARTIAL pending separately authorized genuine three-issue/contradiction/topology/B10-3 acceptance. B11 cited GraphRAG/memory is proposed only after the B10 gate and explicit authorization, not implemented. All18 objectives remain binding.
++
++
++## DEC-044 — B10-O-R pre-code plan
++Reviewed baseline c16346a: B10-O691 PASS/0 FAIL/0 SKIP and zero external Gemini requests confirmed in recorded logs/counters. Clean local commit created after secret/source audit; ignored credentials/runtime/env/caches excluded, no push. Scope only token accounting, budget configuration/recovery, compatible runtime resume and controlled tests. R01/R04–R09/R13/R15/R18 remain binding with all18 objectives; no B11 or live request authorized.
++
++Files: provider/token helper, spending/policy/CLI, runtime/models for additive token exposure and explicit budget resume, relevant configuration/contracts, tests, runtime guide and six trackers/evidence. Risks: unsupported exact3.8 local tokenizer, counted vs billed tokens, unknown retry consumption, old ledger migration and duplicate actions after resume. Use Stage1 focused units, Stage2 real MCP/B09/LangGraph/Saver with simulated Gemini HTTP, Stage3 one stable full regression with both validators and real lifecycle. Review exact boundary cases, old ledger immutability, per-request hold audit, all16 tool schemas/source evidence, zero external requests and retained fingerprints.
++
++Official countTokens accepts full generateContentRequest including steering: https://ai.google.dev/api/tokens . Official local loader https://github.com/googleapis/python-genai/blob/main/google/genai/_local_tokenizer_loader.py does NOT map gemini-3.8-flash. Therefore local SentencePiece/Gemma3 counts are explicitly proxy ESTIMATES (not verified3.8 tokens), with a stated planning margin and complete prompt/schema text. Pinned public vocabulary/hash from Google's loader; no runtime auto-download. Authorized LIVE mode additionally requires separately accounted countTokens before generation; no counting endpoint called in ordinary tests. Count calls use the same exact-case permit and conservative dollar reservation; unknown counting billing is held, not declared free. Mock mode uses offline local counts unless explicitly exercising mocked countTokens. No claim of exact live tokenizer compatibility without later authorized evidence.
++
++New ledger defaults8/.50/concurrency1 with configurable explicitly authorized case ceiling1.50; existing configurations/charges/reservations remain untouched. Add per-request token exposure and request-linked holds/reconciliation audit through additive private SQLite schema migration, never graph migration changes. Holds can be resolved only for exact settled requests after usage/pricing verification and cap checks with stopped sessions/operator reason; unknowns remain held. No blanket reset.
++
++DEC-044 implementation choices: retain default60000-token Budget and B10-3 prompt,
++use pinned SentencePiece0.2.1 with Google's published Gemma3 vocabulary as an
++explicitly uncertain Gemini3.8 proxy (local SDK mappings do not establish3.8
++compatibility), rather than reuse byte length or claim a guessed exact mapping.
++Proxy input plan=ceil(tokens×1.25)+256 plus4096 output. LIVE mode requires a separately
++permitted/accounted full-request countTokens check; ordinary tests never call it.
++A count result is not billed usage, so its conservative dollar reservation remains
++held pending verified reconciliation. Actual generation usage replaces only its
++own token allowance; unknown attempts retain their own allowances. Integer dollar
++reservations and cumulative token exposure are distinct ledgers/units. Legacy
++checkpoint floors prevent resets. Compatible auxiliary SQLite tables only; no
++FalkorDB schema, migration, causal or temporal policy changes.
++
++New defaults8/.50/concurrency1/complex ceiling1.50 apply only to new accounting.
++Existing caps/history stay intact; explicit config changes and single-request
++settled-overage recovery are audited with immutable rows. No blanket clear exists.
++Recovery requires exact usage hash/tariff/repriced charge/evidence/operator/reason
++and cap checks; unknown billing fails closed. Authorized monotonic operational
++Budget increases resume the same checkpoint and retain counters and source refresh.
++Bad operator input is rejected before ownership instead of quarantining a valid
++thread. No runtime budget default or global recursion limit increased.
++
++DEC-044 compatible overrun representation: a valid reported usage total up to1M
++plus a prior configured-budget baseline could exceed the previous1M checkpoint
++counter validation ceiling. Increase only `InvestigationState.tokens` storage
++ceiling to2M so an unexpectedly large receipt can be recorded exactly and paused
++without failing checkpoint validation. Operational Budget.max_tokens remains at
++most150000 (default60000); this adds no spending or inference allowance. Provider
++usage fields above1M are invalid/unknown and retain reserved exposure. A real
++Saver integration test simulates a1M-token receipt plus100000 prior tokens and
++verifies an exact1100000 counter, no action or further HTTP, and durable pause.
++
++
++## B10-O-R final observed verification | 2026-10-18
++
++- Local reviewed baseline c16346a; no push. Final **740 PASS/0 FAIL/0 SKIP** in1249.98s:466 unit/274 actual FalkorDB/MCP integration; all691 original cases unchanged plus34 unit/15 integration. Actual Gemini outputs/counts/costs **NOT RUN**; HTTP responses and returned usage are simulated. Both specification validators PASS; frozen offline lock75 packages, only SentencePiece0.2.1 added.
++- Whole-suite external-request interlock:0 Gemini requests,2 intentional parent/child probes blocked,0 ordinary unexpected attempts. All new tests and original real official/domain MCP, B09 authority/episode rules, LangGraph/Saver and actual Docker restart/recreation/Browser checks passed. Targeted overlapping batches58/76/10/29 passed; do not sum overlapping totals. Initial unit1-failure and authored integration-fixture failures are preserved in B10OR-COMMANDS.md/raw logs.
++- Bytes/token minimal reproduction: old byte+output guard127331 vs corrected proxy allowance30394 tokens under60000. Three real complex contexts preserve8 assessment versions/4 observations/2 alternatives/all16 schemas: complete request bytes66234/73621/81990; proxy input+output allowances37476/41089/46721. Exact/-1/+1 cases reject/pass/pass. These estimates and mock130-token receipts are not genuine Gemini usage or billed savings. Model mapping/framing uncertainty is explicit; LIVE requires separately authorized/accounted counting.
++- New-ledger8/.50/concurrency1/explicit complex ceiling1.50; existing6/.15 history and reservations unchanged. Explicit audited upgrade demonstrated on a private SQLite backup, not the original. Exact-request hold recovery binds known usage/tariff/hash/evidence/operator/reason and caps, retains immutable audit, and cannot clear unknown billing. Reopen/fresh-process/lifecycle witness retains5120 token exposure. Same-thread authorized Budget increases preserve counters/source refresh; operational defaults unchanged. Only checkpoint counter storage widens to2M to retain an unexpected1100000-token simulated overrun exactly and pause.
++- Retained B10 source revision103/80nodes/47edges/content/audit/writer state and all6 public SDK threads/12 executions match accepted evidence. B01 probe, B04 city858/1246 revision2104, B05/B08/B09 sources and B09R original v1/v2 history preserved;101 accepted trace observations checked43+27+31. Registryv3/0001/0002 and all prior evidence unchanged. Four fresh rolling proofs saved as B10OR-regression-* before restoring accepted bytes. No graph/volume deletion to pass tests.
++- Supplemental legacy verifier rejected only pytest's ',2 warnings' summary formatting after real data assertions. New B10OR evidence adapter validates the untouched raw740-pass log, lifecycle markers and successful guard, then runs every unchanged original B09 graph/history assertion. PASS; no old tests or logs normalized. This genuine compatibility adjustment/failure is recorded in B10OR-retention-parser-compatibility.json.
++- Current source inventory, actual patch, dependency/retention/financial/zero-request proofs and commands live under docs/evidence/B10OR-*. Final source/security audit checks exact accepted files, actual private values without printing them, secret patterns and leaked MCP children. Human review required; no ZIP or later milestone.
++
++DEC-044 final acceptance basis:740 complete cases, not an aggregate of focused runs. The only post-suite compatibility addition is standalone evidence parsing for pytest warning fields; application logic and all prior tests remain unchanged after final source freeze. The old verifier's graph/history assertions are reused intact. No fabricated normalized success log or live-model closure. Baseline and exact source audit/patch are c16346a-relative. STOP for human review.
++
++Final B10-O-R scope/security audit PASS:61 prior test files unchanged, all prior evidence byte-identical, actual private credential values/patterns absent, no leaked MCP children. No push or ZIP. Exact source inventory/patch is against c16346a; subsequent human review and separately authorized B10 live acceptance remain required.
+--- a/flow.md
++++ b/flow.md
+@@ -590,3 +590,39 @@
+ - Preserved genuine failed attempt: after first recreation dynamic shared MCP trace-writer ACL was unavailable.24 authentication failures/1 Browser pass, interrupted72.93s; unexecuted remainder is NOT RUN for that attempt. Existing trusted configure/exact-key provisioning restored authorization without changing domain records. All6 retained threads/source matched before lifecycle; final full691 run then passed. Runtime guide now states configure before pytest. Raw failure/counters retained in B10O-auth-failed-*; no test weakened or removed.
+ - Four rolling proofs saved as B10O-regression-* before exact pre-task copies were restored. Previous B10 evidence remains byte-identical. B10O-FILES.md/source-audit.json and incremental B10O-changes.patch identify exact changes against frozen B10O-baseline.json, not a misleading HEAD-only diff.
+ - **STOP for human review.** B10-O verified; B10 remains PARTIAL pending separately authorized genuine three-issue/contradiction/topology/B10-3 acceptance. B11 cited GraphRAG/memory is proposed only after the B10 gate and explicit authorization, not implemented. All18 objectives remain binding.
++
++## B10-O-R actual token, accounting and recovery flow
++
++B10-O-R only, after accepted baseline c16346a; registry/migrations, source graph,
++B03/B05/B09 policies, B10-3 prompt, all16 MCP tools and context projection unchanged.
++
++- `agents.provider` imports `tokens.plan/total_usage`, `policy.Permit`, `spending.Ledger/Pricing` and strict `models.Selection`. `tokens` verifies the ignored offline Gemma3 asset SHA and uses locked SentencePiece0.2.1. Only `scripts/configure_tokenizer.py` downloads the pinned public asset; runtime does not fetch anything.
++- Complete generation body → serialized UTF8 byte measurement (separate financial estimate) + local proxy count → explicit uncertainty margin/input+4096 output plan. LIVE additionally goes through exact-case authorization → reserved countTokens RPC → verified input count plus framing allowance. Counting is not a generation usage receipt and its financial reservation remains held. Ordinary tests intercept all external Gemini calls and use explicit MockTransport.
++- `Ledger.reserve` atomically checks exact session/case/project/hold limits and durable per-thread cumulative token exposure, inserts separate dollar request and token reservation, and appends immutable accounting audit. No byte/token arithmetic remains in token guards. Retry and repair each get an independent allowance; repair includes changed instructions/schema.
++- Provider usage → independently validated token total and integer-priced input/output/thought/cache usage → reconcile known fields, retain unknown reservations. Host state `tokens` records cumulative accounted exposure; request metadata separately records actual returned usage and simulated/proxy/verified origin. Reopening the ledger cannot erase exposure; legacy checkpoint consumption is a durable floor.
++- `runtime.run` validates operator budget input before acquiring ownership (bad input does not quarantine). A paused same-thread resume accepts only explicitly authorized monotonic Budget changes, records previous/current/reason, retains counters and native journal identities, then revalidates graph/evidence and requires fresh MCP reads on source changes. Recursion150 accommodates bounded32-selection wakes; default limits unchanged.
++- `spending_cli` supports summary, explicit audited configure, exact hold inspection and bound single-request reconciliation. Settled-over-reservation recovery reprices stored usage under the exact tariff, binds usage hash/evidence/operator/reason, checks available caps and immutable audit, and resolves only that hold. Unknown billing/unattributed legacy holds cannot be cleared. Original request/charge/legacy hold records remain.
++- SQLite config adds compatible complex_cap; accounting_events/request_holds/legacy_hold_links/token_usage/token_floors are auxiliary private accounting, not graph schema. Original retained B10-O probe is inspected read-only; configuration migration is demonstrated on a private SQLite backup. New accounting witness includes one unknown token/$ reservation and one resolved settled overage for process/container lifecycle comparison. FalkorDB remains the source, evidence, MCP trace and checkpoint store.
++
++New test helpers `tests.b10or_http`, `b10or_worker`, `b10or_context` feed explicitly
++simulated graph-reactive HTTP selections into the actual Gemini adapter and
++MCP/B09/StateGraph/Saver path. Two fresh Python processes reopen the same ledger
++and checkpoint. Three real complex contexts preserve eight assessment versions,
++two competing hypotheses, all16 schemas, source/provenance/negative/temporal
++material, pickup history and road topology/episode identities. Simulated counts
++are never presented as genuine Gemini usage. No B11 or live acceptance closure.
++
++
++## B10-O-R final observed verification | 2026-10-18
++
++- Local reviewed baseline c16346a; no push. Final **740 PASS/0 FAIL/0 SKIP** in1249.98s:466 unit/274 actual FalkorDB/MCP integration; all691 original cases unchanged plus34 unit/15 integration. Actual Gemini outputs/counts/costs **NOT RUN**; HTTP responses and returned usage are simulated. Both specification validators PASS; frozen offline lock75 packages, only SentencePiece0.2.1 added.
++- Whole-suite external-request interlock:0 Gemini requests,2 intentional parent/child probes blocked,0 ordinary unexpected attempts. All new tests and original real official/domain MCP, B09 authority/episode rules, LangGraph/Saver and actual Docker restart/recreation/Browser checks passed. Targeted overlapping batches58/76/10/29 passed; do not sum overlapping totals. Initial unit1-failure and authored integration-fixture failures are preserved in B10OR-COMMANDS.md/raw logs.
++- Bytes/token minimal reproduction: old byte+output guard127331 vs corrected proxy allowance30394 tokens under60000. Three real complex contexts preserve8 assessment versions/4 observations/2 alternatives/all16 schemas: complete request bytes66234/73621/81990; proxy input+output allowances37476/41089/46721. Exact/-1/+1 cases reject/pass/pass. These estimates and mock130-token receipts are not genuine Gemini usage or billed savings. Model mapping/framing uncertainty is explicit; LIVE requires separately authorized/accounted counting.
++- New-ledger8/.50/concurrency1/explicit complex ceiling1.50; existing6/.15 history and reservations unchanged. Explicit audited upgrade demonstrated on a private SQLite backup, not the original. Exact-request hold recovery binds known usage/tariff/hash/evidence/operator/reason and caps, retains immutable audit, and cannot clear unknown billing. Reopen/fresh-process/lifecycle witness retains5120 token exposure. Same-thread authorized Budget increases preserve counters/source refresh; operational defaults unchanged. Only checkpoint counter storage widens to2M to retain an unexpected1100000-token simulated overrun exactly and pause.
++- Retained B10 source revision103/80nodes/47edges/content/audit/writer state and all6 public SDK threads/12 executions match accepted evidence. B01 probe, B04 city858/1246 revision2104, B05/B08/B09 sources and B09R original v1/v2 history preserved;101 accepted trace observations checked43+27+31. Registryv3/0001/0002 and all prior evidence unchanged. Four fresh rolling proofs saved as B10OR-regression-* before restoring accepted bytes. No graph/volume deletion to pass tests.
++- Supplemental legacy verifier rejected only pytest's ',2 warnings' summary formatting after real data assertions. New B10OR evidence adapter validates the untouched raw740-pass log, lifecycle markers and successful guard, then runs every unchanged original B09 graph/history assertion. PASS; no old tests or logs normalized. This genuine compatibility adjustment/failure is recorded in B10OR-retention-parser-compatibility.json.
++- Current source inventory, actual patch, dependency/retention/financial/zero-request proofs and commands live under docs/evidence/B10OR-*. Final source/security audit checks exact accepted files, actual private values without printing them, secret patterns and leaked MCP children. Human review required; no ZIP or later milestone.
++
++Final verification flow: preflight exact-key ACL restore → full pytest740 with inherited Gemini interception and real Docker lifecycle → restore dynamic ACL only → read-only retained source/checkpoint/trace/history and private accounting comparison → save fresh rolling proofs/restore accepted bytes → warning-aware raw-log adapter reuses original B09 assertions → exact source/secret/process audit and review patch. Application source stayed fixed throughout final regression; only documentation/evidence compatibility tooling finalized afterward.
++
++Final B10-O-R scope/security audit PASS:61 prior test files unchanged, all prior evidence byte-identical, actual private credential values/patterns absent, no leaked MCP children. No push or ZIP. Exact source inventory/patch is against c16346a; subsequent human review and separately authorized B10 live acceptance remain required.
+--- a/implementation_status.md
++++ b/implementation_status.md
+@@ -1,4 +1,6 @@
+ # implementation_status.md — Current implementation truth
++
++> **CURRENT B10-O-R STATUS — 2026-10-18: PASS, HUMAN REVIEW PENDING; B10 LIVE ACCEPTANCE REMAINS OPEN.** Final full regression: **740 PASS / 0 FAIL / 0 SKIP**,1249.98s (466 unit,274 real integration), both specification validators PASS. All691 accepted tests retained unchanged;49 new cases. Zero external Gemini requests,2 intentional blocked probes,0 unexpected attempts. Real FalkorDB/MCP/Saver, restart/recreation/Browser, retained city/history/101 trace observations/all6 B10 checkpoint threads and accounting witnesses PASS. Local baseline c16346a; no push, ZIP or B11. Exact inventory/patch/commands/results: docs/evidence/B10OR-RESULTS.md. Proxy estimates and simulated usage are distinct from genuine Gemini acceptance, which was NOT RUN. This summary supersedes historical headings; audit history retained.
+ 
+ > **CURRENT B10-O STATUS — 2026-10-18: PASS, HUMAN REVIEW PENDING; B10 LIVE ACCEPTANCE STILL PARTIAL/OPEN.** Final complete suite: **691 PASS / 0 FAIL / 0 SKIP** in951.17s (432 unit,259 real integration); both specification validators PASS. Zero external Gemini requests,2 intentional blocked probes,0 unexpected attempts. Real graph/MCP/Saver, retained source/all6 checkpoint threads, original evidence and spending restart/recreation checks PASS. Real complex context reductions9.52–9.80%; estimates are not billed savings. One earlier post-recreation ACL setup attempt failed24 tests/1 passed and was interrupted; preflight restored exact authorization, then final full run passed. Details/inventory/patch: docs/evidence/B10O-RESULTS.md. No B11 or ZIP. This summary supersedes every historical status heading; audit history retained.
+ 
+@@ -367,3 +369,18 @@
+ - Preserved genuine failed attempt: after first recreation dynamic shared MCP trace-writer ACL was unavailable.24 authentication failures/1 Browser pass, interrupted72.93s; unexecuted remainder is NOT RUN for that attempt. Existing trusted configure/exact-key provisioning restored authorization without changing domain records. All6 retained threads/source matched before lifecycle; final full691 run then passed. Runtime guide now states configure before pytest. Raw failure/counters retained in B10O-auth-failed-*; no test weakened or removed.
+ - Four rolling proofs saved as B10O-regression-* before exact pre-task copies were restored. Previous B10 evidence remains byte-identical. B10O-FILES.md/source-audit.json and incremental B10O-changes.patch identify exact changes against frozen B10O-baseline.json, not a misleading HEAD-only diff.
+ - **STOP for human review.** B10-O verified; B10 remains PARTIAL pending separately authorized genuine three-issue/contradiction/topology/B10-3 acceptance. B11 cited GraphRAG/memory is proposed only after the B10 gate and explicit authorization, not implemented. All18 objectives remain binding.
++
++
++## B10-O-R final observed verification | 2026-10-18
++
++- Local reviewed baseline c16346a; no push. Final **740 PASS/0 FAIL/0 SKIP** in1249.98s:466 unit/274 actual FalkorDB/MCP integration; all691 original cases unchanged plus34 unit/15 integration. Actual Gemini outputs/counts/costs **NOT RUN**; HTTP responses and returned usage are simulated. Both specification validators PASS; frozen offline lock75 packages, only SentencePiece0.2.1 added.
++- Whole-suite external-request interlock:0 Gemini requests,2 intentional parent/child probes blocked,0 ordinary unexpected attempts. All new tests and original real official/domain MCP, B09 authority/episode rules, LangGraph/Saver and actual Docker restart/recreation/Browser checks passed. Targeted overlapping batches58/76/10/29 passed; do not sum overlapping totals. Initial unit1-failure and authored integration-fixture failures are preserved in B10OR-COMMANDS.md/raw logs.
++- Bytes/token minimal reproduction: old byte+output guard127331 vs corrected proxy allowance30394 tokens under60000. Three real complex contexts preserve8 assessment versions/4 observations/2 alternatives/all16 schemas: complete request bytes66234/73621/81990; proxy input+output allowances37476/41089/46721. Exact/-1/+1 cases reject/pass/pass. These estimates and mock130-token receipts are not genuine Gemini usage or billed savings. Model mapping/framing uncertainty is explicit; LIVE requires separately authorized/accounted counting.
++- New-ledger8/.50/concurrency1/explicit complex ceiling1.50; existing6/.15 history and reservations unchanged. Explicit audited upgrade demonstrated on a private SQLite backup, not the original. Exact-request hold recovery binds known usage/tariff/hash/evidence/operator/reason and caps, retains immutable audit, and cannot clear unknown billing. Reopen/fresh-process/lifecycle witness retains5120 token exposure. Same-thread authorized Budget increases preserve counters/source refresh; operational defaults unchanged. Only checkpoint counter storage widens to2M to retain an unexpected1100000-token simulated overrun exactly and pause.
++- Retained B10 source revision103/80nodes/47edges/content/audit/writer state and all6 public SDK threads/12 executions match accepted evidence. B01 probe, B04 city858/1246 revision2104, B05/B08/B09 sources and B09R original v1/v2 history preserved;101 accepted trace observations checked43+27+31. Registryv3/0001/0002 and all prior evidence unchanged. Four fresh rolling proofs saved as B10OR-regression-* before restoring accepted bytes. No graph/volume deletion to pass tests.
++- Supplemental legacy verifier rejected only pytest's ',2 warnings' summary formatting after real data assertions. New B10OR evidence adapter validates the untouched raw740-pass log, lifecycle markers and successful guard, then runs every unchanged original B09 graph/history assertion. PASS; no old tests or logs normalized. This genuine compatibility adjustment/failure is recorded in B10OR-retention-parser-compatibility.json.
++- Current source inventory, actual patch, dependency/retention/financial/zero-request proofs and commands live under docs/evidence/B10OR-*. Final source/security audit checks exact accepted files, actual private values without printing them, secret patterns and leaked MCP children. Human review required; no ZIP or later milestone.
++
++B10-O-R is technically ready for review and the separately authorized final-stage live gate. This is not full genuine-agent acceptance or completion of the18 product capabilities. Runtime guide documents the live procedure, operator cap migration, exact hold reconciliation, public tokenizer setup and residual uncertainties. No B11/API/frontend/operational workflow scope added.
++
++Final B10-O-R scope/security audit PASS:61 prior test files unchanged, all prior evidence byte-identical, actual private credential values/patterns absent, no leaked MCP children. No push or ZIP. Exact source inventory/patch is against c16346a; subsequent human review and separately authorized B10 live acceptance remain required.
+--- /dev/null
++++ b/scripts/audit_b10or.py
+@@ -0,0 +1,56 @@
++"""B10-O-R exact-scope, unchanged-history, zero-provider and secret audit."""
++import difflib,hashlib,json,re,subprocess
++from pathlib import Path
++ROOT=Path(__file__).resolve().parents[1];BASE='c16346a'
++def git(*args):return subprocess.check_output(['git',*args],cwd=ROOT)
++baseline=git('ls-tree','-r','--name-only',BASE).decode().splitlines()
++allowed={'.env.example','backend/AGENTS_RUNTIME.md','backend/pyproject.toml','backend/uv.lock','backend/app/agents/provider.py','backend/app/agents/models.py','backend/app/agents/runtime.py','backend/app/agents/policy.py','backend/app/agents/spending.py','backend/app/agents/__main__.py','contracts/agent_runtime.json','contracts/agent_optimization.json','decision.md','flow.md','task_board.md','implementation_status.md','test_log.md','blockers.md'}
++new={'backend/app/agents/tokens.py','backend/app/agents/spending_cli.py','backend/tests/b10or_http.py','backend/tests/b10or_context.py','backend/tests/b10or_worker.py','backend/tests/unit/test_agent_token_accounting.py','backend/tests/unit/test_agent_ledger_recovery.py','backend/tests/integration/test_agent_accounting.py','scripts/configure_tokenizer.py','scripts/verify_b10or_retained.py','scripts/audit_b10or.py','scripts/verify_b10or_spending.py'}
++files=sorted(set(git('ls-files','-z').decode().split('\0')[:-1]+git('ls-files','--others','--exclude-standard','-z').decode().split('\0')[:-1]))
++changed=[];unchanged=[]
++for name in baseline:
++    assert (ROOT/name).is_file(),'Baseline missing: '+name
++    if (ROOT/name).read_bytes()!=git('show',BASE+':'+name):
++        assert name in allowed,'Protected source/evidence changed: '+name
++        changed.append(name)
++    else:unchanged.append(name)
++added=sorted(set(files)-set(baseline))
++for n in added:assert n in new or n.startswith('docs/evidence/B10OR-'),'Outside B10-O-R scope: '+n
++values=[]
++for line in (ROOT/'.env').read_text().splitlines():
++    if '=' not in line:continue
++    k,v=line.split('=',1);v=v.strip(' \"\'')
++    if any(t in k.upper() for t in ['KEY','SECRET','PASSWORD','TOKEN']) and len(v)>=8:values.append(v.encode())
++def private(v):
++    if isinstance(v,dict):
++        for k,item in v.items():
++            if any(t in k.lower() for t in ['password','secret','key','token']) and isinstance(item,str) and len(item)>=8:values.append(item.encode())
++            else:private(item)
++    elif isinstance(v,list):
++        for item in v:private(item)
++for p in (ROOT/'.runtime').glob('*.json'):
++    assert not p.is_symlink() and not p.stat().st_mode&0o077,'Nonprivate runtime profile'
++    private(json.loads(p.read_text()))
++for name in files:
++    assert not set(Path(name).parts)&{'.runtime','.env','.git','.venv','node_modules','__pycache__','.pytest_cache','review_packages'}
++    assert not name.endswith(('.zip','.tar','.tgz','.pem','.key','.p12'))
++    data=(ROOT/name).read_bytes();assert not any(v in data for v in values),'Private value found in '+name
++    assert not re.search(rb'-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----|\bAKIA[0-9A-Z]{16}\b|\bsk-[A-Za-z0-9_-]{24,}',data),'Secret pattern in '+name
++    if name.startswith('backend/app/agents/') and name.endswith('.py'):assert not any(t in data for t in [b'contracts/scenarios',b'eval_hidden',b'delayed_reveal',b'hidden_truth'])
++proof=json.loads((ROOT/'docs/evidence/B10OR-zero-live-proof.json').read_text());assert proof['external_gemini_requests_sent']==0 and proof['ordinary_unexpected_attempts']==0
++leaked=[]
++for row in subprocess.check_output(['ps','-axo','pid=,command='],text=True).splitlines():
++    parts=row.strip().split(None,2)
++    if len(parts)!=3:continue
++    exe,cmd=Path(parts[1]).name,parts[2]
++    if ('python' in exe.lower() and any(t in cmd for t in ['-m app.agents.server','-m app.mcp.civicly.server','-m tests.b07r_server','-m tests.b08_server','-m tests.b09_server'])) or (exe=='node' and 'node_modules/@falkordb/mcpserver/dist/index.js' in cmd):leaked.append(int(parts[0]))
++assert not leaked,'Leaked MCP children'
++source=sorted(n for n in changed+added if not n.startswith('docs/evidence/'));patch=[]
++for name in source:
++    old=git('show',BASE+':'+name).decode().splitlines(keepends=True) if name in baseline else []
++    patch.extend(difflib.unified_diff(old,(ROOT/name).read_text().splitlines(keepends=True),fromfile='a/'+name if old else '/dev/null',tofile='b/'+name))
++(ROOT/'docs/evidence/B10OR-changes.patch').write_text(''.join(patch))
++value={'status':'PASS','baseline':BASE,'baseline_files_unchanged':len(unchanged),'all_prior_test_files_unchanged':all(n in unchanged for n in baseline if n.startswith('backend/tests/')),'prior_test_files_unchanged':sum(n.startswith('backend/tests/') for n in unchanged),'all_prior_evidence_byte_identical':all(n in unchanged for n in baseline if n.startswith('docs/evidence/')),'candidate_files_scanned':len(files),'secrets':'Actual private values and secret patterns absent; no values printed','external_provider_requests':0,'leaked_mcp_children':leaked,'modified_files':changed,'new_files':added,'source_sha256':{n:hashlib.sha256((ROOT/n).read_bytes()).hexdigest() for n in source},'patch_basis':'c16346a reviewed B10-O local commit; source/contract/tracker diff includes actual new files, generated evidence listed separately'}
++(ROOT/'docs/evidence/B10OR-source-audit.json').write_text(json.dumps(value,indent=2)+'\n')
++(ROOT/'docs/evidence/B10OR-FILES.md').write_text('# B10-O-R changed-file inventory\n\nAgainst local baseline c16346a; no push or ZIP. All prior tests and evidence unchanged.\n\n## Modified\n\n'+''.join('- `'+n+'`\n' for n in changed)+'\n## Added\n\n'+''.join('- `'+n+'`\n' for n in sorted(set(added)|{'docs/evidence/B10OR-source-audit.json','docs/evidence/B10OR-changes.patch','docs/evidence/B10OR-FILES.md'})))
++print(json.dumps({k:v for k,v in value.items() if k not in {'source_sha256','modified_files','new_files'}}))
+--- /dev/null
++++ b/scripts/configure_tokenizer.py
+@@ -0,0 +1,10 @@
++"""Explicit public asset setup. No Gemini API, credentials or implicit runtime fetch."""
++import hashlib,urllib.request
++from app.agents.tokens import ASSET,SHA256,URL
++if ASSET.exists():
++    assert hashlib.sha256(ASSET.read_bytes()).hexdigest()==SHA256
++else:
++    data=urllib.request.urlopen(URL,timeout=60).read()
++    assert hashlib.sha256(data).hexdigest()==SHA256
++    ASSET.parent.mkdir(mode=0o700,parents=True,exist_ok=True);ASSET.write_bytes(data);ASSET.chmod(0o600)
++print('PASS: pinned public tokenizer asset available offline; no Gemini request')
+--- /dev/null
++++ b/scripts/verify_b10or_retained.py
+@@ -0,0 +1,17 @@
++"""Verify raw pytest/lifecycle proof, then reuse unchanged B09 graph/history verifier.
++
++The historical CLI regex accepts 'N passed in' but not 'N passed, W warnings in'.
++No test result or historical file is rewritten to work around that presentation gap.
++"""
++import argparse,hashlib,json,re,subprocess,sys
++from pathlib import Path
++p=argparse.ArgumentParser();p.add_argument('--log',type=Path,required=True);p.add_argument('--guard',type=Path,required=True);p.add_argument('--output',type=Path,required=True);a=p.parse_args()
++raw=a.log.read_bytes();text=raw.decode();guard=json.loads(a.guard.read_text())
++match=re.search(r'^=+ (\d+) passed(?:, (\d+) warnings?)? in ([\d.]+)s[^\n]*=+$',text,re.M)
++assert match and int(match[1])==740 and ' failed,' not in text
++assert 'after restart (same container)' in text and 'after recreation (different container, retained volume)' in text
++assert guard['exitstatus']==0 and guard['external_gemini_requests_sent']==0 and guard['ordinary_unexpected_attempts']==0
++# All original data/fingerprint/history assertions execute against the real database.
++subprocess.run([sys.executable,'-m','tests.b09_evidence','verify','--proof','docs/evidence/B09-retained-proof.json','--output',str(a.output)],check=True)
++v=json.loads(a.output.read_text());v['real_lifecycle_log']=str(a.log);v['lifecycle_proof']={'validation':'Warning-aware raw-summary adapter; unchanged B09 data/history verifier; no log normalization','raw_log_sha256':hashlib.sha256(raw).hexdigest(),'passed':int(match[1]),'warnings':int(match[2] or 0),'elapsed_seconds':float(match[3]),'guard_exitstatus':guard['exitstatus'],'actual_external_gemini_requests':0}
++a.output.write_text(json.dumps(v,indent=2)+'\n');print(json.dumps({'status':'PASS','raw_lifecycle_verified':True,'original_B09_assertions_reused':True,'log_rewritten':False}))
+--- /dev/null
++++ b/scripts/verify_b10or_spending.py
+@@ -0,0 +1,37 @@
++"""Read-only old witness + upgraded COPY and new durable simulated accounting probe."""
++import argparse,hashlib,json,os,sqlite3
++from pathlib import Path
++from app.active import ROOT
++from app.agents.spending import Ledger,Pricing,dollars
++
++TABLES=['config','cases','requests','holds','config_changes','warnings','sessions']
++def rows(path,tables):
++    with sqlite3.connect('file:'+str(path)+'?mode=ro',uri=True) as db:
++        db.row_factory=sqlite3.Row
++        return {t:[dict(r) for r in db.execute('SELECT * FROM '+t+' ORDER BY 1')] for t in tables}
++def main():
++    p=argparse.ArgumentParser();p.add_argument('mode',choices=['create','verify']);p.add_argument('--output',required=True);p.add_argument('--anchor');a=p.parse_args()
++    old=ROOT/'.runtime/b10o-spending-probe.sqlite3';before=rows(old,TABLES)
++    original=json.loads((ROOT/'docs/evidence/B10O-spending-before.json').read_text())['tables']
++    assert before==original,'Original accounting witness changed'
++    target=ROOT/'.runtime/b10or-spending-probe.sqlite3';copy=ROOT/'.runtime/b10or-legacy-copy.sqlite3'
++    if a.mode=='create':
++        if target.exists() or copy.exists():raise RuntimeError('Existing probe: never erase; verify instead')
++        with sqlite3.connect('file:'+str(old)+'?mode=ro',uri=True) as src,sqlite3.connect(copy) as dst:src.backup(dst)
++        copy.chmod(0o600);upgraded=Ledger(copy)
++        after=rows(copy,TABLES)
++        assert [{k:v for k,v in row.items() if k!='complex_cap'} for row in after['config']]==before['config']
++        assert all(after[t]==before[t] for t in TABLES if t!='config')
++        upgraded.update_limits(reason='Synthetic operator approved8/.50 on COPY only',project_limit=8,default_case_limit='.50',complex_case_limit='1.50')
++        assert rows(copy,['requests'])['requests']==before['requests']
++        l=Ledger(target);l.configure_case('B10OR-PROBE');l.acquire('B10OR-PROBE','T','O');tariff=Pricing();usage={'promptTokenCount':100,'candidatesTokenCount':20,'totalTokenCount':120}
++        for id in ['UNKNOWN','OVER']:
++            l.reserve(id,'B10OR-PROBE','T',tariff.data['model'],'B10OR-SIMULATED',tariff.version,1000,'O',token_reservation=5000,token_limit=60000)
++            l.reconcile(id,None if id=='UNKNOWN' else tariff.actual(usage),{} if id=='UNKNOWN' else usage)
++        l.release('O');info=l.inspect_hold('OVER')
++        l.resolve_hold('OVER',authorized=True,operator='synthetic-operator',reason='Bound simulated usage and tariff; caps sufficient',verified_pricing=tariff.version,usage_sha256=hashlib.sha256(info['request']['usage'].encode()).hexdigest(),evidence_ref='SIMULATED-RECEIPT')
++    value={'mode':'SIMULATED_ACCOUNTING_NO_PROVIDER','original_B10O_witness_unchanged':rows(old,TABLES)==before,'original_caps':before['config'],'upgraded_copy':rows(copy,TABLES+['accounting_events']),'new_probe':rows(target,TABLES+['request_holds','accounting_events','token_usage','token_floors']),'thread_accounted_tokens':Ledger(target).thread_tokens('T'),'actual_external_provider_requests':0}
++    assert value['thread_accounted_tokens']==5120
++    if a.mode=='verify':assert value==json.loads(Path(a.anchor).read_text()),'Probe changed after lifecycle'
++    Path(a.output).write_text(json.dumps(value,indent=2)+'\n');print(json.dumps({'status':'PASS','mode':a.mode,'original_history_unchanged':True,'durable_token_exposure':5120,'actual_provider_requests':0}))
++if __name__=='__main__':main()
+--- a/task_board.md
++++ b/task_board.md
+@@ -1,4 +1,6 @@
+ # task_board.md — Human-reviewed task queue
++
++> **CURRENT B10-O-R STATUS — 2026-10-18: PASS, HUMAN REVIEW PENDING; B10 LIVE ACCEPTANCE REMAINS OPEN.** Final full regression: **740 PASS / 0 FAIL / 0 SKIP**,1249.98s (466 unit,274 real integration), both specification validators PASS. All691 accepted tests retained unchanged;49 new cases. Zero external Gemini requests,2 intentional blocked probes,0 unexpected attempts. Real FalkorDB/MCP/Saver, restart/recreation/Browser, retained city/history/101 trace observations/all6 B10 checkpoint threads and accounting witnesses PASS. Local baseline c16346a; no push, ZIP or B11. Exact inventory/patch/commands/results: docs/evidence/B10OR-RESULTS.md. Proxy estimates and simulated usage are distinct from genuine Gemini acceptance, which was NOT RUN. This summary supersedes historical headings; audit history retained.
+ 
+ > **CURRENT B10-O STATUS — 2026-10-18: PASS, HUMAN REVIEW PENDING; B10 LIVE ACCEPTANCE STILL PARTIAL/OPEN.** Final complete suite: **691 PASS / 0 FAIL / 0 SKIP** in951.17s (432 unit,259 real integration); both specification validators PASS. Zero external Gemini requests,2 intentional blocked probes,0 unexpected attempts. Real graph/MCP/Saver, retained source/all6 checkpoint threads, original evidence and spending restart/recreation checks PASS. Real complex context reductions9.52–9.80%; estimates are not billed savings. One earlier post-recreation ACL setup attempt failed24 tests/1 passed and was interrupted; preflight restored exact authorization, then final full run passed. Details/inventory/patch: docs/evidence/B10O-RESULTS.md. No B11 or ZIP. This summary supersedes every historical status heading; audit history retained.
+ 
+@@ -290,3 +292,23 @@
+ - Preserved genuine failed attempt: after first recreation dynamic shared MCP trace-writer ACL was unavailable.24 authentication failures/1 Browser pass, interrupted72.93s; unexecuted remainder is NOT RUN for that attempt. Existing trusted configure/exact-key provisioning restored authorization without changing domain records. All6 retained threads/source matched before lifecycle; final full691 run then passed. Runtime guide now states configure before pytest. Raw failure/counters retained in B10O-auth-failed-*; no test weakened or removed.
+ - Four rolling proofs saved as B10O-regression-* before exact pre-task copies were restored. Previous B10 evidence remains byte-identical. B10O-FILES.md/source-audit.json and incremental B10O-changes.patch identify exact changes against frozen B10O-baseline.json, not a misleading HEAD-only diff.
+ - **STOP for human review.** B10-O verified; B10 remains PARTIAL pending separately authorized genuine three-issue/contradiction/topology/B10-3 acceptance. B11 cited GraphRAG/memory is proposed only after the B10 gate and explicit authorization, not implemented. All18 objectives remain binding.
++
++
++## B10-O-R final observed verification | 2026-10-18
++
++- Local reviewed baseline c16346a; no push. Final **740 PASS/0 FAIL/0 SKIP** in1249.98s:466 unit/274 actual FalkorDB/MCP integration; all691 original cases unchanged plus34 unit/15 integration. Actual Gemini outputs/counts/costs **NOT RUN**; HTTP responses and returned usage are simulated. Both specification validators PASS; frozen offline lock75 packages, only SentencePiece0.2.1 added.
++- Whole-suite external-request interlock:0 Gemini requests,2 intentional parent/child probes blocked,0 ordinary unexpected attempts. All new tests and original real official/domain MCP, B09 authority/episode rules, LangGraph/Saver and actual Docker restart/recreation/Browser checks passed. Targeted overlapping batches58/76/10/29 passed; do not sum overlapping totals. Initial unit1-failure and authored integration-fixture failures are preserved in B10OR-COMMANDS.md/raw logs.
++- Bytes/token minimal reproduction: old byte+output guard127331 vs corrected proxy allowance30394 tokens under60000. Three real complex contexts preserve8 assessment versions/4 observations/2 alternatives/all16 schemas: complete request bytes66234/73621/81990; proxy input+output allowances37476/41089/46721. Exact/-1/+1 cases reject/pass/pass. These estimates and mock130-token receipts are not genuine Gemini usage or billed savings. Model mapping/framing uncertainty is explicit; LIVE requires separately authorized/accounted counting.
++- New-ledger8/.50/concurrency1/explicit complex ceiling1.50; existing6/.15 history and reservations unchanged. Explicit audited upgrade demonstrated on a private SQLite backup, not the original. Exact-request hold recovery binds known usage/tariff/hash/evidence/operator/reason and caps, retains immutable audit, and cannot clear unknown billing. Reopen/fresh-process/lifecycle witness retains5120 token exposure. Same-thread authorized Budget increases preserve counters/source refresh; operational defaults unchanged. Only checkpoint counter storage widens to2M to retain an unexpected1100000-token simulated overrun exactly and pause.
++- Retained B10 source revision103/80nodes/47edges/content/audit/writer state and all6 public SDK threads/12 executions match accepted evidence. B01 probe, B04 city858/1246 revision2104, B05/B08/B09 sources and B09R original v1/v2 history preserved;101 accepted trace observations checked43+27+31. Registryv3/0001/0002 and all prior evidence unchanged. Four fresh rolling proofs saved as B10OR-regression-* before restoring accepted bytes. No graph/volume deletion to pass tests.
++- Supplemental legacy verifier rejected only pytest's ',2 warnings' summary formatting after real data assertions. New B10OR evidence adapter validates the untouched raw740-pass log, lifecycle markers and successful guard, then runs every unchanged original B09 graph/history assertion. PASS; no old tests or logs normalized. This genuine compatibility adjustment/failure is recorded in B10OR-retention-parser-compatibility.json.
++- Current source inventory, actual patch, dependency/retention/financial/zero-request proofs and commands live under docs/evidence/B10OR-*. Final source/security audit checks exact accepted files, actual private values without printing them, secret patterns and leaked MCP children. Human review required; no ZIP or later milestone.
++
++### B10-O-R review gate
++- [x] Correct token units, accounting migration/recovery and real mock-HTTP integration.
++- [x] Full740 regression, both SPEC validators, retained lifecycle witnesses and review evidence.
++- [ ] Human review of B10-O-R. STOP.
++- [ ] Separately authorize and complete genuine B10 three-category/contradiction/topology acceptance.
++- [ ] B11 cited GraphRAG/multi-layer memory only after that gate and explicit authorization; not started.
++
++Final B10-O-R scope/security audit PASS:61 prior test files unchanged, all prior evidence byte-identical, actual private credential values/patterns absent, no leaked MCP children. No push or ZIP. Exact source inventory/patch is against c16346a; subsequent human review and separately authorized B10 live acceptance remain required.
+--- a/test_log.md
++++ b/test_log.md
+@@ -1,4 +1,6 @@
+ # test_log.md — Append-only verification record
++
++> **CURRENT B10-O-R STATUS — 2026-10-18: PASS, HUMAN REVIEW PENDING; B10 LIVE ACCEPTANCE REMAINS OPEN.** Final full regression: **740 PASS / 0 FAIL / 0 SKIP**,1249.98s (466 unit,274 real integration), both specification validators PASS. All691 accepted tests retained unchanged;49 new cases. Zero external Gemini requests,2 intentional blocked probes,0 unexpected attempts. Real FalkorDB/MCP/Saver, restart/recreation/Browser, retained city/history/101 trace observations/all6 B10 checkpoint threads and accounting witnesses PASS. Local baseline c16346a; no push, ZIP or B11. Exact inventory/patch/commands/results: docs/evidence/B10OR-RESULTS.md. Proxy estimates and simulated usage are distinct from genuine Gemini acceptance, which was NOT RUN. This summary supersedes historical headings; audit history retained.
+ 
+ > **CURRENT B10-O STATUS — 2026-10-18: PASS, HUMAN REVIEW PENDING; B10 LIVE ACCEPTANCE STILL PARTIAL/OPEN.** Final complete suite: **691 PASS / 0 FAIL / 0 SKIP** in951.17s (432 unit,259 real integration); both specification validators PASS. Zero external Gemini requests,2 intentional blocked probes,0 unexpected attempts. Real graph/MCP/Saver, retained source/all6 checkpoint threads, original evidence and spending restart/recreation checks PASS. Real complex context reductions9.52–9.80%; estimates are not billed savings. One earlier post-recreation ACL setup attempt failed24 tests/1 passed and was interrupted; preflight restored exact authorization, then final full run passed. Details/inventory/patch: docs/evidence/B10O-RESULTS.md. No B11 or ZIP. This summary supersedes every historical status heading; audit history retained.
+ 
+@@ -887,3 +889,16 @@
+ - Preserved genuine failed attempt: after first recreation dynamic shared MCP trace-writer ACL was unavailable.24 authentication failures/1 Browser pass, interrupted72.93s; unexecuted remainder is NOT RUN for that attempt. Existing trusted configure/exact-key provisioning restored authorization without changing domain records. All6 retained threads/source matched before lifecycle; final full691 run then passed. Runtime guide now states configure before pytest. Raw failure/counters retained in B10O-auth-failed-*; no test weakened or removed.
+ - Four rolling proofs saved as B10O-regression-* before exact pre-task copies were restored. Previous B10 evidence remains byte-identical. B10O-FILES.md/source-audit.json and incremental B10O-changes.patch identify exact changes against frozen B10O-baseline.json, not a misleading HEAD-only diff.
+ - **STOP for human review.** B10-O verified; B10 remains PARTIAL pending separately authorized genuine three-issue/contradiction/topology/B10-3 acceptance. B11 cited GraphRAG/memory is proposed only after the B10 gate and explicit authorization, not implemented. All18 objectives remain binding.
++
++
++## B10-O-R final observed verification | 2026-10-18
++
++- Local reviewed baseline c16346a; no push. Final **740 PASS/0 FAIL/0 SKIP** in1249.98s:466 unit/274 actual FalkorDB/MCP integration; all691 original cases unchanged plus34 unit/15 integration. Actual Gemini outputs/counts/costs **NOT RUN**; HTTP responses and returned usage are simulated. Both specification validators PASS; frozen offline lock75 packages, only SentencePiece0.2.1 added.
++- Whole-suite external-request interlock:0 Gemini requests,2 intentional parent/child probes blocked,0 ordinary unexpected attempts. All new tests and original real official/domain MCP, B09 authority/episode rules, LangGraph/Saver and actual Docker restart/recreation/Browser checks passed. Targeted overlapping batches58/76/10/29 passed; do not sum overlapping totals. Initial unit1-failure and authored integration-fixture failures are preserved in B10OR-COMMANDS.md/raw logs.
++- Bytes/token minimal reproduction: old byte+output guard127331 vs corrected proxy allowance30394 tokens under60000. Three real complex contexts preserve8 assessment versions/4 observations/2 alternatives/all16 schemas: complete request bytes66234/73621/81990; proxy input+output allowances37476/41089/46721. Exact/-1/+1 cases reject/pass/pass. These estimates and mock130-token receipts are not genuine Gemini usage or billed savings. Model mapping/framing uncertainty is explicit; LIVE requires separately authorized/accounted counting.
++- New-ledger8/.50/concurrency1/explicit complex ceiling1.50; existing6/.15 history and reservations unchanged. Explicit audited upgrade demonstrated on a private SQLite backup, not the original. Exact-request hold recovery binds known usage/tariff/hash/evidence/operator/reason and caps, retains immutable audit, and cannot clear unknown billing. Reopen/fresh-process/lifecycle witness retains5120 token exposure. Same-thread authorized Budget increases preserve counters/source refresh; operational defaults unchanged. Only checkpoint counter storage widens to2M to retain an unexpected1100000-token simulated overrun exactly and pause.
++- Retained B10 source revision103/80nodes/47edges/content/audit/writer state and all6 public SDK threads/12 executions match accepted evidence. B01 probe, B04 city858/1246 revision2104, B05/B08/B09 sources and B09R original v1/v2 history preserved;101 accepted trace observations checked43+27+31. Registryv3/0001/0002 and all prior evidence unchanged. Four fresh rolling proofs saved as B10OR-regression-* before restoring accepted bytes. No graph/volume deletion to pass tests.
++- Supplemental legacy verifier rejected only pytest's ',2 warnings' summary formatting after real data assertions. New B10OR evidence adapter validates the untouched raw740-pass log, lifecycle markers and successful guard, then runs every unchanged original B09 graph/history assertion. PASS; no old tests or logs normalized. This genuine compatibility adjustment/failure is recorded in B10OR-retention-parser-compatibility.json.
++- Current source inventory, actual patch, dependency/retention/financial/zero-request proofs and commands live under docs/evidence/B10OR-*. Final source/security audit checks exact accepted files, actual private values without printing them, secret patterns and leaked MCP children. Human review required; no ZIP or later milestone.
++
++Final B10-O-R scope/security audit PASS:61 prior test files unchanged, all prior evidence byte-identical, actual private credential values/patterns absent, no leaked MCP children. No push or ZIP. Exact source inventory/patch is against c16346a; subsequent human review and separately authorized B10 live acceptance remain required.

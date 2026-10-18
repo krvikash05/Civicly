@@ -1,0 +1,28 @@
+...............F..............                                           [100%]
+=================================== FAILURES ===================================
+__________ test_retry_rechecks_remaining_token_budget_before_new_http __________
+
+tmp_path = PosixPath('/private/var/folders/ng/nxnstkjs7tn9dbx9nhvtvmzw0000gn/T/pytest-of-vikashkumar/pytest-73/test_retry_rechecks_remaining_0')
+
+    def test_retry_rechecks_remaining_token_budget_before_new_http(tmp_path):
+        m,seen=model(tmp_path,[httpx.Response(503,headers={'retry-after':'0'},json={'usageMetadata':{'promptTokenCount':25000,'candidatesTokenCount':0,'totalTokenCount':25000}}),response()])
+        with pytest.raises(ProviderError,match='TOKEN_BUDGET'):asyncio.run(m.choose({},30000))
+>       assert len(seen)==1 and m.last_failure['category']=='TOKEN_BUDGET'
+E       AssertionError: assert (1 == 1 and 'SERVICE_UNAVAILABLE' == 'TOKEN_BUDGET'
+E        +  where 1 = len([1])
+E         
+E         - TOKEN_BUDGET
+E         + SERVICE_UNAVAILABLE)
+
+backend/tests/unit/test_ai_provider_recovery.py:53: AssertionError
+=============================== warnings summary ===============================
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyPacked has no __module__ attribute
+
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyObject has no __module__ attribute
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED backend/tests/unit/test_ai_provider_recovery.py::test_retry_rechecks_remaining_token_budget_before_new_http
+1 failed, 29 passed, 2 warnings in 1.38s

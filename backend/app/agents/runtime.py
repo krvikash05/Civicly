@@ -77,6 +77,7 @@ class InvestigationAgent:
             s.selection=Selection(action='PAUSE',summary='Runtime budget exhausted; operator review required',tool_name='',arguments_json='{}',pause_reason='DEPENDENCY_UNAVAILABLE')
             s.pause_reason='BUDGET_EXHAUSTED';return self.output(s,'Supervisor')
         id=identity('DEC',s.thread_id,s.iterations,s.wakes);saved=self.control.selected(id)
+        accounted=False
         try:
             if saved:selection,metadata=saved;used=metadata['tokens']
             else:
@@ -85,11 +86,11 @@ class InvestigationAgent:
                 metadata={'mode':self.model.mode,'tokens':used,'inventory_hash':s.inventory_hash,'graph_revision':self.revision(),'as_of':s.as_of,
                           'usage':getattr(self.model,'last_usage',{}),'provider_failure':getattr(self.model,'last_failure',None),'prompt_sha256':hashlib.sha256(__import__('app.agents.provider',fromlist=['PROMPT']).PROMPT.encode()).hexdigest(),'investigation_id':s.investigation_id,'thread_id':s.thread_id}
                 self.check();self.control.decision(id,selection,metadata)
-            s.tokens+=used;s.selection=selection
+            s.tokens+=used;accounted=True;s.selection=selection
             if id not in s.decisions:s.decisions.append(id)
             if s.refresh_required and selection.action not in {'READ','PAUSE'}:raise ValueError('Fresh MCP read required after revision change')
         except Exception as e:
-            if type(e).__name__=='ProviderError':s.tokens+=getattr(self.model,'last_usage',{}).get('total_tokens',0)
+            if type(e).__name__=='ProviderError' and not accounted:s.tokens+=getattr(self.model,'last_usage',{}).get('accounted_tokens',getattr(self.model,'last_usage',{}).get('total_tokens',0))
             if type(e).__name__=='ProviderError':
                 s.observations.append({'provider_failure':getattr(self.model,'last_failure',None),'provider_usage':getattr(self.model,'last_usage',{}),'status':'ERROR','host_generated':True})
             s.errors.append(getattr(e,'code',str(e) if type(e).__name__=='ProviderError' else 'INVALID_MODEL_SELECTION'))
@@ -193,15 +194,33 @@ class InvestigationAgent:
         return self.output(s,'Coordinator')
     async def await_dependency(self,channel):
         s=self.decode(channel)
-        interrupt({'investigation_id':s.investigation_id,'thread_id':s.thread_id,'pause_reason':s.pause_reason,'pending_inspections':s.pending_inspections,'graph_revision':s.graph_revision})
+        recovery=interrupt({'investigation_id':s.investigation_id,'thread_id':s.thread_id,'pause_reason':s.pause_reason,'pending_inspections':s.pending_inspections,'graph_revision':s.graph_revision})
         # Reexecuted on resume: no pre-interrupt side effect.
+        if isinstance(recovery,dict) and recovery.get('budget_increase'):
+            old=s.budget.model_dump(mode='json');s.budget=__import__('app.agents.models',fromlist=['Budget']).Budget.model_validate(recovery['budget_increase'])
+            s.observations.append({'operation':'AUTHORIZED_BUDGET_INCREASE','host_generated':True,'previous':old,'current':s.budget.model_dump(mode='json'),'reason':recovery['operator_reason']})
         s.wakes+=1;s.pause_reason=None;s.as_of=self.clock()
         current=self.revision();changed=current!=s.graph_revision or any(self.repo.get_node(id).content_hash!=h for id,h in s.evidence.items())
         s.refresh_required=changed;s.graph_revision=current
         if changed:s.errors.append('SOURCE_CHANGED_REFRESH_REQUIRED')
         return self.output(s,'AwaitDependency')
-    async def run(self,initial=None,*,thread_id,resume=False):
+    async def run(self,initial=None,*,thread_id,resume=False,budget_increase=None,authorized=False,operator_reason=None):
+        if budget_increase is not None and (authorized is not True or not isinstance(operator_reason,str) or not operator_reason.strip() or len(operator_reason)>512):raise RecoveryRequired('BUDGET_INCREASE_REQUIRES_OPERATOR_AUTHORIZATION')
         self.started=time.monotonic();config={'configurable':{'thread_id':thread_id},'recursion_limit':150}
+        # Operator input errors must not quarantine an otherwise valid paused thread.
+        if budget_increase is not None:
+            from .models import Budget
+            candidate=Budget.model_validate(budget_increase)
+            snapshot=await self.graph.aget_state(config)
+            if not resume or not snapshot.values or not snapshot.next:raise RecoveryRequired('NO_PAUSED_THREAD')
+            prior=Budget.model_validate(snapshot.values['data']['budget'])
+            if any(getattr(candidate,k)<getattr(prior,k) for k in type(prior).model_fields):raise RecoveryRequired('BUDGET_DECREASE_OR_RESET_DENIED')
+        elif resume:
+            snapshot=await self.graph.aget_state(config)
+            if snapshot.values and snapshot.next:
+                from .models import Budget
+                prior=Budget.model_validate(snapshot.values['data']['budget'])
+                if snapshot.values['data']['wakes']>=prior.max_wakes:raise RecoveryRequired('WAKE_BUDGET_EXHAUSTED')
         with active_scope(self.profile):
             async with ownership(self.repo.client,self.profile,thread_id) as check:
                 self.check=check
@@ -209,13 +228,20 @@ class InvestigationAgent:
                 if resume:
                     if not snapshot.values or not snapshot.next:raise RecoveryRequired('NO_PAUSED_THREAD')
                     state=self.decode(snapshot.values)
-                    if state.wakes>=state.budget.max_wakes:raise RecoveryRequired('WAKE_BUDGET_EXHAUSTED')
-                    value=Command(resume={'host_resume':True})
+                    if state.wakes>=(candidate.max_wakes if budget_increase is not None else state.budget.max_wakes):raise RecoveryRequired('WAKE_BUDGET_EXHAUSTED')
+                    recovery={'host_resume':True}
+                    if budget_increase is not None:
+                        from .models import Budget
+                        if authorized is not True or not isinstance(operator_reason,str) or not operator_reason.strip() or len(operator_reason)>512:raise RecoveryRequired('BUDGET_INCREASE_REQUIRES_OPERATOR_AUTHORIZATION')
+                        increased=Budget.model_validate(budget_increase)
+                        if any(getattr(increased,k)<getattr(state.budget,k) for k in type(state.budget).model_fields):raise RecoveryRequired('BUDGET_DECREASE_OR_RESET_DENIED')
+                        recovery.update(budget_increase=increased.model_dump(mode='json'),operator_reason=operator_reason)
+                    value=Command(resume=recovery)
                 else:
                     if snapshot.values:raise RecoveryRequired('THREAD_ALREADY_EXISTS; resume explicitly')
                     if not isinstance(initial,InvestigationState) or initial.thread_id!=thread_id:raise ValueError('Initial thread mismatch')
                     self.control.bind(initial.investigation_id,thread_id);value={'data':initial.model_dump(mode='json')}
-                budget=initial.budget if initial is not None else state.budget
+                budget=initial.budget if initial is not None else (increased if budget_increase is not None else state.budget)
                 async with asyncio.timeout(budget.max_seconds+65):
                     if hasattr(self.model,'execution_scope'):
                         selected=initial if initial is not None else state

@@ -9,7 +9,7 @@ from app.services.evidence.reader import Reader
 from .mcp import brokers
 from .runtime import InvestigationAgent
 from .checkpoints import saver
-from .models import InvestigationState
+from .models import InvestigationState,Budget
 from .provider import Gemini,ProviderSettings
 from .policy import Permit
 
@@ -32,13 +32,22 @@ async def execute(args):
                 assets=sorted({e.target for id in ids for e in reader.edges('AFFECTS',source=id)})
                 initial=InvestigationState(graph=profile.graph,investigation_id=args.investigation,thread_id=args.thread,
                     problem_cluster_id=cluster[0],discovered_tool_names=[t['name'] for t in tools.catalog()],incident_ids=ids,asset_ids=assets,issue=issues.pop(),graph_revision=agent.revision(),inventory_hash=tools.inventory_hash,as_of=utc_now())
-            result=await agent.run(initial,thread_id=args.thread,resume=args.resume)
+            changes={key:getattr(args,key,None) for key in ['max_tokens','max_iterations','max_tools','max_seconds','max_wakes'] if getattr(args,key,None) is not None}
+            increase=None
+            if changes:
+                if args.resume:
+                    snapshot=await agent.graph.aget_state({'configurable':{'thread_id':args.thread}})
+                    increase={**snapshot.values['data']['budget'],**changes}
+                else:initial.budget=Budget.model_validate({**initial.budget.model_dump(),**changes})
+            result=await agent.run(initial,thread_id=args.thread,resume=args.resume,budget_increase=increase,authorized=args.live,operator_reason=args.budget_reason)
             # Public state only, no model private reasoning or credentials.
             print(json.dumps(result,default=str))
 
 def main():
     parser=argparse.ArgumentParser();parser.add_argument('--profile',required=True);parser.add_argument('--thread',required=True)
-    parser.add_argument('--live',action='store_true',help='Explicitly authorize only this investigation/thread');parser.add_argument('--max-cost-usd',default='.15');parser.add_argument('--investigation');parser.add_argument('--resume',action='store_true');args=parser.parse_args()
+    parser.add_argument('--live',action='store_true',help='Explicitly authorize only this investigation/thread');parser.add_argument('--max-cost-usd',default=None);parser.add_argument('--budget-reason');
+    for flag in ['max-tokens','max-iterations','max-tools','max-seconds','max-wakes']:parser.add_argument('--'+flag,type=int)
+    parser.add_argument('--investigation');parser.add_argument('--resume',action='store_true');args=parser.parse_args()
     try:asyncio.run(execute(args))
     except Exception as exc:
         print(json.dumps({'status':'RECOVERY_REQUIRED','code':type(exc).__name__,'detail':'Wake failed closed; reconcile private runtime configuration and public checkpoint. No implicit retry.'}));raise SystemExit(1)

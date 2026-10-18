@@ -1,4 +1,4 @@
-# B10 investigation runtime — B10-O controls, B10 live acceptance OPEN
+# B10 investigation runtime — B10-O-R controls, B10 live acceptance OPEN
 
 B10 only. `contracts/agent_runtime.json` defines the compatible runtime boundary. All 18 product objectives remain mandatory; this foundation does not complete GraphRAG, municipal operations, API or frontend. Final status and exact counts are in `docs/evidence/B10-RESULTS.md` and current tracking summaries.
 
@@ -88,3 +88,50 @@ Exact B10-O commands, results, source inventory/patch and preserved B10 acceptan
 Dependency/API sources: [FalkorDB LangGraph](https://docs.falkordb.com/genai-tools/langgraph), [vendor integration](https://pypi.org/project/langchain-falkordb/), [LangGraph persistence](https://docs.langchain.com/oss/python/langgraph/persistence), [interrupts](https://docs.langchain.com/oss/python/langgraph/interrupts), [Gemini structured outputs](https://ai.google.dev/gemini-api/docs/structured-output), [thinking levels](https://ai.google.dev/gemini-api/docs/generate-content/thinking).
 
 B11 requires separate human authorization: isolated GraphRAG source graph, versioned documents/citations, prompt-injection/stale-document tests and episodic/semantic/procedural memory. No B11 work is included here.
+
+## B10-O-R current accounting and recovery contract (supersedes B10-O defaults)
+
+New ledgers allocate **$8 project / $.50 new investigation / one concurrent investigation**. A trusted invocation can explicitly allocate up to the persisted complex-case ceiling, initially **$1.50**, subject to remaining project/case funds. Approximately $4 of the user's stated credit remains outside this allocation. These are application safeguards, not a guaranteed Google billing cutoff. Existing ledgers keep their limits, case allocations, charges and unknown reservations. The upgrade below is a deliberate operator action; B10-O-R only exercised it on a private copy of the retained accounting witness.
+
+`agents.tokens` loads a pinned Google Gemma3 SentencePiece vocabulary. It is **a proxy estimate for Gemini 3.8**, whose exact mapping is not published in the checked local-tokenizer implementation. It never labels a proxy count provider-confirmed. The complete serialized generation request includes prompt B10-3, current context, all16 tool schemas, controlled-action schemas, Selection response schema and generation settings. Its input allowance is ceil(proxy tokens×1.25)+256 framing/uncertainty margin, with4096 output tokens. This margin is a planning policy, not a mathematical upper bound for Gemini3.8. Bytes are recorded separately. Dollar reservations retain the earlier conservative byte/price fence; that financial heuristic is never used as a model-token count.
+
+Authorized LIVE mode additionally requires an explicitly permitted and financially reserved `countTokens` RPC with `generateContentRequest`, including response constraints. Its verified input count+16 framing margin replaces the proxy input allowance; framing can differ from final generation usage. A count result is not a billing receipt: its dollar reservation remains held until separately verified accounting is available. No generation fallback bypasses unavailable/invalid counting. No provider counting or generation endpoint was contacted in B10-O-R. Mock counts, returned usage and charges in tests are explicitly simulated.
+
+Each generation retry and structured-output repair reserves its own complete input/output allowance atomically with its dollar reservation. Actual validated `totalTokenCount` replaces that attempt's token allowance, while input/output/thinking/cached counts separately determine known cost. Unknown token use retains the full token allowance; unknown billing retains the dollar reservation. Durable `token_usage` and per-thread legacy floors prevent a stale checkpoint or process restart from resetting exposure. Checkpoint `tokens` now represents cumulative **accounted exposure** (known usage plus unknown held allowances); metadata separately records actual returned counts, bytes, estimates, provider counts and dollar exposure. If actual service usage exceeds the remaining plan, the host pauses and records it rather than hiding the overrun. Existing global max_tokens60000 was not raised. Checkpoint token-counter storage widens to2M only to retain an unexpectedly large receipt plus prior exposure; operational max_tokens remains bounded by150000. A1M-token simulated overrun plus100000 prior tokens checkpoints exactly1100000 and pauses, with no selected action.
+
+Setup, ordinary development (public asset download only; no Gemini API):
+
+```sh
+UV_CACHE_DIR=/tmp/civicly-b10or-uv-cache backend/.venv/bin/uv sync --project backend --frozen
+PYTHONPATH=backend backend/.venv/bin/python scripts/configure_tokenizer.py
+```
+
+The explicit setup command downloads the pinned4,689,074-byte vocabulary into ignored `.runtime/tokenizers/gemma3.model`, mode0600, SHA256 `1299c11d7cf632ef3b4e11937501358ada021bbdf7c47638d13c0ee982f2e79c`. Runtime never downloads it; missing/changed assets fail closed with setup guidance. `sentencepiece==0.2.1` is locked. Official local tokenizer smoke phrase “What is your name?” produces5 tokens. Sources: [Google token counting API](https://ai.google.dev/api/tokens), [Google local vocabulary mappings](https://github.com/googleapis/python-genai/blob/main/google/genai/_local_tokenizer_loader.py), [pinned vocabulary](https://raw.githubusercontent.com/google/gemma_pytorch/014acb7ac4563a5f77c76d7ff98f31b568c16508/tokenizer/gemma3_cleaned_262144_v2.spiece.model).
+
+Stop all live processes/sessions, use SQLite backup API for a private consistent backup, inspect current accounting, then deliberately upgrade existing limits:
+
+```sh
+PYTHONPATH=backend backend/.venv/bin/python -m app.agents.spending
+PYTHONPATH=backend backend/.venv/bin/python -m app.agents.spending configure --project-usd 8 --case-usd .50 --complex-usd 1.50 --max-concurrent 1 --operator OPERATOR_ID --reason 'Reviewed allocation increase; preserve all historical usage' --authorize
+```
+
+Do not run the second command merely to install this code. `config_changes` keeps previous/current caps and actor/reason; immutable update/delete triggers protect configuration and accounting audit rows. Existing case limits do not automatically rise. A later separately authorized invocation's `--max-cost-usd .50` or1.50 explicitly increases that case; it cannot reset usage. An explicit conflicting `CIVICLY_AI_PROJECT_LIMIT_USD` fails reopening instead of silently overwriting persisted caps. Remove stale explicit configuration or perform the approved upgrade first.
+
+Exact settled-over-reservation recovery, after stopping the previous process and all sessions:
+
+```sh
+PYTHONPATH=backend backend/.venv/bin/python -m app.agents.spending hold EXACT_REQUEST_ID
+PYTHONPATH=backend backend/.venv/bin/python -m app.agents.spending resolve-hold EXACT_REQUEST_ID --operator OPERATOR_ID --reason 'Verified receipt and tariff; available funds checked' --verified-pricing STORED_PRICING_VERSION --usage-sha256 SHA256_OF_EXACT_STORED_USAGE_TEXT --evidence-ref PRIVATE_ACCOUNTING_RECEIPT_REFERENCE --authorize
+```
+
+Inspection includes exact request, reservation, charged cost, usage, pricing, hold reason and current caps. Resolution requires stored usage hash, exact tariff version, reprice-equals-charge, known settled billing, explicit actor/reason/evidence, no active session, and project/case cap checks. The immutable audit retains the original request and verification binding; only that request hold becomes RESOLVED. Old charges/reservations and legacy hold history remain. Other open holds continue to block. Subsequent reservations recheck all caps. Custom pricing users may call `Ledger.resolve_hold(..., pricing=Pricing(verified_path))` with their retained exact tariff. Unknown billing cannot be cleared by this command; verified usage must first be reconciled for the exact request. Unattributable legacy holds remain blocked for manual accounting investigation. No reset/clear-all or automatic stale-session takeover exists.
+
+Runtime budgets remain16 iterations/8tools/60000tokens/240seconds/5wakes, configurable within existing strict Budget bounds. At most32 Supervisor selections per wake fit recursion_limit150 (read/action cycles plus pause/resume helper nodes). Limits are cumulative except per-wake wall time. A genuine budget failure checkpoints a pause, never a causal conclusion. A trusted resumed CLI can pass an increased `--max-tokens`, `--max-iterations`, `--max-tools`, `--max-seconds` or `--max-wakes` and `--budget-reason`; explicit `--live` is still required. The complete new Budget must be monotonic and validated; counters, same thread, native action IDs and source-refresh requirements remain. Budget-input denials occur before ownership and do not quarantine a valid paused thread. A host-generated audit observation records prior/new budgets and reason. A model cannot invoke this recovery interface.
+
+### Separate final-stage LIVE acceptance procedure — NOT AUTHORIZED / NOT RUN
+
+1. Obtain explicit human approval for a selected three-category case suite and exact dollar allocations (default$.50, explicitly complex up to$1.50 each, cumulative project≤$8). Confirm remaining Google credit independently, current supported model/generation/counting API and unexpired pricing. Inspect ledger/session/holds; record a private consistent backup. Do not assume application accounting includes historical/external Google charges.
+2. Verify scoped profile,16 MCP tools, current synthetic timestamps, source revision, checkpoint and evidence anchors. Use small authored WATERLOGGING conflicting-inspection, ROAD_DAMAGE verified/candidate/disconnected, and WASTE pickup-history cases. Do not expose hidden scenario answers. Enable no fallback provider.
+3. Under that **separate approval only**, invoke `python -m app.agents` with the exact profile/investigation/thread, `--live`, and approved `--max-cost-usd`. Observe both countTokens and generateContent request reservations and genuine usage/cost. Verify at least one multi-step tool-selected investigation, actual tools/list/call, native hypothesis/assessment/inspection actions, source evidence and durable decision/rationale/trace/checkpoint IDs. Stop at cap/unknown billing rather than reset accounting.
+4. Submit a contradictory reviewed inspection through B09, then explicitly resume the same approved thread. Compare genuine model-selected next action and preserved historical classifications; repeat the selected road topology variants and waste explanation test. Distinguish topology from causal evidence and retain candidate/negative limits. Exercise provider interruption recovery only where feasible without blind duplicate billing/actions.
+5. Reopen checkpoints/ledger in a fresh process, inspect actual usage receipts and persisted outputs, compare retained data fingerprints, and publish sanitized proof. Mark a live gate green only for behavior directly observed. B10 live three-category/contradiction/topology/structured-output gates remain OPEN until this succeeds. B10-O-R mock HTTP cannot close them. B11 requires separate review/authorization.

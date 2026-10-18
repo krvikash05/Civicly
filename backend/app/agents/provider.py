@@ -8,6 +8,7 @@ from pydantic import Field,SecretStr
 from pydantic_settings import BaseSettings,SettingsConfigDict
 from app.graph.models import digest
 from .models import Selection
+from .tokens import plan,total_usage
 from .policy import LiveDenied
 from .spending import Ledger,Pricing,SpendError
 
@@ -23,7 +24,7 @@ class ProviderSettings(BaseSettings):
     transient_retries:int=Field(default=2,ge=0,le=4,validation_alias='CIVICLY_LLM_TRANSIENT_RETRIES')
     retry_wait_budget:float=Field(default=8,ge=0,le=30,validation_alias='CIVICLY_LLM_RETRY_WAIT_BUDGET')
     pricing_file:Path|None=Field(default=None,validation_alias='CIVICLY_AI_PRICING_FILE')
-    project_limit:str=Field(default='6',validation_alias='CIVICLY_AI_PROJECT_LIMIT_USD')
+    project_limit:str|None=Field(default=None,validation_alias='CIVICLY_AI_PROJECT_LIMIT_USD')
 
 class ProviderError(RuntimeError):
     def __init__(self,code,category=None):self.code=code;self.category=category or code;super().__init__(code)
@@ -59,10 +60,12 @@ def classify(response):
 
 class Gemini:
     mode='LIVE_GEMINI'
-    def __init__(self,settings,*,permit=None,ledger=None,pricing=None,transport=None):
+    def __init__(self,settings,*,permit=None,ledger=None,pricing=None,transport=None,verify_tokens=None):
         if settings.provider!='gemini':raise ValueError('Unsupported provider; no automatic paid fallback')
         self.settings,self.permit,self.transport=settings,permit,transport
         if permit is not None and permit.mode=='MOCK_HTTP':self.mode='MOCK_GEMINI_HTTP'
+        self.verify_tokens=(permit is not None and permit.mode=='LIVE') if verify_tokens is None else verify_tokens
+        if permit is not None and permit.mode=='LIVE' and not self.verify_tokens:raise ValueError('Live generation requires provider token verification')
         self._ledger=ledger;self.pricing=pricing or Pricing(settings.pricing_file);self.owner=None;self.last_usage={};self.last_failure=None;self.requests_sent=0
     @property
     def ledger(self):
@@ -115,65 +118,88 @@ class Gemini:
             self.last_failure={'category':'NETWORK_TIMEOUT','reservation_retained':self.requests_sent>0}
             raise ProviderError('PROVIDER_TIMEOUT','NETWORK_TIMEOUT') from None
     async def _choose(self,context,remaining_tokens):
+        if type(remaining_tokens)is not int or not 0<=remaining_tokens<=1_000_000:raise ProviderError('INVALID_TOKEN_ALLOWANCE')
+        state=context.get('state',{});base=state.get('tokens',0)
+        if type(base)is not int or not 0<=base<=1_000_000:raise ProviderError('INVALID_TOKEN_BASELINE')
+        ceiling=base+remaining_tokens;used_total=0;waited=0.;attempts=[];counts={}
         text=PROMPT+'\nCONTEXT_JSON:\n'+json.dumps(context,sort_keys=True,separators=(',',':'),allow_nan=False)
-        if len(text.encode())+4096>remaining_tokens:raise ProviderError('TOKEN_BUDGET')
-        used_total=0;waited=0.;attempts=[];state=context.get('state',{})
         group=digest([self.permit.thread_id,state.get('iterations'),state.get('wakes'),'provider-decision'])
+        def exposure():return max(base,self.ledger.thread_tokens(self.permit.thread_id))
+        def metadata():
+            self.last_usage={**self.last_usage,'total_tokens':used_total,'accounted_tokens':max(0,self.ledger.thread_tokens(self.permit.thread_id)-base),
+                'provider':self.settings.provider,'model':self.settings.model,'model_version':self.last_usage.get('model_version','UNAVAILABLE'),
+                'prompt_version':PROMPT_VERSION,'pricing_version':self.pricing.version,'attempts':self.requests_sent,'requests':attempts,'spending':self.spending()}
         async with httpx.AsyncClient(timeout=self.settings.timeout,follow_redirects=False,transport=self.transport) as client:
             async with asyncio.timeout(2*self.settings.timeout+self.settings.retry_wait_budget):
-                for repair in range(2):
-                    for retry in range(self.settings.transient_retries+1):
-                        if used_total+len(text.encode())+4096>remaining_tokens:
-                            self.last_failure={'category':'TOKEN_BUDGET'}
-                            raise ProviderError('TOKEN_BUDGET')
+                try:
+                    for repair in range(2):
                         body={'contents':[{'role':'user','parts':[{'text':text}]}],'generationConfig':{'responseMimeType':'application/json','responseJsonSchema':Selection.model_json_schema(),'maxOutputTokens':4096,'thinkingConfig':{'thinkingLevel':'LOW'}}}
-                        request_id='AI-'+digest([group,repair,retry])
-                        self.pricing.validate(self.settings.model)
-                        reserve=self.pricing.estimate(len(json.dumps(body,ensure_ascii=False).encode()),4096)
-                        try:self.ledger.reserve(request_id,self.permit.case_key,self.permit.thread_id,self.settings.model,self.permit.milestone,self.pricing.version,reserve,self.owner)
-                        except SpendError as e:
-                            self.last_failure={'category':'SPENDING_CONTROL','code':str(e)}
-                            raise ProviderError(str(e),'SPENDING_CONTROL') from None
-                        self.requests_sent+=1
+                        estimate=plan(body);count_key=digest(body)
+                        if ceiling-exposure()<4096:raise ProviderError('TOKEN_BUDGET')
+                        if self.verify_tokens and count_key not in counts:
+                            # Counting is a real authorized/accounted RPC, not free billing metadata.
+                            cid='AI-COUNT-'+digest([group,repair,count_key])
+                            self.ledger.reserve(cid,self.permit.case_key,self.permit.thread_id,self.settings.model,self.permit.milestone,self.pricing.version,self.pricing.estimate(estimate['serialized_utf8_bytes'],0),self.owner)
+                            self.requests_sent+=1
+                            try:
+                                counted=await client.post('https://generativelanguage.googleapis.com/v1beta/models/'+self.settings.model+':countTokens',headers={'x-goog-api-key':self.settings.key.get_secret_value()},json={'generateContentRequest':{'model':'models/'+self.settings.model,**body}})
+                                value=counted.json()
+                                if counted.status_code!=200:raise ProviderError('COUNT_HTTP_'+str(counted.status_code),classify(counted)[0])
+                                count=value.get('totalTokens') if isinstance(value,dict) else None
+                                if type(count)is not int or not 0<=count<=1_000_000:raise ProviderError('INVALID_PROVIDER_COUNT')
+                                counts[count_key]=count
+                            except (httpx.HTTPError,ValueError,TimeoutError):raise ProviderError('COUNT_TRANSPORT_OR_PAYLOAD','COUNT_UNAVAILABLE') from None
+                            finally:
+                                self.ledger.reconcile(cid,None,{},'COUNT_BILLING_UNCONFIRMED')
+                                attempts.append({'request_id':cid,'kind':'COUNT_TOKENS','billing':'UNCERTAIN_RESERVATION_HELD','count_is_not_consumed_generation_tokens':True})
+                        allocation=plan(body,provider_count=counts.get(count_key))
+                        allocation['provider_count_origin']='SIMULATED_PROVIDER_RESPONSE' if self.mode=='MOCK_GEMINI_HTTP' and self.verify_tokens else ('PROVIDER_COUNT_API' if self.verify_tokens else 'NO_PROVIDER_COUNT')
+                        for retry in range(self.settings.transient_retries+1):
+                            request_id='AI-'+digest([group,repair,retry]);self.pricing.validate(self.settings.model)
+                            reserve=self.pricing.estimate(allocation['serialized_utf8_bytes'],4096)
+                            self.ledger.reserve(request_id,self.permit.case_key,self.permit.thread_id,self.settings.model,self.permit.milestone,self.pricing.version,reserve,self.owner,
+                                token_reservation=allocation['total_allowance_tokens'],token_limit=ceiling,base_tokens=base)
+                            self.requests_sent+=1
+                            entry={'request_id':request_id,'kind':'GENERATE','token_plan':allocation,'reserved_nusd':reserve};attempts.append(entry)
+                            try:
+                                response=await client.post('https://generativelanguage.googleapis.com/v1beta/models/'+self.settings.model+':generateContent',headers={'x-goog-api-key':self.settings.key.get_secret_value()},json=body)
+                            except (httpx.HTTPError,TimeoutError) as e:
+                                category='NETWORK_TIMEOUT' if isinstance(e,(httpx.TimeoutException,TimeoutError)) else 'NETWORK_TRANSPORT'
+                                self.ledger.reconcile(request_id,None,{},category);entry['category']=category
+                                raise ProviderError('PROVIDER_TIMEOUT' if category=='NETWORK_TIMEOUT' else 'PROVIDER_TRANSPORT',category) from None
+                            value={};usage={}
+                            try:
+                                parsed=response.json();value=parsed if isinstance(parsed,dict) else {}
+                                raw_usage=value.get('usageMetadata',{})
+                                if isinstance(raw_usage,dict):usage={k:v for k,v in raw_usage.items() if k in {'promptTokenCount','candidatesTokenCount','thoughtsTokenCount','totalTokenCount','cachedContentTokenCount','toolUsePromptTokenCount'} and type(v)is int and 0<=v<=1_000_000}
+                            except ValueError:pass
+                            actual=self.pricing.actual(usage);used=total_usage(usage);category=None
+                            if response.status_code!=200:category,hint,retryable=classify(response)
+                            self.ledger.reconcile(request_id,actual,usage,category or ('USAGE_UNCERTAIN' if actual is None else None))
+                            if used is not None:used_total+=used
+                            version=value.get('modelVersion',self.settings.model)
+                            self.last_usage['model_version']=version if isinstance(version,str) and re.fullmatch(r'[A-Za-z0-9._-]{1,100}',version) else 'UNAVAILABLE'
+                            entry.update({'status':response.status_code,'category':category,'usage':usage,'actual_nusd':actual,'consumed_tokens':used,'unknown_tokens_held':used is None})
+                            metadata()
+                            if exposure()>ceiling:raise ProviderError('TOKEN_BUDGET')
+                            if response.status_code==200:break
+                            delay=hint if hint is not None else min(2**retry,4)
+                            can_retry=retryable and retry<self.settings.transient_retries and delay<=self.settings.retry_wait_budget-waited
+                            self.last_failure={'category':category,'status_code':response.status_code,'request_id':request_id,'retry_after_seconds':hint,'retry_possible':can_retry}
+                            if not can_retry:raise ProviderError('PROVIDER_HTTP_'+str(response.status_code),category)
+                            await asyncio.sleep(delay);waited+=delay
+                        if used is None or used==0:raise ProviderError('PROVIDER_USAGE_MISSING')
                         try:
-                            response=await client.post('https://generativelanguage.googleapis.com/v1beta/models/'+self.settings.model+':generateContent',headers={'x-goog-api-key':self.settings.key.get_secret_value()},json=body)
-                        except (httpx.HTTPError,TimeoutError) as e:
-                            category='NETWORK_TIMEOUT' if isinstance(e,(httpx.TimeoutException,TimeoutError)) else 'NETWORK_TRANSPORT'
-                            self.ledger.reconcile(request_id,None,{},category)
-                            self.last_usage={'total_tokens':used_total,'provider':self.settings.provider,'model':self.settings.model,'model_version':'UNAVAILABLE','prompt_version':PROMPT_VERSION,'pricing_version':self.pricing.version,'attempts':self.requests_sent,'usage_status':'UNCERTAIN','spending':self.spending()}
-                            self.last_failure={'category':category,'request_id':request_id}
-                            raise ProviderError('PROVIDER_TIMEOUT' if category=='NETWORK_TIMEOUT' else 'PROVIDER_TRANSPORT',category) from None
-                        value={};usage={}
-                        try:
-                            value=response.json()
-                            usage={k:v for k,v in value.get('usageMetadata',{}).items() if k in {'promptTokenCount','candidatesTokenCount','thoughtsTokenCount','totalTokenCount','cachedContentTokenCount','toolUsePromptTokenCount'} and type(v)is int and v>=0}
-                        except Exception:pass
-                        actual=self.pricing.actual(usage)
-                        category=None
-                        if response.status_code!=200:category,hint,retryable=classify(response)
-                        self.ledger.reconcile(request_id,actual,usage,category or ('USAGE_UNCERTAIN' if actual is None else None))
-                        used=usage.get('totalTokenCount',0)
-                        if type(used)is not int or used<0:used=0
-                        used_total+=used
-                        attempts.append({'request_id':request_id,'status':response.status_code,'category':category,'usage':usage,'reserved_nusd':reserve,'actual_nusd':actual})
-                        self.last_usage={'total_tokens':used_total,'provider':self.settings.provider,'model':self.settings.model,'model_version':value.get('modelVersion',self.settings.model) if re.fullmatch(r'[A-Za-z0-9._-]{1,100}',str(value.get('modelVersion',self.settings.model))) else self.settings.model,
-                            'prompt_version':PROMPT_VERSION,'pricing_version':self.pricing.version,'attempts':self.requests_sent,'requests':attempts,'spending':self.spending()}
-                        if response.status_code==200:break
-                        delay=hint if hint is not None else min(2**retry,4)
-                        can_retry=retryable and retry<self.settings.transient_retries and delay<=self.settings.retry_wait_budget-waited
-                        self.last_failure={'category':category,'status_code':response.status_code,'request_id':request_id,'retry_after_seconds':hint,'retry_possible':can_retry}
-                        if not can_retry:raise ProviderError('PROVIDER_HTTP_'+str(response.status_code),category)
-                        await asyncio.sleep(delay);waited+=delay
-                    try:
-                        if used_total>remaining_tokens:raise ProviderError('TOKEN_BUDGET')
-                        if not used:raise ProviderError('PROVIDER_USAGE_MISSING')
-                        raw=''.join(p.get('text','') for p in value['candidates'][0]['content']['parts'] if not p.get('thought'))
-                        selection=Selection.model_validate_json(raw)
-                        self.last_failure=None
-                        return selection,used_total
-                    except ProviderError:raise
-                    except Exception:
-                        self.last_failure={'category':'INVALID_STRUCTURED_OUTPUT','request_id':request_id}
-                        if repair or used_total+len(text.encode())+4096>remaining_tokens:raise ProviderError('INVALID_MODEL_OUTPUT','INVALID_STRUCTURED_OUTPUT') from None
-                        text+='\nPrevious output failed strict validation. Return exactly the supplied schema; no additional fields.'
+                            raw=''.join(p.get('text','') for p in value['candidates'][0]['content']['parts'] if not p.get('thought'))
+                            selection=Selection.model_validate_json(raw);self.last_failure=None
+                            return selection,self.last_usage['accounted_tokens']
+                        except Exception:
+                            if repair:raise ProviderError('INVALID_MODEL_OUTPUT','INVALID_STRUCTURED_OUTPUT') from None
+                            text+='\nPrevious output failed strict validation. Return exactly the supplied schema; no additional fields.'
+                except SpendError as e:
+                    category='SPENDING_CONTROL' if str(e)!='TOKEN_BUDGET' else 'TOKEN_BUDGET';self.last_failure={'category':category,'code':str(e)}
+                    raise ProviderError(str(e),category) from None
+                except ProviderError as e:
+                    self.last_failure={**(self.last_failure or {}),'category':e.category,'code':e.code};raise
+                finally:metadata()
         raise ProviderError('INVALID_MODEL_OUTPUT','INVALID_STRUCTURED_OUTPUT')

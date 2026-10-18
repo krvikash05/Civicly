@@ -10,12 +10,12 @@ class Permit:
     investigation_id:str
     thread_id:str
     milestone:str='B10'
-    max_usd:str='.15'
+    max_usd:str|None=None
     mode:str='LIVE'
     @classmethod
-    def explicit_live(cls,*,approved,investigation_id,thread_id,max_usd='.15',milestone='B10'):
+    def explicit_live(cls,*,approved,investigation_id,thread_id,max_usd=None,milestone='B10'):
         if approved is not True or not investigation_id or not thread_id:raise LiveDenied('EXPLICIT_INVOCATION_OPT_IN_REQUIRED')
-        return cls(investigation_id,thread_id,milestone,str(max_usd),'LIVE')
+        return cls(investigation_id,thread_id,milestone,None if max_usd is None else str(max_usd),'LIVE')
     @classmethod
     def mocked(cls,investigation_id='TEST_INV',thread_id=None):
         return cls(investigation_id,thread_id or uuid4().hex,'B10-O-TEST','.15','MOCK_HTTP')

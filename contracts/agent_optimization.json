@@ -1,7 +1,7 @@
 {
-  "version": "B10-O-1",
+  "version": "B10-O-R-1",
   "extends": "agent_runtime.json",
-  "scope": "B10 optimization only; B10 live acceptance remains OPEN, no B11",
+  "scope": "B10 corrective token/accounting pass only; B10 live gates OPEN, no B11",
   "execution": {
     "default_live": false,
     "opt_in": "Trusted explicit permit bound to one investigation and thread; CLI --live required even on resume",
@@ -19,7 +19,15 @@
     "native_provider_cache": "Disabled, no paid spike or claimed measured savings"
   },
   "read_cache": {
-    "key": ["source_graph", "graph_revision", "as_of/cutoff", "arguments", "tool_identity", "inventory_schema_hash", "invocation_permission_scope"],
+    "key": [
+      "source_graph",
+      "graph_revision",
+      "as_of/cutoff",
+      "arguments",
+      "tool_identity",
+      "inventory_schema_hash",
+      "invocation_permission_scope"
+    ],
     "max_entries": 32,
     "reuse": "Return original validated result and original ToolExecution reference; no fabricated new execution",
     "invalidation": "Any graph revision change, including host audit writes; stable revision required before and after call",
@@ -27,24 +35,68 @@
   },
   "spending": {
     "store": "Private auxiliary SQLite WAL/FULL ledger, BEGIN IMMEDIATE; domain/evidence/checkpoints remain FalkorDB",
-    "project_usd": "6.00",
-    "initial_investigation_usd": "0.15",
+    "project_usd": "8.00",
+    "initial_investigation_usd": "0.50",
     "concurrent_live_investigations": 1,
-    "warning_percentages": [50, 80, 95, 100],
-    "reserve": "Before every HTTP attempt including retry/repair; UTF8 serialized input bytes plus framing allowance and twice output ceiling at maximum output/thinking price",
+    "warning_percentages": [
+      50,
+      80,
+      95,
+      100
+    ],
+    "reserve": "Dollar fence only: complete serialized input UTF8 bytes plus framing and doubled output price allowance; NOT token units. Counting RPC separately financially reserved; count result is not billing receipt.",
     "unknown_billing": "Retain full reservation, do not treat as free; reconcile only from verified metadata",
-    "over_reservation": "Record actual greater cost and hold further requests for operator review",
+    "over_reservation": "Exact request hold; bound verified stored usage/pricing, operator/reason/evidence, repricing and cap checks, immutable recovery audit; no blanket clear",
     "idempotency": "Thread/wake/decision/repair/retry ID, duplicate reservation denied, no blind rebilling after crash",
     "session_recovery": "No automatic expiry takeover; stop old process, reconcile and release exact owner explicitly",
-    "tracking": ["model", "thread", "request", "investigation", "milestone", "pricing_version", "input/output/thinking/cached tokens", "project"],
-    "scope_limit": "New managed requests only; historical/external billing unknown, not Google account billing hard cap"
+    "tracking": [
+      "model",
+      "thread",
+      "request",
+      "investigation",
+      "milestone",
+      "pricing_version",
+      "input/output/thinking/cached tokens",
+      "project"
+    ],
+    "scope_limit": "New managed requests only; historical/external billing unknown, not Google account billing hard cap",
+    "explicit_complex_investigation_ceiling_usd": "1.50",
+    "existing_ledgers": "Persisted caps, charges, unknown reservations and cases unchanged unless explicit audited operator action"
   },
   "provider_recovery": {
     "transient_retries_default": 2,
     "wait_budget_seconds_default": 8,
     "schema_repairs": 1,
-    "retry": ["503 service unavailable", "structured short-term 429", "408/500/502/504 within bounds"],
-    "no_blind_retry": ["daily/project quota exhaustion", "unknown 429", "auth/configuration", "unavailable model", "network timeout with uncertain billing"],
+    "retry": [
+      "503 service unavailable",
+      "structured short-term 429",
+      "408/500/502/504 within bounds"
+    ],
+    "no_blind_retry": [
+      "daily/project quota exhaustion",
+      "unknown 429",
+      "auth/configuration",
+      "unavailable model",
+      "network timeout with uncertain billing"
+    ],
     "trace": "Sanitized category, model/prompt/pricing versions, actual usage or uncertainty and durable reservation; never provider body/key or thought text"
+  },
+  "token_accounting": {
+    "units": [
+      "serialized_utf8_bytes",
+      "local_proxy_tokens",
+      "provider_count_tokens",
+      "input_allowance_tokens",
+      "output_allowance_tokens",
+      "actual_total_tokens",
+      "cumulative_accounted_tokens",
+      "integer_nanodollars"
+    ],
+    "offline": "Pinned official Gemma3 SentencePiece vocabulary: proxy for Gemini3.8, never exact; ceil(local count*1.25)+256 input margin plus4096 output",
+    "live": "Requires explicit permit, accounted countTokens with full generateContentRequest and response schema; verified count+16 framing plus4096 output. Ordinary tests use no external counting. Result not billing proof.",
+    "unknown": "Token allowance remains held until verified usage; durable per-thread floor prevents stale checkpoint reset",
+    "retry_repair": "Each generation attempt independently reserves complete current-body input/output; actual usage replaces its allowance; bounded repair recounts changed body",
+    "resume": "Trusted explicit reason and validated monotonic Budget increase on same paused thread; counters and source refresh retained",
+    "limits": "Defaults unchanged60000tokens/16iterations/8tools/240seconds/5wakes; configurable within existing model bounds; StateGraph recursion150 bounds32iteration wakes"
   }
 }

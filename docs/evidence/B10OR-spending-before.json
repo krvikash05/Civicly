@@ -1,0 +1,209 @@
+{
+  "mode": "SIMULATED_ACCOUNTING_NO_PROVIDER",
+  "original_B10O_witness_unchanged": true,
+  "original_caps": [
+    {
+      "id": 1,
+      "project_cap": 6000000000,
+      "case_cap": 150000000,
+      "max_concurrent": 1
+    }
+  ],
+  "upgraded_copy": {
+    "config": [
+      {
+        "id": 1,
+        "project_cap": 8000000000,
+        "case_cap": 500000000,
+        "max_concurrent": 1,
+        "complex_cap": 1500000000
+      }
+    ],
+    "cases": [
+      {
+        "id": "B10O-DURABILITY-PROBE",
+        "cap": 150000000
+      }
+    ],
+    "requests": [
+      {
+        "id": "SETTLED",
+        "case_id": "B10O-DURABILITY-PROBE",
+        "thread": "T",
+        "model": "gemini-3.8-flash",
+        "milestone": "B10-O-SIMULATED",
+        "pricing": "SIMULATED",
+        "reserved": 20000000,
+        "charged": 1000000,
+        "status": "SETTLED",
+        "usage": "{\"simulation\": true}",
+        "error": null,
+        "created": 1792284956.736224
+      },
+      {
+        "id": "UNKNOWN",
+        "case_id": "B10O-DURABILITY-PROBE",
+        "thread": "T",
+        "model": "gemini-3.8-flash",
+        "milestone": "B10-O-SIMULATED",
+        "pricing": "SIMULATED",
+        "reserved": 20000000,
+        "charged": null,
+        "status": "UNCERTAIN",
+        "usage": "{}",
+        "error": "SIMULATED_NETWORK_TIMEOUT",
+        "created": 1792284956.734972
+      }
+    ],
+    "holds": [],
+    "config_changes": [
+      {
+        "id": 1,
+        "previous": "{\"id\": 1, \"project_cap\": 6000000000, \"case_cap\": 150000000, \"max_concurrent\": 1, \"complex_cap\": 1500000000}",
+        "current": "{\"id\": 1, \"project_cap\": 8000000000, \"case_cap\": 500000000, \"max_concurrent\": 1, \"complex_cap\": 1500000000}",
+        "reason": "Synthetic operator approved8/.50 on COPY only",
+        "created": 1792289467.4922721
+      }
+    ],
+    "warnings": [],
+    "sessions": [],
+    "accounting_events": []
+  },
+  "new_probe": {
+    "config": [
+      {
+        "id": 1,
+        "project_cap": 8000000000,
+        "case_cap": 500000000,
+        "max_concurrent": 1,
+        "complex_cap": 1500000000
+      }
+    ],
+    "cases": [
+      {
+        "id": "B10OR-PROBE",
+        "cap": 500000000
+      }
+    ],
+    "requests": [
+      {
+        "id": "OVER",
+        "case_id": "B10OR-PROBE",
+        "thread": "T",
+        "model": "gemini-3.8-flash",
+        "milestone": "B10OR-SIMULATED",
+        "pricing": "google-gemini-standard-text-2026-10-18",
+        "reserved": 1000,
+        "charged": 150000,
+        "status": "SETTLED_OVER_RESERVATION",
+        "usage": "{\"candidatesTokenCount\": 20, \"promptTokenCount\": 100, \"totalTokenCount\": 120}",
+        "error": null,
+        "created": 1792289467.520962
+      },
+      {
+        "id": "UNKNOWN",
+        "case_id": "B10OR-PROBE",
+        "thread": "T",
+        "model": "gemini-3.8-flash",
+        "milestone": "B10OR-SIMULATED",
+        "pricing": "google-gemini-standard-text-2026-10-18",
+        "reserved": 1000,
+        "charged": null,
+        "status": "UNCERTAIN",
+        "usage": "{}",
+        "error": null,
+        "created": 1792289467.506913
+      }
+    ],
+    "holds": [],
+    "config_changes": [],
+    "warnings": [],
+    "sessions": [],
+    "request_holds": [
+      {
+        "request_id": "OVER",
+        "reason": "Actual cost exceeds reservation; verify pricing/usage and caps",
+        "status": "RESOLVED",
+        "created": 1792289467.5221498
+      }
+    ],
+    "accounting_events": [
+      {
+        "id": 1,
+        "request_id": "B10OR-PROBE",
+        "operation": "CASE_ALLOCATION",
+        "operator": "TRUSTED_HOST",
+        "reason": "Explicit allocation or new-case default",
+        "payload": "{\"current\": 500000000, \"previous\": null}",
+        "created": 1792289467.502679
+      },
+      {
+        "id": 2,
+        "request_id": "UNKNOWN",
+        "operation": "RESERVE",
+        "operator": "PROVIDER",
+        "reason": "Atomic request reservation",
+        "payload": "{\"nanodollars\": 1000, \"token_allowance\": 5000}",
+        "created": 1792289467.5069041
+      },
+      {
+        "id": 3,
+        "request_id": "UNKNOWN",
+        "operation": "RECONCILE",
+        "operator": "PROVIDER",
+        "reason": "UNCERTAIN",
+        "payload": "{\"charged\": null, \"status\": \"UNCERTAIN\", \"usage\": {}}",
+        "created": 1792289467.51952
+      },
+      {
+        "id": 4,
+        "request_id": "OVER",
+        "operation": "RESERVE",
+        "operator": "PROVIDER",
+        "reason": "Atomic request reservation",
+        "payload": "{\"nanodollars\": 1000, \"token_allowance\": 5000}",
+        "created": 1792289467.5209548
+      },
+      {
+        "id": 5,
+        "request_id": "OVER",
+        "operation": "RECONCILE",
+        "operator": "PROVIDER",
+        "reason": "SETTLED_OVER_RESERVATION",
+        "payload": "{\"charged\": 150000, \"status\": \"SETTLED_OVER_RESERVATION\", \"usage\": {\"candidatesTokenCount\": 20, \"promptTokenCount\": 100, \"totalTokenCount\": 120}}",
+        "created": 1792289467.522203
+      },
+      {
+        "id": 6,
+        "request_id": "OVER",
+        "operation": "RESOLVE_HOLD",
+        "operator": "synthetic-operator",
+        "reason": "Bound simulated usage and tariff; caps sufficient",
+        "payload": "{\"caps\": {\"case_cap\": 500000000, \"complex_cap\": 1500000000, \"id\": 1, \"max_concurrent\": 1, \"project_cap\": 8000000000}, \"evidence_ref\": \"SIMULATED-RECEIPT\", \"request\": {\"case_id\": \"B10OR-PROBE\", \"charged\": 150000, \"created\": 1792289467.520962, \"error\": null, \"id\": \"OVER\", \"milestone\": \"B10OR-SIMULATED\", \"model\": \"gemini-3.8-flash\", \"pricing\": \"google-gemini-standard-text-2026-10-18\", \"reserved\": 1000, \"status\": \"SETTLED_OVER_RESERVATION\", \"thread\": \"T\", \"usage\": \"{\\\"candidatesTokenCount\\\": 20, \\\"promptTokenCount\\\": 100, \\\"totalTokenCount\\\": 120}\"}, \"usage_sha256\": \"033bfa638ff17b74d2f883874857b9d1e5ce1042708636508546dbadc502178c\", \"verified_pricing\": \"google-gemini-standard-text-2026-10-18\"}",
+        "created": 1792289467.5253508
+      }
+    ],
+    "token_usage": [
+      {
+        "request_id": "OVER",
+        "thread": "T",
+        "reserved": 5000,
+        "consumed": 120
+      },
+      {
+        "request_id": "UNKNOWN",
+        "thread": "T",
+        "reserved": 5000,
+        "consumed": null
+      }
+    ],
+    "token_floors": [
+      {
+        "thread": "T",
+        "baseline": 0
+      }
+    ]
+  },
+  "thread_accounted_tokens": 5120,
+  "actual_external_provider_requests": 0
+}

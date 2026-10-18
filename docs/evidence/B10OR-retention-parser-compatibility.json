@@ -1,0 +1,13 @@
+{
+  "observed_failed_command": "PYTHONPATH=backend backend/.venv/bin/python -m tests.b09_evidence verify --proof docs/evidence/B09-retained-proof.json --lifecycle-log /tmp/civicly-b10or-final-tests.txt --output docs/evidence/B10OR-post-B09-retained.json",
+  "failure": "AssertionError in legacy tests/b09_evidence.py:59: summary regex rejects warning fields",
+  "actual_raw_summary": "================= 740 passed, 2 warnings in 1249.98s (0:20:49) =================",
+  "legacy_regex_matches": false,
+  "raw_log_sha256": "e893fde523ebfec32b38decedf0ca823de1e2cf13c46e9284b14bf375871d427",
+  "correction": "scripts/verify_b10or_retained.py validates untouched raw log/lifecycle/guard, then executes unchanged original graph/history verifier. No old tests or output logs changed.",
+  "result": "PASS; see B10OR-post-B09-retained.json",
+  "final_regression_counts": {
+    "unit": 466,
+    "integration": 274
+  }
+}
