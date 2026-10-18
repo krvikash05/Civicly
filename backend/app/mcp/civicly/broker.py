@@ -3,6 +3,7 @@ import asyncio,json,time
 from contextlib import asynccontextmanager
 from uuid import uuid4
 from mcp import Client
+from app.mcp.runtime import CITY_GRAPH
 from app.graph.schema import Registry,utc_now
 from app.graph.models import NodeRecord,EdgeRecord
 from app.graph.analysis.models import ProofPath
@@ -47,8 +48,10 @@ def validate_result(name,value,c):
 
 
 class DomainBroker:
-    def __init__(self,client,store,*,timeout=8,max_calls=32):
+    def __init__(self,client,store,*,timeout=8,max_calls=32,source_graph=CITY_GRAPH):
         if not .01<=timeout<=10 or not 1<=max_calls<=64:raise ValueError('Finite broker budgets required')
+        from app.active import require_source
+        self.source_graph=require_source(source_graph)
         self.__client=client;self.__store=store;self.timeout=timeout;self.max_calls=max_calls;self.calls=0;self.broken=False;self.lock=asyncio.Lock()
     async def discover(self):
         info=self.__client.server_info
@@ -60,10 +63,10 @@ class DomainBroker:
         self.protocol=self.__client.protocol_version
         self.operator_initialization={'server':info.model_dump(mode='json'),'protocol_version':self.protocol}
         self.operator_inventory=[t.model_dump(mode='json') for t in listing.tools]
-    def tools(self):return [{'name':'civicly::'+name,'input_schema':input_schema(name),'output_schema':t['output_schema']} for name,t in sorted(READ.items())]
-    async def call(self,qualified_name,args,*,invocation=None):
-        c=invocation or context(args.get('investigation_id') if isinstance(args,dict) else None)
-        if not isinstance(c,Context):raise BrokerError('INVALID_CONTEXT')
+    def tools(self):return [{'name':'civicly::'+name,'description':t['description'],'input_schema':input_schema(name),'output_schema':t['output_schema']} for name,t in sorted(READ.items())]
+    async def call(self,qualified_name,args,*,invocation=None,rationale_summary=None):
+        c=invocation or context(args.get('investigation_id') if isinstance(args,dict) else None).model_copy(update={'source_graph':self.source_graph})
+        if not isinstance(c,Context) or c.source_graph!=self.source_graph:raise BrokerError('INVALID_CONTEXT')
         started,clock=utc_now(),time.perf_counter();result=None;code='SUCCESS'
         name=qualified_name.removeprefix('civicly::') if isinstance(qualified_name,str) else ''
         try:
@@ -96,7 +99,7 @@ class DomainBroker:
             child=c.model_copy(update={'execution_id':uuid4().hex,'parent_execution_id':c.execution_id})
             try:arg_hash=digest(args)
             except Exception:arg_hash=digest({'withheld':True})
-            record=TraceRecord(context=child,phase='BROKER',server_id=SERVER,server_version=VERSION,
+            record=TraceRecord(context=child,rationale_summary=rationale_summary,phase='BROKER',server_id=SERVER,server_version=VERSION,
                 tool_name=name if name in READ else 'UNAUTHORIZED_TOOL',inventory_version=INVENTORY_HASH,
                 schema_sha256=digest(input_schema(name)) if name in READ else digest({}),arguments_sha256=arg_hash,
                 started_at=started,finished_at=utc_now(),latency_ms=(time.perf_counter()-clock)*1000,status=code,

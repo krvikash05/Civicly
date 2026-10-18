@@ -29,7 +29,7 @@ class TraceRecord(BaseModel):
     graph_path_ids: list[str]=Field(default_factory=list,max_length=100)
     result_summary: dict[str,int | bool]=Field(default_factory=dict)
     simulation_mode: Literal[True]=True
-    rationale_summary: None=None
+    rationale_summary: str | None=Field(default=None,max_length=512)
 
     @field_validator('started_at','finished_at')
     @classmethod

@@ -1,0 +1,65 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.1, pytest-9.1.1, pluggy-1.7.0 -- /Users/vikashkumar/Desktop/Civicly/backend/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/vikashkumar/Desktop/Civicly/backend
+configfile: pyproject.toml
+plugins: langsmith-0.14.11, anyio-4.15.1
+collecting ... collected 26 items
+
+backend/tests/unit/test_agent_models.py::test_invalid_selection[changes0] PASSED
+backend/tests/unit/test_agent_models.py::test_invalid_selection[changes1] PASSED
+backend/tests/unit/test_agent_models.py::test_invalid_selection[changes2] PASSED
+backend/tests/unit/test_agent_models.py::test_invalid_selection[changes3] PASSED
+backend/tests/unit/test_agent_models.py::test_invalid_selection[changes4] PASSED
+backend/tests/unit/test_agent_models.py::test_profile_requires_exact_context PASSED
+backend/tests/unit/test_agent_models.py::test_profile_rejects_unapproved_names[changes0] PASSED
+backend/tests/unit/test_agent_models.py::test_profile_rejects_unapproved_names[changes1] PASSED
+backend/tests/unit/test_agent_models.py::test_profile_rejects_unapproved_names[changes2] PASSED
+backend/tests/unit/test_agent_models.py::test_profile_rejects_unapproved_names[changes3] PASSED
+backend/tests/unit/test_agent_models.py::test_finite_budgets[changes0] PASSED
+backend/tests/unit/test_agent_models.py::test_finite_budgets[changes1] PASSED
+backend/tests/unit/test_agent_models.py::test_finite_budgets[changes2] PASSED
+backend/tests/unit/test_agent_models.py::test_finite_budgets[changes3] PASSED
+backend/tests/unit/test_agent_models.py::test_finite_budgets[changes4] PASSED
+backend/tests/integration/test_agent_active.py::test_real_shared_graph_boundary PASSED
+backend/tests/integration/test_agent_runtime.py::test_real_graph_pause_resume[WATERLOGGING-BLOCKAGE] PASSED
+backend/tests/integration/test_agent_runtime.py::test_real_graph_pause_resume[ROAD_DAMAGE-SUBGRADE_FAILURE] PASSED
+backend/tests/integration/test_agent_runtime.py::test_real_graph_pause_resume[WASTE_ACCUMULATION-MISSED_PICKUP] PASSED
+backend/tests/integration/test_agent_runtime.py::test_actual_python_process_restart_resume FAILED
+backend/tests/integration/test_agent_safety.py::test_invalid_model_tool_or_args_pauses[official::query_graph-args0] PASSED
+backend/tests/integration/test_agent_safety.py::test_invalid_model_tool_or_args_pauses[civicly::create_plan-args1] PASSED
+backend/tests/integration/test_agent_safety.py::test_invalid_model_tool_or_args_pauses[official::query_graph_readonly-args2] PASSED
+backend/tests/integration/test_agent_safety.py::test_invalid_model_tool_or_args_pauses[civicly::get_maintenance_history-args3] PASSED
+backend/tests/integration/test_agent_safety.py::test_concurrent_lease_denial_and_corrupt_checkpoint PASSED
+backend/tests/integration/test_agent_safety.py::test_actual_mcp_timeout_and_fresh_session_recovery owned B10 server count 1
+timeout result DEPENDENCY_UNAVAILABLE [{'status': 'ERROR', 'error': {'code': 'TIMEOUT'}, 'source_evidence_ids': [], 'gaps': ['MCP failed closed; reconnect at next wake']}]
+PASSED
+
+=================================== FAILURES ===================================
+__________________ test_actual_python_process_restart_resume ___________________
+
+db = <falkordb.falkordb.FalkorDB object at 0x11591c110>
+tmp_path = PosixPath('/private/var/folders/ng/nxnstkjs7tn9dbx9nhvtvmzw0000gn/T/pytest-of-vikashkumar/pytest-55/test_actual_python_process_res0')
+
+    def test_actual_python_process_restart_resume(db,tmp_path):
+        import subprocess,os
+        from uuid import uuid4
+        path=tmp_path/'profile.json';p,repo,clock,receipt,inv=create(db,path)
+        try:
+            async def prepare():
+                with active_scope(p):
+                    async with brokers(p,path) as tools:return state(p,repo,tools,clock,receipt,inv)
+            initial=asyncio.run(prepare());input_path=tmp_path/'state.json';input_path.write_text(initial.model_dump_json())
+            outputs=[]
+            for phase in ['create','resume']:
+                out=tmp_path/(phase+'.json')
+                process=subprocess.run([str(Path('backend/.venv/bin/python').resolve()),'-m','tests.b10_worker',str(path),phase,str(input_path),str(out)],env={**os.environ,'PYTHONPATH':'backend'},capture_output=True,timeout=70)
+>               assert process.returncode==0,'Restart driver failed; inspect sanitized local test output'
+E               AssertionError: Restart driver failed; inspect sanitized local test output
+E               assert 1 == 0
+E                +  where 1 = CompletedProcess(args=['/Library/Frameworks/Python.framework/Versions/3.12/bin/python3.12', '-m', 'tests.b10_worker', '/private/var/folders/ng/nxnstkjs7tn9dbx9nhvtvmzw0000gn/T/pytest-of-vikashkumar/pytest-55/test_actual_python_process_res0/profile.json', 'create', '/private/var/folders/ng/nxnstkjs7tn9dbx9nhvtvmzw0000gn/T/pytest-of-vikashkumar/pytest-55/test_actual_python_process_res0/state.json', '/private/var/folders/ng/nxnstkjs7tn9dbx9nhvtvmzw0000gn/T/pytest-of-vikashkumar/pytest-55/test_actual_python_process_res0/create.json'], returncode=1, stdout=b'', stderr=b'Traceback (most recent call last):\n  File "<frozen runpy>", line 198, in _run_module_as_main\n  File "<frozen runpy>", line 88, in _run_code\n  File "/Users/vikashkumar/Desktop/Civicly/backend/tests/b10_worker.py", line 4, in <module>\n    from app.active import load,active_scope\n  File "/Users/vikashkumar/Desktop/Civicly/backend/app/active.py", line 9, in <module>\n    from app.mcp.runtime import ROOT\n  File "/Users/vikashkumar/Desktop/Civicly/backend/app/mcp/runtime.py", line 11, in <module>\n    from mcp import StdioServerParameters\nModuleNotFoundError: No module named \'mcp\'\n').returncode
+
+backend/tests/integration/test_agent_runtime.py:58: AssertionError
+=========================== short test summary info ============================
+FAILED backend/tests/integration/test_agent_runtime.py::test_actual_python_process_restart_resume
+=================== 1 failed, 25 passed in 70.14s (0:01:10) ====================

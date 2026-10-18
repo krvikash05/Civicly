@@ -24,7 +24,7 @@ def trace(ctx,name,started,clock,args_hash,result=None,error=None):
         result_summary={'nodes':len(result['data']['nodes']),'edges':len(result['data']['edges']),'truncated':result['truncated']} if result else {})
 
 
-def build(service,store):
+def build(service,store,*,expected_graph=None):
     async def listing(ctx,params):
         return types.ListToolsResult(tools=[types.Tool(name=name,description=t['description'],input_schema=input_schema(name,True),output_schema=t['output_schema']) for name,t in sorted(READ.items())])
     async def execute(request,params):
@@ -32,7 +32,9 @@ def build(service,store):
         try:
             if name not in READ:raise PermissionError('DENIED_TOOL')
             bounded(args);validate(input_schema(name,True),args)
-            c=Context.model_validate(args['_context']);values={k:v for k,v in args.items() if k!='_context'}
+            c=Context.model_validate(args['_context'])
+            if expected_graph is not None and c.source_graph!=expected_graph:raise PermissionError('SOURCE_MISMATCH')
+            values={k:v for k,v in args.items() if k!='_context'}
             if values.get('investigation_id') and c.investigation_id!=values['investigation_id']:raise PermissionError('CONTEXT_MISMATCH')
             try:result=await asyncio.to_thread(service.run,name,values,c)
             except NotFound:
@@ -66,7 +68,7 @@ def build(service,store):
 
 async def main():
     with connections() as (reader,writer,name):
-        server=build(CivicReadService(reader),TraceStore(writer,name))
+        server=build(CivicReadService(reader),TraceStore(writer,name),expected_graph=CivicReadService(reader).repo.graph.name)
         async with stdio_server() as streams:
             await server.run(*streams,server.create_initialization_options())
 

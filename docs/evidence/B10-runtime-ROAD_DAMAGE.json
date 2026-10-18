@@ -1,0 +1,365 @@
+{
+  "mode": "DETERMINISTIC_FAKE_MODEL_REAL_MCP_AND_SAVER",
+  "initial": {
+    "data": {
+      "version": 1,
+      "graph": "civicly_b10_test_069619396df3499d8706c7b4fff4b42d",
+      "investigation_id": "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+      "thread_id": "c6e573dfab864298a449b96de6d4847b",
+      "problem_cluster_id": "PC-B08-cce2eb941019b700b3f4f518ea9b9ff6",
+      "discovered_tool_names": [
+        "official::get_graph_schema",
+        "official::get_node_schema",
+        "official::get_relationship_schema",
+        "official::query_graph_readonly",
+        "civicly::find_related_incidents",
+        "civicly::get_decision_evidence_path",
+        "civicly::get_maintenance_history",
+        "civicly::get_monitoring_status",
+        "civicly::get_organizational_procedures",
+        "civicly::get_pickup_execution_history",
+        "civicly::get_road_condition_history",
+        "civicly::get_source_document_excerpt",
+        "civicly::get_work_order_status",
+        "civicly::retrieve_case_memory",
+        "civicly::retrieve_external_evidence",
+        "civicly::trace_infrastructure_dependencies"
+      ],
+      "missing_evidence": [],
+      "current_plan_id": null,
+      "incident_ids": [
+        "INC-B08-acf134fea71ed9b7db39b8c1201d4fe4"
+      ],
+      "asset_ids": [
+        "R1"
+      ],
+      "issue": "ROAD_DAMAGE",
+      "graph_revision": 36,
+      "phase": "Coordinator",
+      "hypotheses": [
+        "HYP-B09-2fe6bc7215f0e201c855f63103226605"
+      ],
+      "evidence": {},
+      "inventory_hash": "60e6cc345311a3446a1aedb713b945a2cfdd16b594fa40d2ae50a196dca57ebd",
+      "selection": {
+        "action": "INSPECT",
+        "summary": "Authored deterministic model test selection",
+        "tool_name": "",
+        "arguments_json": "{\"asset_ids\": [\"R1\"], \"department_id\": \"DEP\", \"inspection_type\": \"B10_CONTROLLED\"}",
+        "pause_reason": "NONE"
+      },
+      "decisions": [
+        "DEC-B10-9b5f7cadefb72e1d232015b2e48d9163",
+        "DEC-B10-e94a337767c8979e97ca672d0426d17d",
+        "DEC-B10-a999887f9f4613413fdcb0fc1450014c"
+      ],
+      "executions": [
+        "MCP-B10-9b5f7cadefb72e1d232015b2e48d9163"
+      ],
+      "pending_inspections": [
+        "INS-B09-b3b9b7395d67c9d35782998ecfbd0c12"
+      ],
+      "pending_approval": null,
+      "errors": [],
+      "observations": [
+        {
+          "graph": "civicly_b10_test_069619396df3499d8706c7b4fff4b42d",
+          "tool": "query_graph_readonly",
+          "template": "node",
+          "graph_revision": 23,
+          "rows": [
+            {
+              "labels": [
+                "CivicEntity",
+                "Incident"
+              ],
+              "properties": {
+                "id": "INC-B08-acf134fea71ed9b7db39b8c1201d4fe4",
+                "started_at": "2026-10-18T04:00:00.000000Z",
+                "updated_at": "2026-10-18T12:00:00.000000Z",
+                "municipality_id": "demo-city",
+                "status": "REPORTED",
+                "issue_type": "ROAD_DAMAGE",
+                "created_at": "2026-10-18T12:00:00.000000Z",
+                "schema_version": 3,
+                "severity": "MODERATE",
+                "subtype": "UNSPECIFIED"
+              }
+            }
+          ],
+          "schema_data": null,
+          "truncated": false,
+          "search_limited": true,
+          "semantics": "Raw recorded synthetic facts; no causal finding. Schema samples are incomplete; node lookup is current-state, edge validity is half-open with unknown/open dates."
+        },
+        {
+          "operation": "propose",
+          "journal_id": "EV-JOURNAL-B09-9ba3c6bf0853011655b32e21f1f56a65",
+          "entity_id": "HYP-B09-2fe6bc7215f0e201c855f63103226605",
+          "graph": "civicly_b10_test_069619396df3499d8706c7b4fff4b42d",
+          "graph_revision": 29,
+          "recorded_at": "2026-10-18T12:00:00.000000Z",
+          "created_ids": [
+            "HYP-B09-2fe6bc7215f0e201c855f63103226605"
+          ],
+          "relationship_ids": [
+            "REL-B09-9f8900bd7bd08c8ac594c8c784e3d955",
+            "REL-B09-66ea99c39f297ef025b52c31b118e97d",
+            "REL-B09-97eca497a8be105849854afc5833faa3"
+          ],
+          "updated_ids": [],
+          "assessment": null,
+          "replayed": false,
+          "historical_receipt": true,
+          "simulation_mode": true
+        },
+        {
+          "operation": "request_inspection",
+          "journal_id": "EV-JOURNAL-B09-a56ad4d947bfb458e094d1f6ea37e417",
+          "entity_id": "INS-B09-b3b9b7395d67c9d35782998ecfbd0c12",
+          "graph": "civicly_b10_test_069619396df3499d8706c7b4fff4b42d",
+          "graph_revision": 35,
+          "recorded_at": "2026-10-18T12:00:00.000000Z",
+          "created_ids": [
+            "INS-B09-b3b9b7395d67c9d35782998ecfbd0c12"
+          ],
+          "relationship_ids": [
+            "REL-B09-cd79f1f27f2cff7750cd70c47ac92cf1"
+          ],
+          "updated_ids": [],
+          "assessment": null,
+          "replayed": false,
+          "historical_receipt": true,
+          "simulation_mode": true
+        }
+      ],
+      "nodes": [
+        "Supervisor",
+        "Investigator",
+        "Supervisor",
+        "RootCauseAnalyst",
+        "Supervisor",
+        "Coordinator"
+      ],
+      "pause_reason": "MISSING_EVIDENCE",
+      "recommendation": null,
+      "budget": {
+        "max_iterations": 16,
+        "max_tools": 8,
+        "max_tokens": 60000,
+        "max_seconds": 240,
+        "max_wakes": 5
+      },
+      "iterations": 3,
+      "tool_calls": 1,
+      "tokens": 0,
+      "wakes": 0,
+      "refresh_required": false,
+      "as_of": "2026-10-18T12:00:00.000000Z"
+    },
+    "__interrupt__": [
+      "Interrupt(value={'investigation_id': 'INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f', 'thread_id': 'c6e573dfab864298a449b96de6d4847b', 'pause_reason': 'MISSING_EVIDENCE', 'pending_inspections': ['INS-B09-b3b9b7395d67c9d35782998ecfbd0c12'], 'graph_revision': 36}, id='e5314208fac47fa76d350686744d3341', response_schema=None)"
+    ]
+  },
+  "resumed": {
+    "data": {
+      "version": 1,
+      "graph": "civicly_b10_test_069619396df3499d8706c7b4fff4b42d",
+      "investigation_id": "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+      "thread_id": "c6e573dfab864298a449b96de6d4847b",
+      "problem_cluster_id": "PC-B08-cce2eb941019b700b3f4f518ea9b9ff6",
+      "discovered_tool_names": [
+        "official::get_graph_schema",
+        "official::get_node_schema",
+        "official::get_relationship_schema",
+        "official::query_graph_readonly",
+        "civicly::find_related_incidents",
+        "civicly::get_decision_evidence_path",
+        "civicly::get_maintenance_history",
+        "civicly::get_monitoring_status",
+        "civicly::get_organizational_procedures",
+        "civicly::get_pickup_execution_history",
+        "civicly::get_road_condition_history",
+        "civicly::get_source_document_excerpt",
+        "civicly::get_work_order_status",
+        "civicly::retrieve_case_memory",
+        "civicly::retrieve_external_evidence",
+        "civicly::trace_infrastructure_dependencies"
+      ],
+      "missing_evidence": [],
+      "current_plan_id": null,
+      "incident_ids": [
+        "INC-B08-acf134fea71ed9b7db39b8c1201d4fe4"
+      ],
+      "asset_ids": [
+        "R1"
+      ],
+      "issue": "ROAD_DAMAGE",
+      "graph_revision": 41,
+      "phase": "Coordinator",
+      "hypotheses": [
+        "HYP-B09-2fe6bc7215f0e201c855f63103226605"
+      ],
+      "evidence": {},
+      "inventory_hash": "60e6cc345311a3446a1aedb713b945a2cfdd16b594fa40d2ae50a196dca57ebd",
+      "selection": {
+        "action": "PAUSE",
+        "summary": "Authored deterministic model test selection",
+        "tool_name": "",
+        "arguments_json": "{}",
+        "pause_reason": "MISSING_EVIDENCE"
+      },
+      "decisions": [
+        "DEC-B10-9b5f7cadefb72e1d232015b2e48d9163",
+        "DEC-B10-e94a337767c8979e97ca672d0426d17d",
+        "DEC-B10-a999887f9f4613413fdcb0fc1450014c",
+        "DEC-B10-6de973b7114979c30baee1bd2dcc1339",
+        "DEC-B10-a3d18af41fc140a1cae8a110618fa381"
+      ],
+      "executions": [
+        "MCP-B10-9b5f7cadefb72e1d232015b2e48d9163",
+        "MCP-B10-6de973b7114979c30baee1bd2dcc1339"
+      ],
+      "pending_inspections": [
+        "INS-B09-b3b9b7395d67c9d35782998ecfbd0c12"
+      ],
+      "pending_approval": null,
+      "errors": [
+        "SOURCE_CHANGED_REFRESH_REQUIRED"
+      ],
+      "observations": [
+        {
+          "graph": "civicly_b10_test_069619396df3499d8706c7b4fff4b42d",
+          "tool": "query_graph_readonly",
+          "template": "node",
+          "graph_revision": 23,
+          "rows": [
+            {
+              "labels": [
+                "CivicEntity",
+                "Incident"
+              ],
+              "properties": {
+                "id": "INC-B08-acf134fea71ed9b7db39b8c1201d4fe4",
+                "started_at": "2026-10-18T04:00:00.000000Z",
+                "updated_at": "2026-10-18T12:00:00.000000Z",
+                "municipality_id": "demo-city",
+                "status": "REPORTED",
+                "issue_type": "ROAD_DAMAGE",
+                "created_at": "2026-10-18T12:00:00.000000Z",
+                "schema_version": 3,
+                "severity": "MODERATE",
+                "subtype": "UNSPECIFIED"
+              }
+            }
+          ],
+          "schema_data": null,
+          "truncated": false,
+          "search_limited": true,
+          "semantics": "Raw recorded synthetic facts; no causal finding. Schema samples are incomplete; node lookup is current-state, edge validity is half-open with unknown/open dates."
+        },
+        {
+          "operation": "propose",
+          "journal_id": "EV-JOURNAL-B09-9ba3c6bf0853011655b32e21f1f56a65",
+          "entity_id": "HYP-B09-2fe6bc7215f0e201c855f63103226605",
+          "graph": "civicly_b10_test_069619396df3499d8706c7b4fff4b42d",
+          "graph_revision": 29,
+          "recorded_at": "2026-10-18T12:00:00.000000Z",
+          "created_ids": [
+            "HYP-B09-2fe6bc7215f0e201c855f63103226605"
+          ],
+          "relationship_ids": [
+            "REL-B09-9f8900bd7bd08c8ac594c8c784e3d955",
+            "REL-B09-66ea99c39f297ef025b52c31b118e97d",
+            "REL-B09-97eca497a8be105849854afc5833faa3"
+          ],
+          "updated_ids": [],
+          "assessment": null,
+          "replayed": false,
+          "historical_receipt": true,
+          "simulation_mode": true
+        },
+        {
+          "operation": "request_inspection",
+          "journal_id": "EV-JOURNAL-B09-a56ad4d947bfb458e094d1f6ea37e417",
+          "entity_id": "INS-B09-b3b9b7395d67c9d35782998ecfbd0c12",
+          "graph": "civicly_b10_test_069619396df3499d8706c7b4fff4b42d",
+          "graph_revision": 35,
+          "recorded_at": "2026-10-18T12:00:00.000000Z",
+          "created_ids": [
+            "INS-B09-b3b9b7395d67c9d35782998ecfbd0c12"
+          ],
+          "relationship_ids": [
+            "REL-B09-cd79f1f27f2cff7750cd70c47ac92cf1"
+          ],
+          "updated_ids": [],
+          "assessment": null,
+          "replayed": false,
+          "historical_receipt": true,
+          "simulation_mode": true
+        },
+        {
+          "graph": "civicly_b10_test_069619396df3499d8706c7b4fff4b42d",
+          "tool": "query_graph_readonly",
+          "template": "node",
+          "graph_revision": 39,
+          "rows": [
+            {
+              "labels": [
+                "CivicEntity",
+                "Evidence"
+              ],
+              "properties": {
+                "id": "EV-B10-NEW",
+                "updated_at": "2026-10-18T12:00:01.000000Z",
+                "municipality_id": "demo-city",
+                "recorded_at": "2026-10-18T12:00:01.000000Z",
+                "created_at": "2026-10-18T12:00:01.000000Z",
+                "schema_version": 3,
+                "summary": "Additional source requires fresh read",
+                "source_kind": "SYNTHETIC",
+                "evidence_type": "CONTEXT",
+                "reliability": "UNVERIFIED"
+              }
+            }
+          ],
+          "schema_data": null,
+          "truncated": false,
+          "search_limited": true,
+          "semantics": "Raw recorded synthetic facts; no causal finding. Schema samples are incomplete; node lookup is current-state, edge validity is half-open with unknown/open dates."
+        }
+      ],
+      "nodes": [
+        "Supervisor",
+        "Investigator",
+        "Supervisor",
+        "RootCauseAnalyst",
+        "Supervisor",
+        "Coordinator",
+        "AwaitDependency",
+        "Supervisor",
+        "Investigator",
+        "Supervisor",
+        "Coordinator"
+      ],
+      "pause_reason": "MISSING_EVIDENCE",
+      "recommendation": null,
+      "budget": {
+        "max_iterations": 16,
+        "max_tools": 8,
+        "max_tokens": 60000,
+        "max_seconds": 240,
+        "max_wakes": 5
+      },
+      "iterations": 5,
+      "tool_calls": 2,
+      "tokens": 0,
+      "wakes": 1,
+      "refresh_required": false,
+      "as_of": "2026-10-18T12:00:01.000000Z"
+    },
+    "__interrupt__": [
+      "Interrupt(value={'investigation_id': 'INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f', 'thread_id': 'c6e573dfab864298a449b96de6d4847b', 'pause_reason': 'MISSING_EVIDENCE', 'pending_inspections': ['INS-B09-b3b9b7395d67c9d35782998ecfbd0c12'], 'graph_revision': 41}, id='f2a0b563f11e0614d97ee929d7a0e069', response_schema=None)"
+    ]
+  }
+}

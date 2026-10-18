@@ -1,0 +1,96 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.1, pytest-9.1.1, pluggy-1.7.0 -- /Users/vikashkumar/Desktop/Civicly/backend/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/vikashkumar/Desktop/Civicly/backend
+configfile: pyproject.toml
+plugins: langsmith-0.14.11, anyio-4.15.1
+collecting ... collected 1 item
+
+backend/tests/integration/test_agent_safety.py::test_actual_mcp_timeout_and_fresh_session_recovery owned B10 server count 1
+timeout result DEPENDENCY_UNAVAILABLE [{'status': 'ERROR', 'error': {'code': 'INVALID_ARGUMENTS'}, 'source_evidence_ids': [], 'gaps': ['MCP failed closed; reconnect at next wake']}]
+FAILED
+
+=================================== FAILURES ===================================
+______________ test_actual_mcp_timeout_and_fresh_session_recovery ______________
+
+f = (ActiveProfile(version=1, graph='civicly_b10_test_0dcb35f45ab340d78067222cecbb9cbe', checkpoints='civicly_b10_checkpoi...ers/ng/nxnstkjs7tn9dbx9nhvtvmzw0000gn/T/pytest-of-vikashkumar/pytest-54/test_actual_mcp_timeout_and_fr0/profile.json'))
+
+    def test_actual_mcp_timeout_and_fresh_session_recovery(f):
+        p,r,clock,receipt,inv,path=f
+        async def run():
+            with active_scope(p):
+                async with brokers(p,path,timeout=2) as tools:
+                    # Identify only this owned B10 profile server, never unrelated processes.
+                    rows=subprocess.check_output(['ps','-axo','pid=,command='],text=True).splitlines()
+                    ids=[int(row.strip().split(None,1)[0]) for row in rows if '-m app.agents.server '+str(path) in row]
+                    print('owned B10 server count',len(ids));assert len(ids)==1;pid=ids[0];os.kill(pid,signal.SIGSTOP)
+                    try:
+                        s=state(p,r,tools,clock,receipt,inv)
+                        model=ScriptedModel([choose('READ',{'asset_id':'D1','as_of':clock()},'civicly::get_maintenance_history')])
+                        agent=InvestigationAgent(p,r,tools,model,saver(p),clock=clock);paused=await agent.run(s,thread_id=s.thread_id)
+                        print('timeout result',paused['data']['pause_reason'],paused['data']['observations'])
+                        assert paused['data']['pause_reason']=='DEPENDENCY_UNAVAILABLE'
+                        assert paused['data']['observations'][0]['error']['code']=='TIMEOUT'
+                    finally:os.kill(pid,signal.SIGCONT)
+                async with brokers(p,path) as tools:
+                    model=ScriptedModel([choose('READ',{'template':'node','id':'D1'},'official::query_graph_readonly'),choose()])
+                    fresh=InvestigationAgent(p,r,tools,model,saver(p),clock=clock)
+                    result=await fresh.run(thread_id=s.thread_id,resume=True)
+                    assert result['data']['tool_calls']==2 and result['data']['observations'][-1]['rows'][0]['properties']['id']=='D1'
+>       asyncio.run(run())
+
+backend/tests/integration/test_agent_safety.py:76: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/base_events.py:684: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+backend/tests/integration/test_agent_safety.py:58: in run
+    async with brokers(p,path,timeout=2) as tools:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:231: in __aexit__
+    await self.gen.athrow(value)
+backend/app/agents/mcp.py:21: in brokers
+    async with open_broker(traces,timeout=min(timeout,10),max_calls=64,source_graph=profile.graph,credentials=creds) as official:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:231: in __aexit__
+    await self.gen.athrow(value)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+traces = [{'operation': 'initialize', 'status': 'SUCCESS', 'started_at': '2026-10-17T20:55:02.749467Z', 'ended_at': '2026-10-17...n': '2025-11-25', ...}, {'operation': 'session/closed', 'status': 'CLOSED', 'ended_at': '2026-10-17T20:55:06.490598Z'}]
+timeout = 2, max_calls = 64
+source_graph = 'civicly_b10_test_0dcb35f45ab340d78067222cecbb9cbe'
+credentials = RuntimeCredentials(username='civicly_b10_read_0dcb35f45ab340d78067222cecbb9cbe', password=SecretStr('**********'), graph='civicly_b10_test_0dcb35f45ab340d78067222cecbb9cbe')
+
+    @asynccontextmanager
+    async def open_broker(traces=None, *, timeout=4.0, max_calls=32, source_graph=CITY_GRAPH, credentials=None):
+        """Own initialize/list/call/shutdown in one task; fresh context reconnects."""
+        traces = traces if traces is not None else []
+        started, clock = now(), time.perf_counter()
+        opened = False
+        try:
+            with server_parameters(credentials=credentials) as params:
+                async with Client(params, mode='legacy', read_timeout_seconds=timeout,
+                                  logging_callback=_ignore_vendor_log) as client:
+                    traces.append({'operation': 'initialize', 'status': 'SUCCESS', 'started_at': started,
+                        'ended_at': now(), 'latency_ms': round((time.perf_counter()-clock)*1000,3),
+                        'server': {'name': client.server_info.name, 'version': client.server_info.version},
+                        'protocol_version': client.protocol_version})
+                    broker = ReadBroker(client, traces, timeout=timeout, max_calls=max_calls, source_graph=source_graph)
+                    await broker.discover()
+                    opened = True
+                    yield broker
+        except Exception as exc:
+            code = error_code(exc)
+            if not opened:
+                traces.append({'operation': 'initialize', 'status': code, 'started_at': started, 'ended_at': now()})
+>           raise BrokerError(code) from None
+E           app.mcp.broker.BrokerError: TRANSPORT_FAILURE
+
+backend/app/mcp/broker.py:266: BrokerError
+=========================== short test summary info ============================
+FAILED backend/tests/integration/test_agent_safety.py::test_actual_mcp_timeout_and_fresh_session_recovery
+============================== 1 failed in 6.94s ===============================

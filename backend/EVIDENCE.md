@@ -227,3 +227,7 @@ real results and legacy replay proof are under docs/evidence/B09R-*. Existing re
 B09 proof is read-only; the separate B09R legacy compatibility fixture is owned by
 this corrective pass. Active graph integration remains a documented gate, not a
 claim of end-to-end autonomous operation. Stop after B09-R for review.
+
+
+## B10 compatible integration update (partial agent acceptance)
+The retained-city default remains unchanged. An explicit private B10 ActiveProfile now supplies one narrowly authorized disposable source graph to B08/B09 readers, official MCP and the actual Civicly MCP production bootstrap. Model arguments cannot select a graph or Cypher. B07 source references can decode that B10 UUID, but broker and server still require exact trusted graph equality; separate source-read, trace-write and SDK-checkpoint accounts remain enforced. Optional host rationale summaries contain actual short public model summaries; old null defaults are preserved. Actual B10 source IDs/revisions, CLI and integration proof are documented in `AGENTS_RUNTIME.md` and `docs/evidence/B10-*`. No final canonical-city activation, B11 organizational retrieval, operational workflow or frontend claim.

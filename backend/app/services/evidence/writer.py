@@ -1,4 +1,5 @@
 """Narrow B09 batch compiler; unchanged B03 integrity/fence/intent machinery."""
+from app.active import is_shared_target
 from app.graph.models import NodeRecord, EdgeRecord, digest
 from app.graph.repository import Conflict, PreconditionFailed, interval, intersection
 from app.graph.schema import timestamp
@@ -11,7 +12,7 @@ EDGES = {'INVESTIGATES', 'PROPOSES', 'CONCERNS', 'EXPLAINS', 'HAS_ASSESSMENT', '
 
 def target(repo):
     name = repo.graph.name
-    if not is_allowed_graph_target(name) or (name != 'civicly_knowledge' and not name.startswith('civicly_b09_test_')):
+    if not is_allowed_graph_target(name) or (name != 'civicly_knowledge' and not name.startswith('civicly_b09_test_') and not is_shared_target(name)):
         raise PreconditionFailed('B09 writes require canonical or isolated B09 graph; retained sources protected')
 
 

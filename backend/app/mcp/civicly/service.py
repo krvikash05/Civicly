@@ -23,8 +23,10 @@ def visible(props,as_of):
 
 
 class CivicReadService:
-    def __init__(self,client):
-        self.repo=GraphRepository(ScopedClient(client,CITY_GRAPH),CITY_GRAPH)
+    def __init__(self,client,*,source_graph=CITY_GRAPH):
+        from app.active import require_source
+        require_source(source_graph)
+        self.repo=GraphRepository(ScopedClient(client,source_graph),source_graph)
         self.analysis=GraphAnalysis(self.repo)
     def revision(self):
         row=self.repo._read("MATCH (m:CivicSchemaMigration {id:$id}) WHERE m.state='READY' RETURN coalesce(m.repo_revision,0),coalesce(m.repo_pending,'') LIMIT 1",{'id':'0001'})

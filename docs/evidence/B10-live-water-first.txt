@@ -1,0 +1,26 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/vikashkumar/Desktop/Civicly/backend/tests/b10_live.py", line 49, in <module>
+    if __name__=='__main__':asyncio.run(main())
+                            ^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/base_events.py", line 684, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/Users/vikashkumar/Desktop/Civicly/backend/tests/b10_live.py", line 34, in main
+    async with brokers(p,profile_path) as tools:
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py", line 231, in __aexit__
+    await self.gen.athrow(value)
+  File "/Users/vikashkumar/Desktop/Civicly/backend/app/agents/mcp.py", line 21, in brokers
+    async with open_broker(traces,timeout=min(timeout,10),max_calls=64,source_graph=profile.graph,credentials=creds) as official:
+  File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py", line 231, in __aexit__
+    await self.gen.athrow(value)
+  File "/Users/vikashkumar/Desktop/Civicly/backend/app/mcp/broker.py", line 266, in open_broker
+    raise BrokerError(code) from None
+app.mcp.broker.BrokerError: INVALID_OUTPUT

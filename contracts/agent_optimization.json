@@ -1,0 +1,50 @@
+{
+  "version": "B10-O-1",
+  "extends": "agent_runtime.json",
+  "scope": "B10 optimization only; B10 live acceptance remains OPEN, no B11",
+  "execution": {
+    "default_live": false,
+    "opt_in": "Trusted explicit permit bound to one investigation and thread; CLI --live required even on resume",
+    "ordinary_tests": "Deny live permit and intercept external provider HTTP/DNS in parent and inherited Python children",
+    "mock_permit": "Requires actual httpx.MockTransport, never grants network permission",
+    "live_suite": "backend/tests/live; excluded from ordinary pytest; only separately approved operator invocation"
+  },
+  "context_version": "B10-O-1",
+  "prompt_version": "B10-3",
+  "context": {
+    "facts": "Full-content SHA256 references; distinct source versions never merged",
+    "history": "Latest authoritative assessment plus all historical evidence classifications, provenance, paths, temporal references and limitations; full source histories retained in FalkorDB",
+    "catalog": "All 16 approved tools, exact input schemas interned by content hash; no scenario-to-tool filter",
+    "overflow": "Pause on finite token or durable journal budget, never silently drop decision-critical data",
+    "native_provider_cache": "Disabled, no paid spike or claimed measured savings"
+  },
+  "read_cache": {
+    "key": ["source_graph", "graph_revision", "as_of/cutoff", "arguments", "tool_identity", "inventory_schema_hash", "invocation_permission_scope"],
+    "max_entries": 32,
+    "reuse": "Return original validated result and original ToolExecution reference; no fabricated new execution",
+    "invalidation": "Any graph revision change, including host audit writes; stable revision required before and after call",
+    "negatives": "Bounded-negative, truncated, missing evidence and candidate/verified reservations retained; never proof of absence"
+  },
+  "spending": {
+    "store": "Private auxiliary SQLite WAL/FULL ledger, BEGIN IMMEDIATE; domain/evidence/checkpoints remain FalkorDB",
+    "project_usd": "6.00",
+    "initial_investigation_usd": "0.15",
+    "concurrent_live_investigations": 1,
+    "warning_percentages": [50, 80, 95, 100],
+    "reserve": "Before every HTTP attempt including retry/repair; UTF8 serialized input bytes plus framing allowance and twice output ceiling at maximum output/thinking price",
+    "unknown_billing": "Retain full reservation, do not treat as free; reconcile only from verified metadata",
+    "over_reservation": "Record actual greater cost and hold further requests for operator review",
+    "idempotency": "Thread/wake/decision/repair/retry ID, duplicate reservation denied, no blind rebilling after crash",
+    "session_recovery": "No automatic expiry takeover; stop old process, reconcile and release exact owner explicitly",
+    "tracking": ["model", "thread", "request", "investigation", "milestone", "pricing_version", "input/output/thinking/cached tokens", "project"],
+    "scope_limit": "New managed requests only; historical/external billing unknown, not Google account billing hard cap"
+  },
+  "provider_recovery": {
+    "transient_retries_default": 2,
+    "wait_budget_seconds_default": 8,
+    "schema_repairs": 1,
+    "retry": ["503 service unavailable", "structured short-term 429", "408/500/502/504 within bounds"],
+    "no_blind_retry": ["daily/project quota exhaustion", "unknown 429", "auth/configuration", "unavailable model", "network timeout with uncertain billing"],
+    "trace": "Sanitized category, model/prompt/pricing versions, actual usage or uncertainty and durable reservation; never provider body/key or thought text"
+  }
+}

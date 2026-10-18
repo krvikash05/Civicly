@@ -1,4 +1,5 @@
 """B08 trusted domain intake, transparent grouping and explicit reviewed correction."""
+from app.active import is_shared_target
 import json
 from datetime import timedelta
 from app.graph.models import EdgeRecord,PathRecord,digest
@@ -40,7 +41,7 @@ class ComplaintService:
     def __init__(self,repository,*,clock=utc_now):self.repo=repository;self.clock=clock
     def write_target(self):
         name=self.repo.graph.name
-        if name!='civicly_knowledge' and not name.startswith('civicly_b08_test_'):raise PreconditionFailed('B08 writes restricted to canonical or isolated B08 graph; retained sources read-only')
+        if name!='civicly_knowledge' and not name.startswith('civicly_b08_test_') and not is_shared_target(name):raise PreconditionFailed('B08 writes restricted to canonical or isolated B08 graph; retained sources read-only')
     def load(self,id,request_hash,operation='INTAKE'):
         n=self.repo._node_optional(id)
         if n is None:return None,None

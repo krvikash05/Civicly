@@ -1,4 +1,5 @@
 """Narrow single-query batches through unchanged B03 fence/intent/audit machinery."""
+from app.active import is_shared_target
 from app.graph.models import NodeRecord,EdgeRecord
 from app.graph.repository import Conflict,PreconditionFailed,interval,intersection
 from app.graph.schema import timestamp
@@ -12,7 +13,7 @@ class Writer:
     def __init__(self,repo):self.repo=repo
     def commit(self,session,journal,new_nodes,updates,new_edges,edge_updates,summary,now):
         r=self.repo
-        if r.graph.name!='civicly_knowledge' and not r.graph.name.startswith('civicly_b08_test_'):raise PreconditionFailed('B08 batch target protected')
+        if r.graph.name!='civicly_knowledge' and not r.graph.name.startswith('civicly_b08_test_') and not is_shared_target(r.graph.name):raise PreconditionFailed('B08 batch target protected')
         if any(n.kind not in {'Complaint','Incident','ProblemCluster'} for n in new_nodes) or any(n.kind!='ProblemCluster' for n in updates):raise PreconditionFailed('Unapproved intake node mutation')
         if any(e.kind not in {'REPORTS','PART_OF','OCCURRED_AT','AFFECTS'} for e in new_edges) or any(e.kind!='PART_OF' for e in edge_updates):raise PreconditionFailed('Unapproved intake relationship mutation')
         if any(e.properties.get('source_evidence_id')!=journal.id or (e.kind=='AFFECTS' and e.properties.get('association_status')!='REPORTED') for e in new_edges):raise PreconditionFailed('Intake cannot assert verified/unattributed associations')

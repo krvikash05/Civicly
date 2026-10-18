@@ -1,0 +1,175 @@
+{
+  "mode": "REACTIVE_FAKE_MODEL_REAL_MCP",
+  "topology": "EXPIRED",
+  "target": "R1",
+  "result": {
+    "data": {
+      "version": 1,
+      "graph": "civicly_b10_test_ab83153a39eb4335b08c7ade931cff4f",
+      "investigation_id": "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+      "thread_id": "cb02f3586f7d41a3a531e9ed0b76e14e",
+      "problem_cluster_id": "PC-B08-cce2eb941019b700b3f4f518ea9b9ff6",
+      "discovered_tool_names": [
+        "official::get_graph_schema",
+        "official::get_node_schema",
+        "official::get_relationship_schema",
+        "official::query_graph_readonly",
+        "civicly::find_related_incidents",
+        "civicly::get_decision_evidence_path",
+        "civicly::get_maintenance_history",
+        "civicly::get_monitoring_status",
+        "civicly::get_organizational_procedures",
+        "civicly::get_pickup_execution_history",
+        "civicly::get_road_condition_history",
+        "civicly::get_source_document_excerpt",
+        "civicly::get_work_order_status",
+        "civicly::retrieve_case_memory",
+        "civicly::retrieve_external_evidence",
+        "civicly::trace_infrastructure_dependencies"
+      ],
+      "missing_evidence": [
+        "No qualifying paths within evidence/time/search filters; missing proof and actual disconnection are not distinguished",
+        "No matching recorded results within this bounded query; not proof of global absence"
+      ],
+      "current_plan_id": null,
+      "incident_ids": [
+        "INC-B08-acf134fea71ed9b7db39b8c1201d4fe4"
+      ],
+      "asset_ids": [
+        "P1",
+        "R1"
+      ],
+      "issue": "ROAD_DAMAGE",
+      "graph_revision": 31,
+      "phase": "Coordinator",
+      "hypotheses": [],
+      "evidence": {},
+      "inventory_hash": "60e6cc345311a3446a1aedb713b945a2cfdd16b594fa40d2ae50a196dca57ebd",
+      "selection": {
+        "action": "INSPECT",
+        "summary": "Authored deterministic model test selection",
+        "tool_name": "",
+        "arguments_json": "{\"asset_ids\": [\"R1\"], \"department_id\": \"DEP\", \"inspection_type\": \"ROAD_STRUCTURE\"}",
+        "pause_reason": "NONE"
+      },
+      "decisions": [
+        "DEC-B10-5871977b2ad64f5f655b36076cb9a11d",
+        "DEC-B10-4cc70905682f62745a5b453594bceaf7"
+      ],
+      "executions": [
+        "MCP-B10-5871977b2ad64f5f655b36076cb9a11d"
+      ],
+      "pending_inspections": [
+        "INS-B09-86fe31c483cf5760fe01616a7ba48d11"
+      ],
+      "pending_approval": null,
+      "errors": [],
+      "observations": [
+        {
+          "status": "PARTIAL",
+          "trace_id": "cb02f3586f7d41a3a531e9ed0b76e14e",
+          "execution_id": "MCP-B10-5871977b2ad64f5f655b36076cb9a11d",
+          "context": {
+            "trace_id": "cb02f3586f7d41a3a531e9ed0b76e14e",
+            "execution_id": "MCP-B10-5871977b2ad64f5f655b36076cb9a11d",
+            "parent_execution_id": "DEC-B10-5871977b2ad64f5f655b36076cb9a11d",
+            "investigation_id": "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+            "municipality_id": "demo-city",
+            "source_graph": "civicly_b10_test_ab83153a39eb4335b08c7ade931cff4f",
+            "caller_role": "READ_ONLY",
+            "invocation_origin": "APPLICATION"
+          },
+          "server_id": "civicly-domain",
+          "tool_name": "trace_infrastructure_dependencies",
+          "schema_version": 3,
+          "inventory_version": "da1f25b2f8174ec96b4213038b92eb8600c24e8b362697f63f85b5d143790b42",
+          "source_evidence_ids": [],
+          "simulation_mode": true,
+          "graph_revision": 24,
+          "truncated": false,
+          "search_limited": true,
+          "error": null,
+          "paths": [],
+          "data": {
+            "nodes": [
+              {
+                "id": "P1",
+                "kind": "WaterPipe",
+                "labels": [
+                  "InfrastructureAsset",
+                  "WaterPipe"
+                ],
+                "properties": {
+                  "id": "P1",
+                  "updated_at": "2026-10-17T00:00:00Z",
+                  "municipality_id": "demo-city",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "schema_version": 3,
+                  "operational_status": "ACTIVE",
+                  "name": "Synthetic asset",
+                  "asset_type": "WATER_PIPE"
+                }
+              }
+            ],
+            "edges": [],
+            "paths": [],
+            "gaps": [
+              "No qualifying paths within evidence/time/search filters; missing proof and actual disconnection are not distinguished",
+              "No matching recorded results within this bounded query; not proof of global absence"
+            ],
+            "reservations": [
+              "Connectivity and count-based criticality are not root-cause or hydraulic proof.",
+              "No result is a bounded negative, not proof of global disconnection.",
+              "Historical node versions are not reconstructed; future-updated records are excluded.",
+              "Open relationship validity bounds remain unknown, not manufactured dates."
+            ],
+            "as_of": "2026-10-18T12:00:00.000000Z"
+          }
+        },
+        {
+          "operation": "request_inspection",
+          "journal_id": "EV-JOURNAL-B09-eb7d83b6cea01c76cd1c7fb34f09ea2f",
+          "entity_id": "INS-B09-86fe31c483cf5760fe01616a7ba48d11",
+          "graph": "civicly_b10_test_ab83153a39eb4335b08c7ade931cff4f",
+          "graph_revision": 30,
+          "recorded_at": "2026-10-18T12:00:00.000000Z",
+          "created_ids": [
+            "INS-B09-86fe31c483cf5760fe01616a7ba48d11"
+          ],
+          "relationship_ids": [
+            "REL-B09-8b53537349e10d45cc8112c806591122"
+          ],
+          "updated_ids": [],
+          "assessment": null,
+          "replayed": false,
+          "historical_receipt": true,
+          "simulation_mode": true
+        }
+      ],
+      "nodes": [
+        "Supervisor",
+        "Investigator",
+        "Supervisor",
+        "Coordinator"
+      ],
+      "pause_reason": "MISSING_EVIDENCE",
+      "recommendation": null,
+      "budget": {
+        "max_iterations": 16,
+        "max_tools": 8,
+        "max_tokens": 60000,
+        "max_seconds": 240,
+        "max_wakes": 5
+      },
+      "iterations": 2,
+      "tool_calls": 1,
+      "tokens": 0,
+      "wakes": 0,
+      "refresh_required": false,
+      "as_of": "2026-10-18T12:00:00.000000Z"
+    },
+    "__interrupt__": [
+      "Interrupt(value={'investigation_id': 'INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f', 'thread_id': 'cb02f3586f7d41a3a531e9ed0b76e14e', 'pause_reason': 'MISSING_EVIDENCE', 'pending_inspections': ['INS-B09-86fe31c483cf5760fe01616a7ba48d11'], 'graph_revision': 31}, id='79b60c2ae80caa8e54d416b9d1cd447c', response_schema=None)"
+    ]
+  }
+}

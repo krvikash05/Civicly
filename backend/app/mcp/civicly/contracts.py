@@ -3,7 +3,7 @@ import hashlib,json
 from pathlib import Path
 from uuid import UUID,uuid4
 from jsonschema import Draft202012Validator,FormatChecker
-from pydantic import BaseModel,ConfigDict,Field
+from pydantic import BaseModel,ConfigDict,Field,field_validator
 from typing import Literal
 from app.mcp.runtime import ROOT,CITY_GRAPH
 
@@ -24,7 +24,13 @@ class Context(BaseModel):
     parent_execution_id: str | None=None
     investigation_id: str | None=Field(default=None,max_length=200)
     municipality_id: Literal['demo-city']='demo-city'
-    source_graph: Literal[CITY_GRAPH]=CITY_GRAPH
+    source_graph: str=CITY_GRAPH
+    @field_validator('source_graph')
+    @classmethod
+    def known_source(cls,value):
+        from app.graph.targets import is_disposable_graph
+        if value!=CITY_GRAPH and not (value.startswith('civicly_b10_test_') and is_disposable_graph(value)):raise ValueError('Unknown source reference')
+        return value
     caller_role: Literal['READ_ONLY','OPERATOR_REVIEW']='OPERATOR_REVIEW'
     invocation_origin: Literal['OPERATOR_REVIEW','APPLICATION']='OPERATOR_REVIEW'
 

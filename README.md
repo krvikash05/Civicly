@@ -1,11 +1,13 @@
 # Civicly — Backend-First Codex Build System (v2.0)
 
-**Status:** B08 accepted; B09 evidence/hypothesis/inspection foundation verified (582 PASS), awaiting human review. The full civic AI application remains unimplemented. Current truth is in the engineering tracking files.
+> **B10-O verified, review pending:** fail-closed live opt-in, compact source-aware context, revision-scoped read caching and durable spending controls. B10 genuine live acceptance remains OPEN; no B11. Ordinary tests block Gemini, including Python child processes. 691 regression tests and both specification validators passed; zero external Gemini calls. Current results and reproduction: [B10-O evidence](docs/evidence/B10O-RESULTS.md), [runtime guide](backend/AGENTS_RUNTIME.md).
+
+**Current status:** B09-R accepted (617-test baseline). B10 runtime is implemented with partial acceptance: live provider 503/429 and outstanding live reasoning controls block full B10 completion. B11 has not started. The full civic AI application remains unimplemented. Current truth is in the engineering tracking files.
 See [complaint intelligence guide](backend/COMPLAINTS.md), [algorithm guide](backend/ALGORITHMS.md) and [official MCP guide](backend/MCP.md) and [Civicly domain MCP guide](backend/CIVICLY_MCP.md) for scope and real evidence.
 
 For the current Python 3.12/Docker setup, CLI health and verified persistence tests,
 see [backend/README.md](backend/README.md) and [schema/recovery guide](backend/SCHEMA.md).
-B00–B08 are accepted; B09 awaits human review; B10 has not started. The 18 objectives, remaining B00
+B00–B09-R are accepted; B10 is partial and awaits review of its remaining live acceptance gates. The 18 objectives, remaining B00
 contract findings and backend-first gates remain binding.
 
 **Purpose:** Implement a genuinely agentic, FalkorDB-native, MCP-connected civic investigation system covering recurring WATERLOGGING, ROAD_DAMAGE and WASTE_ACCUMULATION, including interlinked failures, persistent memory, municipal knowledge, approved actions, progress tracking, and verifiable outcomes. Backend first; frontend last, but its data requirements are fixed now.
@@ -60,3 +62,5 @@ A task is not complete merely because files exist. Mark complete only after its 
 - Synthetic/public/rightfully used data only; no actual government dispatch. Clear `SIMULATED` badges in future UI.
 
 B09 domain guide: [EVIDENCE.md](backend/EVIDENCE.md). Explicit evidence criteria, immutable assessment revisions, actual inspection lifecycle, active-graph boundaries and reproduction commands; no agent/dispatch/event delivery claim.
+
+B10 workflow, exact shared source boundary, real MCP/Saver behavior and limitations: [agent runtime guide](backend/AGENTS_RUNTIME.md), [current B10 evidence](docs/evidence/B10-RESULTS.md). No product capability is marked complete merely by these foundations.

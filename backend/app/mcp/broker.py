@@ -63,9 +63,11 @@ class ReadBroker:
     Construction/session ownership is trusted application code, not a capability
     sandbox against arbitrary Python code running as the same OS user.
     """
-    def __init__(self, client, traces, *, timeout=4.0, max_calls=32):
+    def __init__(self, client, traces, *, timeout=4.0, max_calls=32, source_graph=CITY_GRAPH):
         if not 0.01 <= timeout <= 10 or not 3 <= max_calls <= 64:
             raise ValueError('Invalid broker budgets')
+        from app.active import require_source
+        self.__graph = require_source(source_graph)
         self.__client = client
         self.__traces = traces
         self.__timeout = timeout
@@ -90,7 +92,7 @@ class ReadBroker:
             'status': status, 'denial_reason': status if status.startswith(('DENIED', 'INVALID_ARGUMENT')) else None,
             'result_summary': {('validated_rows' if operation == 'broker/validated_call' else 'received_rows'): rows} if rows is not None else None,
             'graph_revision': revision, 'selection_rationale': None,
-            'invocation_origin': 'application_or_operator; no agent implemented'})
+            'invocation_origin': ('application_or_operator; no agent implemented' if self.__graph==CITY_GRAPH else 'B10 host broker; actual model summary in separate durable shared trace')})
 
     async def discover(self):
         started, clock = now(), time.perf_counter()
@@ -150,7 +152,7 @@ class ReadBroker:
 
     async def __revision(self):
         data = QueryPayload.model_validate(await self.__wire('query_graph_readonly',
-            {'graphName': CITY_GRAPH, 'query': REVISION_QUERY, 'params': {'id': '0001'}}))
+            {'graphName': self.__graph, 'query': REVISION_QUERY, 'params': {'id': '0001'}}))
         if len(data.data) != 1: raise BrokerError('INVALID_REVISION')
         row = RevisionRow.model_validate(data.data[0])
         if row.pending: raise BrokerError('GRAPH_WRITE_PENDING')
@@ -213,8 +215,8 @@ class ReadBroker:
         try:
             if not isinstance(arguments, dict) or arguments.get('tool') not in ALLOWED:
                 raise BrokerError('DENIED_TOOL')
-            if arguments.get('graph', CITY_GRAPH) != CITY_GRAPH: raise BrokerError('DENIED_GRAPH')
-            try: req = Request.model_validate(arguments)
+            if arguments.get('graph', self.__graph) != self.__graph: raise BrokerError('DENIED_GRAPH')
+            try: req = Request.model_validate({**arguments, 'graph': self.__graph}, context={'authorized_graph': self.__graph})
             except (ValidationError, SchemaError): raise BrokerError('INVALID_ARGUMENTS') from None
             async with self.__lock:
                 before = await self.__revision()
@@ -240,24 +242,26 @@ async def _ignore_vendor_log(*args, **kwargs):
 
 
 @asynccontextmanager
-async def open_broker(traces=None, *, timeout=4.0, max_calls=32):
+async def open_broker(traces=None, *, timeout=4.0, max_calls=32, source_graph=CITY_GRAPH, credentials=None):
     """Own initialize/list/call/shutdown in one task; fresh context reconnects."""
     traces = traces if traces is not None else []
     started, clock = now(), time.perf_counter()
     opened = False
     try:
-        with server_parameters() as params:
+        with server_parameters(credentials=credentials) as params:
             async with Client(params, mode='legacy', read_timeout_seconds=timeout,
                               logging_callback=_ignore_vendor_log) as client:
                 traces.append({'operation': 'initialize', 'status': 'SUCCESS', 'started_at': started,
                     'ended_at': now(), 'latency_ms': round((time.perf_counter()-clock)*1000,3),
                     'server': {'name': client.server_info.name, 'version': client.server_info.version},
                     'protocol_version': client.protocol_version})
-                broker = ReadBroker(client, traces, timeout=timeout, max_calls=max_calls)
+                broker = ReadBroker(client, traces, timeout=timeout, max_calls=max_calls, source_graph=source_graph)
                 await broker.discover()
                 opened = True
                 yield broker
     except Exception as exc:
+        if opened and not isinstance(exc, BrokerError):
+            raise  # Consumer application failures are not MCP transport failures.
         code = error_code(exc)
         if not opened:
             traces.append({'operation': 'initialize', 'status': code, 'started_at': started, 'ended_at': now()})

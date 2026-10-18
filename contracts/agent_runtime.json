@@ -1,0 +1,80 @@
+{
+  "version": "B10-1",
+  "status": "IMPLEMENTATION_UNDER_VERIFICATION",
+  "registry_version": 3,
+  "required_migrations": [
+    "0001",
+    "0002"
+  ],
+  "source_authorization": "Exactly the B10 UUID graph in the trusted private ActiveProfile; matching a graph-name pattern alone never grants shared service access",
+  "checkpoint_namespace": "civicly_b10_checkpoints_<uuid4hex>, separate exact-key database account, vendor SDK owns internal schema",
+  "trace_namespace": "Existing compatible B07 trace graph; immutable server and host observations remain separate",
+  "roles": [
+    "Supervisor",
+    "Investigator",
+    "RootCauseAnalyst",
+    "ResolutionPlanner",
+    "Coordinator"
+  ],
+  "helper_nodes": [
+    "AwaitDependency"
+  ],
+  "selection_actions": [
+    "READ",
+    "PROPOSE",
+    "ASSESS",
+    "INSPECT",
+    "RECOMMEND",
+    "PAUSE"
+  ],
+  "mcp_namespaces": [
+    "official::",
+    "civicly::"
+  ],
+  "mcp_compatibility": "Source reference syntax permits retained city or validated B10 UUID; exact trusted server/broker binding is still required. Optional rationale_summary defaults null on historical records and records actual public model summary on host observations only. Schema version 3 retained as additive compatible envelope widening; discovered inventory hashes change.",
+  "domain_writes": "B09 typed narrow services only for hypothesis/assessment/inspection request. B10 Control writes only AgentDecision, B10_OPERATION Evidence and Investigation thread binding through B03 integrity/CAS.",
+  "read_guarantees": [
+    "Actual initialize and tools/list before model context",
+    "Actual tools/call through validated broker",
+    "No graph selector, raw Cypher or privileged tools in model interface",
+    "GRAPH.RO_QUERY and exact graph read ACL",
+    "Candidate, bounded-negative, temporal and provenance reservations preserved",
+    "Trusted host cutoff supplies missing as_of, rejects future selected cutoffs, and applies accepted B05 temporal visibility to raw returned facts before model context"
+  ],
+  "resume_guarantees": [
+    "Stable Investigation.thread_id",
+    "Public FalkorDBSaver synchronous durability",
+    "Exclusive host-owned lease with heartbeat",
+    "Source revision/reference hash revalidation and mandatory fresh MCP read after change",
+    "Durable decision and operation IDs",
+    "Committed operation result replay without repeating calls",
+    "Unknown prepared read outcome pauses for reconciliation",
+    "Uncertain checkpoint failures quarantine thread; no automatic reset"
+  ],
+  "reasoning_guarantees": [
+    "Model cannot self-grant VERIFIED",
+    "B09-R classification and episode rules remain unchanged",
+    "Recommendations nonbinding and require human review",
+    "No Plan, approval, WorkOrder, task dispatch or monitoring implementation"
+  ],
+  "defaults": {
+    "max_iterations": 16,
+    "max_tools": 8,
+    "max_tokens": 60000,
+    "max_seconds": 240,
+    "max_wakes": 5,
+    "model_repair_attempts": 1,
+    "provider_timeout_seconds": 45,
+    "max_output_tokens": 4096
+  },
+  "not_claimed": [
+    "Final canonical-city deployment",
+    "Full S01-S12 evaluation",
+    "B11 GraphRAG or multi-layer organizational memory",
+    "B12-B15 operational workflows",
+    "In-process malicious Python sandbox",
+    "Atomic vendor multi-query checkpoint writes"
+  ],
+  "prompt_version": "B10-3",
+  "optimization_contract": "agent_optimization.json"
+}

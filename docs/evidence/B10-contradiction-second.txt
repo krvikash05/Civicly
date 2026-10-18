@@ -1,0 +1,120 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.1, pytest-9.1.1, pluggy-1.7.0 -- /Users/vikashkumar/Desktop/Civicly/backend/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/vikashkumar/Desktop/Civicly/backend
+configfile: pyproject.toml
+plugins: langsmith-0.14.11, anyio-4.15.1
+collecting ... collected 1 item
+
+backend/tests/integration/test_agent_reasoning.py::test_contradiction_changes_actual_b09_assessment_and_next_inspection FAILED
+
+=================================== FAILURES ===================================
+_____ test_contradiction_changes_actual_b09_assessment_and_next_inspection _____
+  + Exception Group Traceback (most recent call last):
+  |   File "/Users/vikashkumar/Desktop/Civicly/backend/tests/integration/test_agent_reasoning.py", line 54, in test_contradiction_changes_actual_b09_assessment_and_next_inspection
+  |     try:asyncio.run(run())
+  |         ^^^^^^^^^^^^^^^^^^
+  |   File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 194, in run
+  |     return runner.run(main)
+  |            ^^^^^^^^^^^^^^^^
+  |   File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py", line 118, in run
+  |     return self._loop.run_until_complete(task)
+  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |   File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/base_events.py", line 684, in run_until_complete
+  |     return future.result()
+  |            ^^^^^^^^^^^^^^^
+  |   File "/Users/vikashkumar/Desktop/Civicly/backend/tests/integration/test_agent_reasoning.py", line 38, in run
+  |     async with brokers(p,path) as tools:
+  |   File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py", line 231, in __aexit__
+  |     await self.gen.athrow(value)
+  |   File "/Users/vikashkumar/Desktop/Civicly/backend/app/agents/mcp.py", line 21, in brokers
+  |     async with open_broker(traces,timeout=min(timeout,10),max_calls=64,source_graph=profile.graph,credentials=creds) as official:
+  |   File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py", line 231, in __aexit__
+  |     await self.gen.athrow(value)
+  |   File "/Users/vikashkumar/Desktop/Civicly/backend/app/mcp/broker.py", line 252, in open_broker
+  |     async with Client(params, mode='legacy', read_timeout_seconds=timeout,
+  |   File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/mcp/client/client.py", line 480, in __aexit__
+  |     await self._exit_stack.__aexit__(exc_type, exc_val, exc_tb)
+  |   File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py", line 754, in __aexit__
+  |     raise exc_details[1]
+  |   File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py", line 737, in __aexit__
+  |     cb_suppress = await cb(*exc_details)
+  |                   ^^^^^^^^^^^^^^^^^^^^^^
+  |   File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py", line 231, in __aexit__
+  |     await self.gen.athrow(value)
+  |   File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/mcp/client/stdio.py", line 201, in stdio_client
+  |     async with anyio.create_task_group() as tg:
+  |   File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 847, in __aexit__
+  |     raise BaseExceptionGroup(
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Exception Group Traceback (most recent call last):
+    |   File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/mcp/client/stdio.py", line 205, in stdio_client
+    |     yield read_stream, write_stream
+    |   File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py", line 737, in __aexit__
+    |     cb_suppress = await cb(*exc_details)
+    |                   ^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/mcp/client/session.py", line 514, in __aexit__
+    |     result = await self._task_group.__aexit__(exc_type, exc_val, exc_tb)
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 847, in __aexit__
+    |     raise BaseExceptionGroup(
+    | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+    +-+---------------- 1 ----------------
+      | Exception Group Traceback (most recent call last):
+      |   File "/Users/vikashkumar/Desktop/Civicly/backend/app/mcp/broker.py", line 261, in open_broker
+      |     yield broker
+      |   File "/Users/vikashkumar/Desktop/Civicly/backend/app/agents/mcp.py", line 22, in brokers
+      |     async with Client(params,mode='legacy',read_timeout_seconds=timeout) as client:
+      |   File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/mcp/client/client.py", line 480, in __aexit__
+      |     await self._exit_stack.__aexit__(exc_type, exc_val, exc_tb)
+      |   File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py", line 754, in __aexit__
+      |     raise exc_details[1]
+      |   File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py", line 737, in __aexit__
+      |     cb_suppress = await cb(*exc_details)
+      |                   ^^^^^^^^^^^^^^^^^^^^^^
+      |   File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py", line 231, in __aexit__
+      |     await self.gen.athrow(value)
+      |   File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/mcp/client/stdio.py", line 201, in stdio_client
+      |     async with anyio.create_task_group() as tg:
+      |   File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 847, in __aexit__
+      |     raise BaseExceptionGroup(
+      | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+      +-+---------------- 1 ----------------
+        | Exception Group Traceback (most recent call last):
+        |   File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/mcp/client/stdio.py", line 205, in stdio_client
+        |     yield read_stream, write_stream
+        |   File "/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py", line 737, in __aexit__
+        |     cb_suppress = await cb(*exc_details)
+        |                   ^^^^^^^^^^^^^^^^^^^^^^
+        |   File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/mcp/client/session.py", line 514, in __aexit__
+        |     result = await self._task_group.__aexit__(exc_type, exc_val, exc_tb)
+        |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        |   File "/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 847, in __aexit__
+        |     raise BaseExceptionGroup(
+        | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+        +-+---------------- 1 ----------------
+          | Traceback (most recent call last):
+          |   File "/Users/vikashkumar/Desktop/Civicly/backend/app/agents/mcp.py", line 25, in brokers
+          |     yield Tools(official,domain,store,traces,profile.graph)
+          |   File "/Users/vikashkumar/Desktop/Civicly/backend/tests/integration/test_agent_reasoning.py", line 50, in run
+          |     assert first_assets=={'D1'} and next_assets=={'D2'}
+          | AssertionError: assert ({'D1'} == {'D1'}
+          |   
+          |   Full diff:
+          |     {
+          |         'D1',
+          |     } and {'D1'} == {'D2'}
+          |   
+          |   Extra items in the left set:
+          |   'D1'
+          |   Extra items in the right set:
+          |   'D2'
+          |   
+          |   Full diff:...
+          |   
+          |   ...Full output truncated (6 lines hidden), use '-vv' to show)
+          +------------------------------------
+=========================== short test summary info ============================
+FAILED backend/tests/integration/test_agent_reasoning.py::test_contradiction_changes_actual_b09_assessment_and_next_inspection
+============================== 1 failed in 8.70s ===============================

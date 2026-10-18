@@ -1,5 +1,10 @@
 # test_log.md — Append-only verification record
 
+> **CURRENT B10-O STATUS — 2026-10-18: PASS, HUMAN REVIEW PENDING; B10 LIVE ACCEPTANCE STILL PARTIAL/OPEN.** Final complete suite: **691 PASS / 0 FAIL / 0 SKIP** in951.17s (432 unit,259 real integration); both specification validators PASS. Zero external Gemini requests,2 intentional blocked probes,0 unexpected attempts. Real graph/MCP/Saver, retained source/all6 checkpoint threads, original evidence and spending restart/recreation checks PASS. Real complex context reductions9.52–9.80%; estimates are not billed savings. One earlier post-recreation ACL setup attempt failed24 tests/1 passed and was interrupted; preflight restored exact authorization, then final full run passed. Details/inventory/patch: docs/evidence/B10O-RESULTS.md. No B11 or ZIP. This summary supersedes every historical status heading; audit history retained.
+
+> **CURRENT B10 STATUS — 2026-10-18: PARTIAL / LIVE ACCEPTANCE BLOCKED.** B09-R accepted at local baseline `2d30550`. Baseline: **617 PASS**; full regression: **655 PASS / 0 FAIL / 0 SKIP** (824.63s); final-source B10 suite: **42 PASS / 0 FAIL / 0 SKIP** (126.05s: 23 unit + 19 real integration). Both specification validators PASS. Actual shared-graph MCP/StateGraph/Saver, two-process resume and container restart/recreation are verified; six retained B10 threads and source/audit fingerprints survived exactly. Live Gemini produced real tool selections, water alternatives and a road inspection request, but 503/429 failures and incomplete live contradiction/topology comparison prevent full acceptance. B10-2's nested action-schema correction is not live-verified. No B11+ implemented. This summary supersedes historical status headings; history retained.
+
+
 ## Current status — B09-R, 2026-10-18 (takes precedence over every historical status)
 
 B09-R PASS — human review pending. Local accepted B09 baseline `688b893`, no push.
@@ -833,3 +838,52 @@ source:507 baseline +37 pure unit +38 real DB/MCP. No schema/old runtime changes
 - `make test-spec`: both validators PASS; strict B04 artifact preservation PASS. Actual existing Compose restart/same container and recreation/new container/retained volumes; fresh MATCH, Browser HTTP200 and Browser file persistence PASS.
 - Post-lifecycle exact commands/output: B09R-COMMANDS.md and B09R-post-*.json. Original B01–B09 fingerprints/70 prior trace observations plus31 accepted B09 trace observations PASS; original v1 history unchanged, corrected compatibility graph/history exact pre/post PASS.
 - Source hash freeze matches tested code; final source/secret audit and B09R-only patch/inventory retained. No live LLM/autonomous agent verification attempted or claimed; B10 remains unstarted.
+
+
+## B10 execution record (preserve failed attempts)
+Baseline: `backend/.venv/bin/python -m pytest backend/tests -v -s --run-persistence` -> **617 PASS / 0 FAIL / 0 SKIP**, 736.44s; `make test-spec` -> both PASS. Retained B01–B09/B09-R checks PASS; original assessment/journal hashes preserved. Local secret audit PASS before `2d30550`.
+
+Dependency/public Saver spike: isolated /tmp virtualenv, real FalkorDB pause and fresh-process resume PASS. Provider smoke: old responseSchema HTTP400; old gemini-2.5-flash HTTP404; actual gemini-3.8-flash responseJsonSchema HTTP200. These are compatibility spikes, not investigation evidence.
+
+Initial shared graph probe failed safely on weakened B09 observation codes; canonical policy codes corrected -> 1 actual integration PASS. Existing unit regression -> 382 PASS. Initial three-category deterministic model/runtime suite -> 3 PASS with real MCP/Saver. Initial safety suite -> 20 PASS / 1 FAIL because timeout fixture omitted required maintenance time bounds; corrected actual timeout/reconnect passes. Initial two-process test used a symlink-resolved system interpreter without MCP; fixed to isolated project interpreter. Initial contradiction test requested an unrelated asset and B09 correctly denied it; corrected within-scope discriminating inspection -> B09 INCONCLUSIVE to CONTRADICTED and changed inspection purpose PASS. Six strengthened reasoning/topology/role tests PASS. Provider mock-HTTP tests -> 6 PASS, explicitly not live evidence.
+
+Live runs are separately recorded: model-selected real drainage MCP traversal and two B09 hypotheses; actual provider 503 pauses; same-thread fresh-process resume and another real MCP call; road inspection request; waste unavailable/error pause; live topology comparison blocked by 429. No complete live contradiction/perturbation or full S01–S12 claim. Exact outputs, failed attempts and public decision/trace IDs are retained.
+
+Final full suite launched: `backend/.venv/bin/python -m pytest backend/tests -v -s --run-persistence` (655 collected). Final counts, lifecycle/retained comparison and both validators are added after completion. See B10-COMMANDS.md, B10-RESULTS.md and raw logs; never infer real-model success from fake model or HTTP mocks.
+
+
+## B10 final verification record (2026-10-18)
+- Full regression: **655 PASS / 0 FAIL / 0 SKIP**, 824.63s, including all accepted 617 cases, actual official/domain MCP and container restart/recreation.
+- Final B10 source: **42 PASS / 0 FAIL / 0 SKIP**, 126.05s: 23 unit (including mocked HTTP/broker errors, not live) and 19 actual FalkorDB/MCP/Saver integration cases (18 explicitly deterministic fake-model cases; one direct shared-graph boundary probe). Four new cases added after the full suite collected; unique cases covered across both runs: 659, not one 659-test invocation.
+- Both specification validators PASS; separate static evidence. Exact commands/raw logs in B10-COMMANDS.md and B10-regression-tests.txt/B10-final-runtime-tests.txt.
+- B10 pre/post-recreation source fingerprint: revision103, 80 nodes/47 relationships, immutable content/audit and writer state exactly matched. Six public SDK checkpoint threads and 12 referenced actual executions retained; B07 storage remains separate. Browser HTTP/volume and B01 retained probe PASS.
+- Accepted B01/B04/B05/B08/B09 source checks PASS; 101 earlier B07/B08/B09 trace observations verified. Original B09-R v1 node/journal hashes and exact two-version history preserved. Native receipt replay changed only writer lease metadata, explicitly distinguished from immutable content/audit. Four rolling proofs restored after their fresh output was saved under B10-regression-*.
+- Registry3, 0001 and 0002 remain byte-identical; source/security audit and exact changed inventory/patch are in docs/evidence/B10-*. No ZIP or push.
+- Live acceptance remains PARTIAL: actual provider 503/429, incomplete full three-issue competing-cause/contradiction/perturbation proof, B10-2 live correction unverified. Deterministic controls do not close those gates.
+- Stop for review. Exact next task remains B10 acceptance/recovery; B11 cited GraphRAG/multi-layer memory is proposed only after separate approval.
+
+Final source/security audit: **PASS**. 504 accepted files, including all44 accepted test/helper files, remain byte-identical to `2d30550`; registry and migrations 0001/0002 protected. Git candidates scanned for actual local credential values/private-key patterns; values never logged. No leaked MCP child processes. See B10-source-audit.json for exact candidate count and source SHA256 inventory. `git diff --check` passes excluding historical patch payload context.
+
+
+## B10-O evidence classification (2026-10-18)
+Focused provider/model43 PASS and context3 PASS; focused actual graph/MCP/Saver12 PASS. Overlapping runs are not summed. Complete regression, exact counts/interception/lifecycle results recorded in B10O-RESULTS.md after completion. Real MCP/catalog/calls, source filtering, classification and public SDK checkpoints are exercised. Model routing is deterministic fake or explicit MockHTTP, never live Gemini proof. All live B10-O tests NOT RUN (not authorized).
+
+
+## B10-O final observed verification — 2026-10-18
+
+- Final **691 PASS/0 FAIL/0 SKIP**,951.17s:432 unit/259 actual integration. All659 previous unique cases retained (including accepted617 B01–B09-R),32 new cases. First full687 PASS,940.94s; overlapping runs are not added. Both specification validators PASS; uv lock --check --offline PASS,74 unchanged packages. Python3.12.1,SQLite3.43.1; no new external dependency.
+- Entire ordinary-suite interlock:0 external Gemini requests,2 intentional HTTP parent/child probes blocked before network,0 ordinary unexpected attempts. Real model/live acceptance **NOT RUN** (not authorized). Mock provider errors and deterministic/reactive model routing are distinct from actual graph/MCP/Saver calls.
+- Real actual-schema/context benchmark:8 persisted B09 assessment versions,4 source read observations and all16 discovered tools per issue.
+
+| Issue | Before JSON bytes | After JSON bytes | Reduction |
+|---|---:|---:|---:|
+| WATERLOGGING | 62913 | 56921 | 9.52% |
+| ROAD_DAMAGE | 63308 | 57121 | 9.77% |
+| WASTE_ACCUMULATION | 63762 | 57512 | 9.80% |
+
+Small actual two-assessment cases changed by+28/+10/-2 bytes; no universal reduction claim. Authored large duplicate-schema/source fixtures reduce74.8%, separately labeled and not treated as production savings. Simulated allocations use versioned pricing/context bytes only, not tokenizer/billed usage. Native paid caching remains disabled.
+
+- Exact source/audit fingerprints, all6 retained B10 SDK threads/12 executions, original B01/B04/B05/B08/B09 sources and immutable B09R v1/v2 history preserved.101 prior trace observations verified (43+27+31). Registry3/migrations0001/0002 unchanged. Actual container restart/recreation and Browser persistence PASS. Simulated financial ledger matches exact before/after state, including unknown reservation; no reset or retained-volume deletion.
+- Preserved genuine failed attempt: after first recreation dynamic shared MCP trace-writer ACL was unavailable.24 authentication failures/1 Browser pass, interrupted72.93s; unexecuted remainder is NOT RUN for that attempt. Existing trusted configure/exact-key provisioning restored authorization without changing domain records. All6 retained threads/source matched before lifecycle; final full691 run then passed. Runtime guide now states configure before pytest. Raw failure/counters retained in B10O-auth-failed-*; no test weakened or removed.
+- Four rolling proofs saved as B10O-regression-* before exact pre-task copies were restored. Previous B10 evidence remains byte-identical. B10O-FILES.md/source-audit.json and incremental B10O-changes.patch identify exact changes against frozen B10O-baseline.json, not a misleading HEAD-only diff.
+- **STOP for human review.** B10-O verified; B10 remains PARTIAL pending separately authorized genuine three-issue/contradiction/topology/B10-3 acceptance. B11 cited GraphRAG/memory is proposed only after the B10 gate and explicit authorization, not implemented. All18 objectives remain binding.

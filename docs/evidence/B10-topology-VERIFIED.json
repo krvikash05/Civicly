@@ -1,0 +1,286 @@
+{
+  "mode": "REACTIVE_FAKE_MODEL_REAL_MCP",
+  "topology": "VERIFIED",
+  "target": "P1",
+  "result": {
+    "data": {
+      "version": 1,
+      "graph": "civicly_b10_test_b76151162ad941d6a15d185f7889bd90",
+      "investigation_id": "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+      "thread_id": "f8c1f508f16c4254b1bf998469b69d00",
+      "problem_cluster_id": "PC-B08-cce2eb941019b700b3f4f518ea9b9ff6",
+      "discovered_tool_names": [
+        "official::get_graph_schema",
+        "official::get_node_schema",
+        "official::get_relationship_schema",
+        "official::query_graph_readonly",
+        "civicly::find_related_incidents",
+        "civicly::get_decision_evidence_path",
+        "civicly::get_maintenance_history",
+        "civicly::get_monitoring_status",
+        "civicly::get_organizational_procedures",
+        "civicly::get_pickup_execution_history",
+        "civicly::get_road_condition_history",
+        "civicly::get_source_document_excerpt",
+        "civicly::get_work_order_status",
+        "civicly::retrieve_case_memory",
+        "civicly::retrieve_external_evidence",
+        "civicly::trace_infrastructure_dependencies"
+      ],
+      "missing_evidence": [],
+      "current_plan_id": null,
+      "incident_ids": [
+        "INC-B08-acf134fea71ed9b7db39b8c1201d4fe4"
+      ],
+      "asset_ids": [
+        "P1",
+        "R1"
+      ],
+      "issue": "ROAD_DAMAGE",
+      "graph_revision": 37,
+      "phase": "Coordinator",
+      "hypotheses": [
+        "HYP-B09-659e6f8ee0d631fa795b3b983f9d34aa"
+      ],
+      "evidence": {
+        "EV": "ea59025ba1a656bb97074ae1921a3d3e4624edb20a9ef62ee3346b1fdce4247b"
+      },
+      "inventory_hash": "60e6cc345311a3446a1aedb713b945a2cfdd16b594fa40d2ae50a196dca57ebd",
+      "selection": {
+        "action": "INSPECT",
+        "summary": "Authored deterministic model test selection",
+        "tool_name": "",
+        "arguments_json": "{\"asset_ids\": [\"P1\"], \"department_id\": \"DEP\", \"inspection_type\": \"UTILITY_PRESSURE\"}",
+        "pause_reason": "NONE"
+      },
+      "decisions": [
+        "DEC-B10-42f2d33665456fdd011315fc5781eadf",
+        "DEC-B10-ee640473f4e5647df95a5fdba265df5a",
+        "DEC-B10-fd5f6d610666f425b15695e1a6456316"
+      ],
+      "executions": [
+        "MCP-B10-42f2d33665456fdd011315fc5781eadf"
+      ],
+      "pending_inspections": [
+        "INS-B09-04f83bc3eefced457e3ec53f9a0fb0a6"
+      ],
+      "pending_approval": null,
+      "errors": [],
+      "observations": [
+        {
+          "status": "PARTIAL",
+          "trace_id": "f8c1f508f16c4254b1bf998469b69d00",
+          "execution_id": "MCP-B10-42f2d33665456fdd011315fc5781eadf",
+          "context": {
+            "trace_id": "f8c1f508f16c4254b1bf998469b69d00",
+            "execution_id": "MCP-B10-42f2d33665456fdd011315fc5781eadf",
+            "parent_execution_id": "DEC-B10-42f2d33665456fdd011315fc5781eadf",
+            "investigation_id": "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+            "municipality_id": "demo-city",
+            "source_graph": "civicly_b10_test_b76151162ad941d6a15d185f7889bd90",
+            "caller_role": "READ_ONLY",
+            "invocation_origin": "APPLICATION"
+          },
+          "server_id": "civicly-domain",
+          "tool_name": "trace_infrastructure_dependencies",
+          "schema_version": 3,
+          "inventory_version": "da1f25b2f8174ec96b4213038b92eb8600c24e8b362697f63f85b5d143790b42",
+          "source_evidence_ids": [
+            "EV"
+          ],
+          "simulation_mode": true,
+          "graph_revision": 24,
+          "truncated": false,
+          "search_limited": true,
+          "error": null,
+          "paths": [
+            {
+              "asset_ids": [
+                "P1",
+                "R1"
+              ],
+              "relationship": "UNDERLIES",
+              "verification_status": "VERIFIED",
+              "source_evidence_ids": [
+                "EV"
+              ]
+            }
+          ],
+          "data": {
+            "nodes": [
+              {
+                "id": "EV",
+                "kind": "Evidence",
+                "labels": [
+                  "Evidence"
+                ],
+                "properties": {
+                  "id": "EV",
+                  "updated_at": "2026-10-17T00:00:00Z",
+                  "municipality_id": "demo-city",
+                  "observed_at": "2026-10-17T00:00:00Z",
+                  "recorded_at": "2026-10-17T00:00:00Z",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "schema_version": 3,
+                  "summary": "Synthetic inspection",
+                  "source_kind": "SYNTHETIC",
+                  "evidence_type": "INSPECTION_REPORT",
+                  "reliability": "VERIFIED",
+                  "source_record_id": "test-record"
+                }
+              },
+              {
+                "id": "P1",
+                "kind": "WaterPipe",
+                "labels": [
+                  "InfrastructureAsset",
+                  "WaterPipe"
+                ],
+                "properties": {
+                  "id": "P1",
+                  "updated_at": "2026-10-17T00:00:00Z",
+                  "municipality_id": "demo-city",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "schema_version": 3,
+                  "operational_status": "ACTIVE",
+                  "name": "Synthetic asset",
+                  "asset_type": "WATER_PIPE"
+                }
+              },
+              {
+                "id": "R1",
+                "kind": "RoadSegment",
+                "labels": [
+                  "InfrastructureAsset",
+                  "RoadSegment"
+                ],
+                "properties": {
+                  "id": "R1",
+                  "updated_at": "2026-10-17T00:00:00Z",
+                  "municipality_id": "demo-city",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "schema_version": 3,
+                  "operational_status": "ACTIVE",
+                  "name": "Synthetic asset",
+                  "asset_type": "ROAD_SEGMENT"
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "B10-PIPE-ROAD",
+                "kind": "UNDERLIES",
+                "source": "P1",
+                "target": "R1",
+                "properties": {
+                  "id": "B10-PIPE-ROAD",
+                  "municipality_id": "demo-city",
+                  "valid_from": "2026-10-17T00:00:00Z",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "source_evidence_id": "EV",
+                  "association_status": "VERIFIED"
+                }
+              }
+            ],
+            "paths": [
+              {
+                "node_ids": [
+                  "P1",
+                  "R1"
+                ],
+                "edge_ids": [
+                  "B10-PIPE-ROAD"
+                ],
+                "directions": [
+                  "OUTGOING"
+                ],
+                "evidence_ids": [
+                  "EV"
+                ],
+                "context": {
+                  "template": "dependencies",
+                  "classification": "Connectivity/evidence context, not causal proof"
+                },
+                "id": "PATH-ee3b838eac2553092834e688f38dd13d"
+              }
+            ],
+            "gaps": [],
+            "reservations": [
+              "Connectivity and count-based criticality are not root-cause or hydraulic proof.",
+              "No result is a bounded negative, not proof of global disconnection.",
+              "Historical node versions are not reconstructed; future-updated records are excluded.",
+              "Open relationship validity bounds remain unknown, not manufactured dates."
+            ],
+            "as_of": "2026-10-18T12:00:00.000000Z"
+          }
+        },
+        {
+          "operation": "propose",
+          "journal_id": "EV-JOURNAL-B09-8f09855af5f24da8d598f5e1272865f9",
+          "entity_id": "HYP-B09-659e6f8ee0d631fa795b3b983f9d34aa",
+          "graph": "civicly_b10_test_b76151162ad941d6a15d185f7889bd90",
+          "graph_revision": 30,
+          "recorded_at": "2026-10-18T12:00:00.000000Z",
+          "created_ids": [
+            "HYP-B09-659e6f8ee0d631fa795b3b983f9d34aa"
+          ],
+          "relationship_ids": [
+            "REL-B09-fc433ae19f47b72dbf172a327b71cc0c",
+            "REL-B09-819da4636c2628a1b8e3381af47d27f2",
+            "REL-B09-12c62348b1b2f347d3650fd20d28a670"
+          ],
+          "updated_ids": [],
+          "assessment": null,
+          "replayed": false,
+          "historical_receipt": true,
+          "simulation_mode": true
+        },
+        {
+          "operation": "request_inspection",
+          "journal_id": "EV-JOURNAL-B09-5a29f614920196eb578e6559b9b286ef",
+          "entity_id": "INS-B09-04f83bc3eefced457e3ec53f9a0fb0a6",
+          "graph": "civicly_b10_test_b76151162ad941d6a15d185f7889bd90",
+          "graph_revision": 36,
+          "recorded_at": "2026-10-18T12:00:00.000000Z",
+          "created_ids": [
+            "INS-B09-04f83bc3eefced457e3ec53f9a0fb0a6"
+          ],
+          "relationship_ids": [
+            "REL-B09-1d8a2ce0cb5653cc7ba87037c80a1bd5"
+          ],
+          "updated_ids": [],
+          "assessment": null,
+          "replayed": false,
+          "historical_receipt": true,
+          "simulation_mode": true
+        }
+      ],
+      "nodes": [
+        "Supervisor",
+        "Investigator",
+        "Supervisor",
+        "RootCauseAnalyst",
+        "Supervisor",
+        "Coordinator"
+      ],
+      "pause_reason": "MISSING_EVIDENCE",
+      "recommendation": null,
+      "budget": {
+        "max_iterations": 16,
+        "max_tools": 8,
+        "max_tokens": 60000,
+        "max_seconds": 240,
+        "max_wakes": 5
+      },
+      "iterations": 3,
+      "tool_calls": 1,
+      "tokens": 0,
+      "wakes": 0,
+      "refresh_required": false,
+      "as_of": "2026-10-18T12:00:00.000000Z"
+    },
+    "__interrupt__": [
+      "Interrupt(value={'investigation_id': 'INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f', 'thread_id': 'f8c1f508f16c4254b1bf998469b69d00', 'pause_reason': 'MISSING_EVIDENCE', 'pending_inspections': ['INS-B09-04f83bc3eefced457e3ec53f9a0fb0a6'], 'graph_revision': 37}, id='23bad7454b9a2828d244191556857bb0', response_schema=None)"
+    ]
+  }
+}

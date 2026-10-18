@@ -53,9 +53,12 @@ def provision(client):
 
 
 @contextmanager
-def server_parameters():
+def server_parameters(*, credentials=None):
     """Fresh dotenv-free cwd and explicit environment; SDK inherits only OS basics."""
-    creds = load_credentials()
+    creds = credentials or load_credentials()
+    if credentials is not None:
+        from app.active import require_source
+        require_source(creds.graph)
     node = shutil.which('node')
     package = RUNTIME / 'node_modules/@falkordb/mcpserver/package.json'
     if not node or json.loads(package.read_text())['version'] != VERSION:

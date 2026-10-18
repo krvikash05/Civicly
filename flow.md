@@ -498,3 +498,95 @@ new graph labels/relationships, dependency changes or runtime graph target chang
 Persistence remains B01 AOF retained volumes; no graph merge, volume removal or
 historical assessment rewrite. See B09R-ACTIVE-GRAPH.md for the uncompleted shared
 application graph gate before a live B10 investigator.
+
+
+## B10 implemented runtime flow (partial acceptance; 2026-10-18)
+
+```text
+app.active [private profile, exact graph context, ACL provisioning]
+  -> B08 ComplaintService -> B03 GraphRepository -> same B10 source graph
+  -> B09 EvidenceService -> immutable hypothesis/assessment/inspection history
+app.agents.__main__ / test drivers
+  -> agents.mcp.brokers
+       -> B06 official Node MCP initialize/list/call -> GRAPH.RO_QUERY exact source
+       -> agents.server -> B07 CivicReadService -> B03/B05 same source
+       -> B07 TraceStore -> existing separate B07 trace graph (0002)
+  -> provider.Gemini + prompts/B10-1.txt -> strict models.Selection
+  -> runtime.InvestigationAgent -> actual LangGraph StateGraph
+       Supervisor -> Investigator -> Supervisor
+       Supervisor -> RootCauseAnalyst -> existing B09 service -> Supervisor
+       Supervisor -> ResolutionPlanner -> Coordinator -> AwaitDependency(interrupt)
+       Supervisor -> Coordinator(request inspection/pause) -> AwaitDependency
+       explicit resume -> source/reference/revision refresh -> Supervisor
+  -> control.Control -> AgentDecision / B10_OPERATION Evidence / Investigation.thread_id
+       B03 parameterization + CAS + fence + immutable decision + durable receipt journal
+  -> checkpoints.saver -> public FalkorDBSaver -> separate SDK-owned checkpoint graph
+  -> checkpoints.ownership -> host thread lock/heartbeat/quarantine
+```
+
+Imports: `active` reuses graph target validators and resolves the repository root locally; B08/B09 import only `is_shared_target`. B06 broker/policy use trusted graph injection. B07 Context/TraceRecord contracts permit compatible B10 source references and actual optional summaries. New agents models/provider/control/checkpoints/runtime compose existing B03/B05/B06/B07/B09 interfaces; no reverse dependency from graph algorithms into agents. The production domain server binds the profile exactly; credentials never enter model state/catalog/checkpoint/traces.
+
+Startup: private profile -> schema readiness -> source/read ACL + separate SDK ACL -> two real MCP sessions and discovery/schema validation -> inventory hash -> strict typed state -> stable investigation/thread binding -> model selection -> policy and trusted-cutoff validation -> actual tool call -> inherited B05 returned-fact temporal validation or typed B09 action -> durable decision/journal/trace -> synchronous checkpoint -> interrupt. Actual provider summaries and execution IDs are preserved. Planning remains a nonbinding proposal; no operations.
+
+Resume: recreate actual graph/Saver in a new process, take exclusive host lease, validate version/source/catalog/thread and graph relationship binding, resume helper with no prior side effects, compare source revision and evidence hashes, require fresh MCP read after change. Committed result journals replay; unknown PREPARED reads pause for reconciliation. Exceptions quarantine the exact thread. SDK internals remain vendor-owned; public checkpoint-history/update APIs are the recovery interface.
+
+Actual persistence witnesses are B10-before-lifecycle.json and the final post-lifecycle comparison, separate from existing B01/B04/B05/B08/B09 retained checks. No old graph/volume deletion. Complete file inventory, commands, runtime proofs and limits are under docs/evidence/B10-* and backend/AGENTS_RUNTIME.md. Controlled shared-graph proof does not establish final canonical-city deployment, B11 memory or a completed product capability.
+
+
+## B10 final verification record (2026-10-18)
+- Full regression: **655 PASS / 0 FAIL / 0 SKIP**, 824.63s, including all accepted 617 cases, actual official/domain MCP and container restart/recreation.
+- Final B10 source: **42 PASS / 0 FAIL / 0 SKIP**, 126.05s: 23 unit (including mocked HTTP/broker errors, not live) and 19 actual FalkorDB/MCP/Saver integration cases (18 explicitly deterministic fake-model cases; one direct shared-graph boundary probe). Four new cases added after the full suite collected; unique cases covered across both runs: 659, not one 659-test invocation.
+- Both specification validators PASS; separate static evidence. Exact commands/raw logs in B10-COMMANDS.md and B10-regression-tests.txt/B10-final-runtime-tests.txt.
+- B10 pre/post-recreation source fingerprint: revision103, 80 nodes/47 relationships, immutable content/audit and writer state exactly matched. Six public SDK checkpoint threads and 12 referenced actual executions retained; B07 storage remains separate. Browser HTTP/volume and B01 retained probe PASS.
+- Accepted B01/B04/B05/B08/B09 source checks PASS; 101 earlier B07/B08/B09 trace observations verified. Original B09-R v1 node/journal hashes and exact two-version history preserved. Native receipt replay changed only writer lease metadata, explicitly distinguished from immutable content/audit. Four rolling proofs restored after their fresh output was saved under B10-regression-*.
+- Registry3, 0001 and 0002 remain byte-identical; source/security audit and exact changed inventory/patch are in docs/evidence/B10-*. No ZIP or push.
+- Live acceptance remains PARTIAL: actual provider 503/429, incomplete full three-issue competing-cause/contradiction/perturbation proof, B10-2 live correction unverified. Deterministic controls do not close those gates.
+- Stop for review. Exact next task remains B10 acceptance/recovery; B11 cited GraphRAG/multi-layer memory is proposed only after separate approval.
+
+
+## B10-O implemented flow (2026-10-18)
+
+- `app/agents/__main__.py` parses per-investigation/thread `--live` and explicit cost cap; `policy.py` denies absent authorization and ordinary-test live attempts. `tests/live/` delegates only to this explicit CLI. Legacy paid batch drivers fail closed; prior evidence is retained.
+- `runtime.py` loads unchanged actual B09 histories and exact discovered MCP catalog, then imports `context.build`. The projection interns repeated node/edge/path/report bodies by full-content hash and exact schemas into `facts`/`tool_schemas`. Latest authoritative assessments and all material historical classifications/contradictions/provenance/paths/limits remain. Current IDs, cutoff/revision, recent results and remaining budgets are explicit. Original histories and evidence remain in FalkorDB.
+- `provider.py` imports `policy`, `spending.Ledger/Pricing`, strict `models.Selection` and prompt B10-3. A live session spans the whole LangGraph wake. Before each HTTP attempt it atomically reserves conservative integer cost in a shared private SQLite transaction, then reconciles actual input/output/thinking/cached token metadata or holds unknown billing. Configured limits, requests and warnings persist independently of database container recreation. SQLite contains accounting only, not municipal knowledge. No extra package dependency.
+- `mcp.Tools` caches validated discovery; exact read-cache keys include source graph/revision, tool/inventory/schema, arguments, time cutoff and permission/invocation context. Hits return the original execution reference and bounded result, never manufacture traces. Revision change, including host audit writes, invalidates. All16 approved safe tools stay available and bounded GRAPH.RO_QUERY/exact-key ACL remain unchanged.
+- `runtime` records sanitized provider failures/usage in durable checkpoint state; normal cap rejection selects PAUSE before HTTP, preserving evidence and Saver state. A resumed explicit higher case limit keeps prior spend. Uncertain process failures retain reservations/session ownership until operator reconciliation. No automatic takeover or cost reset.
+- `backend/test_guards/sitecustomize.py` imports `civicly_no_live.install`; root pytest conftest installs HTTPX/DNS interception and inherits it into Python children, including real MCP servers. Suite-wide counters separately record intentional negative probes. Actual localhost DB/MCP/SDK calls continue; Gemini is blocked. Fake models and HTTP responses remain explicitly labeled. No live quality claim follows from these tests.
+
+```mermaid
+flowchart TD
+  CLI[Explicit exact-case live opt-in] --> L[Durable project live-session gate]
+  L --> G[Actual LangGraph Supervisor]
+  B[B09 histories + source graph + discovered 16 tools] --> C[Deterministic compact context]
+  C --> G
+  G --> R[Atomic per-attempt cost reservation]
+  R -->|within budget| H[Gemini adapter: authorized requests only]
+  R -->|cap reached| P[Pause + actual FalkorDBSaver checkpoint]
+  H --> U[Actual usage reconciliation or uncertain hold]
+  U --> D[Validated durable decision]
+  D --> M[Approved MCP broker + exact revision read cache]
+  M --> F[FalkorDB RO source + durable traces]
+  F --> G
+```
+
+Preserved: `active.py`, checkpoints/public Saver APIs, all graph/repository/analysis/B09 source and migrations, three issue categories, candidate/verified separation and all18 objectives. New exact file inventory/source patch and measured byte/cost evidence are B10O-*; no B11 code or canonical dataset change.
+
+
+## B10-O final observed verification — 2026-10-18
+
+- Final **691 PASS/0 FAIL/0 SKIP**,951.17s:432 unit/259 actual integration. All659 previous unique cases retained (including accepted617 B01–B09-R),32 new cases. First full687 PASS,940.94s; overlapping runs are not added. Both specification validators PASS; uv lock --check --offline PASS,74 unchanged packages. Python3.12.1,SQLite3.43.1; no new external dependency.
+- Entire ordinary-suite interlock:0 external Gemini requests,2 intentional HTTP parent/child probes blocked before network,0 ordinary unexpected attempts. Real model/live acceptance **NOT RUN** (not authorized). Mock provider errors and deterministic/reactive model routing are distinct from actual graph/MCP/Saver calls.
+- Real actual-schema/context benchmark:8 persisted B09 assessment versions,4 source read observations and all16 discovered tools per issue.
+
+| Issue | Before JSON bytes | After JSON bytes | Reduction |
+|---|---:|---:|---:|
+| WATERLOGGING | 62913 | 56921 | 9.52% |
+| ROAD_DAMAGE | 63308 | 57121 | 9.77% |
+| WASTE_ACCUMULATION | 63762 | 57512 | 9.80% |
+
+Small actual two-assessment cases changed by+28/+10/-2 bytes; no universal reduction claim. Authored large duplicate-schema/source fixtures reduce74.8%, separately labeled and not treated as production savings. Simulated allocations use versioned pricing/context bytes only, not tokenizer/billed usage. Native paid caching remains disabled.
+
+- Exact source/audit fingerprints, all6 retained B10 SDK threads/12 executions, original B01/B04/B05/B08/B09 sources and immutable B09R v1/v2 history preserved.101 prior trace observations verified (43+27+31). Registry3/migrations0001/0002 unchanged. Actual container restart/recreation and Browser persistence PASS. Simulated financial ledger matches exact before/after state, including unknown reservation; no reset or retained-volume deletion.
+- Preserved genuine failed attempt: after first recreation dynamic shared MCP trace-writer ACL was unavailable.24 authentication failures/1 Browser pass, interrupted72.93s; unexecuted remainder is NOT RUN for that attempt. Existing trusted configure/exact-key provisioning restored authorization without changing domain records. All6 retained threads/source matched before lifecycle; final full691 run then passed. Runtime guide now states configure before pytest. Raw failure/counters retained in B10O-auth-failed-*; no test weakened or removed.
+- Four rolling proofs saved as B10O-regression-* before exact pre-task copies were restored. Previous B10 evidence remains byte-identical. B10O-FILES.md/source-audit.json and incremental B10O-changes.patch identify exact changes against frozen B10O-baseline.json, not a misleading HEAD-only diff.
+- **STOP for human review.** B10-O verified; B10 remains PARTIAL pending separately authorized genuine three-issue/contradiction/topology/B10-3 acceptance. B11 cited GraphRAG/memory is proposed only after the B10 gate and explicit authorization, not implemented. All18 objectives remain binding.

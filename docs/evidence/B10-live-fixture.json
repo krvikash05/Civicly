@@ -1,0 +1,1322 @@
+{
+  "graph": "civicly_b10_test_256e3263934f4753a07012e9edcd6f25",
+  "checkpoint_graph": "civicly_b10_checkpoints_482af4c64ff84ca6a21a1071a39c22af",
+  "cases": {
+    "WATERLOGGING": {
+      "receipt": {
+        "graph": "civicly_b10_test_256e3263934f4753a07012e9edcd6f25",
+        "municipality_id": "demo-city",
+        "complaint_id": "CMP-B08-2f119b109ac146efc1b41e0bd8fe83bb",
+        "incident_id": "INC-B08-3b169d9dcd081279142900a44b96e6ff",
+        "cluster_id": "PC-B08-dfe595f9e0fdc0a8091e3b342c6a2691",
+        "journal_id": "EV-B08-2f119b109ac146efc1b41e0bd8fe83bb",
+        "pattern_type": "SINGLE_EVENT",
+        "classification": "NEW_OCCURRENCE",
+        "created_incident": true,
+        "related_incident_ids": [],
+        "matched_attributes": [
+          "issue_type=WATERLOGGING",
+          "subtype=UNSPECIFIED",
+          "location_id=L1",
+          "explicit_assets=D1",
+          "occurred_at=2026-10-18T04:00:00.000000Z",
+          "ended_at=unknown",
+          "source_event_reference=absent"
+        ],
+        "explanations": [
+          "Same-event start gap is at most24 hours unless source+event reference matches; declared intervals must overlap.",
+          "Matched by explicit issue/subtype/location/assets and occurrence intervals, never report count or spatial proximity.",
+          "Incident status remains REPORTED; claimed end does not establish verified resolution.",
+          "RECURRENT requires a distinct occurrence after a recorded ENDED interval; completed orders alone do not qualify."
+        ],
+        "uncertainty": [
+          "Reported associations and grouping are context, not verified causes or resolution.",
+          "Search limited to100 incidents/400 context edges/200 report journals,4 infrastructure hops; no global-absence claim.",
+          "Historical node versions are not reconstructed; future-updated records excluded.",
+          "Submitted measurements/claims are source reports, not verified observations or causal findings.",
+          "Issue subtype unspecified; matching is qualified.",
+          "water_depth measurement missing; no quantity manufactured.",
+          "duration measurement missing; no quantity manufactured.",
+          "rainfall measurement missing; no quantity manufactured.",
+          "Blockage/capacity allegations require inspection; verified-only topology excludes candidate drainage links."
+        ],
+        "assessment": {
+          "measurements": [],
+          "claims": [],
+          "gaps": [
+            "Submitted measurements/claims are source reports, not verified observations or causal findings.",
+            "Issue subtype unspecified; matching is qualified.",
+            "water_depth measurement missing; no quantity manufactured.",
+            "duration measurement missing; no quantity manufactured.",
+            "rainfall measurement missing; no quantity manufactured.",
+            "Blockage/capacity allegations require inspection; verified-only topology excludes candidate drainage links."
+          ],
+          "contradictions": [],
+          "history_ids": [],
+          "history_records": [],
+          "source_evidence_ids": []
+        },
+        "graph_paths": [
+          {
+            "node_ids": [
+              "CMP-B08-2f119b109ac146efc1b41e0bd8fe83bb",
+              "INC-B08-3b169d9dcd081279142900a44b96e6ff"
+            ],
+            "edge_ids": [
+              "REL-B08-f244d0bc3b3ddae6c43264ab83a46220"
+            ],
+            "directions": [
+              "OUTGOING"
+            ],
+            "evidence_ids": [
+              "EV-B08-2f119b109ac146efc1b41e0bd8fe83bb"
+            ],
+            "context": {
+              "classification": "REPORTED_INTAKE_CONTEXT",
+              "path_id": "PATH-B08-6dd121d102befda95e5d0e16a39afa32"
+            }
+          },
+          {
+            "node_ids": [
+              "INC-B08-3b169d9dcd081279142900a44b96e6ff",
+              "L1"
+            ],
+            "edge_ids": [
+              "REL-B08-8a9ae7d5b1669a82ab4243e1e52c02f3"
+            ],
+            "directions": [
+              "OUTGOING"
+            ],
+            "evidence_ids": [
+              "EV-B08-2f119b109ac146efc1b41e0bd8fe83bb"
+            ],
+            "context": {
+              "classification": "REPORTED_INTAKE_CONTEXT",
+              "path_id": "PATH-B08-76b83017f5ba1e6f4c9ca4f511855800"
+            }
+          },
+          {
+            "node_ids": [
+              "INC-B08-3b169d9dcd081279142900a44b96e6ff",
+              "D1"
+            ],
+            "edge_ids": [
+              "REL-B08-53b2dee7c5fda2fca57132403b8bb162"
+            ],
+            "directions": [
+              "OUTGOING"
+            ],
+            "evidence_ids": [
+              "EV-B08-2f119b109ac146efc1b41e0bd8fe83bb"
+            ],
+            "context": {
+              "classification": "REPORTED_INTAKE_CONTEXT",
+              "path_id": "PATH-B08-a5d89e4608cdf2b19a051a88ebb83dfb"
+            }
+          },
+          {
+            "node_ids": [
+              "INC-B08-3b169d9dcd081279142900a44b96e6ff",
+              "PC-B08-dfe595f9e0fdc0a8091e3b342c6a2691"
+            ],
+            "edge_ids": [
+              "REL-B08-d80fa182d6a01cb1c3268087f7bd2878"
+            ],
+            "directions": [
+              "OUTGOING"
+            ],
+            "evidence_ids": [
+              "EV-B08-2f119b109ac146efc1b41e0bd8fe83bb"
+            ],
+            "context": {
+              "classification": "REPORTED_INTAKE_CONTEXT",
+              "path_id": "PATH-B08-21ef6f93ffb635803db715db72831aaf"
+            }
+          },
+          {
+            "node_ids": [
+              "CMP-B08-2f119b109ac146efc1b41e0bd8fe83bb",
+              "INC-B08-3b169d9dcd081279142900a44b96e6ff",
+              "PC-B08-dfe595f9e0fdc0a8091e3b342c6a2691"
+            ],
+            "edge_ids": [
+              "REL-B08-f244d0bc3b3ddae6c43264ab83a46220",
+              "REL-B08-d80fa182d6a01cb1c3268087f7bd2878"
+            ],
+            "directions": [
+              "OUTGOING",
+              "OUTGOING"
+            ],
+            "evidence_ids": [
+              "EV-B08-2f119b109ac146efc1b41e0bd8fe83bb"
+            ],
+            "context": {
+              "classification": "COMPLAINT_INCIDENT_PRIMARY_CLUSTER",
+              "path_id": "PATH-B08-823ae5404ee5fd0b4e7814c33e4be95b"
+            }
+          }
+        ],
+        "source_evidence_ids": [
+          "EV-B08-2f119b109ac146efc1b41e0bd8fe83bb"
+        ],
+        "evidence_references": [
+          {
+            "id": "EV-B08-2f119b109ac146efc1b41e0bd8fe83bb",
+            "recorded_at": "2026-10-18T12:00:00.000000Z",
+            "observed_at": null,
+            "source_kind": "SYNTHETIC",
+            "reliability": "UNVERIFIED"
+          }
+        ],
+        "graph_revision": 18,
+        "as_of": "2026-10-18T12:00:00.000000Z",
+        "simulation_mode": true,
+        "search_limited": true,
+        "truncated": false,
+        "replayed": false,
+        "preview": false,
+        "historical_receipt": false
+      },
+      "investigation": "INV-B09-8feb823672b893a6e0483ff2f3529c19",
+      "thread": "3ddc8999aa764f48ac53062aea506912"
+    },
+    "ROAD_DAMAGE": {
+      "receipt": {
+        "graph": "civicly_b10_test_256e3263934f4753a07012e9edcd6f25",
+        "municipality_id": "demo-city",
+        "complaint_id": "CMP-B08-9da23060f38556200513a080f4bd7273",
+        "incident_id": "INC-B08-588e37cc6b5f9ab48e8f80d350e07ed0",
+        "cluster_id": "PC-B08-99b7e4a11ed5ace2a6bec41aeb0f847c",
+        "journal_id": "EV-B08-9da23060f38556200513a080f4bd7273",
+        "pattern_type": "SINGLE_EVENT",
+        "classification": "NEW_OCCURRENCE",
+        "created_incident": true,
+        "related_incident_ids": [],
+        "matched_attributes": [
+          "issue_type=ROAD_DAMAGE",
+          "subtype=UNSPECIFIED",
+          "location_id=L1",
+          "explicit_assets=R1",
+          "occurred_at=2026-10-18T04:00:00.000000Z",
+          "ended_at=unknown",
+          "source_event_reference=absent"
+        ],
+        "explanations": [
+          "Same-event start gap is at most24 hours unless source+event reference matches; declared intervals must overlap.",
+          "Matched by explicit issue/subtype/location/assets and occurrence intervals, never report count or spatial proximity.",
+          "Incident status remains REPORTED; claimed end does not establish verified resolution.",
+          "RECURRENT requires a distinct occurrence after a recorded ENDED interval; completed orders alone do not qualify."
+        ],
+        "uncertainty": [
+          "Reported associations and grouping are context, not verified causes or resolution.",
+          "Search limited to100 incidents/400 context edges/200 report journals,4 infrastructure hops; no global-absence claim.",
+          "Historical node versions are not reconstructed; future-updated records excluded.",
+          "Submitted measurements/claims are source reports, not verified observations or causal findings.",
+          "Issue subtype unspecified; matching is qualified.",
+          "pothole_depth measurement missing; no quantity manufactured.",
+          "damage_area measurement missing; no quantity manufactured.",
+          "No linked inspection for R1 in bounded history.",
+          "No linked repair/work-order history for R1.",
+          "Completed work orders and asset-linked outcomes do not verify resolution of this incident.",
+          "Specific road distress description missing."
+        ],
+        "assessment": {
+          "measurements": [],
+          "claims": [],
+          "gaps": [
+            "Submitted measurements/claims are source reports, not verified observations or causal findings.",
+            "Issue subtype unspecified; matching is qualified.",
+            "pothole_depth measurement missing; no quantity manufactured.",
+            "damage_area measurement missing; no quantity manufactured.",
+            "No linked inspection for R1 in bounded history.",
+            "No linked repair/work-order history for R1.",
+            "Completed work orders and asset-linked outcomes do not verify resolution of this incident.",
+            "Specific road distress description missing."
+          ],
+          "contradictions": [],
+          "history_ids": [],
+          "history_records": [],
+          "source_evidence_ids": []
+        },
+        "graph_paths": [
+          {
+            "node_ids": [
+              "CMP-B08-9da23060f38556200513a080f4bd7273",
+              "INC-B08-588e37cc6b5f9ab48e8f80d350e07ed0"
+            ],
+            "edge_ids": [
+              "REL-B08-9f95f6ea959812c7c0df1965dc6f2ba7"
+            ],
+            "directions": [
+              "OUTGOING"
+            ],
+            "evidence_ids": [
+              "EV-B08-9da23060f38556200513a080f4bd7273"
+            ],
+            "context": {
+              "classification": "REPORTED_INTAKE_CONTEXT",
+              "path_id": "PATH-B08-9b44b3b4311c9596565248f58a6e8f82"
+            }
+          },
+          {
+            "node_ids": [
+              "INC-B08-588e37cc6b5f9ab48e8f80d350e07ed0",
+              "L1"
+            ],
+            "edge_ids": [
+              "REL-B08-3b91c58ae2f05d98866acf8deb2a57bf"
+            ],
+            "directions": [
+              "OUTGOING"
+            ],
+            "evidence_ids": [
+              "EV-B08-9da23060f38556200513a080f4bd7273"
+            ],
+            "context": {
+              "classification": "REPORTED_INTAKE_CONTEXT",
+              "path_id": "PATH-B08-c357303d627dcdc9f7a9675f6173916f"
+            }
+          },
+          {
+            "node_ids": [
+              "INC-B08-588e37cc6b5f9ab48e8f80d350e07ed0",
+              "R1"
+            ],
+            "edge_ids": [
+              "REL-B08-04275b8ec5329709bb6905871ab160f7"
+            ],
+            "directions": [
+              "OUTGOING"
+            ],
+            "evidence_ids": [
+              "EV-B08-9da23060f38556200513a080f4bd7273"
+            ],
+            "context": {
+              "classification": "REPORTED_INTAKE_CONTEXT",
+              "path_id": "PATH-B08-35448ef66003d52440fcab59a464ebe8"
+            }
+          },
+          {
+            "node_ids": [
+              "INC-B08-588e37cc6b5f9ab48e8f80d350e07ed0",
+              "PC-B08-99b7e4a11ed5ace2a6bec41aeb0f847c"
+            ],
+            "edge_ids": [
+              "REL-B08-e7ce5435686cd852ca4e0309469f07b1"
+            ],
+            "directions": [
+              "OUTGOING"
+            ],
+            "evidence_ids": [
+              "EV-B08-9da23060f38556200513a080f4bd7273"
+            ],
+            "context": {
+              "classification": "REPORTED_INTAKE_CONTEXT",
+              "path_id": "PATH-B08-09493dfb71a60d82a9844749a32f51aa"
+            }
+          },
+          {
+            "node_ids": [
+              "CMP-B08-9da23060f38556200513a080f4bd7273",
+              "INC-B08-588e37cc6b5f9ab48e8f80d350e07ed0",
+              "PC-B08-99b7e4a11ed5ace2a6bec41aeb0f847c"
+            ],
+            "edge_ids": [
+              "REL-B08-9f95f6ea959812c7c0df1965dc6f2ba7",
+              "REL-B08-e7ce5435686cd852ca4e0309469f07b1"
+            ],
+            "directions": [
+              "OUTGOING",
+              "OUTGOING"
+            ],
+            "evidence_ids": [
+              "EV-B08-9da23060f38556200513a080f4bd7273"
+            ],
+            "context": {
+              "classification": "COMPLAINT_INCIDENT_PRIMARY_CLUSTER",
+              "path_id": "PATH-B08-655fa0b6ec55c987959a92e50579052f"
+            }
+          }
+        ],
+        "source_evidence_ids": [
+          "EV-B08-9da23060f38556200513a080f4bd7273"
+        ],
+        "evidence_references": [
+          {
+            "id": "EV-B08-9da23060f38556200513a080f4bd7273",
+            "recorded_at": "2026-10-18T12:00:00.000000Z",
+            "observed_at": null,
+            "source_kind": "SYNTHETIC",
+            "reliability": "UNVERIFIED"
+          }
+        ],
+        "graph_revision": 22,
+        "as_of": "2026-10-18T12:00:00.000000Z",
+        "simulation_mode": true,
+        "search_limited": true,
+        "truncated": false,
+        "replayed": false,
+        "preview": false,
+        "historical_receipt": false
+      },
+      "investigation": "INV-B09-f23a3e85e861abd47a9512258d413aed",
+      "thread": "a06429f4f1b34116a5efbfe6214d1aae"
+    },
+    "WASTE_ACCUMULATION": {
+      "receipt": {
+        "graph": "civicly_b10_test_256e3263934f4753a07012e9edcd6f25",
+        "municipality_id": "demo-city",
+        "complaint_id": "CMP-B08-9cb3dc83d3fe8690a11075bdb478730c",
+        "incident_id": "INC-B08-9357b0870858d6c11386013279d54e93",
+        "cluster_id": "PC-B08-f6a0993d328cfb25e63074c47e5ff536",
+        "journal_id": "EV-B08-9cb3dc83d3fe8690a11075bdb478730c",
+        "pattern_type": "SINGLE_EVENT",
+        "classification": "NEW_OCCURRENCE",
+        "created_incident": true,
+        "related_incident_ids": [],
+        "matched_attributes": [
+          "issue_type=WASTE_ACCUMULATION",
+          "subtype=UNSPECIFIED",
+          "location_id=L1",
+          "explicit_assets=W1",
+          "occurred_at=2026-10-18T04:00:00.000000Z",
+          "ended_at=unknown",
+          "source_event_reference=absent"
+        ],
+        "explanations": [
+          "Same-event start gap is at most24 hours unless source+event reference matches; declared intervals must overlap.",
+          "Matched by explicit issue/subtype/location/assets and occurrence intervals, never report count or spatial proximity.",
+          "Incident status remains REPORTED; claimed end does not establish verified resolution.",
+          "RECURRENT requires a distinct occurrence after a recorded ENDED interval; completed orders alone do not qualify."
+        ],
+        "uncertainty": [
+          "Reported associations and grouping are context, not verified causes or resolution.",
+          "Search limited to100 incidents/400 context edges/200 report journals,4 infrastructure hops; no global-absence claim.",
+          "Historical node versions are not reconstructed; future-updated records excluded.",
+          "Submitted measurements/claims are source reports, not verified observations or causal findings.",
+          "Issue subtype unspecified; matching is qualified.",
+          "waste_quantity measurement missing; no quantity manufactured.",
+          "No applicable collection schedule in bounded context.",
+          "Source pickup local-clock/service-alias warnings retained; schedule adherence is not inferred.",
+          "Actual pickup execution records unavailable for this bounded window."
+        ],
+        "assessment": {
+          "measurements": [],
+          "claims": [],
+          "gaps": [
+            "Submitted measurements/claims are source reports, not verified observations or causal findings.",
+            "Issue subtype unspecified; matching is qualified.",
+            "waste_quantity measurement missing; no quantity manufactured.",
+            "No applicable collection schedule in bounded context.",
+            "Source pickup local-clock/service-alias warnings retained; schedule adherence is not inferred.",
+            "Actual pickup execution records unavailable for this bounded window."
+          ],
+          "contradictions": [],
+          "history_ids": [],
+          "history_records": [],
+          "source_evidence_ids": []
+        },
+        "graph_paths": [
+          {
+            "node_ids": [
+              "CMP-B08-9cb3dc83d3fe8690a11075bdb478730c",
+              "INC-B08-9357b0870858d6c11386013279d54e93"
+            ],
+            "edge_ids": [
+              "REL-B08-282c022a357dbd1c716df7e66e90ccd4"
+            ],
+            "directions": [
+              "OUTGOING"
+            ],
+            "evidence_ids": [
+              "EV-B08-9cb3dc83d3fe8690a11075bdb478730c"
+            ],
+            "context": {
+              "classification": "REPORTED_INTAKE_CONTEXT",
+              "path_id": "PATH-B08-ffe7a923adacab22080c09e6c2d7a0c2"
+            }
+          },
+          {
+            "node_ids": [
+              "INC-B08-9357b0870858d6c11386013279d54e93",
+              "L1"
+            ],
+            "edge_ids": [
+              "REL-B08-07784152c126037511b91c14cf93d449"
+            ],
+            "directions": [
+              "OUTGOING"
+            ],
+            "evidence_ids": [
+              "EV-B08-9cb3dc83d3fe8690a11075bdb478730c"
+            ],
+            "context": {
+              "classification": "REPORTED_INTAKE_CONTEXT",
+              "path_id": "PATH-B08-bfe7df61fcad99f14f2992ad54fd45ba"
+            }
+          },
+          {
+            "node_ids": [
+              "INC-B08-9357b0870858d6c11386013279d54e93",
+              "W1"
+            ],
+            "edge_ids": [
+              "REL-B08-747ad024b7b6bf8902ed07f507025ee6"
+            ],
+            "directions": [
+              "OUTGOING"
+            ],
+            "evidence_ids": [
+              "EV-B08-9cb3dc83d3fe8690a11075bdb478730c"
+            ],
+            "context": {
+              "classification": "REPORTED_INTAKE_CONTEXT",
+              "path_id": "PATH-B08-6b6a0a1f62001b137dd5d118753d32cc"
+            }
+          },
+          {
+            "node_ids": [
+              "INC-B08-9357b0870858d6c11386013279d54e93",
+              "PC-B08-f6a0993d328cfb25e63074c47e5ff536"
+            ],
+            "edge_ids": [
+              "REL-B08-e2871dbb1c39877c36938277a812aea8"
+            ],
+            "directions": [
+              "OUTGOING"
+            ],
+            "evidence_ids": [
+              "EV-B08-9cb3dc83d3fe8690a11075bdb478730c"
+            ],
+            "context": {
+              "classification": "REPORTED_INTAKE_CONTEXT",
+              "path_id": "PATH-B08-74557d186b61620e76acb7ac5ec33a4a"
+            }
+          },
+          {
+            "node_ids": [
+              "CMP-B08-9cb3dc83d3fe8690a11075bdb478730c",
+              "INC-B08-9357b0870858d6c11386013279d54e93",
+              "PC-B08-f6a0993d328cfb25e63074c47e5ff536"
+            ],
+            "edge_ids": [
+              "REL-B08-282c022a357dbd1c716df7e66e90ccd4",
+              "REL-B08-e2871dbb1c39877c36938277a812aea8"
+            ],
+            "directions": [
+              "OUTGOING",
+              "OUTGOING"
+            ],
+            "evidence_ids": [
+              "EV-B08-9cb3dc83d3fe8690a11075bdb478730c"
+            ],
+            "context": {
+              "classification": "COMPLAINT_INCIDENT_PRIMARY_CLUSTER",
+              "path_id": "PATH-B08-e0e348ae34e47d34231b415efb3e88d3"
+            }
+          }
+        ],
+        "source_evidence_ids": [
+          "EV-B08-9cb3dc83d3fe8690a11075bdb478730c"
+        ],
+        "evidence_references": [
+          {
+            "id": "EV-B08-9cb3dc83d3fe8690a11075bdb478730c",
+            "recorded_at": "2026-10-18T12:00:00.000000Z",
+            "observed_at": null,
+            "source_kind": "SYNTHETIC",
+            "reliability": "UNVERIFIED"
+          }
+        ],
+        "graph_revision": 26,
+        "as_of": "2026-10-18T12:00:00.000000Z",
+        "simulation_mode": true,
+        "search_limited": true,
+        "truncated": false,
+        "replayed": false,
+        "preview": false,
+        "historical_receipt": false
+      },
+      "investigation": "INV-B09-20ca69e4b6d7267869f3a88db2eb30c4",
+      "thread": "95aa223444734810ac2337a9f6cd5c88"
+    },
+    "ROAD_TOPOLOGY_VERIFIED": {
+      "receipt": {
+        "graph": "civicly_b10_test_256e3263934f4753a07012e9edcd6f25",
+        "municipality_id": "demo-city",
+        "complaint_id": "CMP-B08-c14664ba619cc4152728de7bf4906e2d",
+        "incident_id": "INC-B08-246dfd87d321d3cc58a85822bc869f0d",
+        "cluster_id": "PC-B08-04798d2ecff31bfc8c95e8a1c38c446d",
+        "journal_id": "EV-B08-c14664ba619cc4152728de7bf4906e2d",
+        "pattern_type": "SINGLE_EVENT",
+        "classification": "NEW_OCCURRENCE",
+        "created_incident": true,
+        "related_incident_ids": [],
+        "matched_attributes": [
+          "issue_type=ROAD_DAMAGE",
+          "subtype=UNSPECIFIED",
+          "location_id=L1",
+          "explicit_assets=P1,R1",
+          "occurred_at=2026-10-18T04:00:00.000000Z",
+          "ended_at=unknown",
+          "source_event_reference=fixture-portal:B10-live-VERIFIED"
+        ],
+        "explanations": [
+          "Same-event start gap is at most24 hours unless source+event reference matches; declared intervals must overlap.",
+          "Matched by explicit issue/subtype/location/assets and occurrence intervals, never report count or spatial proximity.",
+          "Incident status remains REPORTED; claimed end does not establish verified resolution.",
+          "RECURRENT requires a distinct occurrence after a recorded ENDED interval; completed orders alone do not qualify."
+        ],
+        "uncertainty": [
+          "Reported associations and grouping are context, not verified causes or resolution.",
+          "Search limited to100 incidents/400 context edges/200 report journals,4 infrastructure hops; no global-absence claim.",
+          "Historical node versions are not reconstructed; future-updated records excluded.",
+          "Submitted measurements/claims are source reports, not verified observations or causal findings.",
+          "Issue subtype unspecified; matching is qualified.",
+          "pothole_depth measurement missing; no quantity manufactured.",
+          "damage_area measurement missing; no quantity manufactured.",
+          "No linked inspection for P1 in bounded history.",
+          "No linked repair/work-order history for P1.",
+          "Completed work orders and asset-linked outcomes do not verify resolution of this incident.",
+          "Specific road distress description missing.",
+          "No linked repair/work-order history for R1."
+        ],
+        "assessment": {
+          "measurements": [],
+          "claims": [],
+          "gaps": [
+            "Submitted measurements/claims are source reports, not verified observations or causal findings.",
+            "Issue subtype unspecified; matching is qualified.",
+            "pothole_depth measurement missing; no quantity manufactured.",
+            "damage_area measurement missing; no quantity manufactured.",
+            "No linked inspection for P1 in bounded history.",
+            "No linked repair/work-order history for P1.",
+            "Completed work orders and asset-linked outcomes do not verify resolution of this incident.",
+            "Specific road distress description missing.",
+            "No linked repair/work-order history for R1."
+          ],
+          "contradictions": [],
+          "history_ids": [
+            "INS-B09-c6adb071f4b84b732c3bc1573991f0ca"
+          ],
+          "history_records": [
+            {
+              "id": "INS-B09-c6adb071f4b84b732c3bc1573991f0ca",
+              "kind": "Inspection",
+              "occurred_at": "2026-10-18T12:00:00.000000Z",
+              "status": "PROPOSED",
+              "result": null
+            }
+          ],
+          "source_evidence_ids": [
+            "EV-JOURNAL-B09-c651edaf28ea63d1b2dc17bc3ad0ee07"
+          ]
+        },
+        "graph_paths": [
+          {
+            "node_ids": [
+              "P1",
+              "R1"
+            ],
+            "edge_ids": [
+              "B10-LIVE-UNDERLIES"
+            ],
+            "directions": [
+              "OUTGOING"
+            ],
+            "evidence_ids": [
+              "EV"
+            ],
+            "context": {
+              "template": "dependencies",
+              "classification": "Connectivity/evidence context, not causal proof",
+              "path_id": "PATH-60b8e6c4183ba04d6e01c9eda82eaee3"
+            }
+          },
+          {
+            "node_ids": [
+              "R1",
+              "INS-B09-c6adb071f4b84b732c3bc1573991f0ca"
+            ],
+            "edge_ids": [
+              "REL-B09-9ca7e1b36b5ba6832673b8047c03b29e"
+            ],
+            "directions": [
+              "INCOMING"
+            ],
+            "evidence_ids": [
+              "EV-JOURNAL-B09-c651edaf28ea63d1b2dc17bc3ad0ee07"
+            ],
+            "context": {
+              "path_id": "PATH-B08-6cb5dfa6f74ab8ea687186785be79cb9"
+            }
+          },
+          {
+            "node_ids": [
+              "CMP-B08-c14664ba619cc4152728de7bf4906e2d",
+              "INC-B08-246dfd87d321d3cc58a85822bc869f0d"
+            ],
+            "edge_ids": [
+              "REL-B08-2b76f6e76b95468e931f36386a35e9f6"
+            ],
+            "directions": [
+              "OUTGOING"
+            ],
+            "evidence_ids": [
+              "EV-B08-c14664ba619cc4152728de7bf4906e2d"
+            ],
+            "context": {
+              "classification": "REPORTED_INTAKE_CONTEXT",
+              "path_id": "PATH-B08-3b82af617bc06dce8ef6e5ecae61af2f"
+            }
+          },
+          {
+            "node_ids": [
+              "INC-B08-246dfd87d321d3cc58a85822bc869f0d",
+              "L1"
+            ],
+            "edge_ids": [
+              "REL-B08-fb0702569e0ac86da376ee697feebe8e"
+            ],
+            "directions": [
+              "OUTGOING"
+            ],
+            "evidence_ids": [
+              "EV-B08-c14664ba619cc4152728de7bf4906e2d"
+            ],
+            "context": {
+              "classification": "REPORTED_INTAKE_CONTEXT",
+              "path_id": "PATH-B08-42e37274161c04ce7ec0bb6e18fdaa16"
+            }
+          },
+          {
+            "node_ids": [
+              "INC-B08-246dfd87d321d3cc58a85822bc869f0d",
+              "P1"
+            ],
+            "edge_ids": [
+              "REL-B08-06ef69c3a413764e1dd2ac34ee579a34"
+            ],
+            "directions": [
+              "OUTGOING"
+            ],
+            "evidence_ids": [
+              "EV-B08-c14664ba619cc4152728de7bf4906e2d"
+            ],
+            "context": {
+              "classification": "REPORTED_INTAKE_CONTEXT",
+              "path_id": "PATH-B08-ace0c3b6a73fc7a27d2ca23f4b912a8d"
+            }
+          },
+          {
+            "node_ids": [
+              "INC-B08-246dfd87d321d3cc58a85822bc869f0d",
+              "R1"
+            ],
+            "edge_ids": [
+              "REL-B08-48ccffecc6aee67868b54442ad8b8ba8"
+            ],
+            "directions": [
+              "OUTGOING"
+            ],
+            "evidence_ids": [
+              "EV-B08-c14664ba619cc4152728de7bf4906e2d"
+            ],
+            "context": {
+              "classification": "REPORTED_INTAKE_CONTEXT",
+              "path_id": "PATH-B08-33e671fa4e28cc4e560a5c496c08b15f"
+            }
+          },
+          {
+            "node_ids": [
+              "INC-B08-246dfd87d321d3cc58a85822bc869f0d",
+              "PC-B08-04798d2ecff31bfc8c95e8a1c38c446d"
+            ],
+            "edge_ids": [
+              "REL-B08-2871ddef112d8cce6d009704eb0223da"
+            ],
+            "directions": [
+              "OUTGOING"
+            ],
+            "evidence_ids": [
+              "EV-B08-c14664ba619cc4152728de7bf4906e2d"
+            ],
+            "context": {
+              "classification": "REPORTED_INTAKE_CONTEXT",
+              "path_id": "PATH-B08-f089bf27cc0746f90b8378441bc9f198"
+            }
+          },
+          {
+            "node_ids": [
+              "CMP-B08-c14664ba619cc4152728de7bf4906e2d",
+              "INC-B08-246dfd87d321d3cc58a85822bc869f0d",
+              "PC-B08-04798d2ecff31bfc8c95e8a1c38c446d"
+            ],
+            "edge_ids": [
+              "REL-B08-2b76f6e76b95468e931f36386a35e9f6",
+              "REL-B08-2871ddef112d8cce6d009704eb0223da"
+            ],
+            "directions": [
+              "OUTGOING",
+              "OUTGOING"
+            ],
+            "evidence_ids": [
+              "EV-B08-c14664ba619cc4152728de7bf4906e2d"
+            ],
+            "context": {
+              "classification": "COMPLAINT_INCIDENT_PRIMARY_CLUSTER",
+              "path_id": "PATH-B08-eb770d975fe4ce04274e2c5413393ae1"
+            }
+          }
+        ],
+        "source_evidence_ids": [
+          "EV",
+          "EV-B08-c14664ba619cc4152728de7bf4906e2d",
+          "EV-JOURNAL-B09-c651edaf28ea63d1b2dc17bc3ad0ee07"
+        ],
+        "evidence_references": [
+          {
+            "id": "EV",
+            "recorded_at": "2026-10-17T00:00:00Z",
+            "observed_at": "2026-10-17T00:00:00Z",
+            "source_kind": "SYNTHETIC",
+            "reliability": "VERIFIED"
+          },
+          {
+            "id": "EV-B08-c14664ba619cc4152728de7bf4906e2d",
+            "recorded_at": "2026-10-18T12:00:00.000000Z",
+            "observed_at": null,
+            "source_kind": "SYNTHETIC",
+            "reliability": "UNVERIFIED"
+          },
+          {
+            "id": "EV-JOURNAL-B09-c651edaf28ea63d1b2dc17bc3ad0ee07",
+            "recorded_at": "2026-10-18T12:00:00.000000Z",
+            "observed_at": null,
+            "source_kind": "USER",
+            "reliability": "UNVERIFIED"
+          }
+        ],
+        "graph_revision": 85,
+        "as_of": "2026-10-18T12:00:00.000000Z",
+        "simulation_mode": true,
+        "search_limited": true,
+        "truncated": false,
+        "replayed": false,
+        "preview": false,
+        "historical_receipt": false
+      },
+      "investigation": "INV-B09-3e1ae0253e81c0e732b1a98a79ebbae8",
+      "thread": "273a49d92d36418b8f92cba51e516bf9"
+    },
+    "ROAD_TOPOLOGY_DISCONNECTED": {
+      "receipt": {
+        "graph": "civicly_b10_test_256e3263934f4753a07012e9edcd6f25",
+        "municipality_id": "demo-city",
+        "complaint_id": "CMP-B08-bd3ab18d324e89eadebcc68a1a334237",
+        "incident_id": "INC-B08-ca9e8f93302318be09b9ea2867980581",
+        "cluster_id": "PC-B08-04798d2ecff31bfc8c95e8a1c38c446d",
+        "journal_id": "EV-B08-bd3ab18d324e89eadebcc68a1a334237",
+        "pattern_type": "PERSISTENT",
+        "classification": "CONTINUING_UNRESOLVED",
+        "created_incident": true,
+        "related_incident_ids": [
+          "INC-B08-246dfd87d321d3cc58a85822bc869f0d"
+        ],
+        "matched_attributes": [
+          "issue_type=ROAD_DAMAGE",
+          "subtype=UNSPECIFIED",
+          "location_id=L1",
+          "explicit_assets=P1,R1",
+          "occurred_at=2026-10-18T04:00:00.000000Z",
+          "ended_at=unknown",
+          "source_event_reference=fixture-portal:B10-live-DISCONNECTED"
+        ],
+        "explanations": [
+          "Same-event start gap is at most24 hours unless source+event reference matches; declared intervals must overlap.",
+          "Matched by explicit issue/subtype/location/assets and occurrence intervals, never report count or spatial proximity.",
+          "Incident status remains REPORTED; claimed end does not establish verified resolution.",
+          "RECURRENT requires a distinct occurrence after a recorded ENDED interval; completed orders alone do not qualify.",
+          "Related INC-B08-246dfd87d321d3cc58a85822bc869f0d: issue=ROAD_DAMAGE, status=REPORTED, started_at=2026-10-18T04:00:00.000000Z, ended_at=unknown, explicit_assets=P1,R1, primary_clusters=PC-B08-04798d2ecff31bfc8c95e8a1c38c446d."
+        ],
+        "uncertainty": [
+          "Reported associations and grouping are context, not verified causes or resolution.",
+          "Search limited to100 incidents/400 context edges/200 report journals,4 infrastructure hops; no global-absence claim.",
+          "Historical node versions are not reconstructed; future-updated records excluded.",
+          "Persistence is provisional reported context; missing termination/outcome verification cannot rule out unrecorded resolution.",
+          "Submitted measurements/claims are source reports, not verified observations or causal findings.",
+          "Issue subtype unspecified; matching is qualified.",
+          "pothole_depth measurement missing; no quantity manufactured.",
+          "damage_area measurement missing; no quantity manufactured.",
+          "No linked inspection for P1 in bounded history.",
+          "No linked repair/work-order history for P1.",
+          "Completed work orders and asset-linked outcomes do not verify resolution of this incident.",
+          "Specific road distress description missing.",
+          "No linked repair/work-order history for R1."
+        ],
+        "assessment": {
+          "measurements": [],
+          "claims": [],
+          "gaps": [
+            "Submitted measurements/claims are source reports, not verified observations or causal findings.",
+            "Issue subtype unspecified; matching is qualified.",
+            "pothole_depth measurement missing; no quantity manufactured.",
+            "damage_area measurement missing; no quantity manufactured.",
+            "No linked inspection for P1 in bounded history.",
+            "No linked repair/work-order history for P1.",
+            "Completed work orders and asset-linked outcomes do not verify resolution of this incident.",
+            "Specific road distress description missing.",
+            "No linked repair/work-order history for R1."
+          ],
+          "contradictions": [],
+          "history_ids": [
+            "INS-B09-c6adb071f4b84b732c3bc1573991f0ca"
+          ],
+          "history_records": [
+            {
+              "id": "INS-B09-c6adb071f4b84b732c3bc1573991f0ca",
+              "kind": "Inspection",
+              "occurred_at": "2026-10-18T12:00:00.000000Z",
+              "status": "PROPOSED",
+              "result": null
+            }
+          ],
+          "source_evidence_ids": [
+            "EV-JOURNAL-B09-c651edaf28ea63d1b2dc17bc3ad0ee07"
+          ]
+        },
+        "graph_paths": [
+          {
+            "node_ids": [
+              "R1",
+              "INS-B09-c6adb071f4b84b732c3bc1573991f0ca"
+            ],
+            "edge_ids": [
+              "REL-B09-9ca7e1b36b5ba6832673b8047c03b29e"
+            ],
+            "directions": [
+              "INCOMING"
+            ],
+            "evidence_ids": [
+              "EV-JOURNAL-B09-c651edaf28ea63d1b2dc17bc3ad0ee07"
+            ],
+            "context": {
+              "path_id": "PATH-B08-6cb5dfa6f74ab8ea687186785be79cb9"
+            }
+          },
+          {
+            "node_ids": [
+              "INC-B08-246dfd87d321d3cc58a85822bc869f0d",
+              "L1"
+            ],
+            "edge_ids": [
+              "REL-B08-fb0702569e0ac86da376ee697feebe8e"
+            ],
+            "directions": [
+              "OUTGOING"
+            ],
+            "evidence_ids": [
+              "EV-B08-c14664ba619cc4152728de7bf4906e2d"
+            ],
+            "context": {
+              "classification": "RECORDED_PRIOR_CONTEXT",
+              "path_id": "PATH-B08-42e37274161c04ce7ec0bb6e18fdaa16"
+            }
+          },
+          {
+            "node_ids": [
+              "INC-B08-246dfd87d321d3cc58a85822bc869f0d",
+              "R1"
+            ],
+            "edge_ids": [
+              "REL-B08-48ccffecc6aee67868b54442ad8b8ba8"
+            ],
+            "directions": [
+              "OUTGOING"
+            ],
+            "evidence_ids": [
+              "EV-B08-c14664ba619cc4152728de7bf4906e2d"
+            ],
+            "context": {
+              "classification": "RECORDED_PRIOR_CONTEXT",
+              "path_id": "PATH-B08-33e671fa4e28cc4e560a5c496c08b15f"
+            }
+          },
+          {
+            "node_ids": [
+              "INC-B08-246dfd87d321d3cc58a85822bc869f0d",
+              "P1"
+            ],
+            "edge_ids": [
+              "REL-B08-06ef69c3a413764e1dd2ac34ee579a34"
+            ],
+            "directions": [
+              "OUTGOING"
+            ],
+            "evidence_ids": [
+              "EV-B08-c14664ba619cc4152728de7bf4906e2d"
+            ],
+            "context": {
+              "classification": "RECORDED_PRIOR_CONTEXT",
+              "path_id": "PATH-B08-ace0c3b6a73fc7a27d2ca23f4b912a8d"
+            }
+          },
+          {
+            "node_ids": [
+              "INC-B08-246dfd87d321d3cc58a85822bc869f0d",
+              "PC-B08-04798d2ecff31bfc8c95e8a1c38c446d"
+            ],
+            "edge_ids": [
+              "REL-B08-2871ddef112d8cce6d009704eb0223da"
+            ],
+            "directions": [
+              "OUTGOING"
+            ],
+            "evidence_ids": [
+              "EV-B08-c14664ba619cc4152728de7bf4906e2d"
+            ],
+            "context": {
+              "classification": "RECORDED_PRIOR_CONTEXT",
+              "path_id": "PATH-B08-f089bf27cc0746f90b8378441bc9f198"
+            }
+          },
+          {
+            "node_ids": [
+              "CMP-B08-bd3ab18d324e89eadebcc68a1a334237",
+              "INC-B08-ca9e8f93302318be09b9ea2867980581"
+            ],
+            "edge_ids": [
+              "REL-B08-e84f2d59bb75ad643e737147e3f6e4b2"
+            ],
+            "directions": [
+              "OUTGOING"
+            ],
+            "evidence_ids": [
+              "EV-B08-bd3ab18d324e89eadebcc68a1a334237"
+            ],
+            "context": {
+              "classification": "REPORTED_INTAKE_CONTEXT",
+              "path_id": "PATH-B08-4ae2f157ed7e135553f72554f65b0160"
+            }
+          },
+          {
+            "node_ids": [
+              "INC-B08-ca9e8f93302318be09b9ea2867980581",
+              "L1"
+            ],
+            "edge_ids": [
+              "REL-B08-c4616a36114d57e31c2647d649d69312"
+            ],
+            "directions": [
+              "OUTGOING"
+            ],
+            "evidence_ids": [
+              "EV-B08-bd3ab18d324e89eadebcc68a1a334237"
+            ],
+            "context": {
+              "classification": "REPORTED_INTAKE_CONTEXT",
+              "path_id": "PATH-B08-b3df36478d0c5dfcb9d9333a1d71aa06"
+            }
+          },
+          {
+            "node_ids": [
+              "INC-B08-ca9e8f93302318be09b9ea2867980581",
+              "P1"
+            ],
+            "edge_ids": [
+              "REL-B08-cb42ef4fc7b2af4ac5ef3154b6306f9d"
+            ],
+            "directions": [
+              "OUTGOING"
+            ],
+            "evidence_ids": [
+              "EV-B08-bd3ab18d324e89eadebcc68a1a334237"
+            ],
+            "context": {
+              "classification": "REPORTED_INTAKE_CONTEXT",
+              "path_id": "PATH-B08-697e827e681bdfa4ba929e6f980a6dc4"
+            }
+          },
+          {
+            "node_ids": [
+              "INC-B08-ca9e8f93302318be09b9ea2867980581",
+              "R1"
+            ],
+            "edge_ids": [
+              "REL-B08-98cc0359f978219575252639283f69db"
+            ],
+            "directions": [
+              "OUTGOING"
+            ],
+            "evidence_ids": [
+              "EV-B08-bd3ab18d324e89eadebcc68a1a334237"
+            ],
+            "context": {
+              "classification": "REPORTED_INTAKE_CONTEXT",
+              "path_id": "PATH-B08-1f218fc2fc69d3798c02e0924115765f"
+            }
+          },
+          {
+            "node_ids": [
+              "INC-B08-ca9e8f93302318be09b9ea2867980581",
+              "PC-B08-04798d2ecff31bfc8c95e8a1c38c446d"
+            ],
+            "edge_ids": [
+              "REL-B08-822903b375115db037a10f10901a1832"
+            ],
+            "directions": [
+              "OUTGOING"
+            ],
+            "evidence_ids": [
+              "EV-B08-bd3ab18d324e89eadebcc68a1a334237"
+            ],
+            "context": {
+              "classification": "REPORTED_INTAKE_CONTEXT",
+              "path_id": "PATH-B08-38f4fe5fc528fa01d65926747faa9ac2"
+            }
+          },
+          {
+            "node_ids": [
+              "CMP-B08-bd3ab18d324e89eadebcc68a1a334237",
+              "INC-B08-ca9e8f93302318be09b9ea2867980581",
+              "PC-B08-04798d2ecff31bfc8c95e8a1c38c446d"
+            ],
+            "edge_ids": [
+              "REL-B08-e84f2d59bb75ad643e737147e3f6e4b2",
+              "REL-B08-822903b375115db037a10f10901a1832"
+            ],
+            "directions": [
+              "OUTGOING",
+              "OUTGOING"
+            ],
+            "evidence_ids": [
+              "EV-B08-bd3ab18d324e89eadebcc68a1a334237"
+            ],
+            "context": {
+              "classification": "COMPLAINT_INCIDENT_PRIMARY_CLUSTER",
+              "path_id": "PATH-B08-3afd0b62d57a09b09f518ab19b2027f2"
+            }
+          }
+        ],
+        "source_evidence_ids": [
+          "EV-B08-bd3ab18d324e89eadebcc68a1a334237",
+          "EV-B08-c14664ba619cc4152728de7bf4906e2d",
+          "EV-JOURNAL-B09-c651edaf28ea63d1b2dc17bc3ad0ee07"
+        ],
+        "evidence_references": [
+          {
+            "id": "EV-B08-bd3ab18d324e89eadebcc68a1a334237",
+            "recorded_at": "2026-10-18T12:00:00.000000Z",
+            "observed_at": null,
+            "source_kind": "SYNTHETIC",
+            "reliability": "UNVERIFIED"
+          },
+          {
+            "id": "EV-B08-c14664ba619cc4152728de7bf4906e2d",
+            "recorded_at": "2026-10-18T12:00:00.000000Z",
+            "observed_at": null,
+            "source_kind": "SYNTHETIC",
+            "reliability": "UNVERIFIED"
+          },
+          {
+            "id": "EV-JOURNAL-B09-c651edaf28ea63d1b2dc17bc3ad0ee07",
+            "recorded_at": "2026-10-18T12:00:00.000000Z",
+            "observed_at": null,
+            "source_kind": "USER",
+            "reliability": "UNVERIFIED"
+          }
+        ],
+        "graph_revision": 100,
+        "as_of": "2026-10-18T12:00:00.000000Z",
+        "simulation_mode": true,
+        "search_limited": true,
+        "truncated": false,
+        "replayed": false,
+        "preview": false,
+        "historical_receipt": false
+      },
+      "investigation": "INV-B09-cfda83e4c56731a2bfb29da98b96dc99",
+      "thread": "1ba390d9c5334a9fa73f9b147e996e6e"
+    }
+  },
+  "previous_attempts": [
+    {
+      "receipt": {
+        "graph": "civicly_b10_test_256e3263934f4753a07012e9edcd6f25",
+        "municipality_id": "demo-city",
+        "complaint_id": "CMP-B08-2f119b109ac146efc1b41e0bd8fe83bb",
+        "incident_id": "INC-B08-3b169d9dcd081279142900a44b96e6ff",
+        "cluster_id": "PC-B08-dfe595f9e0fdc0a8091e3b342c6a2691",
+        "journal_id": "EV-B08-2f119b109ac146efc1b41e0bd8fe83bb",
+        "pattern_type": "SINGLE_EVENT",
+        "classification": "NEW_OCCURRENCE",
+        "created_incident": true,
+        "related_incident_ids": [],
+        "matched_attributes": [
+          "issue_type=WATERLOGGING",
+          "subtype=UNSPECIFIED",
+          "location_id=L1",
+          "explicit_assets=D1",
+          "occurred_at=2026-10-18T04:00:00.000000Z",
+          "ended_at=unknown",
+          "source_event_reference=absent"
+        ],
+        "explanations": [
+          "Same-event start gap is at most24 hours unless source+event reference matches; declared intervals must overlap.",
+          "Matched by explicit issue/subtype/location/assets and occurrence intervals, never report count or spatial proximity.",
+          "Incident status remains REPORTED; claimed end does not establish verified resolution.",
+          "RECURRENT requires a distinct occurrence after a recorded ENDED interval; completed orders alone do not qualify."
+        ],
+        "uncertainty": [
+          "Reported associations and grouping are context, not verified causes or resolution.",
+          "Search limited to100 incidents/400 context edges/200 report journals,4 infrastructure hops; no global-absence claim.",
+          "Historical node versions are not reconstructed; future-updated records excluded.",
+          "Submitted measurements/claims are source reports, not verified observations or causal findings.",
+          "Issue subtype unspecified; matching is qualified.",
+          "water_depth measurement missing; no quantity manufactured.",
+          "duration measurement missing; no quantity manufactured.",
+          "rainfall measurement missing; no quantity manufactured.",
+          "Blockage/capacity allegations require inspection; verified-only topology excludes candidate drainage links."
+        ],
+        "assessment": {
+          "measurements": [],
+          "claims": [],
+          "gaps": [
+            "Submitted measurements/claims are source reports, not verified observations or causal findings.",
+            "Issue subtype unspecified; matching is qualified.",
+            "water_depth measurement missing; no quantity manufactured.",
+            "duration measurement missing; no quantity manufactured.",
+            "rainfall measurement missing; no quantity manufactured.",
+            "Blockage/capacity allegations require inspection; verified-only topology excludes candidate drainage links."
+          ],
+          "contradictions": [],
+          "history_ids": [],
+          "history_records": [],
+          "source_evidence_ids": []
+        },
+        "graph_paths": [
+          {
+            "node_ids": [
+              "CMP-B08-2f119b109ac146efc1b41e0bd8fe83bb",
+              "INC-B08-3b169d9dcd081279142900a44b96e6ff"
+            ],
+            "edge_ids": [
+              "REL-B08-f244d0bc3b3ddae6c43264ab83a46220"
+            ],
+            "directions": [
+              "OUTGOING"
+            ],
+            "evidence_ids": [
+              "EV-B08-2f119b109ac146efc1b41e0bd8fe83bb"
+            ],
+            "context": {
+              "classification": "REPORTED_INTAKE_CONTEXT",
+              "path_id": "PATH-B08-6dd121d102befda95e5d0e16a39afa32"
+            }
+          },
+          {
+            "node_ids": [
+              "INC-B08-3b169d9dcd081279142900a44b96e6ff",
+              "L1"
+            ],
+            "edge_ids": [
+              "REL-B08-8a9ae7d5b1669a82ab4243e1e52c02f3"
+            ],
+            "directions": [
+              "OUTGOING"
+            ],
+            "evidence_ids": [
+              "EV-B08-2f119b109ac146efc1b41e0bd8fe83bb"
+            ],
+            "context": {
+              "classification": "REPORTED_INTAKE_CONTEXT",
+              "path_id": "PATH-B08-76b83017f5ba1e6f4c9ca4f511855800"
+            }
+          },
+          {
+            "node_ids": [
+              "INC-B08-3b169d9dcd081279142900a44b96e6ff",
+              "D1"
+            ],
+            "edge_ids": [
+              "REL-B08-53b2dee7c5fda2fca57132403b8bb162"
+            ],
+            "directions": [
+              "OUTGOING"
+            ],
+            "evidence_ids": [
+              "EV-B08-2f119b109ac146efc1b41e0bd8fe83bb"
+            ],
+            "context": {
+              "classification": "REPORTED_INTAKE_CONTEXT",
+              "path_id": "PATH-B08-a5d89e4608cdf2b19a051a88ebb83dfb"
+            }
+          },
+          {
+            "node_ids": [
+              "INC-B08-3b169d9dcd081279142900a44b96e6ff",
+              "PC-B08-dfe595f9e0fdc0a8091e3b342c6a2691"
+            ],
+            "edge_ids": [
+              "REL-B08-d80fa182d6a01cb1c3268087f7bd2878"
+            ],
+            "directions": [
+              "OUTGOING"
+            ],
+            "evidence_ids": [
+              "EV-B08-2f119b109ac146efc1b41e0bd8fe83bb"
+            ],
+            "context": {
+              "classification": "REPORTED_INTAKE_CONTEXT",
+              "path_id": "PATH-B08-21ef6f93ffb635803db715db72831aaf"
+            }
+          },
+          {
+            "node_ids": [
+              "CMP-B08-2f119b109ac146efc1b41e0bd8fe83bb",
+              "INC-B08-3b169d9dcd081279142900a44b96e6ff",
+              "PC-B08-dfe595f9e0fdc0a8091e3b342c6a2691"
+            ],
+            "edge_ids": [
+              "REL-B08-f244d0bc3b3ddae6c43264ab83a46220",
+              "REL-B08-d80fa182d6a01cb1c3268087f7bd2878"
+            ],
+            "directions": [
+              "OUTGOING",
+              "OUTGOING"
+            ],
+            "evidence_ids": [
+              "EV-B08-2f119b109ac146efc1b41e0bd8fe83bb"
+            ],
+            "context": {
+              "classification": "COMPLAINT_INCIDENT_PRIMARY_CLUSTER",
+              "path_id": "PATH-B08-823ae5404ee5fd0b4e7814c33e4be95b"
+            }
+          }
+        ],
+        "source_evidence_ids": [
+          "EV-B08-2f119b109ac146efc1b41e0bd8fe83bb"
+        ],
+        "evidence_references": [
+          {
+            "id": "EV-B08-2f119b109ac146efc1b41e0bd8fe83bb",
+            "recorded_at": "2026-10-18T12:00:00.000000Z",
+            "observed_at": null,
+            "source_kind": "SYNTHETIC",
+            "reliability": "UNVERIFIED"
+          }
+        ],
+        "graph_revision": 18,
+        "as_of": "2026-10-18T12:00:00.000000Z",
+        "simulation_mode": true,
+        "search_limited": true,
+        "truncated": false,
+        "replayed": false,
+        "preview": false,
+        "historical_receipt": false
+      },
+      "investigation": "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+      "thread": "557b92273995482a8b68564ae751e5a0"
+    }
+  ]
+}

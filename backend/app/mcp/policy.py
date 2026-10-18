@@ -1,6 +1,6 @@
 """Preapproved bounded raw-fact templates; not B05 decision-grade analysis."""
 from typing import Literal
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator, ValidationInfo
 from app.graph.schema import Registry, timestamp
 from app.graph.queries import GraphQueries
 from .runtime import CITY_GRAPH
@@ -27,8 +27,8 @@ class Request(BaseModel):
     sample_size: int = Field(default=20, ge=1, le=100)
 
     @model_validator(mode='after')
-    def exact_arguments(self):
-        if self.graph != CITY_GRAPH:
+    def exact_arguments(self, info: ValidationInfo):
+        if self.graph != (info.context or {}).get('authorized_graph', CITY_GRAPH):
             raise ValueError('Graph is not authorized')
         registry = Registry()
         if self.tool == 'query_graph_readonly':

@@ -1,0 +1,73 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.1, pytest-9.1.1, pluggy-1.7.0 -- /Users/vikashkumar/Desktop/Civicly/backend/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/vikashkumar/Desktop/Civicly/backend
+configfile: pyproject.toml
+plugins: langsmith-0.14.11, anyio-4.15.1
+collecting ... collected 1 item
+
+backend/tests/integration/test_agent_active.py::test_real_shared_graph_boundary FAILED
+
+=================================== FAILURES ===================================
+_______________________ test_real_shared_graph_boundary ________________________
+
+db = <falkordb.falkordb.FalkorDB object at 0x107ff3aa0>
+tmp_path = PosixPath('/private/var/folders/ng/nxnstkjs7tn9dbx9nhvtvmzw0000gn/T/pytest-of-vikashkumar/pytest-50/test_real_shared_graph_boundar0')
+
+    def test_real_shared_graph_boundary(db,tmp_path):
+        p=new_profile();path=tmp_path/'active.json';save(p,path)
+        MigrationRunner(db,p.graph).apply();repo=GraphRepository(db,p.graph,lease_seconds=30)
+        try:
+            populate(repo);repo.create_node('Department',{**common('DEP'),'name':'Synthetic','department_type':'ENGINEERING'})
+            with pytest.raises(PreconditionFailed):ComplaintService(repo,clock=lambda:CLOCK).intake(payload())
+            with active_scope(p):
+                receipt=ComplaintService(repo,clock=lambda:CLOCK).intake(payload())
+                inv=EvidenceService(repo,clock=lambda:CLOCK).execute({'operation':'open','request_id':'b10-open','incident_ids':[receipt.incident_id],'cluster_id':receipt.cluster_id},ANALYST).entity_id
+>               hyp=EvidenceService(repo,clock=lambda:CLOCK).execute({'operation':'propose','request_id':'b10-propose','investigation_id':inv,'incident_ids':[receipt.incident_id],'asset_ids':['D1'],
+                    'cause_code':'BLOCKAGE','statement':'Blockage requires independent inspection','mechanism':'Restricted flow may explain standing water','confirming_codes':['BLOCKAGE_OBSERVED'],'falsifying_codes':['DRAIN_CLEAR']},ANALYST).entity_id
+
+backend/tests/integration/test_agent_active.py:30: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+backend/app/services/evidence/service.py:89: in execute
+    entity, nodes, updates, edges, assessment = self.plan(q, actor, reader, jid, now, session.revision)
+                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <app.services.evidence.service.EvidenceService object at 0x107eda120>
+q = Propose(request_id='b10-propose', operation='propose', investigation_id='INV-B09-79c9f6380031faadbbaedb144ef5c8b5', in...w may explain standing water', confirming_codes=['BLOCKAGE_OBSERVED'], falsifying_codes=['DRAIN_CLEAR'], topology=None)
+actor = Actor(id='synthetic-analyst', role='ANALYST', department_id=None)
+r = <app.services.evidence.reader.Reader object at 0x1102bfce0>
+jid = 'EV-JOURNAL-B09-0d09b7e448cd6d8dd3302d6ba4359280'
+now = '2026-10-18T12:00:00Z', revision = 21
+
+    def plan(self, q, actor, r, jid, now, revision):
+        n = lambda kind, props: node(self.repo, kind, props)
+        edge = lambda kind, s, t: link(kind, s, t, jid, now)
+        if isinstance(q, OpenInvestigation):
+            r.node(q.cluster_id, 'ProblemCluster')
+            for id in q.incident_ids:
+                r.node(id, 'Incident')
+                if not any(e.target == q.cluster_id for e in r.edges('PART_OF', source=id)):
+                    raise PreconditionFailed('Incident must have the specified active primary cluster')
+            id = stable('INV', jid)
+            inv = n('Investigation', {**common(id, now), 'status': 'OPEN', 'priority': q.priority, 'opened_at': now, 'graph_revision': revision})
+            return id, [inv], [], [edge('INVESTIGATES', id, t) for t in [q.cluster_id, *q.incident_ids]], None
+        if isinstance(q, Propose):
+            r.node(q.investigation_id, 'Investigation')
+            bound = {e.target for e in r.edges('INVESTIGATES', source=q.investigation_id)}
+            if not set(q.incident_ids) <= bound:
+                raise PreconditionFailed('Hypothesis incidents outside investigation')
+            incidents = [r.node(id, 'Incident') for id in q.incident_ids]
+            issues = {i.properties['issue_type'] for i in incidents}
+            if len(issues) != 1:
+                raise PreconditionFailed('One hypothesis issue; use competing hypotheses across categories')
+            issue = next(iter(issues))
+            rule = POLICIES[issue].get(q.cause_code)
+            if rule and (not set(rule['confirming']) <= set(q.confirming_codes) or not set(rule['falsifying']) <= set(q.falsifying_codes)):
+>               raise PreconditionFailed('Expected observations cannot weaken domain criteria')
+E               app.graph.repository.PreconditionFailed: Expected observations cannot weaken domain criteria
+
+backend/app/services/evidence/service.py:144: PreconditionFailed
+=========================== short test summary info ============================
+FAILED backend/tests/integration/test_agent_active.py::test_real_shared_graph_boundary
+============================== 1 failed in 2.62s ===============================

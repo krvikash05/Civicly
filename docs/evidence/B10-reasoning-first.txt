@@ -1,0 +1,96 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.1, pytest-9.1.1, pluggy-1.7.0 -- /Users/vikashkumar/Desktop/Civicly/backend/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/vikashkumar/Desktop/Civicly/backend
+configfile: pyproject.toml
+plugins: langsmith-0.14.11, anyio-4.15.1
+collecting ... collected 3 items
+
+backend/tests/integration/test_agent_reasoning.py::test_contradiction_changes_actual_b09_assessment_and_next_inspection FAILED
+backend/tests/integration/test_agent_reasoning.py::test_planner_is_nonbinding_no_operational_nodes PASSED
+backend/tests/integration/test_agent_runtime.py::test_actual_python_process_restart_resume PASSED
+
+=================================== FAILURES ===================================
+_____ test_contradiction_changes_actual_b09_assessment_and_next_inspection _____
+
+db = <falkordb.falkordb.FalkorDB object at 0x10918e5a0>
+tmp_path = PosixPath('/private/var/folders/ng/nxnstkjs7tn9dbx9nhvtvmzw0000gn/T/pytest-of-vikashkumar/pytest-56/test_contradiction_changes_act0')
+
+    def test_contradiction_changes_actual_b09_assessment_and_next_inspection(db,tmp_path):
+        path=tmp_path/'profile.json';p,r,clock,receipt,inv=create(db,path)
+        async def run():
+            with active_scope(p):
+                async with brokers(p,path) as tools:
+                    initial=state(p,r,tools,clock,receipt,inv);agent=InvestigationAgent(p,r,tools,EvidenceReactiveFake(),saver(p),clock=clock)
+                    first=await agent.run(initial,thread_id=initial.thread_id)
+                    assert len(first['data']['hypotheses'])==2
+                    # Authored reviewed evidence through the accepted full B09 inspection lifecycle.
+                    fixture=Fixture(r,clock,{'WATERLOGGING':receipt},p.graph,{})
+                    report(fixture,inv,ref='B10-clear-drain',codes=['DRAIN_CLEAR'],assets=['D1'])
+                    clock.advance()
+                    resumed=await InvestigationAgent(p,r,tools,EvidenceReactiveFake(),saver(p),clock=clock).run(thread_id=initial.thread_id,resume=True)
+                    a=first['data']['pending_inspections'][-1];b=resumed['data']['pending_inspections'][-1]
+                    first_assets={row[0] for row in r._read('MATCH (:Inspection {id:$id})-[:INSPECTS]->(a) RETURN a.id',{'id':a})}
+                    next_assets={row[0] for row in r._read('MATCH (:Inspection {id:$id})-[:INSPECTS]->(a) RETURN a.id',{'id':b})}
+                    assert first_assets=={'D1'} and next_assets=={'D2'}
+                    states=r._read('MATCH (:Hypothesis {id:$id})-[:HAS_ASSESSMENT]->(a) RETURN a.assessment',{'id':resumed['data']['hypotheses'][0]})
+                    assert {row[0] for row in states}=={'INCONCLUSIVE','CONTRADICTED'}
+                    Path('/tmp/civicly-b10-contradiction-proof.json').write_text(json.dumps({'mode':'REACTIVE_FAKE_MODEL_REAL_DOMAIN','first':first,'resumed':resumed,'before_target':sorted(first_assets),'after_target':sorted(next_assets)},default=str,indent=2))
+>       try:asyncio.run(run())
+            ^^^^^^^^^^^^^^^^^^
+
+backend/tests/integration/test_agent_reasoning.py:54: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/base_events.py:684: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+backend/tests/integration/test_agent_reasoning.py:38: in run
+    async with brokers(p,path) as tools:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:231: in __aexit__
+    await self.gen.athrow(value)
+backend/app/agents/mcp.py:21: in brokers
+    async with open_broker(traces,timeout=min(timeout,10),max_calls=64,source_graph=profile.graph,credentials=creds) as official:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:231: in __aexit__
+    await self.gen.athrow(value)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+traces = [{'operation': 'initialize', 'status': 'SUCCESS', 'started_at': '2026-10-17T20:57:27.341480Z', 'ended_at': '2026-10-17...roker/validated_call', 'server': {'name': 'falkordb', 'version': '1.3.0'}, 'protocol_version': '2025-11-25', ...}, ...]
+timeout = 8, max_calls = 64
+source_graph = 'civicly_b10_test_6cb81078436c4536b6db9d0e78e9ffaa'
+credentials = RuntimeCredentials(username='civicly_b10_read_6cb81078436c4536b6db9d0e78e9ffaa', password=SecretStr('**********'), graph='civicly_b10_test_6cb81078436c4536b6db9d0e78e9ffaa')
+
+    @asynccontextmanager
+    async def open_broker(traces=None, *, timeout=4.0, max_calls=32, source_graph=CITY_GRAPH, credentials=None):
+        """Own initialize/list/call/shutdown in one task; fresh context reconnects."""
+        traces = traces if traces is not None else []
+        started, clock = now(), time.perf_counter()
+        opened = False
+        try:
+            with server_parameters(credentials=credentials) as params:
+                async with Client(params, mode='legacy', read_timeout_seconds=timeout,
+                                  logging_callback=_ignore_vendor_log) as client:
+                    traces.append({'operation': 'initialize', 'status': 'SUCCESS', 'started_at': started,
+                        'ended_at': now(), 'latency_ms': round((time.perf_counter()-clock)*1000,3),
+                        'server': {'name': client.server_info.name, 'version': client.server_info.version},
+                        'protocol_version': client.protocol_version})
+                    broker = ReadBroker(client, traces, timeout=timeout, max_calls=max_calls, source_graph=source_graph)
+                    await broker.discover()
+                    opened = True
+                    yield broker
+        except Exception as exc:
+            code = error_code(exc)
+            if not opened:
+                traces.append({'operation': 'initialize', 'status': code, 'started_at': started, 'ended_at': now()})
+>           raise BrokerError(code) from None
+E           app.mcp.broker.BrokerError: TRANSPORT_FAILURE
+
+backend/app/mcp/broker.py:266: BrokerError
+=========================== short test summary info ============================
+FAILED backend/tests/integration/test_agent_reasoning.py::test_contradiction_changes_actual_b09_assessment_and_next_inspection
+========================= 1 failed, 2 passed in 27.96s =========================

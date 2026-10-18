@@ -1,0 +1,101 @@
+# B10-O changed-file inventory
+
+Incremental against frozen B10O-baseline.json; earlier uncommitted B10 changes are preserved. No ZIP or push.
+
+## Modified
+
+- `.env.example`
+- `README.md`
+- `backend/AGENTS_RUNTIME.md`
+- `backend/app/agents/__main__.py`
+- `backend/app/agents/mcp.py`
+- `backend/app/agents/provider.py`
+- `backend/app/agents/runtime.py`
+- `backend/pyproject.toml`
+- `backend/tests/b10_live.py`
+- `backend/tests/b10_live_topology.py`
+- `backend/tests/conftest.py`
+- `backend/tests/unit/test_agent_provider.py`
+- `blockers.md`
+- `contracts/agent_runtime.json`
+- `decision.md`
+- `flow.md`
+- `implementation_status.md`
+- `task_board.md`
+- `test_log.md`
+
+## Added
+
+- `backend/app/agents/context.py`
+- `backend/app/agents/policy.py`
+- `backend/app/agents/pricing/gemini-3.8-flash-standard-2026-10.json`
+- `backend/app/agents/prompts/B10-3.txt`
+- `backend/app/agents/spending.py`
+- `backend/test_guards/civicly_no_live.py`
+- `backend/test_guards/sitecustomize.py`
+- `backend/tests/integration/test_agent_optimization.py`
+- `backend/tests/live/README.md`
+- `backend/tests/live/run_investigation.py`
+- `backend/tests/unit/test_agent_context.py`
+- `backend/tests/unit/test_ai_execution_policy.py`
+- `backend/tests/unit/test_ai_provider_recovery.py`
+- `backend/tests/unit/test_ai_spending.py`
+- `contracts/agent_optimization.json`
+- `docs/evidence/B10O-COMMANDS.md`
+- `docs/evidence/B10O-FILES.md`
+- `docs/evidence/B10O-RESULTS.md`
+- `docs/evidence/B10O-after-first-retained.json`
+- `docs/evidence/B10O-auth-failed-provider-proof.json`
+- `docs/evidence/B10O-auth-failed-tests.txt`
+- `docs/evidence/B10O-authority-ROAD_DAMAGE.json`
+- `docs/evidence/B10O-authority-WASTE_ACCUMULATION.json`
+- `docs/evidence/B10O-authority-WATERLOGGING.json`
+- `docs/evidence/B10O-baseline.json`
+- `docs/evidence/B10O-benchmark-provider-audit.json`
+- `docs/evidence/B10O-budget-checkpoint-proof.json`
+- `docs/evidence/B10O-cache-proof.json`
+- `docs/evidence/B10O-changes.patch`
+- `docs/evidence/B10O-context-ROAD_DAMAGE.json`
+- `docs/evidence/B10O-context-WASTE_ACCUMULATION.json`
+- `docs/evidence/B10O-context-WATERLOGGING.json`
+- `docs/evidence/B10O-context-final.txt`
+- `docs/evidence/B10O-context-first.txt`
+- `docs/evidence/B10O-controls-first.txt`
+- `docs/evidence/B10O-controls-second.txt`
+- `docs/evidence/B10O-first-regression-B07R-runtime-proof.json`
+- `docs/evidence/B10O-first-regression-B08-runtime-proof.json`
+- `docs/evidence/B10O-first-regression-B09-runtime-proof.json`
+- `docs/evidence/B10O-first-regression-B09R-runtime-proof.json`
+- `docs/evidence/B10O-first-regression-tests.txt`
+- `docs/evidence/B10O-first-zero-live-proof.json`
+- `docs/evidence/B10O-integration-first.txt`
+- `docs/evidence/B10O-lock-check.txt`
+- `docs/evidence/B10O-post-B01-B09-B01-B07.json`
+- `docs/evidence/B10O-post-B01-B09.json`
+- `docs/evidence/B10O-post-B09-retained.json`
+- `docs/evidence/B10O-post-B09R-history.json`
+- `docs/evidence/B10O-post-retained.json`
+- `docs/evidence/B10O-pre-benchmark-retained.json`
+- `docs/evidence/B10O-real-context-benchmark.json`
+- `docs/evidence/B10O-real-context-benchmark.txt`
+- `docs/evidence/B10O-recovery-final.txt`
+- `docs/evidence/B10O-recovery-first-expansion.txt`
+- `docs/evidence/B10O-regression-B07R-runtime-proof.json`
+- `docs/evidence/B10O-regression-B08-runtime-proof.json`
+- `docs/evidence/B10O-regression-B09-runtime-proof.json`
+- `docs/evidence/B10O-regression-B09R-runtime-proof.json`
+- `docs/evidence/B10O-regression-tests.txt`
+- `docs/evidence/B10O-source-audit.json`
+- `docs/evidence/B10O-spec-final.txt`
+- `docs/evidence/B10O-spec-first.txt`
+- `docs/evidence/B10O-spending-after.json`
+- `docs/evidence/B10O-spending-before.json`
+- `docs/evidence/B10O-test-summary.json`
+- `docs/evidence/B10O-units-first.txt`
+- `docs/evidence/B10O-versions.json`
+- `docs/evidence/B10O-zero-live-proof.json`
+- `scripts/audit_b10o.py`
+- `scripts/measure_b10o_context.py`
+- `scripts/verify_b10o_spending.py`
+
+Provider test setup now requires explicit MockTransport permission/private simulated ledger; original assertions retained. Global conftest adds interception; no old test removed. Legacy paid batch helpers disabled in favor of exact-case live CLI. All prior evidence is byte-identical.

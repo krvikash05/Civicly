@@ -1,0 +1,445 @@
+[
+  {
+    "id": "DEC-B10-fd03218a34d35e10d4501048f58fc73d",
+    "metadata": {
+      "as_of": "2026-10-18T12:00:00.000000Z",
+      "graph_revision": 29,
+      "inventory_hash": "60e6cc345311a3446a1aedb713b945a2cfdd16b594fa40d2ae50a196dca57ebd",
+      "investigation_id": "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+      "mode": "LIVE_GEMINI",
+      "thread_id": "557b92273995482a8b68564ae751e5a0",
+      "tokens": 12829,
+      "usage": {
+        "attempts": 2,
+        "model": "gemini-3.8-flash",
+        "prompt_version": "B10-1",
+        "provider": "gemini",
+        "total_tokens": 12829
+      }
+    },
+    "selection": {
+      "action": "READ",
+      "arguments_json": "{\"as_of\":\"2026-10-18T12:00:00.000000Z\",\"asset_id\":\"D1\",\"direction\":\"DOWNSTREAM\",\"investigation_id\":\"INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f\",\"max_hops\":3}",
+      "pause_reason": "NONE",
+      "summary": "Trace downstream drainage infrastructure dependencies from asset D1 to inspect connected drainage network components.",
+      "tool_name": "civicly::trace_infrastructure_dependencies"
+    },
+    "version": 1
+  },
+  {
+    "id": "DEC-B10-8e2d2bd40dc95bcd1709f8656b1ff7f6",
+    "metadata": {
+      "as_of": "2026-10-18T12:00:00.000000Z",
+      "graph_revision": 35,
+      "inventory_hash": "60e6cc345311a3446a1aedb713b945a2cfdd16b594fa40d2ae50a196dca57ebd",
+      "investigation_id": "INV-B09-8feb823672b893a6e0483ff2f3529c19",
+      "mode": "LIVE_GEMINI",
+      "thread_id": "3ddc8999aa764f48ac53062aea506912",
+      "tokens": 4833,
+      "usage": {
+        "attempts": 1,
+        "model": "gemini-3.8-flash",
+        "prompt_version": "B10-1",
+        "provider": "gemini",
+        "total_tokens": 4833
+      }
+    },
+    "selection": {
+      "action": "READ",
+      "arguments_json": "{\"as_of\":\"2026-10-18T12:00:00.000000Z\",\"asset_id\":\"D1\",\"direction\":\"DOWNSTREAM\",\"include_candidates\":true,\"investigation_id\":\"INV-B09-8feb823672b893a6e0483ff2f3529c19\",\"max_hops\":3,\"network\":\"DRAINAGE\"}",
+      "pause_reason": "NONE",
+      "summary": "Trace drainage infrastructure dependencies downstream from asset D1 to identify network connectivity and related assets.",
+      "tool_name": "civicly::trace_infrastructure_dependencies"
+    },
+    "version": 1
+  },
+  {
+    "id": "DEC-B10-230150028328ac47a6b6ef6c49c72466",
+    "metadata": {
+      "as_of": "2026-10-18T12:00:00.000000Z",
+      "graph_revision": 38,
+      "inventory_hash": "60e6cc345311a3446a1aedb713b945a2cfdd16b594fa40d2ae50a196dca57ebd",
+      "investigation_id": "INV-B09-8feb823672b893a6e0483ff2f3529c19",
+      "mode": "LIVE_GEMINI",
+      "thread_id": "3ddc8999aa764f48ac53062aea506912",
+      "tokens": 5775,
+      "usage": {
+        "attempts": 1,
+        "model": "gemini-3.8-flash",
+        "prompt_version": "B10-1",
+        "provider": "gemini",
+        "total_tokens": 5775
+      }
+    },
+    "selection": {
+      "action": "PROPOSE",
+      "arguments_json": "{\"asset_ids\":[\"D1\"],\"cause_code\":\"BLOCKAGE\",\"confirming_codes\":[\"OBSTRUCTION_OBSERVED\",\"FLOW_RESTRICTED\"],\"falsifying_codes\":[\"DRAIN_CLEAR\"],\"mechanism\":\"Obstruction within drain segment restricting flow and causing local waterlogging.\",\"statement\":\"Drain segment D1 is experiencing a blockage resulting in waterlogging.\"}",
+      "pause_reason": "NONE",
+      "summary": "Propose BLOCKAGE hypothesis for asset D1 based on waterlogging issue in drain segment.",
+      "tool_name": ""
+    },
+    "version": 1
+  },
+  {
+    "id": "DEC-B10-2509dda3a851c69f807f90377d4f46dc",
+    "metadata": {
+      "as_of": "2026-10-18T12:00:00.000000Z",
+      "graph_revision": 44,
+      "inventory_hash": "60e6cc345311a3446a1aedb713b945a2cfdd16b594fa40d2ae50a196dca57ebd",
+      "investigation_id": "INV-B09-8feb823672b893a6e0483ff2f3529c19",
+      "mode": "LIVE_GEMINI",
+      "thread_id": "3ddc8999aa764f48ac53062aea506912",
+      "tokens": 6391,
+      "usage": {
+        "attempts": 1,
+        "model": "gemini-3.8-flash",
+        "prompt_version": "B10-1",
+        "provider": "gemini",
+        "total_tokens": 6391
+      }
+    },
+    "selection": {
+      "action": "PROPOSE",
+      "arguments_json": "{\"asset_ids\":[\"D1\"],\"cause_code\":\"CAPACITY_DEFICIT\",\"confirming_codes\":[\"CAPACITY_TEST_EXCEEDED\",\"DRAIN_CLEAR\"],\"falsifying_codes\":[\"CAPACITY_ADEQUATE\"],\"mechanism\":\"Peak flow exceeds designed hydraulic capacity of drain segment D1 despite absence of physical blockage.\",\"statement\":\"Drain segment D1 lacks sufficient hydraulic capacity during peak runoff, resulting in waterlogging.\"}",
+      "pause_reason": "NONE",
+      "summary": "Propose CAPACITY_DEFICIT as a competing hypothesis for drain segment D1 waterlogging.",
+      "tool_name": ""
+    },
+    "version": 1
+  },
+  {
+    "id": "DEC-B10-63f04a95c5366c8539aa402c1fb746f3",
+    "metadata": {
+      "as_of": "2026-10-18T12:00:00.000000Z",
+      "graph_revision": 50,
+      "inventory_hash": "60e6cc345311a3446a1aedb713b945a2cfdd16b594fa40d2ae50a196dca57ebd",
+      "investigation_id": "INV-B09-8feb823672b893a6e0483ff2f3529c19",
+      "mode": "LIVE_GEMINI",
+      "thread_id": "3ddc8999aa764f48ac53062aea506912",
+      "tokens": 6915,
+      "usage": {
+        "attempts": 1,
+        "model": "gemini-3.8-flash",
+        "prompt_version": "B10-1",
+        "provider": "gemini",
+        "total_tokens": 6915
+      }
+    },
+    "selection": {
+      "action": "READ",
+      "arguments_json": "{\"asset_id\":\"D1\",\"from_time\":\"2026-09-18T12:00:00Z\",\"to_time\":\"2026-10-18T12:00:00Z\"}",
+      "pause_reason": "NONE",
+      "summary": "Read maintenance history for drain segment D1 to look for recorded obstructions, flow issues, or capacity tests.",
+      "tool_name": "civicly::get_maintenance_history"
+    },
+    "version": 1
+  },
+  {
+    "id": "DEC-B10-e7462d36357863035b18737eef434cc1",
+    "metadata": {
+      "as_of": "2026-10-18T12:00:00.000000Z",
+      "graph_revision": 54,
+      "inventory_hash": "60e6cc345311a3446a1aedb713b945a2cfdd16b594fa40d2ae50a196dca57ebd",
+      "investigation_id": "INV-B09-f23a3e85e861abd47a9512258d413aed",
+      "mode": "LIVE_GEMINI",
+      "prompt_sha256": "44d347ba4f6abb237bd26f4c188d03e8deb06b3c043dc27a5d5b4b80ed9a31a5",
+      "thread_id": "a06429f4f1b34116a5efbfe6214d1aae",
+      "tokens": 4722,
+      "usage": {
+        "attempts": 1,
+        "model": "gemini-3.8-flash",
+        "prompt_version": "B10-1",
+        "provider": "gemini",
+        "total_tokens": 4722
+      }
+    },
+    "selection": {
+      "action": "READ",
+      "arguments_json": "{\"road_segment_id\":\"R1\",\"as_of\":\"2026-10-18T12:00:00.000000Z\"}",
+      "pause_reason": "NONE",
+      "summary": "Query road condition history for asset R1 to retrieve baseline empirical observations and repair attempts.",
+      "tool_name": "civicly::get_road_condition_history"
+    },
+    "version": 1
+  },
+  {
+    "id": "DEC-B10-d28d338b639c0ca0d53742c7c45098c6",
+    "metadata": {
+      "as_of": "2026-10-18T12:00:00.000000Z",
+      "graph_revision": 57,
+      "inventory_hash": "60e6cc345311a3446a1aedb713b945a2cfdd16b594fa40d2ae50a196dca57ebd",
+      "investigation_id": "INV-B09-f23a3e85e861abd47a9512258d413aed",
+      "mode": "LIVE_GEMINI",
+      "prompt_sha256": "44d347ba4f6abb237bd26f4c188d03e8deb06b3c043dc27a5d5b4b80ed9a31a5",
+      "thread_id": "a06429f4f1b34116a5efbfe6214d1aae",
+      "tokens": 5488,
+      "usage": {
+        "attempts": 1,
+        "model": "gemini-3.8-flash",
+        "prompt_version": "B10-1",
+        "provider": "gemini",
+        "total_tokens": 5488
+      }
+    },
+    "selection": {
+      "action": "READ",
+      "arguments_json": "{\"asset_id\":\"R1\",\"direction\":\"BOTH\",\"investigation_id\":\"INV-B09-f23a3e85e861abd47a9512258d413aed\",\"max_hops\":3}",
+      "pause_reason": "NONE",
+      "summary": "Trace infrastructure dependencies upstream and downstream for asset R1 to discover connected network assets.",
+      "tool_name": "civicly::trace_infrastructure_dependencies"
+    },
+    "version": 1
+  },
+  {
+    "id": "DEC-B10-3394bba4dd00802b9fe0a20d10014e0a",
+    "metadata": {
+      "as_of": "2026-10-18T12:00:00.000000Z",
+      "graph_revision": 60,
+      "inventory_hash": "60e6cc345311a3446a1aedb713b945a2cfdd16b594fa40d2ae50a196dca57ebd",
+      "investigation_id": "INV-B09-f23a3e85e861abd47a9512258d413aed",
+      "mode": "LIVE_GEMINI",
+      "prompt_sha256": "44d347ba4f6abb237bd26f4c188d03e8deb06b3c043dc27a5d5b4b80ed9a31a5",
+      "thread_id": "a06429f4f1b34116a5efbfe6214d1aae",
+      "tokens": 6355,
+      "usage": {
+        "attempts": 1,
+        "model": "gemini-3.8-flash",
+        "prompt_version": "B10-1",
+        "provider": "gemini",
+        "total_tokens": 6355
+      }
+    },
+    "selection": {
+      "action": "READ",
+      "arguments_json": "{\"as_of\":\"2026-10-18T12:00:00.000000Z\",\"asset_id\":\"R1\",\"from_time\":\"2025-10-18T12:00:00.000000Z\",\"include_candidates\":true,\"to_time\":\"2026-10-18T12:00:00.000000Z\"}",
+      "pause_reason": "NONE",
+      "summary": "Check maintenance history for asset R1 within the relevant time window to identify past inspections, repairs, or failure records.",
+      "tool_name": "civicly::get_maintenance_history"
+    },
+    "version": 1
+  },
+  {
+    "id": "DEC-B10-865b80769554998b47a71073e8a75cf2",
+    "metadata": {
+      "as_of": "2026-10-18T12:00:00.000000Z",
+      "graph_revision": 63,
+      "inventory_hash": "60e6cc345311a3446a1aedb713b945a2cfdd16b594fa40d2ae50a196dca57ebd",
+      "investigation_id": "INV-B09-f23a3e85e861abd47a9512258d413aed",
+      "mode": "LIVE_GEMINI",
+      "prompt_sha256": "44d347ba4f6abb237bd26f4c188d03e8deb06b3c043dc27a5d5b4b80ed9a31a5",
+      "thread_id": "a06429f4f1b34116a5efbfe6214d1aae",
+      "tokens": 6971,
+      "usage": {
+        "attempts": 1,
+        "model": "gemini-3.8-flash",
+        "prompt_version": "B10-1",
+        "provider": "gemini",
+        "total_tokens": 6971
+      }
+    },
+    "selection": {
+      "action": "INSPECT",
+      "arguments_json": "{\"asset_ids\":[\"R1\"],\"department_id\":\"DEP\",\"inspection_type\":\"SUBGRADE_STRUCTURAL_ASSESSMENT\"}",
+      "pause_reason": "NONE",
+      "summary": "Prior reads for road condition, infrastructure dependency tracing, and maintenance history returned no records or connecting edges for asset R1. Because graph and archival evidence cannot discriminate between potential subgrade failure or utility leakage, a physical inspection is requested.",
+      "tool_name": ""
+    },
+    "version": 1
+  },
+  {
+    "id": "DEC-B10-589daccea4ab344b1330b9b9172bf939",
+    "metadata": {
+      "as_of": "2026-10-18T12:00:00.000000Z",
+      "graph_revision": 70,
+      "inventory_hash": "60e6cc345311a3446a1aedb713b945a2cfdd16b594fa40d2ae50a196dca57ebd",
+      "investigation_id": "INV-B09-20ca69e4b6d7267869f3a88db2eb30c4",
+      "mode": "LIVE_GEMINI",
+      "prompt_sha256": "44d347ba4f6abb237bd26f4c188d03e8deb06b3c043dc27a5d5b4b80ed9a31a5",
+      "thread_id": "95aa223444734810ac2337a9f6cd5c88",
+      "tokens": 4836,
+      "usage": {
+        "attempts": 1,
+        "model": "gemini-3.8-flash",
+        "prompt_version": "B10-1",
+        "provider": "gemini",
+        "total_tokens": 4836
+      }
+    },
+    "selection": {
+      "action": "READ",
+      "arguments_json": "{\"collection_point_id\":\"W1\",\"days\":30,\"as_of\":\"2026-10-18T12:00:00.000000Z\"}",
+      "pause_reason": "NONE",
+      "summary": "Retrieve pickup execution history for collection point W1 to assess scheduled vs actual waste collection and investigate potential missed pickup or capacity shortfall.",
+      "tool_name": "civicly::get_pickup_execution_history"
+    },
+    "version": 1
+  },
+  {
+    "id": "DEC-B10-239da7a58d49dfdfc973b9c031c45a51",
+    "metadata": {
+      "as_of": "2026-10-18T12:00:00.000000Z",
+      "graph_revision": 73,
+      "inventory_hash": "60e6cc345311a3446a1aedb713b945a2cfdd16b594fa40d2ae50a196dca57ebd",
+      "investigation_id": "INV-B09-20ca69e4b6d7267869f3a88db2eb30c4",
+      "mode": "LIVE_GEMINI",
+      "prompt_sha256": "44d347ba4f6abb237bd26f4c188d03e8deb06b3c043dc27a5d5b4b80ed9a31a5",
+      "thread_id": "95aa223444734810ac2337a9f6cd5c88",
+      "tokens": 5629,
+      "usage": {
+        "attempts": 1,
+        "model": "gemini-3.8-flash",
+        "prompt_version": "B10-1",
+        "provider": "gemini",
+        "total_tokens": 5629
+      }
+    },
+    "selection": {
+      "action": "READ",
+      "arguments_json": "{\"problem_cluster_id\":\"PC-B08-f6a0993d328cfb25e63074c47e5ff536\",\"as_of\":\"2026-10-18T12:00:00.000000Z\"}",
+      "pause_reason": "NONE",
+      "summary": "Retrieve monitoring and verification status for problem cluster PC-B08-f6a0993d328cfb25e63074c47e5ff536 to check verified condition data regarding waste accumulation.",
+      "tool_name": "civicly::get_monitoring_status"
+    },
+    "version": 1
+  },
+  {
+    "id": "DEC-B10-94668d98694eddec90dfc2c9d2cd379e",
+    "metadata": {
+      "as_of": "2026-10-18T12:00:00.000000Z",
+      "graph_revision": 76,
+      "inventory_hash": "60e6cc345311a3446a1aedb713b945a2cfdd16b594fa40d2ae50a196dca57ebd",
+      "investigation_id": "INV-B09-20ca69e4b6d7267869f3a88db2eb30c4",
+      "mode": "LIVE_GEMINI",
+      "prompt_sha256": "44d347ba4f6abb237bd26f4c188d03e8deb06b3c043dc27a5d5b4b80ed9a31a5",
+      "thread_id": "95aa223444734810ac2337a9f6cd5c88",
+      "tokens": 6313,
+      "usage": {
+        "attempts": 1,
+        "model": "gemini-3.8-flash",
+        "prompt_version": "B10-1",
+        "provider": "gemini",
+        "total_tokens": 6313
+      }
+    },
+    "selection": {
+      "action": "READ",
+      "arguments_json": "{\"incident_id\":\"INC-B08-9357b0870858d6c11386013279d54e93\",\"max_results\":10,\"as_of\":\"2026-10-18T12:00:00.000000Z\"}",
+      "pause_reason": "NONE",
+      "summary": "Query related incidents for incident INC-B08-9357b0870858d6c11386013279d54e93 to gather verified asset reports and chronological evidence.",
+      "tool_name": "civicly::find_related_incidents"
+    },
+    "version": 1
+  },
+  {
+    "id": "DEC-B10-eb7c044ea5e0b2121932356655856925",
+    "metadata": {
+      "as_of": "2026-10-18T12:00:00.000000Z",
+      "graph_revision": 79,
+      "inventory_hash": "60e6cc345311a3446a1aedb713b945a2cfdd16b594fa40d2ae50a196dca57ebd",
+      "investigation_id": "INV-B09-20ca69e4b6d7267869f3a88db2eb30c4",
+      "mode": "LIVE_GEMINI",
+      "prompt_sha256": "44d347ba4f6abb237bd26f4c188d03e8deb06b3c043dc27a5d5b4b80ed9a31a5",
+      "thread_id": "95aa223444734810ac2337a9f6cd5c88",
+      "tokens": 11375,
+      "usage": {
+        "attempts": 1,
+        "model": "gemini-3.8-flash",
+        "prompt_version": "B10-1",
+        "provider": "gemini",
+        "total_tokens": 11375
+      }
+    },
+    "selection": {
+      "action": "READ",
+      "arguments_json": "{\"asset_id\":\"W1\",\"from_time\":\"2026-10-01T00:00:00Z\",\"to_time\":\"2026-10-18T12:00:00.000000Z\"}",
+      "pause_reason": "NONE",
+      "summary": "Retrieve maintenance and past inspection records for asset W1 to inspect historical service failures and physical conditions.",
+      "tool_name": "civicly::get_maintenance_history"
+    },
+    "version": 1
+  },
+  {
+    "id": "DEC-B10-189e99f451d0d72170f18d8ecffe94fb",
+    "metadata": {
+      "as_of": "2026-10-18T12:00:00.000000Z",
+      "graph_revision": 88,
+      "inventory_hash": "60e6cc345311a3446a1aedb713b945a2cfdd16b594fa40d2ae50a196dca57ebd",
+      "investigation_id": "INV-B09-3e1ae0253e81c0e732b1a98a79ebbae8",
+      "mode": "LIVE_GEMINI",
+      "prompt_sha256": "44d347ba4f6abb237bd26f4c188d03e8deb06b3c043dc27a5d5b4b80ed9a31a5",
+      "thread_id": "273a49d92d36418b8f92cba51e516bf9",
+      "tokens": 4742,
+      "usage": {
+        "attempts": 1,
+        "model": "gemini-3.8-flash",
+        "prompt_version": "B10-1",
+        "provider": "gemini",
+        "total_tokens": 4742
+      }
+    },
+    "selection": {
+      "action": "READ",
+      "arguments_json": "{\"asset_id\":\"R1\",\"direction\":\"BOTH\",\"investigation_id\":\"INV-B09-3e1ae0253e81c0e732b1a98a79ebbae8\",\"max_hops\":3}",
+      "pause_reason": "NONE",
+      "summary": "Trace infrastructure dependencies upstream and downstream for asset R1 to discover topological connectivity with asset P1.",
+      "tool_name": "civicly::trace_infrastructure_dependencies"
+    },
+    "version": 1
+  },
+  {
+    "id": "DEC-B10-b8314afefe56735380ffc149e1370d82",
+    "metadata": {
+      "as_of": "2026-10-18T12:00:00.000000Z",
+      "graph_revision": 91,
+      "inventory_hash": "60e6cc345311a3446a1aedb713b945a2cfdd16b594fa40d2ae50a196dca57ebd",
+      "investigation_id": "INV-B09-3e1ae0253e81c0e732b1a98a79ebbae8",
+      "mode": "LIVE_GEMINI",
+      "prompt_sha256": "44d347ba4f6abb237bd26f4c188d03e8deb06b3c043dc27a5d5b4b80ed9a31a5",
+      "thread_id": "273a49d92d36418b8f92cba51e516bf9",
+      "tokens": 5660,
+      "usage": {
+        "attempts": 1,
+        "model": "gemini-3.8-flash",
+        "prompt_version": "B10-1",
+        "provider": "gemini",
+        "total_tokens": 5660
+      }
+    },
+    "selection": {
+      "action": "READ",
+      "arguments_json": "{\"asset_id\":\"P1\",\"direction\":\"DOWNSTREAM\",\"investigation_id\":\"INV-B09-3e1ae0253e81c0e732b1a98a79ebbae8\",\"max_hops\":3,\"network\":\"TYPED_DEPENDENCIES\"}",
+      "pause_reason": "NONE",
+      "summary": "Trace typed dependencies from water pipe asset P1 downstream to check for structural or spatial relationship with road segment R1.",
+      "tool_name": "civicly::trace_infrastructure_dependencies"
+    },
+    "version": 1
+  },
+  {
+    "id": "DEC-B10-71c0a84c3ff1fd53b90a728f35c7d4b6",
+    "metadata": {
+      "as_of": "2026-10-18T12:00:00.000000Z",
+      "graph_revision": 94,
+      "inventory_hash": "60e6cc345311a3446a1aedb713b945a2cfdd16b594fa40d2ae50a196dca57ebd",
+      "investigation_id": "INV-B09-3e1ae0253e81c0e732b1a98a79ebbae8",
+      "mode": "LIVE_GEMINI",
+      "prompt_sha256": "44d347ba4f6abb237bd26f4c188d03e8deb06b3c043dc27a5d5b4b80ed9a31a5",
+      "thread_id": "273a49d92d36418b8f92cba51e516bf9",
+      "tokens": 7031,
+      "usage": {
+        "attempts": 1,
+        "model": "gemini-3.8-flash",
+        "prompt_version": "B10-1",
+        "provider": "gemini",
+        "total_tokens": 7031
+      }
+    },
+    "selection": {
+      "action": "PROPOSE",
+      "arguments_json": "{\"cause_code\":\"UTILITY_LEAK\",\"asset_ids\":[\"P1\"],\"statement\":\"Water pipe P1 underlying road segment R1 may have suffered a leak causing road damage.\",\"mechanism\":\"Water pipe leak erodes surrounding subgrade leading to road segment degradation.\",\"confirming_codes\":[\"LEAK_DETECTED\",\"INFILTRATION_AT_DAMAGE\"],\"falsifying_codes\":[\"PRESSURE_TEST_NORMAL\"],\"topology\":{\"asset_ids\":[\"P1\",\"R1\"],\"relationship\":\"UNDERLIES\",\"verified\":true}}",
+      "pause_reason": "NONE",
+      "summary": "Propose UTILITY_LEAK hypothesis for pipe P1 underlying road segment R1 supported by verified topological relationship.",
+      "tool_name": ""
+    },
+    "version": 1
+  }
+]

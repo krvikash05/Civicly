@@ -1,0 +1,2816 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.1, pytest-9.1.1, pluggy-1.7.0 -- /Users/vikashkumar/Desktop/Civicly/backend/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/vikashkumar/Desktop/Civicly/backend
+configfile: pyproject.toml
+plugins: langsmith-0.14.11, anyio-4.15.1
+collecting ... collected 691 items
+
+backend/tests/integration/test_agent_active.py::test_real_shared_graph_boundary FAILED
+backend/tests/integration/test_agent_optimization.py::test_real_mcp_read_cache_scope_time_and_revision_invalidation FAILED
+backend/tests/integration/test_agent_optimization.py::test_budget_pause_real_checkpoint_and_fresh_ledger_resume FAILED
+backend/tests/integration/test_agent_optimization.py::test_compact_real_b09_history_preserves_reviewed_contradiction_and_unreviewed_support[WATERLOGGING-BLOCKAGE] FAILED
+backend/tests/integration/test_agent_optimization.py::test_compact_real_b09_history_preserves_reviewed_contradiction_and_unreviewed_support[ROAD_DAMAGE-SUBGRADE_FAILURE] FAILED
+backend/tests/integration/test_agent_optimization.py::test_compact_real_b09_history_preserves_reviewed_contradiction_and_unreviewed_support[WASTE_ACCUMULATION-MISSED_PICKUP] FAILED
+backend/tests/integration/test_agent_reasoning.py::test_contradiction_changes_actual_b09_assessment_and_next_inspection FAILED
+backend/tests/integration/test_agent_reasoning.py::test_planner_is_nonbinding_no_operational_nodes FAILED
+backend/tests/integration/test_agent_reasoning.py::test_topology_controls_next_inspection_without_causal_promotion[VERIFIED-P1] FAILED
+backend/tests/integration/test_agent_reasoning.py::test_topology_controls_next_inspection_without_causal_promotion[CANDIDATE-R1] FAILED
+backend/tests/integration/test_agent_reasoning.py::test_topology_controls_next_inspection_without_causal_promotion[DISCONNECTED-R1] FAILED
+backend/tests/integration/test_agent_reasoning.py::test_topology_controls_next_inspection_without_causal_promotion[EXPIRED-R1] FAILED
+backend/tests/integration/test_agent_runtime.py::test_real_graph_pause_resume[WATERLOGGING-BLOCKAGE] FAILED
+backend/tests/integration/test_agent_runtime.py::test_real_graph_pause_resume[ROAD_DAMAGE-SUBGRADE_FAILURE] FAILED
+backend/tests/integration/test_agent_runtime.py::test_real_graph_pause_resume[WASTE_ACCUMULATION-MISSED_PICKUP] FAILED
+backend/tests/integration/test_agent_runtime.py::test_actual_python_process_restart_resume FAILED
+backend/tests/integration/test_agent_safety.py::test_invalid_model_tool_or_args_pauses[official::query_graph-args0] FAILED
+backend/tests/integration/test_agent_safety.py::test_invalid_model_tool_or_args_pauses[civicly::create_plan-args1] FAILED
+backend/tests/integration/test_agent_safety.py::test_invalid_model_tool_or_args_pauses[official::query_graph_readonly-args2] FAILED
+backend/tests/integration/test_agent_safety.py::test_invalid_model_tool_or_args_pauses[civicly::get_maintenance_history-args3] FAILED
+backend/tests/integration/test_agent_safety.py::test_concurrent_lease_denial_and_corrupt_checkpoint FAILED
+backend/tests/integration/test_agent_safety.py::test_actual_mcp_timeout_and_fresh_session_recovery FAILED
+backend/tests/integration/test_agent_safety.py::test_agent_rejects_future_knowledge_before_model_context[future-cutoff] FAILED
+backend/tests/integration/test_agent_safety.py::test_agent_rejects_future_knowledge_before_model_context[future-raw-fact] FAILED
+backend/tests/integration/test_browser.py::test_browser_http_available PASSED
+backend/tests/integration/test_civicly_mcp.py::test_actual_twelve_handlers_provenance_and_source_unchanged 
+
+=================================== FAILURES ===================================
+_______________________ test_real_shared_graph_boundary ________________________
+
+db = <falkordb.falkordb.FalkorDB object at 0x1207bb860>
+tmp_path = PosixPath('/private/var/folders/ng/nxnstkjs7tn9dbx9nhvtvmzw0000gn/T/pytest-of-vikashkumar/pytest-71/test_real_shared_graph_boundar0')
+
+    def test_real_shared_graph_boundary(db,tmp_path):
+        p=new_profile();path=tmp_path/'active.json';save(p,path)
+        MigrationRunner(db,p.graph).apply();repo=GraphRepository(db,p.graph,lease_seconds=30)
+        try:
+            populate(repo);repo.create_node('Department',{**common('DEP'),'name':'Synthetic','department_type':'ENGINEERING'})
+            with pytest.raises(PreconditionFailed):ComplaintService(repo,clock=lambda:CLOCK).intake(payload())
+            with active_scope(p):
+                receipt=ComplaintService(repo,clock=lambda:CLOCK).intake(payload())
+                inv=EvidenceService(repo,clock=lambda:CLOCK).execute({'operation':'open','request_id':'b10-open','incident_ids':[receipt.incident_id],'cluster_id':receipt.cluster_id},ANALYST).entity_id
+                hyp=EvidenceService(repo,clock=lambda:CLOCK).execute({'operation':'propose','request_id':'b10-propose','investigation_id':inv,'incident_ids':[receipt.incident_id],'asset_ids':['D1'],
+                    'cause_code':'BLOCKAGE','statement':'Blockage requires independent inspection','mechanism':'Restricted flow may explain standing water','confirming_codes':POLICIES['WATERLOGGING']['BLOCKAGE']['confirming'],'falsifying_codes':POLICIES['WATERLOGGING']['BLOCKAGE']['falsifying']},ANALYST).entity_id
+                provision(db,p)
+                async def check():
+                    async with brokers(p,path) as tools:
+                        calls=[]
+                        for id in [receipt.incident_id,receipt.cluster_id,inv,hyp]:
+                            ctx=Context(trace_id=uuid4().hex,execution_id=uuid4().hex,source_graph=p.graph,investigation_id=inv)
+                            result=await tools.call('official::query_graph_readonly',{'template':'node','id':id},ctx,'Application integration probe; no model selection')
+                            assert result['rows'][0]['properties']['id']==id;calls.append(result)
+                        ctx=Context(trace_id=uuid4().hex,execution_id=uuid4().hex,source_graph=p.graph,investigation_id=inv)
+                        value=await tools.call('civicly::find_related_incidents',{'incident_id':receipt.incident_id,'max_results':10,'as_of':CLOCK},ctx,'Application boundary probe; no model selection')
+                        assert value['context']['source_graph']==p.graph and value['graph_revision']==calls[-1]['graph_revision']
+                        assert any(n['id']==receipt.incident_id for n in value['data']['nodes'])
+                        return {'official':calls,'domain':value,'catalog':tools.catalog(),'transport':tools.traces}
+>               result=asyncio.run(check())
+                       ^^^^^^^^^^^^^^^^^^^^
+
+backend/tests/integration/test_agent_active.py:47: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/base_events.py:684: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+backend/tests/integration/test_agent_active.py:36: in check
+    async with brokers(p,path) as tools:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:210: in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+backend/app/agents/mcp.py:16: in brokers
+    with active_scope(profile),connections() as (_,writer,name),tempfile.TemporaryDirectory(prefix='civicly-b10-domain-') as cwd:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+backend/app/mcp/civicly/runtime.py:42: in connections
+    source=FalkorDB(host='127.0.0.1',port=6379,username=read.username,password=read.password.get_secret_value(),socket_timeout=3,socket_connect_timeout=2,max_connections=4,retry=Retry(NoBackoff(),0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/falkordb/falkordb.py:132: in __init__
+    if Is_Sentinel(conn):
+       ^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/falkordb/sentinel.py:6: in Is_Sentinel
+    info = conn.info(section="server")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/commands/core.py:1692: in info
+    return self.execute_command("INFO", section, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/client.py:867: in execute_command
+    return self._execute_command(*args, **options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/client.py:873: in _execute_command
+    conn = self.connection or pool.get_connection()
+                              ^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/utils.py:258: in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:3273: in get_connection
+    connection.connect()
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1028: in connect
+    self.retry.call_with_retry(
+backend/.venv/lib/python3.12/site-packages/redis/retry.py:132: in call_with_retry
+    raise error
+backend/.venv/lib/python3.12/site-packages/redis/retry.py:120: in call_with_retry
+    return do()
+           ^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1029: in <lambda>
+    lambda: self.connect_check_health(
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1083: in connect_check_health
+    self.on_connect_check_health(check_health=check_health)
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1166: in on_connect_check_health
+    auth_response = self.read_response()
+                    ^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1413: in read_response
+    response = self._parser.read_response(
+backend/.venv/lib/python3.12/site-packages/redis/_parsers/resp2.py:18: in read_response
+    result = self._read_response(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <redis._parsers.resp2._RESP2Parser object at 0x1211ac950>
+disable_decoding = False, timeout = <object object at 0x104a5aa70>
+
+    def _read_response(
+        self, disable_decoding=False, timeout: Union[float, object] = SENTINEL
+    ):
+        raw = self._buffer.readline(timeout=timeout)
+        if not raw:
+            raise ConnectionError(SERVER_CLOSED_CONNECTION_ERROR)
+    
+        byte, response = raw[:1], raw[1:]
+    
+        # server returned an error
+        if byte == b"-":
+            response = response.decode("utf-8", errors="replace")
+            error = self.parse_error(response)
+            # if the error is a ConnectionError, raise immediately so the user
+            # is notified
+            if isinstance(error, ConnectionError):
+>               raise error
+E               redis.exceptions.AuthenticationError: invalid username-password pair or user is disabled.
+
+backend/.venv/lib/python3.12/site-packages/redis/_parsers/resp2.py:45: AuthenticationError
+________ test_real_mcp_read_cache_scope_time_and_revision_invalidation _________
+
+db = <falkordb.falkordb.FalkorDB object at 0x1211adbe0>
+tmp_path = PosixPath('/private/var/folders/ng/nxnstkjs7tn9dbx9nhvtvmzw0000gn/T/pytest-of-vikashkumar/pytest-71/test_real_mcp_read_cache_scope0')
+
+    def test_real_mcp_read_cache_scope_time_and_revision_invalidation(db,tmp_path):
+        path=tmp_path/'profile.json';p,r,clock,receipt,inv=create(db,path)
+        async def run():
+            with active_scope(p):
+                async with brokers(p,path) as tools:
+                    tools.bind_read_cache(GraphQueries(r)._state)
+                    ctx=Context(trace_id='B10O-CACHE',execution_id=uuid4().hex,investigation_id=inv,source_graph=p.graph,caller_role='READ_ONLY',invocation_origin='APPLICATION')
+                    name='civicly::trace_infrastructure_dependencies'
+                    args={'investigation_id':inv,'asset_id':'D1','network':'TYPED_DEPENDENCIES','direction':'DOWNSTREAM','max_hops':2,'as_of':clock(),'include_candidates':False}
+                    original=tools._actual_call;calls=[]
+                    async def counted(*a,**k):calls.append(a[0]);return await original(*a,**k)
+                    tools._actual_call=counted
+                    first=await tools.call(name,args,ctx,'Authored test read',cutoff=clock());count=len(calls)
+                    repeat=await tools.call(name,args,ctx.model_copy(update={'execution_id':uuid4().hex}),'Authored identical read',cutoff=clock())
+                    assert first==repeat and len(calls)==count
+                    assert tools.last_cache_receipt['original_execution_id']==first['execution_id']
+                    assert tools.last_cache_receipt['bounded_negative_is_not_absence'] and repeat['search_limited']
+                    await tools.call(name,{**args,'max_hops':3},ctx.model_copy(update={'execution_id':uuid4().hex}),'Changed arguments',cutoff=clock());assert len(calls)==count+1
+                    await tools.call(name,args,ctx.model_copy(update={'execution_id':uuid4().hex,'caller_role':'OPERATOR_REVIEW'}),'Changed permission',cutoff=clock());assert len(calls)==count+2
+                    clock.advance();await tools.call(name,{**args,'as_of':clock()},ctx.model_copy(update={'execution_id':uuid4().hex}),'Changed cutoff',cutoff=clock());assert len(calls)==count+3
+                    r.create_node('Evidence',{**common('EV-B10O-CHANGED'),'recorded_at':clock(),'source_kind':'SYNTHETIC','evidence_type':'CONTEXT','summary':'Changed source invalidates all cached reads','reliability':'UNVERIFIED'})
+                    await tools.call(name,args,ctx.model_copy(update={'execution_id':uuid4().hex}),'Changed revision',cutoff=args['as_of']);assert len(calls)==count+4 and tools.last_cache_receipt is None
+                    Path('/tmp/civicly-b10o-cache-proof.json').write_text(json.dumps({'mode':'REAL_MCP','actual_calls':len(calls),'identical_read_reused_original_execution':True,'args_permission_time_revision_invalidated':True,'bounded_negative_preserved':True},indent=2))
+>       try:asyncio.run(run())
+            ^^^^^^^^^^^^^^^^^^
+
+backend/tests/integration/test_agent_optimization.py:49: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/base_events.py:684: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+backend/tests/integration/test_agent_optimization.py:30: in run
+    async with brokers(p,path) as tools:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:210: in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+backend/app/agents/mcp.py:16: in brokers
+    with active_scope(profile),connections() as (_,writer,name),tempfile.TemporaryDirectory(prefix='civicly-b10-domain-') as cwd:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+backend/app/mcp/civicly/runtime.py:42: in connections
+    source=FalkorDB(host='127.0.0.1',port=6379,username=read.username,password=read.password.get_secret_value(),socket_timeout=3,socket_connect_timeout=2,max_connections=4,retry=Retry(NoBackoff(),0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/falkordb/falkordb.py:132: in __init__
+    if Is_Sentinel(conn):
+       ^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/falkordb/sentinel.py:6: in Is_Sentinel
+    info = conn.info(section="server")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/commands/core.py:1692: in info
+    return self.execute_command("INFO", section, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/client.py:867: in execute_command
+    return self._execute_command(*args, **options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/client.py:873: in _execute_command
+    conn = self.connection or pool.get_connection()
+                              ^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/utils.py:258: in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:3273: in get_connection
+    connection.connect()
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1028: in connect
+    self.retry.call_with_retry(
+backend/.venv/lib/python3.12/site-packages/redis/retry.py:132: in call_with_retry
+    raise error
+backend/.venv/lib/python3.12/site-packages/redis/retry.py:120: in call_with_retry
+    return do()
+           ^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1029: in <lambda>
+    lambda: self.connect_check_health(
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1083: in connect_check_health
+    self.on_connect_check_health(check_health=check_health)
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1166: in on_connect_check_health
+    auth_response = self.read_response()
+                    ^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1413: in read_response
+    response = self._parser.read_response(
+backend/.venv/lib/python3.12/site-packages/redis/_parsers/resp2.py:18: in read_response
+    result = self._read_response(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <redis._parsers.resp2._RESP2Parser object at 0x1210d3ec0>
+disable_decoding = False, timeout = <object object at 0x104a5aa70>
+
+    def _read_response(
+        self, disable_decoding=False, timeout: Union[float, object] = SENTINEL
+    ):
+        raw = self._buffer.readline(timeout=timeout)
+        if not raw:
+            raise ConnectionError(SERVER_CLOSED_CONNECTION_ERROR)
+    
+        byte, response = raw[:1], raw[1:]
+    
+        # server returned an error
+        if byte == b"-":
+            response = response.decode("utf-8", errors="replace")
+            error = self.parse_error(response)
+            # if the error is a ConnectionError, raise immediately so the user
+            # is notified
+            if isinstance(error, ConnectionError):
+>               raise error
+E               redis.exceptions.AuthenticationError: invalid username-password pair or user is disabled.
+
+backend/.venv/lib/python3.12/site-packages/redis/_parsers/resp2.py:45: AuthenticationError
+__________ test_budget_pause_real_checkpoint_and_fresh_ledger_resume ___________
+
+db = <falkordb.falkordb.FalkorDB object at 0x1210d16d0>
+tmp_path = PosixPath('/private/var/folders/ng/nxnstkjs7tn9dbx9nhvtvmzw0000gn/T/pytest-of-vikashkumar/pytest-71/test_budget_pause_real_checkpo0')
+
+    def test_budget_pause_real_checkpoint_and_fresh_ledger_resume(db,tmp_path):
+        path=tmp_path/'profile.json';p,r,clock,receipt,inv=create(db,path)
+        async def run():
+            with active_scope(p):
+                async with brokers(p,path) as tools:
+                    initial=state(p,r,tools,clock,receipt,inv);ledger_path=tmp_path/'spend.sqlite3';ledger=Ledger(ledger_path);seen=[]
+                    def handler(req):
+                        seen.append(1);return httpx.Response(200,json={'modelVersion':'gemini-3.8-flash','usageMetadata':{'promptTokenCount':100,'candidatesTokenCount':20,'totalTokenCount':120},'candidates':[{'content':{'parts':[{'text':json.dumps(choose())}]}}]})
+                    permit=Permit(inv,initial.thread_id,'B10-O-TEST','.001','MOCK_HTTP')
+                    model=Gemini(ProviderSettings(GEMINI_API_KEY='synthetic-test-key'),permit=permit,ledger=ledger,transport=httpx.MockTransport(handler))
+                    first=await InvestigationAgent(p,r,tools,model,saver(p),clock=clock).run(initial,thread_id=initial.thread_id)
+                    assert not seen and first['__interrupt__'] and 'INVESTIGATION_SPENDING_CAP' in first['data']['errors']
+                    assert saver(p).get_tuple({'configurable':{'thread_id':initial.thread_id}}) is not None
+                    next_permit=Permit(inv,initial.thread_id,'B10-O-TEST','.15','MOCK_HTTP')
+                    recovered=Gemini(ProviderSettings(GEMINI_API_KEY='synthetic-test-key'),permit=next_permit,ledger=Ledger(ledger_path),transport=httpx.MockTransport(handler))
+                    clock.advance();result=await InvestigationAgent(p,r,tools,recovered,saver(p),clock=clock).run(thread_id=initial.thread_id,resume=True)
+                    assert result['__interrupt__'] and len(seen)==1 and result['data']['wakes']==1
+                    assert recovered.ledger.summary(inv)['case_accounted']==150000
+                    Path('/tmp/civicly-b10o-budget-checkpoint-proof.json').write_text(json.dumps({'mode':'MOCK_HTTP_REAL_MCP_SAVER','blocked_before_request':True,'fresh_ledger_same_investigation_resumed':True,'mock_requests':len(seen),'simulated_nusd':150000,'actual_gemini_requests':0},indent=2))
+>       try:asyncio.run(run())
+            ^^^^^^^^^^^^^^^^^^
+
+backend/tests/integration/test_agent_optimization.py:72: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/base_events.py:684: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+backend/tests/integration/test_agent_optimization.py:57: in run
+    async with brokers(p,path) as tools:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:210: in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+backend/app/agents/mcp.py:16: in brokers
+    with active_scope(profile),connections() as (_,writer,name),tempfile.TemporaryDirectory(prefix='civicly-b10-domain-') as cwd:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+backend/app/mcp/civicly/runtime.py:42: in connections
+    source=FalkorDB(host='127.0.0.1',port=6379,username=read.username,password=read.password.get_secret_value(),socket_timeout=3,socket_connect_timeout=2,max_connections=4,retry=Retry(NoBackoff(),0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/falkordb/falkordb.py:132: in __init__
+    if Is_Sentinel(conn):
+       ^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/falkordb/sentinel.py:6: in Is_Sentinel
+    info = conn.info(section="server")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/commands/core.py:1692: in info
+    return self.execute_command("INFO", section, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/client.py:867: in execute_command
+    return self._execute_command(*args, **options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/client.py:873: in _execute_command
+    conn = self.connection or pool.get_connection()
+                              ^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/utils.py:258: in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:3273: in get_connection
+    connection.connect()
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1028: in connect
+    self.retry.call_with_retry(
+backend/.venv/lib/python3.12/site-packages/redis/retry.py:132: in call_with_retry
+    raise error
+backend/.venv/lib/python3.12/site-packages/redis/retry.py:120: in call_with_retry
+    return do()
+           ^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1029: in <lambda>
+    lambda: self.connect_check_health(
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1083: in connect_check_health
+    self.on_connect_check_health(check_health=check_health)
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1166: in on_connect_check_health
+    auth_response = self.read_response()
+                    ^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1413: in read_response
+    response = self._parser.read_response(
+backend/.venv/lib/python3.12/site-packages/redis/_parsers/resp2.py:18: in read_response
+    result = self._read_response(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <redis._parsers.resp2._RESP2Parser object at 0x1211ac620>
+disable_decoding = False, timeout = <object object at 0x104a5aa70>
+
+    def _read_response(
+        self, disable_decoding=False, timeout: Union[float, object] = SENTINEL
+    ):
+        raw = self._buffer.readline(timeout=timeout)
+        if not raw:
+            raise ConnectionError(SERVER_CLOSED_CONNECTION_ERROR)
+    
+        byte, response = raw[:1], raw[1:]
+    
+        # server returned an error
+        if byte == b"-":
+            response = response.decode("utf-8", errors="replace")
+            error = self.parse_error(response)
+            # if the error is a ConnectionError, raise immediately so the user
+            # is notified
+            if isinstance(error, ConnectionError):
+>               raise error
+E               redis.exceptions.AuthenticationError: invalid username-password pair or user is disabled.
+
+backend/.venv/lib/python3.12/site-packages/redis/_parsers/resp2.py:45: AuthenticationError
+_ test_compact_real_b09_history_preserves_reviewed_contradiction_and_unreviewed_support[WATERLOGGING-BLOCKAGE] _
+
+db = <falkordb.falkordb.FalkorDB object at 0x1211e9ac0>
+tmp_path = PosixPath('/private/var/folders/ng/nxnstkjs7tn9dbx9nhvtvmzw0000gn/T/pytest-of-vikashkumar/pytest-71/test_compact_real_b09_history_0')
+issue = 'WATERLOGGING', cause = 'BLOCKAGE'
+
+    @pytest.mark.parametrize('issue,cause',[('WATERLOGGING','BLOCKAGE'),('ROAD_DAMAGE','SUBGRADE_FAILURE'),('WASTE_ACCUMULATION','MISSED_PICKUP')])
+    def test_compact_real_b09_history_preserves_reviewed_contradiction_and_unreviewed_support(db,tmp_path,issue,cause):
+        from tests.b09_fixtures import Fixture,propose,report,assess
+        from app.services.evidence.policies import POLICIES
+        path=tmp_path/'profile.json';p,r,clock,receipt,inv=create(db,path,issue)
+        async def run():
+            with active_scope(p):
+                f=Fixture(r,clock,{issue:receipt},p.graph,{})
+                hypothesis=propose(f,inv,issue,cause)
+                rule=POLICIES[issue][cause];asset={'WATERLOGGING':'D1','ROAD_DAMAGE':'R1','WASTE_ACCUMULATION':'W1'}[issue]
+                report(f,inv,'negative',codes=rule['falsifying'][:1],assets=[asset])
+                first=assess(f,hypothesis,ref='old').assessment
+                report(f,inv,'unreviewed',codes=rule['confirming'][:1],assets=[asset],reviewed=False)
+                latest=assess(f,hypothesis,ref='latest').assessment
+                assert latest.classification.reviewed_contradiction_ids and latest.classification.unreviewed_support_ids
+                async with brokers(p,path) as tools:
+                    s=state(p,r,tools,clock,receipt,inv,issue);s.hypotheses=[hypothesis]
+                    from tests.b10_fixtures import ScriptedModel
+                    agent=InvestigationAgent(p,r,tools,ScriptedModel([]),saver(p),clock=clock);compact=agent.context(s)
+                    assert len(compact['catalog'])==16
+                    for actual,projected in zip(tools.catalog(),compact['catalog']):
+                        assert actual['name']==projected['name'] and actual['input_schema']==compact['tool_schemas'][projected['input_schema_ref']]
+                    old_context={'state':s.model_dump(mode='json'),'catalog':tools.catalog(),'policies':POLICIES[issue],'controlled_action_schemas':agent.action_schemas(),
+                        'hypotheses':[{'id':hypothesis,'definition':r.get_node(hypothesis).properties,'assessments':[v.model_dump(mode='json') for v in agent.service.history(hypothesis,clock())]}],
+                        'departments':r._read('MATCH (d:Department {municipality_id:$scope}) RETURN d.id LIMIT 10',{'scope':'demo-city'}),'budget_notice':'Missing/history/candidate/negative results never prove causation; B09 assessments authoritative.'}
+                    sizes={'before':len(json.dumps(old_context,separators=(',',':')).encode()),'after':len(json.dumps(compact,separators=(',',':')).encode())}
+                    assert compact['hypotheses'][0]['assessments'][0]['classification']==latest.classification.model_dump(mode='json')
+                    prior=compact['hypotheses'][0]['historical_material'][0]
+                    assert prior['classification']==first.classification.model_dump(mode='json')
+                    for ref in prior['evidence_references']:
+                        if ref['report'] is not None:assert compact['facts'][ref['report']['fact_ref']]==next(v.model_dump(mode='json')['report'] for v in first.evidence_references if v.id==ref['id'])
+                    assert [a.id for a in agent.service.history(hypothesis,clock())]==[first.id,latest.id]
+                    Path('/tmp/civicly-b10o-authority-'+issue+'.json').write_text(json.dumps({'mode':'REAL_B09_MCP_CATALOG_NO_LIVE_MODEL','issue':issue,'latest_classification':latest.classification.model_dump(mode='json'),'historical_classification':prior['classification'],'full_history_unchanged':True,'catalog_count':16,'actual_tool_names':[t['name'] for t in tools.catalog()],'real_graph_context_json_bytes':sizes},indent=2))
+>       try:asyncio.run(run())
+            ^^^^^^^^^^^^^^^^^^
+
+backend/tests/integration/test_agent_optimization.py:108: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/base_events.py:684: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+backend/tests/integration/test_agent_optimization.py:90: in run
+    async with brokers(p,path) as tools:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:210: in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+backend/app/agents/mcp.py:16: in brokers
+    with active_scope(profile),connections() as (_,writer,name),tempfile.TemporaryDirectory(prefix='civicly-b10-domain-') as cwd:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+backend/app/mcp/civicly/runtime.py:42: in connections
+    source=FalkorDB(host='127.0.0.1',port=6379,username=read.username,password=read.password.get_secret_value(),socket_timeout=3,socket_connect_timeout=2,max_connections=4,retry=Retry(NoBackoff(),0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/falkordb/falkordb.py:132: in __init__
+    if Is_Sentinel(conn):
+       ^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/falkordb/sentinel.py:6: in Is_Sentinel
+    info = conn.info(section="server")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/commands/core.py:1692: in info
+    return self.execute_command("INFO", section, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/client.py:867: in execute_command
+    return self._execute_command(*args, **options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/client.py:873: in _execute_command
+    conn = self.connection or pool.get_connection()
+                              ^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/utils.py:258: in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:3273: in get_connection
+    connection.connect()
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1028: in connect
+    self.retry.call_with_retry(
+backend/.venv/lib/python3.12/site-packages/redis/retry.py:132: in call_with_retry
+    raise error
+backend/.venv/lib/python3.12/site-packages/redis/retry.py:120: in call_with_retry
+    return do()
+           ^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1029: in <lambda>
+    lambda: self.connect_check_health(
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1083: in connect_check_health
+    self.on_connect_check_health(check_health=check_health)
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1166: in on_connect_check_health
+    auth_response = self.read_response()
+                    ^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1413: in read_response
+    response = self._parser.read_response(
+backend/.venv/lib/python3.12/site-packages/redis/_parsers/resp2.py:18: in read_response
+    result = self._read_response(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <redis._parsers.resp2._RESP2Parser object at 0x1210d0bf0>
+disable_decoding = False, timeout = <object object at 0x104a5aa70>
+
+    def _read_response(
+        self, disable_decoding=False, timeout: Union[float, object] = SENTINEL
+    ):
+        raw = self._buffer.readline(timeout=timeout)
+        if not raw:
+            raise ConnectionError(SERVER_CLOSED_CONNECTION_ERROR)
+    
+        byte, response = raw[:1], raw[1:]
+    
+        # server returned an error
+        if byte == b"-":
+            response = response.decode("utf-8", errors="replace")
+            error = self.parse_error(response)
+            # if the error is a ConnectionError, raise immediately so the user
+            # is notified
+            if isinstance(error, ConnectionError):
+>               raise error
+E               redis.exceptions.AuthenticationError: invalid username-password pair or user is disabled.
+
+backend/.venv/lib/python3.12/site-packages/redis/_parsers/resp2.py:45: AuthenticationError
+_ test_compact_real_b09_history_preserves_reviewed_contradiction_and_unreviewed_support[ROAD_DAMAGE-SUBGRADE_FAILURE] _
+
+db = <falkordb.falkordb.FalkorDB object at 0x1211ad4f0>
+tmp_path = PosixPath('/private/var/folders/ng/nxnstkjs7tn9dbx9nhvtvmzw0000gn/T/pytest-of-vikashkumar/pytest-71/test_compact_real_b09_history_1')
+issue = 'ROAD_DAMAGE', cause = 'SUBGRADE_FAILURE'
+
+    @pytest.mark.parametrize('issue,cause',[('WATERLOGGING','BLOCKAGE'),('ROAD_DAMAGE','SUBGRADE_FAILURE'),('WASTE_ACCUMULATION','MISSED_PICKUP')])
+    def test_compact_real_b09_history_preserves_reviewed_contradiction_and_unreviewed_support(db,tmp_path,issue,cause):
+        from tests.b09_fixtures import Fixture,propose,report,assess
+        from app.services.evidence.policies import POLICIES
+        path=tmp_path/'profile.json';p,r,clock,receipt,inv=create(db,path,issue)
+        async def run():
+            with active_scope(p):
+                f=Fixture(r,clock,{issue:receipt},p.graph,{})
+                hypothesis=propose(f,inv,issue,cause)
+                rule=POLICIES[issue][cause];asset={'WATERLOGGING':'D1','ROAD_DAMAGE':'R1','WASTE_ACCUMULATION':'W1'}[issue]
+                report(f,inv,'negative',codes=rule['falsifying'][:1],assets=[asset])
+                first=assess(f,hypothesis,ref='old').assessment
+                report(f,inv,'unreviewed',codes=rule['confirming'][:1],assets=[asset],reviewed=False)
+                latest=assess(f,hypothesis,ref='latest').assessment
+                assert latest.classification.reviewed_contradiction_ids and latest.classification.unreviewed_support_ids
+                async with brokers(p,path) as tools:
+                    s=state(p,r,tools,clock,receipt,inv,issue);s.hypotheses=[hypothesis]
+                    from tests.b10_fixtures import ScriptedModel
+                    agent=InvestigationAgent(p,r,tools,ScriptedModel([]),saver(p),clock=clock);compact=agent.context(s)
+                    assert len(compact['catalog'])==16
+                    for actual,projected in zip(tools.catalog(),compact['catalog']):
+                        assert actual['name']==projected['name'] and actual['input_schema']==compact['tool_schemas'][projected['input_schema_ref']]
+                    old_context={'state':s.model_dump(mode='json'),'catalog':tools.catalog(),'policies':POLICIES[issue],'controlled_action_schemas':agent.action_schemas(),
+                        'hypotheses':[{'id':hypothesis,'definition':r.get_node(hypothesis).properties,'assessments':[v.model_dump(mode='json') for v in agent.service.history(hypothesis,clock())]}],
+                        'departments':r._read('MATCH (d:Department {municipality_id:$scope}) RETURN d.id LIMIT 10',{'scope':'demo-city'}),'budget_notice':'Missing/history/candidate/negative results never prove causation; B09 assessments authoritative.'}
+                    sizes={'before':len(json.dumps(old_context,separators=(',',':')).encode()),'after':len(json.dumps(compact,separators=(',',':')).encode())}
+                    assert compact['hypotheses'][0]['assessments'][0]['classification']==latest.classification.model_dump(mode='json')
+                    prior=compact['hypotheses'][0]['historical_material'][0]
+                    assert prior['classification']==first.classification.model_dump(mode='json')
+                    for ref in prior['evidence_references']:
+                        if ref['report'] is not None:assert compact['facts'][ref['report']['fact_ref']]==next(v.model_dump(mode='json')['report'] for v in first.evidence_references if v.id==ref['id'])
+                    assert [a.id for a in agent.service.history(hypothesis,clock())]==[first.id,latest.id]
+                    Path('/tmp/civicly-b10o-authority-'+issue+'.json').write_text(json.dumps({'mode':'REAL_B09_MCP_CATALOG_NO_LIVE_MODEL','issue':issue,'latest_classification':latest.classification.model_dump(mode='json'),'historical_classification':prior['classification'],'full_history_unchanged':True,'catalog_count':16,'actual_tool_names':[t['name'] for t in tools.catalog()],'real_graph_context_json_bytes':sizes},indent=2))
+>       try:asyncio.run(run())
+            ^^^^^^^^^^^^^^^^^^
+
+backend/tests/integration/test_agent_optimization.py:108: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/base_events.py:684: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+backend/tests/integration/test_agent_optimization.py:90: in run
+    async with brokers(p,path) as tools:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:210: in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+backend/app/agents/mcp.py:16: in brokers
+    with active_scope(profile),connections() as (_,writer,name),tempfile.TemporaryDirectory(prefix='civicly-b10-domain-') as cwd:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+backend/app/mcp/civicly/runtime.py:42: in connections
+    source=FalkorDB(host='127.0.0.1',port=6379,username=read.username,password=read.password.get_secret_value(),socket_timeout=3,socket_connect_timeout=2,max_connections=4,retry=Retry(NoBackoff(),0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/falkordb/falkordb.py:132: in __init__
+    if Is_Sentinel(conn):
+       ^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/falkordb/sentinel.py:6: in Is_Sentinel
+    info = conn.info(section="server")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/commands/core.py:1692: in info
+    return self.execute_command("INFO", section, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/client.py:867: in execute_command
+    return self._execute_command(*args, **options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/client.py:873: in _execute_command
+    conn = self.connection or pool.get_connection()
+                              ^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/utils.py:258: in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:3273: in get_connection
+    connection.connect()
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1028: in connect
+    self.retry.call_with_retry(
+backend/.venv/lib/python3.12/site-packages/redis/retry.py:132: in call_with_retry
+    raise error
+backend/.venv/lib/python3.12/site-packages/redis/retry.py:120: in call_with_retry
+    return do()
+           ^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1029: in <lambda>
+    lambda: self.connect_check_health(
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1083: in connect_check_health
+    self.on_connect_check_health(check_health=check_health)
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1166: in on_connect_check_health
+    auth_response = self.read_response()
+                    ^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1413: in read_response
+    response = self._parser.read_response(
+backend/.venv/lib/python3.12/site-packages/redis/_parsers/resp2.py:18: in read_response
+    result = self._read_response(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <redis._parsers.resp2._RESP2Parser object at 0x12161caa0>
+disable_decoding = False, timeout = <object object at 0x104a5aa70>
+
+    def _read_response(
+        self, disable_decoding=False, timeout: Union[float, object] = SENTINEL
+    ):
+        raw = self._buffer.readline(timeout=timeout)
+        if not raw:
+            raise ConnectionError(SERVER_CLOSED_CONNECTION_ERROR)
+    
+        byte, response = raw[:1], raw[1:]
+    
+        # server returned an error
+        if byte == b"-":
+            response = response.decode("utf-8", errors="replace")
+            error = self.parse_error(response)
+            # if the error is a ConnectionError, raise immediately so the user
+            # is notified
+            if isinstance(error, ConnectionError):
+>               raise error
+E               redis.exceptions.AuthenticationError: invalid username-password pair or user is disabled.
+
+backend/.venv/lib/python3.12/site-packages/redis/_parsers/resp2.py:45: AuthenticationError
+_ test_compact_real_b09_history_preserves_reviewed_contradiction_and_unreviewed_support[WASTE_ACCUMULATION-MISSED_PICKUP] _
+
+db = <falkordb.falkordb.FalkorDB object at 0x1136e2270>
+tmp_path = PosixPath('/private/var/folders/ng/nxnstkjs7tn9dbx9nhvtvmzw0000gn/T/pytest-of-vikashkumar/pytest-71/test_compact_real_b09_history_2')
+issue = 'WASTE_ACCUMULATION', cause = 'MISSED_PICKUP'
+
+    @pytest.mark.parametrize('issue,cause',[('WATERLOGGING','BLOCKAGE'),('ROAD_DAMAGE','SUBGRADE_FAILURE'),('WASTE_ACCUMULATION','MISSED_PICKUP')])
+    def test_compact_real_b09_history_preserves_reviewed_contradiction_and_unreviewed_support(db,tmp_path,issue,cause):
+        from tests.b09_fixtures import Fixture,propose,report,assess
+        from app.services.evidence.policies import POLICIES
+        path=tmp_path/'profile.json';p,r,clock,receipt,inv=create(db,path,issue)
+        async def run():
+            with active_scope(p):
+                f=Fixture(r,clock,{issue:receipt},p.graph,{})
+                hypothesis=propose(f,inv,issue,cause)
+                rule=POLICIES[issue][cause];asset={'WATERLOGGING':'D1','ROAD_DAMAGE':'R1','WASTE_ACCUMULATION':'W1'}[issue]
+                report(f,inv,'negative',codes=rule['falsifying'][:1],assets=[asset])
+                first=assess(f,hypothesis,ref='old').assessment
+                report(f,inv,'unreviewed',codes=rule['confirming'][:1],assets=[asset],reviewed=False)
+                latest=assess(f,hypothesis,ref='latest').assessment
+                assert latest.classification.reviewed_contradiction_ids and latest.classification.unreviewed_support_ids
+                async with brokers(p,path) as tools:
+                    s=state(p,r,tools,clock,receipt,inv,issue);s.hypotheses=[hypothesis]
+                    from tests.b10_fixtures import ScriptedModel
+                    agent=InvestigationAgent(p,r,tools,ScriptedModel([]),saver(p),clock=clock);compact=agent.context(s)
+                    assert len(compact['catalog'])==16
+                    for actual,projected in zip(tools.catalog(),compact['catalog']):
+                        assert actual['name']==projected['name'] and actual['input_schema']==compact['tool_schemas'][projected['input_schema_ref']]
+                    old_context={'state':s.model_dump(mode='json'),'catalog':tools.catalog(),'policies':POLICIES[issue],'controlled_action_schemas':agent.action_schemas(),
+                        'hypotheses':[{'id':hypothesis,'definition':r.get_node(hypothesis).properties,'assessments':[v.model_dump(mode='json') for v in agent.service.history(hypothesis,clock())]}],
+                        'departments':r._read('MATCH (d:Department {municipality_id:$scope}) RETURN d.id LIMIT 10',{'scope':'demo-city'}),'budget_notice':'Missing/history/candidate/negative results never prove causation; B09 assessments authoritative.'}
+                    sizes={'before':len(json.dumps(old_context,separators=(',',':')).encode()),'after':len(json.dumps(compact,separators=(',',':')).encode())}
+                    assert compact['hypotheses'][0]['assessments'][0]['classification']==latest.classification.model_dump(mode='json')
+                    prior=compact['hypotheses'][0]['historical_material'][0]
+                    assert prior['classification']==first.classification.model_dump(mode='json')
+                    for ref in prior['evidence_references']:
+                        if ref['report'] is not None:assert compact['facts'][ref['report']['fact_ref']]==next(v.model_dump(mode='json')['report'] for v in first.evidence_references if v.id==ref['id'])
+                    assert [a.id for a in agent.service.history(hypothesis,clock())]==[first.id,latest.id]
+                    Path('/tmp/civicly-b10o-authority-'+issue+'.json').write_text(json.dumps({'mode':'REAL_B09_MCP_CATALOG_NO_LIVE_MODEL','issue':issue,'latest_classification':latest.classification.model_dump(mode='json'),'historical_classification':prior['classification'],'full_history_unchanged':True,'catalog_count':16,'actual_tool_names':[t['name'] for t in tools.catalog()],'real_graph_context_json_bytes':sizes},indent=2))
+>       try:asyncio.run(run())
+            ^^^^^^^^^^^^^^^^^^
+
+backend/tests/integration/test_agent_optimization.py:108: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/base_events.py:684: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+backend/tests/integration/test_agent_optimization.py:90: in run
+    async with brokers(p,path) as tools:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:210: in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+backend/app/agents/mcp.py:16: in brokers
+    with active_scope(profile),connections() as (_,writer,name),tempfile.TemporaryDirectory(prefix='civicly-b10-domain-') as cwd:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+backend/app/mcp/civicly/runtime.py:42: in connections
+    source=FalkorDB(host='127.0.0.1',port=6379,username=read.username,password=read.password.get_secret_value(),socket_timeout=3,socket_connect_timeout=2,max_connections=4,retry=Retry(NoBackoff(),0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/falkordb/falkordb.py:132: in __init__
+    if Is_Sentinel(conn):
+       ^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/falkordb/sentinel.py:6: in Is_Sentinel
+    info = conn.info(section="server")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/commands/core.py:1692: in info
+    return self.execute_command("INFO", section, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/client.py:867: in execute_command
+    return self._execute_command(*args, **options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/client.py:873: in _execute_command
+    conn = self.connection or pool.get_connection()
+                              ^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/utils.py:258: in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:3273: in get_connection
+    connection.connect()
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1028: in connect
+    self.retry.call_with_retry(
+backend/.venv/lib/python3.12/site-packages/redis/retry.py:132: in call_with_retry
+    raise error
+backend/.venv/lib/python3.12/site-packages/redis/retry.py:120: in call_with_retry
+    return do()
+           ^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1029: in <lambda>
+    lambda: self.connect_check_health(
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1083: in connect_check_health
+    self.on_connect_check_health(check_health=check_health)
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1166: in on_connect_check_health
+    auth_response = self.read_response()
+                    ^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1413: in read_response
+    response = self._parser.read_response(
+backend/.venv/lib/python3.12/site-packages/redis/_parsers/resp2.py:18: in read_response
+    result = self._read_response(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <redis._parsers.resp2._RESP2Parser object at 0x121174110>
+disable_decoding = False, timeout = <object object at 0x104a5aa70>
+
+    def _read_response(
+        self, disable_decoding=False, timeout: Union[float, object] = SENTINEL
+    ):
+        raw = self._buffer.readline(timeout=timeout)
+        if not raw:
+            raise ConnectionError(SERVER_CLOSED_CONNECTION_ERROR)
+    
+        byte, response = raw[:1], raw[1:]
+    
+        # server returned an error
+        if byte == b"-":
+            response = response.decode("utf-8", errors="replace")
+            error = self.parse_error(response)
+            # if the error is a ConnectionError, raise immediately so the user
+            # is notified
+            if isinstance(error, ConnectionError):
+>               raise error
+E               redis.exceptions.AuthenticationError: invalid username-password pair or user is disabled.
+
+backend/.venv/lib/python3.12/site-packages/redis/_parsers/resp2.py:45: AuthenticationError
+_____ test_contradiction_changes_actual_b09_assessment_and_next_inspection _____
+
+db = <falkordb.falkordb.FalkorDB object at 0x12161c830>
+tmp_path = PosixPath('/private/var/folders/ng/nxnstkjs7tn9dbx9nhvtvmzw0000gn/T/pytest-of-vikashkumar/pytest-71/test_contradiction_changes_act0')
+
+    def test_contradiction_changes_actual_b09_assessment_and_next_inspection(db,tmp_path):
+        path=tmp_path/'profile.json';p,r,clock,receipt,inv=create(db,path)
+        async def run():
+            with active_scope(p):
+                async with brokers(p,path) as tools:
+                    initial=state(p,r,tools,clock,receipt,inv);agent=InvestigationAgent(p,r,tools,EvidenceReactiveFake(),saver(p),clock=clock)
+                    first=await agent.run(initial,thread_id=initial.thread_id)
+                    assert len(first['data']['hypotheses'])==2
+                    # Authored reviewed evidence through the accepted full B09 inspection lifecycle.
+                    fixture=Fixture(r,clock,{'WATERLOGGING':receipt},p.graph,{})
+                    report(fixture,inv,ref='B10-clear-drain',codes=['DRAIN_CLEAR'],assets=['D1'])
+                    clock.advance()
+                    resumed=await InvestigationAgent(p,r,tools,EvidenceReactiveFake(),saver(p),clock=clock).run(thread_id=initial.thread_id,resume=True)
+                    a=first['data']['pending_inspections'][-1];b=resumed['data']['pending_inspections'][-1]
+                    first_assets={row[0] for row in r._read('MATCH (:Inspection {id:$id})-[:INSPECTS]->(a) RETURN a.id',{'id':a})}
+                    next_assets={row[0] for row in r._read('MATCH (:Inspection {id:$id})-[:INSPECTS]->(a) RETURN a.id',{'id':b})}
+                    Path('/tmp/civicly-b10-contradiction-debug.json').write_text(json.dumps({'first':first,'resumed':resumed},default=str,indent=2))
+                    assert first_assets==next_assets=={'D1'}
+                    assert r.get_node(a).properties['inspection_type']=='BLOCKAGE_INSPECTION'
+                    assert r.get_node(b).properties['inspection_type']=='CAPACITY_TEST'
+                    states=r._read('MATCH (:Hypothesis {id:$id})-[:HAS_ASSESSMENT]->(a) RETURN a.assessment',{'id':resumed['data']['hypotheses'][0]})
+                    assert {row[0] for row in states}=={'INCONCLUSIVE','CONTRADICTED'}
+                    Path('/tmp/civicly-b10-contradiction-proof.json').write_text(json.dumps({'mode':'REACTIVE_FAKE_MODEL_REAL_DOMAIN','first':first,'resumed':resumed,'before_target':sorted(first_assets),'after_target':sorted(next_assets)},default=str,indent=2))
+>       try:asyncio.run(run())
+            ^^^^^^^^^^^^^^^^^^
+
+backend/tests/integration/test_agent_reasoning.py:58: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/base_events.py:684: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+backend/tests/integration/test_agent_reasoning.py:39: in run
+    async with brokers(p,path) as tools:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:210: in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+backend/app/agents/mcp.py:16: in brokers
+    with active_scope(profile),connections() as (_,writer,name),tempfile.TemporaryDirectory(prefix='civicly-b10-domain-') as cwd:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+backend/app/mcp/civicly/runtime.py:42: in connections
+    source=FalkorDB(host='127.0.0.1',port=6379,username=read.username,password=read.password.get_secret_value(),socket_timeout=3,socket_connect_timeout=2,max_connections=4,retry=Retry(NoBackoff(),0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/falkordb/falkordb.py:132: in __init__
+    if Is_Sentinel(conn):
+       ^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/falkordb/sentinel.py:6: in Is_Sentinel
+    info = conn.info(section="server")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/commands/core.py:1692: in info
+    return self.execute_command("INFO", section, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/client.py:867: in execute_command
+    return self._execute_command(*args, **options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/client.py:873: in _execute_command
+    conn = self.connection or pool.get_connection()
+                              ^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/utils.py:258: in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:3273: in get_connection
+    connection.connect()
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1028: in connect
+    self.retry.call_with_retry(
+backend/.venv/lib/python3.12/site-packages/redis/retry.py:132: in call_with_retry
+    raise error
+backend/.venv/lib/python3.12/site-packages/redis/retry.py:120: in call_with_retry
+    return do()
+           ^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1029: in <lambda>
+    lambda: self.connect_check_health(
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1083: in connect_check_health
+    self.on_connect_check_health(check_health=check_health)
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1166: in on_connect_check_health
+    auth_response = self.read_response()
+                    ^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1413: in read_response
+    response = self._parser.read_response(
+backend/.venv/lib/python3.12/site-packages/redis/_parsers/resp2.py:18: in read_response
+    result = self._read_response(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <redis._parsers.resp2._RESP2Parser object at 0x121604b60>
+disable_decoding = False, timeout = <object object at 0x104a5aa70>
+
+    def _read_response(
+        self, disable_decoding=False, timeout: Union[float, object] = SENTINEL
+    ):
+        raw = self._buffer.readline(timeout=timeout)
+        if not raw:
+            raise ConnectionError(SERVER_CLOSED_CONNECTION_ERROR)
+    
+        byte, response = raw[:1], raw[1:]
+    
+        # server returned an error
+        if byte == b"-":
+            response = response.decode("utf-8", errors="replace")
+            error = self.parse_error(response)
+            # if the error is a ConnectionError, raise immediately so the user
+            # is notified
+            if isinstance(error, ConnectionError):
+>               raise error
+E               redis.exceptions.AuthenticationError: invalid username-password pair or user is disabled.
+
+backend/.venv/lib/python3.12/site-packages/redis/_parsers/resp2.py:45: AuthenticationError
+_______________ test_planner_is_nonbinding_no_operational_nodes ________________
+
+db = <falkordb.falkordb.FalkorDB object at 0x121607e00>
+tmp_path = PosixPath('/private/var/folders/ng/nxnstkjs7tn9dbx9nhvtvmzw0000gn/T/pytest-of-vikashkumar/pytest-71/test_planner_is_nonbinding_no_0')
+
+    def test_planner_is_nonbinding_no_operational_nodes(db,tmp_path):
+        path=tmp_path/'profile.json';p,r,clock,receipt,inv=create(db,path)
+        async def run():
+            with active_scope(p):
+                async with brokers(p,path) as tools:
+                    initial=state(p,r,tools,clock,receipt,inv);actions=[]
+                    actions.append(choose('READ',{'template':'node','id':'D1'},'official::query_graph_readonly'))
+                    for cause in ['BLOCKAGE','CAPACITY_DEFICIT']:
+                        rule=POLICIES['WATERLOGGING'][cause]
+                        actions.append(choose('PROPOSE',{'cause_code':cause,'asset_ids':['D1'],'statement':'Synthetic '+cause,'mechanism':'Requires field confirmation','confirming_codes':rule['confirming'],'falsifying_codes':rule['falsifying']}))
+                    actions.append(choose('RECOMMEND',{'next_action':'Request human review of discriminating inspection','target_ids':['D1'],'basis_evidence_ids':[],'limitations':['No causal finding; inspection required']}))
+                    result=await InvestigationAgent(p,r,tools,ScriptedModel(actions),saver(p),clock=clock).run(initial,thread_id=initial.thread_id)
+                    assert set(['Supervisor','Investigator','RootCauseAnalyst','ResolutionPlanner','Coordinator'])<=set(result['data']['nodes'])
+                    assert result['data']['recommendation']['binding'] is False
+                    assert r._read('MATCH (n) WHERE n:Plan OR n:WorkOrder OR n:ActionTask RETURN count(n)')[0][0]==0
+>       try:asyncio.run(run())
+            ^^^^^^^^^^^^^^^^^^
+
+backend/tests/integration/test_agent_reasoning.py:80: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/base_events.py:684: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+backend/tests/integration/test_agent_reasoning.py:69: in run
+    async with brokers(p,path) as tools:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:210: in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+backend/app/agents/mcp.py:16: in brokers
+    with active_scope(profile),connections() as (_,writer,name),tempfile.TemporaryDirectory(prefix='civicly-b10-domain-') as cwd:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+backend/app/mcp/civicly/runtime.py:42: in connections
+    source=FalkorDB(host='127.0.0.1',port=6379,username=read.username,password=read.password.get_secret_value(),socket_timeout=3,socket_connect_timeout=2,max_connections=4,retry=Retry(NoBackoff(),0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/falkordb/falkordb.py:132: in __init__
+    if Is_Sentinel(conn):
+       ^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/falkordb/sentinel.py:6: in Is_Sentinel
+    info = conn.info(section="server")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/commands/core.py:1692: in info
+    return self.execute_command("INFO", section, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/client.py:867: in execute_command
+    return self._execute_command(*args, **options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/client.py:873: in _execute_command
+    conn = self.connection or pool.get_connection()
+                              ^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/utils.py:258: in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:3273: in get_connection
+    connection.connect()
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1028: in connect
+    self.retry.call_with_retry(
+backend/.venv/lib/python3.12/site-packages/redis/retry.py:132: in call_with_retry
+    raise error
+backend/.venv/lib/python3.12/site-packages/redis/retry.py:120: in call_with_retry
+    return do()
+           ^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1029: in <lambda>
+    lambda: self.connect_check_health(
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1083: in connect_check_health
+    self.on_connect_check_health(check_health=check_health)
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1166: in on_connect_check_health
+    auth_response = self.read_response()
+                    ^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1413: in read_response
+    response = self._parser.read_response(
+backend/.venv/lib/python3.12/site-packages/redis/_parsers/resp2.py:18: in read_response
+    result = self._read_response(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <redis._parsers.resp2._RESP2Parser object at 0x1216192e0>
+disable_decoding = False, timeout = <object object at 0x104a5aa70>
+
+    def _read_response(
+        self, disable_decoding=False, timeout: Union[float, object] = SENTINEL
+    ):
+        raw = self._buffer.readline(timeout=timeout)
+        if not raw:
+            raise ConnectionError(SERVER_CLOSED_CONNECTION_ERROR)
+    
+        byte, response = raw[:1], raw[1:]
+    
+        # server returned an error
+        if byte == b"-":
+            response = response.decode("utf-8", errors="replace")
+            error = self.parse_error(response)
+            # if the error is a ConnectionError, raise immediately so the user
+            # is notified
+            if isinstance(error, ConnectionError):
+>               raise error
+E               redis.exceptions.AuthenticationError: invalid username-password pair or user is disabled.
+
+backend/.venv/lib/python3.12/site-packages/redis/_parsers/resp2.py:45: AuthenticationError
+_ test_topology_controls_next_inspection_without_causal_promotion[VERIFIED-P1] _
+
+db = <falkordb.falkordb.FalkorDB object at 0x121607800>
+tmp_path = PosixPath('/private/var/folders/ng/nxnstkjs7tn9dbx9nhvtvmzw0000gn/T/pytest-of-vikashkumar/pytest-71/test_topology_controls_next_in0')
+topology = 'VERIFIED', expected = 'P1'
+
+    @pytest.mark.parametrize('topology,expected',[('VERIFIED','P1'),('CANDIDATE','R1'),('DISCONNECTED','R1'),('EXPIRED','R1')])
+    def test_topology_controls_next_inspection_without_causal_promotion(db,tmp_path,topology,expected):
+        path=tmp_path/'profile.json';p,r,clock,receipt,inv=create(db,path,'ROAD_DAMAGE')
+        with active_scope(p):
+            if topology!='DISCONNECTED':
+                props={**edge('B10-PIPE-ROAD'),'valid_from':NOW,'association_status':'CANDIDATE' if topology=='CANDIDATE' else 'VERIFIED','source_evidence_id':'EV'}
+                if topology=='EXPIRED':props['valid_to']='2026-10-18T01:00:00Z'
+                r.create_relationship('UNDERLIES','P1','R1',props)
+        async def run():
+            with active_scope(p):
+                async with brokers(p,path) as tools:
+                    initial=state(p,r,tools,clock,receipt,inv,'ROAD_DAMAGE');initial.asset_ids=['P1','R1']
+                    result=await InvestigationAgent(p,r,tools,TopologyReactiveFake(),saver(p),clock=clock).run(initial,thread_id=initial.thread_id)
+                    inspection=result['data']['pending_inspections'][-1]
+                    targets=r._read('MATCH (:Inspection {id:$id})-[:INSPECTS]->(a) RETURN a.id',{'id':inspection})
+                    assert targets==[[expected]]
+                    assert result['data']['observations'][0]['search_limited'] is True
+                    assert not r._read("MATCH (h:Hypothesis {status:'VERIFIED'}) RETURN h.id LIMIT 1")
+                    Path('/tmp/civicly-b10-topology-'+topology+'.json').write_text(json.dumps({'mode':'REACTIVE_FAKE_MODEL_REAL_MCP','topology':topology,'target':expected,'result':result},default=str,indent=2))
+>       try:asyncio.run(run())
+            ^^^^^^^^^^^^^^^^^^
+
+backend/tests/integration/test_agent_reasoning.py:118: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/base_events.py:684: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+backend/tests/integration/test_agent_reasoning.py:109: in run
+    async with brokers(p,path) as tools:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:210: in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+backend/app/agents/mcp.py:16: in brokers
+    with active_scope(profile),connections() as (_,writer,name),tempfile.TemporaryDirectory(prefix='civicly-b10-domain-') as cwd:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+backend/app/mcp/civicly/runtime.py:42: in connections
+    source=FalkorDB(host='127.0.0.1',port=6379,username=read.username,password=read.password.get_secret_value(),socket_timeout=3,socket_connect_timeout=2,max_connections=4,retry=Retry(NoBackoff(),0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/falkordb/falkordb.py:132: in __init__
+    if Is_Sentinel(conn):
+       ^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/falkordb/sentinel.py:6: in Is_Sentinel
+    info = conn.info(section="server")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/commands/core.py:1692: in info
+    return self.execute_command("INFO", section, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/client.py:867: in execute_command
+    return self._execute_command(*args, **options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/client.py:873: in _execute_command
+    conn = self.connection or pool.get_connection()
+                              ^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/utils.py:258: in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:3273: in get_connection
+    connection.connect()
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1028: in connect
+    self.retry.call_with_retry(
+backend/.venv/lib/python3.12/site-packages/redis/retry.py:132: in call_with_retry
+    raise error
+backend/.venv/lib/python3.12/site-packages/redis/retry.py:120: in call_with_retry
+    return do()
+           ^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1029: in <lambda>
+    lambda: self.connect_check_health(
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1083: in connect_check_health
+    self.on_connect_check_health(check_health=check_health)
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1166: in on_connect_check_health
+    auth_response = self.read_response()
+                    ^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1413: in read_response
+    response = self._parser.read_response(
+backend/.venv/lib/python3.12/site-packages/redis/_parsers/resp2.py:18: in read_response
+    result = self._read_response(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <redis._parsers.resp2._RESP2Parser object at 0x12161e540>
+disable_decoding = False, timeout = <object object at 0x104a5aa70>
+
+    def _read_response(
+        self, disable_decoding=False, timeout: Union[float, object] = SENTINEL
+    ):
+        raw = self._buffer.readline(timeout=timeout)
+        if not raw:
+            raise ConnectionError(SERVER_CLOSED_CONNECTION_ERROR)
+    
+        byte, response = raw[:1], raw[1:]
+    
+        # server returned an error
+        if byte == b"-":
+            response = response.decode("utf-8", errors="replace")
+            error = self.parse_error(response)
+            # if the error is a ConnectionError, raise immediately so the user
+            # is notified
+            if isinstance(error, ConnectionError):
+>               raise error
+E               redis.exceptions.AuthenticationError: invalid username-password pair or user is disabled.
+
+backend/.venv/lib/python3.12/site-packages/redis/_parsers/resp2.py:45: AuthenticationError
+_ test_topology_controls_next_inspection_without_causal_promotion[CANDIDATE-R1] _
+
+db = <falkordb.falkordb.FalkorDB object at 0x1211ebf80>
+tmp_path = PosixPath('/private/var/folders/ng/nxnstkjs7tn9dbx9nhvtvmzw0000gn/T/pytest-of-vikashkumar/pytest-71/test_topology_controls_next_in1')
+topology = 'CANDIDATE', expected = 'R1'
+
+    @pytest.mark.parametrize('topology,expected',[('VERIFIED','P1'),('CANDIDATE','R1'),('DISCONNECTED','R1'),('EXPIRED','R1')])
+    def test_topology_controls_next_inspection_without_causal_promotion(db,tmp_path,topology,expected):
+        path=tmp_path/'profile.json';p,r,clock,receipt,inv=create(db,path,'ROAD_DAMAGE')
+        with active_scope(p):
+            if topology!='DISCONNECTED':
+                props={**edge('B10-PIPE-ROAD'),'valid_from':NOW,'association_status':'CANDIDATE' if topology=='CANDIDATE' else 'VERIFIED','source_evidence_id':'EV'}
+                if topology=='EXPIRED':props['valid_to']='2026-10-18T01:00:00Z'
+                r.create_relationship('UNDERLIES','P1','R1',props)
+        async def run():
+            with active_scope(p):
+                async with brokers(p,path) as tools:
+                    initial=state(p,r,tools,clock,receipt,inv,'ROAD_DAMAGE');initial.asset_ids=['P1','R1']
+                    result=await InvestigationAgent(p,r,tools,TopologyReactiveFake(),saver(p),clock=clock).run(initial,thread_id=initial.thread_id)
+                    inspection=result['data']['pending_inspections'][-1]
+                    targets=r._read('MATCH (:Inspection {id:$id})-[:INSPECTS]->(a) RETURN a.id',{'id':inspection})
+                    assert targets==[[expected]]
+                    assert result['data']['observations'][0]['search_limited'] is True
+                    assert not r._read("MATCH (h:Hypothesis {status:'VERIFIED'}) RETURN h.id LIMIT 1")
+                    Path('/tmp/civicly-b10-topology-'+topology+'.json').write_text(json.dumps({'mode':'REACTIVE_FAKE_MODEL_REAL_MCP','topology':topology,'target':expected,'result':result},default=str,indent=2))
+>       try:asyncio.run(run())
+            ^^^^^^^^^^^^^^^^^^
+
+backend/tests/integration/test_agent_reasoning.py:118: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/base_events.py:684: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+backend/tests/integration/test_agent_reasoning.py:109: in run
+    async with brokers(p,path) as tools:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:210: in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+backend/app/agents/mcp.py:16: in brokers
+    with active_scope(profile),connections() as (_,writer,name),tempfile.TemporaryDirectory(prefix='civicly-b10-domain-') as cwd:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+backend/app/mcp/civicly/runtime.py:42: in connections
+    source=FalkorDB(host='127.0.0.1',port=6379,username=read.username,password=read.password.get_secret_value(),socket_timeout=3,socket_connect_timeout=2,max_connections=4,retry=Retry(NoBackoff(),0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/falkordb/falkordb.py:132: in __init__
+    if Is_Sentinel(conn):
+       ^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/falkordb/sentinel.py:6: in Is_Sentinel
+    info = conn.info(section="server")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/commands/core.py:1692: in info
+    return self.execute_command("INFO", section, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/client.py:867: in execute_command
+    return self._execute_command(*args, **options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/client.py:873: in _execute_command
+    conn = self.connection or pool.get_connection()
+                              ^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/utils.py:258: in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:3273: in get_connection
+    connection.connect()
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1028: in connect
+    self.retry.call_with_retry(
+backend/.venv/lib/python3.12/site-packages/redis/retry.py:132: in call_with_retry
+    raise error
+backend/.venv/lib/python3.12/site-packages/redis/retry.py:120: in call_with_retry
+    return do()
+           ^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1029: in <lambda>
+    lambda: self.connect_check_health(
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1083: in connect_check_health
+    self.on_connect_check_health(check_health=check_health)
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1166: in on_connect_check_health
+    auth_response = self.read_response()
+                    ^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1413: in read_response
+    response = self._parser.read_response(
+backend/.venv/lib/python3.12/site-packages/redis/_parsers/resp2.py:18: in read_response
+    result = self._read_response(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <redis._parsers.resp2._RESP2Parser object at 0x121604aa0>
+disable_decoding = False, timeout = <object object at 0x104a5aa70>
+
+    def _read_response(
+        self, disable_decoding=False, timeout: Union[float, object] = SENTINEL
+    ):
+        raw = self._buffer.readline(timeout=timeout)
+        if not raw:
+            raise ConnectionError(SERVER_CLOSED_CONNECTION_ERROR)
+    
+        byte, response = raw[:1], raw[1:]
+    
+        # server returned an error
+        if byte == b"-":
+            response = response.decode("utf-8", errors="replace")
+            error = self.parse_error(response)
+            # if the error is a ConnectionError, raise immediately so the user
+            # is notified
+            if isinstance(error, ConnectionError):
+>               raise error
+E               redis.exceptions.AuthenticationError: invalid username-password pair or user is disabled.
+
+backend/.venv/lib/python3.12/site-packages/redis/_parsers/resp2.py:45: AuthenticationError
+_ test_topology_controls_next_inspection_without_causal_promotion[DISCONNECTED-R1] _
+
+db = <falkordb.falkordb.FalkorDB object at 0x1211e9520>
+tmp_path = PosixPath('/private/var/folders/ng/nxnstkjs7tn9dbx9nhvtvmzw0000gn/T/pytest-of-vikashkumar/pytest-71/test_topology_controls_next_in2')
+topology = 'DISCONNECTED', expected = 'R1'
+
+    @pytest.mark.parametrize('topology,expected',[('VERIFIED','P1'),('CANDIDATE','R1'),('DISCONNECTED','R1'),('EXPIRED','R1')])
+    def test_topology_controls_next_inspection_without_causal_promotion(db,tmp_path,topology,expected):
+        path=tmp_path/'profile.json';p,r,clock,receipt,inv=create(db,path,'ROAD_DAMAGE')
+        with active_scope(p):
+            if topology!='DISCONNECTED':
+                props={**edge('B10-PIPE-ROAD'),'valid_from':NOW,'association_status':'CANDIDATE' if topology=='CANDIDATE' else 'VERIFIED','source_evidence_id':'EV'}
+                if topology=='EXPIRED':props['valid_to']='2026-10-18T01:00:00Z'
+                r.create_relationship('UNDERLIES','P1','R1',props)
+        async def run():
+            with active_scope(p):
+                async with brokers(p,path) as tools:
+                    initial=state(p,r,tools,clock,receipt,inv,'ROAD_DAMAGE');initial.asset_ids=['P1','R1']
+                    result=await InvestigationAgent(p,r,tools,TopologyReactiveFake(),saver(p),clock=clock).run(initial,thread_id=initial.thread_id)
+                    inspection=result['data']['pending_inspections'][-1]
+                    targets=r._read('MATCH (:Inspection {id:$id})-[:INSPECTS]->(a) RETURN a.id',{'id':inspection})
+                    assert targets==[[expected]]
+                    assert result['data']['observations'][0]['search_limited'] is True
+                    assert not r._read("MATCH (h:Hypothesis {status:'VERIFIED'}) RETURN h.id LIMIT 1")
+                    Path('/tmp/civicly-b10-topology-'+topology+'.json').write_text(json.dumps({'mode':'REACTIVE_FAKE_MODEL_REAL_MCP','topology':topology,'target':expected,'result':result},default=str,indent=2))
+>       try:asyncio.run(run())
+            ^^^^^^^^^^^^^^^^^^
+
+backend/tests/integration/test_agent_reasoning.py:118: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/base_events.py:684: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+backend/tests/integration/test_agent_reasoning.py:109: in run
+    async with brokers(p,path) as tools:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:210: in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+backend/app/agents/mcp.py:16: in brokers
+    with active_scope(profile),connections() as (_,writer,name),tempfile.TemporaryDirectory(prefix='civicly-b10-domain-') as cwd:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+backend/app/mcp/civicly/runtime.py:42: in connections
+    source=FalkorDB(host='127.0.0.1',port=6379,username=read.username,password=read.password.get_secret_value(),socket_timeout=3,socket_connect_timeout=2,max_connections=4,retry=Retry(NoBackoff(),0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/falkordb/falkordb.py:132: in __init__
+    if Is_Sentinel(conn):
+       ^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/falkordb/sentinel.py:6: in Is_Sentinel
+    info = conn.info(section="server")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/commands/core.py:1692: in info
+    return self.execute_command("INFO", section, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/client.py:867: in execute_command
+    return self._execute_command(*args, **options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/client.py:873: in _execute_command
+    conn = self.connection or pool.get_connection()
+                              ^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/utils.py:258: in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:3273: in get_connection
+    connection.connect()
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1028: in connect
+    self.retry.call_with_retry(
+backend/.venv/lib/python3.12/site-packages/redis/retry.py:132: in call_with_retry
+    raise error
+backend/.venv/lib/python3.12/site-packages/redis/retry.py:120: in call_with_retry
+    return do()
+           ^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1029: in <lambda>
+    lambda: self.connect_check_health(
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1083: in connect_check_health
+    self.on_connect_check_health(check_health=check_health)
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1166: in on_connect_check_health
+    auth_response = self.read_response()
+                    ^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1413: in read_response
+    response = self._parser.read_response(
+backend/.venv/lib/python3.12/site-packages/redis/_parsers/resp2.py:18: in read_response
+    result = self._read_response(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <redis._parsers.resp2._RESP2Parser object at 0x1216075f0>
+disable_decoding = False, timeout = <object object at 0x104a5aa70>
+
+    def _read_response(
+        self, disable_decoding=False, timeout: Union[float, object] = SENTINEL
+    ):
+        raw = self._buffer.readline(timeout=timeout)
+        if not raw:
+            raise ConnectionError(SERVER_CLOSED_CONNECTION_ERROR)
+    
+        byte, response = raw[:1], raw[1:]
+    
+        # server returned an error
+        if byte == b"-":
+            response = response.decode("utf-8", errors="replace")
+            error = self.parse_error(response)
+            # if the error is a ConnectionError, raise immediately so the user
+            # is notified
+            if isinstance(error, ConnectionError):
+>               raise error
+E               redis.exceptions.AuthenticationError: invalid username-password pair or user is disabled.
+
+backend/.venv/lib/python3.12/site-packages/redis/_parsers/resp2.py:45: AuthenticationError
+_ test_topology_controls_next_inspection_without_causal_promotion[EXPIRED-R1] __
+
+db = <falkordb.falkordb.FalkorDB object at 0x12162efc0>
+tmp_path = PosixPath('/private/var/folders/ng/nxnstkjs7tn9dbx9nhvtvmzw0000gn/T/pytest-of-vikashkumar/pytest-71/test_topology_controls_next_in3')
+topology = 'EXPIRED', expected = 'R1'
+
+    @pytest.mark.parametrize('topology,expected',[('VERIFIED','P1'),('CANDIDATE','R1'),('DISCONNECTED','R1'),('EXPIRED','R1')])
+    def test_topology_controls_next_inspection_without_causal_promotion(db,tmp_path,topology,expected):
+        path=tmp_path/'profile.json';p,r,clock,receipt,inv=create(db,path,'ROAD_DAMAGE')
+        with active_scope(p):
+            if topology!='DISCONNECTED':
+                props={**edge('B10-PIPE-ROAD'),'valid_from':NOW,'association_status':'CANDIDATE' if topology=='CANDIDATE' else 'VERIFIED','source_evidence_id':'EV'}
+                if topology=='EXPIRED':props['valid_to']='2026-10-18T01:00:00Z'
+                r.create_relationship('UNDERLIES','P1','R1',props)
+        async def run():
+            with active_scope(p):
+                async with brokers(p,path) as tools:
+                    initial=state(p,r,tools,clock,receipt,inv,'ROAD_DAMAGE');initial.asset_ids=['P1','R1']
+                    result=await InvestigationAgent(p,r,tools,TopologyReactiveFake(),saver(p),clock=clock).run(initial,thread_id=initial.thread_id)
+                    inspection=result['data']['pending_inspections'][-1]
+                    targets=r._read('MATCH (:Inspection {id:$id})-[:INSPECTS]->(a) RETURN a.id',{'id':inspection})
+                    assert targets==[[expected]]
+                    assert result['data']['observations'][0]['search_limited'] is True
+                    assert not r._read("MATCH (h:Hypothesis {status:'VERIFIED'}) RETURN h.id LIMIT 1")
+                    Path('/tmp/civicly-b10-topology-'+topology+'.json').write_text(json.dumps({'mode':'REACTIVE_FAKE_MODEL_REAL_MCP','topology':topology,'target':expected,'result':result},default=str,indent=2))
+>       try:asyncio.run(run())
+            ^^^^^^^^^^^^^^^^^^
+
+backend/tests/integration/test_agent_reasoning.py:118: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/base_events.py:684: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+backend/tests/integration/test_agent_reasoning.py:109: in run
+    async with brokers(p,path) as tools:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:210: in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+backend/app/agents/mcp.py:16: in brokers
+    with active_scope(profile),connections() as (_,writer,name),tempfile.TemporaryDirectory(prefix='civicly-b10-domain-') as cwd:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+backend/app/mcp/civicly/runtime.py:42: in connections
+    source=FalkorDB(host='127.0.0.1',port=6379,username=read.username,password=read.password.get_secret_value(),socket_timeout=3,socket_connect_timeout=2,max_connections=4,retry=Retry(NoBackoff(),0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/falkordb/falkordb.py:132: in __init__
+    if Is_Sentinel(conn):
+       ^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/falkordb/sentinel.py:6: in Is_Sentinel
+    info = conn.info(section="server")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/commands/core.py:1692: in info
+    return self.execute_command("INFO", section, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/client.py:867: in execute_command
+    return self._execute_command(*args, **options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/client.py:873: in _execute_command
+    conn = self.connection or pool.get_connection()
+                              ^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/utils.py:258: in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:3273: in get_connection
+    connection.connect()
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1028: in connect
+    self.retry.call_with_retry(
+backend/.venv/lib/python3.12/site-packages/redis/retry.py:132: in call_with_retry
+    raise error
+backend/.venv/lib/python3.12/site-packages/redis/retry.py:120: in call_with_retry
+    return do()
+           ^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1029: in <lambda>
+    lambda: self.connect_check_health(
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1083: in connect_check_health
+    self.on_connect_check_health(check_health=check_health)
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1166: in on_connect_check_health
+    auth_response = self.read_response()
+                    ^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1413: in read_response
+    response = self._parser.read_response(
+backend/.venv/lib/python3.12/site-packages/redis/_parsers/resp2.py:18: in read_response
+    result = self._read_response(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <redis._parsers.resp2._RESP2Parser object at 0x121143ec0>
+disable_decoding = False, timeout = <object object at 0x104a5aa70>
+
+    def _read_response(
+        self, disable_decoding=False, timeout: Union[float, object] = SENTINEL
+    ):
+        raw = self._buffer.readline(timeout=timeout)
+        if not raw:
+            raise ConnectionError(SERVER_CLOSED_CONNECTION_ERROR)
+    
+        byte, response = raw[:1], raw[1:]
+    
+        # server returned an error
+        if byte == b"-":
+            response = response.decode("utf-8", errors="replace")
+            error = self.parse_error(response)
+            # if the error is a ConnectionError, raise immediately so the user
+            # is notified
+            if isinstance(error, ConnectionError):
+>               raise error
+E               redis.exceptions.AuthenticationError: invalid username-password pair or user is disabled.
+
+backend/.venv/lib/python3.12/site-packages/redis/_parsers/resp2.py:45: AuthenticationError
+_____________ test_real_graph_pause_resume[WATERLOGGING-BLOCKAGE] ______________
+
+db = <falkordb.falkordb.FalkorDB object at 0x12117d4c0>
+tmp_path = PosixPath('/private/var/folders/ng/nxnstkjs7tn9dbx9nhvtvmzw0000gn/T/pytest-of-vikashkumar/pytest-71/test_real_graph_pause_resume_W0')
+issue = 'WATERLOGGING', cause = 'BLOCKAGE'
+
+    @pytest.mark.parametrize('issue,cause',[('WATERLOGGING','BLOCKAGE'),('ROAD_DAMAGE','SUBGRADE_FAILURE'),('WASTE_ACCUMULATION','MISSED_PICKUP')])
+    def test_real_graph_pause_resume(db,tmp_path,issue,cause):
+        path=tmp_path/'profile.json';p,repo,clock,receipt,inv=create(db,path,issue)
+        rule=POLICIES[issue][cause];asset={'WATERLOGGING':'D1','ROAD_DAMAGE':'R1','WASTE_ACCUMULATION':'W1'}[issue]
+        actions=[choose('READ',{'template':'node','id':receipt.incident_id},'official::query_graph_readonly'),
+            choose('PROPOSE',{'cause_code':cause,'asset_ids':[asset],'statement':'Synthetic possible explanation','mechanism':'Must be independently inspected','confirming_codes':rule['confirming'],'falsifying_codes':rule['falsifying']}),
+            choose('INSPECT',{'asset_ids':[asset],'department_id':'DEP','inspection_type':'B10_CONTROLLED'})]
+        async def run():
+            with active_scope(p):
+                async with brokers(p,path) as tools:
+                    s=state(p,repo,tools,clock,receipt,inv,issue);agent=InvestigationAgent(p,repo,tools,ScriptedModel(actions),saver(p),clock=clock)
+                    result=await agent.run(s,thread_id=s.thread_id)
+                    final=result['data'];assert final['pending_inspections'] and final['hypotheses'] and final['executions']
+                    assert all(role in final['nodes'] for role in ['Supervisor','Investigator','RootCauseAnalyst','Coordinator'])
+                    assert result['__interrupt__']
+                    # New agent + new Saver connection, stable investigation/thread; real changed graph.
+                    clock.advance();repo.create_node('Evidence',{'id':'EV-B10-NEW','municipality_id':'demo-city','schema_version':3,'created_at':clock(),'updated_at':clock(),'recorded_at':clock(),'source_kind':'SYNTHETIC','evidence_type':'CONTEXT','summary':'Additional source requires fresh read','reliability':'UNVERIFIED'})
+                    model=ScriptedModel([choose('READ',{'template':'node','id':'EV-B10-NEW'},'official::query_graph_readonly'),choose()])
+                    agent2=InvestigationAgent(p,repo,tools,model,saver(p),clock=clock)
+                    resumed=await agent2.run(thread_id=s.thread_id,resume=True)
+                    assert 'SOURCE_CHANGED_REFRESH_REQUIRED' in resumed['data']['errors']
+                    assert resumed['data']['wakes']==1 and resumed['data']['pending_inspections']==final['pending_inspections']
+                    assert len(resumed['data']['decisions'])==5
+                    Path('/tmp/civicly-b10-runtime-'+issue+'.json').write_text(json.dumps({'mode':'DETERMINISTIC_FAKE_MODEL_REAL_MCP_AND_SAVER','initial':result,'resumed':resumed},default=str,indent=2))
+>       try:asyncio.run(run())
+            ^^^^^^^^^^^^^^^^^^
+
+backend/tests/integration/test_agent_runtime.py:38: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/base_events.py:684: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+backend/tests/integration/test_agent_runtime.py:23: in run
+    async with brokers(p,path) as tools:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:210: in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+backend/app/agents/mcp.py:16: in brokers
+    with active_scope(profile),connections() as (_,writer,name),tempfile.TemporaryDirectory(prefix='civicly-b10-domain-') as cwd:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+backend/app/mcp/civicly/runtime.py:42: in connections
+    source=FalkorDB(host='127.0.0.1',port=6379,username=read.username,password=read.password.get_secret_value(),socket_timeout=3,socket_connect_timeout=2,max_connections=4,retry=Retry(NoBackoff(),0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/falkordb/falkordb.py:132: in __init__
+    if Is_Sentinel(conn):
+       ^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/falkordb/sentinel.py:6: in Is_Sentinel
+    info = conn.info(section="server")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/commands/core.py:1692: in info
+    return self.execute_command("INFO", section, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/client.py:867: in execute_command
+    return self._execute_command(*args, **options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/client.py:873: in _execute_command
+    conn = self.connection or pool.get_connection()
+                              ^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/utils.py:258: in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:3273: in get_connection
+    connection.connect()
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1028: in connect
+    self.retry.call_with_retry(
+backend/.venv/lib/python3.12/site-packages/redis/retry.py:132: in call_with_retry
+    raise error
+backend/.venv/lib/python3.12/site-packages/redis/retry.py:120: in call_with_retry
+    return do()
+           ^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1029: in <lambda>
+    lambda: self.connect_check_health(
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1083: in connect_check_health
+    self.on_connect_check_health(check_health=check_health)
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1166: in on_connect_check_health
+    auth_response = self.read_response()
+                    ^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1413: in read_response
+    response = self._parser.read_response(
+backend/.venv/lib/python3.12/site-packages/redis/_parsers/resp2.py:18: in read_response
+    result = self._read_response(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <redis._parsers.resp2._RESP2Parser object at 0x12117c290>
+disable_decoding = False, timeout = <object object at 0x104a5aa70>
+
+    def _read_response(
+        self, disable_decoding=False, timeout: Union[float, object] = SENTINEL
+    ):
+        raw = self._buffer.readline(timeout=timeout)
+        if not raw:
+            raise ConnectionError(SERVER_CLOSED_CONNECTION_ERROR)
+    
+        byte, response = raw[:1], raw[1:]
+    
+        # server returned an error
+        if byte == b"-":
+            response = response.decode("utf-8", errors="replace")
+            error = self.parse_error(response)
+            # if the error is a ConnectionError, raise immediately so the user
+            # is notified
+            if isinstance(error, ConnectionError):
+>               raise error
+E               redis.exceptions.AuthenticationError: invalid username-password pair or user is disabled.
+
+backend/.venv/lib/python3.12/site-packages/redis/_parsers/resp2.py:45: AuthenticationError
+__________ test_real_graph_pause_resume[ROAD_DAMAGE-SUBGRADE_FAILURE] __________
+
+db = <falkordb.falkordb.FalkorDB object at 0x1211e8320>
+tmp_path = PosixPath('/private/var/folders/ng/nxnstkjs7tn9dbx9nhvtvmzw0000gn/T/pytest-of-vikashkumar/pytest-71/test_real_graph_pause_resume_R0')
+issue = 'ROAD_DAMAGE', cause = 'SUBGRADE_FAILURE'
+
+    @pytest.mark.parametrize('issue,cause',[('WATERLOGGING','BLOCKAGE'),('ROAD_DAMAGE','SUBGRADE_FAILURE'),('WASTE_ACCUMULATION','MISSED_PICKUP')])
+    def test_real_graph_pause_resume(db,tmp_path,issue,cause):
+        path=tmp_path/'profile.json';p,repo,clock,receipt,inv=create(db,path,issue)
+        rule=POLICIES[issue][cause];asset={'WATERLOGGING':'D1','ROAD_DAMAGE':'R1','WASTE_ACCUMULATION':'W1'}[issue]
+        actions=[choose('READ',{'template':'node','id':receipt.incident_id},'official::query_graph_readonly'),
+            choose('PROPOSE',{'cause_code':cause,'asset_ids':[asset],'statement':'Synthetic possible explanation','mechanism':'Must be independently inspected','confirming_codes':rule['confirming'],'falsifying_codes':rule['falsifying']}),
+            choose('INSPECT',{'asset_ids':[asset],'department_id':'DEP','inspection_type':'B10_CONTROLLED'})]
+        async def run():
+            with active_scope(p):
+                async with brokers(p,path) as tools:
+                    s=state(p,repo,tools,clock,receipt,inv,issue);agent=InvestigationAgent(p,repo,tools,ScriptedModel(actions),saver(p),clock=clock)
+                    result=await agent.run(s,thread_id=s.thread_id)
+                    final=result['data'];assert final['pending_inspections'] and final['hypotheses'] and final['executions']
+                    assert all(role in final['nodes'] for role in ['Supervisor','Investigator','RootCauseAnalyst','Coordinator'])
+                    assert result['__interrupt__']
+                    # New agent + new Saver connection, stable investigation/thread; real changed graph.
+                    clock.advance();repo.create_node('Evidence',{'id':'EV-B10-NEW','municipality_id':'demo-city','schema_version':3,'created_at':clock(),'updated_at':clock(),'recorded_at':clock(),'source_kind':'SYNTHETIC','evidence_type':'CONTEXT','summary':'Additional source requires fresh read','reliability':'UNVERIFIED'})
+                    model=ScriptedModel([choose('READ',{'template':'node','id':'EV-B10-NEW'},'official::query_graph_readonly'),choose()])
+                    agent2=InvestigationAgent(p,repo,tools,model,saver(p),clock=clock)
+                    resumed=await agent2.run(thread_id=s.thread_id,resume=True)
+                    assert 'SOURCE_CHANGED_REFRESH_REQUIRED' in resumed['data']['errors']
+                    assert resumed['data']['wakes']==1 and resumed['data']['pending_inspections']==final['pending_inspections']
+                    assert len(resumed['data']['decisions'])==5
+                    Path('/tmp/civicly-b10-runtime-'+issue+'.json').write_text(json.dumps({'mode':'DETERMINISTIC_FAKE_MODEL_REAL_MCP_AND_SAVER','initial':result,'resumed':resumed},default=str,indent=2))
+>       try:asyncio.run(run())
+            ^^^^^^^^^^^^^^^^^^
+
+backend/tests/integration/test_agent_runtime.py:38: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/base_events.py:684: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+backend/tests/integration/test_agent_runtime.py:23: in run
+    async with brokers(p,path) as tools:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:210: in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+backend/app/agents/mcp.py:16: in brokers
+    with active_scope(profile),connections() as (_,writer,name),tempfile.TemporaryDirectory(prefix='civicly-b10-domain-') as cwd:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+backend/app/mcp/civicly/runtime.py:42: in connections
+    source=FalkorDB(host='127.0.0.1',port=6379,username=read.username,password=read.password.get_secret_value(),socket_timeout=3,socket_connect_timeout=2,max_connections=4,retry=Retry(NoBackoff(),0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/falkordb/falkordb.py:132: in __init__
+    if Is_Sentinel(conn):
+       ^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/falkordb/sentinel.py:6: in Is_Sentinel
+    info = conn.info(section="server")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/commands/core.py:1692: in info
+    return self.execute_command("INFO", section, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/client.py:867: in execute_command
+    return self._execute_command(*args, **options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/client.py:873: in _execute_command
+    conn = self.connection or pool.get_connection()
+                              ^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/utils.py:258: in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:3273: in get_connection
+    connection.connect()
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1028: in connect
+    self.retry.call_with_retry(
+backend/.venv/lib/python3.12/site-packages/redis/retry.py:132: in call_with_retry
+    raise error
+backend/.venv/lib/python3.12/site-packages/redis/retry.py:120: in call_with_retry
+    return do()
+           ^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1029: in <lambda>
+    lambda: self.connect_check_health(
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1083: in connect_check_health
+    self.on_connect_check_health(check_health=check_health)
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1166: in on_connect_check_health
+    auth_response = self.read_response()
+                    ^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1413: in read_response
+    response = self._parser.read_response(
+backend/.venv/lib/python3.12/site-packages/redis/_parsers/resp2.py:18: in read_response
+    result = self._read_response(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <redis._parsers.resp2._RESP2Parser object at 0x121140e30>
+disable_decoding = False, timeout = <object object at 0x104a5aa70>
+
+    def _read_response(
+        self, disable_decoding=False, timeout: Union[float, object] = SENTINEL
+    ):
+        raw = self._buffer.readline(timeout=timeout)
+        if not raw:
+            raise ConnectionError(SERVER_CLOSED_CONNECTION_ERROR)
+    
+        byte, response = raw[:1], raw[1:]
+    
+        # server returned an error
+        if byte == b"-":
+            response = response.decode("utf-8", errors="replace")
+            error = self.parse_error(response)
+            # if the error is a ConnectionError, raise immediately so the user
+            # is notified
+            if isinstance(error, ConnectionError):
+>               raise error
+E               redis.exceptions.AuthenticationError: invalid username-password pair or user is disabled.
+
+backend/.venv/lib/python3.12/site-packages/redis/_parsers/resp2.py:45: AuthenticationError
+________ test_real_graph_pause_resume[WASTE_ACCUMULATION-MISSED_PICKUP] ________
+
+db = <falkordb.falkordb.FalkorDB object at 0x121142f00>
+tmp_path = PosixPath('/private/var/folders/ng/nxnstkjs7tn9dbx9nhvtvmzw0000gn/T/pytest-of-vikashkumar/pytest-71/test_real_graph_pause_resume_W1')
+issue = 'WASTE_ACCUMULATION', cause = 'MISSED_PICKUP'
+
+    @pytest.mark.parametrize('issue,cause',[('WATERLOGGING','BLOCKAGE'),('ROAD_DAMAGE','SUBGRADE_FAILURE'),('WASTE_ACCUMULATION','MISSED_PICKUP')])
+    def test_real_graph_pause_resume(db,tmp_path,issue,cause):
+        path=tmp_path/'profile.json';p,repo,clock,receipt,inv=create(db,path,issue)
+        rule=POLICIES[issue][cause];asset={'WATERLOGGING':'D1','ROAD_DAMAGE':'R1','WASTE_ACCUMULATION':'W1'}[issue]
+        actions=[choose('READ',{'template':'node','id':receipt.incident_id},'official::query_graph_readonly'),
+            choose('PROPOSE',{'cause_code':cause,'asset_ids':[asset],'statement':'Synthetic possible explanation','mechanism':'Must be independently inspected','confirming_codes':rule['confirming'],'falsifying_codes':rule['falsifying']}),
+            choose('INSPECT',{'asset_ids':[asset],'department_id':'DEP','inspection_type':'B10_CONTROLLED'})]
+        async def run():
+            with active_scope(p):
+                async with brokers(p,path) as tools:
+                    s=state(p,repo,tools,clock,receipt,inv,issue);agent=InvestigationAgent(p,repo,tools,ScriptedModel(actions),saver(p),clock=clock)
+                    result=await agent.run(s,thread_id=s.thread_id)
+                    final=result['data'];assert final['pending_inspections'] and final['hypotheses'] and final['executions']
+                    assert all(role in final['nodes'] for role in ['Supervisor','Investigator','RootCauseAnalyst','Coordinator'])
+                    assert result['__interrupt__']
+                    # New agent + new Saver connection, stable investigation/thread; real changed graph.
+                    clock.advance();repo.create_node('Evidence',{'id':'EV-B10-NEW','municipality_id':'demo-city','schema_version':3,'created_at':clock(),'updated_at':clock(),'recorded_at':clock(),'source_kind':'SYNTHETIC','evidence_type':'CONTEXT','summary':'Additional source requires fresh read','reliability':'UNVERIFIED'})
+                    model=ScriptedModel([choose('READ',{'template':'node','id':'EV-B10-NEW'},'official::query_graph_readonly'),choose()])
+                    agent2=InvestigationAgent(p,repo,tools,model,saver(p),clock=clock)
+                    resumed=await agent2.run(thread_id=s.thread_id,resume=True)
+                    assert 'SOURCE_CHANGED_REFRESH_REQUIRED' in resumed['data']['errors']
+                    assert resumed['data']['wakes']==1 and resumed['data']['pending_inspections']==final['pending_inspections']
+                    assert len(resumed['data']['decisions'])==5
+                    Path('/tmp/civicly-b10-runtime-'+issue+'.json').write_text(json.dumps({'mode':'DETERMINISTIC_FAKE_MODEL_REAL_MCP_AND_SAVER','initial':result,'resumed':resumed},default=str,indent=2))
+>       try:asyncio.run(run())
+            ^^^^^^^^^^^^^^^^^^
+
+backend/tests/integration/test_agent_runtime.py:38: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/base_events.py:684: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+backend/tests/integration/test_agent_runtime.py:23: in run
+    async with brokers(p,path) as tools:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:210: in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+backend/app/agents/mcp.py:16: in brokers
+    with active_scope(profile),connections() as (_,writer,name),tempfile.TemporaryDirectory(prefix='civicly-b10-domain-') as cwd:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+backend/app/mcp/civicly/runtime.py:42: in connections
+    source=FalkorDB(host='127.0.0.1',port=6379,username=read.username,password=read.password.get_secret_value(),socket_timeout=3,socket_connect_timeout=2,max_connections=4,retry=Retry(NoBackoff(),0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/falkordb/falkordb.py:132: in __init__
+    if Is_Sentinel(conn):
+       ^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/falkordb/sentinel.py:6: in Is_Sentinel
+    info = conn.info(section="server")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/commands/core.py:1692: in info
+    return self.execute_command("INFO", section, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/client.py:867: in execute_command
+    return self._execute_command(*args, **options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/client.py:873: in _execute_command
+    conn = self.connection or pool.get_connection()
+                              ^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/utils.py:258: in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:3273: in get_connection
+    connection.connect()
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1028: in connect
+    self.retry.call_with_retry(
+backend/.venv/lib/python3.12/site-packages/redis/retry.py:132: in call_with_retry
+    raise error
+backend/.venv/lib/python3.12/site-packages/redis/retry.py:120: in call_with_retry
+    return do()
+           ^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1029: in <lambda>
+    lambda: self.connect_check_health(
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1083: in connect_check_health
+    self.on_connect_check_health(check_health=check_health)
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1166: in on_connect_check_health
+    auth_response = self.read_response()
+                    ^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1413: in read_response
+    response = self._parser.read_response(
+backend/.venv/lib/python3.12/site-packages/redis/_parsers/resp2.py:18: in read_response
+    result = self._read_response(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <redis._parsers.resp2._RESP2Parser object at 0x121606450>
+disable_decoding = False, timeout = <object object at 0x104a5aa70>
+
+    def _read_response(
+        self, disable_decoding=False, timeout: Union[float, object] = SENTINEL
+    ):
+        raw = self._buffer.readline(timeout=timeout)
+        if not raw:
+            raise ConnectionError(SERVER_CLOSED_CONNECTION_ERROR)
+    
+        byte, response = raw[:1], raw[1:]
+    
+        # server returned an error
+        if byte == b"-":
+            response = response.decode("utf-8", errors="replace")
+            error = self.parse_error(response)
+            # if the error is a ConnectionError, raise immediately so the user
+            # is notified
+            if isinstance(error, ConnectionError):
+>               raise error
+E               redis.exceptions.AuthenticationError: invalid username-password pair or user is disabled.
+
+backend/.venv/lib/python3.12/site-packages/redis/_parsers/resp2.py:45: AuthenticationError
+__________________ test_actual_python_process_restart_resume ___________________
+
+db = <falkordb.falkordb.FalkorDB object at 0x12116b440>
+tmp_path = PosixPath('/private/var/folders/ng/nxnstkjs7tn9dbx9nhvtvmzw0000gn/T/pytest-of-vikashkumar/pytest-71/test_actual_python_process_res0')
+
+    def test_actual_python_process_restart_resume(db,tmp_path):
+        import subprocess,os
+        from uuid import uuid4
+        path=tmp_path/'profile.json';p,repo,clock,receipt,inv=create(db,path)
+        try:
+            async def prepare():
+                with active_scope(p):
+                    async with brokers(p,path) as tools:return state(p,repo,tools,clock,receipt,inv)
+>           initial=asyncio.run(prepare());input_path=tmp_path/'state.json';input_path.write_text(initial.model_dump_json())
+                    ^^^^^^^^^^^^^^^^^^^^^^
+
+backend/tests/integration/test_agent_runtime.py:53: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/base_events.py:684: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+backend/tests/integration/test_agent_runtime.py:52: in prepare
+    async with brokers(p,path) as tools:return state(p,repo,tools,clock,receipt,inv)
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:210: in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+backend/app/agents/mcp.py:16: in brokers
+    with active_scope(profile),connections() as (_,writer,name),tempfile.TemporaryDirectory(prefix='civicly-b10-domain-') as cwd:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+backend/app/mcp/civicly/runtime.py:42: in connections
+    source=FalkorDB(host='127.0.0.1',port=6379,username=read.username,password=read.password.get_secret_value(),socket_timeout=3,socket_connect_timeout=2,max_connections=4,retry=Retry(NoBackoff(),0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/falkordb/falkordb.py:132: in __init__
+    if Is_Sentinel(conn):
+       ^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/falkordb/sentinel.py:6: in Is_Sentinel
+    info = conn.info(section="server")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/commands/core.py:1692: in info
+    return self.execute_command("INFO", section, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/client.py:867: in execute_command
+    return self._execute_command(*args, **options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/client.py:873: in _execute_command
+    conn = self.connection or pool.get_connection()
+                              ^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/utils.py:258: in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:3273: in get_connection
+    connection.connect()
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1028: in connect
+    self.retry.call_with_retry(
+backend/.venv/lib/python3.12/site-packages/redis/retry.py:132: in call_with_retry
+    raise error
+backend/.venv/lib/python3.12/site-packages/redis/retry.py:120: in call_with_retry
+    return do()
+           ^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1029: in <lambda>
+    lambda: self.connect_check_health(
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1083: in connect_check_health
+    self.on_connect_check_health(check_health=check_health)
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1166: in on_connect_check_health
+    auth_response = self.read_response()
+                    ^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1413: in read_response
+    response = self._parser.read_response(
+backend/.venv/lib/python3.12/site-packages/redis/_parsers/resp2.py:18: in read_response
+    result = self._read_response(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <redis._parsers.resp2._RESP2Parser object at 0x121168410>
+disable_decoding = False, timeout = <object object at 0x104a5aa70>
+
+    def _read_response(
+        self, disable_decoding=False, timeout: Union[float, object] = SENTINEL
+    ):
+        raw = self._buffer.readline(timeout=timeout)
+        if not raw:
+            raise ConnectionError(SERVER_CLOSED_CONNECTION_ERROR)
+    
+        byte, response = raw[:1], raw[1:]
+    
+        # server returned an error
+        if byte == b"-":
+            response = response.decode("utf-8", errors="replace")
+            error = self.parse_error(response)
+            # if the error is a ConnectionError, raise immediately so the user
+            # is notified
+            if isinstance(error, ConnectionError):
+>               raise error
+E               redis.exceptions.AuthenticationError: invalid username-password pair or user is disabled.
+
+backend/.venv/lib/python3.12/site-packages/redis/_parsers/resp2.py:45: AuthenticationError
+_____ test_invalid_model_tool_or_args_pauses[official::query_graph-args0] ______
+
+f = (ActiveProfile(version=1, graph='civicly_b10_test_e10c82c0fe2d4a86befd64efc34cbef5', checkpoints='civicly_b10_checkpoi...ers/ng/nxnstkjs7tn9dbx9nhvtvmzw0000gn/T/pytest-of-vikashkumar/pytest-71/test_invalid_model_tool_or_arg0/profile.json'))
+tool = 'official::query_graph', args = {'query': 'CREATE (:Forbidden)'}
+
+    @pytest.mark.parametrize('tool,args',[('official::query_graph',{'query':'CREATE (:Forbidden)'}),('civicly::create_plan',{}),('official::query_graph_readonly',{'template':'node','id':'D1','graph':'civicly_knowledge'}),('civicly::get_maintenance_history',{'asset_id':'D1','surprise':True})])
+    def test_invalid_model_tool_or_args_pauses(f,tool,args):
+        p,r,clock,receipt,inv,path=f
+        async def run():
+            with active_scope(p):
+                async with brokers(p,path) as tools:
+                    s=state(p,r,tools,clock,receipt,inv);agent=InvestigationAgent(p,r,tools,ScriptedModel([choose('READ',args,tool)]),saver(p),clock=clock)
+                    result=await agent.run(s,thread_id=s.thread_id)
+                    assert result['__interrupt__'] and result['data']['pause_reason']=='DEPENDENCY_UNAVAILABLE'
+                    assert not result['data']['hypotheses']
+>       asyncio.run(run())
+
+backend/tests/integration/test_agent_safety.py:33: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/base_events.py:684: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+backend/tests/integration/test_agent_safety.py:28: in run
+    async with brokers(p,path) as tools:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:210: in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+backend/app/agents/mcp.py:16: in brokers
+    with active_scope(profile),connections() as (_,writer,name),tempfile.TemporaryDirectory(prefix='civicly-b10-domain-') as cwd:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+backend/app/mcp/civicly/runtime.py:42: in connections
+    source=FalkorDB(host='127.0.0.1',port=6379,username=read.username,password=read.password.get_secret_value(),socket_timeout=3,socket_connect_timeout=2,max_connections=4,retry=Retry(NoBackoff(),0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/falkordb/falkordb.py:132: in __init__
+    if Is_Sentinel(conn):
+       ^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/falkordb/sentinel.py:6: in Is_Sentinel
+    info = conn.info(section="server")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/commands/core.py:1692: in info
+    return self.execute_command("INFO", section, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/client.py:867: in execute_command
+    return self._execute_command(*args, **options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/client.py:873: in _execute_command
+    conn = self.connection or pool.get_connection()
+                              ^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/utils.py:258: in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:3273: in get_connection
+    connection.connect()
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1028: in connect
+    self.retry.call_with_retry(
+backend/.venv/lib/python3.12/site-packages/redis/retry.py:132: in call_with_retry
+    raise error
+backend/.venv/lib/python3.12/site-packages/redis/retry.py:120: in call_with_retry
+    return do()
+           ^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1029: in <lambda>
+    lambda: self.connect_check_health(
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1083: in connect_check_health
+    self.on_connect_check_health(check_health=check_health)
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1166: in on_connect_check_health
+    auth_response = self.read_response()
+                    ^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1413: in read_response
+    response = self._parser.read_response(
+backend/.venv/lib/python3.12/site-packages/redis/_parsers/resp2.py:18: in read_response
+    result = self._read_response(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <redis._parsers.resp2._RESP2Parser object at 0x1216079b0>
+disable_decoding = False, timeout = <object object at 0x104a5aa70>
+
+    def _read_response(
+        self, disable_decoding=False, timeout: Union[float, object] = SENTINEL
+    ):
+        raw = self._buffer.readline(timeout=timeout)
+        if not raw:
+            raise ConnectionError(SERVER_CLOSED_CONNECTION_ERROR)
+    
+        byte, response = raw[:1], raw[1:]
+    
+        # server returned an error
+        if byte == b"-":
+            response = response.decode("utf-8", errors="replace")
+            error = self.parse_error(response)
+            # if the error is a ConnectionError, raise immediately so the user
+            # is notified
+            if isinstance(error, ConnectionError):
+>               raise error
+E               redis.exceptions.AuthenticationError: invalid username-password pair or user is disabled.
+
+backend/.venv/lib/python3.12/site-packages/redis/_parsers/resp2.py:45: AuthenticationError
+______ test_invalid_model_tool_or_args_pauses[civicly::create_plan-args1] ______
+
+f = (ActiveProfile(version=1, graph='civicly_b10_test_94e28a639d544204b3a64104cd2da3a7', checkpoints='civicly_b10_checkpoi...ers/ng/nxnstkjs7tn9dbx9nhvtvmzw0000gn/T/pytest-of-vikashkumar/pytest-71/test_invalid_model_tool_or_arg1/profile.json'))
+tool = 'civicly::create_plan', args = {}
+
+    @pytest.mark.parametrize('tool,args',[('official::query_graph',{'query':'CREATE (:Forbidden)'}),('civicly::create_plan',{}),('official::query_graph_readonly',{'template':'node','id':'D1','graph':'civicly_knowledge'}),('civicly::get_maintenance_history',{'asset_id':'D1','surprise':True})])
+    def test_invalid_model_tool_or_args_pauses(f,tool,args):
+        p,r,clock,receipt,inv,path=f
+        async def run():
+            with active_scope(p):
+                async with brokers(p,path) as tools:
+                    s=state(p,r,tools,clock,receipt,inv);agent=InvestigationAgent(p,r,tools,ScriptedModel([choose('READ',args,tool)]),saver(p),clock=clock)
+                    result=await agent.run(s,thread_id=s.thread_id)
+                    assert result['__interrupt__'] and result['data']['pause_reason']=='DEPENDENCY_UNAVAILABLE'
+                    assert not result['data']['hypotheses']
+>       asyncio.run(run())
+
+backend/tests/integration/test_agent_safety.py:33: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/base_events.py:684: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+backend/tests/integration/test_agent_safety.py:28: in run
+    async with brokers(p,path) as tools:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:210: in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+backend/app/agents/mcp.py:16: in brokers
+    with active_scope(profile),connections() as (_,writer,name),tempfile.TemporaryDirectory(prefix='civicly-b10-domain-') as cwd:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+backend/app/mcp/civicly/runtime.py:42: in connections
+    source=FalkorDB(host='127.0.0.1',port=6379,username=read.username,password=read.password.get_secret_value(),socket_timeout=3,socket_connect_timeout=2,max_connections=4,retry=Retry(NoBackoff(),0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/falkordb/falkordb.py:132: in __init__
+    if Is_Sentinel(conn):
+       ^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/falkordb/sentinel.py:6: in Is_Sentinel
+    info = conn.info(section="server")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/commands/core.py:1692: in info
+    return self.execute_command("INFO", section, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/client.py:867: in execute_command
+    return self._execute_command(*args, **options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/client.py:873: in _execute_command
+    conn = self.connection or pool.get_connection()
+                              ^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/utils.py:258: in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:3273: in get_connection
+    connection.connect()
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1028: in connect
+    self.retry.call_with_retry(
+backend/.venv/lib/python3.12/site-packages/redis/retry.py:132: in call_with_retry
+    raise error
+backend/.venv/lib/python3.12/site-packages/redis/retry.py:120: in call_with_retry
+    return do()
+           ^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1029: in <lambda>
+    lambda: self.connect_check_health(
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1083: in connect_check_health
+    self.on_connect_check_health(check_health=check_health)
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1166: in on_connect_check_health
+    auth_response = self.read_response()
+                    ^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1413: in read_response
+    response = self._parser.read_response(
+backend/.venv/lib/python3.12/site-packages/redis/_parsers/resp2.py:18: in read_response
+    result = self._read_response(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <redis._parsers.resp2._RESP2Parser object at 0x12116a3f0>
+disable_decoding = False, timeout = <object object at 0x104a5aa70>
+
+    def _read_response(
+        self, disable_decoding=False, timeout: Union[float, object] = SENTINEL
+    ):
+        raw = self._buffer.readline(timeout=timeout)
+        if not raw:
+            raise ConnectionError(SERVER_CLOSED_CONNECTION_ERROR)
+    
+        byte, response = raw[:1], raw[1:]
+    
+        # server returned an error
+        if byte == b"-":
+            response = response.decode("utf-8", errors="replace")
+            error = self.parse_error(response)
+            # if the error is a ConnectionError, raise immediately so the user
+            # is notified
+            if isinstance(error, ConnectionError):
+>               raise error
+E               redis.exceptions.AuthenticationError: invalid username-password pair or user is disabled.
+
+backend/.venv/lib/python3.12/site-packages/redis/_parsers/resp2.py:45: AuthenticationError
+_ test_invalid_model_tool_or_args_pauses[official::query_graph_readonly-args2] _
+
+f = (ActiveProfile(version=1, graph='civicly_b10_test_6900602f7c4a44a981038706a3c8fcfc', checkpoints='civicly_b10_checkpoi...ers/ng/nxnstkjs7tn9dbx9nhvtvmzw0000gn/T/pytest-of-vikashkumar/pytest-71/test_invalid_model_tool_or_arg2/profile.json'))
+tool = 'official::query_graph_readonly'
+args = {'template': 'node', 'id': 'D1', 'graph': 'civicly_knowledge'}
+
+    @pytest.mark.parametrize('tool,args',[('official::query_graph',{'query':'CREATE (:Forbidden)'}),('civicly::create_plan',{}),('official::query_graph_readonly',{'template':'node','id':'D1','graph':'civicly_knowledge'}),('civicly::get_maintenance_history',{'asset_id':'D1','surprise':True})])
+    def test_invalid_model_tool_or_args_pauses(f,tool,args):
+        p,r,clock,receipt,inv,path=f
+        async def run():
+            with active_scope(p):
+                async with brokers(p,path) as tools:
+                    s=state(p,r,tools,clock,receipt,inv);agent=InvestigationAgent(p,r,tools,ScriptedModel([choose('READ',args,tool)]),saver(p),clock=clock)
+                    result=await agent.run(s,thread_id=s.thread_id)
+                    assert result['__interrupt__'] and result['data']['pause_reason']=='DEPENDENCY_UNAVAILABLE'
+                    assert not result['data']['hypotheses']
+>       asyncio.run(run())
+
+backend/tests/integration/test_agent_safety.py:33: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/base_events.py:684: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+backend/tests/integration/test_agent_safety.py:28: in run
+    async with brokers(p,path) as tools:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:210: in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+backend/app/agents/mcp.py:16: in brokers
+    with active_scope(profile),connections() as (_,writer,name),tempfile.TemporaryDirectory(prefix='civicly-b10-domain-') as cwd:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+backend/app/mcp/civicly/runtime.py:42: in connections
+    source=FalkorDB(host='127.0.0.1',port=6379,username=read.username,password=read.password.get_secret_value(),socket_timeout=3,socket_connect_timeout=2,max_connections=4,retry=Retry(NoBackoff(),0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/falkordb/falkordb.py:132: in __init__
+    if Is_Sentinel(conn):
+       ^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/falkordb/sentinel.py:6: in Is_Sentinel
+    info = conn.info(section="server")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/commands/core.py:1692: in info
+    return self.execute_command("INFO", section, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/client.py:867: in execute_command
+    return self._execute_command(*args, **options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/client.py:873: in _execute_command
+    conn = self.connection or pool.get_connection()
+                              ^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/utils.py:258: in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:3273: in get_connection
+    connection.connect()
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1028: in connect
+    self.retry.call_with_retry(
+backend/.venv/lib/python3.12/site-packages/redis/retry.py:132: in call_with_retry
+    raise error
+backend/.venv/lib/python3.12/site-packages/redis/retry.py:120: in call_with_retry
+    return do()
+           ^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1029: in <lambda>
+    lambda: self.connect_check_health(
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1083: in connect_check_health
+    self.on_connect_check_health(check_health=check_health)
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1166: in on_connect_check_health
+    auth_response = self.read_response()
+                    ^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1413: in read_response
+    response = self._parser.read_response(
+backend/.venv/lib/python3.12/site-packages/redis/_parsers/resp2.py:18: in read_response
+    result = self._read_response(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <redis._parsers.resp2._RESP2Parser object at 0x121177020>
+disable_decoding = False, timeout = <object object at 0x104a5aa70>
+
+    def _read_response(
+        self, disable_decoding=False, timeout: Union[float, object] = SENTINEL
+    ):
+        raw = self._buffer.readline(timeout=timeout)
+        if not raw:
+            raise ConnectionError(SERVER_CLOSED_CONNECTION_ERROR)
+    
+        byte, response = raw[:1], raw[1:]
+    
+        # server returned an error
+        if byte == b"-":
+            response = response.decode("utf-8", errors="replace")
+            error = self.parse_error(response)
+            # if the error is a ConnectionError, raise immediately so the user
+            # is notified
+            if isinstance(error, ConnectionError):
+>               raise error
+E               redis.exceptions.AuthenticationError: invalid username-password pair or user is disabled.
+
+backend/.venv/lib/python3.12/site-packages/redis/_parsers/resp2.py:45: AuthenticationError
+_ test_invalid_model_tool_or_args_pauses[civicly::get_maintenance_history-args3] _
+
+f = (ActiveProfile(version=1, graph='civicly_b10_test_629dfe838d93409d93e3881e4dc226b8', checkpoints='civicly_b10_checkpoi...ers/ng/nxnstkjs7tn9dbx9nhvtvmzw0000gn/T/pytest-of-vikashkumar/pytest-71/test_invalid_model_tool_or_arg3/profile.json'))
+tool = 'civicly::get_maintenance_history'
+args = {'asset_id': 'D1', 'surprise': True}
+
+    @pytest.mark.parametrize('tool,args',[('official::query_graph',{'query':'CREATE (:Forbidden)'}),('civicly::create_plan',{}),('official::query_graph_readonly',{'template':'node','id':'D1','graph':'civicly_knowledge'}),('civicly::get_maintenance_history',{'asset_id':'D1','surprise':True})])
+    def test_invalid_model_tool_or_args_pauses(f,tool,args):
+        p,r,clock,receipt,inv,path=f
+        async def run():
+            with active_scope(p):
+                async with brokers(p,path) as tools:
+                    s=state(p,r,tools,clock,receipt,inv);agent=InvestigationAgent(p,r,tools,ScriptedModel([choose('READ',args,tool)]),saver(p),clock=clock)
+                    result=await agent.run(s,thread_id=s.thread_id)
+                    assert result['__interrupt__'] and result['data']['pause_reason']=='DEPENDENCY_UNAVAILABLE'
+                    assert not result['data']['hypotheses']
+>       asyncio.run(run())
+
+backend/tests/integration/test_agent_safety.py:33: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/base_events.py:684: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+backend/tests/integration/test_agent_safety.py:28: in run
+    async with brokers(p,path) as tools:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:210: in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+backend/app/agents/mcp.py:16: in brokers
+    with active_scope(profile),connections() as (_,writer,name),tempfile.TemporaryDirectory(prefix='civicly-b10-domain-') as cwd:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+backend/app/mcp/civicly/runtime.py:42: in connections
+    source=FalkorDB(host='127.0.0.1',port=6379,username=read.username,password=read.password.get_secret_value(),socket_timeout=3,socket_connect_timeout=2,max_connections=4,retry=Retry(NoBackoff(),0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/falkordb/falkordb.py:132: in __init__
+    if Is_Sentinel(conn):
+       ^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/falkordb/sentinel.py:6: in Is_Sentinel
+    info = conn.info(section="server")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/commands/core.py:1692: in info
+    return self.execute_command("INFO", section, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/client.py:867: in execute_command
+    return self._execute_command(*args, **options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/client.py:873: in _execute_command
+    conn = self.connection or pool.get_connection()
+                              ^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/utils.py:258: in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:3273: in get_connection
+    connection.connect()
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1028: in connect
+    self.retry.call_with_retry(
+backend/.venv/lib/python3.12/site-packages/redis/retry.py:132: in call_with_retry
+    raise error
+backend/.venv/lib/python3.12/site-packages/redis/retry.py:120: in call_with_retry
+    return do()
+           ^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1029: in <lambda>
+    lambda: self.connect_check_health(
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1083: in connect_check_health
+    self.on_connect_check_health(check_health=check_health)
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1166: in on_connect_check_health
+    auth_response = self.read_response()
+                    ^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1413: in read_response
+    response = self._parser.read_response(
+backend/.venv/lib/python3.12/site-packages/redis/_parsers/resp2.py:18: in read_response
+    result = self._read_response(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <redis._parsers.resp2._RESP2Parser object at 0x1211693a0>
+disable_decoding = False, timeout = <object object at 0x104a5aa70>
+
+    def _read_response(
+        self, disable_decoding=False, timeout: Union[float, object] = SENTINEL
+    ):
+        raw = self._buffer.readline(timeout=timeout)
+        if not raw:
+            raise ConnectionError(SERVER_CLOSED_CONNECTION_ERROR)
+    
+        byte, response = raw[:1], raw[1:]
+    
+        # server returned an error
+        if byte == b"-":
+            response = response.decode("utf-8", errors="replace")
+            error = self.parse_error(response)
+            # if the error is a ConnectionError, raise immediately so the user
+            # is notified
+            if isinstance(error, ConnectionError):
+>               raise error
+E               redis.exceptions.AuthenticationError: invalid username-password pair or user is disabled.
+
+backend/.venv/lib/python3.12/site-packages/redis/_parsers/resp2.py:45: AuthenticationError
+_____________ test_concurrent_lease_denial_and_corrupt_checkpoint ______________
+
+f = (ActiveProfile(version=1, graph='civicly_b10_test_58bbf19ac1334262b33cf14ce5698225', checkpoints='civicly_b10_checkpoi...ers/ng/nxnstkjs7tn9dbx9nhvtvmzw0000gn/T/pytest-of-vikashkumar/pytest-71/test_concurrent_lease_denial_a0/profile.json'))
+
+    def test_concurrent_lease_denial_and_corrupt_checkpoint(f):
+        p,r,clock,receipt,inv,path=f
+        async def run():
+            with active_scope(p):
+                async with ownership(r.client,p,'ownership-thread'):
+                    with pytest.raises(RecoveryRequired,match='CONCURRENT'):
+                        async with ownership(r.client,p,'ownership-thread'):pass
+                async with brokers(p,path) as tools:
+                    s=state(p,r,tools,clock,receipt,inv);agent=InvestigationAgent(p,r,tools,ScriptedModel([choose()]),saver(p),clock=clock)
+                    paused=await agent.run(s,thread_id=s.thread_id)
+                    # Public LangGraph API creates a new incompatible state version; no SDK schema mutation.
+                    config={'configurable':{'thread_id':s.thread_id}}
+                    await agent.graph.aupdate_state(config,{'data':{**paused['data'],'version':99}})
+                    with pytest.raises(Exception):await agent.run(thread_id=s.thread_id,resume=True)
+                    with pytest.raises(RecoveryRequired,match='QUARANTINED'):await agent.run(thread_id=s.thread_id,resume=True)
+                    assert len(r._read('MATCH (d:AgentDecision) RETURN d.id LIMIT 100'))==1
+>       asyncio.run(run())
+
+backend/tests/integration/test_agent_safety.py:51: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/base_events.py:684: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+backend/tests/integration/test_agent_safety.py:42: in run
+    async with brokers(p,path) as tools:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:210: in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+backend/app/agents/mcp.py:16: in brokers
+    with active_scope(profile),connections() as (_,writer,name),tempfile.TemporaryDirectory(prefix='civicly-b10-domain-') as cwd:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+backend/app/mcp/civicly/runtime.py:42: in connections
+    source=FalkorDB(host='127.0.0.1',port=6379,username=read.username,password=read.password.get_secret_value(),socket_timeout=3,socket_connect_timeout=2,max_connections=4,retry=Retry(NoBackoff(),0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/falkordb/falkordb.py:132: in __init__
+    if Is_Sentinel(conn):
+       ^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/falkordb/sentinel.py:6: in Is_Sentinel
+    info = conn.info(section="server")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/commands/core.py:1692: in info
+    return self.execute_command("INFO", section, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/client.py:867: in execute_command
+    return self._execute_command(*args, **options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/client.py:873: in _execute_command
+    conn = self.connection or pool.get_connection()
+                              ^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/utils.py:258: in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:3273: in get_connection
+    connection.connect()
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1028: in connect
+    self.retry.call_with_retry(
+backend/.venv/lib/python3.12/site-packages/redis/retry.py:132: in call_with_retry
+    raise error
+backend/.venv/lib/python3.12/site-packages/redis/retry.py:120: in call_with_retry
+    return do()
+           ^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1029: in <lambda>
+    lambda: self.connect_check_health(
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1083: in connect_check_health
+    self.on_connect_check_health(check_health=check_health)
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1166: in on_connect_check_health
+    auth_response = self.read_response()
+                    ^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1413: in read_response
+    response = self._parser.read_response(
+backend/.venv/lib/python3.12/site-packages/redis/_parsers/resp2.py:18: in read_response
+    result = self._read_response(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <redis._parsers.resp2._RESP2Parser object at 0x12116a000>
+disable_decoding = False, timeout = <object object at 0x104a5aa70>
+
+    def _read_response(
+        self, disable_decoding=False, timeout: Union[float, object] = SENTINEL
+    ):
+        raw = self._buffer.readline(timeout=timeout)
+        if not raw:
+            raise ConnectionError(SERVER_CLOSED_CONNECTION_ERROR)
+    
+        byte, response = raw[:1], raw[1:]
+    
+        # server returned an error
+        if byte == b"-":
+            response = response.decode("utf-8", errors="replace")
+            error = self.parse_error(response)
+            # if the error is a ConnectionError, raise immediately so the user
+            # is notified
+            if isinstance(error, ConnectionError):
+>               raise error
+E               redis.exceptions.AuthenticationError: invalid username-password pair or user is disabled.
+
+backend/.venv/lib/python3.12/site-packages/redis/_parsers/resp2.py:45: AuthenticationError
+______________ test_actual_mcp_timeout_and_fresh_session_recovery ______________
+
+f = (ActiveProfile(version=1, graph='civicly_b10_test_bb1bc38f66ae4591953885391c97ccd1', checkpoints='civicly_b10_checkpoi...ers/ng/nxnstkjs7tn9dbx9nhvtvmzw0000gn/T/pytest-of-vikashkumar/pytest-71/test_actual_mcp_timeout_and_fr0/profile.json'))
+
+    def test_actual_mcp_timeout_and_fresh_session_recovery(f):
+        p,r,clock,receipt,inv,path=f
+        async def run():
+            with active_scope(p):
+                async with brokers(p,path,timeout=2) as tools:
+                    # Identify only this owned B10 profile server, never unrelated processes.
+                    rows=subprocess.check_output(['ps','-axo','pid=,command='],text=True).splitlines()
+                    ids=[int(row.strip().split(None,1)[0]) for row in rows if '-m app.agents.server '+str(path) in row]
+                    print('owned B10 server count',len(ids));assert len(ids)==1;pid=ids[0];os.kill(pid,signal.SIGSTOP)
+                    try:
+                        s=state(p,r,tools,clock,receipt,inv)
+                        model=ScriptedModel([choose('READ',{'asset_id':'D1','from_time':'2026-10-17T00:00:00Z','to_time':clock(),'as_of':clock()},'civicly::get_maintenance_history')])
+                        agent=InvestigationAgent(p,r,tools,model,saver(p),clock=clock);paused=await agent.run(s,thread_id=s.thread_id)
+                        print('timeout result',paused['data']['pause_reason'],paused['data']['observations'])
+                        assert paused['data']['pause_reason']=='DEPENDENCY_UNAVAILABLE'
+                        assert paused['data']['observations'][0]['error']['code']=='TIMEOUT'
+                    finally:os.kill(pid,signal.SIGCONT)
+                async with brokers(p,path) as tools:
+                    model=ScriptedModel([choose('READ',{'template':'node','id':'D1'},'official::query_graph_readonly'),choose()])
+                    fresh=InvestigationAgent(p,r,tools,model,saver(p),clock=clock)
+                    result=await fresh.run(thread_id=s.thread_id,resume=True)
+                    assert result['data']['tool_calls']==2 and result['data']['observations'][-1]['rows'][0]['properties']['id']=='D1'
+>       asyncio.run(run())
+
+backend/tests/integration/test_agent_safety.py:76: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/base_events.py:684: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+backend/tests/integration/test_agent_safety.py:58: in run
+    async with brokers(p,path,timeout=2) as tools:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:210: in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+backend/app/agents/mcp.py:16: in brokers
+    with active_scope(profile),connections() as (_,writer,name),tempfile.TemporaryDirectory(prefix='civicly-b10-domain-') as cwd:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+backend/app/mcp/civicly/runtime.py:42: in connections
+    source=FalkorDB(host='127.0.0.1',port=6379,username=read.username,password=read.password.get_secret_value(),socket_timeout=3,socket_connect_timeout=2,max_connections=4,retry=Retry(NoBackoff(),0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/falkordb/falkordb.py:132: in __init__
+    if Is_Sentinel(conn):
+       ^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/falkordb/sentinel.py:6: in Is_Sentinel
+    info = conn.info(section="server")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/commands/core.py:1692: in info
+    return self.execute_command("INFO", section, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/client.py:867: in execute_command
+    return self._execute_command(*args, **options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/client.py:873: in _execute_command
+    conn = self.connection or pool.get_connection()
+                              ^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/utils.py:258: in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:3273: in get_connection
+    connection.connect()
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1028: in connect
+    self.retry.call_with_retry(
+backend/.venv/lib/python3.12/site-packages/redis/retry.py:132: in call_with_retry
+    raise error
+backend/.venv/lib/python3.12/site-packages/redis/retry.py:120: in call_with_retry
+    return do()
+           ^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1029: in <lambda>
+    lambda: self.connect_check_health(
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1083: in connect_check_health
+    self.on_connect_check_health(check_health=check_health)
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1166: in on_connect_check_health
+    auth_response = self.read_response()
+                    ^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1413: in read_response
+    response = self._parser.read_response(
+backend/.venv/lib/python3.12/site-packages/redis/_parsers/resp2.py:18: in read_response
+    result = self._read_response(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <redis._parsers.resp2._RESP2Parser object at 0x1211962a0>
+disable_decoding = False, timeout = <object object at 0x104a5aa70>
+
+    def _read_response(
+        self, disable_decoding=False, timeout: Union[float, object] = SENTINEL
+    ):
+        raw = self._buffer.readline(timeout=timeout)
+        if not raw:
+            raise ConnectionError(SERVER_CLOSED_CONNECTION_ERROR)
+    
+        byte, response = raw[:1], raw[1:]
+    
+        # server returned an error
+        if byte == b"-":
+            response = response.decode("utf-8", errors="replace")
+            error = self.parse_error(response)
+            # if the error is a ConnectionError, raise immediately so the user
+            # is notified
+            if isinstance(error, ConnectionError):
+>               raise error
+E               redis.exceptions.AuthenticationError: invalid username-password pair or user is disabled.
+
+backend/.venv/lib/python3.12/site-packages/redis/_parsers/resp2.py:45: AuthenticationError
+___ test_agent_rejects_future_knowledge_before_model_context[future-cutoff] ____
+
+f = (ActiveProfile(version=1, graph='civicly_b10_test_0fbecedcfcaa4d42a381056b24e00cc1', checkpoints='civicly_b10_checkpoi...ers/ng/nxnstkjs7tn9dbx9nhvtvmzw0000gn/T/pytest-of-vikashkumar/pytest-71/test_agent_rejects_future_know0/profile.json'))
+case = 'future-cutoff'
+
+    @pytest.mark.parametrize('case',['future-cutoff','future-raw-fact'])
+    def test_agent_rejects_future_knowledge_before_model_context(f,case):
+        p,r,clock,receipt,inv,path=f
+        with active_scope(p):
+            future='2026-10-19T00:00:00Z'
+            r.create_node('Evidence',{'id':'EV-FUTURE','municipality_id':'demo-city','schema_version':3,'created_at':future,'updated_at':future,'recorded_at':future,'source_kind':'SYNTHETIC','reliability':'UNVERIFIED','evidence_type':'CONTEXT','summary':'Future source must not enter model observation'})
+        async def run():
+            with active_scope(p):
+                async with brokers(p,path) as tools:
+                    args={'template':'node','id':'EV-FUTURE'} if case=='future-raw-fact' else {'asset_id':'D1','from_time':'2026-10-17T00:00:00Z','to_time':future,'as_of':future}
+                    tool='official::query_graph_readonly' if case=='future-raw-fact' else 'civicly::get_maintenance_history'
+                    initial=state(p,r,tools,clock,receipt,inv);model=ScriptedModel([choose('READ',args,tool)])
+                    result=await InvestigationAgent(p,r,tools,model,saver(p),clock=clock).run(initial,thread_id=initial.thread_id)
+                    assert result['data']['pause_reason']=='DEPENDENCY_UNAVAILABLE'
+                    assert result['data']['observations'][0]['error']['code']==('OUTPUT_OUTSIDE_CUTOFF' if case=='future-raw-fact' else 'INVALID_ARGUMENTS')
+                    assert 'Future source must not enter model observation' not in json.dumps(result,default=str)
+>       asyncio.run(run())
+
+backend/tests/integration/test_agent_safety.py:94: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/base_events.py:684: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+backend/tests/integration/test_agent_safety.py:86: in run
+    async with brokers(p,path) as tools:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:210: in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+backend/app/agents/mcp.py:16: in brokers
+    with active_scope(profile),connections() as (_,writer,name),tempfile.TemporaryDirectory(prefix='civicly-b10-domain-') as cwd:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+backend/app/mcp/civicly/runtime.py:42: in connections
+    source=FalkorDB(host='127.0.0.1',port=6379,username=read.username,password=read.password.get_secret_value(),socket_timeout=3,socket_connect_timeout=2,max_connections=4,retry=Retry(NoBackoff(),0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/falkordb/falkordb.py:132: in __init__
+    if Is_Sentinel(conn):
+       ^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/falkordb/sentinel.py:6: in Is_Sentinel
+    info = conn.info(section="server")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/commands/core.py:1692: in info
+    return self.execute_command("INFO", section, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/client.py:867: in execute_command
+    return self._execute_command(*args, **options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/client.py:873: in _execute_command
+    conn = self.connection or pool.get_connection()
+                              ^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/utils.py:258: in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:3273: in get_connection
+    connection.connect()
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1028: in connect
+    self.retry.call_with_retry(
+backend/.venv/lib/python3.12/site-packages/redis/retry.py:132: in call_with_retry
+    raise error
+backend/.venv/lib/python3.12/site-packages/redis/retry.py:120: in call_with_retry
+    return do()
+           ^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1029: in <lambda>
+    lambda: self.connect_check_health(
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1083: in connect_check_health
+    self.on_connect_check_health(check_health=check_health)
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1166: in on_connect_check_health
+    auth_response = self.read_response()
+                    ^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1413: in read_response
+    response = self._parser.read_response(
+backend/.venv/lib/python3.12/site-packages/redis/_parsers/resp2.py:18: in read_response
+    result = self._read_response(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <redis._parsers.resp2._RESP2Parser object at 0x12161e870>
+disable_decoding = False, timeout = <object object at 0x104a5aa70>
+
+    def _read_response(
+        self, disable_decoding=False, timeout: Union[float, object] = SENTINEL
+    ):
+        raw = self._buffer.readline(timeout=timeout)
+        if not raw:
+            raise ConnectionError(SERVER_CLOSED_CONNECTION_ERROR)
+    
+        byte, response = raw[:1], raw[1:]
+    
+        # server returned an error
+        if byte == b"-":
+            response = response.decode("utf-8", errors="replace")
+            error = self.parse_error(response)
+            # if the error is a ConnectionError, raise immediately so the user
+            # is notified
+            if isinstance(error, ConnectionError):
+>               raise error
+E               redis.exceptions.AuthenticationError: invalid username-password pair or user is disabled.
+
+backend/.venv/lib/python3.12/site-packages/redis/_parsers/resp2.py:45: AuthenticationError
+__ test_agent_rejects_future_knowledge_before_model_context[future-raw-fact] ___
+
+f = (ActiveProfile(version=1, graph='civicly_b10_test_36a2f05f84ac4c2c8568ce7ad31b35d9', checkpoints='civicly_b10_checkpoi...ers/ng/nxnstkjs7tn9dbx9nhvtvmzw0000gn/T/pytest-of-vikashkumar/pytest-71/test_agent_rejects_future_know1/profile.json'))
+case = 'future-raw-fact'
+
+    @pytest.mark.parametrize('case',['future-cutoff','future-raw-fact'])
+    def test_agent_rejects_future_knowledge_before_model_context(f,case):
+        p,r,clock,receipt,inv,path=f
+        with active_scope(p):
+            future='2026-10-19T00:00:00Z'
+            r.create_node('Evidence',{'id':'EV-FUTURE','municipality_id':'demo-city','schema_version':3,'created_at':future,'updated_at':future,'recorded_at':future,'source_kind':'SYNTHETIC','reliability':'UNVERIFIED','evidence_type':'CONTEXT','summary':'Future source must not enter model observation'})
+        async def run():
+            with active_scope(p):
+                async with brokers(p,path) as tools:
+                    args={'template':'node','id':'EV-FUTURE'} if case=='future-raw-fact' else {'asset_id':'D1','from_time':'2026-10-17T00:00:00Z','to_time':future,'as_of':future}
+                    tool='official::query_graph_readonly' if case=='future-raw-fact' else 'civicly::get_maintenance_history'
+                    initial=state(p,r,tools,clock,receipt,inv);model=ScriptedModel([choose('READ',args,tool)])
+                    result=await InvestigationAgent(p,r,tools,model,saver(p),clock=clock).run(initial,thread_id=initial.thread_id)
+                    assert result['data']['pause_reason']=='DEPENDENCY_UNAVAILABLE'
+                    assert result['data']['observations'][0]['error']['code']==('OUTPUT_OUTSIDE_CUTOFF' if case=='future-raw-fact' else 'INVALID_ARGUMENTS')
+                    assert 'Future source must not enter model observation' not in json.dumps(result,default=str)
+>       asyncio.run(run())
+
+backend/tests/integration/test_agent_safety.py:94: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:194: in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/base_events.py:684: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+backend/tests/integration/test_agent_safety.py:86: in run
+    async with brokers(p,path) as tools:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:210: in __aenter__
+    return await anext(self.gen)
+           ^^^^^^^^^^^^^^^^^^^^^
+backend/app/agents/mcp.py:16: in brokers
+    with active_scope(profile),connections() as (_,writer,name),tempfile.TemporaryDirectory(prefix='civicly-b10-domain-') as cwd:
+/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/contextlib.py:137: in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+backend/app/mcp/civicly/runtime.py:42: in connections
+    source=FalkorDB(host='127.0.0.1',port=6379,username=read.username,password=read.password.get_secret_value(),socket_timeout=3,socket_connect_timeout=2,max_connections=4,retry=Retry(NoBackoff(),0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/falkordb/falkordb.py:132: in __init__
+    if Is_Sentinel(conn):
+       ^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/falkordb/sentinel.py:6: in Is_Sentinel
+    info = conn.info(section="server")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/commands/core.py:1692: in info
+    return self.execute_command("INFO", section, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/client.py:867: in execute_command
+    return self._execute_command(*args, **options)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/client.py:873: in _execute_command
+    conn = self.connection or pool.get_connection()
+                              ^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/utils.py:258: in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:3273: in get_connection
+    connection.connect()
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1028: in connect
+    self.retry.call_with_retry(
+backend/.venv/lib/python3.12/site-packages/redis/retry.py:132: in call_with_retry
+    raise error
+backend/.venv/lib/python3.12/site-packages/redis/retry.py:120: in call_with_retry
+    return do()
+           ^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1029: in <lambda>
+    lambda: self.connect_check_health(
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1083: in connect_check_health
+    self.on_connect_check_health(check_health=check_health)
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1166: in on_connect_check_health
+    auth_response = self.read_response()
+                    ^^^^^^^^^^^^^^^^^^^^
+backend/.venv/lib/python3.12/site-packages/redis/connection.py:1413: in read_response
+    response = self._parser.read_response(
+backend/.venv/lib/python3.12/site-packages/redis/_parsers/resp2.py:18: in read_response
+    result = self._read_response(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <redis._parsers.resp2._RESP2Parser object at 0x12116ae70>
+disable_decoding = False, timeout = <object object at 0x104a5aa70>
+
+    def _read_response(
+        self, disable_decoding=False, timeout: Union[float, object] = SENTINEL
+    ):
+        raw = self._buffer.readline(timeout=timeout)
+        if not raw:
+            raise ConnectionError(SERVER_CLOSED_CONNECTION_ERROR)
+    
+        byte, response = raw[:1], raw[1:]
+    
+        # server returned an error
+        if byte == b"-":
+            response = response.decode("utf-8", errors="replace")
+            error = self.parse_error(response)
+            # if the error is a ConnectionError, raise immediately so the user
+            # is notified
+            if isinstance(error, ConnectionError):
+>               raise error
+E               redis.exceptions.AuthenticationError: invalid username-password pair or user is disabled.
+
+backend/.venv/lib/python3.12/site-packages/redis/_parsers/resp2.py:45: AuthenticationError
+=========================== short test summary info ============================
+FAILED backend/tests/integration/test_agent_active.py::test_real_shared_graph_boundary
+FAILED backend/tests/integration/test_agent_optimization.py::test_real_mcp_read_cache_scope_time_and_revision_invalidation
+FAILED backend/tests/integration/test_agent_optimization.py::test_budget_pause_real_checkpoint_and_fresh_ledger_resume
+FAILED backend/tests/integration/test_agent_optimization.py::test_compact_real_b09_history_preserves_reviewed_contradiction_and_unreviewed_support[WATERLOGGING-BLOCKAGE]
+FAILED backend/tests/integration/test_agent_optimization.py::test_compact_real_b09_history_preserves_reviewed_contradiction_and_unreviewed_support[ROAD_DAMAGE-SUBGRADE_FAILURE]
+FAILED backend/tests/integration/test_agent_optimization.py::test_compact_real_b09_history_preserves_reviewed_contradiction_and_unreviewed_support[WASTE_ACCUMULATION-MISSED_PICKUP]
+FAILED backend/tests/integration/test_agent_reasoning.py::test_contradiction_changes_actual_b09_assessment_and_next_inspection
+FAILED backend/tests/integration/test_agent_reasoning.py::test_planner_is_nonbinding_no_operational_nodes
+FAILED backend/tests/integration/test_agent_reasoning.py::test_topology_controls_next_inspection_without_causal_promotion[VERIFIED-P1]
+FAILED backend/tests/integration/test_agent_reasoning.py::test_topology_controls_next_inspection_without_causal_promotion[CANDIDATE-R1]
+FAILED backend/tests/integration/test_agent_reasoning.py::test_topology_controls_next_inspection_without_causal_promotion[DISCONNECTED-R1]
+FAILED backend/tests/integration/test_agent_reasoning.py::test_topology_controls_next_inspection_without_causal_promotion[EXPIRED-R1]
+FAILED backend/tests/integration/test_agent_runtime.py::test_real_graph_pause_resume[WATERLOGGING-BLOCKAGE]
+FAILED backend/tests/integration/test_agent_runtime.py::test_real_graph_pause_resume[ROAD_DAMAGE-SUBGRADE_FAILURE]
+FAILED backend/tests/integration/test_agent_runtime.py::test_real_graph_pause_resume[WASTE_ACCUMULATION-MISSED_PICKUP]
+FAILED backend/tests/integration/test_agent_runtime.py::test_actual_python_process_restart_resume
+FAILED backend/tests/integration/test_agent_safety.py::test_invalid_model_tool_or_args_pauses[official::query_graph-args0]
+FAILED backend/tests/integration/test_agent_safety.py::test_invalid_model_tool_or_args_pauses[civicly::create_plan-args1]
+FAILED backend/tests/integration/test_agent_safety.py::test_invalid_model_tool_or_args_pauses[official::query_graph_readonly-args2]
+FAILED backend/tests/integration/test_agent_safety.py::test_invalid_model_tool_or_args_pauses[civicly::get_maintenance_history-args3]
+FAILED backend/tests/integration/test_agent_safety.py::test_concurrent_lease_denial_and_corrupt_checkpoint
+FAILED backend/tests/integration/test_agent_safety.py::test_actual_mcp_timeout_and_fresh_session_recovery
+FAILED backend/tests/integration/test_agent_safety.py::test_agent_rejects_future_knowledge_before_model_context[future-cutoff]
+FAILED backend/tests/integration/test_agent_safety.py::test_agent_rejects_future_knowledge_before_model_context[future-raw-fact]
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! KeyboardInterrupt !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+/Users/vikashkumar/Desktop/Civicly/backend/.venv/lib/python3.12/site-packages/redis/_parsers/socket.py:64: KeyboardInterrupt
+(to show a full traceback on KeyboardInterrupt use --full-trace)
+=================== 24 failed, 1 passed in 72.93s (0:01:12) ====================

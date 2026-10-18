@@ -1,0 +1,174 @@
+{
+  "mode": "LIVE_GEMINI_REAL_MCP_REAL_FALKORDBSAVER",
+  "issue": "WATERLOGGING",
+  "result": {
+    "data": {
+      "version": 1,
+      "graph": "civicly_b10_test_256e3263934f4753a07012e9edcd6f25",
+      "investigation_id": "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+      "thread_id": "557b92273995482a8b68564ae751e5a0",
+      "incident_ids": [
+        "INC-B08-3b169d9dcd081279142900a44b96e6ff"
+      ],
+      "asset_ids": [
+        "D1"
+      ],
+      "issue": "WATERLOGGING",
+      "graph_revision": 32,
+      "phase": "Coordinator",
+      "hypotheses": [],
+      "evidence": {},
+      "inventory_hash": "60e6cc345311a3446a1aedb713b945a2cfdd16b594fa40d2ae50a196dca57ebd",
+      "selection": {
+        "action": "PAUSE",
+        "summary": "Model or resume validation failed; no action executed",
+        "tool_name": "",
+        "arguments_json": "{}",
+        "pause_reason": "DEPENDENCY_UNAVAILABLE"
+      },
+      "decisions": [
+        "DEC-B10-fd03218a34d35e10d4501048f58fc73d"
+      ],
+      "executions": [
+        "MCP-B10-fd03218a34d35e10d4501048f58fc73d"
+      ],
+      "pending_inspections": [],
+      "pending_approval": null,
+      "errors": [
+        "INVALID_MODEL_OUTPUT"
+      ],
+      "observations": [
+        {
+          "status": "PARTIAL",
+          "trace_id": "557b92273995482a8b68564ae751e5a0",
+          "execution_id": "MCP-B10-fd03218a34d35e10d4501048f58fc73d",
+          "context": {
+            "trace_id": "557b92273995482a8b68564ae751e5a0",
+            "execution_id": "MCP-B10-fd03218a34d35e10d4501048f58fc73d",
+            "parent_execution_id": "DEC-B10-fd03218a34d35e10d4501048f58fc73d",
+            "investigation_id": "INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f",
+            "municipality_id": "demo-city",
+            "source_graph": "civicly_b10_test_256e3263934f4753a07012e9edcd6f25",
+            "caller_role": "READ_ONLY",
+            "invocation_origin": "APPLICATION"
+          },
+          "server_id": "civicly-domain",
+          "tool_name": "trace_infrastructure_dependencies",
+          "schema_version": 3,
+          "inventory_version": "da1f25b2f8174ec96b4213038b92eb8600c24e8b362697f63f85b5d143790b42",
+          "source_evidence_ids": [],
+          "simulation_mode": true,
+          "graph_revision": 31,
+          "truncated": false,
+          "search_limited": true,
+          "error": null,
+          "paths": [],
+          "data": {
+            "nodes": [
+              {
+                "id": "D1",
+                "kind": "DrainSegment",
+                "labels": [
+                  "DrainSegment",
+                  "InfrastructureAsset"
+                ],
+                "properties": {
+                  "id": "D1",
+                  "updated_at": "2026-10-17T00:00:00Z",
+                  "municipality_id": "demo-city",
+                  "created_at": "2026-10-17T00:00:00Z",
+                  "schema_version": 3,
+                  "operational_status": "ACTIVE",
+                  "name": "Synthetic asset",
+                  "asset_type": "DRAIN_SEGMENT"
+                }
+              }
+            ],
+            "edges": [],
+            "paths": [],
+            "gaps": [
+              "No qualifying paths within evidence/time/search filters; missing proof and actual disconnection are not distinguished",
+              "No matching recorded results within this bounded query; not proof of global absence"
+            ],
+            "reservations": [
+              "Connectivity and count-based criticality are not root-cause or hydraulic proof.",
+              "No result is a bounded negative, not proof of global disconnection.",
+              "Historical node versions are not reconstructed; future-updated records are excluded.",
+              "Open relationship validity bounds remain unknown, not manufactured dates."
+            ],
+            "as_of": "2026-10-18T12:00:00.000000Z"
+          }
+        }
+      ],
+      "nodes": [
+        "Supervisor",
+        "Investigator",
+        "Supervisor",
+        "Coordinator"
+      ],
+      "pause_reason": "DEPENDENCY_UNAVAILABLE",
+      "recommendation": null,
+      "budget": {
+        "max_iterations": 16,
+        "max_tools": 8,
+        "max_tokens": 60000,
+        "max_seconds": 240,
+        "max_wakes": 5
+      },
+      "iterations": 2,
+      "tool_calls": 1,
+      "tokens": 12829,
+      "wakes": 0,
+      "refresh_required": false,
+      "as_of": "2026-10-18T12:00:00.000000Z"
+    },
+    "__interrupt__": [
+      "Interrupt(value={'investigation_id': 'INV-B09-d8b67c785a6aa6bdcf800dbefe0a4f2f', 'thread_id': '557b92273995482a8b68564ae751e5a0', 'pause_reason': 'DEPENDENCY_UNAVAILABLE', 'pending_inspections': [], 'graph_revision': 32}, id='831a3c47472d031ec196047f9c578e22', response_schema=None)"
+    ]
+  },
+  "provider_usage": {
+    "total_tokens": 14818,
+    "provider": "gemini",
+    "model": "gemini-3.8-flash",
+    "prompt_version": "B10-1",
+    "attempts": 2
+  },
+  "catalog_hash": "60e6cc345311a3446a1aedb713b945a2cfdd16b594fa40d2ae50a196dca57ebd",
+  "transport": [
+    {
+      "operation": "initialize",
+      "status": "SUCCESS",
+      "started_at": "2026-10-17T20:52:37.456267Z",
+      "ended_at": "2026-10-17T20:52:38.158679Z",
+      "latency_ms": 701.628,
+      "server": {
+        "name": "falkordb",
+        "version": "1.3.0"
+      },
+      "protocol_version": "2025-11-25"
+    },
+    {
+      "trace_version": "B06-1",
+      "operation": "tools/list",
+      "server": {
+        "name": "falkordb",
+        "version": "1.3.0"
+      },
+      "protocol_version": "2025-11-25",
+      "tool": null,
+      "schema_sha256": null,
+      "inventory_sha256": "327cf9a3587cc23cc2d28040a4ac7cc8df2fa790d3fbb57700591689ea3cb4a0",
+      "arguments_sha256": null,
+      "arguments_summary": null,
+      "started_at": "2026-10-17T20:52:38.159832Z",
+      "ended_at": "2026-10-17T20:52:38.166161Z",
+      "latency_ms": 6.334,
+      "status": "SUCCESS",
+      "denial_reason": null,
+      "result_summary": null,
+      "graph_revision": null,
+      "selection_rationale": null,
+      "invocation_origin": "application_or_operator; no agent implemented"
+    }
+  ]
+}
