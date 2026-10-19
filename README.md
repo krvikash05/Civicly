@@ -2,7 +2,7 @@
 
 ### Understand the cause. Coordinate the response. Verify the outcome.
 
-**Civicly is a FalkorDB-powered AI investigation workspace for recurring civic problems like waterlogging, road damage and waste accumulation.** It connects complaints to the infrastructure, evidence and previous work behind them, then carries the investigation through a reviewed plan, human approval, simulated work and follow-up.
+**Civicly is a FalkorDB-powered AI agent platform that investigates recurring civic problems like waterlogging, road damage and waste accumulation, and helps coordinate evidence-based action.** Its agent connects complaints to infrastructure, evidence and previous work, selects investigative tools and compares possible causes. The platform carries the findings through a reviewed plan, human approval, simulated work and follow-up verification.
 
 Consider a road that keeps developing potholes. Should the road be repaired again—or is a leaking pipe damaging the ground beneath it? Civicly helps an investigator follow the connections, compare explanations and see what evidence is needed before acting.
 
