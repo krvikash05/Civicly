@@ -12,6 +12,10 @@ Consider a road that keeps developing potholes. Should the road be repaired agai
 
 > **About the demo:** municipal data, inspections and field work are synthetic. Gemini, MCP, FalkorDB, GraphRAG retrieval and saved workflow records use actual services. The hosted site lets you explore retained results; browsing does not start a paid agent run. Hosting uses a temporary hostname.
 
+![Civicly evidence workspace with competing hypotheses and its FalkorDB Canvas subgraph](docs/images/civicly-evidence-canvas.jpg)
+
+*The actual local workspace: reviewed utility-leak evidence alongside the bounded case graph. This capture shows contextual relationships, not a selected model decision path. Municipal observations are synthetic.*
+
 ## What can Civicly investigate?
 
 | Problem | Questions the investigation can explore | Evidence that matters |
@@ -85,6 +89,14 @@ flowchart TB
 Location and physical connection are different: **a pipe being nearby does not prove it lies beneath the road or caused the damage.** Relationships distinguish candidate and verified associations and carry source references and time bounds where available.
 
 Beyond this overview, the model includes collection schedules and actual pickup records, rainfall events, procedures, tool executions and status events. Assessments are versioned; evidence retains its source, date and review status. See [the full graph model](docs/backend/02_graph.md) and [evidence rules](backend/EVIDENCE.md).
+
+### The model in a running database
+
+![FalkorDB Browser showing the road case assets, plan, tasks, departments and work orders](docs/images/falkordb-road-task-graph.jpg)
+
+*An actual read-only query of the retained road case in FalkorDB Browser: **11 nodes and 15 relationships** connect the pipe and road (`UNDERLIES`), plan and tasks (`HAS_TASK`), task prerequisites (`DEPENDS_ON`), responsible departments (`ASSIGNED_TO`), target assets (`TARGETS`) and work orders (`IMPLEMENTS`). Browser node captions may show internal database IDs; Civicly keeps canonical IDs in technical details. These are persisted synthetic demo records, not a drawn mockup.*
+
+[Read-only query and capture notes](docs/images/README.md) · [Reproduce the focused query](docs/images/road-task-graph.cypher)
 
 ## How FalkorDB helps at every stage
 
