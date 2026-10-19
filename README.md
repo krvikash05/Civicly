@@ -6,13 +6,13 @@
 
 Consider a road that keeps developing potholes. Should the road be repaired again—or is a leaking pipe damaging the ground beneath it? Civicly helps an investigator follow the connections, compare explanations and see what evidence is needed before acting.
 
-**FalkorDB connects the investigation to the response.** Its domain graph links reports, infrastructure, inspection evidence, departments, tasks and outcomes. Gemini investigates those records through runtime MCP; the FalkorDB GraphRAG SDK retrieves sourced procedures; FalkorDBSaver preserves the investigation thread. People review evidence and approve work, while the workspace makes the supporting graph paths inspectable.
+**FalkorDB connects the investigation to the response.** Its domain graph links reports, infrastructure, inspection evidence, departments, tasks and outcomes. Civicly's AI investigates those records through runtime MCP; the FalkorDB GraphRAG SDK retrieves sourced procedures; FalkorDBSaver preserves the investigation thread. People review evidence and approve work, while the workspace makes the supporting graph paths inspectable.
 
 Across the whole case journey, Civicly uses FalkorDB to connect a new report to relevant assets and past incidents, retrieve evidence and procedures for the agent, and track planned work across departments. After authorized work, dated follow-up and retained outcomes complete the episode’s history—so future investigations can retrieve what was tried and what happened.
 
 [**Civicly Live ↗**](https://civicly-13-55-205-208.sslip.io) · [**Follow the completed road case**](https://civicly-13-55-205-208.sslip.io/investigations?investigation=INV-B09-b9d4d66e130ed348c4f6a50e9d66a891&section=report#case-workspace) · [Two-minute walkthrough](#one-investigation-six-connected-stages)
 
-> **About the demo:** municipal data, inspections and field work are synthetic. Gemini, MCP, FalkorDB, GraphRAG retrieval and saved workflow records use actual services. The hosted site lets you explore retained results; browsing does not start a paid agent run. Hosting uses a temporary hostname.
+> **About the demo:** municipal data, inspections and field work are synthetic. Civicly's AI, MCP, FalkorDB, GraphRAG retrieval and saved workflow records use actual services. The hosted site lets you explore retained results; browsing does not start a paid agent run. Hosting uses a temporary hostname.
 
 ![Civicly live workspace with the featured road investigation and recorded work and outcome counts](docs/images/civicly-overview.png)
 
@@ -173,7 +173,7 @@ flowchart TB
     API -->|Persist and read| KG["FalkorDB • connected case and infrastructure records"]
     API --> EVENTS["Durable events • authorized worker"]
     EVENTS --> AGENT["LangGraph • investigation roles"]
-    AGENT <-->|Choose next action| GEMINI[Gemini API]
+    AGENT <-->|Choose next action| CIVICLY_AI["Civicly's AI"]
     AGENT -->|Discover and call tools| MCP["MCP • official graph tools and Civicly tools"]
     MCP -->|Read connected evidence| KG
     AGENT -->|Validated analytical writes| API
@@ -181,11 +181,11 @@ flowchart TB
     AGENT <-->|Save and resume| CHECKPOINTS["FalkorDBSaver • separate checkpoint graph"]
 ```
 
-**Reading the diagram:** the workspace calls the backend; an explicitly authorized worker runs the investigation; Gemini chooses an action; MCP retrieves graph evidence; validated services record the resulting findings or plans. The UI then reads those persisted records.
+**Reading the diagram:** the workspace calls the backend; an explicitly authorized worker runs the investigation; Civicly's AI chooses an action; MCP retrieves graph evidence; validated services record the resulting findings or plans. The UI then reads those persisted records.
 
 | Component | Its job |
 |---|---|
-| **Gemini + LangGraph** | Select investigative actions and coordinate Supervisor, Investigator, RootCauseAnalyst, ResolutionPlanner and Coordinator roles |
+| **Civicly's AI + LangGraph** | Select investigative actions and coordinate Supervisor, Investigator, RootCauseAnalyst, ResolutionPlanner and Coordinator roles |
 | **Runtime MCP** | Discover available tools and execute validated reads through `tools/list` and `tools/call` |
 | **FalkorDB domain graph** | Store infrastructure, incidents, evidence, assessments, plans, work and outcomes as connected records |
 | **GraphRAG document memory** | Retrieve cited, versioned municipal guidance from a separate SDK-managed FalkorDB graph |
@@ -193,7 +193,7 @@ flowchart TB
 | **FastAPI services and worker** | Enforce evidence rules, permissions, approval scope, task transitions and durable event handling |
 | **Next.js + FalkorDB Canvas** | Present the six-stage case, inspectable graph, evidence and recorded decision paths |
 
-**Three FalkorDB-backed stores serve different purposes:** the domain graph holds connected case and operational records; the SDK-managed document graph supports cited knowledge retrieval; the separate FalkorDBSaver graph preserves workflow checkpoints. Gemini chooses investigative actions, and authenticated application services validate writes and operational transitions.
+**Three FalkorDB-backed stores serve different purposes:** the domain graph holds connected case and operational records; the SDK-managed document graph supports cited knowledge retrieval; the separate FalkorDBSaver graph preserves workflow checkpoints. Civicly's AI chooses investigative actions, and authenticated application services validate writes and operational transitions.
 
 These are modules in a backend application with a single worker, not a fleet of independently deployed agent services. Private authentication and spending ledgers use SQLite. The browser never receives database credentials or unrestricted query access.
 
@@ -203,7 +203,7 @@ Agent graph reads are bounded and read-only. Analytical changes pass through val
 
 **The report:** recurring potholes and subsidence at a junction, alongside low-pressure complaints.
 
-**The investigation:** Gemini reads road and utility history through MCP and compares two explanations: utility leakage and subgrade failure. Reviewed inspections provide evidence for both. Their assessments become **SUPPORTED**; this does not erase the remaining evidence gaps.
+**The investigation:** Civicly's AI reads road and utility history through MCP and compares two explanations: utility leakage and subgrade failure. Reviewed inspections provide evidence for both. Their assessments become **SUPPORTED**; this does not erase the remaining evidence gaps.
 
 **The response:** coordinate utility work and road work so the road repair follows the required utility checks.
 
@@ -228,7 +228,7 @@ flowchart LR
 
 This is where the graph becomes operational: the verified infrastructure connection and the task prerequisites determine **which work can proceed**, while evidence records explain **why**.
 
-**Demonstration boundary:** the genuine Gemini run reached its retained token limit before drafting. The subsequent cited plan was analyst-assisted, explicitly approved by the human, and executed through authenticated simulated department workflows. This demonstrates the complete application lifecycle, not an autonomous end-to-end planning claim. All field work and observations are synthetic; verification follows the declared demo policy, not a claim of long-term municipal durability.
+**Demonstration boundary:** the live run of Civicly's AI reached its retained token limit before drafting. The subsequent cited plan was analyst-assisted, explicitly approved by the human, and executed through authenticated simulated department workflows. This demonstrates the complete application lifecycle, not an autonomous end-to-end planning claim. All field work and observations are synthetic; verification follows the declared demo policy, not a claim of long-term municipal durability.
 
 [Review the actual lifecycle evidence](docs/evidence/EXACT-ROAD-LIFECYCLE-RESULTS.md): three completed work orders, five outcome records, four recorded MCP decision paths and retained episode memory.
 
@@ -273,7 +273,7 @@ Start with the [completed road case](https://civicly-13-55-205-208.sslip.io/inve
 
 | Category | Retained demonstration result |
 |---|---|
-| **Road damage** | Genuine Gemini/MCP investigation, reviewed findings, analyst-assisted plan, exact human approval, three completed simulated work orders, separate verification and episode memory |
+| **Road damage** | Live investigation by Civicly's AI through MCP, reviewed findings, analyst-assisted plan, exact human approval, three completed simulated work orders, separate verification and episode memory |
 | **Waterlogging** | Recorded drainage investigation, reviewed blockage evidence, approved drain clearance, completed simulated work, independent verified follow-up and episode memory |
 | **Second road case** | Reviewed subgrade-repair plan, authorized completed work, separate verified follow-up and retained history |
 | **Waste accumulation** | Reviewed missed-pickup response, human-approved plan and completed simulated collection; independent follow-up remains outstanding, so the case stays under monitoring |
@@ -284,4 +284,4 @@ Start with the [completed road case](https://civicly-13-55-205-208.sslip.io/inve
 
 The scenario harness contains twelve scenarios with negative variants. A prepared scenario does not prove that an autonomous agent has solved it. Full live-provider, cross-category and comprehensive backend acceptance remain incomplete. Original failed attempts, uncertain operations and assessment history are retained.
 
-Built with **FalkorDB, FalkorDB GraphRAG SDK, FalkorDBSaver, runtime MCP, Gemini, LangGraph, FastAPI/Pydantic, Next.js/React/TypeScript and FalkorDB Canvas**.
+Built with **FalkorDB, FalkorDB GraphRAG SDK, FalkorDBSaver, runtime MCP, Civicly's AI, LangGraph, FastAPI/Pydantic, Next.js/React/TypeScript and FalkorDB Canvas**.
