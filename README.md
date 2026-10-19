@@ -86,38 +86,6 @@ Location and physical connection are different: **a pipe being nearby does not p
 
 Beyond this overview, the model includes collection schedules and actual pickup records, rainfall events, procedures, tool executions and status events. Assessments are versioned; evidence retains its source, date and review status. See [the full graph model](docs/backend/02_graph.md) and [evidence rules](backend/EVIDENCE.md).
 
-## Architecture
-
-```mermaid
-flowchart TB
-    UI["Workspace • Next.js and FalkorDB Canvas"] -->|REST and live events| API["FastAPI • authentication and validated services"]
-    API -->|Persist and read| KG["FalkorDB • connected case and infrastructure records"]
-    API --> EVENTS["Durable events • authorized worker"]
-    EVENTS --> AGENT["LangGraph • investigation roles"]
-    AGENT <-->|Choose next action| GEMINI[Gemini API]
-    AGENT -->|Discover and call tools| MCP["MCP • official graph tools and Civicly tools"]
-    MCP -->|Read connected evidence| KG
-    AGENT -->|Validated analytical writes| API
-    MCP --> DOCS["GraphRAG • sourced organizational documents in FalkorDB"]
-    AGENT <-->|Save and resume| CHECKPOINTS["FalkorDBSaver • separate checkpoint graph"]
-```
-
-**Reading the diagram:** the workspace calls the backend; an explicitly authorized worker runs the investigation; Gemini chooses an action; MCP retrieves graph evidence; validated services record the resulting findings or plans. The UI then reads those persisted records.
-
-| Component | Its job |
-|---|---|
-| **Gemini + LangGraph** | Select investigative actions and coordinate Supervisor, Investigator, RootCauseAnalyst, ResolutionPlanner and Coordinator roles |
-| **Runtime MCP** | Discover available tools and execute validated reads through `tools/list` and `tools/call` |
-| **FalkorDB domain graph** | Store infrastructure, incidents, evidence, assessments, plans, work and outcomes as connected records |
-| **GraphRAG document memory** | Retrieve cited, versioned municipal guidance from a separate SDK-managed FalkorDB graph |
-| **FalkorDBSaver** | Preserve the investigation thread so it can pause and resume |
-| **FastAPI services and worker** | Enforce evidence rules, permissions, approval scope, task transitions and durable event handling |
-| **Next.js + FalkorDB Canvas** | Present the six-stage case, inspectable graph, evidence and recorded decision paths |
-
-These are modules in a backend application with a single worker, not a fleet of independently deployed agent services. Private authentication and spending ledgers use SQLite. The browser never receives database credentials or unrestricted query access.
-
-Agent graph reads are bounded and read-only. Analytical changes pass through validated services; work requires authenticated roles and approval of the exact plan. [Detailed architecture](docs/backend/01_system.md).
-
 ## How FalkorDB helps at every stage
 
 ```mermaid
@@ -152,6 +120,38 @@ Each stage answers a practical question. The frontend uses readable labels and k
 In the graph panel, judges can inspect entities and follow recorded decision paths alongside the case. The reasoning view connects **the question asked → returned graph evidence → recorded action**. It distinguishes a recorded decision path from a contextual read; visible adjacency alone does not prove the graph influenced a model decision.
 
 Live updates use server-sent events (SSE) from persisted activity. They trigger a fresh read of the actual case, rather than animated or fabricated progress.
+
+## Architecture
+
+```mermaid
+flowchart TB
+    UI["Workspace • Next.js and FalkorDB Canvas"] -->|REST and live events| API["FastAPI • authentication and validated services"]
+    API -->|Persist and read| KG["FalkorDB • connected case and infrastructure records"]
+    API --> EVENTS["Durable events • authorized worker"]
+    EVENTS --> AGENT["LangGraph • investigation roles"]
+    AGENT <-->|Choose next action| GEMINI[Gemini API]
+    AGENT -->|Discover and call tools| MCP["MCP • official graph tools and Civicly tools"]
+    MCP -->|Read connected evidence| KG
+    AGENT -->|Validated analytical writes| API
+    MCP --> DOCS["GraphRAG • sourced organizational documents in FalkorDB"]
+    AGENT <-->|Save and resume| CHECKPOINTS["FalkorDBSaver • separate checkpoint graph"]
+```
+
+**Reading the diagram:** the workspace calls the backend; an explicitly authorized worker runs the investigation; Gemini chooses an action; MCP retrieves graph evidence; validated services record the resulting findings or plans. The UI then reads those persisted records.
+
+| Component | Its job |
+|---|---|
+| **Gemini + LangGraph** | Select investigative actions and coordinate Supervisor, Investigator, RootCauseAnalyst, ResolutionPlanner and Coordinator roles |
+| **Runtime MCP** | Discover available tools and execute validated reads through `tools/list` and `tools/call` |
+| **FalkorDB domain graph** | Store infrastructure, incidents, evidence, assessments, plans, work and outcomes as connected records |
+| **GraphRAG document memory** | Retrieve cited, versioned municipal guidance from a separate SDK-managed FalkorDB graph |
+| **FalkorDBSaver** | Preserve the investigation thread so it can pause and resume |
+| **FastAPI services and worker** | Enforce evidence rules, permissions, approval scope, task transitions and durable event handling |
+| **Next.js + FalkorDB Canvas** | Present the six-stage case, inspectable graph, evidence and recorded decision paths |
+
+These are modules in a backend application with a single worker, not a fleet of independently deployed agent services. Private authentication and spending ledgers use SQLite. The browser never receives database credentials or unrestricted query access.
+
+Agent graph reads are bounded and read-only. Analytical changes pass through validated services; work requires authenticated roles and approval of the exact plan. [Detailed architecture](docs/backend/01_system.md).
 
 ## Follow one case: the road that kept failing
 
