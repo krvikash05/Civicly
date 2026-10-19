@@ -1,0 +1,16 @@
+Traceback (most recent call last):
+  File "/Users/vikashkumar/Desktop/Civicly/scripts/complete_demo_lifecycles.py", line 234, in <module>
+    main()
+  File "/Users/vikashkumar/Desktop/Civicly/scripts/complete_demo_lifecycles.py", line 228, in main
+    print(json.dumps(journey.execute() if args.operation == 'execute' else journey.verify(), indent=2))
+                     ^^^^^^^^^^^^^^^^^
+  File "/Users/vikashkumar/Desktop/Civicly/scripts/complete_demo_lifecycles.py", line 121, in execute
+    approval = self.call('POST', '/approvals/' + a['id'] + '/decision', {
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/vikashkumar/Desktop/Civicly/scripts/complete_demo_lifecycles.py", line 94, in call
+    result = super().call(method, path, body, who,
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/vikashkumar/Desktop/Civicly/scripts/exact_road_lifecycle.py", line 33, in call
+    if r.status_code!=200:raise RuntimeError(json.dumps({'path':path,'http':r.status_code,'response':out}))
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: {"path": "/approvals/APPROVAL-B13-8be3619083045ba6f1d947cbf2a69ca3/decision", "http": 503, "response": {"error": {"code": "GRAPH_UNAVAILABLE", "message": "Graph dependency is unavailable", "details": {"blocker_code": null, "correlation_id": null, "commitment": null, "entity_id": null, "investigation_id": null, "plan_id": null, "request_id": null}, "retryable": false}, "request_id": "f8ee7bbf8c97431ea74869d2632fc0fb"}}

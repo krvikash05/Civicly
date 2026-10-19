@@ -1,0 +1,2045 @@
+{
+  "investigation": {
+    "id": "INV-B09-f663f7a1473c4a28a941d147633e08ad",
+    "expected_hash": "7ed7cc92766a01b7862578f191a2ff53095eed8f4039f4eae6d53cbc483f9fd1",
+    "simulated": true,
+    "status": "COMPLETED",
+    "incident_ids": [],
+    "historical_incident_ids": [
+      "INC-B08-8effe2e5da6bd34da2372713ba6e6693"
+    ],
+    "problem_cluster_id": "PC-B08-a634385f0c8444ee30096e881824dafe",
+    "current_agent_role": null,
+    "active_hypothesis_ids": [
+      "HYP-B09-1f6b6b25f7ba5eb2bbbb49ce97513083",
+      "HYP-B09-68a78bf4632cc12f1781f94cb8f56734"
+    ],
+    "pending_inspection_ids": [],
+    "current_plan_id": "PLAN-B12-3a26fd93b1eb567bf101905dc4c43b76",
+    "next_action": "DURABLE_WORKER_OR_HUMAN_REVIEW",
+    "graph_revision": 866,
+    "runtime_status": "DETERMINISTIC_DEVELOPMENT_ONLY_NO_LIVE_AUTHORIZATION"
+  },
+  "plan": {
+    "task_bindings": [
+      {
+        "local_task_id": "TASK-01-SUBGRADE-REPAIR",
+        "task_id": "TASK-B12-9fd186bc06707b0f76702608529dd76e",
+        "action_type": "SUBGRADE_REPAIR",
+        "target_ids": [
+          "ROAD-DEMO-SUBGRADE-02"
+        ],
+        "department_id": "DEPT-ROAD",
+        "depends_on_task_ids": [],
+        "status": "COMPLETED",
+        "expected_hash": "21f360c0bc728f7b8553ba892cb68b11882c9235ac96ac1394c3b480dbc58ff4",
+        "eligible_assignee_ids": [
+          "OP-ROAD-LEAD"
+        ]
+      }
+    ],
+    "plan_id": "PLAN-B12-3a26fd93b1eb567bf101905dc4c43b76",
+    "investigation_id": "INV-B09-f663f7a1473c4a28a941d147633e08ad",
+    "version": 1,
+    "content_hash": "a39f811a8913ba4c5870a6acff9a05b918027db1768c64146e32bc4f90a2c834",
+    "draft": {
+      "investigation_id": "INV-B09-f663f7a1473c4a28a941d147633e08ad",
+      "issue": "ROAD_DAMAGE",
+      "version": 1,
+      "previous_plan_id": null,
+      "simulation_mode": "SIMULATED",
+      "basis": [
+        {
+          "hypothesis_id": "HYP-B09-1f6b6b25f7ba5eb2bbbb49ce97513083",
+          "assessment_id": "ASSESS-B09-c5a53c9b60ed7108f13247b92c8a0378",
+          "reason": "Assessment evaluated confirming physical observations STRUCTURAL_TEST_FAILED and SUBGRADE_FAILURE_OBSERVED on ROAD-DEMO-SUBGRADE-02, supporting subgrade failure mechanism.",
+          "addressed": true
+        },
+        {
+          "hypothesis_id": "HYP-B09-68a78bf4632cc12f1781f94cb8f56734",
+          "assessment_id": "ASSESS-B09-8a466da9816ed002875384a9d6045af4",
+          "reason": "Assessment evaluated normal pressure test observation PRESSURE_TEST_NORMAL on PIPE-DEMO-NORMAL-02, contradicting the competing utility leak hypothesis.",
+          "addressed": false
+        }
+      ],
+      "evidence_ids": [
+        "EV-REPORT-B09-aa69698f124f46d2900d8a93e537005b"
+      ],
+      "tasks": [
+        {
+          "id": "TASK-01-SUBGRADE-REPAIR",
+          "action_type": "SUBGRADE_REPAIR",
+          "remediation": {
+            "mode": "SUPPORTED_NOW",
+            "conditions": [
+              {
+                "kind": "CAUSAL_INSPECTION",
+                "status": "MET",
+                "evidence_ids": [
+                  "EV-REPORT-B09-aa69698f124f46d2900d8a93e537005b"
+                ],
+                "depends_on_task_id": null
+              },
+              {
+                "kind": "SAFETY_REVIEW",
+                "status": "MET",
+                "evidence_ids": [
+                  "EV-REPORT-B09-aa69698f124f46d2900d8a93e537005b"
+                ],
+                "depends_on_task_id": null
+              }
+            ]
+          },
+          "target_ids": [
+            "ROAD-DEMO-SUBGRADE-02"
+          ],
+          "department_id": "DEPT-ROAD",
+          "priority": "HIGH",
+          "prerequisites": [
+            "Reviewed field inspection confirming subgrade failure observations",
+            "Reviewed target-specific safety review SUBGRADE_REPAIR_SAFETY_REVIEWED"
+          ],
+          "depends_on": [],
+          "evidence_ids": [
+            "EV-REPORT-B09-aa69698f124f46d2900d8a93e537005b"
+          ],
+          "assessment_ids": [
+            "ASSESS-B09-c5a53c9b60ed7108f13247b92c8a0378"
+          ],
+          "procedure_citation": {
+            "source_document_id": "D020",
+            "source_version": 1,
+            "canonical_document_id": "ORG:D020:1",
+            "owner_department_id": "DEPT-ROAD",
+            "source_uri": "data/documents/b12r/D020_subgrade_repair.md",
+            "content_checksum": "71e327f8cebb886a6abf7cd21ccfbb0d7b341e8c453db914f1a7414b6d560de3",
+            "quote_excerpt": "anations and contradictions remain separate. Documentary guidance is not physical causal evidence. Insufficient, unreviewed or contradicted support requires inspection instead.\n\nSUPPORTED_NOW requires typed MET CAUSAL_INSPECTION with all cause confirmation codes from reviewed attributed dated reports, plus MET SAFETY_REVIEW supported by a reviewed target-specific SUBGRADE_REPAIR_SAFETY_REVIEWED observation. Safety review covers: Utility clearance, excavation/traffic isolation and water-infiltration assessment.\n\nCONDITIONAL requires reviewed causal support and explicit typed UNMET gates. An unmet causal inspection must depend on an inspection draft for this target. An unmet safety review remains an unresolved gate. Text such as subject to inspection does not satisfy a gate.\n\nVerified MAINTA",
+            "passage_location": "chunk:1:fd99ebc8-4383-4481-bd47-ebfcbb472711",
+            "chunk_sha256": "343e8b31341e9ecfcd4bcdbdb5efd418aa289ae75f54b01bbb13ad81dafc737f",
+            "confidence_label": "SOURCE_REVIEWED_SYNTHETIC",
+            "assertion_status": "PROPOSED",
+            "retrieved_at": "2026-10-18T15:49:43.214Z",
+            "effective_from": "2026-10-18T00:00:00Z",
+            "derived_from": null,
+            "trusted_as_instructions": false
+          },
+          "expected_outcome": "Excavate and remediate failed subgrade foundation layer beneath ROAD-DEMO-SUBGRADE-02 prior to surface repaving.",
+          "verification_criteria": "Structural load re-testing post-repair and wear exposure monitoring demonstrating subgrade stabilization.",
+          "risks": [
+            "Traffic disruption during road excavation",
+            "Weather exposure of exposed road base"
+          ]
+        }
+      ],
+      "expected_outcomes": [
+        "Stabilization and structural restoration of subgrade layer on ROAD-DEMO-SUBGRADE-02 preventing recurring pavement deformation."
+      ],
+      "risks": [
+        "Subsurface excavation hazards and traffic disruption during repair operations."
+      ],
+      "uncertainties": [
+        "Long-term pavement durability remains subject to meaningful wear exposure and post-repair traffic load."
+      ],
+      "monitoring": {
+        "issue": "ROAD_DAMAGE",
+        "required_evidence": [
+          "FOLLOWUP_PAVEMENT",
+          "WEAR_EXPOSURE"
+        ],
+        "observation_opportunity": "Follow-up pavement visual inspection and structural profile assessment following post-repair wear exposure.",
+        "verification_criteria": "No recurring depression, cracking, or subgrade movement following 30 days of standard traffic exposure.",
+        "missing_opportunity": "UNRESOLVED",
+        "completion_implies_resolution": false
+      }
+    },
+    "draft_receipt": {
+      "id": "PLAN-B12-3a26fd93b1eb567bf101905dc4c43b76",
+      "version": 1,
+      "plan_hash": "a39f811a8913ba4c5870a6acff9a05b918027db1768c64146e32bc4f90a2c834",
+      "status": "DRAFT",
+      "simulation_mode": "SIMULATED",
+      "approved": false,
+      "executable": false
+    },
+    "status": "COMPLETED",
+    "expected_hash": "23eedfba5291db7a1846bcf39dcacdf2efdf45d9942f199c64cc363d9ac9a736",
+    "approval_status": "COMPLETED",
+    "execution_gates_verified": false,
+    "simulated": true,
+    "limitations": [
+      "Immutable draft receipt is not current execution authority",
+      "Approval does not prove all execution gates are satisfied",
+      "approval_status preserves the legacy plan lifecycle state; use ApprovalDTO.status for the approval decision"
+    ]
+  },
+  "approval": {
+    "id": "APPROVAL-B13-421f1dfc4187d58155e9d190f5085551",
+    "expected_hash": "07116b26ecfcf2c52dff857fbb2bc898261e379824bbfcf995e04cb43aed4451",
+    "simulated": true,
+    "plan_id": "PLAN-B12-3a26fd93b1eb567bf101905dc4c43b76",
+    "plan_version": 1,
+    "plan_hash": "a39f811a8913ba4c5870a6acff9a05b918027db1768c64146e32bc4f90a2c834",
+    "assignments": [
+      {
+        "task_id": "TASK-B12-9fd186bc06707b0f76702608529dd76e",
+        "action_type": "SUBGRADE_REPAIR",
+        "target_ids": [
+          "ROAD-DEMO-SUBGRADE-02"
+        ],
+        "department_id": "DEPT-ROAD",
+        "assignee_id": "OP-ROAD-LEAD"
+      }
+    ],
+    "status": "APPROVED",
+    "approved_by": "OP-APPROVER",
+    "requested_at": "2026-10-18T16:01:29.743Z",
+    "scope_hash": "224811393a30eb4343b0237360093a5c39fc71188fa17b248994309c3da0ffd3"
+  },
+  "orders": [
+    {
+      "id": "WO-B13-9b024fe9f51913bf88e76ded948dc09e",
+      "expected_hash": "b14ddae094255612955d466ddf6c00db9fa8df561612b233cd6f7ed7ba001370",
+      "simulated": true,
+      "status": "COMPLETED",
+      "task_id": "TASK-B12-9fd186bc06707b0f76702608529dd76e",
+      "plan_id": "PLAN-B12-3a26fd93b1eb567bf101905dc4c43b76",
+      "department_id": "DEPT-ROAD",
+      "assignee_id": "OP-ROAD-LEAD",
+      "execution_mode": "SIMULATED",
+      "authorized_by": "OP-APPROVER",
+      "status_event_ids": [
+        "STATUS-B13-9dd89faac6fd5cb0cbccf4be38cabd3e",
+        "STATUS-B13-79b73497fa4aa68d6865f20205566696",
+        "STATUS-B13-c9eb0235ac6515112ed2145f0a861704"
+      ],
+      "resolution_verified": true,
+      "latest_assessment_status": "RESOLUTION_VERIFIED",
+      "limitations": [
+        "Work completion alone does not establish resolution"
+      ]
+    }
+  ],
+  "incidents": [
+    {
+      "id": "INC-B08-8effe2e5da6bd34da2372713ba6e6693",
+      "expected_hash": "4275f5b645af3f09449a87bc73ce748e18ce771748fd2814e679594dd8451c2d",
+      "simulated": true,
+      "issue_type": "ROAD_DAMAGE",
+      "subtype": "UNSPECIFIED",
+      "location_id": "LOC-ROAD-DEMO-SUBGRADE-02",
+      "started_at": "2026-10-18T15:35:22.587000Z",
+      "ended_at": "2026-10-19T07:53:35.401Z",
+      "status": "ENDED",
+      "cluster_id": "PC-B08-a634385f0c8444ee30096e881824dafe",
+      "complaint_ids": [
+        "CMP-B08-4a6d5484bfd5fd7abe9180ed33d65ecc"
+      ]
+    }
+  ],
+  "memory": [
+    {
+      "items": [
+        {
+          "id": "INC-B08-27a2cb5d89ae9ab9d86f999cf7b50472",
+          "source_investigation_id": "INV-B09-b9d4d66e130ed348c4f6a50e9d66a891",
+          "outcome_ids": [],
+          "evidence_ids": [
+            "EV-B08-1551e3008ee140ea2ec35c851a3f4b81",
+            "EV-B08-4a6d5484bfd5fd7abe9180ed33d65ecc"
+          ],
+          "gaps": [
+            "Asset-linked interventions are context, not proof they resolved this incident",
+            "No linked historical inspection in bounded export",
+            "No linked historical repair/work order in bounded export",
+            "No linked historical outcome in bounded export",
+            "No qualifying asset association; category/zone similarity is weak context",
+            "Ranking is lexicographic over declared factors; similarity is not causal or resolution proof",
+            "Bounded case paths are historical context; recurrence classification and operational verification require their controlled domain services"
+          ],
+          "truncated": false,
+          "memory_type": "RECORDED_CASE_CONTEXT",
+          "summary": "Stored historical context; absent records are evidence gaps"
+        },
+        {
+          "id": "INC-B08-8effe2e5da6bd34da2372713ba6e6693",
+          "source_investigation_id": "INV-B09-f663f7a1473c4a28a941d147633e08ad",
+          "outcome_ids": [
+            "OUTCOME-B13-b032594269436a9d0c0aab16b7e99112",
+            "OUTCOME-B13-cc1c5de2f7ce56ea3e01bcad6a6fe66d"
+          ],
+          "evidence_ids": [
+            "EV-REPORT-B09-523b1c63ed31a70df2634b31988ee00a",
+            "EV-REPORT-B09-c93e39658f052c257511bd0179087931"
+          ],
+          "gaps": [
+            "Recorded completed episode, not an automatically generalized lesson; synthetic outcome policy and original assessment gaps remain applicable"
+          ],
+          "truncated": false,
+          "memory_type": "RECORDED_CASE_CONTEXT",
+          "summary": "Stored historical context; absent records are evidence gaps"
+        },
+        {
+          "id": "INC-B08-fe8695bcfe14451423ab395c971c684c",
+          "source_investigation_id": "INV-B09-9d231c8718136a90974e19c6c9a77c47",
+          "outcome_ids": [],
+          "evidence_ids": [
+            "EV-B08-4a6d5484bfd5fd7abe9180ed33d65ecc",
+            "EV-B08-563a9086b3ac69c4c3e38051acd0cb0d"
+          ],
+          "gaps": [
+            "Asset-linked interventions are context, not proof they resolved this incident",
+            "No linked historical inspection in bounded export",
+            "No linked historical repair/work order in bounded export",
+            "No linked historical outcome in bounded export",
+            "No qualifying asset association; category/zone similarity is weak context",
+            "Ranking is lexicographic over declared factors; similarity is not causal or resolution proof",
+            "Bounded case paths are historical context; recurrence classification and operational verification require their controlled domain services"
+          ],
+          "truncated": false,
+          "memory_type": "RECORDED_CASE_CONTEXT",
+          "summary": "Stored historical context; absent records are evidence gaps"
+        }
+      ],
+      "next_cursor": null,
+      "total_count": 3,
+      "limitations": [
+        "Ranking is lexicographic over declared factors; similarity is not causal or resolution proof",
+        "Bounded case paths are historical context; recurrence classification and operational verification require their controlled domain services",
+        "Connectivity and count-based criticality are not root-cause or hydraulic proof.",
+        "No result is a bounded negative, not proof of global disconnection.",
+        "Historical node versions are not reconstructed; future-updated records are excluded.",
+        "Open relationship validity bounds remain unknown, not manufactured dates."
+      ],
+      "truncated": true
+    }
+  ],
+  "outcomes": {
+    "items": [
+      {
+        "id": "OUTCOME-B13-b032594269436a9d0c0aab16b7e99112",
+        "work_order_id": "WO-B13-9b024fe9f51913bf88e76ded948dc09e",
+        "assessment_status": "MONITORING",
+        "result": "ACTION_COMPLETED",
+        "evidence_ids": [
+          "EV-REPORT-B09-523b1c63ed31a70df2634b31988ee00a"
+        ],
+        "evaluated_at": "2026-10-19T07:53:34.040Z",
+        "case_closed": false,
+        "policy_version": "B14-2",
+        "simulated": true
+      },
+      {
+        "id": "OUTCOME-B13-cc1c5de2f7ce56ea3e01bcad6a6fe66d",
+        "work_order_id": "WO-B13-9b024fe9f51913bf88e76ded948dc09e",
+        "assessment_status": "RESOLUTION_VERIFIED",
+        "result": "MITIGATION_VERIFIED",
+        "evidence_ids": [
+          "EV-REPORT-B09-c93e39658f052c257511bd0179087931"
+        ],
+        "evaluated_at": "2026-10-19T07:53:35.401Z",
+        "case_closed": true,
+        "policy_version": "B14-2",
+        "simulated": true
+      }
+    ],
+    "next_cursor": null,
+    "total_count": 2,
+    "limitations": [],
+    "truncated": false
+  },
+  "graph": {
+    "decision_paths": [],
+    "nodes": [
+      {
+        "id": "ASSESS-B09-8a466da9816ed002875384a9d6045af4",
+        "labels": [
+          "HypothesisAssessment"
+        ],
+        "kind": "HypothesisAssessment",
+        "display_label": "ASSESS-B09-8a466da9816ed002875384a9d6045af4",
+        "status": null,
+        "source_kind": null,
+        "evidence_ids": [
+          "EV-JOURNAL-B09-e799c4ec093f49af5eada41c09958ccf",
+          "EV-REPORT-B09-aa69698f124f46d2900d8a93e537005b"
+        ],
+        "observed_at": null
+      },
+      {
+        "id": "ASSESS-B09-c5a53c9b60ed7108f13247b92c8a0378",
+        "labels": [
+          "HypothesisAssessment"
+        ],
+        "kind": "HypothesisAssessment",
+        "display_label": "ASSESS-B09-c5a53c9b60ed7108f13247b92c8a0378",
+        "status": null,
+        "source_kind": null,
+        "evidence_ids": [
+          "EV-JOURNAL-B09-5994de76c0b091f889c60bf259dadef4",
+          "EV-REPORT-B09-aa69698f124f46d2900d8a93e537005b"
+        ],
+        "observed_at": null
+      },
+      {
+        "id": "CMP-B08-4a6d5484bfd5fd7abe9180ed33d65ecc",
+        "labels": [
+          "Complaint"
+        ],
+        "kind": "Complaint",
+        "display_label": "CMP-B08-4a6d5484bfd5fd7abe9180ed33d65ecc",
+        "status": "RECEIVED",
+        "source_kind": "SYNTHETIC",
+        "evidence_ids": [
+          "EV-B08-4a6d5484bfd5fd7abe9180ed33d65ecc"
+        ],
+        "observed_at": null
+      },
+      {
+        "id": "DEPT-ROAD",
+        "labels": [
+          "Department"
+        ],
+        "kind": "Department",
+        "display_label": "Road Maintenance",
+        "status": null,
+        "source_kind": null,
+        "evidence_ids": [
+          "EV-RESP-REVIEW-B20R-3431582fadcdcc5818af60b50cb50a98",
+          "EV-RESP-REVIEW-B20R-7ff53460770a73834bbf359c77b57bd2",
+          "EV-RESP-REVIEW-B20R-b88aabae2172bfdf430d1d5e6d1b5f6f",
+          "EVD-B04-IMPORT"
+        ],
+        "observed_at": null
+      },
+      {
+        "id": "DEPT-WATER",
+        "labels": [
+          "Department"
+        ],
+        "kind": "Department",
+        "display_label": "Water Utilities",
+        "status": null,
+        "source_kind": null,
+        "evidence_ids": [
+          "EV-RESP-REVIEW-B20R-34c4bc3765167592271bc6e336326b49",
+          "EV-RESP-REVIEW-B20R-37b7afe95be8d1f506870b2d7dfbbc09",
+          "EV-RESP-REVIEW-B20R-4c8db8f8f5d688ac180c65162132c7cc",
+          "EVD-B04-IMPORT"
+        ],
+        "observed_at": null
+      },
+      {
+        "id": "EV-REPORT-B09-523b1c63ed31a70df2634b31988ee00a",
+        "labels": [
+          "Evidence"
+        ],
+        "kind": "Evidence",
+        "display_label": "EV-REPORT-B09-523b1c63ed31a70df2634b31988ee00a",
+        "status": null,
+        "source_kind": "SYNTHETIC",
+        "evidence_ids": [
+          "EV-JOURNAL-B09-c704c786e8c9a25cba4a13764da89595"
+        ],
+        "observed_at": "2026-10-19T07:53:33.841Z"
+      },
+      {
+        "id": "EV-REPORT-B09-aa69698f124f46d2900d8a93e537005b",
+        "labels": [
+          "Evidence"
+        ],
+        "kind": "Evidence",
+        "display_label": "EV-REPORT-B09-aa69698f124f46d2900d8a93e537005b",
+        "status": null,
+        "source_kind": "SYNTHETIC",
+        "evidence_ids": [
+          "EV-JOURNAL-B09-40856c3ab5bfb35633cc753818494341",
+          "EV-REPORT-B09-aa69698f124f46d2900d8a93e537005b"
+        ],
+        "observed_at": "2026-10-18T15:48:28.379Z"
+      },
+      {
+        "id": "EV-REPORT-B09-c93e39658f052c257511bd0179087931",
+        "labels": [
+          "Evidence"
+        ],
+        "kind": "Evidence",
+        "display_label": "EV-REPORT-B09-c93e39658f052c257511bd0179087931",
+        "status": null,
+        "source_kind": "SYNTHETIC",
+        "evidence_ids": [
+          "EV-JOURNAL-B09-2de4f91d27a1196e0c7ae7d5f9cd9bc2"
+        ],
+        "observed_at": "2026-10-19T07:53:35.149Z"
+      },
+      {
+        "id": "FINDING-B09-0394e7a6d308cb0791ce07ec17da9684",
+        "labels": [
+          "Finding"
+        ],
+        "kind": "Finding",
+        "display_label": "FINDING-B09-0394e7a6d308cb0791ce07ec17da9684",
+        "status": "VERIFIED",
+        "source_kind": null,
+        "evidence_ids": [
+          "EV-JOURNAL-B09-40856c3ab5bfb35633cc753818494341"
+        ],
+        "observed_at": null
+      },
+      {
+        "id": "FINDING-B09-0cf4345fbe747f835ede3a1e91c4c1b9",
+        "labels": [
+          "Finding"
+        ],
+        "kind": "Finding",
+        "display_label": "FINDING-B09-0cf4345fbe747f835ede3a1e91c4c1b9",
+        "status": "VERIFIED",
+        "source_kind": null,
+        "evidence_ids": [
+          "EV-JOURNAL-B09-40856c3ab5bfb35633cc753818494341"
+        ],
+        "observed_at": null
+      },
+      {
+        "id": "FINDING-B09-72a30ab418ee185e30d1fbb1c5a9238e",
+        "labels": [
+          "Finding"
+        ],
+        "kind": "Finding",
+        "display_label": "FINDING-B09-72a30ab418ee185e30d1fbb1c5a9238e",
+        "status": "VERIFIED",
+        "source_kind": null,
+        "evidence_ids": [
+          "EV-JOURNAL-B09-40856c3ab5bfb35633cc753818494341"
+        ],
+        "observed_at": null
+      },
+      {
+        "id": "FINDING-B09-77c1e611ecaae5713703dcbf92d2a7ac",
+        "labels": [
+          "Finding"
+        ],
+        "kind": "Finding",
+        "display_label": "FINDING-B09-77c1e611ecaae5713703dcbf92d2a7ac",
+        "status": "VERIFIED",
+        "source_kind": null,
+        "evidence_ids": [
+          "EV-JOURNAL-B09-40856c3ab5bfb35633cc753818494341"
+        ],
+        "observed_at": null
+      },
+      {
+        "id": "FINDING-B09-a4c3388705b04d95e47e311428dd4054",
+        "labels": [
+          "Finding"
+        ],
+        "kind": "Finding",
+        "display_label": "FINDING-B09-a4c3388705b04d95e47e311428dd4054",
+        "status": "VERIFIED",
+        "source_kind": null,
+        "evidence_ids": [
+          "EV-JOURNAL-B09-40856c3ab5bfb35633cc753818494341"
+        ],
+        "observed_at": null
+      },
+      {
+        "id": "HYP-B09-1f6b6b25f7ba5eb2bbbb49ce97513083",
+        "labels": [
+          "Hypothesis"
+        ],
+        "kind": "Hypothesis",
+        "display_label": "HYP-B09-1f6b6b25f7ba5eb2bbbb49ce97513083",
+        "status": "SUPPORTED",
+        "source_kind": null,
+        "evidence_ids": [
+          "EV-JOURNAL-B09-5994de76c0b091f889c60bf259dadef4",
+          "EV-JOURNAL-B09-76985433bf0fd3abb50fc1a618ac2b4d"
+        ],
+        "observed_at": null
+      },
+      {
+        "id": "HYP-B09-68a78bf4632cc12f1781f94cb8f56734",
+        "labels": [
+          "Hypothesis"
+        ],
+        "kind": "Hypothesis",
+        "display_label": "HYP-B09-68a78bf4632cc12f1781f94cb8f56734",
+        "status": "REJECTED",
+        "source_kind": null,
+        "evidence_ids": [
+          "EV-JOURNAL-B09-5ef7dd524b18d8568f80f9997e59a30a",
+          "EV-JOURNAL-B09-e799c4ec093f49af5eada41c09958ccf"
+        ],
+        "observed_at": null
+      },
+      {
+        "id": "INC-B08-8effe2e5da6bd34da2372713ba6e6693",
+        "labels": [
+          "Incident"
+        ],
+        "kind": "Incident",
+        "display_label": "INC-B08-8effe2e5da6bd34da2372713ba6e6693",
+        "status": "ENDED",
+        "source_kind": null,
+        "evidence_ids": [
+          "EV-B08-4a6d5484bfd5fd7abe9180ed33d65ecc",
+          "EV-JOURNAL-B09-9f3601aa0c815569e6b7d60b37eda7ae"
+        ],
+        "observed_at": null
+      },
+      {
+        "id": "INS-B09-00e5698e6f61e3a354bd3cce28365457",
+        "labels": [
+          "Inspection"
+        ],
+        "kind": "Inspection",
+        "display_label": "INS-B09-00e5698e6f61e3a354bd3cce28365457",
+        "status": "COMPLETED",
+        "source_kind": null,
+        "evidence_ids": [
+          "EV-JOURNAL-B09-2de4f91d27a1196e0c7ae7d5f9cd9bc2",
+          "EV-JOURNAL-B09-aa70f3ac0750274d40a9a3a96fbcca1e"
+        ],
+        "observed_at": null
+      },
+      {
+        "id": "INS-B09-1fe68eeb269e548b68b1646a36b25f1f",
+        "labels": [
+          "Inspection"
+        ],
+        "kind": "Inspection",
+        "display_label": "INS-B09-1fe68eeb269e548b68b1646a36b25f1f",
+        "status": "COMPLETED",
+        "source_kind": null,
+        "evidence_ids": [
+          "EV-JOURNAL-B09-08bc121836d72411d9338ffe8520755c",
+          "EV-JOURNAL-B09-c704c786e8c9a25cba4a13764da89595"
+        ],
+        "observed_at": null
+      },
+      {
+        "id": "INS-B09-44e1bceff4bc62bd8c87e8b45db92346",
+        "labels": [
+          "Inspection"
+        ],
+        "kind": "Inspection",
+        "display_label": "INS-B09-44e1bceff4bc62bd8c87e8b45db92346",
+        "status": "COMPLETED",
+        "source_kind": null,
+        "evidence_ids": [
+          "EV-JOURNAL-B09-40856c3ab5bfb35633cc753818494341",
+          "EV-JOURNAL-B09-db3b4a88e1fa4d64da8b06576a00de86"
+        ],
+        "observed_at": null
+      },
+      {
+        "id": "INV-B09-f663f7a1473c4a28a941d147633e08ad",
+        "labels": [
+          "Investigation"
+        ],
+        "kind": "Investigation",
+        "display_label": "INV-B09-f663f7a1473c4a28a941d147633e08ad",
+        "status": "COMPLETED",
+        "source_kind": null,
+        "evidence_ids": [
+          "EV-JOURNAL-B09-5ef7dd524b18d8568f80f9997e59a30a",
+          "EV-JOURNAL-B09-76985433bf0fd3abb50fc1a618ac2b4d",
+          "EV-JOURNAL-B09-9f3601aa0c815569e6b7d60b37eda7ae"
+        ],
+        "observed_at": null
+      },
+      {
+        "id": "LOC-PIPE-DEMO-NORMAL-02",
+        "labels": [
+          "Location"
+        ],
+        "kind": "Location",
+        "display_label": "Independent synthetic location PIPE-DEMO-NORMAL-02",
+        "status": null,
+        "source_kind": null,
+        "evidence_ids": [
+          "DEMO-REHEARSAL02-INVENTORY"
+        ],
+        "observed_at": null
+      },
+      {
+        "id": "LOC-ROAD-DEMO-SUBGRADE-02",
+        "labels": [
+          "Location"
+        ],
+        "kind": "Location",
+        "display_label": "Independent synthetic location ROAD-DEMO-SUBGRADE-02",
+        "status": null,
+        "source_kind": null,
+        "evidence_ids": [
+          "DEMO-REHEARSAL02-INVENTORY",
+          "EV-B08-4a6d5484bfd5fd7abe9180ed33d65ecc"
+        ],
+        "observed_at": null
+      },
+      {
+        "id": "OUTCOME-B13-b032594269436a9d0c0aab16b7e99112",
+        "labels": [
+          "InterventionOutcome"
+        ],
+        "kind": "InterventionOutcome",
+        "display_label": "OUTCOME-B13-b032594269436a9d0c0aab16b7e99112",
+        "status": null,
+        "source_kind": null,
+        "evidence_ids": [
+          "EV-REPORT-B09-523b1c63ed31a70df2634b31988ee00a"
+        ],
+        "observed_at": null
+      },
+      {
+        "id": "OUTCOME-B13-cc1c5de2f7ce56ea3e01bcad6a6fe66d",
+        "labels": [
+          "InterventionOutcome"
+        ],
+        "kind": "InterventionOutcome",
+        "display_label": "OUTCOME-B13-cc1c5de2f7ce56ea3e01bcad6a6fe66d",
+        "status": null,
+        "source_kind": null,
+        "evidence_ids": [
+          "EV-REPORT-B09-c93e39658f052c257511bd0179087931"
+        ],
+        "observed_at": null
+      },
+      {
+        "id": "PC-B08-a634385f0c8444ee30096e881824dafe",
+        "labels": [
+          "ProblemCluster"
+        ],
+        "kind": "ProblemCluster",
+        "display_label": "ROAD_DAMAGE reported at LOC-ROAD-DEMO-SUBGRADE-02",
+        "status": "CONTROLLED",
+        "source_kind": null,
+        "evidence_ids": [
+          "EV-B08-4a6d5484bfd5fd7abe9180ed33d65ecc",
+          "EV-JOURNAL-B09-9f3601aa0c815569e6b7d60b37eda7ae"
+        ],
+        "observed_at": null
+      },
+      {
+        "id": "PIPE-100",
+        "labels": [
+          "InfrastructureAsset",
+          "WaterPipe"
+        ],
+        "kind": "WaterPipe",
+        "display_label": "Demo utility pipe 100",
+        "status": "ACTIVE",
+        "source_kind": null,
+        "evidence_ids": [
+          "EV-RESP-REVIEW-B20R-37b7afe95be8d1f506870b2d7dfbbc09",
+          "EVD-B04-IMPORT"
+        ],
+        "observed_at": null
+      },
+      {
+        "id": "PIPE-DEMO-HEALTHY",
+        "labels": [
+          "InfrastructureAsset",
+          "WaterPipe"
+        ],
+        "kind": "WaterPipe",
+        "display_label": "Independent synthetic PIPE-DEMO-HEALTHY",
+        "status": "ACTIVE",
+        "source_kind": null,
+        "evidence_ids": [
+          "EV-RESP-REVIEW-B20R-34c4bc3765167592271bc6e336326b49"
+        ],
+        "observed_at": null
+      },
+      {
+        "id": "PIPE-DEMO-NORMAL-02",
+        "labels": [
+          "InfrastructureAsset",
+          "WaterPipe"
+        ],
+        "kind": "WaterPipe",
+        "display_label": "Independent synthetic PIPE-DEMO-NORMAL-02",
+        "status": "ACTIVE",
+        "source_kind": null,
+        "evidence_ids": [
+          "DEMO-REHEARSAL02-INVENTORY",
+          "EV-B08-4a6d5484bfd5fd7abe9180ed33d65ecc",
+          "EV-JOURNAL-B09-5ef7dd524b18d8568f80f9997e59a30a",
+          "EV-JOURNAL-B09-db3b4a88e1fa4d64da8b06576a00de86",
+          "EV-RESP-REVIEW-B20R-4c8db8f8f5d688ac180c65162132c7cc"
+        ],
+        "observed_at": null
+      },
+      {
+        "id": "PLAN-B12-3a26fd93b1eb567bf101905dc4c43b76",
+        "labels": [
+          "ResolutionPlan"
+        ],
+        "kind": "ResolutionPlan",
+        "display_label": "PLAN-B12-3a26fd93b1eb567bf101905dc4c43b76",
+        "status": "COMPLETED",
+        "source_kind": null,
+        "evidence_ids": [],
+        "observed_at": null
+      },
+      {
+        "id": "ROAD-100",
+        "labels": [
+          "InfrastructureAsset",
+          "RoadSegment"
+        ],
+        "kind": "RoadSegment",
+        "display_label": "Demo road segment 100",
+        "status": "ACTIVE",
+        "source_kind": null,
+        "evidence_ids": [
+          "EV-RESP-REVIEW-B20R-3431582fadcdcc5818af60b50cb50a98",
+          "EVD-B04-IMPORT"
+        ],
+        "observed_at": null
+      },
+      {
+        "id": "ROAD-DEMO-HEALTHY",
+        "labels": [
+          "InfrastructureAsset",
+          "RoadSegment"
+        ],
+        "kind": "RoadSegment",
+        "display_label": "Independent synthetic ROAD-DEMO-HEALTHY",
+        "status": "ACTIVE",
+        "source_kind": null,
+        "evidence_ids": [
+          "EV-RESP-REVIEW-B20R-b88aabae2172bfdf430d1d5e6d1b5f6f"
+        ],
+        "observed_at": null
+      },
+      {
+        "id": "ROAD-DEMO-SUBGRADE-02",
+        "labels": [
+          "InfrastructureAsset",
+          "RoadSegment"
+        ],
+        "kind": "RoadSegment",
+        "display_label": "Independent synthetic ROAD-DEMO-SUBGRADE-02",
+        "status": "ACTIVE",
+        "source_kind": null,
+        "evidence_ids": [
+          "DEMO-REHEARSAL02-INVENTORY",
+          "EV-B08-4a6d5484bfd5fd7abe9180ed33d65ecc",
+          "EV-JOURNAL-B09-08bc121836d72411d9338ffe8520755c",
+          "EV-JOURNAL-B09-76985433bf0fd3abb50fc1a618ac2b4d",
+          "EV-JOURNAL-B09-aa70f3ac0750274d40a9a3a96fbcca1e",
+          "EV-JOURNAL-B09-db3b4a88e1fa4d64da8b06576a00de86",
+          "EV-RESP-REVIEW-B20R-7ff53460770a73834bbf359c77b57bd2"
+        ],
+        "observed_at": null
+      },
+      {
+        "id": "STATUS-B13-79b73497fa4aa68d6865f20205566696",
+        "labels": [
+          "StatusEvent"
+        ],
+        "kind": "StatusEvent",
+        "display_label": "STATUS-B13-79b73497fa4aa68d6865f20205566696",
+        "status": null,
+        "source_kind": null,
+        "evidence_ids": [],
+        "observed_at": null
+      },
+      {
+        "id": "STATUS-B13-9dd89faac6fd5cb0cbccf4be38cabd3e",
+        "labels": [
+          "StatusEvent"
+        ],
+        "kind": "StatusEvent",
+        "display_label": "STATUS-B13-9dd89faac6fd5cb0cbccf4be38cabd3e",
+        "status": null,
+        "source_kind": null,
+        "evidence_ids": [],
+        "observed_at": null
+      },
+      {
+        "id": "STATUS-B13-c9eb0235ac6515112ed2145f0a861704",
+        "labels": [
+          "StatusEvent"
+        ],
+        "kind": "StatusEvent",
+        "display_label": "STATUS-B13-c9eb0235ac6515112ed2145f0a861704",
+        "status": null,
+        "source_kind": null,
+        "evidence_ids": [],
+        "observed_at": null
+      },
+      {
+        "id": "TASK-B12-8a158819baf845e296daf7a45a4e4065",
+        "labels": [
+          "ActionTask"
+        ],
+        "kind": "ActionTask",
+        "display_label": "TASK-B12-8a158819baf845e296daf7a45a4e4065",
+        "status": "COMPLETED",
+        "source_kind": null,
+        "evidence_ids": [],
+        "observed_at": null
+      },
+      {
+        "id": "TASK-B12-8b0208f48c4de3b290ac7a8a36e45040",
+        "labels": [
+          "ActionTask"
+        ],
+        "kind": "ActionTask",
+        "display_label": "TASK-B12-8b0208f48c4de3b290ac7a8a36e45040",
+        "status": "COMPLETED",
+        "source_kind": null,
+        "evidence_ids": [],
+        "observed_at": null
+      },
+      {
+        "id": "TASK-B12-9fd186bc06707b0f76702608529dd76e",
+        "labels": [
+          "ActionTask"
+        ],
+        "kind": "ActionTask",
+        "display_label": "TASK-B12-9fd186bc06707b0f76702608529dd76e",
+        "status": "COMPLETED",
+        "source_kind": null,
+        "evidence_ids": [],
+        "observed_at": null
+      },
+      {
+        "id": "TASK-B12-cc5b217112ba51340a062ca9fb55853b",
+        "labels": [
+          "ActionTask"
+        ],
+        "kind": "ActionTask",
+        "display_label": "TASK-B12-cc5b217112ba51340a062ca9fb55853b",
+        "status": "COMPLETED",
+        "source_kind": null,
+        "evidence_ids": [],
+        "observed_at": null
+      },
+      {
+        "id": "WO-B13-9b024fe9f51913bf88e76ded948dc09e",
+        "labels": [
+          "WorkOrder"
+        ],
+        "kind": "WorkOrder",
+        "display_label": "WO-B13-9b024fe9f51913bf88e76ded948dc09e",
+        "status": "COMPLETED",
+        "source_kind": null,
+        "evidence_ids": [
+          "EV-REPORT-B09-523b1c63ed31a70df2634b31988ee00a",
+          "EV-REPORT-B09-c93e39658f052c257511bd0179087931"
+        ],
+        "observed_at": null
+      }
+    ],
+    "edges": [
+      {
+        "id": "LOCATED-PIPE-DEMO-NORMAL-02",
+        "type": "LOCATED_AT",
+        "source": "PIPE-DEMO-NORMAL-02",
+        "target": "LOC-PIPE-DEMO-NORMAL-02",
+        "valid_from": null,
+        "valid_to": null,
+        "observed_at": null,
+        "verification_status": "RECORDED_ASSOCIATION_NOT_CAUSATION",
+        "source_evidence_ids": [
+          "DEMO-REHEARSAL02-INVENTORY"
+        ]
+      },
+      {
+        "id": "LOCATED-ROAD-DEMO-SUBGRADE-02",
+        "type": "LOCATED_AT",
+        "source": "ROAD-DEMO-SUBGRADE-02",
+        "target": "LOC-ROAD-DEMO-SUBGRADE-02",
+        "valid_from": null,
+        "valid_to": null,
+        "observed_at": null,
+        "verification_status": "RECORDED_ASSOCIATION_NOT_CAUSATION",
+        "source_evidence_ids": [
+          "DEMO-REHEARSAL02-INVENTORY"
+        ]
+      },
+      {
+        "id": "REL-B08-0567bd1555780614323496eb7fcf05a7",
+        "type": "AFFECTS",
+        "source": "INC-B08-8effe2e5da6bd34da2372713ba6e6693",
+        "target": "PIPE-DEMO-NORMAL-02",
+        "valid_from": "2026-10-18T15:35:23.745000Z",
+        "valid_to": null,
+        "observed_at": null,
+        "verification_status": "REPORTED",
+        "source_evidence_ids": [
+          "EV-B08-4a6d5484bfd5fd7abe9180ed33d65ecc"
+        ]
+      },
+      {
+        "id": "REL-B08-21532c6bd3d9404966bb8484e1ed51bf",
+        "type": "OCCURRED_AT",
+        "source": "INC-B08-8effe2e5da6bd34da2372713ba6e6693",
+        "target": "LOC-ROAD-DEMO-SUBGRADE-02",
+        "valid_from": "2026-10-18T15:35:23.745000Z",
+        "valid_to": null,
+        "observed_at": null,
+        "verification_status": "RECORDED_ASSOCIATION_NOT_CAUSATION",
+        "source_evidence_ids": [
+          "EV-B08-4a6d5484bfd5fd7abe9180ed33d65ecc"
+        ]
+      },
+      {
+        "id": "REL-B08-327e6083a8ae55f7530d179d7ecbcf5e",
+        "type": "PART_OF",
+        "source": "INC-B08-8effe2e5da6bd34da2372713ba6e6693",
+        "target": "PC-B08-a634385f0c8444ee30096e881824dafe",
+        "valid_from": "2026-10-18T15:35:23.745000Z",
+        "valid_to": null,
+        "observed_at": null,
+        "verification_status": "RECORDED_ASSOCIATION_NOT_CAUSATION",
+        "source_evidence_ids": [
+          "EV-B08-4a6d5484bfd5fd7abe9180ed33d65ecc"
+        ]
+      },
+      {
+        "id": "REL-B08-9f8e6fbb4ab45b0690419da63914d6b9",
+        "type": "REPORTS",
+        "source": "CMP-B08-4a6d5484bfd5fd7abe9180ed33d65ecc",
+        "target": "INC-B08-8effe2e5da6bd34da2372713ba6e6693",
+        "valid_from": "2026-10-18T15:35:23.745000Z",
+        "valid_to": null,
+        "observed_at": null,
+        "verification_status": "RECORDED_ASSOCIATION_NOT_CAUSATION",
+        "source_evidence_ids": [
+          "EV-B08-4a6d5484bfd5fd7abe9180ed33d65ecc"
+        ]
+      },
+      {
+        "id": "REL-B08-d331f6e995dd10e85ff645f47bdb164f",
+        "type": "AFFECTS",
+        "source": "INC-B08-8effe2e5da6bd34da2372713ba6e6693",
+        "target": "ROAD-DEMO-SUBGRADE-02",
+        "valid_from": "2026-10-18T15:35:23.745000Z",
+        "valid_to": null,
+        "observed_at": null,
+        "verification_status": "REPORTED",
+        "source_evidence_ids": [
+          "EV-B08-4a6d5484bfd5fd7abe9180ed33d65ecc"
+        ]
+      },
+      {
+        "id": "REL-B09-059cbfd8cff986dfe6c383c53037336f",
+        "type": "PRODUCED",
+        "source": "INS-B09-1fe68eeb269e548b68b1646a36b25f1f",
+        "target": "EV-REPORT-B09-523b1c63ed31a70df2634b31988ee00a",
+        "valid_from": "2026-10-19T07:53:33.881Z",
+        "valid_to": null,
+        "observed_at": null,
+        "verification_status": "RECORDED_ASSOCIATION_NOT_CAUSATION",
+        "source_evidence_ids": [
+          "EV-JOURNAL-B09-c704c786e8c9a25cba4a13764da89595"
+        ]
+      },
+      {
+        "id": "REL-B09-06a2cfb4aff5ca02b1448a266735579a",
+        "type": "INSPECTS",
+        "source": "INS-B09-44e1bceff4bc62bd8c87e8b45db92346",
+        "target": "ROAD-DEMO-SUBGRADE-02",
+        "valid_from": "2026-10-18T15:36:52.429Z",
+        "valid_to": null,
+        "observed_at": null,
+        "verification_status": "RECORDED_ASSOCIATION_NOT_CAUSATION",
+        "source_evidence_ids": [
+          "EV-JOURNAL-B09-db3b4a88e1fa4d64da8b06576a00de86"
+        ]
+      },
+      {
+        "id": "REL-B09-088e63aca85397029204fa282e4a4563",
+        "type": "CONCERNS",
+        "source": "HYP-B09-68a78bf4632cc12f1781f94cb8f56734",
+        "target": "PIPE-DEMO-NORMAL-02",
+        "valid_from": "2026-10-18T15:49:34.434Z",
+        "valid_to": null,
+        "observed_at": null,
+        "verification_status": "RECORDED_ASSOCIATION_NOT_CAUSATION",
+        "source_evidence_ids": [
+          "EV-JOURNAL-B09-5ef7dd524b18d8568f80f9997e59a30a"
+        ]
+      },
+      {
+        "id": "REL-B09-1059faaf988e30961e1e290031d87dfd",
+        "type": "HAS_ASSESSMENT",
+        "source": "HYP-B09-1f6b6b25f7ba5eb2bbbb49ce97513083",
+        "target": "ASSESS-B09-c5a53c9b60ed7108f13247b92c8a0378",
+        "valid_from": "2026-10-18T15:49:30.264Z",
+        "valid_to": null,
+        "observed_at": null,
+        "verification_status": "RECORDED_ASSOCIATION_NOT_CAUSATION",
+        "source_evidence_ids": [
+          "EV-JOURNAL-B09-5994de76c0b091f889c60bf259dadef4"
+        ]
+      },
+      {
+        "id": "REL-B09-1ebb4167d1a9ba8bab2984c65d537d96",
+        "type": "PROPOSES",
+        "source": "INV-B09-f663f7a1473c4a28a941d147633e08ad",
+        "target": "HYP-B09-1f6b6b25f7ba5eb2bbbb49ce97513083",
+        "valid_from": "2026-10-18T15:36:43.064Z",
+        "valid_to": null,
+        "observed_at": null,
+        "verification_status": "RECORDED_ASSOCIATION_NOT_CAUSATION",
+        "source_evidence_ids": [
+          "EV-JOURNAL-B09-76985433bf0fd3abb50fc1a618ac2b4d"
+        ]
+      },
+      {
+        "id": "REL-B09-20b5a6de791898aa64639c8b4abc4705",
+        "type": "INVESTIGATES",
+        "source": "INV-B09-f663f7a1473c4a28a941d147633e08ad",
+        "target": "INC-B08-8effe2e5da6bd34da2372713ba6e6693",
+        "valid_from": "2026-10-18T15:35:23.895Z",
+        "valid_to": null,
+        "observed_at": null,
+        "verification_status": "RECORDED_ASSOCIATION_NOT_CAUSATION",
+        "source_evidence_ids": [
+          "EV-JOURNAL-B09-9f3601aa0c815569e6b7d60b37eda7ae"
+        ]
+      },
+      {
+        "id": "REL-B09-287ba36e609fe566a89cdebd868210e3",
+        "type": "INSPECTS",
+        "source": "INS-B09-00e5698e6f61e3a354bd3cce28365457",
+        "target": "ROAD-DEMO-SUBGRADE-02",
+        "valid_from": "2026-10-19T07:53:34.317Z",
+        "valid_to": null,
+        "observed_at": null,
+        "verification_status": "RECORDED_ASSOCIATION_NOT_CAUSATION",
+        "source_evidence_ids": [
+          "EV-JOURNAL-B09-aa70f3ac0750274d40a9a3a96fbcca1e"
+        ]
+      },
+      {
+        "id": "REL-B09-2d711720079572bc841ea822ade13fc4",
+        "type": "PROPOSES",
+        "source": "INV-B09-f663f7a1473c4a28a941d147633e08ad",
+        "target": "HYP-B09-68a78bf4632cc12f1781f94cb8f56734",
+        "valid_from": "2026-10-18T15:49:34.434Z",
+        "valid_to": null,
+        "observed_at": null,
+        "verification_status": "RECORDED_ASSOCIATION_NOT_CAUSATION",
+        "source_evidence_ids": [
+          "EV-JOURNAL-B09-5ef7dd524b18d8568f80f9997e59a30a"
+        ]
+      },
+      {
+        "id": "REL-B09-466abbe21b6f8a8c4c9cfa676d7d970a",
+        "type": "ESTABLISHES",
+        "source": "EV-REPORT-B09-aa69698f124f46d2900d8a93e537005b",
+        "target": "FINDING-B09-0394e7a6d308cb0791ce07ec17da9684",
+        "valid_from": "2026-10-18T15:48:28.379Z",
+        "valid_to": null,
+        "observed_at": null,
+        "verification_status": "RECORDED_ASSOCIATION_NOT_CAUSATION",
+        "source_evidence_ids": [
+          "EV-JOURNAL-B09-40856c3ab5bfb35633cc753818494341"
+        ]
+      },
+      {
+        "id": "REL-B09-67972e264b5dabef61c64227781f7bdb",
+        "type": "INVESTIGATES",
+        "source": "INV-B09-f663f7a1473c4a28a941d147633e08ad",
+        "target": "PC-B08-a634385f0c8444ee30096e881824dafe",
+        "valid_from": "2026-10-18T15:35:23.895Z",
+        "valid_to": null,
+        "observed_at": null,
+        "verification_status": "RECORDED_ASSOCIATION_NOT_CAUSATION",
+        "source_evidence_ids": [
+          "EV-JOURNAL-B09-9f3601aa0c815569e6b7d60b37eda7ae"
+        ]
+      },
+      {
+        "id": "REL-B09-72d8553216dd8b34506fe2401292b358",
+        "type": "PRODUCED",
+        "source": "INS-B09-44e1bceff4bc62bd8c87e8b45db92346",
+        "target": "EV-REPORT-B09-aa69698f124f46d2900d8a93e537005b",
+        "valid_from": "2026-10-18T15:48:28.379Z",
+        "valid_to": null,
+        "observed_at": null,
+        "verification_status": "RECORDED_ASSOCIATION_NOT_CAUSATION",
+        "source_evidence_ids": [
+          "EV-JOURNAL-B09-40856c3ab5bfb35633cc753818494341"
+        ]
+      },
+      {
+        "id": "REL-B09-75fa37e6719df79b636e49617a18e59b",
+        "type": "INSPECTS",
+        "source": "INS-B09-1fe68eeb269e548b68b1646a36b25f1f",
+        "target": "ROAD-DEMO-SUBGRADE-02",
+        "valid_from": "2026-10-19T07:53:33.207Z",
+        "valid_to": null,
+        "observed_at": null,
+        "verification_status": "RECORDED_ASSOCIATION_NOT_CAUSATION",
+        "source_evidence_ids": [
+          "EV-JOURNAL-B09-08bc121836d72411d9338ffe8520755c"
+        ]
+      },
+      {
+        "id": "REL-B09-774a561ddab8bf5ac092604f7e79427f",
+        "type": "ESTABLISHES",
+        "source": "EV-REPORT-B09-aa69698f124f46d2900d8a93e537005b",
+        "target": "FINDING-B09-0cf4345fbe747f835ede3a1e91c4c1b9",
+        "valid_from": "2026-10-18T15:48:28.379Z",
+        "valid_to": null,
+        "observed_at": null,
+        "verification_status": "RECORDED_ASSOCIATION_NOT_CAUSATION",
+        "source_evidence_ids": [
+          "EV-JOURNAL-B09-40856c3ab5bfb35633cc753818494341"
+        ]
+      },
+      {
+        "id": "REL-B09-84c798a26d6bbfb6cb889c7a0631a1cc",
+        "type": "SUPPORTED_BY",
+        "source": "ASSESS-B09-c5a53c9b60ed7108f13247b92c8a0378",
+        "target": "EV-REPORT-B09-aa69698f124f46d2900d8a93e537005b",
+        "valid_from": "2026-10-18T15:49:30.264Z",
+        "valid_to": null,
+        "observed_at": null,
+        "verification_status": "RECORDED_ASSOCIATION_NOT_CAUSATION",
+        "source_evidence_ids": [
+          "EV-REPORT-B09-aa69698f124f46d2900d8a93e537005b"
+        ]
+      },
+      {
+        "id": "REL-B09-c603e5217a7b731c5570718faabddddb",
+        "type": "HAS_ASSESSMENT",
+        "source": "HYP-B09-68a78bf4632cc12f1781f94cb8f56734",
+        "target": "ASSESS-B09-8a466da9816ed002875384a9d6045af4",
+        "valid_from": "2026-10-18T15:49:39.178Z",
+        "valid_to": null,
+        "observed_at": null,
+        "verification_status": "RECORDED_ASSOCIATION_NOT_CAUSATION",
+        "source_evidence_ids": [
+          "EV-JOURNAL-B09-e799c4ec093f49af5eada41c09958ccf"
+        ]
+      },
+      {
+        "id": "REL-B09-ca91d63710f5e6fa5cb9aaf8ae50da18",
+        "type": "CONCERNS",
+        "source": "HYP-B09-1f6b6b25f7ba5eb2bbbb49ce97513083",
+        "target": "ROAD-DEMO-SUBGRADE-02",
+        "valid_from": "2026-10-18T15:36:43.064Z",
+        "valid_to": null,
+        "observed_at": null,
+        "verification_status": "RECORDED_ASSOCIATION_NOT_CAUSATION",
+        "source_evidence_ids": [
+          "EV-JOURNAL-B09-76985433bf0fd3abb50fc1a618ac2b4d"
+        ]
+      },
+      {
+        "id": "REL-B09-d070a9dcecbc88e38334ea73323481ad",
+        "type": "ESTABLISHES",
+        "source": "EV-REPORT-B09-aa69698f124f46d2900d8a93e537005b",
+        "target": "FINDING-B09-77c1e611ecaae5713703dcbf92d2a7ac",
+        "valid_from": "2026-10-18T15:48:28.379Z",
+        "valid_to": null,
+        "observed_at": null,
+        "verification_status": "RECORDED_ASSOCIATION_NOT_CAUSATION",
+        "source_evidence_ids": [
+          "EV-JOURNAL-B09-40856c3ab5bfb35633cc753818494341"
+        ]
+      },
+      {
+        "id": "REL-B09-dcc73d954616a7742de01142b8155967",
+        "type": "CONTRADICTED_BY",
+        "source": "ASSESS-B09-8a466da9816ed002875384a9d6045af4",
+        "target": "EV-REPORT-B09-aa69698f124f46d2900d8a93e537005b",
+        "valid_from": "2026-10-18T15:49:39.178Z",
+        "valid_to": null,
+        "observed_at": null,
+        "verification_status": "RECORDED_ASSOCIATION_NOT_CAUSATION",
+        "source_evidence_ids": [
+          "EV-REPORT-B09-aa69698f124f46d2900d8a93e537005b"
+        ]
+      },
+      {
+        "id": "REL-B09-e06a31392012f9d228078f3335e13f42",
+        "type": "PRODUCED",
+        "source": "INS-B09-00e5698e6f61e3a354bd3cce28365457",
+        "target": "EV-REPORT-B09-c93e39658f052c257511bd0179087931",
+        "valid_from": "2026-10-19T07:53:35.189Z",
+        "valid_to": null,
+        "observed_at": null,
+        "verification_status": "RECORDED_ASSOCIATION_NOT_CAUSATION",
+        "source_evidence_ids": [
+          "EV-JOURNAL-B09-2de4f91d27a1196e0c7ae7d5f9cd9bc2"
+        ]
+      },
+      {
+        "id": "REL-B09-e72de8ed85906f5e5d19984fc9163b49",
+        "type": "INSPECTS",
+        "source": "INS-B09-44e1bceff4bc62bd8c87e8b45db92346",
+        "target": "PIPE-DEMO-NORMAL-02",
+        "valid_from": "2026-10-18T15:36:52.429Z",
+        "valid_to": null,
+        "observed_at": null,
+        "verification_status": "RECORDED_ASSOCIATION_NOT_CAUSATION",
+        "source_evidence_ids": [
+          "EV-JOURNAL-B09-db3b4a88e1fa4d64da8b06576a00de86"
+        ]
+      },
+      {
+        "id": "REL-B09-f2d61e793f635badf0be298f0eba817e",
+        "type": "ESTABLISHES",
+        "source": "EV-REPORT-B09-aa69698f124f46d2900d8a93e537005b",
+        "target": "FINDING-B09-72a30ab418ee185e30d1fbb1c5a9238e",
+        "valid_from": "2026-10-18T15:48:28.379Z",
+        "valid_to": null,
+        "observed_at": null,
+        "verification_status": "RECORDED_ASSOCIATION_NOT_CAUSATION",
+        "source_evidence_ids": [
+          "EV-JOURNAL-B09-40856c3ab5bfb35633cc753818494341"
+        ]
+      },
+      {
+        "id": "REL-B09-f4a44be3d0c7b70a31789a7982853ba8",
+        "type": "ESTABLISHES",
+        "source": "EV-REPORT-B09-aa69698f124f46d2900d8a93e537005b",
+        "target": "FINDING-B09-a4c3388705b04d95e47e311428dd4054",
+        "valid_from": "2026-10-18T15:48:28.379Z",
+        "valid_to": null,
+        "observed_at": null,
+        "verification_status": "RECORDED_ASSOCIATION_NOT_CAUSATION",
+        "source_evidence_ids": [
+          "EV-JOURNAL-B09-40856c3ab5bfb35633cc753818494341"
+        ]
+      },
+      {
+        "id": "REL-B12-1344e3b4c22f6bb692ed2b7964402ee7",
+        "type": "ASSIGNED_TO",
+        "source": "TASK-B12-cc5b217112ba51340a062ca9fb55853b",
+        "target": "DEPT-ROAD",
+        "valid_from": null,
+        "valid_to": null,
+        "observed_at": null,
+        "verification_status": "RECORDED_ASSOCIATION_NOT_CAUSATION",
+        "source_evidence_ids": []
+      },
+      {
+        "id": "REL-B12-8f716f2dcc7c55b9807edee2eb4531d2",
+        "type": "ASSIGNED_TO",
+        "source": "TASK-B12-8a158819baf845e296daf7a45a4e4065",
+        "target": "DEPT-WATER",
+        "valid_from": null,
+        "valid_to": null,
+        "observed_at": null,
+        "verification_status": "RECORDED_ASSOCIATION_NOT_CAUSATION",
+        "source_evidence_ids": []
+      },
+      {
+        "id": "REL-B12-9b9afc87743a51886d54450ce8cc9146",
+        "type": "HAS_TASK",
+        "source": "PLAN-B12-3a26fd93b1eb567bf101905dc4c43b76",
+        "target": "TASK-B12-9fd186bc06707b0f76702608529dd76e",
+        "valid_from": null,
+        "valid_to": null,
+        "observed_at": null,
+        "verification_status": "RECORDED_ASSOCIATION_NOT_CAUSATION",
+        "source_evidence_ids": []
+      },
+      {
+        "id": "REL-B12-9d18bede1bad791fd1667d02d0b98bbc",
+        "type": "ASSIGNED_TO",
+        "source": "TASK-B12-8b0208f48c4de3b290ac7a8a36e45040",
+        "target": "DEPT-WATER",
+        "valid_from": null,
+        "valid_to": null,
+        "observed_at": null,
+        "verification_status": "RECORDED_ASSOCIATION_NOT_CAUSATION",
+        "source_evidence_ids": []
+      },
+      {
+        "id": "REL-B12-a1d8df7bf455a178106795063f7cce09",
+        "type": "PRODUCED_PLAN",
+        "source": "INV-B09-f663f7a1473c4a28a941d147633e08ad",
+        "target": "PLAN-B12-3a26fd93b1eb567bf101905dc4c43b76",
+        "valid_from": null,
+        "valid_to": null,
+        "observed_at": null,
+        "verification_status": "RECORDED_ASSOCIATION_NOT_CAUSATION",
+        "source_evidence_ids": []
+      },
+      {
+        "id": "REL-B12-b74fbac0253a79cf955bebf33696296b",
+        "type": "TARGETS",
+        "source": "TASK-B12-9fd186bc06707b0f76702608529dd76e",
+        "target": "ROAD-DEMO-SUBGRADE-02",
+        "valid_from": null,
+        "valid_to": null,
+        "observed_at": null,
+        "verification_status": "RECORDED_ASSOCIATION_NOT_CAUSATION",
+        "source_evidence_ids": []
+      },
+      {
+        "id": "REL-B12-d1b4f8fd86b3b78d19b010b3173806ac",
+        "type": "ASSIGNED_TO",
+        "source": "TASK-B12-9fd186bc06707b0f76702608529dd76e",
+        "target": "DEPT-ROAD",
+        "valid_from": null,
+        "valid_to": null,
+        "observed_at": null,
+        "verification_status": "RECORDED_ASSOCIATION_NOT_CAUSATION",
+        "source_evidence_ids": []
+      },
+      {
+        "id": "REL-B13-1d0269fb778b8a1b9c64e5ac63850178",
+        "type": "RESULTED_IN",
+        "source": "WO-B13-9b024fe9f51913bf88e76ded948dc09e",
+        "target": "OUTCOME-B13-cc1c5de2f7ce56ea3e01bcad6a6fe66d",
+        "valid_from": "2026-10-19T07:53:35.401Z",
+        "valid_to": null,
+        "observed_at": null,
+        "verification_status": "RECORDED_ASSOCIATION_NOT_CAUSATION",
+        "source_evidence_ids": [
+          "EV-REPORT-B09-c93e39658f052c257511bd0179087931"
+        ]
+      },
+      {
+        "id": "REL-B13-5dbe67ee4fb33ff953a99cdd74a12767",
+        "type": "HAS_EVENT",
+        "source": "WO-B13-9b024fe9f51913bf88e76ded948dc09e",
+        "target": "STATUS-B13-9dd89faac6fd5cb0cbccf4be38cabd3e",
+        "valid_from": "2026-10-19T07:53:34.040Z",
+        "valid_to": null,
+        "observed_at": null,
+        "verification_status": "RECORDED_ASSOCIATION_NOT_CAUSATION",
+        "source_evidence_ids": []
+      },
+      {
+        "id": "REL-B13-987ea5f06dfcb87fff8028ece3c9786a",
+        "type": "RESULTED_IN",
+        "source": "WO-B13-9b024fe9f51913bf88e76ded948dc09e",
+        "target": "OUTCOME-B13-b032594269436a9d0c0aab16b7e99112",
+        "valid_from": "2026-10-19T07:53:34.040Z",
+        "valid_to": null,
+        "observed_at": null,
+        "verification_status": "RECORDED_ASSOCIATION_NOT_CAUSATION",
+        "source_evidence_ids": [
+          "EV-REPORT-B09-523b1c63ed31a70df2634b31988ee00a"
+        ]
+      },
+      {
+        "id": "REL-B13-a968118751c0169e32127eee392ff74d",
+        "type": "HAS_EVENT",
+        "source": "WO-B13-9b024fe9f51913bf88e76ded948dc09e",
+        "target": "STATUS-B13-79b73497fa4aa68d6865f20205566696",
+        "valid_from": "2026-10-19T07:53:32.981Z",
+        "valid_to": null,
+        "observed_at": null,
+        "verification_status": "RECORDED_ASSOCIATION_NOT_CAUSATION",
+        "source_evidence_ids": []
+      },
+      {
+        "id": "REL-B13-cdd24d5503592029b7c52614e7a91e6c",
+        "type": "IMPLEMENTS",
+        "source": "WO-B13-9b024fe9f51913bf88e76ded948dc09e",
+        "target": "TASK-B12-9fd186bc06707b0f76702608529dd76e",
+        "valid_from": null,
+        "valid_to": null,
+        "observed_at": null,
+        "verification_status": "RECORDED_ASSOCIATION_NOT_CAUSATION",
+        "source_evidence_ids": []
+      },
+      {
+        "id": "REL-B13-e35c859509c439a4babae3061d4993e6",
+        "type": "HAS_EVENT",
+        "source": "WO-B13-9b024fe9f51913bf88e76ded948dc09e",
+        "target": "STATUS-B13-c9eb0235ac6515112ed2145f0a861704",
+        "valid_from": null,
+        "valid_to": null,
+        "observed_at": null,
+        "verification_status": "RECORDED_ASSOCIATION_NOT_CAUSATION",
+        "source_evidence_ids": []
+      },
+      {
+        "id": "REL-RESP-B20R-3431582fadcdcc5818af60b50cb50a98",
+        "type": "MAINTAINED_BY",
+        "source": "ROAD-100",
+        "target": "DEPT-ROAD",
+        "valid_from": "2026-10-18T14:52:43.675000Z",
+        "valid_to": null,
+        "observed_at": null,
+        "verification_status": "VERIFIED",
+        "source_evidence_ids": [
+          "EV-RESP-REVIEW-B20R-3431582fadcdcc5818af60b50cb50a98"
+        ]
+      },
+      {
+        "id": "REL-RESP-B20R-34c4bc3765167592271bc6e336326b49",
+        "type": "MAINTAINED_BY",
+        "source": "PIPE-DEMO-HEALTHY",
+        "target": "DEPT-WATER",
+        "valid_from": "2026-10-18T15:03:23.224000Z",
+        "valid_to": null,
+        "observed_at": null,
+        "verification_status": "VERIFIED",
+        "source_evidence_ids": [
+          "EV-RESP-REVIEW-B20R-34c4bc3765167592271bc6e336326b49"
+        ]
+      },
+      {
+        "id": "REL-RESP-B20R-37b7afe95be8d1f506870b2d7dfbbc09",
+        "type": "MAINTAINED_BY",
+        "source": "PIPE-100",
+        "target": "DEPT-WATER",
+        "valid_from": "2026-10-18T14:52:43.799000Z",
+        "valid_to": null,
+        "observed_at": null,
+        "verification_status": "VERIFIED",
+        "source_evidence_ids": [
+          "EV-RESP-REVIEW-B20R-37b7afe95be8d1f506870b2d7dfbbc09"
+        ]
+      },
+      {
+        "id": "REL-RESP-B20R-4c8db8f8f5d688ac180c65162132c7cc",
+        "type": "MAINTAINED_BY",
+        "source": "PIPE-DEMO-NORMAL-02",
+        "target": "DEPT-WATER",
+        "valid_from": "2026-10-18T15:35:22.587000Z",
+        "valid_to": null,
+        "observed_at": null,
+        "verification_status": "VERIFIED",
+        "source_evidence_ids": [
+          "EV-RESP-REVIEW-B20R-4c8db8f8f5d688ac180c65162132c7cc"
+        ]
+      },
+      {
+        "id": "REL-RESP-B20R-7ff53460770a73834bbf359c77b57bd2",
+        "type": "MAINTAINED_BY",
+        "source": "ROAD-DEMO-SUBGRADE-02",
+        "target": "DEPT-ROAD",
+        "valid_from": "2026-10-18T15:35:22.587000Z",
+        "valid_to": null,
+        "observed_at": null,
+        "verification_status": "VERIFIED",
+        "source_evidence_ids": [
+          "EV-RESP-REVIEW-B20R-7ff53460770a73834bbf359c77b57bd2"
+        ]
+      },
+      {
+        "id": "REL-RESP-B20R-b88aabae2172bfdf430d1d5e6d1b5f6f",
+        "type": "MAINTAINED_BY",
+        "source": "ROAD-DEMO-HEALTHY",
+        "target": "DEPT-ROAD",
+        "valid_from": "2026-10-18T15:03:23.224000Z",
+        "valid_to": null,
+        "observed_at": null,
+        "verification_status": "VERIFIED",
+        "source_evidence_ids": [
+          "EV-RESP-REVIEW-B20R-b88aabae2172bfdf430d1d5e6d1b5f6f"
+        ]
+      },
+      {
+        "id": "REL-b2ffd217d5f0a9b25e601aee748afeef73ad7888",
+        "type": "MAINTAINED_BY",
+        "source": "PIPE-100",
+        "target": "DEPT-WATER",
+        "valid_from": null,
+        "valid_to": null,
+        "observed_at": null,
+        "verification_status": "CANDIDATE",
+        "source_evidence_ids": [
+          "EVD-B04-IMPORT"
+        ]
+      },
+      {
+        "id": "REL-c3f0203969bb0b63c0981a4f6102119728b9ce6a",
+        "type": "MAINTAINED_BY",
+        "source": "ROAD-100",
+        "target": "DEPT-ROAD",
+        "valid_from": null,
+        "valid_to": null,
+        "observed_at": null,
+        "verification_status": "CANDIDATE",
+        "source_evidence_ids": [
+          "EVD-B04-IMPORT"
+        ]
+      }
+    ],
+    "decision_path_ids": [],
+    "graph_revision": 866,
+    "as_of": "2026-10-19T07:54:12.910Z",
+    "truncated": false,
+    "search_limited": true,
+    "reservations": [
+      "Current projection, not a historical snapshot; intervening writes can change later pages",
+      "Bounded search; no result does not establish global absence",
+      "Neighborhood connections are context, not proof of physical causation",
+      "Candidate associations explicitly requested; never verified causation",
+      "Only persisted decision path bodies whose endpoints remain visible in this bounded projection are highlighted"
+    ]
+  },
+  "trace": {
+    "checkpoint_graph_revision": 574,
+    "refresh_required": true,
+    "error_codes": [
+      "PRECONDITION_FAILED",
+      "SOURCE_CHANGED_REFRESH_REQUIRED"
+    ],
+    "items": [
+      {
+        "event_id": "DEC-B10-0a98df676adb1d76872cda1a7ba9cd44",
+        "investigation_id": "INV-B09-f663f7a1473c4a28a941d147633e08ad",
+        "timestamp": "2026-10-18T15:36:21.323Z",
+        "agent_role": "Supervisor",
+        "kind": "DECISION",
+        "tool_name": "civicly::get_road_condition_history",
+        "server_id": null,
+        "status": "READ",
+        "rationale_summary": "Look up road condition history for asset ROAD-DEMO-SUBGRADE-02 to gather baseline evidence.",
+        "arguments_sha256": null,
+        "input_summary": "values withheld",
+        "output_sha256": null,
+        "validated_output": null,
+        "duration_ms": null,
+        "evidence_ids": [],
+        "graph_path_ids": [],
+        "graph_revision": 404,
+        "error_code": null,
+        "execution_mode": "LIVE_GEMINI",
+        "parent_execution_id": null,
+        "decision_id": null
+      },
+      {
+        "event_id": "4331950e566049908d3d38a46259f252",
+        "investigation_id": "INV-B09-f663f7a1473c4a28a941d147633e08ad",
+        "timestamp": "2026-10-18T15:36:21.995Z",
+        "agent_role": "Investigator",
+        "kind": "TOOL",
+        "tool_name": "get_road_condition_history",
+        "server_id": "civicly-domain",
+        "status": "SUCCESS",
+        "rationale_summary": null,
+        "arguments_sha256": "8bf8d96182bd49ac5a8f1159acec4e69567a92a2dc699f7e47a9ce2935764781",
+        "input_summary": "values withheld",
+        "output_sha256": "96cf803d2d01beb484de33d26a4b55fd2a5920f46a39501dc9b90d8829e4202d",
+        "validated_output": true,
+        "duration_ms": 391.721916035749,
+        "evidence_ids": [],
+        "graph_path_ids": [],
+        "graph_revision": 406,
+        "error_code": null,
+        "execution_mode": "LIVE_GEMINI",
+        "parent_execution_id": "MCP-B10-0a98df676adb1d76872cda1a7ba9cd44",
+        "decision_id": "DEC-B10-0a98df676adb1d76872cda1a7ba9cd44"
+      },
+      {
+        "event_id": "DEC-B10-ef836aaa152bd7a9ee9d04a3bb99b169",
+        "investigation_id": "INV-B09-f663f7a1473c4a28a941d147633e08ad",
+        "timestamp": "2026-10-18T15:36:26.829Z",
+        "agent_role": "Supervisor",
+        "kind": "DECISION",
+        "tool_name": "civicly::get_maintenance_history",
+        "server_id": null,
+        "status": "READ",
+        "rationale_summary": "Retrieve maintenance history for asset ROAD-DEMO-SUBGRADE-02 to discover inspections, repairs, or structural condition reports.",
+        "arguments_sha256": null,
+        "input_summary": "values withheld",
+        "output_sha256": null,
+        "validated_output": null,
+        "duration_ms": null,
+        "evidence_ids": [],
+        "graph_path_ids": [],
+        "graph_revision": 408,
+        "error_code": null,
+        "execution_mode": "LIVE_GEMINI",
+        "parent_execution_id": null,
+        "decision_id": null
+      },
+      {
+        "event_id": "a7d6337ec8404a5aaa9b16d9d75d9477",
+        "investigation_id": "INV-B09-f663f7a1473c4a28a941d147633e08ad",
+        "timestamp": "2026-10-18T15:36:27.699Z",
+        "agent_role": "Investigator",
+        "kind": "TOOL",
+        "tool_name": "get_maintenance_history",
+        "server_id": "civicly-domain",
+        "status": "SUCCESS",
+        "rationale_summary": null,
+        "arguments_sha256": "f9a9d2a97b44d6b74aba709b2258e4f4402399a85b7825f2437fcc27dfdad90a",
+        "input_summary": "values withheld",
+        "output_sha256": "4035d69ab8953d060fce8b46abe88f79d16197c5a89411d76c86b2ea804d0593",
+        "validated_output": true,
+        "duration_ms": 504.6661249361932,
+        "evidence_ids": [],
+        "graph_path_ids": [],
+        "graph_revision": 410,
+        "error_code": null,
+        "execution_mode": "LIVE_GEMINI",
+        "parent_execution_id": "MCP-B10-ef836aaa152bd7a9ee9d04a3bb99b169",
+        "decision_id": "DEC-B10-ef836aaa152bd7a9ee9d04a3bb99b169"
+      },
+      {
+        "event_id": "DEC-B10-ac1b698e5a6421a03d38132df148a814",
+        "investigation_id": "INV-B09-f663f7a1473c4a28a941d147633e08ad",
+        "timestamp": "2026-10-18T15:36:32.135Z",
+        "agent_role": "Supervisor",
+        "kind": "DECISION",
+        "tool_name": "civicly::trace_infrastructure_dependencies",
+        "server_id": null,
+        "status": "READ",
+        "rationale_summary": "Trace typed infrastructure dependencies downstream from asset ROAD-DEMO-SUBGRADE-02 to discover physical asset connectivity and underlying infrastructure.",
+        "arguments_sha256": null,
+        "input_summary": "values withheld",
+        "output_sha256": null,
+        "validated_output": null,
+        "duration_ms": null,
+        "evidence_ids": [],
+        "graph_path_ids": [],
+        "graph_revision": 411,
+        "error_code": null,
+        "execution_mode": "LIVE_GEMINI",
+        "parent_execution_id": null,
+        "decision_id": null
+      },
+      {
+        "event_id": "9402169f4fb543dba4e41e672d422bfc",
+        "investigation_id": "INV-B09-f663f7a1473c4a28a941d147633e08ad",
+        "timestamp": "2026-10-18T15:36:33.448Z",
+        "agent_role": "Investigator",
+        "kind": "TOOL",
+        "tool_name": "trace_infrastructure_dependencies",
+        "server_id": "civicly-domain",
+        "status": "SUCCESS",
+        "rationale_summary": null,
+        "arguments_sha256": "c8942cd78279a7fe67c97803d2426ba32179403252eec3b4a7b1cb72e6a76c4c",
+        "input_summary": "values withheld",
+        "output_sha256": "b4b1cb0bf3e1ac191c2c5fac1d413a14bcb36d763d4d13c5a65733607c08ffbc",
+        "validated_output": true,
+        "duration_ms": 764.683041954413,
+        "evidence_ids": [],
+        "graph_path_ids": [],
+        "graph_revision": 413,
+        "error_code": null,
+        "execution_mode": "LIVE_GEMINI",
+        "parent_execution_id": "MCP-B10-ac1b698e5a6421a03d38132df148a814",
+        "decision_id": "DEC-B10-ac1b698e5a6421a03d38132df148a814"
+      },
+      {
+        "event_id": "DEC-B10-42830edc378d41bca9301b544db11712",
+        "investigation_id": "INV-B09-f663f7a1473c4a28a941d147633e08ad",
+        "timestamp": "2026-10-18T15:36:38.441Z",
+        "agent_role": "Supervisor",
+        "kind": "DECISION",
+        "tool_name": "official::query_graph_readonly",
+        "server_id": null,
+        "status": "READ",
+        "rationale_summary": "Query asset node PIPE-DEMO-NORMAL-02 in graph to check its properties and underlying relationships with ROAD-DEMO-SUBGRADE-02.",
+        "arguments_sha256": null,
+        "input_summary": "values withheld",
+        "output_sha256": null,
+        "validated_output": null,
+        "duration_ms": null,
+        "evidence_ids": [],
+        "graph_path_ids": [],
+        "graph_revision": 415,
+        "error_code": null,
+        "execution_mode": "LIVE_GEMINI",
+        "parent_execution_id": null,
+        "decision_id": null
+      },
+      {
+        "event_id": "MCP-B10-42830edc378d41bca9301b544db11712",
+        "investigation_id": "INV-B09-f663f7a1473c4a28a941d147633e08ad",
+        "timestamp": "2026-10-18T15:36:38.774Z",
+        "agent_role": "Investigator",
+        "kind": "TOOL",
+        "tool_name": "query_graph_readonly",
+        "server_id": "official-falkordb",
+        "status": "SUCCESS",
+        "rationale_summary": null,
+        "arguments_sha256": "1ec8efa0c1edc2dc58a3ad69b287a5e96d0c089254112274a87ad66c7d7426bf",
+        "input_summary": "values withheld",
+        "output_sha256": "81d4bc92f3847f298022f6dc5a2d214b6e73f5010b8b56d7230170357d528d38",
+        "validated_output": true,
+        "duration_ms": 74.52162506524473,
+        "evidence_ids": [],
+        "graph_path_ids": [],
+        "graph_revision": 417,
+        "error_code": null,
+        "execution_mode": "LIVE_GEMINI",
+        "parent_execution_id": "DEC-B10-42830edc378d41bca9301b544db11712",
+        "decision_id": "DEC-B10-42830edc378d41bca9301b544db11712"
+      },
+      {
+        "event_id": "DEC-B10-4269b55e7d03a0a0a239e30daf415518",
+        "investigation_id": "INV-B09-f663f7a1473c4a28a941d147633e08ad",
+        "timestamp": "2026-10-18T15:36:42.816Z",
+        "agent_role": "Supervisor",
+        "kind": "DECISION",
+        "tool_name": null,
+        "server_id": null,
+        "status": "PROPOSE",
+        "rationale_summary": "Propose SUBGRADE_FAILURE hypothesis on ROAD-DEMO-SUBGRADE-02 based on surface road damage observations.",
+        "arguments_sha256": null,
+        "input_summary": "values withheld",
+        "output_sha256": null,
+        "validated_output": null,
+        "duration_ms": null,
+        "evidence_ids": [],
+        "graph_path_ids": [],
+        "graph_revision": 418,
+        "error_code": null,
+        "execution_mode": "LIVE_GEMINI",
+        "parent_execution_id": null,
+        "decision_id": null
+      },
+      {
+        "event_id": "DEC-B10-0e0f014ec437dc2f20f613e9ee06b7dc",
+        "investigation_id": "INV-B09-f663f7a1473c4a28a941d147633e08ad",
+        "timestamp": "2026-10-18T15:36:47.839Z",
+        "agent_role": "Supervisor",
+        "kind": "DECISION",
+        "tool_name": null,
+        "server_id": null,
+        "status": "PROPOSE",
+        "rationale_summary": "Propose competing hypothesis UTILITY_LEAK on PIPE-DEMO-NORMAL-02 to evaluate potential subsurface water infiltration affecting road segment ROAD-DEMO-SUBGRADE-02.",
+        "arguments_sha256": null,
+        "input_summary": "values withheld",
+        "output_sha256": null,
+        "validated_output": null,
+        "duration_ms": null,
+        "evidence_ids": [],
+        "graph_path_ids": [],
+        "graph_revision": 425,
+        "error_code": null,
+        "execution_mode": "LIVE_GEMINI",
+        "parent_execution_id": null,
+        "decision_id": null
+      },
+      {
+        "event_id": "DEC-B10-80e5c0ca2359b55c18b3ad1e857f3eda",
+        "investigation_id": "INV-B09-f663f7a1473c4a28a941d147633e08ad",
+        "timestamp": "2026-10-18T15:36:52.222Z",
+        "agent_role": "Supervisor",
+        "kind": "DECISION",
+        "tool_name": null,
+        "server_id": null,
+        "status": "INSPECT",
+        "rationale_summary": "Request causal inspection on road segment ROAD-DEMO-SUBGRADE-02 and water pipe PIPE-DEMO-NORMAL-02 by DEPT-ROAD to discriminate subgrade failure from utility leak without prior verification.",
+        "arguments_sha256": null,
+        "input_summary": "values withheld",
+        "output_sha256": null,
+        "validated_output": null,
+        "duration_ms": null,
+        "evidence_ids": [],
+        "graph_path_ids": [],
+        "graph_revision": 429,
+        "error_code": null,
+        "execution_mode": "LIVE_GEMINI",
+        "parent_execution_id": null,
+        "decision_id": null
+      },
+      {
+        "event_id": "DEC-B10-34dc28fb298ce14832f650736eac74a2",
+        "investigation_id": "INV-B09-f663f7a1473c4a28a941d147633e08ad",
+        "timestamp": "2026-10-18T15:49:25.657Z",
+        "agent_role": "Supervisor",
+        "kind": "DECISION",
+        "tool_name": "official::query_graph_readonly",
+        "server_id": null,
+        "status": "READ",
+        "rationale_summary": "Execute query_graph_readonly to inspect the current state of road segment ROAD-DEMO-SUBGRADE-02 following the source change and refresh requirement.",
+        "arguments_sha256": null,
+        "input_summary": "values withheld",
+        "output_sha256": null,
+        "validated_output": null,
+        "duration_ms": null,
+        "evidence_ids": [],
+        "graph_path_ids": [],
+        "graph_revision": 545,
+        "error_code": null,
+        "execution_mode": "LIVE_GEMINI",
+        "parent_execution_id": null,
+        "decision_id": null
+      },
+      {
+        "event_id": "MCP-B10-34dc28fb298ce14832f650736eac74a2",
+        "investigation_id": "INV-B09-f663f7a1473c4a28a941d147633e08ad",
+        "timestamp": "2026-10-18T15:49:25.884Z",
+        "agent_role": "Investigator",
+        "kind": "TOOL",
+        "tool_name": "query_graph_readonly",
+        "server_id": "official-falkordb",
+        "status": "SUCCESS",
+        "rationale_summary": null,
+        "arguments_sha256": "b04041bd7f8f3951e95cf8af21a0f2bd508c22a380b231c5909af620b04290ca",
+        "input_summary": "values withheld",
+        "output_sha256": "8c74ef8b358f6d2ea47f7d9c6b78743510b8fcc9ca2860d268d08c75b5ae72c3",
+        "validated_output": true,
+        "duration_ms": 54.36916707549244,
+        "evidence_ids": [],
+        "graph_path_ids": [],
+        "graph_revision": 547,
+        "error_code": null,
+        "execution_mode": "LIVE_GEMINI",
+        "parent_execution_id": "DEC-B10-34dc28fb298ce14832f650736eac74a2",
+        "decision_id": "DEC-B10-34dc28fb298ce14832f650736eac74a2"
+      },
+      {
+        "event_id": "DEC-B10-556f003bab917a3d7a21ad80b9f2b817",
+        "investigation_id": "INV-B09-f663f7a1473c4a28a941d147633e08ad",
+        "timestamp": "2026-10-18T15:49:30.107Z",
+        "agent_role": "Supervisor",
+        "kind": "DECISION",
+        "tool_name": null,
+        "server_id": null,
+        "status": "ASSESS",
+        "rationale_summary": "Assess proposed hypothesis HYP-B09-1f6b6b25f7ba5eb2bbbb49ce97513083 against recorded asset facts and pending inspection status.",
+        "arguments_sha256": null,
+        "input_summary": "values withheld",
+        "output_sha256": null,
+        "validated_output": null,
+        "duration_ms": null,
+        "evidence_ids": [],
+        "graph_path_ids": [],
+        "graph_revision": 549,
+        "error_code": null,
+        "execution_mode": "LIVE_GEMINI",
+        "parent_execution_id": null,
+        "decision_id": null
+      },
+      {
+        "event_id": "DEC-B10-fd45ad2837d30699586adc918036e6ab",
+        "investigation_id": "INV-B09-f663f7a1473c4a28a941d147633e08ad",
+        "timestamp": "2026-10-18T15:49:34.225Z",
+        "agent_role": "Supervisor",
+        "kind": "DECISION",
+        "tool_name": null,
+        "server_id": null,
+        "status": "PROPOSE",
+        "rationale_summary": "Propose competing utility leak hypothesis for water pipe PIPE-DEMO-NORMAL-02 to consider alternative mechanisms before resolution.",
+        "arguments_sha256": null,
+        "input_summary": "values withheld",
+        "output_sha256": null,
+        "validated_output": null,
+        "duration_ms": null,
+        "evidence_ids": [],
+        "graph_path_ids": [],
+        "graph_revision": 555,
+        "error_code": null,
+        "execution_mode": "LIVE_GEMINI",
+        "parent_execution_id": null,
+        "decision_id": null
+      },
+      {
+        "event_id": "DEC-B10-503037fd3c414f1b2552d1668acfe5b5",
+        "investigation_id": "INV-B09-f663f7a1473c4a28a941d147633e08ad",
+        "timestamp": "2026-10-18T15:49:38.985Z",
+        "agent_role": "Supervisor",
+        "kind": "DECISION",
+        "tool_name": null,
+        "server_id": null,
+        "status": "ASSESS",
+        "rationale_summary": "Assess competing hypothesis HYP-B09-68a78bf4632cc12f1781f94cb8f56734 (UTILITY_LEAK) against available inspection evidence EV-REPORT-B09-aa69698f124f46d2900d8a93e537005b before proceeding.",
+        "arguments_sha256": null,
+        "input_summary": "values withheld",
+        "output_sha256": null,
+        "validated_output": null,
+        "duration_ms": null,
+        "evidence_ids": [],
+        "graph_path_ids": [],
+        "graph_revision": 562,
+        "error_code": null,
+        "execution_mode": "LIVE_GEMINI",
+        "parent_execution_id": null,
+        "decision_id": null
+      },
+      {
+        "event_id": "DEC-B10-ddfd0677d200c809dfd252b4656dc655",
+        "investigation_id": "INV-B09-f663f7a1473c4a28a941d147633e08ad",
+        "timestamp": "2026-10-18T15:49:42.921Z",
+        "agent_role": "Supervisor",
+        "kind": "DECISION",
+        "tool_name": "civicly::get_organizational_procedures",
+        "server_id": null,
+        "status": "READ",
+        "rationale_summary": "Retrieve municipal procedures for SUBGRADE_REPAIR under DEPT-ROAD to obtain required versioned citations before drafting a recommendation.",
+        "arguments_sha256": null,
+        "input_summary": "values withheld",
+        "output_sha256": null,
+        "validated_output": null,
+        "duration_ms": null,
+        "evidence_ids": [],
+        "graph_path_ids": [],
+        "graph_revision": 568,
+        "error_code": null,
+        "execution_mode": "LIVE_GEMINI",
+        "parent_execution_id": null,
+        "decision_id": null
+      },
+      {
+        "event_id": "c3bbb7fd88774f5598611df1d7120ab4",
+        "investigation_id": "INV-B09-f663f7a1473c4a28a941d147633e08ad",
+        "timestamp": "2026-10-18T15:49:43.384Z",
+        "agent_role": "Investigator",
+        "kind": "TOOL",
+        "tool_name": "get_organizational_procedures",
+        "server_id": "civicly-domain",
+        "status": "SUCCESS",
+        "rationale_summary": null,
+        "arguments_sha256": "3a6fc83037aec87739914f0d754d33d9150b7ac2d93029a28c5932cab1f6a8d4",
+        "input_summary": "values withheld",
+        "output_sha256": "f5132a128fb96f2f39336b16e475f4c685960902214d231a121de8c5cd6767b6",
+        "validated_output": true,
+        "duration_ms": 341.2428750889376,
+        "evidence_ids": [],
+        "graph_path_ids": [],
+        "graph_revision": 570,
+        "error_code": null,
+        "execution_mode": "LIVE_GEMINI",
+        "parent_execution_id": "MCP-B10-ddfd0677d200c809dfd252b4656dc655",
+        "decision_id": "DEC-B10-ddfd0677d200c809dfd252b4656dc655"
+      },
+      {
+        "event_id": "DEC-B10-fa8317c3045f0cd64a0f1fb9c6b3879b",
+        "investigation_id": "INV-B09-f663f7a1473c4a28a941d147633e08ad",
+        "timestamp": "2026-10-18T15:49:55.939Z",
+        "agent_role": "Supervisor",
+        "kind": "DECISION",
+        "tool_name": null,
+        "server_id": null,
+        "status": "RECOMMEND",
+        "rationale_summary": "Drafting resolution plan for ROAD_DAMAGE on ROAD-DEMO-SUBGRADE-02 citing supported subgrade failure assessment ASSESS-B09-c5a53c9b60ed7108f13247b92c8a0378 and contradicted utility leak assessment ASSESS-B09-8a466da9816ed002875384a9d6045af4 under procedure D020.",
+        "arguments_sha256": null,
+        "input_summary": "values withheld",
+        "output_sha256": null,
+        "validated_output": null,
+        "duration_ms": null,
+        "evidence_ids": [],
+        "graph_path_ids": [],
+        "graph_revision": 572,
+        "error_code": null,
+        "execution_mode": "LIVE_GEMINI",
+        "parent_execution_id": null,
+        "decision_id": null
+      }
+    ],
+    "next_cursor": null,
+    "total_count": 19,
+    "graph_revision": 866,
+    "as_of": "2026-10-19T07:54:13.110Z",
+    "phase": "Coordinator",
+    "pause_reason": "HUMAN_REVIEW",
+    "recovery_required": false,
+    "current_agent_role": "Coordinator",
+    "active_incident_ids": [],
+    "historical_incident_ids": [
+      "INC-B08-8effe2e5da6bd34da2372713ba6e6693"
+    ],
+    "limitations": [
+      "Current projection, not a historical snapshot; intervening writes can change later pages",
+      "Bounded search; no result does not establish global absence",
+      "Only persisted public decision summaries and validated broker metadata; raw arguments and private reasoning withheld",
+      "Scripted execution modes are test behavior, not genuine live autonomy"
+    ]
+  },
+  "provider_requests_initiated": 0
+}

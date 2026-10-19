@@ -18,6 +18,8 @@ import { TechnicalDetails, CopyableIdentifier } from './technical-details';
 interface FalkorDBCanvasViewProps {
   subgraph: GraphSubgraphDTO;
   selectedDecisionPathId?: string | null;
+  focusedPath?: boolean;
+  showCaption?: boolean;
   onSelectEvidenceId?: (id: string) => void;
   isExpanded?: boolean;
   onToggleExpand?: () => void;
@@ -26,6 +28,8 @@ interface FalkorDBCanvasViewProps {
 export function FalkorDBCanvasView({
   subgraph,
   selectedDecisionPathId,
+  focusedPath = false,
+  showCaption = true,
   onSelectEvidenceId,
   isExpanded = false,
   onToggleExpand,
@@ -67,12 +71,7 @@ export function FalkorDBCanvasView({
         if (!mounted || !canvasRef.current) return;
         const canvas = canvasRef.current;
 
-        const signature =
-          canvasData.nodes.map((n) => n.id).sort().join(',') +
-          '|' +
-          canvasData.links.map((l) => l.id).sort().join(',') +
-          '|' +
-          (selectedDecisionPathId ?? '');
+        const signature = JSON.stringify(canvasData)+'|'+(selectedDecisionPathId ?? '');
 
         // Only call setData if graph structure or decision path actually changed
         if (signature !== lastDataSignature.current) {
@@ -165,25 +164,9 @@ export function FalkorDBCanvasView({
     }
   };
 
-  const hasDecisionPaths = stats.decisionPathEdges > 0;
 
   return (
     <div className={`canvas-view-container ${isExpanded ? 'canvas-expanded' : ''}`}>
-      {/* 1. Grounded "What this graph shows" Caption */}
-      <div className="canvas-grounded-caption">
-        <div className="caption-icon" aria-hidden="true">🕸</div>
-        <div className="caption-text-block">
-          <span className="caption-heading">What this graph shows</span>
-          <p className="caption-body">{stats.whatThisGraphShows}</p>
-          {!hasDecisionPaths && (
-            <p className="caption-no-path">
-              <em>Note:</em> No recorded decision path is available in this view.
-              The displayed contextual graph shows background infrastructure topology; it does not represent an isolated causal trace.
-            </p>
-          )}
-        </div>
-      </div>
-
       {/* 2. Top Controls & Action Bar */}
       <div className="canvas-toolbar">
         {/* Core Quick Action Buttons */}
@@ -282,7 +265,7 @@ export function FalkorDBCanvasView({
         <div className="meta-badges-group">
           {stats.searchLimited && (
             <span className="badge badge-warning" title="Traversal depth deliberately bounded by query policy">
-              Limited graph view (bounded query)
+              Partial view · additional records may exist
             </span>
           )}
           {stats.truncated && (
@@ -591,6 +574,8 @@ export function FalkorDBCanvasView({
         )}
       </div>
 
+      {showCaption&&<GraphCaption subgraph={subgraph} selectedDecisionPathId={selectedDecisionPathId} focusedPath={focusedPath}/>}
+
       {/* 6. Visual Graph Legend & Technical Subgraph Revision */}
       <footer className="canvas-legend" aria-label="Graph Visualization Legend">
         <div className="legend-section">
@@ -648,4 +633,16 @@ export function FalkorDBCanvasView({
       </footer>
     </div>
   );
+}
+
+export function GraphCaption({subgraph,selectedDecisionPathId,focusedPath=false}:{subgraph:GraphSubgraphDTO;selectedDecisionPathId?:string|null;focusedPath?:boolean}){
+ const {stats}=mapGraphSubgraphToCanvas(subgraph,selectedDecisionPathId);
+ return <div className="canvas-grounded-caption">
+  <div className="caption-icon" aria-hidden="true">🕸</div>
+  <div className="caption-text-block">
+   <span className="caption-heading">What this graph shows</span>
+   <p className="caption-body">{focusedPath?`Showing the ${stats.totalNodes} linked records and ${stats.totalEdges} connections in the selected recorded lookup.`:stats.whatThisGraphShows}</p>
+   {!stats.decisionPathEdges&&<p className="caption-no-path"><em>Note:</em> No recorded decision path is available in this view. This view shows related records. It does not establish which connections influenced a model decision.</p>}
+  </div>
+ </div>;
 }

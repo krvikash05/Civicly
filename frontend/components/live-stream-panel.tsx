@@ -2,6 +2,8 @@
 
 import React, { useState } from 'react';
 import type { LiveFeedItem } from './use-event-stream.ts';
+import {translateStatus,formatEntityDisplayName} from '../lib/read/display';
+import {TechnicalDetails} from './technical-details';
 import type { SSEConnectionStatus } from '../lib/api/sse.ts';
 
 interface LiveStreamPanelProps {
@@ -20,7 +22,7 @@ export function LiveStreamPanel({
   events,
   onReconnect,
   onClear,
-  title = 'Live Backend Event Stream',
+  title = 'Saved case updates',
   defaultExpanded = true,
 }: LiveStreamPanelProps) {
   const [expanded, setExpanded] = useState(defaultExpanded);
@@ -31,7 +33,7 @@ export function LiveStreamPanel({
         return (
           <span className="stream-badge status-connected">
             <span className="status-pulse-dot pulse-green"></span>
-            Connected {lastEventId ? `(#${lastEventId})` : ''}
+            Connected to saved updates
           </span>
         );
       case 'connecting':
@@ -80,7 +82,7 @@ export function LiveStreamPanel({
       case 'error':
         return { label: 'Stream Error', css: 'tag-error' };
       default:
-        return { label: name, css: 'tag-default' };
+        return { label: translateStatus(name), css: 'tag-default' };
     }
   };
 
@@ -120,14 +122,12 @@ export function LiveStreamPanel({
       {expanded && (
         <div className="stream-panel-body">
           <div className="stream-disclaimer">
-            <strong>Architecture Notice:</strong> Persisted event stream over authenticated SSE.
-            Stream events signal state changes; authoritative state is continuously re-synchronized via
-            validated GET endpoints. Zero simulated or fabricated reasoning steps.
+            These are saved case events. The workspace reloads records when updates arrive. A connected feed does not mean an AI agent is currently running.
           </div>
 
           {events.length === 0 ? (
             <div className="stream-empty">
-              No live mutation events received in this window. Stream is active and listening for persisted backend events.
+              No saved updates have arrived during this viewing session. This does not mean the case has no earlier history.
             </div>
           ) : (
             <div className="stream-event-list">
@@ -139,29 +139,24 @@ export function LiveStreamPanel({
                   <div key={ev.id} className="stream-event-item">
                     <div className="stream-event-top">
                       <span className={`stream-event-tag ${tag.css}`}>{tag.label}</span>
-                      {ev.cursor && <span className="stream-cursor">cursor #{ev.cursor}</span>}
+
                       <span className="stream-time">{time}</span>
                     </div>
                     <div className="stream-event-content">
                       {se ? (
                         <>
-                          <span className="stream-entity-id">{se.entity_id}</span>
-                          {se.investigation_id && (
-                            <span className="stream-inv-id">
-                              (inv: <code>{se.investigation_id}</code>)
-                            </span>
-                          )}
-                          {se.payload?.operation && (
-                            <span className="stream-operation">
-                              op: <code>{se.payload.operation}</code>
-                            </span>
-                          )}
-                          {se.source_kind && (
-                            <span className="stream-source-kind">[{se.source_kind}]</span>
-                          )}
+                          <span>{formatEntityDisplayName({id:se.entity_id}).primary}</span>
+                          {se.payload?.operation && <span> · {translateStatus(String(se.payload.operation))}</span>}
+                          {se.source_kind && <span> · {translateStatus(se.source_kind)}</span>}
+                          <TechnicalDetails title="Update references" items={[
+                            {label:'Record ID',value:<code>{se.entity_id}</code>,rawString:se.entity_id},
+                            {label:'Event type',value:<code>{ev.name}</code>},
+                            {label:'Stream position',value:<code>{ev.cursor||'Not recorded'}</code>},
+                          ]}/>
+
                         </>
                       ) : (
-                        <span className="stream-raw-data">{JSON.stringify(ev.rawData ?? {})}</span>
+                        <span>Connection or replay information received. The case records remain the source of truth.</span>
                       )}
                     </div>
                   </div>

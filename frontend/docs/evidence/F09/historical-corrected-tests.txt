@@ -1,0 +1,157 @@
+npm notice run civicly-frontend@0.1.0 test
+npm notice run node --experimental-strip-types --test tests/transport.test.ts tests/cases.test.ts tests/canvas-adapter.test.ts tests/sse.test.ts tests/plans.test.ts tests/memory.test.ts tests/journeys.test.ts tests/display.test.ts tests/workflow.test.ts
+✔ getNodeColor and getLinkColor return expected colors (2.235417ms)
+✔ mapGraphSubgraphToCanvas maps nodes, edges, verified/candidate counts and decision paths (0.688708ms)
+✖ extractDecisionTraces connects Question Asked -> Graph Evidence -> Recorded Decision (1.999542ms)
+✔ closed schema validation accepts valid GraphSubgraphDTO and rejects extra properties (17.784833ms)
+✔ closed schema validation validates HypothesisPage and EvidenceDTO (34.501959ms)
+✔ metrics array defines exact four backend metrics with descriptions (1.022833ms)
+✔ issue parsing and naming handle valid and invalid values (0.105417ms)
+✔ displayStatus and displayTime formatting (57.7925ms)
+✔ registeredCases filters out NOT_STARTED and filters by issue (0.20075ms)
+✔ uniqueCaseForIncident and caseHref (0.167958ms)
+✔ loadSelectedCase with investigation loads linked incidents (47.101417ms)
+✔ loadSelectedCase with standalone incident (1.693708ms)
+✔ LatestRead suppresses stale inflight reads (21.559125ms)
+✔ LatestRead cancel aborts controller (0.2985ms)
+✔ DashboardSummary and Incident schemas validate valid objects (2.840917ms)
+✔ translateStatus provides human-readable labels for municipal and plan states (0.985541ms)
+✔ translateCauseCode provides clear titles and contextual explanations (0.969166ms)
+✔ translateAssessment separates evidence assessment from plan coverage (0.326083ms)
+✔ translateActionType maps municipal action codes to readable titles (0.802167ms)
+✔ translateDepartment maps department codes to official municipal units (4.182083ms)
+✔ translateRole translates security operator roles (0.287625ms)
+✔ formatEntityDisplayName formats human-readable primary labels with short IDs (0.943333ms)
+✔ formatShortIdentifier shortens technical IDs without losing identity and trims long hashes (1.679666ms)
+✔ formatIssueName formats issue categories (1.093875ms)
+✔ translateLocation translates raw location codes into human sites (0.297292ms)
+✔ translateAsset translates asset codes into human descriptive names (0.139042ms)
+✔ translateToolAction translates MCP tool names into readable action descriptions (0.087833ms)
+✔ translateNextAction translates workflow next actions (0.540083ms)
+✔ formatMissingEvidence transforms raw machine evidence tokens into clear checklists (0.8305ms)
+✔ cleanTextIdentifiers sanitizes raw machine tokens in sentences (0.229ms)
+✔ filterScenariosByCategory filters correctly (16.861709ms)
+✔ stage formatting and badges (3.082708ms)
+✔ getScenarioHref and primary case mapping (1.349292ms)
+✔ municipal role governance and permission boundaries (1.277042ms)
+✔ closed schema validation validates ScenarioDTO (93.55825ms)
+✔ findClusterMonitoring finds matching cluster or returns null (1.041542ms)
+✔ filterRelevantProcedures filters by department or issue category (0.216583ms)
+✔ getMonitoringStatusStyle returns semantic status colors (0.124584ms)
+✔ formatQuoteExcerpt handles clean truncation and whitespace normalization (0.162458ms)
+✔ closed schema validation validates MonitoringDTO, ProcedureDTO, CaseMemoryDTO, and OutcomeDTO (311.763834ms)
+✔ computeTaskDag empty inputs return empty structure (2.132042ms)
+✔ computeTaskDag linear dependency chain orders tiers sequentially (0.497583ms)
+✔ computeTaskDag diamond dependency graph parallelizes independent branches (49.429042ms)
+✔ computeTaskDag detects cyclic dependencies safely without hanging (0.349917ms)
+✔ computeTaskDag merges taskBindings properties correctly (0.361709ms)
+✔ formatShortHash shortens long SHA-256 and handles falsy values (0.661416ms)
+✔ getStatusBadgeStyle returns semantic colors for plan and work order statuses (0.221125ms)
+✔ closed schema validation validates PlanDTO and WorkOrderDTO (180.225042ms)
+✔ parseSSEChunk handles standard SSE frames with id, event, and data (1.4955ms)
+✔ parseSSEChunk ignores comment lines like heartbeats (0.27625ms)
+✔ parseSSEChunk handles multi-line data and buffer splits across chunks (0.365917ms)
+✔ SSEClient disconnects without token (0.321791ms)
+✔ SSEClient connects and dispatches events on 200 stream (129.030875ms)
+✔ SSEClient on 401 triggers onUnauthorized and disconnects without retrying (42.51675ms)
+✔ SSEClient on 409 resets cursor and triggers onRefetchRequired (61.410708ms)
+✔ closed schema rejects invented privilege and extra fields (2.507583ms)
+✔ validated identity response preserves request ID and bearer/no-cache (23.412334ms)
+✔ protected request without token never fetches (0.8465ms)
+✔ dashboard pagination/hypothesis date/unknown query/bad bounds fail before fetch (9.105625ms)
+✔ path traversal and extra parameters fail before fetch (0.379458ms)
+✔ closed request validation excludes credentials from error (1.136417ms)
+✔ 403 preserves session; 401 clears it and blocks further fetch (8.824417ms)
+✔ non-JSON response and incompatible identity fail closed (0.5565ms)
+✔ uncertain mutation preserves explicit key, sends once and never retries (1.38775ms)
+✔ recovery details retained with no redispatch (0.540917ms)
+✔ late 401 cannot clear replacement session (0.270125ms)
+✔ automatic connect deduplicates opens and verifies identity (3.52075ms)
+✔ expired or mismatched identity is refused (1.1875ms)
+✔ end during pending connect cannot restore old session (0.293541ms)
+✔ logout clears local token when revocation unavailable (2.155959ms)
+✔ SSE excluded from REST client pending F05 (0.13125ms)
+✔ proxy only accepts host loopback origin (0.210167ms)
+✔ unconfigured proxy returns sanitized unavailable envelope (2.407875ms)
+✔ proxy denies unknown/repeated selectors and unsupported routes (0.913584ms)
+✔ cross-origin session/proxy are refused (0.299708ms)
+✔ proxy preserves bearer/key but strips cookies/extra headers (0.618125ms)
+✔ proxy transport fault on write does not retry (0.313166ms)
+✔ automatic session accepts neither browser credentials nor elevated host identity (0.294209ms)
+✔ automatic session never echoes secret/upstream failure text (0.175333ms)
+✔ non-JSON/oversized proxy bodies refused before forwarding (0.4745ms)
+✔ Next internal localhost normalization preserves legitimate browser origin (0.329416ms)
+✔ late response body cannot restore prior session state (6.616167ms)
+✔ default browser fetch remains a bare global call, not a class method receiver (0.830375ms)
+✔ query optional null/undefined values are omitted while unknown fields still fail (16.234666ms)
+✔ finishing old logout cannot erase a new connection (1.206667ms)
+✔ hosted proxy permits only the configured HTTPS host and origin (0.654125ms)
+✔ hosted sessions require an exact browser Origin and HTTPS configuration (0.475083ms)
+✔ legacy runtime constant is not translated into false execution evidence (1.14275ms)
+✔ development and mixed traces remain explicit (0.121417ms)
+✔ water draft awaits exact approval even if a historical agent pause was a usage limit (0.098042ms)
+✔ waste with no draft honestly stops at its usage limit (0.384208ms)
+✔ completed road operation is separate from stale saved agent pause (0.302875ms)
+✔ completion, a component result, and a foreign outcome cannot prove resolution (0.210458ms)
+✔ recovery blocks routine continuation without erasing terminal operational history (0.092875ms)
+✔ current operational plan is authoritative, including when an older draft is first (0.651792ms)
+✔ category directory derives all three issue categories including a closed road episode (1.262875ms)
+✔ completed investigation loads its incident by history link and retains selected scope checks (28.035791ms)
+✔ native task binding supplies work title and never guesses an assignee (0.267834ms)
+✖ evidence, work and outcomes have distinct neutral labels (0.843542ms)
+ℹ tests 99
+ℹ suites 0
+ℹ pass 97
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 810.264333
+
+✖ failing tests:
+
+test at tests/canvas-adapter.test.ts:144:1
+✖ extractDecisionTraces connects Question Asked -> Graph Evidence -> Recorded Decision (1.999542ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'No recorded graph-path link establishes how the graph influenced this step.'
+  - 'Graph query executed as contextual background; no causal influence trace established for this step.'
+  
+      at TestContext.<anonymous> (file:///Users/vikashkumar/Desktop/Civicly/frontend/tests/canvas-adapter.test.ts:254:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'No recorded graph-path link establishes how the graph influenced this step.',
+    expected: 'Graph query executed as contextual background; no causal influence trace established for this step.',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/workflow.test.ts:61:1
+✖ evidence, work and outcomes have distinct neutral labels (0.843542ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'Evidence reference #REPORT-ABC needs review'
+  - 'Evidence reference #EV-REPORT needs review'
+  
+      at TestContext.<anonymous> (file:///Users/vikashkumar/Desktop/Civicly/frontend/tests/workflow.test.ts:64:9)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'Evidence reference #REPORT-ABC needs review',
+    expected: 'Evidence reference #EV-REPORT needs review',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

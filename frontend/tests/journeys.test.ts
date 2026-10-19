@@ -4,6 +4,8 @@ import Ajv from 'ajv';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import {
+  groupJourneys,
+  SUGGESTED_JOURNEY_ID,
   filterScenariosByCategory,
   formatStageName,
   getStageBadgeClass,
@@ -153,7 +155,7 @@ test('getScenarioHref and primary case mapping', () => {
     limitations: [],
   };
 
-  assert.equal(getScenarioHref(scenarioWithInv), '/investigations?investigation=INV-TEST-01');
+  assert.equal(getScenarioHref(scenarioWithInv), '/investigations?investigation=INV-TEST-01&section=report');
   assert.equal(getScenarioPrimaryCase(scenarioWithInv)?.asset_id, 'A-01');
   assert.equal(getScenarioIssueLabel(scenarioWithInv), 'Waterlogging');
 
@@ -163,6 +165,8 @@ test('getScenarioHref and primary case mapping', () => {
     issue_types: ['WATERLOGGING', 'ROAD_DAMAGE'],
   };
   assert.equal(getScenarioIssueLabel(crossScenario), 'Cross-Category');
+  // An uninitialized definition must not masquerade as an available journey.
+  assert.equal(getScenarioHref({...scenarioWithInv, stage:'NOT_STARTED', cases:[]}), null);
 });
 
 test('municipal role governance and permission boundaries', () => {
@@ -247,4 +251,26 @@ test('closed schema validation validates ScenarioDTO', () => {
     invented_field: 'illegal',
   };
   assert.equal(validateScenario(invalidScenario), false);
+});
+
+// F35: catalog definitions and partial progress cannot become completed journeys.
+import type {DirectoryCase} from '../lib/read/workflow.ts';
+const journey=(id:string,stage:string,issue_type='ROAD_DAMAGE'):DirectoryCase=>({investigation_id:id,incident_id:'INC-'+id,incident_ids:['INC-'+id],issue_type,stage});
+test('curated journeys keep unfinished and cancelled cases separate; suggested case must actually be completed',()=>{
+ const rows=[journey('OTHER','COMPLETED'),journey('OPEN','OPEN'),journey(SUGGESTED_JOURNEY_ID,'COMPLETED'),journey('MON','MONITORING'),journey('CANCEL','CANCELLED')];
+ const groups=groupJourneys(rows,'ALL');assert.deepEqual(groups.completed.map(c=>c.investigation_id),[SUGGESTED_JOURNEY_ID,'OTHER']);
+ assert.deepEqual(groups.ongoing.map(c=>c.investigation_id),['MON','OPEN']);assert.equal(groups.cancelled.length,1);
+ assert.equal(groupJourneys([journey(SUGGESTED_JOURNEY_ID,'OPEN')],'ALL').completed.length,0);assert.equal(groupJourneys([],'ALL').completed.length,0);
+});
+test('curated category filters and deduplication preserve genuine multi-category investigations',()=>{
+ const road=journey('CROSS','COMPLETED'),water=journey('CROSS','COMPLETED','WATERLOGGING');
+ const rows=[road,road,water,journey('WASTE','MONITORING','WASTE_ACCUMULATION')];
+ assert.equal(groupJourneys(rows,'ALL').completed.length,2);
+ assert.equal(groupJourneys(rows,'CROSS_CATEGORY').completed.length,2);assert.equal(groupJourneys(rows,'CROSS_CATEGORY').ongoing.length,0);
+ assert.equal(groupJourneys(rows,'WASTE_ACCUMULATION').ongoing.length,1);assert.equal(groupJourneys(rows,'ROAD_DAMAGE').completed.length,1);
+});
+test('scenario links begin at report and do not invent runs for empty definitions',()=>{
+ const bare={id:'S12',cases:[],stage:'NOT_STARTED'} as unknown as ScenarioDTO;
+ assert.equal(getScenarioHref(bare),null);
+ assert.equal(getScenarioHref({...bare,cases:[{incident_id:'INC & /',investigation_id:''} as never]}),'/investigations?incident=INC%20%26%20%2F&section=report');
 });

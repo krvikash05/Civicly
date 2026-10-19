@@ -1,0 +1,7 @@
+# F14 — Empty workspace case chooser
+
+F14 — Added Choose a case to the unselected case workspace, opening the existing real CaseDirectory inline. Shared across all six sections; removes misleading Data unavailable inside the unselected case panel. Directory respects existing issue filter/loading/error/read-bound behavior. Bottom directory mounts only for selected cases to avoid duplicate element IDs/duplicate directory requests. Only application source:frontend/components/investigation-workspace.tsx. SupportsR15/R16; backend/domain/provider state unchanged.
+
+Production build/generatedAPI/contracts PASS;bothspecvalidatorsPASS;whitespacePASS. Actual browser:Report empty CTA→inline directory with14real links (7investigations+7incidents), single directory ID→waterlogging selection→linkedreportloaded/Nextbutton→Clear→closechooser→CTArestored. Initial immediate report-visible probe false while loading; explicit wait then passed. No scenario activation/mutation/provider request initiated. No new unit tests for low-impact UI composition reusing existing tested directory. Localfrontendrefreshed only. Humanverify:openlocal/investigations,Chooseacase,selectavailablecase. No local blocker;GitHub/publicsite unchanged;next humanreviewthen separatelypublish/deploy.
+
+Flow:Choosebutton→localpickerstate→existingtypedAPI directory reads→existingcaseHref→selectedcaseread→normalstagepanels. Prefer inline directory reuse over duplicate selection/fetch logic or scenario reset. Evidence:build.txt,spec.txt,choose-case.jpg,available-cases.jpg.

@@ -244,7 +244,7 @@ test('extractDecisionTraces connects Question Asked -> Graph Evidence -> Recorde
   const t2 = traceItems[1];
   assert.equal(t2.eventId, 'EVT-02');
   assert.equal(t2.influenceCategory, 'CONTEXTUAL_GRAPH_QUERY');
-  assert.match(t2.influenceExplanation, /Contextual graph read retrieved knowledge from FalkorDB/);
+  assert.match(t2.influenceExplanation, /contextual records; no specific decision path/);
   assert.equal(t2.recordedDecision.action, 'Execute civicly::get_recent_maintenance_logs');
 
   // Check 3: Unestablished Influence
@@ -253,7 +253,7 @@ test('extractDecisionTraces connects Question Asked -> Graph Evidence -> Recorde
   assert.equal(t3.influenceCategory, 'UNESTABLISHED_INFLUENCE');
   assert.equal(
     t3.influenceExplanation,
-    'Graph query executed as contextual background; no causal influence trace established for this step.',
+    'No recorded graph-path link establishes how the graph influenced this step.',
   );
   assert.equal(t3.recordedDecision.action, 'DECISION');
 });
@@ -316,4 +316,31 @@ test('closed schema validation validates HypothesisPage and EvidenceDTO', () => 
   };
 
   assert.equal(validSchema('EvidenceDTO', validEvidence), true);
+});
+
+test('recorded path guide binds successful tool output to the exact decision and rejects incomplete or foreign paths',async()=>{
+ const {recordedGraphSteps,focusDecisionPath,pathExplanation}=await import('../lib/read/decision-paths.ts');
+ const {readFileSync}=await import('node:fs');
+ const retained=JSON.parse(readFileSync(new URL('../docs/evidence/F32/road-graph-trace.json',import.meta.url),'utf8')) as {graph:GraphSubgraphDTO;trace:AgentTracePage};
+ const steps=recordedGraphSteps(retained.trace,retained.graph);
+ assert.equal(steps.length,2);
+ assert.ok(steps.every(s=>s.path.node_ids.length===3&&s.path.edge_ids.length===2));
+ assert.match(steps[0].decision.rationale_summary??'',/following completed inspection/);
+ assert.equal(steps[0].next?.status,'ASSESS');
+ const focused=focusDecisionPath(retained.graph,steps[0].path);
+ assert.equal(focused.nodes.length,3);assert.equal(focused.edges.length,2);
+ assert.deepEqual(focused.edges,retained.graph.edges.filter(e=>steps[0].path.edge_ids.includes(e.id)));
+ assert.equal(focused.graph_revision,retained.graph.graph_revision);
+ assert.equal(focused.search_limited,retained.graph.search_limited);
+ assert.match(pathExplanation(retained.graph,steps[0].path).summary,/inspection and the report/);
+ assert.match(pathExplanation(retained.graph,steps[0].path).reservation,/Reviewed findings are needed/);
+ assert.equal(recordedGraphSteps(retained.trace,{...retained.graph,decision_paths:undefined}).length,0);
+ assert.equal(recordedGraphSteps({...retained.trace,items:retained.trace.items.map(e=>({...e,validated_output:false}))},retained.graph).length,0);
+ assert.equal(recordedGraphSteps(retained.trace,{...retained.graph,nodes:[]}).length,0);
+ assert.equal(recordedGraphSteps(retained.trace,{...retained.graph,edges:[]}).length,0);
+ assert.equal(recordedGraphSteps({...retained.trace,items:retained.trace.items.map(e=>e.kind==='DECISION'?{...e,investigation_id:'FOREIGN'}:e)},retained.graph).length,0);
+ assert.equal(recordedGraphSteps(retained.trace,{...retained.graph,decision_paths:retained.graph.decision_paths?.map(p=>({...p,execution_id:'FOREIGN'}))}).length,0);
+ assert.equal(recordedGraphSteps({...retained.trace,items:retained.trace.items.map(e=>e.kind==='DECISION'?{...e,execution_mode:'SCRIPTED'}:e)},retained.graph).length,0);
+ const candidate={...retained.graph,edges:retained.graph.edges.map(e=>({...e,verification_status:'CANDIDATE'}))};
+ assert.match(pathExplanation(candidate,steps[0].path).reservation,/candidate connection/);
 });

@@ -91,3 +91,24 @@ test('hosted sessions require an exact browser Origin and HTTPS configuration',a
  assert.equal(response.status,200);
  assert(!(await response.text()).includes('PRIVATE'));
 });
+
+// F36: connection transitions never expose stale session/case data or fake absence.
+import {visibleReadState,type OwnedRead} from '../lib/read/read-state.ts';
+test('connecting reads are loading, while actual unavailable and ended sessions stay unavailable',()=>{
+ const owner={};const saved:OwnedRead<string>={owner,key:'CASE',state:{status:'ready',data:'prior record',message:'',requestId:null}};
+ assert.deepEqual(visibleReadState({status:'connecting',identity:null,message:'Connecting',requestId:null},'CASE',true,saved),{status:'loading',data:null,message:'Connecting to the demo workspace…',requestId:null});
+ for(const status of ['unavailable','ended'] as const){const result=visibleReadState({status,identity:owner,message:'Session unavailable',requestId:'R'},'CASE',true,saved);assert.equal(result.status,'unavailable');assert.equal(result.data,null);assert.equal(result.requestId,'R');}
+});
+test('read presentation rejects cached records from a different case or session and disabled selection',()=>{
+ const owner={};const saved:OwnedRead<string>={owner,key:'CASE-A',state:{status:'ready',data:'case A',message:'',requestId:null}};
+ const connected={status:'connected' as const,identity:owner,message:'Ready',requestId:null};
+ for(const [identity,key] of [[owner,'CASE-B'],[{},'CASE-A'],[null,'CASE-A']] as const){const result=visibleReadState({...connected,identity},key,true,saved);assert.equal(result.status,'loading');assert.equal(result.data,null);}
+ assert.equal(visibleReadState(connected,'CASE-A',false,saved).data,null);
+ assert.equal(visibleReadState(connected,'CASE-A',true,saved).data,'case A');
+});
+test('same-scope refresh can retain ready data but a confirmed error remains an error',()=>{
+ const owner={};const connection={status:'connected' as const,identity:owner,message:'Ready',requestId:null};
+ const saved:OwnedRead<string>={owner,key:'CASE',state:{status:'error',data:null,message:'Source unavailable',requestId:'R',errorCode:'GRAPH_UNAVAILABLE'}};
+ assert.equal(visibleReadState(connection,'CASE',true,saved).status,'error');assert.equal(visibleReadState(connection,'CASE',true,saved).errorCode,'GRAPH_UNAVAILABLE');
+ saved.state={status:'ready',data:'retained during refresh',message:'',requestId:null};assert.equal(visibleReadState(connection,'CASE',true,saved).data,'retained during refresh');
+});

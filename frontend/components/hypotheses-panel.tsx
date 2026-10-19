@@ -6,6 +6,9 @@ import {
   translateCauseCode,
   translateAssessment,
   formatEntityDisplayName,
+  formatMissingEvidence,
+  formatShortIdentifier,
+  explainPlanConsideration,
 } from '../lib/read/display';
 import { TechnicalDetails, CopyableIdentifier } from './technical-details';
 
@@ -50,11 +53,9 @@ export function HypothesesPanel({
   return (
     <div className="hypotheses-panel">
       <div className="panel-intro">
-        <h3>Competing Hypotheses & Differential Diagnostics</h3>
+        <h3>Possible causes and the evidence</h3>
         <p className="muted">
-          The agent formulates competing hypotheses based on observed defect patterns. Sourced
-          evidence independently supports or contradicts each hypothesis. Hypotheses requiring
-          additional physical verification list missing inspection evidence.
+          Compare the explanations considered during the investigation. Each card shows supporting evidence, contradictions and what still needs checking. Being addressed in a plan does not make an explanation verified.
         </p>
       </div>
 
@@ -96,6 +97,11 @@ export function HypothesesPanel({
                   },
                 ]
               : []),
+            ...(planBasis?.reason ? [{
+              label: 'Original plan explanation',
+              value: <span>{planBasis.reason}</span>,
+              rawString: planBasis.reason,
+            }] : []),
           ];
 
           return (
@@ -225,7 +231,7 @@ export function HypothesesPanel({
                     </span>
                     <ul className="missing-list">
                       {hyp.missing_evidence.map((me: string, i: number) => (
-                        <li key={i}>{me}</li>
+                        <li key={i}>{formatMissingEvidence(me)}</li>
                       ))}
                     </ul>
                   </div>
@@ -243,9 +249,9 @@ export function HypothesesPanel({
                 {/* Plan Basis Rationale if evaluated in plan */}
                 {planBasis && planBasis.reason && (
                   <div className="hyp-section plan-basis-note">
-                    <span className="section-label">Remediation plan consideration:</span>
+                    <span className="section-label">How this affects the plan:</span>
                     <p className="text-sm" style={{ margin: 0, color: '#33483c' }}>
-                      {planBasis.reason}
+                      {explainPlanConsideration(planBasis.reason, planBasis.addressed)}
                     </p>
                   </div>
                 )}

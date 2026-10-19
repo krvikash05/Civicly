@@ -1,0 +1,13 @@
+# F17 — Explain the incident before technical metadata
+
+Human-requested frontend task; R15/R16, with R08/R09 evidence distinctions preserved. All18requirements remain binding. No backend phase advanced.
+
+Application paths:frontend/components/investigation-workspace.tsx, frontend/lib/read/workflow.ts, frontend/app/globals.css. Checks:frontend/tests/workflow.test.ts. Sixroottrackers and frontend/docs/tasks.md appended; concurrent source/evidence preserved.
+
+Selected-case header leads with What was reported and What the investigation examines. Retrieves at most3complaints by exact incident-linked IDs using generated client; both complaint ID and returned incident ID must match before inclusion. Five known exact report templates receive plain-language rendering; unknown text remains verbatim React text. Reports remain attributed claims, not established findings. Loaded hypothesis titles provide possible explanations, never a confirmed diagnosis. Category-specific inquiry prompts are fallback focus, not assertions that evidence exists. Primary incident location/start, short case reference, status and actual next step remain visible. Graph revision, problem group and role metadata move into existing technical disclosure; original report wording retained there. No caseID-based invented story or causal result.
+
+Validation: npm --prefix frontend test:108PASS/0FAIL/0SKIP (105previous plus3focusedcases). npm --prefix frontend run build:PASS includingAPI/contracts/TypeScript. make test-spec:bothPASS. Scoped git diff --check:PASS. Real typed HTTP readback for all7cases/3categories includes source complaintIDs and generated introduction at graphrevision1056:real-introductions.json. Browser loaded water case and confirmed plain report/focus/location/nextstep; technical disclosure contains exact original report and graph/groupmetadata. First DOM role locator did not match native details summary; actual current AXbutton click succeeded, original text confirmed. Screenshot water-introduction.jpg.
+
+Human verify:refresh localhost3100/investigations?investigation=INV-B09-8b006fb97aa2b908fc69addcf7ecd037. Read the introduction; expand Technical case identifiers & references for original report. Try road and waste cards to see their distinct reports/focus. This shows reports and possible causes; inspect Evidence and Monitoring for actual findings/outcome.
+
+Known limits: bounded first3report retrieval, first linked report displayed with explicit multi-report notice; unknown phrasing stays as recorded. No provider calls/domain mutations/checkpoint/quarantine/approval changes. Local frontend reloaded only;AWS not updated. Next:humanreview then separately requested deployment or next readability task. STOPafterF17.

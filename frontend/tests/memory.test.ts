@@ -8,6 +8,8 @@ import {
   filterRelevantProcedures,
   getMonitoringStatusStyle,
   formatQuoteExcerpt,
+  explainOutcome,
+  monitoringOpportunity,
 } from '../lib/read/memory.ts';
 import type {
   MonitoringDTO,
@@ -15,6 +17,22 @@ import type {
   CaseMemoryDTO,
   OutcomeDTO,
 } from '../lib/generated/models.ts';
+
+test('follow-up descriptions distinguish utility checks, completion and episode closure',()=>{
+ const out=(assessment_status:string,case_closed=false)=>({assessment_status,case_closed} as OutcomeDTO);
+ assert.match(explainOutcome(out('UTILITY_VERIFIED')),/does not establish.*road problem is resolved/);
+ assert.match(explainOutcome(out('MONITORING')),/separate follow-up/);
+ assert.match(explainOutcome(out('RESOLUTION_VERIFIED',true)),/closed this incident episode.*future recurrence/);
+ assert.match(explainOutcome(out('RESOLUTION_VERIFIED')),/did not close/);
+ assert.match(explainOutcome(out('PROBLEM_PERSISTS')),/did not establish a successful resolution/);
+ assert.match(explainOutcome(out('UNKNOWN')),/did not close/);
+});
+test('monitoring explanations describe issue-specific observation opportunities without inventing results',()=>{
+ assert.match(monitoringOpportunity('WATERLOGGING'),/comparable rainfall/);
+ assert.match(monitoringOpportunity('ROAD_DAMAGE'),/separate verification/);
+ assert.match(monitoringOpportunity('WASTE_ACCUMULATION'),/scheduled collections with actual pickups/);
+ for(const issue of ['WATERLOGGING','ROAD_DAMAGE','WASTE_ACCUMULATION'])assert.doesNotMatch(monitoringOpportunity(issue),/problem resolved|no recurrence|checks passed/i);
+});
 
 test('findClusterMonitoring finds matching cluster or returns null', () => {
   const list: MonitoringDTO[] = [

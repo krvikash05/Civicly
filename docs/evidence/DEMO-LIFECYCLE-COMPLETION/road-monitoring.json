@@ -1,0 +1,197 @@
+{
+  "plan": {
+    "task_bindings": [
+      {
+        "local_task_id": "TASK-01-SUBGRADE-REPAIR",
+        "task_id": "TASK-B12-9fd186bc06707b0f76702608529dd76e",
+        "action_type": "SUBGRADE_REPAIR",
+        "target_ids": [
+          "ROAD-DEMO-SUBGRADE-02"
+        ],
+        "department_id": "DEPT-ROAD",
+        "depends_on_task_ids": [],
+        "status": "COMPLETED",
+        "expected_hash": "21f360c0bc728f7b8553ba892cb68b11882c9235ac96ac1394c3b480dbc58ff4",
+        "eligible_assignee_ids": [
+          "OP-ROAD-LEAD"
+        ]
+      }
+    ],
+    "plan_id": "PLAN-B12-3a26fd93b1eb567bf101905dc4c43b76",
+    "investigation_id": "INV-B09-f663f7a1473c4a28a941d147633e08ad",
+    "version": 1,
+    "content_hash": "a39f811a8913ba4c5870a6acff9a05b918027db1768c64146e32bc4f90a2c834",
+    "draft": {
+      "investigation_id": "INV-B09-f663f7a1473c4a28a941d147633e08ad",
+      "issue": "ROAD_DAMAGE",
+      "version": 1,
+      "previous_plan_id": null,
+      "simulation_mode": "SIMULATED",
+      "basis": [
+        {
+          "hypothesis_id": "HYP-B09-1f6b6b25f7ba5eb2bbbb49ce97513083",
+          "assessment_id": "ASSESS-B09-c5a53c9b60ed7108f13247b92c8a0378",
+          "reason": "Assessment evaluated confirming physical observations STRUCTURAL_TEST_FAILED and SUBGRADE_FAILURE_OBSERVED on ROAD-DEMO-SUBGRADE-02, supporting subgrade failure mechanism.",
+          "addressed": true
+        },
+        {
+          "hypothesis_id": "HYP-B09-68a78bf4632cc12f1781f94cb8f56734",
+          "assessment_id": "ASSESS-B09-8a466da9816ed002875384a9d6045af4",
+          "reason": "Assessment evaluated normal pressure test observation PRESSURE_TEST_NORMAL on PIPE-DEMO-NORMAL-02, contradicting the competing utility leak hypothesis.",
+          "addressed": false
+        }
+      ],
+      "evidence_ids": [
+        "EV-REPORT-B09-aa69698f124f46d2900d8a93e537005b"
+      ],
+      "tasks": [
+        {
+          "id": "TASK-01-SUBGRADE-REPAIR",
+          "action_type": "SUBGRADE_REPAIR",
+          "remediation": {
+            "mode": "SUPPORTED_NOW",
+            "conditions": [
+              {
+                "kind": "CAUSAL_INSPECTION",
+                "status": "MET",
+                "evidence_ids": [
+                  "EV-REPORT-B09-aa69698f124f46d2900d8a93e537005b"
+                ],
+                "depends_on_task_id": null
+              },
+              {
+                "kind": "SAFETY_REVIEW",
+                "status": "MET",
+                "evidence_ids": [
+                  "EV-REPORT-B09-aa69698f124f46d2900d8a93e537005b"
+                ],
+                "depends_on_task_id": null
+              }
+            ]
+          },
+          "target_ids": [
+            "ROAD-DEMO-SUBGRADE-02"
+          ],
+          "department_id": "DEPT-ROAD",
+          "priority": "HIGH",
+          "prerequisites": [
+            "Reviewed field inspection confirming subgrade failure observations",
+            "Reviewed target-specific safety review SUBGRADE_REPAIR_SAFETY_REVIEWED"
+          ],
+          "depends_on": [],
+          "evidence_ids": [
+            "EV-REPORT-B09-aa69698f124f46d2900d8a93e537005b"
+          ],
+          "assessment_ids": [
+            "ASSESS-B09-c5a53c9b60ed7108f13247b92c8a0378"
+          ],
+          "procedure_citation": {
+            "source_document_id": "D020",
+            "source_version": 1,
+            "canonical_document_id": "ORG:D020:1",
+            "owner_department_id": "DEPT-ROAD",
+            "source_uri": "data/documents/b12r/D020_subgrade_repair.md",
+            "content_checksum": "71e327f8cebb886a6abf7cd21ccfbb0d7b341e8c453db914f1a7414b6d560de3",
+            "quote_excerpt": "anations and contradictions remain separate. Documentary guidance is not physical causal evidence. Insufficient, unreviewed or contradicted support requires inspection instead.\n\nSUPPORTED_NOW requires typed MET CAUSAL_INSPECTION with all cause confirmation codes from reviewed attributed dated reports, plus MET SAFETY_REVIEW supported by a reviewed target-specific SUBGRADE_REPAIR_SAFETY_REVIEWED observation. Safety review covers: Utility clearance, excavation/traffic isolation and water-infiltration assessment.\n\nCONDITIONAL requires reviewed causal support and explicit typed UNMET gates. An unmet causal inspection must depend on an inspection draft for this target. An unmet safety review remains an unresolved gate. Text such as subject to inspection does not satisfy a gate.\n\nVerified MAINTA",
+            "passage_location": "chunk:1:fd99ebc8-4383-4481-bd47-ebfcbb472711",
+            "chunk_sha256": "343e8b31341e9ecfcd4bcdbdb5efd418aa289ae75f54b01bbb13ad81dafc737f",
+            "confidence_label": "SOURCE_REVIEWED_SYNTHETIC",
+            "assertion_status": "PROPOSED",
+            "retrieved_at": "2026-10-18T15:49:43.214Z",
+            "effective_from": "2026-10-18T00:00:00Z",
+            "derived_from": null,
+            "trusted_as_instructions": false
+          },
+          "expected_outcome": "Excavate and remediate failed subgrade foundation layer beneath ROAD-DEMO-SUBGRADE-02 prior to surface repaving.",
+          "verification_criteria": "Structural load re-testing post-repair and wear exposure monitoring demonstrating subgrade stabilization.",
+          "risks": [
+            "Traffic disruption during road excavation",
+            "Weather exposure of exposed road base"
+          ]
+        }
+      ],
+      "expected_outcomes": [
+        "Stabilization and structural restoration of subgrade layer on ROAD-DEMO-SUBGRADE-02 preventing recurring pavement deformation."
+      ],
+      "risks": [
+        "Subsurface excavation hazards and traffic disruption during repair operations."
+      ],
+      "uncertainties": [
+        "Long-term pavement durability remains subject to meaningful wear exposure and post-repair traffic load."
+      ],
+      "monitoring": {
+        "issue": "ROAD_DAMAGE",
+        "required_evidence": [
+          "FOLLOWUP_PAVEMENT",
+          "WEAR_EXPOSURE"
+        ],
+        "observation_opportunity": "Follow-up pavement visual inspection and structural profile assessment following post-repair wear exposure.",
+        "verification_criteria": "No recurring depression, cracking, or subgrade movement following 30 days of standard traffic exposure.",
+        "missing_opportunity": "UNRESOLVED",
+        "completion_implies_resolution": false
+      }
+    },
+    "draft_receipt": {
+      "id": "PLAN-B12-3a26fd93b1eb567bf101905dc4c43b76",
+      "version": 1,
+      "plan_hash": "a39f811a8913ba4c5870a6acff9a05b918027db1768c64146e32bc4f90a2c834",
+      "status": "DRAFT",
+      "simulation_mode": "SIMULATED",
+      "approved": false,
+      "executable": false
+    },
+    "status": "MONITORING",
+    "expected_hash": "5adc21a4437286627ee6ad6041b9796e3ab1c8df1ffcb429974f44eba972ee9f",
+    "approval_status": "MONITORING",
+    "execution_gates_verified": false,
+    "simulated": true,
+    "limitations": [
+      "Immutable draft receipt is not current execution authority",
+      "Approval does not prove all execution gates are satisfied",
+      "approval_status preserves the legacy plan lifecycle state; use ApprovalDTO.status for the approval decision"
+    ]
+  },
+  "investigation": {
+    "id": "INV-B09-f663f7a1473c4a28a941d147633e08ad",
+    "expected_hash": "426f9f5ff5e9bca75002555543da8a2aed2208e4a864d1378241a54d82ff0296",
+    "simulated": true,
+    "status": "MONITORING",
+    "incident_ids": [
+      "INC-B08-8effe2e5da6bd34da2372713ba6e6693"
+    ],
+    "historical_incident_ids": [],
+    "problem_cluster_id": "PC-B08-a634385f0c8444ee30096e881824dafe",
+    "current_agent_role": null,
+    "active_hypothesis_ids": [
+      "HYP-B09-1f6b6b25f7ba5eb2bbbb49ce97513083",
+      "HYP-B09-68a78bf4632cc12f1781f94cb8f56734"
+    ],
+    "pending_inspection_ids": [],
+    "current_plan_id": "PLAN-B12-3a26fd93b1eb567bf101905dc4c43b76",
+    "next_action": "DURABLE_WORKER_OR_HUMAN_REVIEW",
+    "graph_revision": 848,
+    "runtime_status": "DETERMINISTIC_DEVELOPMENT_ONLY_NO_LIVE_AUTHORIZATION"
+  },
+  "order": {
+    "id": "WO-B13-9b024fe9f51913bf88e76ded948dc09e",
+    "expected_hash": "b14ddae094255612955d466ddf6c00db9fa8df561612b233cd6f7ed7ba001370",
+    "simulated": true,
+    "status": "COMPLETED",
+    "task_id": "TASK-B12-9fd186bc06707b0f76702608529dd76e",
+    "plan_id": "PLAN-B12-3a26fd93b1eb567bf101905dc4c43b76",
+    "department_id": "DEPT-ROAD",
+    "assignee_id": "OP-ROAD-LEAD",
+    "execution_mode": "SIMULATED",
+    "authorized_by": "OP-APPROVER",
+    "status_event_ids": [
+      "STATUS-B13-9dd89faac6fd5cb0cbccf4be38cabd3e",
+      "STATUS-B13-79b73497fa4aa68d6865f20205566696",
+      "STATUS-B13-c9eb0235ac6515112ed2145f0a861704"
+    ],
+    "resolution_verified": false,
+    "latest_assessment_status": "MONITORING",
+    "limitations": [
+      "Work completion alone does not establish resolution"
+    ]
+  }
+}

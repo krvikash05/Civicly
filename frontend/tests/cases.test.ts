@@ -22,10 +22,10 @@ const ok = (data: unknown) => Response.json({ data, request_id: 'test-req', sche
 test('metrics array defines exact four backend metrics with descriptions', () => {
   const fields = metrics.map(m => m.field);
   assert.deepEqual(fields, [
-    'active_investigations',
-    'pending_approvals',
     'completed_work_orders',
     'verified_work_orders',
+    'active_investigations',
+    'pending_approvals',
   ]);
   assert.equal(metrics.find(m => m.field === 'completed_work_orders')?.description, 'Completion alone does not prove resolution');
   assert.equal(metrics.find(m => m.field === 'active_investigations')?.description, 'Excludes completed and cancelled cases');
@@ -151,6 +151,7 @@ test('uniqueCaseForIncident and caseHref', () => {
     '/investigations?issue=WATERLOGGING&incident=INC-01&investigation=INV-01#case-workspace'
   );
   assert.equal(caseHref({}), '/investigations#case-workspace');
+  assert.equal(caseHref({investigation:'INV-01',section:'report'}),'/investigations?investigation=INV-01&section=report#case-workspace');
 });
 
 test('loadSelectedCase with investigation loads linked incidents', async () => {

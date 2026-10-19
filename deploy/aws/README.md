@@ -1,3 +1,77 @@
+# Latest frontend update — verified 19 October 2026 (ui-20261019-01)
+
+The [public demo](https://civicly-13-55-205-208.sslip.io) now serves reviewed frontend changes through F37, including **Every civic problem has a story. Follow it to resolution.**, the featured case, graph guide, stage takeaways, response timeline, curated journeys and calmer loading states.
+
+Frontend service WorkingDirectory is `/opt/civicly-frontend-releases/ui-20261019-01/frontend`, selected through `/etc/systemd/system/civicly-frontend.service.d/50-ui-release.conf`. Backend and database still use `/opt/civicly` → `/opt/civicly-releases/update-20261019-02`; their services/volumes were not restarted or replaced. Graph revision1148 and retained case/work/outcome/recovery states are unchanged. Local servers were left running.
+
+136 frontend tests, both spec validators, actual EC2 production build, all70source hashes, public HTTPS/API/SSE/security checks and browser walkthrough passed. One staging-only Turbopack symlink error was corrected by copying locked dependencies into the frontend release. No provider calls, worker wakes, S3 transfer resources or IAM changes.
+
+[Results and exact checks](../../docs/evidence/AWS-UI-20261019-01/RESULTS.md) · [Public acceptance](../../docs/evidence/AWS-UI-20261019-01/public-after.json) · [Preservation comparison](../../docs/evidence/AWS-UI-20261019-01/preservation-comparison.json)
+
+Frontend-only rollback, if explicitly chosen: remove the new `50-ui-release.conf` override, run `systemctl daemon-reload`, then `systemctl restart civicly-frontend`. This restores the previous frontend working directory without reverting any database. Retain both frontend releases. The historical full-release rollback instructions below are separate and must not be used for this frontend-only update.
+
+Backend acceptance/recovery and waste follow-up obligations remain open. Next: human public walkthrough.
+
+---
+
+# Latest update — verified 19 October 2026 (release02)
+
+The [public demo](https://civicly-13-55-205-208.sslip.io) now serves frontend F15–F26 and retained graph revision1148: **three completed cases, one under monitoring, three recovery-blocked cases, six completed work orders and three verified work orders**. The approved waste pickup is complete; its independent post-pickup monitoring remains outstanding. Earliest eligible follow-up is20October2026 at4:19pm IST; elapsed time alone does not prove resolution.
+
+Active `/opt/civicly-releases/update-20261019-02`, previous `/opt/civicly-releases/update-20261019-01`; `/opt/civicly` points to the active release. Docker project `civicly-update-20261019-02`. Both previous app and database volumes remain retained. Public host, EC2 instance, TLS, services, account plan and allocated disk remain unchanged. A cutover guard checked the old hosted graph was still READY revision1056 with no pending write; hosted auth sessions were backed up separately.
+
+120 frontend tests, both spec validators, actual EC2 production build, public HTTPS/API/SSE/security checks and fresh cloud persistence/source-hash checks passed. Seven exact checkpoints and three quarantines remain unchanged; no provider calls or worker execution. Temporary private S3 archive/bucket and exact-object instance permission removed. Local app servers remain stopped.
+
+Evidence: [results](../../docs/evidence/AWS-UPDATE-20261019-02/RESULTS.md), [public acceptance](../../docs/evidence/AWS-UPDATE-20261019-02/public-proof.json), [cloud persistence](../../docs/evidence/AWS-UPDATE-20261019-02/cloud-persistence-proof.json).
+
+## Rollback from release02
+
+Only choose this after reviewing any subsequent cloud writes. It restores release01's earlier graph snapshot; it does not merge newer records. Release02 and its volume remain retained.
+
+```sh
+systemctl stop civicly-frontend civicly-api
+cd /opt/civicly
+docker compose stop
+unlink /opt/civicly
+ln -s /opt/civicly-releases/update-20261019-01 /opt/civicly
+cd /opt/civicly
+docker compose up -d --wait --wait-timeout 120
+systemctl start civicly-api civicly-frontend
+```
+
+This is deployment acceptance; B10/B20/B-END and recovery/monitoring obligations remain open. Next:public human walkthrough, then separately continued recovery reconciliation. Historical notes below are retained unchanged.
+
+---
+
+# Current update — verified on 19 October 2026
+
+The existing [public demo](https://civicly-13-55-205-208.sslip.io) now serves the current frontend and retained graph revision1056: three completed investigations, five completed work orders, three verified work orders and zero pending approvals. Waterlogging and the second road repair now show exact approval, completed work, separate follow-up and memory. Waste keeps its TOKEN_BUDGET pause; three recovery cases remain blocked. Recent readable labels, centered scenario dialog, Next-section buttons and inline case chooser are verified on the public site.
+
+Active release: `/opt/civicly-releases/update-20261019-01`, reached through `/opt/civicly`. Previous app/runtime: `/opt/civicly-releases/previous-update-20261019-01`. Active Docker Compose project: `civicly-update-20261019-01`, container `civicly-update-20261019-01-falkordb-1`. Old project `civicly` is stopped with its volumes retained. All databases remain loopback-only. Services retain the existing systemd names, public hostname, EC2 instance, TLS configuration, account plan and allocated EBS capacity.
+
+`update-app.sh` stages the build and a fresh database volume before a guarded cutover. It compares frozen dependency lockfiles before reusing installed libraries, preserves the hosted auth/session DB through SQLite backup, validates17snapshotkeys including six primary graphs plus the SDK ontology graph, compares exact quarantine dump hashes, persists ACLs before container recreation and checks application readiness. Explicit phase-resume modes never restore over a populated database. A rollback trap restores the old release/volume if cutover readiness fails; that failure path was not deliberately injected on the public host.
+
+Verification: [public proof](../../docs/evidence/AWS-UPDATE-20261019/public-proof.json), [persistent ACL/quarantine and approval proof](../../docs/evidence/AWS-UPDATE-20261019/cloud-persistence-proof.json), [results](../../docs/evidence/AWS-UPDATE-20261019/RESULTS.md). Public HTTPS, automatic login, source hashes, three completed cases, graph/trace/procedures/memory, SSE, cross-origin and revoked-session denials passed. No provider request or worker was started. Temporary encrypted private S3 transfer storage and its exact-object instance-role grant were removed after verified download. Existing private snapshots/archives and both old/new EC2 database volumes remain available for recovery.
+
+## Reversible manual rollback for this update
+
+Run only as an explicitly chosen operator rollback via SSM, after assessing any new cloud writes. This restores the older hosted snapshot; it does not merge later records. The new volume/release remain retained.
+
+```sh
+systemctl stop civicly-frontend civicly-api
+cd /opt/civicly
+docker compose stop
+unlink /opt/civicly
+ln -s /opt/civicly-releases/previous-update-20261019-01 /opt/civicly
+cd /opt/civicly
+docker compose up -d --wait --wait-timeout 120
+systemctl start civicly-api civicly-frontend
+```
+
+No new EC2 instance, paid model run or permanent AWS staging storage was added. Extra Docker release data uses the existing allocated EBS disk; the original ongoing hosting charges still apply. This update is deployment acceptance, not full B10/B20/B-END completion. Exact next: human public walkthrough; resume the separately reviewed clean-waste workflow later. Historical deployment notes below remain intact.
+
+---
+
 # Current deployment — verified on 18 October 2026
 
 Civicly is live at **https://civicly-13-55-205-208.sslip.io** on instance `i-00e332036cd609ff0` in `ap-southeast-2`. The human approved the configuration and approximately **US$2.87/day before credits** (US$87.36 for a 730-hour month). No upgrade from the Free plan occurred.

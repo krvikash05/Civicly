@@ -1,0 +1,198 @@
+{
+  "plan": {
+    "task_bindings": [
+      {
+        "local_task_id": "TASK-CLEAR-DRAIN-101",
+        "task_id": "TASK-B12-d325851f9f86a18658e97f1942c15171",
+        "action_type": "DRAIN_BLOCKAGE_CLEARANCE",
+        "target_ids": [
+          "DRAIN-101"
+        ],
+        "department_id": "DEPT-DRAIN",
+        "depends_on_task_ids": [],
+        "status": "COMPLETED",
+        "expected_hash": "89eb4b52dfe2a3ac7fc238e69726b32b3d8f9cc52de62582b85cb26a49331ba3",
+        "eligible_assignee_ids": [
+          "OP-DRAIN-LEAD"
+        ]
+      }
+    ],
+    "plan_id": "PLAN-B12-da6d426cc7a42982a3dac6c8a76af2a6",
+    "investigation_id": "INV-B09-8b006fb97aa2b908fc69addcf7ecd037",
+    "version": 1,
+    "content_hash": "1b04b300f41379529bd0e7b6667bf28c1fbaaec5f1bbe38f4cfb5803a3a74286",
+    "draft": {
+      "investigation_id": "INV-B09-8b006fb97aa2b908fc69addcf7ecd037",
+      "issue": "WATERLOGGING",
+      "version": 1,
+      "previous_plan_id": null,
+      "simulation_mode": "SIMULATED",
+      "basis": [
+        {
+          "hypothesis_id": "HYP-B09-67069586a2c59c991ee97a506c861caf",
+          "assessment_id": "ASSESS-B09-3bd930e452fc791c7121d5972a40240b",
+          "reason": "Assessment ASSESS-B09-3bd930e452fc791c7121d5972a40240b found BLOCKAGE supported by reviewed inspection observations FLOW_RESTRICTED and OBSTRUCTION_OBSERVED on DRAIN-101.",
+          "addressed": true
+        },
+        {
+          "hypothesis_id": "HYP-B09-e816856dd2ff1f7f817e573fe26215a6",
+          "assessment_id": "ASSESS-B09-67fca704d96d284b17d792dbb05d7900",
+          "reason": "Alternative hypothesis CAPACITY_DEFICIT assessed as INCONCLUSIVE due to lack of discriminating capacity test evidence.",
+          "addressed": false
+        }
+      ],
+      "evidence_ids": [
+        "EV-REPORT-B09-e391ab25460225848fa1bc7ee58af6f9"
+      ],
+      "tasks": [
+        {
+          "id": "TASK-CLEAR-DRAIN-101",
+          "action_type": "DRAIN_BLOCKAGE_CLEARANCE",
+          "remediation": {
+            "mode": "SUPPORTED_NOW",
+            "conditions": [
+              {
+                "kind": "CAUSAL_INSPECTION",
+                "status": "MET",
+                "evidence_ids": [
+                  "EV-REPORT-B09-e391ab25460225848fa1bc7ee58af6f9"
+                ],
+                "depends_on_task_id": null
+              },
+              {
+                "kind": "SAFETY_REVIEW",
+                "status": "MET",
+                "evidence_ids": [
+                  "EV-REPORT-B09-e391ab25460225848fa1bc7ee58af6f9"
+                ],
+                "depends_on_task_id": null
+              }
+            ]
+          },
+          "target_ids": [
+            "DRAIN-101"
+          ],
+          "department_id": "DEPT-DRAIN",
+          "priority": "HIGH",
+          "prerequisites": [
+            "CAUSAL_INSPECTION MET by EV-REPORT-B09-e391ab25460225848fa1bc7ee58af6f9 with OBSTRUCTION_OBSERVED and FLOW_RESTRICTED",
+            "SAFETY_REVIEW MET by EV-REPORT-B09-e391ab25460225848fa1bc7ee58af6f9 with DRAIN_CLEARANCE_SAFETY_REVIEWED"
+          ],
+          "depends_on": [],
+          "evidence_ids": [
+            "EV-REPORT-B09-e391ab25460225848fa1bc7ee58af6f9"
+          ],
+          "assessment_ids": [
+            "ASSESS-B09-3bd930e452fc791c7121d5972a40240b"
+          ],
+          "procedure_citation": {
+            "source_document_id": "D019",
+            "source_version": 1,
+            "canonical_document_id": "ORG:D019:1",
+            "owner_department_id": "DEPT-DRAIN",
+            "source_uri": "data/documents/b12r/D019_drain_blockage_clearance.md",
+            "content_checksum": "15bbe2e22a79c4f39a482afa711c5135eb1b8a13e660c50003c823d723dab261",
+            "quote_excerpt": "# Synthetic demonstration drain blockage clearance proposal policy\n\nID: D019; version: 1; municipality: demo-city.\nAuthor: Codex B12-R AI-assisted synthetic policy author (newly authored demonstration).\nOwner: Drainage Operations (DEPT-DRAIN). Effective: 2026-10-18T00:00:00Z.\nReview: automated author self-review for consistency of these demo guards only.\nReviewer: Codex B12-R automated self-review; no independent human review, government approval or recovered history.\nProcedure/assertion status: PROPOSED; source curation is not approved policy.\nAction applicability: DRAIN_BLOCKAGE_CLEARANCE; target: drain inlet or segment; cause: BLOCKAGE.\n\nA latest addressed SUPPORTED or VERIFIED B09 assessment with reviewed physical supporting observations on each target may justify a qualified proposal.",
+            "passage_location": "chunk:0:c6a1b4b3-56b5-4941-b6ad-d302558db32f",
+            "chunk_sha256": "bd681cfe32129e8fcb021237d7f5886ef12dadc94a68c3ff190ebd13703e496f",
+            "confidence_label": "SOURCE_REVIEWED_SYNTHETIC",
+            "assertion_status": "PROPOSED",
+            "retrieved_at": "2026-10-18T15:01:13.549Z",
+            "effective_from": "2026-10-18T00:00:00Z",
+            "derived_from": null,
+            "trusted_as_instructions": false
+          },
+          "expected_outcome": "Remove physical obstruction and restore hydraulic conveyance capacity in DRAIN-101.",
+          "verification_criteria": "Discharge through DRAIN-101 verified clear during post-intervention inspection and comparable follow-up rainfall without waterlogging.",
+          "risks": [
+            "Downstream debris transfer during flushing operations",
+            "Confined space entry and isolation hazards during clearing"
+          ]
+        }
+      ],
+      "expected_outcomes": [
+        "Restore hydraulic flow through DRAIN-101 to relieve upstream waterlogging."
+      ],
+      "risks": [
+        "Downstream sediment accumulation or localized flooding during clearance operations."
+      ],
+      "uncertainties": [
+        "Residual hydraulic capacity deficit may persist under peak storm conditions.",
+        "Long-term maintenance frequency unknown from current records."
+      ],
+      "monitoring": {
+        "issue": "WATERLOGGING",
+        "required_evidence": [
+          "COMPARABLE_FOLLOWUP_RAINFALL",
+          "FOLLOWUP_WATERLOGGING"
+        ],
+        "observation_opportunity": "Monitor DRAIN-101 and surrounding surface catchment across next significant rainfall event.",
+        "verification_criteria": "Absence of surface waterlogging under comparable rainfall intensity following clearance clearance.",
+        "missing_opportunity": "UNRESOLVED",
+        "completion_implies_resolution": false
+      }
+    },
+    "draft_receipt": {
+      "id": "PLAN-B12-da6d426cc7a42982a3dac6c8a76af2a6",
+      "version": 1,
+      "plan_hash": "1b04b300f41379529bd0e7b6667bf28c1fbaaec5f1bbe38f4cfb5803a3a74286",
+      "status": "DRAFT",
+      "simulation_mode": "SIMULATED",
+      "approved": false,
+      "executable": false
+    },
+    "status": "MONITORING",
+    "expected_hash": "02c3e7546f2870a068e1a01c8b9321ead79df0b379d853d898231af6715337cb",
+    "approval_status": "MONITORING",
+    "execution_gates_verified": false,
+    "simulated": true,
+    "limitations": [
+      "Immutable draft receipt is not current execution authority",
+      "Approval does not prove all execution gates are satisfied",
+      "approval_status preserves the legacy plan lifecycle state; use ApprovalDTO.status for the approval decision"
+    ]
+  },
+  "investigation": {
+    "id": "INV-B09-8b006fb97aa2b908fc69addcf7ecd037",
+    "expected_hash": "16dc03d4e2138f760d782a33ede18a31d0db3bdf9ae19f5b6d6dae4457e1c5af",
+    "simulated": true,
+    "status": "MONITORING",
+    "incident_ids": [
+      "INC-B08-deb500b2c98d7efee3c755ea6a317589"
+    ],
+    "historical_incident_ids": [],
+    "problem_cluster_id": "PC-B08-e05a65f1899a2b545765090629fe1a61",
+    "current_agent_role": null,
+    "active_hypothesis_ids": [
+      "HYP-B09-67069586a2c59c991ee97a506c861caf",
+      "HYP-B09-e816856dd2ff1f7f817e573fe26215a6"
+    ],
+    "pending_inspection_ids": [],
+    "current_plan_id": "PLAN-B12-da6d426cc7a42982a3dac6c8a76af2a6",
+    "next_action": "DURABLE_WORKER_OR_HUMAN_REVIEW",
+    "graph_revision": 896,
+    "runtime_status": "DETERMINISTIC_DEVELOPMENT_ONLY_NO_LIVE_AUTHORIZATION"
+  },
+  "order": {
+    "id": "WO-B13-2b12fab042ac1ae7f77f4fe38a1d1c1d",
+    "expected_hash": "31cc19c38c4ac88870201ea9a73eb219d83b6479355fc3a8f10f3a5c1ecbbcb2",
+    "simulated": true,
+    "status": "COMPLETED",
+    "task_id": "TASK-B12-d325851f9f86a18658e97f1942c15171",
+    "plan_id": "PLAN-B12-da6d426cc7a42982a3dac6c8a76af2a6",
+    "department_id": "DEPT-DRAIN",
+    "assignee_id": "OP-DRAIN-LEAD",
+    "execution_mode": "SIMULATED",
+    "authorized_by": "OP-APPROVER",
+    "status_event_ids": [
+      "STATUS-B13-edde5c832e27b8a90552108817644d21",
+      "STATUS-B13-71185b15abe0515aa0e16aac143f29aa",
+      "STATUS-B13-cc8deb0d80efc9c240ccd87756145f2e"
+    ],
+    "resolution_verified": false,
+    "latest_assessment_status": "MONITORING",
+    "limitations": [
+      "Work completion alone does not establish resolution"
+    ]
+  }
+}

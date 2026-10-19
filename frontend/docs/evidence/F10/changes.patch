@@ -1,0 +1,24 @@
+--- a/frontend/app/globals.css
++++ b/frontend/app/globals.css
+@@ -246,6 +246,12 @@
+ .topbar-action-pill:focus-visible{outline:2px solid #27654e;outline-offset:1px}
+ 
+ /* F08 Modals & Cards */
++.modal-overlay{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(19,38,31,.48);overflow:auto;overscroll-behavior:contain}
++.modal-card{min-width:0;background:var(--paper);border:1px solid var(--border);border-radius:12px;padding:24px;box-shadow:0 20px 64px rgba(19,38,31,.24);overflow:auto}
++.modal-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:16px;flex-shrink:0}
++.modal-close{display:grid;place-items:center;width:32px;height:32px;flex-shrink:0;border:1px solid var(--border);border-radius:6px;background:var(--paper);color:var(--ink)}
++.modal-close:hover{background:var(--soft)}
++.modal-footer{display:flex;justify-content:flex-end;flex-shrink:0}
+ .journey-modal-card{max-width:960px;width:92vw;max-height:88vh;display:flex;flex-direction:column}
+ .journey-lead{font-size:12px;color:#536a5c;line-height:1.5;margin:0 0 16px}
+ .journey-filter-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;border-bottom:1px solid #e2ebe5;padding-bottom:12px}
+@@ -253,7 +259,7 @@
+ .journey-filter-btn:hover{background:#f3f7f4}
+ .journey-filter-btn.active{background:#27654e;color:#fff;border-color:#27654e}
+ .journey-scenarios-scroll{overflow-y:auto;padding-right:6px;max-height:55vh}
+-.journey-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
++.journey-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(280px,100%),1fr));gap:14px}
+ .journey-card{background:#fff;border:1px solid #e0e8e3;border-radius:8px;padding:14px;display:flex;flex-direction:column;gap:10px;transition:box-shadow 0.15s ease,border-color 0.15s ease}
+ .journey-card:hover{border-color:#b4cebe;box-shadow:0 4px 12px rgba(0,0,0,0.04)}
+ .card-top{display:flex;align-items:center;justify-content:space-between;gap:8px}

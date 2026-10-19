@@ -2,35 +2,51 @@
 
 ### Understand the cause. Coordinate the response. Verify the outcome.
 
-**Civicly helps investigate recurring waterlogging, road damage and waste accumulation.** It connects complaints to the infrastructure, evidence and previous work behind them, then carries the investigation through a reviewed plan, human approval, simulated work and follow-up.
+**Civicly is a FalkorDB-powered AI investigation workspace for recurring civic problems like waterlogging, road damage and waste accumulation.** It connects complaints to the infrastructure, evidence and previous work behind them, then carries the investigation through a reviewed plan, human approval, simulated work and follow-up.
 
 Consider a road that keeps developing potholes. Should the road be repaired again—or is a leaking pipe damaging the ground beneath it? Civicly helps an investigator follow the connections, compare explanations and see what evidence is needed before acting.
 
-**FalkorDB is the connected record behind that process.** Gemini uses MCP tools to investigate it. People review evidence and approve work. The workspace shows how each decision relates to the reports, assets and findings that support it.
+**FalkorDB connects the investigation to the response.** Its domain graph links reports, infrastructure, inspection evidence, departments, tasks and outcomes. Gemini investigates those records through runtime MCP; the FalkorDB GraphRAG SDK retrieves sourced procedures; FalkorDBSaver preserves the investigation thread. People review evidence and approve work, while the workspace makes the supporting graph paths inspectable.
 
-[**Live Demo**](https://civicly-13-55-205-208.sslip.io) · [**Follow the completed road case**](https://civicly-13-55-205-208.sslip.io/investigations?investigation=INV-B09-b9d4d66e130ed348c4f6a50e9d66a891) · [Run locally](#run-and-develop-locally) · [Technical docs](#technical-documentation)
+Across the whole case journey, Civicly uses FalkorDB to connect a new report to relevant assets and past incidents, retrieve evidence and procedures for the agent, and track planned work across departments. After authorized work, dated follow-up and retained outcomes complete the episode’s history—so future investigations can retrieve what was tried and what happened.
+
+[**Live Demo**](https://civicly-13-55-205-208.sslip.io) · [**Follow the completed road case**](https://civicly-13-55-205-208.sslip.io/investigations?investigation=INV-B09-b9d4d66e130ed348c4f6a50e9d66a891&section=report#case-workspace) · [Two-minute walkthrough](#one-investigation-six-connected-stages)
 
 > **About the demo:** municipal data, inspections and field work are synthetic. Gemini, MCP, FalkorDB, GraphRAG retrieval and saved workflow records use actual services. The hosted site lets you explore retained results; browsing does not start a paid agent run. Hosting uses a temporary hostname.
 
-![Civicly evidence workspace with competing hypotheses and its FalkorDB Canvas subgraph](docs/images/civicly-evidence-canvas.jpg)
+![Civicly live workspace with the featured road investigation and recorded work and outcome counts](docs/images/civicly-overview.png)
 
-*The actual local workspace: reviewed utility-leak evidence alongside the bounded case graph. This capture shows contextual relationships, not a selected model decision path. Municipal observations are synthetic.*
+*The deployed workspace: start with the road case, follow its evidence and graph connections, then review the coordinated response and independent outcome. All municipal field work and observations are synthetic.*
 
 ## What can Civicly investigate?
 
-| Problem | Questions the investigation can explore | Evidence that matters |
-|---|---|---|
-| **Waterlogging** | Is a drain blocked? Do several affected locations share a downstream restriction? Could capacity or a pump be involved? | Drainage connections, maintenance history, inspection findings and rainfall context |
-| **Road damage** | Is the subgrade failing? Is a verified underlying utility connection relevant? Which department must act first? | Road and pipe relationships, structural observations, leak tests and repair history |
-| **Waste accumulation** | Was collection missed? Was capacity insufficient? Was waste deposited after collection? | Collection routes, scheduled versus actual pickups and dated field observations |
+| Problem | Questions the investigation can explore | Evidence that matters | FalkorDB’s role |
+|---|---|---|---|
+| **Waterlogging** | Is a drain blocked? Do several affected locations share a downstream restriction? Could capacity or a pump be involved? | Drainage connections, maintenance history, inspection findings and rainfall context | Traverses `DRAINS_TO` connections, identifies shared downstream assets and retrieves linked inspections and maintenance history. |
+| **Road damage** | Is the subgrade failing? Is a verified underlying utility connection relevant? Which department must act first? | Road and pipe relationships, structural observations, leak tests and repair history | Connects roads to underlying utilities through sourced `UNDERLIES` relationships and supplies department and task dependencies for coordinated repair checks. |
+| **Waste accumulation** | Was collection missed? Was capacity insufficient? Was waste deposited after collection? | Collection routes, scheduled versus actual pickups and dated field observations | Links waste points to routes through `COLLECTED_BY`, connects schedules with pickup records, and retrieves dated evidence to compare competing explanations. |
 
-These are competing explanations to investigate, not causes inferred automatically from a complaint. The [demo status](#what-is-demonstrated-today) below distinguishes the current results for each category.
+These are competing explanations to investigate, not causes inferred automatically from a complaint. The [demo status](#what-is-demonstrated) below distinguishes the current results for each category.
 
 ## One investigation, six connected stages
 
 **Report → Investigation → Evidence → Plan & approval → Work → Monitoring & memory**
 
 This is also the frontend navigation. A judge can start with the reported problem, follow the agent's tool choices, inspect evidence, review the proposed response and see whether later observations justify closing the episode.
+
+**Two-minute judge walkthrough:** open the [completed Market Junction road case](https://civicly-13-55-205-208.sslip.io/investigations?investigation=INV-B09-b9d4d66e130ed348c4f6a50e9d66a891&section=report#case-workspace), then use the six stage buttons:
+
+| Stage | What to look for |
+|---|---|
+| **Report** | Recurring road damage, low water pressure and the original location |
+| **Investigation** | The agent's recorded questions, MCP results and next choices; inspect **How FalkorDB informed this step** |
+| **Evidence** | Competing explanations, reviewed observations and what remains unproven |
+| **Plan & approval** | The recommended response, responsible departments and utility-before-road prerequisites |
+| **Work** | Three authorized simulated work orders and their recorded progress |
+| **Monitoring & memory** | Separate follow-up verification and retained episode history |
+
+Use **Focus on this path** to isolate an available recorded lookup and open its linked source. The response timeline connects recommendation, authorization, work and follow-up without treating them as the same event.
+
 
 Three distinctions keep that story clear:
 
@@ -39,6 +55,10 @@ Three distinctions keep that story clear:
 - **Completed work is not verified resolution:** follow-up must establish what happened after the intervention.
 
 ## Graph data model
+
+![Full Civicly schema overview in FalkorDB Browser](docs/images/civicly-browser-schema-overview.png)
+
+*The full schema discovered from Civicly's retained demo graph in FalkorDB Browser: 48 node labels and 190 label-to-label connection patterns, including internal workflow records. The focused views below explain the core model and individual case relationships.*
 
 Think of the graph as a connected case file: **what was reported, what infrastructure is involved, what the evidence says, and what happened next.** Nodes represent those records; named relationships explain how they connect.
 
@@ -88,13 +108,25 @@ flowchart TB
 
 Location and physical connection are different: **a pipe being nearby does not prove it lies beneath the road or caused the damage.** Relationships distinguish candidate and verified associations and carry source references and time bounds where available.
 
+**Why these connections matter:** in the road case, the sourced pipe-to-road relationship and the task prerequisites connect a utility investigation to coordinated repair. Application services read these relationships from FalkorDB to validate whether the planned road work can proceed. The graph supplies the connected evidence and dependencies; the services enforce the approval and execution rules.
+
 Beyond this overview, the model includes collection schedules and actual pickup records, rainfall events, procedures, tool executions and status events. Assessments are versioned; evidence retains its source, date and review status. See [the full graph model](docs/backend/02_graph.md) and [evidence rules](backend/EVIDENCE.md).
 
 ### The model in a running database
 
+**Schema view — how the case file is connected.** This view is discovered from Civicly's actual FalkorDB graph. Each square represents a node label, such as Incident or WorkOrder; arrows show the relationship patterns present between labels.
+
+![Filtered FalkorDB Browser Schema view showing Civicly's investigation and response model](docs/images/civicly-browser-schema-focused.png)
+
+*Follow the structure from complaints and incidents through investigation, evidence, plans, approvals, work orders and intervention outcomes. Display filters retain 14 core labels and hide infrastructure subtypes and internal bookkeeping labels. The Browser footer reports the full schema's 48 labels and 190 connection patterns, not the filtered subset. This is a schema view, not a count of incidents or proof of causation.*
+
+[View the full schema image](docs/images/civicly-browser-schema-overview.png)
+
+**Road-case graph — how those connections support a response.** Unlike the schema above, the following graph shows individual persisted records for the retained road investigation.
+
 ![FalkorDB Browser showing the road case assets, plan, tasks, departments and work orders](docs/images/falkordb-road-task-graph.jpg)
 
-*An actual read-only query of the retained road case in FalkorDB Browser: **11 nodes and 15 relationships** connect the pipe and road (`UNDERLIES`), plan and tasks (`HAS_TASK`), task prerequisites (`DEPENDS_ON`), responsible departments (`ASSIGNED_TO`), target assets (`TARGETS`) and work orders (`IMPLEMENTS`). Browser node captions may show internal database IDs; Civicly keeps canonical IDs in technical details. These are persisted synthetic demo records, not a drawn mockup.*
+*An actual read-only query of the retained road case in FalkorDB Browser: **11 nodes and 15 relationships** connect the pipe and road (`UNDERLIES`), plan and tasks (`HAS_TASK`), task prerequisites (`DEPENDS_ON`), responsible departments (`ASSIGNED_TO`), target assets (`TARGETS`) and work orders (`IMPLEMENTS`). Browser node captions may show internal database IDs; Civicly keeps canonical IDs in technical details. These are persisted synthetic demo records, not a drawn mockup. Notice how the pipe-to-road connection and the task dependencies connect utility work to road repair; approval and safety checks are enforced separately by application services.*
 
 [Read-only query and capture notes](docs/images/README.md) · [Reproduce the focused query](docs/images/road-task-graph.cypher)
 
@@ -161,6 +193,8 @@ flowchart TB
 | **FastAPI services and worker** | Enforce evidence rules, permissions, approval scope, task transitions and durable event handling |
 | **Next.js + FalkorDB Canvas** | Present the six-stage case, inspectable graph, evidence and recorded decision paths |
 
+**Three FalkorDB-backed stores serve different purposes:** the domain graph holds connected case and operational records; the SDK-managed document graph supports cited knowledge retrieval; the separate FalkorDBSaver graph preserves workflow checkpoints. Gemini chooses investigative actions, and authenticated application services validate writes and operational transitions.
+
 These are modules in a backend application with a single worker, not a fleet of independently deployed agent services. Private authentication and spending ledgers use SQLite. The browser never receives database credentials or unrestricted query access.
 
 Agent graph reads are bounded and read-only. Analytical changes pass through validated services; work requires authenticated roles and approval of the exact plan. [Detailed architecture](docs/backend/01_system.md).
@@ -225,68 +259,29 @@ Memory serves different purposes:
 
 Synthetic procedure assertions remain proposed guidance. Stored episode context is not automatically a generalized learned rule. [Runtime](backend/AGENTS_RUNTIME.md) · [Memory](backend/MEMORY.md) · [MCP](backend/CIVICLY_MCP.md).
 
-## What is demonstrated today
+## How Civicly connects to the three hackathon tracks
 
-Start with the [completed road case](https://civicly-13-55-205-208.sslip.io/investigations?investigation=INV-B09-b9d4d66e130ed348c4f6a50e9d66a891), move through all six tabs, and inspect the graph and supporting evidence at each step. The presenter-configured analyst session allows browsing without entering credentials; it does not grant approval authority.
+- **Track 1 — Agents That Act on Connected Data:** FalkorDB Cypher traversals connect reports to drainage paths, underlying utilities and service records. Runtime MCP gives the agent bounded access to these connections, while inspectable graph paths show the evidence returned during an investigation.
+- **Track 2 — Agent Memory and Coordination:** LangGraph coordinates investigation roles, FalkorDBSaver preserves their shared workflow across pauses and resumes, and FalkorDB retains previous assessments, interventions and outcomes for later retrieval.
+- **Track 3 — Company Brain:** Civicly applies this track as a municipal operations brain. FalkorDB connects departments, reviewed asset responsibility, plans and decisions. The FalkorDB GraphRAG SDK retrieves cited procedures from an isolated document graph, helping ground recommendations in applicable organizational knowledge.
+
+Together, these uses connect **investigation, continuity and organizational knowledge** within one case journey. The demonstrated results and remaining acceptance limits are described below.
+
+## What is demonstrated
+
+Start with the [completed road case](https://civicly-13-55-205-208.sslip.io/investigations?investigation=INV-B09-b9d4d66e130ed348c4f6a50e9d66a891&section=report#case-workspace), move through all six tabs, and inspect the graph and supporting evidence at each step. The presenter-configured analyst session allows browsing without entering credentials; it does not grant approval authority.
 
 | Category | Retained demonstration result |
 |---|---|
 | **Road damage** | Genuine Gemini/MCP investigation, reviewed findings, analyst-assisted plan, exact human approval, three completed simulated work orders, separate verification and episode memory |
-| **Waterlogging** | Genuine MCP drainage investigation, reviewed findings and a sourced remedial draft awaiting approval |
-| **Waste accumulation** | Inspection and service-history evidence retained; the live investigation stopped at its token budget before a completed reassessment or plan |
+| **Waterlogging** | Recorded drainage investigation, reviewed blockage evidence, approved drain clearance, completed simulated work, independent verified follow-up and episode memory |
+| **Second road case** | Reviewed subgrade-repair plan, authorized completed work, separate verified follow-up and retained history |
+| **Waste accumulation** | Reviewed missed-pickup response, human-approved plan and completed simulated collection; independent follow-up remains outstanding, so the case stays under monitoring |
+
+**Verified deployed state, 19 October 2026:** three completed investigations, six completed work orders and three work orders with verified resolution outcomes. These counts describe different records; they are not interchangeable counts of solved problems. Three other cases retain recovery blocks.
+
+**Explore the implementation:** [Completed road investigation](https://civicly-13-55-205-208.sslip.io/investigations?investigation=INV-B09-b9d4d66e130ed348c4f6a50e9d66a891&section=report#case-workspace) · [FalkorDB-backed workflow evidence](docs/evidence/EXACT-ROAD-LIFECYCLE-RESULTS.md) · [Verification details](docs/evidence/AWS-UI-20261019-01/RESULTS.md)
 
 The scenario harness contains twelve scenarios with negative variants. A prepared scenario does not prove that an autonomous agent has solved it. Full live-provider, cross-category and comprehensive backend acceptance remain incomplete. Original failed attempts, uncertain operations and assessment history are retained.
-
-[Requirements](docs/backend/00_requirements.md) · [Current task board](task_board.md) · [Known blockers](blockers.md) · [Road-case proof](docs/evidence/EXACT-ROAD-LIFECYCLE-RESULTS.md)
-
-## Run and develop locally
-
-Prerequisites: **Python 3.12, Node.js 22+, Docker and Docker Compose**. Backend and frontend dependencies have separate lockfiles.
-
-```sh
-git clone https://github.com/krvikash05/Civicly.git
-cd Civicly
-make setup
-make up
-make migrate
-make health
-make test-spec
-```
-
-These commands prepare the database foundation; they do **not** recreate the hosted private presenter snapshot or automatically run an agent. The public repository excludes credentials, runtime databases and saved private profiles.
-
-For a fresh presenter setup, follow [the backend host runbook](backend/DEMO_HOST.md) and [API guide](backend/API.md); use a new isolated setup directory. Configure the frontend's ignored `frontend/.env.local` using [the connection guide](frontend/docs/API_CONNECTION.md), then:
-
-```sh
-cd frontend
-npm ci
-npm run dev
-```
-
-The usual local endpoints are frontend `127.0.0.1:3100`, API `127.0.0.1:8010` and developer FalkorDB Browser `127.0.0.1:3000`. Private profile provisioning and presenter authorization are required for genuine Gemini runs. Never put provider keys or presenter passwords in browser variables or Git. Browsing retained results does not call Gemini.
-
-Focused development checks:
-
-```sh
-make test-spec
-backend/.venv/bin/python -m pytest backend/tests/unit -q
-npm --prefix frontend test
-npm --prefix frontend run typecheck
-```
-
-These are commands to run, not a claim that this README change reran every suite. Real DB/MCP integration and lifecycle checks are documented in the evidence directory and may require isolated configured services. [Deployment and recovery](deploy/aws/README.md) describes the verified AWS-hosted demonstrator; it is not a one-command fresh deployment promise.
-
-## Technical documentation
-
-| Topic | Guide |
-|---|---|
-| Preserved original README and development context | [Development history](docs/DEVELOPMENT_HISTORY.md) |
-| Architecture and full graph semantics | [System](docs/backend/01_system.md) · [Graph model](docs/backend/02_graph.md) |
-| Runtime and source-grounded knowledge | [Agents](backend/AGENTS_RUNTIME.md) · [Memory](backend/MEMORY.md) · [Official MCP](backend/MCP.md) |
-| Operations and independent outcomes | [Planning](backend/PLANNING.md) · [Approval](backend/OPERATIONS.md) · [Utility gates](backend/UTILITY.md) |
-| API, events and frontend integration | [API](backend/API.md) · [Events](backend/EVENTS.md) · [Handoff](backend/FRONTEND_HANDOFF.md) |
-| Reproducible demonstration and proof | [Judge walkthrough](backend/DEMO_WALKTHROUGH.md) · [Road lifecycle results](docs/evidence/EXACT-ROAD-LIFECYCLE-RESULTS.md) |
-| Requirements and audit trail | [All eighteen requirements](docs/backend/00_requirements.md) · [Implementation status](implementation_status.md) · [Test log](test_log.md) |
-| FalkorDB adoption and references | [Official-source implementation map](docs/backend/12_falkordb_sources.md) |
 
 Built with **FalkorDB, FalkorDB GraphRAG SDK, FalkorDBSaver, runtime MCP, Gemini, LangGraph, FastAPI/Pydantic, Next.js/React/TypeScript and FalkorDB Canvas**.

@@ -828,3 +828,288 @@ AWS-DEPLOY: no current authorization blocker; human approvedexactcost/configurat
 
 Cloud deployment verified: https://civicly-13-55-205-208.sslip.io, instance i-00e332036cd609ff0/Sydney, human-approved4GiB/30GB encrypted configuration. Public acceptance12checks PASS and same12checks PASS after full EC2reboot; real readback has COMPLETED roadcase,61graphnodes,one retained memoryepisode,procedures and actualSSEframe. Browser confirmsDemoConnected andeventcursor52. APIready:graph/delivery/MCP/checkpoint/memory/auth allready; supervisedservices recoverautomatically. Node22.23.3/Python3.12.3/Docker29.9.1/Compose5.6.0/Caddy2.6.2; pinnedFalkorDB6.0.2 amd64. Initialcompilerfailure fixed withbuild-essential/pythonheaders; firstpublicSSEbodytimeout fixed withuncompressedupstream andSSEexcludedCaddyencoding. RedisACLfile persisted beforecontainerrecreation; fullreboot retainsread/checkpoint/memory/trace accounts. InitialMCPsmoke assertion expectedSUCCESS butgotvalidPARTIAL; correctedrequirement preservesPARTIAL with3validatedcitations. Officialnode1row anddomainprocedureactualMCPreadPASS,catalog16tools; operatorselection,notLLM. ZeroGemini/countTokens/paidworkerstarts. TemporaryS3archive/bucket andexactobjectrolepolicy removed;localprivateartifacts retained. Existingapproval/quarantine/tokenlimits andB10/B20/B-ENDgaps unchanged. Deploymenttask technicallyPASS;humanreviewpending.
 No unresolved hosting blocker. Temporary hostname changes on stop/start; costs consume credits. Existing UI case-card category badges can mismatch linked incidents (observed, unchanged); domain/API categories preserved. Live worker not automatically started, and remaining backend acceptance is not waived.
+
+## F09-READABILITY — Current Limitations & Blocker Status (2026-10-19)
+- No active technical or implementation blockers for F09-READABILITY.
+- Scope Strictly Preserved: Modifications restricted entirely to `frontend/`. No backend modifications, no schema changes, no contract mutations, no weakening of authorization, plan hash verification, or state machine transitions.
+- Authorization Integrity: All raw canonical machine identifiers, 32-character hex hashes, and exact scopes remain preserved and accessible in `<TechnicalDetails>` with copy buttons for administrative audit and approval authorization.
+- Fallback Truthfulness: Unknown or unmapped identifiers use neutral, truthful Title Case conversions without inventing unsupported causal statements or physical relationships.
+
+
+## README-SUBMISSION — 2026-10-19, documentation task ready for human review
+
+Human authorized a submission-focused README, preservation of the existing README, review of concurrent Antigravity readability changes, and graph data model before architecture. Reviewed current six-stage workspace, display translations, graph/trace presentation and source contracts; frontend files left untouched. Root README now explains the problem, three categories, canonical graph model, architecture, runtime MCP/agent roles, graph functions at every lifecycle stage, GraphRAG/checkpoints/episode memory, completed road dependency, demo navigation, bounded local setup and honest acceptance limits. Four GitHub Mermaid diagrams; graph model above architecture. No screenshots of superseded UI added. Original README archived in docs/DEVELOPMENT_HISTORY.md with only backend/docs Markdown destinations rebased; reverse-link transformation SHA256 proves every original paragraph/content retained.
+
+Coverage: documents R01–R18 without changing implementation or claiming new acceptance. Checks PASS:55local Markdown targets;21graph diagram relationships/endpoints match canonical schema;4diagramblocks;archive retention/order;public demo homepageHTTP200;both specification validators. One initial docs checker saw display text “Prerequisite task” rather than canonical ActionTask; clarified diagram label and reran PASS. No Mermaid visual renderer, full runtime/frontend regressions or provider calls run (documentation-only). No graph/state/budget/credentials/deployment changes. Concurrent frontend edits remain outside task. Existing dated historical docs are explicitly linked as development context rather than treated as current readiness. Next: human README review, then publish the approved documentation; GitHub was not pushed by this task.
+
+## README-REFINEMENT — 2026-10-19, human review pending
+
+Human requested a clearer and more understandable submission README. Rewrote opening around the recurring-road example and practical purpose; added category/questions/evidence comparison, report-vs-incident/hypothesis-vs-finding/completion-vs-resolution explanation, grouped canonical graph diagram into three stages, explained relationship names in plain language, simplified architecture and added component/job table, turned lifecycle stage descriptions into judge questions, and expanded exact road flow into five readable steps. Added explicit current three-category result table. Graph model remains before architecture; four Mermaid diagrams retained. Existing docs/DEVELOPMENT_HISTORY.md untouched; all original knowledge still preserved. No frontend/application/runtime change; concurrent Antigravity edits excluded.
+
+Validation:56local Markdown targets exist;21canonical diagram relationship endpoint checks PASS;4diagramblocks/section order/archive retention PASS;both specification validators PASS. No Mermaid visual renderer or runtime/regression/provider execution for documentation-only change. Prior public-homepageHTTP200 check retained as historical, not rerun. Proof docs/evidence/README-REFINEMENT-{checks.json,spec.txt}. README-SUBMISSION proof remains its original55linkcheck, not replaced by new count. No commit/push. Next: human readability review and publication after acceptance.
+
+## README-GRAPH-VISUALS — 2026-10-19, ready for human review
+
+Human authorized actual Civicly Canvas and FalkorDB Browser visuals for the README. Captured local retained road case's Evidence-stage Canvas/contextual graph plus focused actual Browser query11nodes/15edges (assets/plan/tasks/departments/work orders). UI reports17nodes/20edges bounded contextual graph; no selected decision path and no fabricated highlight. Screenshots original JPEG, no generated/edited page content; visual inspection excludes credentials and private configuration. Added hero evidence/Canvas image and Browser image within graph model, before stage contributions/architecture. captions distinguish synthetic domain state, contextual versus model-selected evidence, internal versus canonical IDs, and bounded views. Old history and concurrent frontend implementation untouched.
+
+Paths:README.md;docs/images/{civicly-evidence-canvas.jpg,falkordb-road-task-graph.jpg,road-task-graph.cypher,README.md};sixroottrackers append-only. Actual read-only Browser queries and UI views exercised; no application/graph/approval writes, provider calls or deployment changes. Initial previous Browser query had no drainage rows; exact presenter UNDERLIES read returned2nodes/1edge, focused snapshot11/15. Source/UI matches screenshots; local visuals may differ from cloud revision. Checks:readme/image references exist, 4Mermaid diagrams retained, section order retained, both static specification validators PASS. No full runtime/frontend suite warranted for docs/images-only task. Human verify README images/captions and graph query provenance. Next: human review then publish the screenshots if accepted. No GitHub push performed by this task.
+
+## F09 — readable frontend and correct workflow presentation, 2026-10-19
+
+Human explicitly requested wholefrontendreadability and truthful goodworkflow, beginning with legacy runtime metadata appearing as DETERMINISTIC_DEVELOPMENT_ONLY_NO_LIVE_AUTHORIZATION. Implemented one bounded frontend semantic/read-integration microtask covering R15/R16 and preserving R08/R09/R10/R11/R13/R17 and all18requirements. Main UI uses real trace execution_mode and authoritative operational plans/outcomes: water Gemini investigation recorded/Awaiting plan approval; closedroad Investigation complete/Review verified outcome; waste usage-limitpause explicit. Rawruntimecode stays in technicaldetails, not relabelled as liveexecution. Saved traces do not prove currentlyrunningagent.
+
+Fixed directory categoryguessing from missingissuefield; fetches linkedincidentcategories including endedhistory. Closedreports/memory nowuse IncidentIDs, native taskbindings map worktitles/targets, and source-scopedorders preventforeignworkdisplay. Typed evidencefindings/dates/fieldreviewer visible; optionalreaderrors no longerswallowed. Neutral assessment/recurrence/completion labels, roles/permissions, graphpathexplanations and outcome/history semantics. Approval submission neverguesses assignees/nativeIDs; uncertainresponse blocks componentresubmission undernewkey. Fullwidthrecordedactivityrow improvesreadability. Backend/contracts/privateprofiles/deployment untouched; preexistingAntigravity changes captured/preserved in /tmpbaseline and task-onlypatch.
+
+100distinct frontend testsPASS/0FAIL/0SKIP (87existingretained+13new); typecheck/build/generatedAPIguard/contracts59operations55paths185schemas and bothspecvalidatorsPASS. One real threecategory generatedclient/viewmodel HTTP readjourney and one actual browser walkthroughverify retainedFalkorDB-backeddata, report/work/memory/evidence/plan/permissions/categoryfilter. 3roadcards/0wrongwatercards underroadfilter; closedroad3orders/1memoryrow/5outcomes. Screenshot evidence frontend/docs/evidence/F09. Initial optional-typechecks/copyexpectationfailures, a shortIDfixture typo, a wholecodeprefixtranslationbug and narrowstatuslayout corrected and documented; no testremoved. Domainrevision818unchanged; managedproviderledger0requests sincebaseline. Onlylocalfrontendproduction reloaded and diagnosticlogin/logout sessions; no agentwake, domainwrite, graphreset, quarantineclear, raisedbudget or backend/cloudrestart.
+
+Human verify localhost3100 with water INV-B09-8b006fb97aa2b908fc69addcf7ecd037; expect recordedGemini/pendingapproval with rawmetadatahidden. Closedroad INV-B09-b9d4d66e130ed348c4f6a50e9d66a891 has propercategory/report/tasks/memory; waste INV-B09-95e00a75e74b708c966db68bc595dca0 stayspaused. Nonbillable domain-read check `node --experimental-strip-types frontend/scripts/verify-readability.mjs`. README/history unchanged by this task. Remaining limits: boundedreads/no crossrequestsnapshot, staticlegacybackendlabel, partialB10/B20/B-END and nofullmobile/a11yscenarioacceptance. GitHub and hostedAWSfrontend notupdated. Exactnext: humanreviewlocalfrontend then separatelypublish/deployacceptedbuild. STOP.
+
+
+## F10 — Scenario dialog layout (2026-10-19)
+
+F10: no blocker to local layout correction. Cloud/public site and GitHub remain unchanged; publication is the next separately authorized step. Existing backend/live acceptance and recovery obligations unchanged. [Evidence](frontend/docs/evidence/F10/RESULTS.md).
+
+
+## F11 — Civicly’s AI wording (2026-10-19)
+
+F11: no local wording blocker. GitHub/publicsite unchanged; nextreviewthen separatelypublish/deploy. Existing backend acceptance/recovery obligations unchanged. [Evidence](frontend/docs/evidence/F11/RESULTS.md).
+
+
+## F12 — Recorded activity copy (2026-10-19)
+
+F12 — Removed the requested second sentence from recorded activity description in frontend/lib/read/workflow.ts; updated frontend/tests/workflow.test.ts exact-copy expectation. Still describes saved activity, without asserting a current run.13focusedworkflowtestsPASS/0FAIL/0SKIP;productionbuild/API/contractsPASS;bothspecvalidatorsPASS;actualbrowser shortenedcopyvisible. Localfrontendrefreshed; no backend/domain/provider changes or publicdeployment. Humanverify:refreshlocalwaterlogginginvestigation, openInvestigation andreadRecordedagentactivity. Next:humanreviewthen separatelypublish/deploy. [Evidence](frontend/docs/evidence/F12/RESULTS.md).
+
+
+## F13 — Next section navigation (2026-10-19)
+
+F13 — Added a small Next: <section> arrow button in the case workspace header (frontend/components/investigation-workspace.tsx). Uses existing section state only, available when a case is selected; hidden on final Monitoring & memory section. No workflow execution, approval or provider invocation. R15/R16 presentation; other requirements preserved. Production build (includes generated API/contracts) PASS; both spec validators PASS; whitespace PASS. Actual browser clicked all five forward transitions Report→Investigation→Evidence→Plan & approval→Work→Monitoring & memory; final heading visible and0Nextbuttons. Existing stage tabs work returning to Report. No new unit tests for this low-impact UI navigation. Local frontend refreshed with unchanged settings. Publicsite/GitHub unchanged. Humanverify:openlocalcase, Report, click Next: Investigation then continue. No local blocker; next humanreview then separatelypublish/deploy. [Evidence](frontend/docs/evidence/F13/RESULTS.md).
+
+
+## F14 — Empty workspace case chooser (2026-10-19)
+
+F14 — Added Choose a case to the unselected case workspace, opening the existing real CaseDirectory inline. Shared across all six sections; removes misleading Data unavailable inside the unselected case panel. Directory respects existing issue filter/loading/error/read-bound behavior. Bottom directory mounts only for selected cases to avoid duplicate element IDs/duplicate directory requests. Only application source:frontend/components/investigation-workspace.tsx. SupportsR15/R16; backend/domain/provider state unchanged. Production build/generatedAPI/contracts PASS;bothspecvalidatorsPASS;whitespacePASS. Actual browser:Report empty CTA→inline directory with14real links (7investigations+7incidents), single directory ID→waterlogging selection→linkedreportloaded/Nextbutton→Clear→closechooser→CTArestored. Initial immediate report-visible probe false while loading; explicit wait then passed. No scenario activation/mutation/provider request initiated. No new unit tests for low-impact UI composition reusing existing tested directory. Localfrontendrefreshed only. Humanverify:openlocal/investigations,Chooseacase,selectavailablecase. No local blocker;GitHub/publicsite unchanged;next humanreviewthen separatelypublish/deploy. [Evidence](frontend/docs/evidence/F14/RESULTS.md).
+
+
+## DEMO-LIFECYCLE-COMPLETION — 19 Oct 2026
+
+Explicit human approval received for exact waterlogging and secondroad plan bindings. Both now APPROVED→authorized/assigned work→completion→MONITORING→separate RESOLUTION_VERIFIED→COMPLETED with endedincident/memory. Original road/utility complete;3complete localjourneys total. All18requirements remainbinding; B10/B20/B-END/all12acceptance notdeclaredcomplete. [Evidence](docs/evidence/DEMO-LIFECYCLE-COMPLETION/RESULTS.md). No blocker tocompleted2approvedlocalworkflows. Initialwaterpre-intent sockettimeoutrootcause remainsunproven; currentstandardAPIreads/workflowchecks pass. Waste next:reviewedinspection andMISSEDlog exist butoriginalAIstoppedbeforeassessment; no furtherwake/capraise. Needoperatorreassessment,draft/exactapproval,work and24hourpostpickupevidencebeforeclosure. Threeoriginalrecoveryflags unchanged; donotreconcile previouslyprotectedwaste. Cloud/publicsite stilloldretainedsnapshot; synchronizeseparatelyafterhumanreview.
+
+
+## AWS-UPDATE-20261019 — deployed and verified
+
+The existing AWS demo now serves the current frontend and retained graph revision1056: three completed journeys, five completed work orders, three verified work orders and zero pending approvals. Public URL: https://civicly-13-55-205-208.sslip.io . All18requirements remain binding; B10/B20/B-END and unfinished cases are not declared complete. [Evidence](docs/evidence/AWS-UPDATE-20261019/RESULTS.md). No blocker to this AWS update. Waste retains its token-limit pause and needs the next separately reviewed operational workflow; three recovery cases remain blocked. Old release/volume retained; rollback is not a merge of newer writes. Initial AWS session expiration resolved through explicitly approved login. No automatic worker or paid provider run started.
+
+
+## F15 — 19 Oct 2026
+
+F15: no blocking defect in the requested copy change. Unknown coded rationale templates use neutral explanation and preserve original. Local only; not yet deployed to AWS. Existing backend/live-provider/recovery obligations unchanged.
+
+
+## F16 — 19 Oct 2026
+
+F16: no blocker to available-journey navigation. All12scenario completion remains incomplete:11definitions have no run in current source; onlyS05registered. Clean waste needs reassessment/draft/exactapproval and24h independent follow-up. Capacity/route/dumping gaps and protected recovery cases unchanged; do not relabel them solved. Await scope preference/humanreview; AWS unchanged.
+
+
+## F17 — 19 Oct 2026
+
+F17 no blocker to requested header presentation. Reports bounded tofirst3, firstavailable linkedreport shown withexplicitcount; unknown sourcephrasing unchanged. Technical sources retained; no inferred verifiedcause. AWSnotupdated. Existingprovider/scenario/recovery/approval obligations unchanged.
+
+
+## F18 — 19 Oct 2026
+
+F18 no blocker to requestedcardcopy. Firstlinkedreport only; unknown longwording truncated110chars; errorsvisible. NoAWSdeployment. Existing backend/provider/scenario/recovery/approval obligations unchanged.
+
+
+## F19 — 19 Oct 2026
+
+F19 no blocker to requestedstyling. Localonly;AWSunchanged. No fullmobile/a11y audit. Existingbackend/provider/scenario/recovery obligations unchanged.
+
+
+## F20 — 19 Oct 2026
+
+F20 no blocker to requestedReportoverview. Boundedcurrentreads andcondensedassessmenttext requirefullEvidence/Plan/Work/Monitoring forsource details. AWSunchanged;existingprovider/scenario/recovery obligations unchanged. No madeupplan/work/resolution forunfinishedwaste.
+
+
+## F21 — 19 Oct 2026
+
+F21 — Removed The incident at a glance heading and its introductory paragraph per exact human request. Report now starts with What happened; removed unused intro CSS and first-section top divider. R15/R16; all18requirements preserved. Source:frontend/components/investigation-workspace.tsx;frontend/app/globals.css. Build/API/contracts/typesPASS; make test-spec bothPASS; scopedwhitespacePASS. Actual localbrowser zero removedheading/paragraph matches, What happened and remainingcaseoverview visible; screenshot frontend/docs/evidence/F21/report-start.jpg. No newunit/fullbackendtests for simple copy/style removal. No domain/provider/state changes; localfrontend reloaded;AWSunchanged. Humanverify:refreshlocalcase→01Report. No blocker. Exactnext:humanreview then separatelyrequesteddeployment/nextUItask;STOP.
+
+
+## F22 — 19 Oct 2026
+
+F22 — Case-directory cards now say Open Reports and link to section=report. Workspace section is URL-derived; existing tabs/Next update section while retaining selectedcase/filter. This ensures reopening samecase from Evidence or Investigation selects Report, rather than retaining previous localtabstate. Missing/unknownsection retains prior Investigationdefault. Application paths:frontend/components/case-directory.tsx;frontend/components/investigation-workspace.tsx;frontend/lib/read/cases.ts; extendedcheckfrontend/tests/cases.test.ts. R15/R16; all18requirements preserved. npm --prefix frontend test114PASS/0FAIL/0SKIP;build/API/contracts/typesPASS;make test-spec bothPASS;scopedwhitespacePASS. Actualbrowser evidenceURL→samecaseOpenReports→Report, Next→Investigation→samecaseOpenReports→ReportPASS;7cards retainIDs/content andnewlabel. InitialWhat-happened check duringcasekeyreload false, explicitreadinesswait then reportLoadedtrue. Screenshotfrontend/docs/evidence/F22/open-reports.jpg. No domain/provider/approval/checkpoint changes. Localfrontend reloaded only;AWSunchanged. Humanverify:refreshlocaldirectory,OpenReports,thenNextInvestigationandreopencard. No blocker. Exactnext:humanreviewthen separatelyrequesteddeployment/nextUItask;STOP.
+
+
+## F23 — 19 Oct 2026
+
+F23 — Applied exact human-approvedhomepagecopy:CONNECTED EVIDENCE.INFORMED ACTION.;Understand why civic problems keep coming back.;Civicly’s AI connects reports,infrastructure and evidence to investigate recurring problems,guide coordinated action and verify what happened after the work. Application sourceonly:frontend/app/page.tsx. R15/R16;all18requirements preserved. Existing layout/actions retained. npm --prefix frontend run buildPASSincludingAPI/contracts/types;make test-specbothPASS;scopedwhitespacePASS. Actual localbrowser confirmednewcopy,connectedworkspace andreadablewrapping; screenshotfrontend/docs/evidence/F23/homepage.jpg visuallyinspected. No newunit/fullbackendrerunforcopy-onlychange. No domain/provider/approval/statechanges. Localfrontend reloaded;AWSunchanged. Humanverify:refreshlocalhost3100homepage. No blocker. Exactnext:humanreviewthen separatelyrequesteddeployment/nextUItask;STOP.
+
+
+## F24 — 19 Oct 2026
+
+F24 no blocker to requested dashboarddrilldowns. Currentboundedreads maychangebetweencount/list; no snapshots. Pendinglistsaccessiblependingplans, not nativeapprovalidentities;no decisioncontrols. Positivependingruntimeunexercisedsincecount0. AWSunchanged;existingbackend/provider/scenario/recoveryobligationsunchanged.
+
+
+## F25 — 19 Oct 2026
+
+F25 no blocker torequestedWorkstyling. Missingtaskbindingdescriptionneutral;actualdependenciesnotclaimedsatisfied. No newfullmobile/a11yaudit. AWSunchanged;existingbackend/provider/scenario/recoveryobligationsunchanged.
+
+
+## F26 — 19 Oct 2026
+
+F26 no blocker torequestedmonitoringreadability. Categoryquestionsnotmeasurementclaims;boundedcurrentreads/temporarilyloadingproceduresmaylag. Currentplanbindingsrequiredforoutcomecards;readerrorsvisible. NoAWSdeployment;existingbackend/provider/scenario/recoveryobligationsunchanged.
+
+
+## DEMO-WASTE-COMPLETION — 19 Oct 2026
+
+Waste work is complete but resolution requires independently reviewed observations after an actual ≥24-hour post-pickup opportunity: earliest20Oct2026 16:19:17.747 IST. Three other open cases retain quarantines; readback found committed inspection and read/no-dispatch evidence but current reconciliation only supports another PROPOSE state. Next bounded extension must validate interrupted saver/dispatch outcome before resumption. Recurring API socket timeout root cause remains unproven; local API reload mitigated the proven pre-intent failure. No uncertain record cleared. B10/B20 full acceptance remains partial; AWS still earlier snapshot. See docs/evidence/DEMO-WASTE-COMPLETION/RESULTS.md, COMMANDS.md and FILES.md. Human verification: open the local waste investigation and inspect Plan & approval → Work → Monitoring & memory. R08–R11/R13/R17/R18; all18requirements preserved.
+
+
+## AWS-UPDATE-20261019-02 — 19 Oct 2026
+
+No blocker to requested AWS update; live URL connected at1148. Existing3quarantined cases still need tested reconciliation; waste follow-up only eligible after20Oct2026 16:19IST and requires reviewed dated evidence. B10/B20/B-END remain partial. Cloud/local become independent forks after snapshot; guard prevents silent replacement of later hosted writes. Old release/volumes retained; no extra instance/plan upgrade; retained volume data consumes existing EBS disk. Local appservers remain stopped. R15–R18; all18requirements preserved. Exact files/commands/evidence:docs/evidence/AWS-UPDATE-20261019-02/{FILES,COMMANDS,RESULTS}.md. Humanverify:https://civicly-13-55-205-208.sslip.io →Work completed(6)→wastepickup→Work/Monitoring.
+
+
+## F27 — 19 Oct 2026
+
+F27:no implementation blocker. Requested reorder is local only;AWSnotupdated and localservers remain stopped. Existing backend monitoring/recovery/provider gates unchanged. R15/R16;all18requirements preserved. Source:frontend/lib/read/cases.ts;frontend/tests/cases.test.ts. Evidence:frontend/docs/evidence/F27/RESULTS.md. Humanverify:homepagecardorder;nextreview/deployment;STOP.
+
+
+## F28 — 19 Oct 2026
+
+No F28 blocker;localonly,AWSunchanged. Existing backendmonitoring/recovery obligations unchanged. R15/R16;all18requirements preserved. Source:frontend/components/metric-records.tsx;frontend/lib/read/dashboard.ts. Evidence:frontend/docs/evidence/F28/RESULTS.md. Humanverify:homepage→Workcompleted→ViewReport→01Report;STOP.
+
+
+## F29 — 19 Oct 2026
+
+No F29 blocker. Localonly;AWSunchanged. Existingbackendmonitoring/recoveryobligationspreserved. R15/R16;all18requirements preserved.Source:frontend/app/page.tsx.Evidence:frontend/docs/evidence/F29/RESULTS.md.Humanverify:localhomepageRecurringproblemsorder;STOP.
+
+
+## F30 — 19 Oct 2026
+
+No F30 blocker.Localonly;AWSunchanged.Existingbackend/recovery/monitoringobligationspreserved. R15/R16;all18requirements preserved.Source:frontend/components/shell.tsx;frontend/app/globals.css.Evidence:frontend/docs/evidence/F30/RESULTS.md.Humanverify:localhomepageupperleftlogo;STOP.
+
+
+## F31 — 19 Oct 2026
+
+No blocker to F31 on retaineddemo. Curatedentry needs the retainedoriginalroad ID;missing/incomplete data uses standarderrors/genericrecordedlabel,not fabricatedcompletion. Localonly;AWSunchanged. Existing backendB10/B20/recovery/wastefollowupgates remainopen. R15/R16/R18;all18requirements preserved.Source:frontend/components/featured-investigation.tsx;frontend/app/page.tsx;frontend/app/globals.css.Evidence:frontend/docs/evidence/F31/RESULTS.md.Humanverify:localhomepagefeaturedcase→Report→NextInvestigation;STOP.
+
+
+## F32 — 19 Oct 2026
+
+F32 noblockerforavailablecomplete savedtrails. Historicdependencylookup path notpresentincurrent boundedview remainsunavailable;UIdoesnotfabricateitsreplacementorclaimcausalproof. Broader cases/mobile notfullybrowser-audited.AWSunchanged;existingB10/B20/recovery/wastefollowupgatespreserved. R04/R09/R15/R16;all18requirements preserved.Exactfiles/commands/limits:frontend/docs/evidence/F32/RESULTS.md.Humanverify:localoriginalroadInvestigation→rightgraphguide→switchpath/openreport/widergraph;STOP.
+
+
+## F32-R — 19 Oct 2026
+
+No F32-R blocker;localonly,AWSunchanged.Existingboundedpath/provenance/backendacceptance limitations preserved. R04/R09/R15/R16;all18requirements preserved.Source:frontend/components/recorded-decision-graph.tsx;frontend/app/globals.css.Evidence:frontend/docs/evidence/F32R/RESULTS.md.Humanverify:localroadInvestigationgraphfirst/widerdefault;STOP.
+
+
+## F32-R2 — 19 Oct 2026
+
+HumanrequestedactualgraphbeforeWhatthisgraphshows:Canvas toolbar/bounds→visualization→caption→legend/technicalmetadata;widerdefaultandguideexplanationsunchanged.Source:frontend/components/falkordb-canvas-view.tsx.Localbuild/API/contracts/types,specvalidators,scopedwhitespaceandbrowserPASS.No newunit/fullbackendrunforsmallJSXreorder.No blocker;AWSunchanged;backendacceptancepreserved.R15/R16;all18requirements preserved.Evidence:frontend/docs/evidence/F32R2/RESULTS.md.Humanverify:refreshlocalroadInvestigationrightgraphpanel.NextF33stagetakeawaysafterreview;STOP.
+
+
+## F32-R3 — 19 Oct 2026
+
+HumanrequestedWhatthisgraphshowsbelowAssesstheevidence:guidegraph→question→connections→nextrecordedchoice+rationale→sharedGraphCaption→qualifications/sources/details.Canvascaptiondisabledonlyinguide,standalonedefaultretained.Source:frontend/components/falkordb-canvas-view.tsx;frontend/components/recorded-decision-graph.tsx.Build/API/contracts/types,specvalidators,scopedwhitespace/browserPASS.No newunit/fullbackendrunforsmallrenderrelocation.Localonly;AWSunchanged;noblocker.R15/R16;all18requirements preserved.Evidence:frontend/docs/evidence/F32R3/RESULTS.md.Humanverify:localroadInvestigationcaptionbelowassessment.NextF33afterreview;STOP.
+
+
+## F33 — 19 Oct 2026
+
+No F33 blocker on retained demo. Summaries describe bounded loaded records, not exhaustive city evidence or new autonomous execution. Mobile not separately browser-tested; backend acceptance/recovery/monitoring obligations remain unchanged. AWS unchanged. R09/R15/R16/R17; all eighteen requirements preserved. Exact files, commands, verification and limitations: frontend/docs/evidence/F33/RESULTS.md. Human verify: local road case → six stage buttons → Key takeaway; waste monitoring remains unverified. STOP for review.
+
+
+## F34 — 19 Oct 2026
+
+No F34 blocker within available DTOs. Approval identity/decision timestamp remain restricted; work transition times are not exposed. Timeline explicitly presents conceptual milestones/current statuses and only dates actual follow-up. Bounded reads and backend acceptance/recovery obligations unchanged. Mobile not separately tested; AWS unchanged. R09/R10/R11/R15/R16/R17; all eighteen requirements preserved. Exact files, commands, limitations and human verification: frontend/docs/evidence/F34/RESULTS.md. Verify local road Plan/Work/Monitoring response timeline; waste remains unverified. STOP for review.
+
+
+## F35 — 19 Oct 2026
+
+No F35 blocker within retained demo. COMPLETED means investigation state, not automatically verified outcome; the case retains outcome review. Bounded listing/cursor qualification preserved. Original-road suggestion requires returned COMPLETED case. Mobile not separately audited. Existing backend acceptance/recovery/follow-up obligations unchanged; AWS unchanged. R01/R15/R16/R18; all eighteen requirements preserved. Exact paths, commands, limitations and human verification: frontend/docs/evidence/F35/RESULTS.md. Verify local Scenarios completed/ongoing grouping, Report links and preserved catalog. STOP for review.
+
+
+## F36 — 19 Oct 2026
+
+No F36 blocker on retained demo. Actual unavailable/error/recovery paths remain visible; session/case fencing unchanged. Timing beyond observed local loads, mobile and forced network/expiry browser behavior not separately audited. Existing backend acceptance/recovery/waste follow-up obligations remain. AWS unchanged; deployment requires explicit authorization. R09/R15/R16/R17; all eighteen requirements preserved. Exact files, commands, limitations and verification: frontend/docs/evidence/F36/RESULTS.md. Human verify: fresh local case load → Work/Monitoring, and homepage connection state. STOP for review.
+
+
+## F37 — 19 Oct 2026
+
+Human-selected homepage headline implemented in frontend/app/page.tsx: Every civic problem has a story. Follow it to resolution. Existing homepage h1 → new exact copy; no data/control-flow change. Production build/API/contracts/types and both spec validators PASS; no redundant unit/full backend rerun. Local port 3100 had no listener; server/browser not started. AWS unchanged. R15/R16; all eighteen requirements preserved. Evidence and verification: frontend/docs/evidence/F37/RESULTS.md. Next: human review, then deployment only when authorized. STOP.
+
+
+## AWS-UI-20261019-01 — 19 Oct 2026
+
+No deployment blocker. Existing B10/B20/B-END, uncertain-operation recovery and dated waste follow-up gates remain open. Frontend rollback retained/documented, not fault-injected. Preservation verified at API level without new DB dump audit. No paid provider execution or domain writes; normal verification auth sessions only. R09/R15/R16/R17/R18; all eighteen requirements preserved. Exact paths, commands, failures, limitations and human verification: docs/evidence/AWS-UI-20261019-01/RESULTS.md. Public URL https://civicly-13-55-205-208.sslip.io. STOP for review.
+
+
+## README-JUDGE-REFRESH — 19 Oct 2026
+
+No README editing blocker. GitHub Mermaid rendering and fresh-machine setup not rerun; no video created or nonexistent link advertised. Synthetic observations, analyst-assisted planning, open live acceptance/recovery/waste follow-up remain disclosed. Prior README snapshot explicitly historical. Not committed/pushed or deployed by this documentation task. All eighteen requirements preserved. Exact files, commands, limitations and verification: docs/evidence/README-JUDGE-REFRESH/RESULTS.md. Human verify: README story → Report link → graph model before architecture → current result/evidence table. STOP for review.
+
+
+## README-JUDGE-REFRESH-REVERT — 19 Oct 2026
+
+Human requested reverting the README rewrite. README.md restored byte-for-byte from the preserved pre-rewrite body; SHA256 verified against docs/evidence/README-JUDGE-REFRESH/previous-readme.sha256. No application/data changes, GitHub push or AWS deployment. Archive/images/evidence and audit history retained. Next: human review; no further README changes without direction. STOP.
+
+
+## README-TARGETED-REFINEMENT — 19 Oct 2026
+
+Applied human-requested suggestions in place to restored README.md, preserving every original section/order and four Mermaid diagrams. Improved FalkorDB opening/store roles, graph-versus-service explanation, judge walkthrough, Report links, real overview image, current water/waste results and scoped proof links.44local targets/4anchors, unchanged diagram/section checks, both spec validators and scoped whitespace PASS. No new application/provider/runtime changes;136test count points to prior actual deployment evidence. Existing docs/images/civicly-overview.png must accompany future push. GitHub/AWS unchanged. All18requirements preserved. Exact verification/limitations: docs/evidence/README-TARGETED-REFINEMENT/RESULTS.md. Next: human review; push only when requested. STOP.
+
+
+## README-FALKORDB-OVERVIEW — 19 Oct 2026
+
+Human requested a short overall FalkorDB explanation after the third paragraph. Added one paragraph in README.md connecting report/assets/history → evidence/procedures → departmental work → dated follow-up/retained outcomes. Existing wording and diagram/section order unchanged. Text-placement and scoped whitespace checks PASS; no app tests or runtime/provider calls for prose-only edit. No GitHub push/AWS change. All18requirements preserved. Human verify README opening, immediately after FalkorDB paragraph. Next: human review; STOP.
+
+
+## README-BROWSER-GRAPHS — 19 Oct 2026
+
+Human-authorized real Browser schema/case pair added to README: conceptual diagram → filtered14label discovered schema → optional full48label/190placement overview → existing road-case graph. Native Browser display filters/fit/zoom/pan only; actual screenshot visually inspected, no domain writes/provider calls. README.md, docs/images/README.md, focused screenshot and evidence updated; full overview newly referenced.46local links/images, both spec validators and whitespace PASS. Road image/query unchanged; GitHub rendering not separately run. No push/AWS change. All18requirements preserved. Exact files/limits/verification: docs/evidence/README-BROWSER-GRAPHS/RESULTS.md. Next human review, push when requested; STOP.
+
+
+## README-REMOVE-SETUP-DOCS — 19 Oct 2026
+
+Human requested removing local setup and technical documentation sections. Removed both sections and their top navigation anchors from README.md; retained Built with footer. Underlying technical/runbook files and preserved README reference unchanged. Exact section/anchor absence and scoped whitespace checks PASS. Prose-only; no app/runtime tests needed. No GitHub push/AWS change. Next human review; STOP.
+
+
+## README-ISSUE-GRAPH-ROLE — 19 Oct 2026
+
+Added human-requested FalkorDB role to What can Civicly investigate table as a per-category column: drainage traversal/history, sourced road/utility and task dependencies, waste route/schedule/pickup evidence. README.md only content change; preserves qualified questions and evidence distinction. Table shape/three categories and scoped whitespace PASS; no app tests for prose. No push/AWS change. Next human review; STOP.
+
+
+## README-DEMONSTRATED-HEADING — 19 Oct 2026
+
+Human-requested removal of today from README.md heading: What is demonstrated. Updated matching internal anchor. Heading/anchor check and scoped whitespace PASS; copy-only, no app tests. No push/AWS change. Next human review; STOP.
+
+
+## README-COMPACT-EVIDENCE — 19 Oct 2026
+
+Human approved replacing the README engineering verification table with a compact Explore the implementation line linking completed road Report, FalkorDB-backed lifecycle evidence and verification details. Removed the adjacent table-specific test-batch explanation; substantive demonstration boundaries remain. Link existence and scoped whitespace PASS; prose-only/no app tests. Underlying proof files preserved; no GitHub push/AWS change. Next human review; STOP.
+
+
+## README-FOOTER-LINKS — 19 Oct 2026
+
+Removed human-specified final Requirements / Current task board / Known blockers / Road-case proof link row from README.md. Underlying files and other requested evidence links preserved. Exact-row absence and scoped whitespace PASS; prose-only/no app tests. No push/AWS change. Next human review; STOP.
+
+
+## README-TRACKS — 19 Oct 2026
+
+Added human-requested concise three-track explanation to README.md before demonstrated results. Uses project track definitions from docs/backend/00_requirements.md: graph/MCP investigation; coordinated roles/Saver/retained memory; municipal operations/GraphRAG knowledge. Descriptive labels, no claim of official track titles or completed acceptance. Existing limits retained. Three-track presence/placement and scoped whitespace PASS; no runtime/tests for prose-only change. No push/AWS change. Next human review; STOP.
+
+
+## README-TRACK-NAMES — 19 Oct 2026
+
+Corrected README track headings to exact human-provided names: Agents That Act on Connected Data; Agent Memory and Coordination; Company Brain. Company Brain explanation explicitly describes municipal operations application. Exact names and scoped whitespace checks PASS; no runtime change, push or AWS deployment. Next human review; STOP.
+
+
+## README-FULL-SCHEMA — 19 Oct 2026
+
+Embedded existing full schema overview immediately below README Graph data model heading, per human request. Caption identifies discovered48labels/190connection patterns including internal records; existing conceptual/focused/case views retained. Image existence/placement and scoped whitespace PASS; no runtime/test/push/AWS change. Next human review; STOP.
+
+
+## GITHUB-FULL-UPDATE-20261019 — 19 Oct 2026
+
+Human explicitly authorized publishing whole pending project to existing public krvikash05/Civicly main. Included source/frontend/deployment-demo helpers/docs/screenshots/evidence; excluded ignored runtime/secrets/dependencies/builds.136frontend tests/build/API/contracts/types/both spec validators/script syntax/whitespace PASS;391pending files scanned with no credential pattern/suspicious DB/key findings. No full backend/model run. Evidence: docs/evidence/GITHUB-FULL-UPDATE-20261019/RESULTS.md. Next remote commit verification and human review; STOP.

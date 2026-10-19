@@ -12,19 +12,19 @@ export class ApiError extends Error {
 }
 export function errorMessage(code: string): string {
   const messages: Record<string,string> = {
-    DEMO_UNAVAILABLE:'The demo connection is not available yet. Please ask the presenter to configure it.',
+    DEMO_UNAVAILABLE:'The demo could not connect to the data service. Ask the presenter to check the backend and demo account.',
     EXTERNAL_UNAVAILABLE:'The backend connection is unavailable. Please ask the presenter to check it.',
     GRAPH_UNAVAILABLE:'The graph service is unavailable. Please ask the presenter to check it.',
     UNAUTHORIZED:'Your demo session has ended. Reconnect to continue.',
     PERMISSION_DENIED:'This demo identity cannot perform that action.',
-    VALIDATION_ERROR:'The request does not match the current API contract.',
-    CLIENT_VALIDATION:'The request does not match the current API contract.',
+    VALIDATION_ERROR:'Some request details are missing or unsupported. Review them before continuing.',
+    CLIENT_VALIDATION:'Some request details are missing or unsupported. Review them before continuing.',
     CONTRACT_MISMATCH:'The response does not match the reviewed API contract. Please ask the presenter to check compatibility.',
     SELECTION_MISMATCH:'The selected incident or investigation does not match the active filter or case.',
     RECOVERY_REQUIRED:'This action requires operator reconciliation. Do not submit it again with a new request key.',
     WRITE_OUTCOME_UNKNOWN:'The action may have reached the server. Preserve the original request key and ask the operator to check it.',
     CONFLICT:'The resource or request has changed. Review the current version before continuing.',
-    DEPENDENCY_BLOCKED:'Required evidence, approval or a dependency is not yet satisfied.',
+    DEPENDENCY_BLOCKED:'A required source, service or workflow check is unavailable. Review the recorded details before continuing.',
     READ_CAPACITY:'The result exceeds the supported bounds. Narrow the request.',
     NOT_FOUND:'The requested resource is unavailable.',
     NETWORK_ERROR:'The connection was interrupted. Reconnect when the service is available.',

@@ -1,0 +1,13 @@
+Traceback (most recent call last):
+  File "/Users/vikashkumar/Desktop/Civicly/scripts/prepare_waste_completion.py", line 63, in <module>
+    try:j.prepare()
+        ^^^^^^^^^^^
+  File "/Users/vikashkumar/Desktop/Civicly/scripts/prepare_waste_completion.py", line 43, in prepare
+    self.call('POST','/hypotheses/'+h['id']+'/assessments',{'expected_hash':h['expected_hash'],'evidence_ids':[REPORT],'as_of':utc_now()},key='assess-'+h['cause_code'].lower())
+  File "/Users/vikashkumar/Desktop/Civicly/scripts/prepare_waste_completion.py", line 30, in call
+    result=super().call(method,path,body,who,'WASTE-COMPLETION-'+key if key else None,review)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/vikashkumar/Desktop/Civicly/scripts/exact_road_lifecycle.py", line 33, in call
+    if r.status_code!=200:raise RuntimeError(json.dumps({'path':path,'http':r.status_code,'response':out}))
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: {"path": "/hypotheses/HYP-B09-0e9feb1a60bc468c08957335ce143524/assessments", "http": 503, "response": {"error": {"code": "GRAPH_UNAVAILABLE", "message": "Graph dependency is unavailable", "details": {"blocker_code": null, "correlation_id": null, "commitment": null, "entity_id": null, "investigation_id": null, "plan_id": null, "request_id": null}, "retryable": false}, "request_id": "79703207c3b64023a0e03fd2206c4569"}}

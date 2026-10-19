@@ -7,9 +7,12 @@ import {
   translateRole,
   translateStatus,
   translateActionType,
+  translateToolAction,
+  cleanTextIdentifiers,
   formatEntityDisplayName,
 } from '../lib/read/display';
 import { TechnicalDetails, CopyableIdentifier } from './technical-details';
+import {recordedGraphSteps} from '../lib/read/decision-paths';
 
 interface DecisionTracePanelProps {
   tracePage: AgentTracePage | null;
@@ -33,24 +36,22 @@ export function DecisionTracePanel({
           No agent trace events have been recorded for this investigation yet.
         </p>
         <p className="muted text-sm" style={{ marginTop: '0.4rem' }}>
-          When the autonomous investigator executes tool calls, retrieves graph evidence, or records decisions, the 3-part traceability record will display here.
+          When the autonomous investigator executes tool calls, retrieves graph evidence, or records decisions, the question, evidence and decision will display here.
         </p>
       </div>
     );
   }
 
   const items: DecisionTraceItem[] = extractDecisionTraces(tracePage, subgraph);
+  const linkedSteps=subgraph?recordedGraphSteps(tracePage,subgraph):[];
 
   return (
     <div className="decision-trace-panel">
       {/* Educational responsibility callout */}
       <div className="responsibility-banner">
-        <h4>FalkorDB Graph Traceability & Agent Reasoning</h4>
+        <h4>How evidence connects to a decision</h4>
         <p>
-          <strong>Division of Responsibility:</strong> FalkorDB stores and retrieves verified
-          connected knowledge. The autonomous agent reasons over returned evidence to formulate
-          hypotheses and actions. Backend domain services enforce strict authorization, approval
-          gates, and state machine transitions.
+          <strong>Who does what:</strong> FalkorDB retrieves connected records, including evidence and its review status. The agent considers those records when choosing a next step. Backend services check permissions, evidence and approval before recording changes.
         </p>
       </div>
 
@@ -58,7 +59,8 @@ export function DecisionTracePanel({
         {items.map((item, idx) => {
           const roleTitle = translateRole(item.agentRole);
           const readableStatus = translateStatus(item.status);
-          const toolAction = item.toolName ? translateActionType(item.toolName) : null;
+          const toolAction = item.toolName ? translateToolAction(item.toolName) : null;
+          const linked=linkedSteps.find(s=>s.lookup.event_id===item.eventId);
 
           const techItems = [
             { label: 'Event ID', value: <code>{item.eventId}</code>, rawString: item.eventId },
@@ -71,6 +73,7 @@ export function DecisionTracePanel({
             ...(item.toolName
               ? [{ label: 'Raw Tool Identifier', value: <code>{item.toolName}</code>, rawString: item.toolName }]
               : []),
+            { label: 'Original path explanation', value: <span>{item.influenceExplanation}</span> },
             { label: 'Agent Role Code', value: <code>{item.agentRole}</code>, rawString: item.agentRole },
           ];
 
@@ -108,7 +111,7 @@ export function DecisionTracePanel({
                 <div className="trace-column col-question">
                   <div className="column-label">1. Question Asked</div>
                   <div className="column-content">
-                    <p className="question-text">{item.questionAsked}</p>
+                    <p className="question-text">{cleanTextIdentifiers(item.questionAsked)}</p>
                     {toolAction && (
                       <div className="tool-tag">
                         Action: <strong>{toolAction}</strong>
@@ -165,10 +168,10 @@ export function DecisionTracePanel({
                   <div className="column-label">3. Recorded Decision</div>
                   <div className="column-content">
                     <div className="decision-action">
-                      <strong>Action taken:</strong> {item.recordedDecision.action}
+                      <strong>Action taken:</strong> {item.toolName ? translateToolAction(item.toolName) : cleanTextIdentifiers(item.recordedDecision.action)}
                     </div>
                     <p className="rationale-text">
-                      <strong>Rationale:</strong> {item.recordedDecision.rationaleSummary}
+                      <strong>Rationale:</strong> {cleanTextIdentifiers(item.recordedDecision.rationaleSummary)}
                     </p>
                   </div>
                 </div>
@@ -176,6 +179,10 @@ export function DecisionTracePanel({
 
               {/* Step Footer with Influence Attribution */}
               <footer className="trace-card-footer">
+                {linked&&onHighlightDecisionPath&&<button type="button" className="button secondary" aria-pressed={selectedDecisionPathId===linked.path.id} onClick={()=>{
+                  onHighlightDecisionPath(linked.path.id);
+                  document.getElementById('graph-evidence')?.scrollIntoView({block:'start',behavior:'smooth'});
+                }}>View this path in graph</button>}
                 <div className="influence-block">
                   <span
                     className={`influence-badge ${
@@ -187,12 +194,12 @@ export function DecisionTracePanel({
                     }`}
                   >
                     {item.influenceCategory === 'MODEL_SELECTED_PATH'
-                      ? 'Decision bound to graph path'
+                      ? 'Decision references a graph path'
                       : item.influenceCategory === 'CONTEXTUAL_GRAPH_QUERY'
                       ? 'Contextual graph background'
-                      : 'No causal trace established'}
+                      : 'No linked decision path'}
                   </span>
-                  <span className="influence-text">{item.influenceExplanation}</span>
+                  <span className="influence-text">{item.influenceCategory === 'MODEL_SELECTED_PATH' ? 'The saved trace links this step to specific graph paths. Open the graph to inspect them.' : item.influenceExplanation}</span>
                 </div>
 
                 {/* Technical Details for Step */}

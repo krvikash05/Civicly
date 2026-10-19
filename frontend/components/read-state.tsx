@@ -16,8 +16,8 @@ export function ReadMessage({ state, resourceName = 'resource', retry }: ReadMes
   if (state.status === 'loading') {
     return (
       <div className="read-message read-loading" role="status">
-        <span className="read-spinner" aria-hidden="true">⏳</span>
-        <p>Loading {resourceName} details…</p>
+        <span className="read-loading-dot" aria-hidden="true" />
+        <p>{state.message.startsWith('Connecting')?'Connecting to the demo workspace…':`Loading ${resourceName}…`}</p>
       </div>
     );
   }
@@ -30,23 +30,25 @@ export function ReadMessage({ state, resourceName = 'resource', retry }: ReadMes
     let isPrerequisite = false;
     let isAccessDenied = false;
 
-    if (rawMsg.includes('401') || rawMsg.includes('UNAUTHORIZED') || rawMsg.includes('Authentication')) {
-      categoryTitle = 'Authentication required';
-      userFriendlyMsg = 'Your session has expired or authentication is not established. Reconnect your session to proceed.';
-    } else if (rawMsg.includes('403') || rawMsg.includes('FORBIDDEN') || rawMsg.includes('Permission')) {
-      categoryTitle = 'Access is denied';
-      isAccessDenied = true;
-      userFriendlyMsg = 'Your active operator role does not have authorization to view or modify this resource.';
-    } else if (rawMsg.includes('409') || rawMsg.includes('DEPENDENCY_BLOCKED') || rawMsg.includes('PREREQUISITE')) {
-      categoryTitle = 'A prerequisite is unmet';
-      isPrerequisite = true;
-      userFriendlyMsg = 'This record depends on prior workflow stages completing first. Complete previous investigations or approvals before this can be viewed.';
-    } else if (rawMsg.includes('404') || rawMsg.includes('NOT_FOUND')) {
-      categoryTitle = 'No records exist';
-      userFriendlyMsg = `The requested ${resourceName} was not found in the civic ledger.`;
-    } else if (rawMsg.includes('UNAVAILABLE') || rawMsg.includes('503')) {
-      categoryTitle = 'Service temporarily unavailable';
-      userFriendlyMsg = 'The civic data service is currently busy or reindexing. You may try refreshing the query.';
+    const code=state.errorCode;
+    if(code==='UNAUTHORIZED'){
+      categoryTitle='Reconnect your demo session';
+    }else if(code==='PERMISSION_DENIED'){
+      categoryTitle='This role cannot access this record';isAccessDenied=true;
+    }else if(code==='RECOVERY_REQUIRED'||code==='WRITE_OUTCOME_UNKNOWN'){
+      categoryTitle='Operator review required';isPrerequisite=true;
+      userFriendlyMsg='The previous operation may have been saved. Keep its original request key and ask the presenter to check the result; do not submit it as a new action.';
+    }else if(code==='CONFLICT'){
+      categoryTitle='The record changed';
+      userFriendlyMsg='Reload the current record before continuing. A conflict does not mean that an earlier action failed to save.';
+    }else if(code==='DEPENDENCY_BLOCKED'){
+      categoryTitle='A required source or workflow check is unavailable';
+    }else if(code==='NOT_FOUND'){
+      categoryTitle='Requested record not returned';
+      userFriendlyMsg=`This ${resourceName} could not be retrieved. The loaded result does not prove that no related records exist.`;
+    }else if(['EXTERNAL_UNAVAILABLE','GRAPH_UNAVAILABLE','NETWORK_ERROR'].includes(code??'')){
+      categoryTitle='Data connection interrupted';
+      userFriendlyMsg='The data service could not be reached. Ask the presenter to check it, then reload these records.';
     }
 
     const techItems = [
@@ -84,5 +86,5 @@ export function ReadMessage({ state, resourceName = 'resource', retry }: ReadMes
     );
   }
 
-  return null;
+  return <p className="muted text-sm" role="status">{state.message || 'These records are unavailable. Reconnect the demo session to continue.'}</p>;
 }

@@ -1,0 +1,422 @@
+{
+  "mode": "HUMAN_APPROVED_OPERATOR_ASSISTED_SYNTHETIC_WORK_NO_NEW_MODEL_RUN",
+  "binding": {
+    "plan_id": "PLAN-B12-da6d426cc7a42982a3dac6c8a76af2a6",
+    "plan_version": 1,
+    "plan_hash": "1b04b300f41379529bd0e7b6667bf28c1fbaaec5f1bbe38f4cfb5803a3a74286",
+    "assignments": [
+      {
+        "task_id": "TASK-B12-d325851f9f86a18658e97f1942c15171",
+        "action_type": "DRAIN_BLOCKAGE_CLEARANCE",
+        "target_ids": [
+          "DRAIN-101"
+        ],
+        "department_id": "DEPT-DRAIN",
+        "assignee_id": "OP-DRAIN-LEAD"
+      }
+    ]
+  },
+  "approval": {
+    "id": "APPROVAL-B13-8be3619083045ba6f1d947cbf2a69ca3",
+    "expected_hash": "5e11afc130da16deb96b6efea6069cda493cea081d5b5996e48f8bd4d40b9a2c",
+    "simulated": true,
+    "plan_id": "PLAN-B12-da6d426cc7a42982a3dac6c8a76af2a6",
+    "plan_version": 1,
+    "plan_hash": "1b04b300f41379529bd0e7b6667bf28c1fbaaec5f1bbe38f4cfb5803a3a74286",
+    "assignments": [
+      {
+        "task_id": "TASK-B12-d325851f9f86a18658e97f1942c15171",
+        "action_type": "DRAIN_BLOCKAGE_CLEARANCE",
+        "target_ids": [
+          "DRAIN-101"
+        ],
+        "department_id": "DEPT-DRAIN",
+        "assignee_id": "OP-DRAIN-LEAD"
+      }
+    ],
+    "status": "APPROVED",
+    "approved_by": "OP-APPROVER",
+    "requested_at": "2026-10-18T16:01:28.997Z",
+    "scope_hash": "d82c093af1f0e6a02ecd7d281b2a4c1aa10b38c3b465bfdfa833d141fb568492"
+  },
+  "order_id": "WO-B13-2b12fab042ac1ae7f77f4fe38a1d1c1d",
+  "completion": {
+    "inspection_id": "INS-B09-aa86a0e95b49b5926a9013567ad1920a",
+    "evidence_id": "EV-REPORT-B09-36f2a4b69c5ed5c19dece6f2ae8f35cb",
+    "observations": [
+      {
+        "asset_id": "DRAIN-101",
+        "code": "ACTION_COMPLETED",
+        "statement": "Explicit synthetic demonstration observation ACTION_COMPLETED; operator-assisted simulation, not real field execution",
+        "method": "DIRECT_SYNTHETIC_FIELD_TEST",
+        "observed_at": "2026-10-19T07:54:25.387Z",
+        "result": "OBSERVED",
+        "value": null,
+        "unit": null
+      }
+    ]
+  },
+  "followup": {
+    "inspection_id": "INS-B09-e43e80395a5e15035d7d24343cb326a9",
+    "evidence_id": "EV-REPORT-B09-7952466c9a6fbb6507112e8f0454bde7",
+    "observations": [
+      {
+        "asset_id": "DRAIN-101",
+        "code": "COMPARABLE_FOLLOWUP_RAINFALL",
+        "statement": "Explicit synthetic demonstration observation COMPARABLE_FOLLOWUP_RAINFALL; operator-assisted simulation, not real field execution",
+        "method": "DIRECT_SYNTHETIC_FIELD_TEST",
+        "observed_at": "2026-10-19T07:54:26.528Z",
+        "result": "OBSERVED",
+        "value": null,
+        "unit": null
+      },
+      {
+        "asset_id": "DRAIN-101",
+        "code": "FOLLOWUP_WATERLOGGING",
+        "statement": "Explicit synthetic demonstration observation FOLLOWUP_WATERLOGGING; operator-assisted simulation, not real field execution",
+        "method": "DIRECT_SYNTHETIC_FIELD_TEST",
+        "observed_at": "2026-10-19T07:54:26.528Z",
+        "result": "OBSERVED",
+        "value": 0.0,
+        "unit": "boolean"
+      }
+    ]
+  },
+  "outcome": {
+    "id": "OUTCOME-B13-53dec6132c7a6655f358c4b8d6b79b22",
+    "work_order_id": "WO-B13-2b12fab042ac1ae7f77f4fe38a1d1c1d",
+    "assessment_status": "RESOLUTION_VERIFIED",
+    "result": "MITIGATION_VERIFIED",
+    "evidence_ids": [
+      "EV-REPORT-B09-7952466c9a6fbb6507112e8f0454bde7"
+    ],
+    "evaluated_at": "2026-10-19T07:54:26.762Z",
+    "case_closed": true,
+    "policy_version": "B14-2",
+    "simulated": true
+  },
+  "calls": [
+    {
+      "method": "GET",
+      "path": "/plans/PLAN-B12-da6d426cc7a42982a3dac6c8a76af2a6",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/approvals?limit=50&status=PENDING",
+      "operator": "OP-APPROVER",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/approvals/APPROVAL-B13-8be3619083045ba6f1d947cbf2a69ca3",
+      "operator": "OP-APPROVER",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/plans/PLAN-B12-da6d426cc7a42982a3dac6c8a76af2a6",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/work-orders?limit=50",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "POST",
+      "path": "/approvals/APPROVAL-B13-8be3619083045ba6f1d947cbf2a69ca3/decision",
+      "operator": "OP-APPROVER",
+      "key": "LIFECYCLE-COMPLETION-water-approve-v1",
+      "http": 200
+    },
+    {
+      "method": "POST",
+      "path": "/work-orders",
+      "operator": "OP-APPROVER",
+      "key": "LIFECYCLE-COMPLETION-water-order-v1",
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/work-orders/WO-B13-2b12fab042ac1ae7f77f4fe38a1d1c1d",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "POST",
+      "path": "/work-orders/WO-B13-2b12fab042ac1ae7f77f4fe38a1d1c1d/status",
+      "operator": "OP-DRAIN-LEAD",
+      "key": "LIFECYCLE-COMPLETION-water-assign",
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/work-orders/WO-B13-2b12fab042ac1ae7f77f4fe38a1d1c1d",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "POST",
+      "path": "/work-orders/WO-B13-2b12fab042ac1ae7f77f4fe38a1d1c1d/progress",
+      "operator": "OP-DRAIN-LEAD",
+      "key": "LIFECYCLE-COMPLETION-water-start",
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/work-orders/WO-B13-2b12fab042ac1ae7f77f4fe38a1d1c1d",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "POST",
+      "path": "/work-orders/WO-B13-2b12fab042ac1ae7f77f4fe38a1d1c1d/inspections",
+      "operator": "OP-DRAIN-LEAD",
+      "key": "LIFECYCLE-COMPLETION-water-COMPLETION-request",
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/inspections/INS-B09-aa86a0e95b49b5926a9013567ad1920a",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/work-orders/WO-B13-2b12fab042ac1ae7f77f4fe38a1d1c1d",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "POST",
+      "path": "/work-orders/WO-B13-2b12fab042ac1ae7f77f4fe38a1d1c1d/inspections",
+      "operator": "OP-DRAIN-LEAD",
+      "key": "LIFECYCLE-COMPLETION-water-COMPLETION-REQUESTED",
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/inspections/INS-B09-aa86a0e95b49b5926a9013567ad1920a",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/work-orders/WO-B13-2b12fab042ac1ae7f77f4fe38a1d1c1d",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "POST",
+      "path": "/work-orders/WO-B13-2b12fab042ac1ae7f77f4fe38a1d1c1d/inspections",
+      "operator": "OP-DRAIN-LEAD",
+      "key": "LIFECYCLE-COMPLETION-water-COMPLETION-SCHEDULED",
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/inspections/INS-B09-aa86a0e95b49b5926a9013567ad1920a",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/work-orders/WO-B13-2b12fab042ac1ae7f77f4fe38a1d1c1d",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "POST",
+      "path": "/work-orders/WO-B13-2b12fab042ac1ae7f77f4fe38a1d1c1d/inspections",
+      "operator": "OP-DRAIN-LEAD",
+      "key": "LIFECYCLE-COMPLETION-water-COMPLETION-IN_PROGRESS",
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/inspections/INS-B09-aa86a0e95b49b5926a9013567ad1920a",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/work-orders/WO-B13-2b12fab042ac1ae7f77f4fe38a1d1c1d",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "POST",
+      "path": "/work-orders/WO-B13-2b12fab042ac1ae7f77f4fe38a1d1c1d/inspections",
+      "operator": "OP-DRAIN-LEAD",
+      "key": "LIFECYCLE-COMPLETION-water-COMPLETION-report",
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/work-orders/WO-B13-2b12fab042ac1ae7f77f4fe38a1d1c1d",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "POST",
+      "path": "/work-orders/WO-B13-2b12fab042ac1ae7f77f4fe38a1d1c1d/progress",
+      "operator": "OP-DRAIN-LEAD",
+      "key": "LIFECYCLE-COMPLETION-water-complete",
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/plans/PLAN-B12-da6d426cc7a42982a3dac6c8a76af2a6",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/investigations/INV-B09-8b006fb97aa2b908fc69addcf7ecd037",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/work-orders/WO-B13-2b12fab042ac1ae7f77f4fe38a1d1c1d",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/work-orders/WO-B13-2b12fab042ac1ae7f77f4fe38a1d1c1d",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "POST",
+      "path": "/work-orders/WO-B13-2b12fab042ac1ae7f77f4fe38a1d1c1d/inspections",
+      "operator": "OP-DRAIN-LEAD",
+      "key": "LIFECYCLE-COMPLETION-water-FOLLOWUP-request",
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/inspections/INS-B09-e43e80395a5e15035d7d24343cb326a9",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/work-orders/WO-B13-2b12fab042ac1ae7f77f4fe38a1d1c1d",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "POST",
+      "path": "/work-orders/WO-B13-2b12fab042ac1ae7f77f4fe38a1d1c1d/inspections",
+      "operator": "OP-DRAIN-LEAD",
+      "key": "LIFECYCLE-COMPLETION-water-FOLLOWUP-REQUESTED",
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/inspections/INS-B09-e43e80395a5e15035d7d24343cb326a9",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/work-orders/WO-B13-2b12fab042ac1ae7f77f4fe38a1d1c1d",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "POST",
+      "path": "/work-orders/WO-B13-2b12fab042ac1ae7f77f4fe38a1d1c1d/inspections",
+      "operator": "OP-DRAIN-LEAD",
+      "key": "LIFECYCLE-COMPLETION-water-FOLLOWUP-SCHEDULED",
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/inspections/INS-B09-e43e80395a5e15035d7d24343cb326a9",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/work-orders/WO-B13-2b12fab042ac1ae7f77f4fe38a1d1c1d",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "POST",
+      "path": "/work-orders/WO-B13-2b12fab042ac1ae7f77f4fe38a1d1c1d/inspections",
+      "operator": "OP-DRAIN-LEAD",
+      "key": "LIFECYCLE-COMPLETION-water-FOLLOWUP-IN_PROGRESS",
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/inspections/INS-B09-e43e80395a5e15035d7d24343cb326a9",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/work-orders/WO-B13-2b12fab042ac1ae7f77f4fe38a1d1c1d",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "POST",
+      "path": "/work-orders/WO-B13-2b12fab042ac1ae7f77f4fe38a1d1c1d/inspections",
+      "operator": "OP-DRAIN-LEAD",
+      "key": "LIFECYCLE-COMPLETION-water-FOLLOWUP-report",
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/work-orders/WO-B13-2b12fab042ac1ae7f77f4fe38a1d1c1d",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "POST",
+      "path": "/work-orders/WO-B13-2b12fab042ac1ae7f77f4fe38a1d1c1d/outcomes",
+      "operator": "OP-ANALYST",
+      "key": "LIFECYCLE-COMPLETION-water-evaluate",
+      "http": 200
+    }
+  ]
+}

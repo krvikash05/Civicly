@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import type { PlanDTO, PlanTaskBinding, TaskDraft } from '../lib/generated/models';
+import React, { useState, useRef } from 'react';
+import type { PlanDTO, PlanTaskBinding, TaskDraft, HypothesisDTO } from '../lib/generated/models';
 import {
   computeTaskDag,
   formatShortHash,
@@ -10,6 +10,7 @@ import {
 } from '../lib/read/plans';
 import {
   translateStatus,
+  cleanTextIdentifiers,
   translateActionType,
   translateDepartment,
   translateRole,
@@ -18,16 +19,20 @@ import {
 } from '../lib/read/display';
 import { TechnicalDetails, CopyableIdentifier } from './technical-details';
 import { useDemo } from './demo-connection';
+import {approvalAssignments} from '../lib/read/workflow';
+import {ApiError} from '../lib/api/errors';
 
 interface PlanApprovalPanelProps {
   plan: PlanDTO | null;
   investigationId: string;
+  hypotheses?: HypothesisDTO[];
   onRefetch?: () => void;
 }
 
 export function PlanApprovalPanel({
   plan,
   investigationId,
+  hypotheses = [],
   onRefetch,
 }: PlanApprovalPanelProps) {
   const demo = useDemo();
@@ -35,6 +40,7 @@ export function PlanApprovalPanel({
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
+  const intent = useRef<{scope:string;key:string;uncertain:boolean}|null>(null);
 
   if (!plan) {
     return (
@@ -43,7 +49,7 @@ export function PlanApprovalPanel({
           No remediation plan has been drafted yet for this investigation.
         </p>
         <p className="muted text-sm" style={{ marginTop: '0.5rem', maxWidth: '480px', marginLeft: 'auto', marginRight: 'auto' }}>
-          The autonomous agent drafts a structured remediation plan once root-cause hypotheses are evaluated with sufficient verified graph evidence.
+          A plan can be proposed after the evidence, responsible departments and source procedures have been checked. No plan was returned in the loaded records.
         </p>
         <div style={{ marginTop: '1.25rem' }}>
           <TechnicalDetails
@@ -83,27 +89,11 @@ export function PlanApprovalPanel({
     setSubmitSuccess(null);
 
     try {
-      const assignments = bindings.map((b) => ({
-        task_id: b.task_id || b.local_task_id,
-        action_type: b.action_type,
-        target_ids: b.target_ids,
-        department_id: b.department_id,
-        assignee_id: b.eligible_assignee_ids?.[0] || 'OP-DRAIN-LEAD',
-      }));
-
-      if (assignments.length === 0) {
-        for (const t of tasks) {
-          assignments.push({
-            task_id: t.id,
-            action_type: t.action_type,
-            target_ids: t.target_ids,
-            department_id: t.department_id,
-            assignee_id: 'OP-DRAIN-LEAD',
-          });
-        }
-      }
-
-      const idempotencyKey = crypto.randomUUID();
+      const scope = `${plan.plan_id}:${plan.version}:${plan.content_hash}`;
+      if(intent.current?.uncertain)throw new ApiError('RECOVERY_REQUIRED');
+      const assignments = approvalAssignments(plan);
+      if(intent.current?.scope!==scope)intent.current={scope,key:crypto.randomUUID(),uncertain:false};
+      const idempotencyKey=intent.current!.key;
       await demo.connection.client.request(
         'POST /api/v1/plans/{id}/submit-approval',
         {
@@ -120,6 +110,7 @@ export function PlanApprovalPanel({
       setSubmitSuccess('Plan successfully submitted for municipal supervisory approval.');
       if (onRefetch) onRefetch();
     } catch (err: any) {
+      if(err instanceof ApiError && err.uncertain && intent.current)intent.current.uncertain=true;
       setSubmitError(
         err?.response?.error?.message ||
         err?.message ||
@@ -147,8 +138,8 @@ export function PlanApprovalPanel({
       <div className="plan-overview-card">
         <header className="plan-card-header">
           <div className="plan-title-block">
-            <span className="eyebrow-label">PROPOSED ACTION PLAN</span>
-            <h3 className="plan-main-title">Proposed Action Plan</h3>
+            <span className="eyebrow-label">ACTION PLAN</span>
+            <h3 className="plan-main-title">Action plan and approval</h3>
             <p className="plan-subtitle">
               Version {plan.version} &bull; {translateStatus(plan.status)} &bull; {plan.simulated ? 'Simulated Execution' : 'Operational'}
             </p>
@@ -211,11 +202,12 @@ export function PlanApprovalPanel({
         {plan.draft?.basis && plan.draft.basis.length > 0 && (
           <section className="plan-findings-section">
             <h4 className="section-subheading">
-              Findings addressed ({plan.draft.basis.filter((b) => b.addressed).length} of {plan.draft.basis.length} findings)
+              Explanations covered by this plan ({plan.draft.basis.filter((b) => b.addressed).length} of {plan.draft.basis.length} explanations)
             </h4>
             <div className="findings-list">
               {plan.draft.basis.map((b, idx) => {
-                const cause = translateCauseCode(b.hypothesis_id);
+                const hypothesis=hypotheses.find(h=>h.id===b.hypothesis_id);
+                const cause = hypothesis ? translateCauseCode(hypothesis.cause_code) : {title:'Assessed explanation'};
                 const isAddressed = Boolean(b.addressed);
 
                 return (
@@ -240,7 +232,7 @@ export function PlanApprovalPanel({
                         {isAddressed ? 'Addressed in plan' : 'Not addressed in plan'}
                       </span>
                     </div>
-                    {b.reason && <p className="finding-reason">{b.reason}</p>}
+                    {b.reason && <><p className="finding-reason">{cleanTextIdentifiers(b.reason)}</p><TechnicalDetails title="Original planning rationale" items={[{label:'Original rationale',value:<span>{b.reason}</span>},{label:'Hypothesis ID',value:<code>{b.hypothesis_id}</code>},{label:'Assessment ID',value:<code>{b.assessment_id}</code>}]}/></>}
                   </div>
                 );
               })}
@@ -254,17 +246,17 @@ export function PlanApprovalPanel({
             <div>
               <span className="governance-label">Approval & Execution Gates</span>
               <p className="governance-text">
-                {plan.status === 'APPROVED' ? (
+                {plan.status === 'COMPLETED' ? (<strong>Plan approved and planned work completed. Review the separate outcome evidence in Monitoring &amp; memory.</strong>) : plan.status === 'MONITORING' ? (<strong>Plan approved and work completed; independent follow-up is still required.</strong>) : plan.status === 'IN_EXECUTION' ? (<strong>Approved work is in progress. Check the task sequence and unmet conditions.</strong>) : plan.status === 'APPROVED' ? (
                   <strong className="text-success">
-                    ✓ Approved by municipal supervisor. Work orders authorized for deployment.
+                    Plan approved. Each work order still requires its own authorization and satisfied prerequisites.
                   </strong>
                 ) : plan.status === 'PENDING_APPROVAL' ? (
                   <strong className="text-warning">
-                    ⏳ Awaiting review by Supervising Approval Officer (OP-APPROVER).
+                    ⏳ Awaiting review by an authorized approval officer.
                   </strong>
                 ) : (
                   <span className="text-muted">
-                    Draft prepared by autonomous agent. Requires analyst review and formal submission.
+                    Review the recorded plan state and its evidence before deciding whether a new submission is appropriate.
                   </span>
                 )}
               </p>
@@ -301,10 +293,7 @@ export function PlanApprovalPanel({
           <div className="governance-callout">
             <span className="callout-icon">ℹ</span>
             <p>
-              <strong>Separation of duties:</strong> Municipal investigation analysts formulate and
-              submit remedial proposals with cryptographic SHA-256 digests. To ensure safety, analysts
-              cannot self-approve physical civic interventions. An independent Approver (OP-APPROVER)
-              is required to authorize municipal resources.
+              <strong>Approval protects the exact plan:</strong> An analyst can submit a proposal but cannot approve it. An independent approval officer reviews the version, tasks and assigned operators. Safety conditions and task prerequisites are checked separately before work can proceed.
             </p>
           </div>
         </section>
@@ -322,7 +311,7 @@ export function PlanApprovalPanel({
           <div>
             <h4 className="dag-title">Task Dependencies & Execution Sequence</h4>
             <p className="muted text-sm" style={{ margin: 0 }}>
-              Tasks are topologically organized into sequential execution tiers. Independent tasks execute in parallel.
+              Tasks are grouped by their prerequisites. Later tasks wait for the required earlier work and evidence; this view does not start work automatically.
             </p>
           </div>
           <span className="count-pill">{tasks.length} tasks</span>
@@ -338,7 +327,7 @@ export function PlanApprovalPanel({
           {dag.tiers.map((tierTasks, tierIdx) => (
             <div key={tierIdx} className="dag-tier-group">
               <div className="tier-label-badge">
-                Execution Tier {tierIdx + 1} {tierIdx === 0 ? '(Initial Prerequisite Tasks)' : '(Sequential Follow-up)'}
+                Work sequence {tierIdx + 1} {tierIdx === 0 ? '(start with these tasks)' : '(after the required tasks)'}
               </div>
 
               <div className="tier-cards-grid">
@@ -398,7 +387,7 @@ export function PlanApprovalPanel({
                         {/* Expected Civic Outcome */}
                         {task.expected_outcome && (
                           <p className="task-outcome-text">
-                            <strong>Expected outcome:</strong> {task.expected_outcome}
+                            <strong>Expected outcome:</strong> {cleanTextIdentifiers(task.expected_outcome)}
                           </p>
                         )}
 

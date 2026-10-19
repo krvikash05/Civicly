@@ -1,0 +1,790 @@
+{
+  "mode": "READ_ONLY_BASELINE",
+  "cases": [
+    {
+      "investigation": {
+        "id": "INV-B09-8b006fb97aa2b908fc69addcf7ecd037",
+        "expected_hash": "3f1c4e88020cc9a2cffe877e8c39ba64a5aeb79b15aa9df0a4dd2cf8e1f379bf",
+        "simulated": true,
+        "status": "COMPLETED",
+        "incident_ids": [],
+        "historical_incident_ids": [
+          "INC-B08-deb500b2c98d7efee3c755ea6a317589"
+        ],
+        "problem_cluster_id": "PC-B08-e05a65f1899a2b545765090629fe1a61",
+        "current_agent_role": null,
+        "active_hypothesis_ids": [
+          "HYP-B09-67069586a2c59c991ee97a506c861caf",
+          "HYP-B09-e816856dd2ff1f7f817e573fe26215a6"
+        ],
+        "pending_inspection_ids": [],
+        "current_plan_id": "PLAN-B12-da6d426cc7a42982a3dac6c8a76af2a6",
+        "next_action": "DURABLE_WORKER_OR_HUMAN_REVIEW",
+        "graph_revision": 1056,
+        "runtime_status": "DETERMINISTIC_DEVELOPMENT_ONLY_NO_LIVE_AUTHORIZATION"
+      },
+      "trace": {
+        "pause_reason": "HUMAN_REVIEW",
+        "recovery_required": false,
+        "steps": 20
+      },
+      "hypotheses": [
+        {
+          "id": "HYP-B09-67069586a2c59c991ee97a506c861caf",
+          "expected_hash": "38c4a495d1134fd4c57ee51fe4192e99c1d9211351de3e39bedf821b9e30ab3b",
+          "simulated": true,
+          "statement": "Physical blockage within storm drain segment DRAIN-101 restricts stormwater discharge causing surface waterlogging.",
+          "cause_code": "BLOCKAGE",
+          "status": "SUPPORTED",
+          "current_assessment_id": "ASSESS-B09-3bd930e452fc791c7121d5972a40240b",
+          "assessment_history": [
+            {
+              "id": "ASSESS-B09-706f61925026920bb4a23e4ce524eec1",
+              "previous_assessment_id": null,
+              "assessment": "INCONCLUSIVE",
+              "assessed_at": "2026-10-18T14:54:17.423Z",
+              "supporting_evidence_ids": [],
+              "contradicting_evidence_ids": [],
+              "missing_evidence": [
+                "Missing reviewed confirming observations for INC-B08-deb500b2c98d7efee3c755ea6a317589: FLOW_RESTRICTED,OBSTRUCTION_OBSERVED",
+                "Two independent reviewed inspections/inspectors/source records required for INC-B08-deb500b2c98d7efee3c755ea6a317589",
+                "Reviewed discriminating inspection evidence missing or insufficient; no completed inspection invented"
+              ],
+              "current": false
+            },
+            {
+              "id": "ASSESS-B09-3bd930e452fc791c7121d5972a40240b",
+              "previous_assessment_id": "ASSESS-B09-706f61925026920bb4a23e4ce524eec1",
+              "assessment": "SUPPORTED",
+              "assessed_at": "2026-10-18T14:59:12.666Z",
+              "supporting_evidence_ids": [
+                "EV-REPORT-B09-e391ab25460225848fa1bc7ee58af6f9"
+              ],
+              "contradicting_evidence_ids": [],
+              "missing_evidence": [
+                "No approved discriminating observation for this mechanism: EV-REPORT-B09-e391ab25460225848fa1bc7ee58af6f9",
+                "Two independent reviewed inspections/inspectors/source records required for INC-B08-deb500b2c98d7efee3c755ea6a317589"
+              ],
+              "current": true
+            }
+          ],
+          "supporting_evidence_ids": [
+            "EV-REPORT-B09-e391ab25460225848fa1bc7ee58af6f9"
+          ],
+          "contradicting_evidence_ids": [],
+          "missing_evidence": [
+            "No approved discriminating observation for this mechanism: EV-REPORT-B09-e391ab25460225848fa1bc7ee58af6f9",
+            "Two independent reviewed inspections/inspectors/source records required for INC-B08-deb500b2c98d7efee3c755ea6a317589"
+          ],
+          "suspected_asset_ids": [
+            "DRAIN-101"
+          ]
+        },
+        {
+          "id": "HYP-B09-e816856dd2ff1f7f817e573fe26215a6",
+          "expected_hash": "1179befd340ffde5ca8ed34f5483ecc194bfa784df6c3f795fd92245761d0f9c",
+          "simulated": true,
+          "statement": "Insufficient hydraulic capacity of DRAIN-101 relative to peak inflow causes surface waterlogging.",
+          "cause_code": "CAPACITY_DEFICIT",
+          "status": "INCONCLUSIVE",
+          "current_assessment_id": "ASSESS-B09-67fca704d96d284b17d792dbb05d7900",
+          "assessment_history": [
+            {
+              "id": "ASSESS-B09-67fca704d96d284b17d792dbb05d7900",
+              "previous_assessment_id": null,
+              "assessment": "INCONCLUSIVE",
+              "assessed_at": "2026-10-18T14:54:21.029Z",
+              "supporting_evidence_ids": [],
+              "contradicting_evidence_ids": [],
+              "missing_evidence": [
+                "Missing reviewed confirming observations for INC-B08-deb500b2c98d7efee3c755ea6a317589: CAPACITY_TEST_EXCEEDED,DRAIN_CLEAR",
+                "Two independent reviewed inspections/inspectors/source records required for INC-B08-deb500b2c98d7efee3c755ea6a317589",
+                "Reviewed discriminating inspection evidence missing or insufficient; no completed inspection invented"
+              ],
+              "current": true
+            }
+          ],
+          "supporting_evidence_ids": [],
+          "contradicting_evidence_ids": [],
+          "missing_evidence": [
+            "Missing reviewed confirming observations for INC-B08-deb500b2c98d7efee3c755ea6a317589: CAPACITY_TEST_EXCEEDED,DRAIN_CLEAR",
+            "Two independent reviewed inspections/inspectors/source records required for INC-B08-deb500b2c98d7efee3c755ea6a317589",
+            "Reviewed discriminating inspection evidence missing or insufficient; no completed inspection invented"
+          ],
+          "suspected_asset_ids": [
+            "DRAIN-101"
+          ]
+        }
+      ]
+    },
+    {
+      "investigation": {
+        "id": "INV-B09-917765cbf8fef632bd0459640c64f26f",
+        "expected_hash": "8b0fd6718200becf1b5e0eea0a88e2b664110c23e51ab3f227797cecdf3a7420",
+        "simulated": true,
+        "status": "OPEN",
+        "incident_ids": [
+          "INC-B08-15be20bb22891a2b4177fee41f67c08f"
+        ],
+        "historical_incident_ids": [],
+        "problem_cluster_id": "PC-B08-47923a05dcb1434c75d61d8dd424a0b8",
+        "current_agent_role": null,
+        "active_hypothesis_ids": [],
+        "pending_inspection_ids": [],
+        "current_plan_id": null,
+        "next_action": "DURABLE_WORKER_OR_HUMAN_REVIEW",
+        "graph_revision": 1056,
+        "runtime_status": "DETERMINISTIC_DEVELOPMENT_ONLY_NO_LIVE_AUTHORIZATION"
+      },
+      "trace": {
+        "pause_reason": "DEPENDENCY_UNAVAILABLE",
+        "recovery_required": true,
+        "steps": 4
+      },
+      "hypotheses": []
+    },
+    {
+      "investigation": {
+        "id": "INV-B09-95e00a75e74b708c966db68bc595dca0",
+        "expected_hash": "564c43a36baa4cf7aaa47b7e4b6e7c89fa96a9f07a9831ae0c988989ac948349",
+        "simulated": true,
+        "status": "OPEN",
+        "incident_ids": [
+          "INC-B08-1cca3446575fbdc579f88488fafa601b"
+        ],
+        "historical_incident_ids": [],
+        "problem_cluster_id": "PC-B08-60be41453c109a38f7323c6b89d8368a",
+        "current_agent_role": null,
+        "active_hypothesis_ids": [
+          "HYP-B09-42f06a637ff208727459477562c29c0c",
+          "HYP-B09-0e9feb1a60bc468c08957335ce143524"
+        ],
+        "pending_inspection_ids": [],
+        "current_plan_id": null,
+        "next_action": "DURABLE_WORKER_OR_HUMAN_REVIEW",
+        "graph_revision": 1056,
+        "runtime_status": "DETERMINISTIC_DEVELOPMENT_ONLY_NO_LIVE_AUTHORIZATION"
+      },
+      "trace": {
+        "pause_reason": "TOKEN_BUDGET",
+        "recovery_required": false,
+        "steps": 16
+      },
+      "hypotheses": [
+        {
+          "id": "HYP-B09-0e9feb1a60bc468c08957335ce143524",
+          "expected_hash": "04be4986f1898e52e36c3dc0076a04e520013536e0511e9ac22d885d7810871c",
+          "simulated": true,
+          "statement": "Waste accumulation at WASTE-DEMO-SERVICE-02 is caused by collection point capacity shortfall relative to market day waste generation.",
+          "cause_code": "CAPACITY_SHORTFALL",
+          "status": "INCONCLUSIVE",
+          "current_assessment_id": "ASSESS-B09-59f1b81ba8da8b0efa4c25d9449ece48",
+          "assessment_history": [
+            {
+              "id": "ASSESS-B09-59f1b81ba8da8b0efa4c25d9449ece48",
+              "previous_assessment_id": null,
+              "assessment": "INCONCLUSIVE",
+              "assessed_at": "2026-10-18T15:38:21.080Z",
+              "supporting_evidence_ids": [],
+              "contradicting_evidence_ids": [],
+              "missing_evidence": [
+                "Non-inspection evidence is context only: EV-B08-2825858884520ab1d5bcfd47921c2402",
+                "Missing reviewed confirming observations for INC-B08-1cca3446575fbdc579f88488fafa601b: BIN_CAPACITY_EXCEEDED,EXPECTED_PICKUPS_COMPLETED",
+                "Two independent reviewed inspections/inspectors/source records required for INC-B08-1cca3446575fbdc579f88488fafa601b",
+                "Reviewed discriminating inspection evidence missing or insufficient; no completed inspection invented"
+              ],
+              "current": true
+            }
+          ],
+          "supporting_evidence_ids": [],
+          "contradicting_evidence_ids": [],
+          "missing_evidence": [
+            "Non-inspection evidence is context only: EV-B08-2825858884520ab1d5bcfd47921c2402",
+            "Missing reviewed confirming observations for INC-B08-1cca3446575fbdc579f88488fafa601b: BIN_CAPACITY_EXCEEDED,EXPECTED_PICKUPS_COMPLETED",
+            "Two independent reviewed inspections/inspectors/source records required for INC-B08-1cca3446575fbdc579f88488fafa601b",
+            "Reviewed discriminating inspection evidence missing or insufficient; no completed inspection invented"
+          ],
+          "suspected_asset_ids": [
+            "WASTE-DEMO-SERVICE-02"
+          ]
+        },
+        {
+          "id": "HYP-B09-42f06a637ff208727459477562c29c0c",
+          "expected_hash": "ec3f7163e93890306f4c7ba8f0c1a6e2c2146e0424aecb872b4f4da33f3e6a82",
+          "simulated": true,
+          "statement": "Waste accumulation at WASTE-DEMO-SERVICE-02 is caused by a missed or delayed scheduled pickup.",
+          "cause_code": "MISSED_PICKUP",
+          "status": "INCONCLUSIVE",
+          "current_assessment_id": "ASSESS-B09-57fd7098fd00a253faf3b130431e273e",
+          "assessment_history": [
+            {
+              "id": "ASSESS-B09-57fd7098fd00a253faf3b130431e273e",
+              "previous_assessment_id": null,
+              "assessment": "INCONCLUSIVE",
+              "assessed_at": "2026-10-18T15:38:16.623Z",
+              "supporting_evidence_ids": [],
+              "contradicting_evidence_ids": [],
+              "missing_evidence": [
+                "Non-inspection evidence is context only: EV-B08-2825858884520ab1d5bcfd47921c2402",
+                "Missing reviewed confirming observations for INC-B08-1cca3446575fbdc579f88488fafa601b: PICKUP_MISSED_CONFIRMED,WASTE_PERSISTED_AFTER_SCHEDULE",
+                "Two independent reviewed inspections/inspectors/source records required for INC-B08-1cca3446575fbdc579f88488fafa601b",
+                "Reviewed discriminating inspection evidence missing or insufficient; no completed inspection invented"
+              ],
+              "current": true
+            }
+          ],
+          "supporting_evidence_ids": [],
+          "contradicting_evidence_ids": [],
+          "missing_evidence": [
+            "Non-inspection evidence is context only: EV-B08-2825858884520ab1d5bcfd47921c2402",
+            "Missing reviewed confirming observations for INC-B08-1cca3446575fbdc579f88488fafa601b: PICKUP_MISSED_CONFIRMED,WASTE_PERSISTED_AFTER_SCHEDULE",
+            "Two independent reviewed inspections/inspectors/source records required for INC-B08-1cca3446575fbdc579f88488fafa601b",
+            "Reviewed discriminating inspection evidence missing or insufficient; no completed inspection invented"
+          ],
+          "suspected_asset_ids": [
+            "WASTE-DEMO-SERVICE-02"
+          ]
+        }
+      ]
+    },
+    {
+      "investigation": {
+        "id": "INV-B09-9d231c8718136a90974e19c6c9a77c47",
+        "expected_hash": "f91ec43af294a8f82df799f7efdf158d3e288709c2872fe76ce98f7f94b6aed1",
+        "simulated": true,
+        "status": "OPEN",
+        "incident_ids": [
+          "INC-B08-fe8695bcfe14451423ab395c971c684c"
+        ],
+        "historical_incident_ids": [],
+        "problem_cluster_id": "PC-B08-03e311359fa9a2c374203e4131b82aa0",
+        "current_agent_role": null,
+        "active_hypothesis_ids": [],
+        "pending_inspection_ids": [],
+        "current_plan_id": null,
+        "next_action": "DURABLE_WORKER_OR_HUMAN_REVIEW",
+        "graph_revision": 1056,
+        "runtime_status": "DETERMINISTIC_DEVELOPMENT_ONLY_NO_LIVE_AUTHORIZATION"
+      },
+      "trace": {
+        "pause_reason": "DEPENDENCY_UNAVAILABLE",
+        "recovery_required": true,
+        "steps": 9
+      },
+      "hypotheses": []
+    },
+    {
+      "investigation": {
+        "id": "INV-B09-a2fe3dbdecd03984033026c4d0856295",
+        "expected_hash": "2fc39773b45f8f6cf131e34b9b9709608721e2021afb8f5c534c723f795f1b0e",
+        "simulated": true,
+        "status": "OPEN",
+        "incident_ids": [
+          "INC-B08-45b09d54102af55ba6787b8ba199f8d2"
+        ],
+        "historical_incident_ids": [],
+        "problem_cluster_id": "PC-B08-99089bf66c040924e06ad0504a3782a9",
+        "current_agent_role": null,
+        "active_hypothesis_ids": [],
+        "pending_inspection_ids": [],
+        "current_plan_id": null,
+        "next_action": "DURABLE_WORKER_OR_HUMAN_REVIEW",
+        "graph_revision": 1056,
+        "runtime_status": "DETERMINISTIC_DEVELOPMENT_ONLY_NO_LIVE_AUTHORIZATION"
+      },
+      "trace": {
+        "pause_reason": null,
+        "recovery_required": true,
+        "steps": 7
+      },
+      "hypotheses": []
+    },
+    {
+      "investigation": {
+        "id": "INV-B09-b9d4d66e130ed348c4f6a50e9d66a891",
+        "expected_hash": "853d449441fbee283ab612736eda3a3e4218ab52c60367786836a6beed1be0ed",
+        "simulated": true,
+        "status": "COMPLETED",
+        "incident_ids": [],
+        "historical_incident_ids": [
+          "INC-B08-27a2cb5d89ae9ab9d86f999cf7b50472"
+        ],
+        "problem_cluster_id": "PC-B08-4b88ee3a9bbca9d7acbde27e150f7e55",
+        "current_agent_role": null,
+        "active_hypothesis_ids": [
+          "HYP-B09-a15ee19ac01f02a6b6a3622d8f08df5d",
+          "HYP-B09-141618e9674e96533d1d680ab206832c",
+          "HYP-B09-f72432e37a00fd69fea67e309580dee3"
+        ],
+        "pending_inspection_ids": [],
+        "current_plan_id": "PLAN-B12-11e6b8d220e7923a715f5cc0a371b993",
+        "next_action": "DURABLE_WORKER_OR_HUMAN_REVIEW",
+        "graph_revision": 1056,
+        "runtime_status": "DETERMINISTIC_DEVELOPMENT_ONLY_NO_LIVE_AUTHORIZATION"
+      },
+      "trace": {
+        "pause_reason": "TOKEN_BUDGET",
+        "recovery_required": false,
+        "steps": 22
+      },
+      "hypotheses": [
+        {
+          "id": "HYP-B09-141618e9674e96533d1d680ab206832c",
+          "expected_hash": "858c5b4bfdd30a1164392d08e03889a5416873949e548330b81f5c40f5c63409",
+          "simulated": true,
+          "statement": "Subsurface water pipe leak on PIPE-100 undermining and eroding road subgrade beneath ROAD-100.",
+          "cause_code": "UTILITY_LEAK",
+          "status": "SUPPORTED",
+          "current_assessment_id": "ASSESS-B09-6853d09ba8944a070b9436da50e3be5e",
+          "assessment_history": [
+            {
+              "id": "ASSESS-B09-6853d09ba8944a070b9436da50e3be5e",
+              "previous_assessment_id": null,
+              "assessment": "SUPPORTED",
+              "assessed_at": "2026-10-18T16:40:40.362Z",
+              "supporting_evidence_ids": [
+                "EV-REPORT-B09-80a23b69f5d039c76abebaea7d31c8a6"
+              ],
+              "contradicting_evidence_ids": [],
+              "missing_evidence": [
+                "No approved discriminating observation for this mechanism: EV-REPORT-B09-80a23b69f5d039c76abebaea7d31c8a6",
+                "Two independent reviewed inspections/inspectors/source records required for INC-B08-27a2cb5d89ae9ab9d86f999cf7b50472"
+              ],
+              "current": true
+            }
+          ],
+          "supporting_evidence_ids": [
+            "EV-REPORT-B09-80a23b69f5d039c76abebaea7d31c8a6"
+          ],
+          "contradicting_evidence_ids": [],
+          "missing_evidence": [
+            "No approved discriminating observation for this mechanism: EV-REPORT-B09-80a23b69f5d039c76abebaea7d31c8a6",
+            "Two independent reviewed inspections/inspectors/source records required for INC-B08-27a2cb5d89ae9ab9d86f999cf7b50472"
+          ],
+          "suspected_asset_ids": [
+            "PIPE-100"
+          ]
+        },
+        {
+          "id": "HYP-B09-a15ee19ac01f02a6b6a3622d8f08df5d",
+          "expected_hash": "f651a90dcb1c9c263efe0cf545bbe4815e8a29d328d38d28f3cabd6aae70a27b",
+          "simulated": true,
+          "statement": "Subgrade structural settlement or failure directly beneath ROAD-100 causing pavement surface damage.",
+          "cause_code": "SUBGRADE_FAILURE",
+          "status": "SUPPORTED",
+          "current_assessment_id": "ASSESS-B09-4f39568080e4693b9a4b905669e12e24",
+          "assessment_history": [
+            {
+              "id": "ASSESS-B09-4f39568080e4693b9a4b905669e12e24",
+              "previous_assessment_id": null,
+              "assessment": "SUPPORTED",
+              "assessed_at": "2026-10-18T16:40:07.258Z",
+              "supporting_evidence_ids": [
+                "EV-REPORT-B09-35cf02584d74af6e00b814328db794da"
+              ],
+              "contradicting_evidence_ids": [],
+              "missing_evidence": [
+                "No approved discriminating observation for this mechanism: EV-REPORT-B09-35cf02584d74af6e00b814328db794da",
+                "Two independent reviewed inspections/inspectors/source records required for INC-B08-27a2cb5d89ae9ab9d86f999cf7b50472"
+              ],
+              "current": true
+            }
+          ],
+          "supporting_evidence_ids": [
+            "EV-REPORT-B09-35cf02584d74af6e00b814328db794da"
+          ],
+          "contradicting_evidence_ids": [],
+          "missing_evidence": [
+            "No approved discriminating observation for this mechanism: EV-REPORT-B09-35cf02584d74af6e00b814328db794da",
+            "Two independent reviewed inspections/inspectors/source records required for INC-B08-27a2cb5d89ae9ab9d86f999cf7b50472"
+          ],
+          "suspected_asset_ids": [
+            "ROAD-100"
+          ]
+        },
+        {
+          "id": "HYP-B09-f72432e37a00fd69fea67e309580dee3",
+          "expected_hash": "b9711e01fdddea8362249751ecc6fa8aa661c3724c6d2d29a7c2944fc67c9362",
+          "simulated": true,
+          "statement": "Additional independently unsupported extent of subgrade damage beyond the inspected repair footprint remains uncertain.",
+          "cause_code": "SUBGRADE_FAILURE",
+          "status": "SUPPORTED",
+          "current_assessment_id": "ASSESS-B09-d524946c92197691e8e834c72c1e377e",
+          "assessment_history": [
+            {
+              "id": "ASSESS-B09-d524946c92197691e8e834c72c1e377e",
+              "previous_assessment_id": null,
+              "assessment": "SUPPORTED",
+              "assessed_at": "2026-10-18T16:42:31.169Z",
+              "supporting_evidence_ids": [
+                "EV-REPORT-B09-35cf02584d74af6e00b814328db794da"
+              ],
+              "contradicting_evidence_ids": [],
+              "missing_evidence": [
+                "No approved discriminating observation for this mechanism: EV-REPORT-B09-35cf02584d74af6e00b814328db794da",
+                "Two independent reviewed inspections/inspectors/source records required for INC-B08-27a2cb5d89ae9ab9d86f999cf7b50472"
+              ],
+              "current": true
+            }
+          ],
+          "supporting_evidence_ids": [
+            "EV-REPORT-B09-35cf02584d74af6e00b814328db794da"
+          ],
+          "contradicting_evidence_ids": [],
+          "missing_evidence": [
+            "No approved discriminating observation for this mechanism: EV-REPORT-B09-35cf02584d74af6e00b814328db794da",
+            "Two independent reviewed inspections/inspectors/source records required for INC-B08-27a2cb5d89ae9ab9d86f999cf7b50472"
+          ],
+          "suspected_asset_ids": [
+            "ROAD-100"
+          ]
+        }
+      ]
+    },
+    {
+      "investigation": {
+        "id": "INV-B09-f663f7a1473c4a28a941d147633e08ad",
+        "expected_hash": "7ed7cc92766a01b7862578f191a2ff53095eed8f4039f4eae6d53cbc483f9fd1",
+        "simulated": true,
+        "status": "COMPLETED",
+        "incident_ids": [],
+        "historical_incident_ids": [
+          "INC-B08-8effe2e5da6bd34da2372713ba6e6693"
+        ],
+        "problem_cluster_id": "PC-B08-a634385f0c8444ee30096e881824dafe",
+        "current_agent_role": null,
+        "active_hypothesis_ids": [
+          "HYP-B09-1f6b6b25f7ba5eb2bbbb49ce97513083",
+          "HYP-B09-68a78bf4632cc12f1781f94cb8f56734"
+        ],
+        "pending_inspection_ids": [],
+        "current_plan_id": "PLAN-B12-3a26fd93b1eb567bf101905dc4c43b76",
+        "next_action": "DURABLE_WORKER_OR_HUMAN_REVIEW",
+        "graph_revision": 1056,
+        "runtime_status": "DETERMINISTIC_DEVELOPMENT_ONLY_NO_LIVE_AUTHORIZATION"
+      },
+      "trace": {
+        "pause_reason": "HUMAN_REVIEW",
+        "recovery_required": false,
+        "steps": 19
+      },
+      "hypotheses": [
+        {
+          "id": "HYP-B09-1f6b6b25f7ba5eb2bbbb49ce97513083",
+          "expected_hash": "1678ce016c9c9e6cf49931dc48f74dd7705e05b9eba3218d72ba984888462491",
+          "simulated": true,
+          "statement": "Subgrade failure beneath road segment ROAD-DEMO-SUBGRADE-02 is causing road damage.",
+          "cause_code": "SUBGRADE_FAILURE",
+          "status": "SUPPORTED",
+          "current_assessment_id": "ASSESS-B09-c5a53c9b60ed7108f13247b92c8a0378",
+          "assessment_history": [
+            {
+              "id": "ASSESS-B09-c5a53c9b60ed7108f13247b92c8a0378",
+              "previous_assessment_id": null,
+              "assessment": "SUPPORTED",
+              "assessed_at": "2026-10-18T15:49:30.264Z",
+              "supporting_evidence_ids": [
+                "EV-REPORT-B09-aa69698f124f46d2900d8a93e537005b"
+              ],
+              "contradicting_evidence_ids": [],
+              "missing_evidence": [
+                "Unrelated asset or non-observed result; context only: EV-REPORT-B09-aa69698f124f46d2900d8a93e537005b",
+                "No approved discriminating observation for this mechanism: EV-REPORT-B09-aa69698f124f46d2900d8a93e537005b",
+                "Two independent reviewed inspections/inspectors/source records required for INC-B08-8effe2e5da6bd34da2372713ba6e6693"
+              ],
+              "current": true
+            }
+          ],
+          "supporting_evidence_ids": [
+            "EV-REPORT-B09-aa69698f124f46d2900d8a93e537005b"
+          ],
+          "contradicting_evidence_ids": [],
+          "missing_evidence": [
+            "Unrelated asset or non-observed result; context only: EV-REPORT-B09-aa69698f124f46d2900d8a93e537005b",
+            "No approved discriminating observation for this mechanism: EV-REPORT-B09-aa69698f124f46d2900d8a93e537005b",
+            "Two independent reviewed inspections/inspectors/source records required for INC-B08-8effe2e5da6bd34da2372713ba6e6693"
+          ],
+          "suspected_asset_ids": [
+            "ROAD-DEMO-SUBGRADE-02"
+          ]
+        },
+        {
+          "id": "HYP-B09-68a78bf4632cc12f1781f94cb8f56734",
+          "expected_hash": "422b165dd667a181230a6db363271f4e886347bcb418c38ab802be37980b3b99",
+          "simulated": true,
+          "statement": "Subsurface water pipe leak from PIPE-DEMO-NORMAL-02 leading to undermining and road damage.",
+          "cause_code": "UTILITY_LEAK",
+          "status": "REJECTED",
+          "current_assessment_id": "ASSESS-B09-8a466da9816ed002875384a9d6045af4",
+          "assessment_history": [
+            {
+              "id": "ASSESS-B09-8a466da9816ed002875384a9d6045af4",
+              "previous_assessment_id": null,
+              "assessment": "CONTRADICTED",
+              "assessed_at": "2026-10-18T15:49:39.178Z",
+              "supporting_evidence_ids": [],
+              "contradicting_evidence_ids": [
+                "EV-REPORT-B09-aa69698f124f46d2900d8a93e537005b"
+              ],
+              "missing_evidence": [
+                "Unrelated asset or non-observed result; context only: EV-REPORT-B09-aa69698f124f46d2900d8a93e537005b",
+                "Missing reviewed confirming observations for INC-B08-8effe2e5da6bd34da2372713ba6e6693: INFILTRATION_AT_DAMAGE,LEAK_DETECTED",
+                "Two independent reviewed inspections/inspectors/source records required for INC-B08-8effe2e5da6bd34da2372713ba6e6693",
+                "This domain cause requires explicit verified topology; reported impact alone is insufficient"
+              ],
+              "current": true
+            }
+          ],
+          "supporting_evidence_ids": [],
+          "contradicting_evidence_ids": [
+            "EV-REPORT-B09-aa69698f124f46d2900d8a93e537005b"
+          ],
+          "missing_evidence": [
+            "Unrelated asset or non-observed result; context only: EV-REPORT-B09-aa69698f124f46d2900d8a93e537005b",
+            "Missing reviewed confirming observations for INC-B08-8effe2e5da6bd34da2372713ba6e6693: INFILTRATION_AT_DAMAGE,LEAK_DETECTED",
+            "Two independent reviewed inspections/inspectors/source records required for INC-B08-8effe2e5da6bd34da2372713ba6e6693",
+            "This domain cause requires explicit verified topology; reported impact alone is insufficient"
+          ],
+          "suspected_asset_ids": [
+            "PIPE-DEMO-NORMAL-02"
+          ]
+        }
+      ]
+    }
+  ],
+  "orders": {
+    "items": [
+      {
+        "id": "WO-B13-2a5b483d4d3d69153dd4411e5b22ac31",
+        "expected_hash": "8d0517a3a746662d27868f26173e64f0bef43a4bef2aef6ecaca73e3c1b8a60e",
+        "simulated": true,
+        "status": "COMPLETED",
+        "task_id": "TASK-B12-8a158819baf845e296daf7a45a4e4065",
+        "plan_id": "PLAN-B12-11e6b8d220e7923a715f5cc0a371b993",
+        "department_id": "DEPT-WATER",
+        "assignee_id": "OP-WATER-LEAD",
+        "execution_mode": "SIMULATED",
+        "authorized_by": "OP-APPROVER",
+        "status_event_ids": [
+          "STATUS-B13-c5d153942b50fc62c147a326d2e4e4fc",
+          "STATUS-B13-6c2619df6f3e0ff8ad16aa81a1f4292c",
+          "STATUS-B13-88d3b0474400877182325875fd583ff1"
+        ],
+        "resolution_verified": false,
+        "latest_assessment_status": "MONITORING",
+        "limitations": [
+          "Work completion alone does not establish resolution"
+        ]
+      },
+      {
+        "id": "WO-B13-2b12fab042ac1ae7f77f4fe38a1d1c1d",
+        "expected_hash": "31cc19c38c4ac88870201ea9a73eb219d83b6479355fc3a8f10f3a5c1ecbbcb2",
+        "simulated": true,
+        "status": "COMPLETED",
+        "task_id": "TASK-B12-d325851f9f86a18658e97f1942c15171",
+        "plan_id": "PLAN-B12-da6d426cc7a42982a3dac6c8a76af2a6",
+        "department_id": "DEPT-DRAIN",
+        "assignee_id": "OP-DRAIN-LEAD",
+        "execution_mode": "SIMULATED",
+        "authorized_by": "OP-APPROVER",
+        "status_event_ids": [
+          "STATUS-B13-edde5c832e27b8a90552108817644d21",
+          "STATUS-B13-71185b15abe0515aa0e16aac143f29aa",
+          "STATUS-B13-cc8deb0d80efc9c240ccd87756145f2e"
+        ],
+        "resolution_verified": true,
+        "latest_assessment_status": "RESOLUTION_VERIFIED",
+        "limitations": [
+          "Work completion alone does not establish resolution"
+        ]
+      },
+      {
+        "id": "WO-B13-67bde99f5a69c6e34fded1c2decfb72a",
+        "expected_hash": "ea223bd5692fc0f190cbcfd0b1fb5f1423a7d389a685be67a72250a3d5616552",
+        "simulated": true,
+        "status": "COMPLETED",
+        "task_id": "TASK-B12-8b0208f48c4de3b290ac7a8a36e45040",
+        "plan_id": "PLAN-B12-11e6b8d220e7923a715f5cc0a371b993",
+        "department_id": "DEPT-WATER",
+        "assignee_id": "OP-WATER-LEAD",
+        "execution_mode": "SIMULATED",
+        "authorized_by": "OP-APPROVER",
+        "status_event_ids": [
+          "STATUS-B13-920d1f2285a12d7ccb1ba1eab1b48fdc",
+          "STATUS-B13-8372154f6de9804ae59b5d20c6bcb7a6",
+          "STATUS-B13-69c4468a478e0134e6a6431e83a244a0"
+        ],
+        "resolution_verified": false,
+        "latest_assessment_status": "UTILITY_VERIFIED",
+        "limitations": [
+          "Work completion alone does not establish resolution"
+        ]
+      },
+      {
+        "id": "WO-B13-6dffb8eec9d031f47d093805bb264347",
+        "expected_hash": "f143db18e6a962b7c1e0fbb5c9043ced021c308010112d4b5d6bc7aa424bbda1",
+        "simulated": true,
+        "status": "COMPLETED",
+        "task_id": "TASK-B12-cc5b217112ba51340a062ca9fb55853b",
+        "plan_id": "PLAN-B12-11e6b8d220e7923a715f5cc0a371b993",
+        "department_id": "DEPT-ROAD",
+        "assignee_id": "OP-ROAD-LEAD",
+        "execution_mode": "SIMULATED",
+        "authorized_by": "OP-APPROVER",
+        "status_event_ids": [
+          "STATUS-B13-216477a201ad9da860d558daae6792e4",
+          "STATUS-B13-d7b2c2bd1a598aaee3bfaa0241a74539",
+          "STATUS-B13-999f1e773a01eb95e3bcd69d3e382f58"
+        ],
+        "resolution_verified": true,
+        "latest_assessment_status": "RESOLUTION_VERIFIED",
+        "limitations": [
+          "Work completion alone does not establish resolution"
+        ]
+      },
+      {
+        "id": "WO-B13-9b024fe9f51913bf88e76ded948dc09e",
+        "expected_hash": "b14ddae094255612955d466ddf6c00db9fa8df561612b233cd6f7ed7ba001370",
+        "simulated": true,
+        "status": "COMPLETED",
+        "task_id": "TASK-B12-9fd186bc06707b0f76702608529dd76e",
+        "plan_id": "PLAN-B12-3a26fd93b1eb567bf101905dc4c43b76",
+        "department_id": "DEPT-ROAD",
+        "assignee_id": "OP-ROAD-LEAD",
+        "execution_mode": "SIMULATED",
+        "authorized_by": "OP-APPROVER",
+        "status_event_ids": [
+          "STATUS-B13-9dd89faac6fd5cb0cbccf4be38cabd3e",
+          "STATUS-B13-79b73497fa4aa68d6865f20205566696",
+          "STATUS-B13-c9eb0235ac6515112ed2145f0a861704"
+        ],
+        "resolution_verified": true,
+        "latest_assessment_status": "RESOLUTION_VERIFIED",
+        "limitations": [
+          "Work completion alone does not establish resolution"
+        ]
+      }
+    ],
+    "next_cursor": null,
+    "total_count": 5,
+    "limitations": [
+      "Current projection, not a historical snapshot; intervening writes can change later pages",
+      "Bounded search; no result does not establish global absence"
+    ],
+    "truncated": false
+  },
+  "calls": [
+    {
+      "method": "GET",
+      "path": "/investigations?limit=50",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/investigations/INV-B09-8b006fb97aa2b908fc69addcf7ecd037/trace",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/investigations/INV-B09-8b006fb97aa2b908fc69addcf7ecd037/hypotheses",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/investigations/INV-B09-917765cbf8fef632bd0459640c64f26f/trace",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/investigations/INV-B09-917765cbf8fef632bd0459640c64f26f/hypotheses",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/investigations/INV-B09-95e00a75e74b708c966db68bc595dca0/trace",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/investigations/INV-B09-95e00a75e74b708c966db68bc595dca0/hypotheses",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/investigations/INV-B09-9d231c8718136a90974e19c6c9a77c47/trace",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/investigations/INV-B09-9d231c8718136a90974e19c6c9a77c47/hypotheses",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/investigations/INV-B09-a2fe3dbdecd03984033026c4d0856295/trace",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/investigations/INV-B09-a2fe3dbdecd03984033026c4d0856295/hypotheses",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/investigations/INV-B09-b9d4d66e130ed348c4f6a50e9d66a891/trace",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/investigations/INV-B09-b9d4d66e130ed348c4f6a50e9d66a891/hypotheses",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/investigations/INV-B09-f663f7a1473c4a28a941d147633e08ad/trace",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/investigations/INV-B09-f663f7a1473c4a28a941d147633e08ad/hypotheses",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/work-orders?limit=50",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    }
+  ]
+}

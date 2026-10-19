@@ -17,8 +17,10 @@ import {
 import {
   translateStatus,
   formatShortIdentifier,
+  translateLocation,
 } from '../lib/read/display';
 import { Icon } from './icons';
+import {loadDirectory, type DirectoryCase} from '../lib/read/workflow';
 
 export function CaseDirectory({
   issue,
@@ -39,21 +41,11 @@ export function CaseDirectory({
     !invalidFilter
   );
 
+  const scenarioCases: RegisteredCase[] = catalog.data ? registeredCases(catalog.data, issue) : [];
   const invList = useRead(
-    `live-investigations:${issue ?? ''}`,
-    async (signal) => {
-      try {
-        return (
-          await demo.connection.client.request('GET /api/v1/investigations', {
-            query: { limit: 20 },
-            signal,
-          })
-        ).data;
-      } catch {
-        return null;
-      }
-    },
-    !invalidFilter
+    `live-investigations:${issue ?? ''}:${catalog.status}`,
+    signal => loadDirectory(demo.connection.client, scenarioCases, issue, signal),
+    !invalidFilter && catalog.status !== 'loading'
   );
 
   const page = useRead(
@@ -68,25 +60,7 @@ export function CaseDirectory({
     !invalidFilter
   );
 
-  type DirectoryCase = {
-    investigation_id: string;
-    incident_id: string;
-    issue_type: Issue | string;
-    stage: string;
-    title?: string;
-  };
-
-  const scenarioCases: RegisteredCase[] = catalog.data ? registeredCases(catalog.data, issue) : [];
-  const liveCases: DirectoryCase[] = (invList.data?.items ?? [])
-    .filter((inv) => !scenarioCases.some((sc) => sc.investigation_id === inv.id))
-    .map((inv) => ({
-      investigation_id: inv.id,
-      incident_id: inv.incident_ids[0] ?? '',
-      issue_type: issue ?? 'WATERLOGGING',
-      stage: inv.status,
-      title: `${issueName(issue || 'WATERLOGGING')} Investigation`,
-    }));
-  const cases: DirectoryCase[] = [...scenarioCases, ...liveCases];
+  const cases: DirectoryCase[] = invList.data?.items ?? [];
 
   function pageTo(newCursor?: string) {
     if (typeof window === 'undefined') return;
@@ -100,17 +74,17 @@ export function CaseDirectory({
   function getLinkedInvId(incidentId: string): string | undefined {
     const fromCases = scenarioCases.length ? uniqueCaseForIncident(scenarioCases, incidentId) : undefined;
     if (fromCases) return fromCases.investigation_id;
-    const fromInv = invList.data?.items?.find((i) => i.incident_ids.includes(incidentId));
-    return fromInv?.id;
+    const fromInv = cases.find(i => i.incident_ids.includes(incidentId));
+    return fromInv?.investigation_id;
   }
 
   return (
     <div className="case-directory" id="case-directory">
       <div className="directory-heading">
         <div>
-          <h3>Active demo investigations</h3>
+          <h3>Investigation directory</h3>
           <p className="muted text-sm" style={{ margin: '2px 0 0' }}>
-            Pre-registered municipal defect investigations with graph traceability
+            Open and completed investigations, grouped by their linked incident category
           </p>
         </div>
         <button
@@ -126,19 +100,20 @@ export function CaseDirectory({
         </button>
       </div>
 
-      {catalog.status === 'loading' && invList.status === 'loading' ? (
-        <ReadMessage state={catalog} resourceName="case directory" retry={() => { catalog.refresh(); invList.refresh(); }} />
+      {invList.status !== 'ready' ? (
+        <ReadMessage state={catalog.status==='loading'?catalog:invList} resourceName="investigation directory" retry={() => { catalog.refresh(); invList.refresh(); }} />
       ) : cases.length ? (
         <div className="registered-cases">
           {cases.map((c) => {
             const shortInv = formatShortIdentifier(c.investigation_id);
             const readableIssue = issueName(c.issue_type);
+            const cardTitle = c.glimpse ?? 'Report details not available';
 
             return (
               <Link
                 key={c.investigation_id + ':' + c.incident_id}
                 className="registered-case"
-                href={caseHref({ issue, incident: c.incident_id, investigation: c.investigation_id })}
+                href={caseHref({ issue, incident: c.incident_id, investigation: c.investigation_id,section:'report' })}
               >
                 <div className="case-card-top">
                   <span className="case-icon-title">
@@ -150,21 +125,27 @@ export function CaseDirectory({
 
                 <div className="case-card-body">
                   <p className="case-card-desc">
-                    Investigation Case <span className="id-sub">{shortInv}</span>
+                    {cardTitle}
                   </p>
-                  <span className="stage-pill-mini">{translateStatus(c.stage)}</span>
+                  <p className="case-card-location">{c.location ?? 'Location not recorded'}</p>
+                  <div className="case-card-meta">
+                    <span className="id-sub">Ref: #{shortInv}</span>
+                    <span className="stage-pill-mini">{translateStatus(c.stage)}</span>
+                  </div>
                 </div>
 
                 <span className="category-link">
-                  Open investigation <Icon name="arrow" size={14} />
+                  Open Reports <Icon name="arrow" size={14} />
                 </span>
               </Link>
             );
           })}
         </div>
       ) : (
-        <p className="directory-empty">No active investigations match this filter.</p>
+        <p className="directory-empty">No investigations are available in this loaded directory for the selected category.</p>
       )}
+
+      {invList.data?.next_cursor && <p className="muted">Showing up to 20 investigations. Additional records may exist; use the category filter to narrow the list.</p>}
 
       <div className="directory-heading" style={{ marginTop: '1.5rem' }}>
         <div>
@@ -186,15 +167,15 @@ export function CaseDirectory({
               <li key={incident.id}>
                 <Link href={caseHref({ issue, incident: incident.id, investigation: linkedId })}>
                   <div className="incident-row-header">
-                    <div className="incident-title-group">
+                    <div className="incident-title-group" style={{ display: 'flex', alignItems: 'baseline', gap: '6px', flexWrap: 'wrap' }}>
                       <strong>{readableIssue} Incident</strong>
-                      <span className="id-sub">{shortInc}</span>
+                      <span className="id-sub">(#{shortInc})</span>
                     </div>
                     <span className="status-tag">{translateStatus(incident.status)}</span>
                   </div>
 
                   <span className="incident-meta">
-                    {displayTime(incident.started_at)} &bull; {incident.location_id ?? 'Civic location not specified'}
+                    {displayTime(incident.started_at)} &bull; {translateLocation(incident.location_id)}
                   </span>
 
                   <span className="category-link">
@@ -235,7 +216,7 @@ export function CaseDirectory({
 
       {page.data?.truncated || page.data?.limitations?.length ? (
         <details className="resource-notes">
-          <summary>List bounds and limitations</summary>
+          <summary>About this result</summary>
           {page.data.limitations?.map((text, index) => (
             <p key={index}>{text}</p>
           ))}

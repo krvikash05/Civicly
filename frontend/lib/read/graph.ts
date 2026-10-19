@@ -12,6 +12,7 @@ import type {
 import {
   formatEntityDisplayName,
   translateStatus,
+  translateToolAction,
 } from './display.ts';
 
 export interface CanvasNode {
@@ -256,12 +257,12 @@ export function mapGraphSubgraphToCanvas(
     .map(([kind, count]) => `${count} ${kind.toLowerCase()}${count > 1 ? 's' : ''}`)
     .join(', ');
 
-  let whatThisGraphShows = `This view displays ${nodes.length} connected entities${kindSummary ? ` (${kindSummary})` : ''} and ${links.length} infrastructure relationships in FalkorDB.`;
+  let whatThisGraphShows = `This view displays ${nodes.length} connected entities${kindSummary ? ` (${kindSummary})` : ''} and ${links.length} relationships between case records and assets in FalkorDB.`;
   if (verifiedCount > 0 || candidateCount > 0) {
-    whatThisGraphShows += ` ${verifiedCount} connection${verifiedCount !== 1 ? 's are' : ' is'} verified by municipal engineering records, and ${candidateCount} connection${candidateCount !== 1 ? 's remain' : ' remains'} candidate hypotheses.`;
+    whatThisGraphShows += ` ${verifiedCount} connection${verifiedCount !== 1 ? 's are' : ' is'} marked verified in the returned graph, and ${candidateCount} connection${candidateCount !== 1 ? 's remain' : ' remains'} candidate connections.`;
   }
   if (decisionPathCount > 0) {
-    whatThisGraphShows += ` ${decisionPathCount} relationship${decisionPathCount !== 1 ? 's are' : ' is'} highlighted as active decision paths influencing agent actions.`;
+    whatThisGraphShows += ` ${decisionPathCount} relationship${decisionPathCount !== 1 ? 's are' : ' is'} highlighted because the saved trace references their graph paths.`;
   }
 
   const stats: GraphDisplayStats = {
@@ -339,14 +340,14 @@ export function extractDecisionTraces(
     const rationale = event.rationale_summary || 'No rationale recorded by agent.';
 
     let influenceCategory: 'MODEL_SELECTED_PATH' | 'CONTEXTUAL_GRAPH_QUERY' | 'UNESTABLISHED_INFLUENCE' = 'UNESTABLISHED_INFLUENCE';
-    let influenceExplanation = 'Graph query executed as contextual background; no causal influence trace established for this step.';
+    let influenceExplanation = 'No recorded graph-path link establishes how the graph influenced this step.';
 
     if (event.graph_path_ids && event.graph_path_ids.length > 0) {
       influenceCategory = 'MODEL_SELECTED_PATH';
       influenceExplanation = `Decision explicitly bound to FalkorDB path(s): ${event.graph_path_ids.join(', ')}.`;
-    } else if (event.tool_name && event.tool_name.startsWith('civicly::') && event.status === 'SUCCESS') {
+    } else if (event.tool_name && (event.tool_name.startsWith('civicly::') || event.server_id === 'civicly-domain') && event.status === 'SUCCESS') {
       influenceCategory = 'CONTEXTUAL_GRAPH_QUERY';
-      influenceExplanation = 'Contextual graph read retrieved knowledge from FalkorDB; agent reasoned over returned evidence without recording an isolated decision path.';
+      influenceExplanation = 'This tool returned contextual records; no specific decision path is linked in the saved trace.';
     }
 
     return {

@@ -10,10 +10,14 @@ import { CaseDirectory } from '../components/case-directory';
 import { useEventStream } from '../components/use-event-stream';
 import { LiveStreamPanel } from '../components/live-stream-panel';
 import { ScenarioJourneyGuide } from '../components/scenario-journey-guide';
+import {MetricRecords} from '../components/metric-records';
+import type {MetricKind} from '../lib/read/dashboard';
+import {FeaturedInvestigation} from '../components/featured-investigation';
 
 export default function Overview() {
   const demo = useDemo();
   const [isJourneysOpen, setIsJourneysOpen] = useState(false);
+  const [selectedMetric,setSelectedMetric]=useState<MetricKind|null>(null);
   const summary = useRead('dashboard-summary', async signal => (
     await demo.connection.client.request('GET /api/v1/dashboard/summary', { signal })
   ).data);
@@ -30,9 +34,9 @@ export default function Overview() {
     <>
       <div className="page-heading">
         <div>
-          <p className="eyebrow">THE BIG PICTURE</p>
-          <h1>A clearer view of your city.</h1>
-          <p>Understand recurring problems. Follow the evidence. Coordinate what comes next.</p>
+          <p className="eyebrow">CONNECTED EVIDENCE. INFORMED ACTION.</p>
+          <h1>Every civic problem has a story. Follow it to resolution.</h1>
+          <p>Civicly’s AI connects reports, infrastructure and evidence to investigate recurring problems, guide coordinated action and verify what happened after the work.</p>
         </div>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           <button
@@ -43,32 +47,35 @@ export default function Overview() {
           >
             <Icon name="layers" size={17} /> Scenario Journeys (S01–S12)
           </button>
-          <Link className="button primary" href="/investigations">
-            Open investigations <Icon name="arrow" size={17} />
+          <Link className="button secondary" href="/investigations">
+            Browse all investigations <Icon name="arrow" size={17} />
           </Link>
         </div>
       </div>
 
       <ConnectionNotice />
 
+      <FeaturedInvestigation />
+
       <section aria-label="Case overview" className="metrics">
         {metrics.map(({ field, label, icon, description }) => {
           const value = summary.status === 'ready' && summary.data ? summary.data[field] : null;
           const displayVal = summary.status === 'loading' ? '…' : value !== null && value !== undefined ? String(value) : '—';
           return (
-            <article className="metric" key={label}>
+            <button type="button" className="metric metric-button" key={label} onClick={()=>setSelectedMetric(field)} aria-haspopup="dialog" aria-label={`View ${label.toLowerCase()}`}>
               <div className="metric-top">
                 <span>{label}</span>
                 <Icon name={icon} />
               </div>
-              <div className="metric-value" aria-label={value !== null ? `${label}: ${displayVal}` : 'Unavailable'}>
+              <div className="metric-value" aria-label={value !== null ? `${label}: ${displayVal}` : summary.status==='loading'?`${label}: loading`:`${label}: unavailable`}>
                 {displayVal}
               </div>
               <p>{description}</p>
-            </article>
+            </button>
           );
         })}
       </section>
+      {selectedMetric && <MetricRecords key={selectedMetric} kind={selectedMetric} onClose={()=>setSelectedMetric(null)}/>}
 
       {summary.status === 'error' && (
         <div style={{ marginBottom: 20 }}>
@@ -110,9 +117,9 @@ export default function Overview() {
 
           <div className="issue-categories">
             {[
-              ['water', 'Waterlogging', 'Drainage & accumulation', 'WATERLOGGING'],
-              ['road', 'Road damage', 'Pavement & recurring repairs', 'ROAD_DAMAGE'],
               ['waste', 'Waste accumulation', 'Collection & service patterns', 'WASTE_ACCUMULATION'],
+              ['road', 'Road damage', 'Pavement & recurring repairs', 'ROAD_DAMAGE'],
+              ['water', 'Waterlogging', 'Drainage & accumulation', 'WATERLOGGING'],
             ].map(([icon, label, description, issueKey]) => {
               const activeCount = summary.data?.issue_counts?.[issueKey];
               const recurCount = summary.data?.recurrence_counts?.[issueKey];

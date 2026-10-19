@@ -3,6 +3,22 @@
  */
 
 import type { ScenarioDTO, ScenarioCase } from '../generated/models';
+import type {DirectoryCase} from './workflow.ts';
+
+export const SUGGESTED_JOURNEY_ID='INV-B09-b9d4d66e130ed348c4f6a50e9d66a891';
+
+/** Curate only returned investigations; a catalog definition is not a solved case. */
+export function groupJourneys(rows:DirectoryCase[],category:JourneyCategory){
+  const unique=rows.filter((r,i)=>rows.findIndex(other=>other.investigation_id===r.investigation_id&&other.issue_type===r.issue_type)===i);
+  const available=unique.filter(c=>category==='ALL'||(category==='CROSS_CATEGORY'
+    ?unique.some(other=>other.investigation_id===c.investigation_id&&other.issue_type!==c.issue_type)
+    :c.issue_type===category));
+  return {
+    completed:available.filter(c=>c.stage==='COMPLETED').sort((a,b)=>Number(b.investigation_id===SUGGESTED_JOURNEY_ID)-Number(a.investigation_id===SUGGESTED_JOURNEY_ID)),
+    ongoing:available.filter(c=>c.stage!=='COMPLETED'&&c.stage!=='CANCELLED').sort((a,b)=>Number(b.stage==='MONITORING')-Number(a.stage==='MONITORING')),
+    cancelled:available.filter(c=>c.stage==='CANCELLED'),
+  };
+}
 
 export type JourneyCategory = 'ALL' | 'WATERLOGGING' | 'ROAD_DAMAGE' | 'WASTE_ACCUMULATION' | 'CROSS_CATEGORY';
 
@@ -54,16 +70,16 @@ export function getScenarioPrimaryCase(scenario: ScenarioDTO): ScenarioCase | nu
   return scenario.cases[0];
 }
 
-export function getScenarioHref(scenario: ScenarioDTO): string {
+export function getScenarioHref(scenario: ScenarioDTO): string | null {
   const primaryCase = getScenarioPrimaryCase(scenario);
-  if (!primaryCase) return '/investigations';
+  if (!primaryCase) return null;
   if (primaryCase.investigation_id) {
-    return `/investigations?investigation=${encodeURIComponent(primaryCase.investigation_id)}`;
+    return `/investigations?investigation=${encodeURIComponent(primaryCase.investigation_id)}&section=report`;
   }
   if (primaryCase.incident_id) {
-    return `/investigations?incident=${encodeURIComponent(primaryCase.incident_id)}`;
+    return `/investigations?incident=${encodeURIComponent(primaryCase.incident_id)}&section=report`;
   }
-  return '/investigations';
+  return null;
 }
 
 export function getScenarioIssueLabel(scenario: ScenarioDTO): string {

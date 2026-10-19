@@ -1,0 +1,7 @@
+# Full project GitHub update — 19 October 2026
+
+Human explicitly authorized pushing the whole updated project after initially requesting the README. Scope includes pending application source, frontend improvements, demo helper/deployment scripts, docs, images, tests and review evidence. Existing tracked/untracked working changes preserved; no reset or cherry-picked replacement.
+
+Precommit checks:136frontend tests PASS/0FAIL/0SKIP; production build including generated API/contracts/types PASS; both spec validators PASS; four changed/new Python helper scripts parsed with ast.parse; bash -n deploy/aws/update-app.sh PASS; tracked-source git diff --check PASS. Full staged whitespace inspection reported trailing carriage-return/progress whitespace and patch context in retained evidence logs; these historical artifacts were intentionally preserved without rewriting. Pending391files9,672,868bytes scanned with no Google/AWS/GitHub/private-key/Bearer credential or signed-URL pattern findings and no suspicious DB/key/oversized files. Pattern scanning does not prove exhaustive secret detection. Existing .gitignore excludes private .runtime, .env, dependencies, caches/builds and distribution archives. No full backend/integration/model execution for this publication; historic tests remain separately documented. AWS deployment was already verified separately and is not changed by Git publication.
+
+Next: verify GitHub main equals pushed commit, then human repository review. STOP.

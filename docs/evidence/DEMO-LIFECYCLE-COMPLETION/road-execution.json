@@ -1,0 +1,401 @@
+{
+  "mode": "HUMAN_APPROVED_OPERATOR_ASSISTED_SYNTHETIC_WORK_NO_NEW_MODEL_RUN",
+  "binding": {
+    "plan_id": "PLAN-B12-3a26fd93b1eb567bf101905dc4c43b76",
+    "plan_version": 1,
+    "plan_hash": "a39f811a8913ba4c5870a6acff9a05b918027db1768c64146e32bc4f90a2c834",
+    "assignments": [
+      {
+        "task_id": "TASK-B12-9fd186bc06707b0f76702608529dd76e",
+        "action_type": "SUBGRADE_REPAIR",
+        "target_ids": [
+          "ROAD-DEMO-SUBGRADE-02"
+        ],
+        "department_id": "DEPT-ROAD",
+        "assignee_id": "OP-ROAD-LEAD"
+      }
+    ]
+  },
+  "approval": {
+    "id": "APPROVAL-B13-421f1dfc4187d58155e9d190f5085551",
+    "expected_hash": "07116b26ecfcf2c52dff857fbb2bc898261e379824bbfcf995e04cb43aed4451",
+    "simulated": true,
+    "plan_id": "PLAN-B12-3a26fd93b1eb567bf101905dc4c43b76",
+    "plan_version": 1,
+    "plan_hash": "a39f811a8913ba4c5870a6acff9a05b918027db1768c64146e32bc4f90a2c834",
+    "assignments": [
+      {
+        "task_id": "TASK-B12-9fd186bc06707b0f76702608529dd76e",
+        "action_type": "SUBGRADE_REPAIR",
+        "target_ids": [
+          "ROAD-DEMO-SUBGRADE-02"
+        ],
+        "department_id": "DEPT-ROAD",
+        "assignee_id": "OP-ROAD-LEAD"
+      }
+    ],
+    "status": "APPROVED",
+    "approved_by": "OP-APPROVER",
+    "requested_at": "2026-10-18T16:01:29.743Z",
+    "scope_hash": "224811393a30eb4343b0237360093a5c39fc71188fa17b248994309c3da0ffd3"
+  },
+  "order_id": "WO-B13-9b024fe9f51913bf88e76ded948dc09e",
+  "completion": {
+    "inspection_id": "INS-B09-1fe68eeb269e548b68b1646a36b25f1f",
+    "evidence_id": "EV-REPORT-B09-523b1c63ed31a70df2634b31988ee00a",
+    "observations": [
+      {
+        "asset_id": "ROAD-DEMO-SUBGRADE-02",
+        "code": "ACTION_COMPLETED",
+        "statement": "Explicit synthetic demonstration observation ACTION_COMPLETED; operator-assisted simulation, not real field execution",
+        "method": "DIRECT_SYNTHETIC_FIELD_TEST",
+        "observed_at": "2026-10-19T07:53:33.841Z",
+        "result": "OBSERVED",
+        "value": null,
+        "unit": null
+      }
+    ]
+  },
+  "followup": {
+    "inspection_id": "INS-B09-00e5698e6f61e3a354bd3cce28365457",
+    "evidence_id": "EV-REPORT-B09-c93e39658f052c257511bd0179087931",
+    "observations": [
+      {
+        "asset_id": "ROAD-DEMO-SUBGRADE-02",
+        "code": "WEAR_EXPOSURE",
+        "statement": "Explicit synthetic demonstration observation WEAR_EXPOSURE; operator-assisted simulation, not real field execution",
+        "method": "DIRECT_SYNTHETIC_FIELD_TEST",
+        "observed_at": "2026-10-19T07:53:35.149Z",
+        "result": "OBSERVED",
+        "value": null,
+        "unit": null
+      },
+      {
+        "asset_id": "ROAD-DEMO-SUBGRADE-02",
+        "code": "FOLLOWUP_PAVEMENT",
+        "statement": "Explicit synthetic demonstration observation FOLLOWUP_PAVEMENT; operator-assisted simulation, not real field execution",
+        "method": "DIRECT_SYNTHETIC_FIELD_TEST",
+        "observed_at": "2026-10-19T07:53:35.149Z",
+        "result": "OBSERVED",
+        "value": 0.0,
+        "unit": "boolean"
+      }
+    ]
+  },
+  "outcome": {
+    "id": "OUTCOME-B13-cc1c5de2f7ce56ea3e01bcad6a6fe66d",
+    "work_order_id": "WO-B13-9b024fe9f51913bf88e76ded948dc09e",
+    "assessment_status": "RESOLUTION_VERIFIED",
+    "result": "MITIGATION_VERIFIED",
+    "evidence_ids": [
+      "EV-REPORT-B09-c93e39658f052c257511bd0179087931"
+    ],
+    "evaluated_at": "2026-10-19T07:53:35.401Z",
+    "case_closed": true,
+    "policy_version": "B14-2",
+    "simulated": true
+  },
+  "calls": [
+    {
+      "method": "GET",
+      "path": "/plans/PLAN-B12-3a26fd93b1eb567bf101905dc4c43b76",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/approvals?limit=50&status=PENDING",
+      "operator": "OP-APPROVER",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "POST",
+      "path": "/approvals/APPROVAL-B13-421f1dfc4187d58155e9d190f5085551/decision",
+      "operator": "OP-APPROVER",
+      "key": "LIFECYCLE-COMPLETION-road-approve-v1",
+      "http": 200
+    },
+    {
+      "method": "POST",
+      "path": "/work-orders",
+      "operator": "OP-APPROVER",
+      "key": "LIFECYCLE-COMPLETION-road-order-v1",
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/work-orders/WO-B13-9b024fe9f51913bf88e76ded948dc09e",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "POST",
+      "path": "/work-orders/WO-B13-9b024fe9f51913bf88e76ded948dc09e/status",
+      "operator": "OP-ROAD-LEAD",
+      "key": "LIFECYCLE-COMPLETION-road-assign",
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/work-orders/WO-B13-9b024fe9f51913bf88e76ded948dc09e",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "POST",
+      "path": "/work-orders/WO-B13-9b024fe9f51913bf88e76ded948dc09e/progress",
+      "operator": "OP-ROAD-LEAD",
+      "key": "LIFECYCLE-COMPLETION-road-start",
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/work-orders/WO-B13-9b024fe9f51913bf88e76ded948dc09e",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "POST",
+      "path": "/work-orders/WO-B13-9b024fe9f51913bf88e76ded948dc09e/inspections",
+      "operator": "OP-ROAD-LEAD",
+      "key": "LIFECYCLE-COMPLETION-road-COMPLETION-request",
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/inspections/INS-B09-1fe68eeb269e548b68b1646a36b25f1f",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/work-orders/WO-B13-9b024fe9f51913bf88e76ded948dc09e",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "POST",
+      "path": "/work-orders/WO-B13-9b024fe9f51913bf88e76ded948dc09e/inspections",
+      "operator": "OP-ROAD-LEAD",
+      "key": "LIFECYCLE-COMPLETION-road-COMPLETION-REQUESTED",
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/inspections/INS-B09-1fe68eeb269e548b68b1646a36b25f1f",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/work-orders/WO-B13-9b024fe9f51913bf88e76ded948dc09e",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "POST",
+      "path": "/work-orders/WO-B13-9b024fe9f51913bf88e76ded948dc09e/inspections",
+      "operator": "OP-ROAD-LEAD",
+      "key": "LIFECYCLE-COMPLETION-road-COMPLETION-SCHEDULED",
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/inspections/INS-B09-1fe68eeb269e548b68b1646a36b25f1f",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/work-orders/WO-B13-9b024fe9f51913bf88e76ded948dc09e",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "POST",
+      "path": "/work-orders/WO-B13-9b024fe9f51913bf88e76ded948dc09e/inspections",
+      "operator": "OP-ROAD-LEAD",
+      "key": "LIFECYCLE-COMPLETION-road-COMPLETION-IN_PROGRESS",
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/inspections/INS-B09-1fe68eeb269e548b68b1646a36b25f1f",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/work-orders/WO-B13-9b024fe9f51913bf88e76ded948dc09e",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "POST",
+      "path": "/work-orders/WO-B13-9b024fe9f51913bf88e76ded948dc09e/inspections",
+      "operator": "OP-ROAD-LEAD",
+      "key": "LIFECYCLE-COMPLETION-road-COMPLETION-report",
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/work-orders/WO-B13-9b024fe9f51913bf88e76ded948dc09e",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "POST",
+      "path": "/work-orders/WO-B13-9b024fe9f51913bf88e76ded948dc09e/progress",
+      "operator": "OP-ROAD-LEAD",
+      "key": "LIFECYCLE-COMPLETION-road-complete",
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/plans/PLAN-B12-3a26fd93b1eb567bf101905dc4c43b76",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/investigations/INV-B09-f663f7a1473c4a28a941d147633e08ad",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/work-orders/WO-B13-9b024fe9f51913bf88e76ded948dc09e",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/work-orders/WO-B13-9b024fe9f51913bf88e76ded948dc09e",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "POST",
+      "path": "/work-orders/WO-B13-9b024fe9f51913bf88e76ded948dc09e/inspections",
+      "operator": "OP-ROAD-LEAD",
+      "key": "LIFECYCLE-COMPLETION-road-FOLLOWUP-request",
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/inspections/INS-B09-00e5698e6f61e3a354bd3cce28365457",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/work-orders/WO-B13-9b024fe9f51913bf88e76ded948dc09e",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "POST",
+      "path": "/work-orders/WO-B13-9b024fe9f51913bf88e76ded948dc09e/inspections",
+      "operator": "OP-ROAD-LEAD",
+      "key": "LIFECYCLE-COMPLETION-road-FOLLOWUP-REQUESTED",
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/inspections/INS-B09-00e5698e6f61e3a354bd3cce28365457",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/work-orders/WO-B13-9b024fe9f51913bf88e76ded948dc09e",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "POST",
+      "path": "/work-orders/WO-B13-9b024fe9f51913bf88e76ded948dc09e/inspections",
+      "operator": "OP-ROAD-LEAD",
+      "key": "LIFECYCLE-COMPLETION-road-FOLLOWUP-SCHEDULED",
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/inspections/INS-B09-00e5698e6f61e3a354bd3cce28365457",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/work-orders/WO-B13-9b024fe9f51913bf88e76ded948dc09e",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "POST",
+      "path": "/work-orders/WO-B13-9b024fe9f51913bf88e76ded948dc09e/inspections",
+      "operator": "OP-ROAD-LEAD",
+      "key": "LIFECYCLE-COMPLETION-road-FOLLOWUP-IN_PROGRESS",
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/inspections/INS-B09-00e5698e6f61e3a354bd3cce28365457",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/work-orders/WO-B13-9b024fe9f51913bf88e76ded948dc09e",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "POST",
+      "path": "/work-orders/WO-B13-9b024fe9f51913bf88e76ded948dc09e/inspections",
+      "operator": "OP-ROAD-LEAD",
+      "key": "LIFECYCLE-COMPLETION-road-FOLLOWUP-report",
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/work-orders/WO-B13-9b024fe9f51913bf88e76ded948dc09e",
+      "operator": "OP-ANALYST",
+      "key": null,
+      "http": 200
+    },
+    {
+      "method": "POST",
+      "path": "/work-orders/WO-B13-9b024fe9f51913bf88e76ded948dc09e/outcomes",
+      "operator": "OP-ANALYST",
+      "key": "LIFECYCLE-COMPLETION-road-evaluate",
+      "http": 200
+    }
+  ]
+}

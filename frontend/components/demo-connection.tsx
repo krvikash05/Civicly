@@ -45,5 +45,6 @@ export function DemoStatus(){
 }
 export function ConnectionNotice(){
   const demo=useDemo();
-  return <div className="preview-notice"><p role="status">{demo.status==='connected'?<><strong>Demo workspace connected.</strong> Active as <code>{demo.identity?.account.id ?? 'OP-ANALYST'}</code> (Role: <strong>{demo.identity?.account.role ?? 'ANALYST'}</strong>). Live investigations, FalkorDB graph evidence, and remediation plans loaded.</>:demo.message}{demo.requestId&&<span> Reference: {demo.requestId}</span>}</p></div>;
+  if(demo.status==='connected')return null;
+  return <div className="preview-notice"><p role="status">{demo.message}{demo.requestId&&<span> Reference: {demo.requestId}</span>}</p></div>;
 }

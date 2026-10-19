@@ -24,8 +24,10 @@ export function Shell({ children }: { children: React.ReactNode }) {
           <span className="brand-mark">
             <Icon name="graph" size={25} />
           </span>
-          Civicly
-          <span className="brand-dot">.</span>
+          <span className="brand-wordmark">
+            <span className="brand-name">Civicly<span className="brand-dot">.</span></span>
+            <span className="brand-powered">Powered by FalkorDB</span>
+          </span>
         </Link>
 
         <div className="district">
@@ -78,7 +80,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
             aria-haspopup="dialog"
           >
             <Icon name="check" size={16} />
-            <span>Municipal Roles &amp; RBAC</span>
+            <span>Roles &amp; permissions</span>
           </button>
         </div>
 
