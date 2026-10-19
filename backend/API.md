@@ -138,7 +138,7 @@ B20-R-OWNERSHIP adds only POST /responsibilities (DEPARTMENT_LEAD), POST /respon
 
 
 ## Frontend backend demo additive picker
-Authenticated GET `/api/v1/investigations` returns Page[InvestigationDTO] using scoped query/filter/pagination validation. Current contract exposes 59 operations across 55 paths. Paused/recovery cases remain visible; client must not infer model success from a listed case. See FRONTEND_HANDOFF.md.
+Authenticated GET `/api/v1/investigations` returns Page[InvestigationDTO] using scoped query/filter/pagination validation. Current contract exposes 59 operations across 55 paths. Paused/recovery cases remain visible; client must not infer model success from a listed case. See frontend/docs/API_CONNECTION.md for frontend connection guidance.
 
 
 ## Exact task scope for approval UI — DEMO-FIELD-REVIEW

@@ -107,8 +107,7 @@ insufficient requests fail. Result search_budget/search_limited distinguish boun
 negative searches from truncated output and global absence. Detailed per-template
 minima/branch lengths are in backend/GRAPH_ACCESS.md. Both repository/migration
 constructors now share a guarded milestone02–25 UUIDv4 test namespace; canonical
-and B01/document/checkpoint protections remain. backend/B04_BENCHMARK_PLAN.md defines
-future conversion/import/repeat performance verification only; no B04 work began.
+and B01/document/checkpoint protections remain. See backend/INGESTION.md for conversion, import and repeat performance verification.
 
 ## B05 implemented primitives (supersedes B05 TODO above)
 

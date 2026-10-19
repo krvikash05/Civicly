@@ -116,7 +116,7 @@ compiled bundle from data/ingestion rather than rerunning prepare between repeat
 
 ## Benchmark interpretation
 
-Follow B04_BENCHMARK_PLAN.md: one coherent pilot, three fresh full imports, two equal
+The benchmark protocol uses one coherent pilot, three fresh full imports, two equal
 repeats per graph. Instrumentation measures wall/latency/throughput, graph revision,
 audit bytes/checkpoints, policy scan maxima, Python traced peak, server memory and
 AOF byte growth. Instrumented timings include tracemalloc and parameter-byte-counting

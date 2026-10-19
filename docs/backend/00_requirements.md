@@ -37,5 +37,5 @@ An **advanced hackathon AI agent** in a deliberately synthetic municipal distric
 
 ## Acceptance definition
 - Demonstration/agent traces are from the live integrated system; generated fixtures are clearly labeled. Eval ground truth kept separate and never available through agent tools.
-- ``Backend complete`` = all acceptance tests in `docs/backend/10_evaluation.md` and all B-END gates in `docs/backend/11_microtasks.md` executed and green; no frontend required for that gate.
+- ``Backend complete`` = all acceptance tests in `docs/backend/10_evaluation.md` executed and green, including real graph/MCP, persistence, authorization, recovery and end-to-end demonstration gates; no frontend required for that gate.
 - Developer must be able to explain source of every non-obvious relationship and why graph dependence changed a choice.

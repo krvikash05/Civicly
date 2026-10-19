@@ -38,4 +38,4 @@ python3 frontend/scripts/check_contracts.py --record
 
 Recording a fingerprint is not a runtime integration test or proof of UI compatibility. Current generated `contracts/api_models.json` and `contracts/api_endpoints.json` take precedence over historical OpenAPI evidence; compare against fresh `/openapi.json` on an authorized review instance before integrating.
 
-See [integration agreement](docs/integration.md) and [frontend task board](docs/tasks.md). Frontend source, future package manifest/lockfile, configuration, tests and build output stay under this folder. Backend keeps its own dependencies and processes. Do not reset shared graphs, reconfigure Compose, edit backend contracts or run scenario mutations as part of frontend development.
+See [integration agreement](docs/integration.md). Frontend source, future package manifest/lockfile, configuration, tests and build output stay under this folder. Backend keeps its own dependencies and processes. Do not reset shared graphs, reconfigure Compose, edit backend contracts or run scenario mutations as part of frontend development.

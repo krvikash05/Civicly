@@ -99,11 +99,9 @@ for x in manifest:
  file=ROOT/x['file_path'];require(file.is_file(),f"document missing {x['file_path']}")
  if file.is_file():require(hashlib.sha256(file.read_bytes()).hexdigest()==x['sha256'],f"document sha mismatch {x['document_id']}")
  require(x['synthetic'] and x['source_kind']=='SYNTHETIC','unlabeled demo document')
-# all audit files and microtask IDs
-for p in ['AGENTS.md','CODEX_START_HERE.md','decision.md','flow.md','implementation_status.md','test_log.md','blockers.md','task_board.md','docs/backend/11_microtasks.md','docs/frontend_contract/FRONTEND_READINESS.md']:
+# maintained specification files
+for p in ['docs/backend/00_requirements.md','docs/frontend_contract/FRONTEND_READINESS.md']:
  require((ROOT/p).exists(),f'missing handoff file {p}')
-mt=(ROOT/'docs/backend/11_microtasks.md').read_text()
-for i in range(26):require(f'B{i:02d}' in mt,f'B{i:02d} missing from microtask plan')
 for contract in (states,mcp,apis,api_models,events):
  require(contract.get('municipality_scope')==reg['municipality_scope'],'municipality scope contract mismatch')
 require(reg['municipality_scope']['field']=='municipality_id' and reg['municipality_scope']['value']=='demo-city','invalid canonical scope')
@@ -114,7 +112,7 @@ if errors:
  print(f'{len(errors)} errors; {len(warn)} warnings');sys.exit(1)
 print(f'PASS: {len(N)} entity types, {len(R)} relationships, {len(mcp["tools"])} custom MCP tools, {len(apis["routes"])} planned API routes, {len(api_models["$defs"])} typed request/response schemas, {len(events["types"])} event types')
 print(f'PASS: {len(seed["nodes"])} seeded nodes, {len(seed["relationships"])} seeded relationships, {len(scs)} scenario bindings+hidden truths, {len(manifest)} sourced synthetic documents')
-print('PASS: codex log files + B00-B25 microtasks + work-order approval invariant')
+print('PASS: maintained specification files + work-order approval invariant')
 print(f'NOTE: {len(known_observation_defects)} frozen legacy Observation.value_number defects retained as regression evidence; B04 converted artifact is validated separately.')
 for warning in warn:print('WARN:',warning)
 print('NOTE: Above counts describe frozen legacy source structure; B04 canonical artifact and real import evidence are separate checks.')

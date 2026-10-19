@@ -7,7 +7,7 @@ Captured19October2026 from the running local applications through browser UI aut
 
 All municipal records/actions/observations are synthetic. Read-only queries and UI navigation only: no plan/approval/work changes, graph writes, provider requests or paid wake. Initial Browser opened a previously retained civicly_knowledge query with no matching drainage edges; switched to the known presenter graph and exact bounded queries rather than creating data. One preliminary2node/1edge UNDERLIES read preceded the focused11node capture. UI-only zoom, fit, panel/layout controls did not change domain records. No credential/config panels captured; screenshots visually inspected before embedding.
 
-Do not infer full graph completeness, root-cause verification or model influence solely from these screenshots. Runtime proof: [road lifecycle](../evidence/EXACT-ROAD-LIFECYCLE-RESULTS.md). The old README remains preserved in [development history](../DEVELOPMENT_HISTORY.md).
+Do not infer full graph completeness, root-cause verification or model influence solely from these screenshots. Runtime proof: [road lifecycle](../evidence/EXACT-ROAD-LIFECYCLE-RESULTS.md).
 
 
 ## Judge README refresh — 19 October 2026
@@ -16,7 +16,7 @@ Do not infer full graph completeness, root-cause verification or model influence
 - `civicly-recorded-graph-path.png`: actual public original-road Investigation view, focused on the first complete available recorded lookup. Three nodes/two INSPECTS/PRODUCED links connect ROAD-100, its inspection and resulting evidence. The left trace can display other recorded steps; this screenshot does not claim every visible step has a matching path. It is inspection provenance, not physical causal proof. Native page scrolling and the existing focus control only; no edited DOM or compositing.
 - `civicly-response-timeline.png`: actual public original-road Work view. Recorded authorization, three completed work orders and independent verified episode follow-up. Focused graph remains an inspection provenance trail, separate from work/outcome verification. No approval actor identity or execution timestamps are invented.
 
-All new captures are original viewport PNGs. Each was visually inspected. Read-only navigation, normal presenter session and existing display controls only; no provider request, worker wake, domain mutation or secret/configuration panel. The existing Browser graph capture remains unchanged with its original dated provenance above. The previous submission README is preserved in [README_TECHNICAL_REFERENCE.md](../../README_TECHNICAL_REFERENCE.md).
+All new captures are original viewport PNGs. Each was visually inspected. Read-only navigation, normal presenter session and existing display controls only; no provider request, worker wake, domain mutation or secret/configuration panel. The existing Browser graph capture remains unchanged with its original dated provenance above.
 
 
 ## Browser Schema captures — 19 October 2026

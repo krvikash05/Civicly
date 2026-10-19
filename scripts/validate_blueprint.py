@@ -186,19 +186,16 @@ def main():
                 errors.append(f"{case['id']}: missing {needed}")
     if not any(len(x["issue_types"]) == 3 for x in scenarios["scenarios"]):
         errors.append("missing all-three-category scenario")
-    expected_docs = ["PRODUCT.md", "ARCHITECTURE.md", "DATA_MODEL.md", "WORKFLOWS.md", "API.md", "VALIDATION.md", "IMPLEMENTATION.md", "DECISIONS.md", "REFERENCES.md"]
-    for f in expected_docs:
-        if not (ROOT / "docs" / "legacy_v1" / f).exists():
-            errors.append(f"missing archived docs/legacy_v1/{f}")
-    for f in ("AGENTS.md", "CODEX_START_HERE.md", "README.md"):
-        if not (ROOT / f).exists():
-            errors.append(f"missing {f}")
-    product_text = (ROOT / "docs" / "legacy_v1" / "PRODUCT.md").read_text()
-    validation_text = (ROOT / "docs" / "legacy_v1" / "VALIDATION.md").read_text()
-    for i in range(1,19):
-        objective = f"R{i:02}"
-        if objective not in product_text or objective not in validation_text:
-            errors.append(f"requirement {objective} missing product/validation coverage")
+    for relative in ("README.md", "docs/backend/00_requirements.md", "docs/backend/10_evaluation.md"):
+        if not (ROOT / relative).is_file():
+            errors.append(f"missing {relative}")
+    requirements_path = ROOT / "docs/backend/00_requirements.md"
+    if requirements_path.is_file():
+        requirements_text = requirements_path.read_text()
+        for i in range(1, 19):
+            objective = f"R{i:02}"
+            if f"| {objective} |" not in requirements_text:
+                errors.append(f"requirement {objective} missing from maintained requirements")
 
     if errors:
         print(f"FAILED: {len(errors)} issue(s)")

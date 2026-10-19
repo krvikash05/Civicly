@@ -224,8 +224,7 @@ Runtime evidence on pinned 6.0.2 takes precedence over current upstream examples
 
 ## B03-R performance boundary
 
-See [B04_BENCHMARK_PLAN.md](B04_BENCHMARK_PLAN.md) for the proposed pilot/full/repeat
-import benchmark, metrics and correctness gates. Same-type integrity scans repeat
+The import benchmark uses pilot/full/repeat runs with metrics and correctness gates documented in [INGESTION.md](INGESTION.md). Same-type integrity scans repeat
 O(E_k²) aggregate work during ingestion; global relationship-ID checks may scan all
 edges. The scalar JSON audit grows O(N) and is parsed/rewritten per mutation, yielding
 O(N²) cumulative serialization/transport. Schedule grouping adds bounded comparison

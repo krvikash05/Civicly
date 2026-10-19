@@ -10,7 +10,7 @@ All municipal records/field work here are explicitly synthetic. Gemini tool sele
 
 ## Current session
 
-API: http://127.0.0.1:8010. Presenter profile/auth/source unchanged. Antigravity owns frontend, currently previewed independently. Read backend/FRONTEND_HANDOFF.md for private server-only connection details and the latest contract addition. Do not reset this graph or run an offline scripted worker on its live threads.
+API: http://127.0.0.1:8010. Presenter profile/auth/source unchanged. See frontend/docs/API_CONNECTION.md for frontend connection guidance. Do not reset this graph or run an offline scripted worker on its live threads.
 
 ## A five-minute demonstration
 
