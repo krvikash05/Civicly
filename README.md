@@ -10,7 +10,7 @@ Consider a road that keeps developing potholes. Should the road be repaired agai
 
 Across the whole case journey, Civicly uses FalkorDB to connect a new report to relevant assets and past incidents, retrieve evidence and procedures for the agent, and track planned work across departments. After authorized work, dated follow-up and retained outcomes complete the episode’s history—so future investigations can retrieve what was tried and what happened.
 
-[**Live Demo**](https://civicly-13-55-205-208.sslip.io) · [**Follow the completed road case**](https://civicly-13-55-205-208.sslip.io/investigations?investigation=INV-B09-b9d4d66e130ed348c4f6a50e9d66a891&section=report#case-workspace) · [Two-minute walkthrough](#one-investigation-six-connected-stages)
+[**Civicly Live ↗**](https://civicly-13-55-205-208.sslip.io) · [**Follow the completed road case**](https://civicly-13-55-205-208.sslip.io/investigations?investigation=INV-B09-b9d4d66e130ed348c4f6a50e9d66a891&section=report#case-workspace) · [Two-minute walkthrough](#one-investigation-six-connected-stages)
 
 > **About the demo:** municipal data, inspections and field work are synthetic. Gemini, MCP, FalkorDB, GraphRAG retrieval and saved workflow records use actual services. The hosted site lets you explore retained results; browsing does not start a paid agent run. Hosting uses a temporary hostname.
 
