@@ -8,7 +8,7 @@ Consider a road that keeps developing potholes. Should the road be repaired agai
 
 **FalkorDB is the connected record behind that process.** Gemini uses MCP tools to investigate it. People review evidence and approve work. The workspace shows how each decision relates to the reports, assets and findings that support it.
 
-[**Try the demo**](https://civicly-13-55-205-208.sslip.io) · [**Follow the completed road case**](https://civicly-13-55-205-208.sslip.io/investigations?investigation=INV-B09-b9d4d66e130ed348c4f6a50e9d66a891) · [Run locally](#run-and-develop-locally) · [Technical docs](#technical-documentation)
+[**Live Demo**](https://civicly-13-55-205-208.sslip.io) · [**Follow the completed road case**](https://civicly-13-55-205-208.sslip.io/investigations?investigation=INV-B09-b9d4d66e130ed348c4f6a50e9d66a891) · [Run locally](#run-and-develop-locally) · [Technical docs](#technical-documentation)
 
 > **About the demo:** municipal data, inspections and field work are synthetic. Gemini, MCP, FalkorDB, GraphRAG retrieval and saved workflow records use actual services. The hosted site lets you explore retained results; browsing does not start a paid agent run. Hosting uses a temporary hostname.
 
