@@ -14,6 +14,8 @@ Across the whole case journey, Civicly uses FalkorDB to connect a new report to 
 
 ![Civicly: better coordination for more livable cities. A 40-second illustrated overview of how FalkorDB connects reports, evidence, departments, approved work, outcomes and memory.](docs/media/civicly-preview/civicly-explainer.gif)
 
+[**Explore step by step ↗**](https://krvikash05.github.io/Civicly/) — pause, go back or advance through each scene.
+
 *How FalkorDB powers Civicly—from connected evidence to coordinated action and verified outcomes. Illustrated workflow; municipal data and field work are simulated. [View all eight scenes](docs/media/civicly-preview/storyboard.png).*
 
 > **About the demo:** municipal data, inspections and field work are synthetic. Civicly's AI, MCP, FalkorDB, GraphRAG retrieval and saved workflow records use actual services. The hosted site lets you explore retained results; browsing does not start a paid agent run. Hosting uses a temporary hostname.
