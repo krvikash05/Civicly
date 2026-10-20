@@ -1,36 +1,96 @@
-# EXACT-ROAD-LIFECYCLE — completed synthetic episode, human review pending
+# Why did the potholes keep coming back?
 
-## Scope and actual outcome
+At Market Junction, the road kept developing potholes despite earlier repairs. Residents also reported low water pressure. Another surface repair might leave the underlying problem unresolved, so Civicly brought the road and water-utility records into the same investigation.
 
-Human selected exactly `INC-B08-27a2cb5d89ae9ab9d86f999cf7b50472`, LOC-JUNCTION, and explicitly authorized narrowly audited reconciliation and then exact-plan execution. No replacement incident was used. Requirement coverage advances R02/R04/R06–R17 and the road portion of R18; all eighteen requirements remain binding. Full three-category/B10/B20/B-END acceptance is not claimed.
+**The recorded demo outcome:** Water Utilities and Roads carried out an approved, coordinated response. Separate follow-up observations then supported closing the incident, with its evidence and work history saved for future investigations.
 
-Original investigation `INV-B09-b9d4d66e130ed348c4f6a50e9d66a891` and original thread `DEMO-a96d7432fed21ae4921aca5a55195feb` retained. Actual final state: incident ENDED, investigation/plan COMPLETED, cluster CONTROLLED. One plan, three tasks, three work orders. Five outcome records and five distinct completion/follow-up reports are now visible in own-episode memory.
+[**Follow the case in Civicly ↗**](https://civicly-13-55-205-208.sslip.io/investigations?investigation=INV-B09-b9d4d66e130ed348c4f6a50e9d66a891&section=report#case-workspace)
 
-## Proven flow
+> **About this demonstration:** the AI investigation and database services were real. Municipal records, inspections, repairs and follow-up observations were synthetic. The final repair plan was analyst-assisted and approved by a human.
 
-1. Complaint and reported road incident retained. Candidate links not promoted by assumption.
-2. Earlier ambiguous PROPOSE had no mandatory dispatch journal, B09 journal, or native hypothesis. READY repository readback proved no effect. Authenticated admin wrote an immutable human-authorized attestation. Original checkpoint/hash, WRITE_OUTCOME_UNKNOWN error, decision and recovery history retained; no quarantine cleared and no original operation replayed.
-3. Existing road inspection completed with reviewed attributed synthetic causal/safety findings. Analyst explicitly requested a separate utility differential inspection; its reviewed synthetic report supplies leak/infiltration/safety observations. This supplemental request was operator-assisted.
-4. Same original thread resumed with actual Gemini, actual discovered runtime MCP reads and Saver persistence. It read road and pipe reports, created two SUPPORTED assessments and read source procedures. Four recorded graph decision paths remain. The existing cumulative token gate then stopped the model before drafting: 375,398 cumulative tokens, next count would exceed 400,000. No budget raised or extra wake attempted.
-5. Analyst-assisted draft uses those current assessments, actual GraphRAG D020/D022 citations and reviewed ownership. Additional damage extent is retained as an explicit INCONCLUSIVE hypothesis, with no evidence or extra work claimed. Both observed mechanisms remain SUPPORTED with their original verification gaps.
-6. Human approved exact plan `PLAN-B12-11e6b8d220e7923a715f5cc0a371b993`, v1, SHA256 `b0a730059b2339f87b24fa8434fe5f3706f9686d524ba47e746ee0c1f1c78c57`. OP-APPROVER recorded that exact scope through HTTP. OP-WATER-LEAD isolated PIPE-100, supplied reviewed isolation proof, repaired it and obtained separately reviewed POST_REPAIR_PRESSURE_NORMAL / POST_REPAIR_LEAK_ABSENT follow-up, classified UTILITY_VERIFIED without closing the case.
-7. Verified UNDERLIES from PIPE-100 to ROAD-100 bound the road dependency. OP-ROAD-LEAD then performed simulated subgrade repair. All work completed first entered MONITORING (snapshot retained). Separate dated synthetic WEAR_EXPOSURE and FOLLOWUP_PAVEMENT=0 evidence produced RESOLUTION_VERIFIED and case closure. Crew completion alone did not close it.
-8. Fresh-process and reloaded API readback confirms durable state. Own ended-episode memory projection now exposes five immutable outcomes and five report references. This is retained episodic context, not an automatically generalized lesson. No DTO/schema or frontend code change.
+## 1. Understand what was reported
 
-All physical actions/observations are explicitly SYNTHETIC, using the bounded demo policy. Follow-up sources/inspection records are separate from completion and independently authenticated analyst reviewed; the field leads are the assigned simulated operators. The road wear observation is an explicit synthetic demonstration, not a claim of actual long-term road durability or municipal-standard acceptance.
+Civicly preserved the original complaint and the history of repeated road damage. Low water pressure raised a question worth checking: could a utility problem be contributing to the damage, or was the ground beneath the road failing for another reason?
 
-## Tests and measured usage
+A complaint started the investigation. It did not establish the cause.
 
-45 distinct final unit checks PASS; zero final failures/skips. One actual retained-graph lifecycle journey through real TCP HTTP/FalkorDB/GraphRAG/MCP/Gemini/Saver, with 101 execution HTTP calls and additional fresh-process reads; these are one journey, not hundreds of independent test cases. Final spec validators both PASS. Unit interlock: zero external requests. Actual paid wake: 10 countTokens requests, 9 generation attempts, 275,638 additional reported total tokens, calculated known cost $0.20620095; cumulative case cost $0.28464795, no outstanding request uncertainty/reservations and unchanged $0.50 case cap. COUNT requests are not generation usage. Scripted field execution is not a live autonomous planner proof.
+**How FalkorDB supports this step:** the domain graph links the complaint to an incident, location and problem cluster. Related infrastructure and earlier occurrences can be retrieved through those relationships, while the original report remains distinct from verified findings.
 
-Historical harness corrections retained: preparation first failed before draft at missing active-graph scope (alternative hypothesis/assessment had already committed and were safely retained); corrected scope proceeded without repeating that assessment. Initial read-only audit imported a nonexistent State module; corrected to the required read-only errors attribute and reran. First full lifecycle readback had zero own-memory items because related-case retrieval excluded the seed; narrow completed-episode projection corrected this and the final fresh read shows one own-memory row. Earlier verification files are preserved, not rewritten. No failed work-order/unknown operational mutation occurred in this task.
+## 2. Connect the clues
 
-## Reproduce and review
+FalkorDB connected the road with a documented underlying water pipe, previous work and inspection records. Civicly’s AI used those connections to retrieve relevant information and compare possible explanations.
 
-Refresh http://localhost:3100/investigations?investigation=INV-B09-b9d4d66e130ed348c4f6a50e9d66a891 . Inspect Report → Investigation → Evidence → Plan & Approval → Work → Monitoring & Memory. Backend proves those records; browser visual QA remains with the separately developed frontend. The completed incident is historical, so its mapping is in historical_incident_ids. Show true LIVE_GEMINI trace events and decision paths, then explicitly explain the analyst-assisted planning and simulated operations.
+**How FalkorDB supports this step:** Civicly’s AI selects bounded MCP tools that run approved, parameterized graph reads. A sourced `UNDERLIES` relationship connects the pipe to the road; linked history and inspections provide further context. Recorded graph decision paths make the returned connections inspectable alongside the agent’s next choice.
 
-Nonbillable verification: `PYTHONPATH=backend backend/.venv/bin/python scripts/exact_road_lifecycle.py verify`. Expected ENDED/COMPLETED/COMPLETED, one own episode memory with five outcomes, three work orders and 61 graph nodes (bounded projection). It makes authenticated reads and auth session lifecycle calls, never provider requests or domain mutations. Do not rerun prepare/execute on the completed plan; execution requires an exact approved hash, PENDING_APPROVAL state and a private exclusive execution marker.
+The relationship guides the investigation. It does not prove that the pipe caused the damage merely because it lies beneath the road.
 
-Known limits: bounded reads and historical case-search truncation remain explicit; last agent checkpoint retains TOKEN_BUDGET/null current_plan_id because a later analyst draft is operationally separate; legacy InvestigationDTO.runtime_status remains a static development-era label and is not live provenance. Use trace execution_mode and actual InvestigationDTO/plan lifecycle state. Original waste remains blocked and unreconciled. Other water/clean-road plans remain pending. No recurrence scenario or autonomous end-to-end planner acceptance established. All 1,368 baseline evidence files unchanged; frontend untouched; only backend API reloaded to serve memory correction.
+## 3. Check the evidence
 
-Exact next: human review and frontend walkthrough of this completed incident. Further live work, unrelated reconciliation and B21 remain outside this task. STOP.
+Reviewed road and utility inspection findings supported both leakage and ground failure as contributing explanations. The case kept those findings alongside their sources and retained an unresolved question about the extent of additional damage.
+
+The inspection findings were supplied and reviewed through simulated operator workflows. The AI did not perform a physical inspection or invent the observations.
+
+**How FalkorDB supports this step:** inspection and evidence records connect to the relevant assets and hypothesis assessments, retaining their source, date and review status. Versioned assessments link supporting or contradicting evidence to each explanation, preserving earlier conclusions as findings change. Validated application services record these analytical changes; the agent cannot bypass evidence rules.
+
+## 4. Agree on the response
+
+An analyst helped prepare a plan using the reviewed findings, relevant procedures and responsible departments. A human approved that specific plan before work began.
+
+The response had a clear order:
+
+1. **Water Utilities isolated the pipe** so the repair could proceed safely.
+2. **Water Utilities repaired the leak.** Separate checks recorded normal pressure and no observed leak.
+3. **The Roads team repaired the ground beneath the road**, after the required utility verification.
+
+**How FalkorDB supports this step:** the FalkorDB GraphRAG SDK retrieves cited, versioned procedures from a separate document graph. In the domain graph, the plan links to its tasks, target assets and reviewed department responsibility. `DEPENDS_ON` relationships represent the task order, and the approval binds the exact plan version and scope.
+
+Authenticated application services revalidate these records and prerequisites before authorizing work. The graph supplies the connected context; the services enforce the rules.
+
+**How FalkorDB tracks execution:** authorized work orders link back to approved tasks. Simulated operator actions produce durable status history and completion evidence. Utility verification remains a prerequisite for the road task; completion of one department’s work does not silently complete another department’s task.
+
+## 5. Verify what happened after the work
+
+Finishing the repairs moved the case into monitoring; it did not immediately close it.
+
+Separate dated follow-up observations recorded the road’s condition after the demonstration’s simulated wear exposure. Reviewed follow-up supported a verified resolution outcome under the demo policy, allowing the incident to close.
+
+**Completed work and a verified outcome are different records.** The simulated follow-up demonstrates that distinction; it does not establish long-term road durability in a real city.
+
+**How FalkorDB supports this step:** work orders connect to intervention outcomes and attributed follow-up evidence. Monitoring checks read those records against the plan’s declared conditions. Validated services record the resolution outcome and close the episode only when the required evidence supports that transition. Persisted events make changes available for replay and workspace updates.
+
+## 6. Keep the history for the next investigation
+
+FalkorDB retained what was reported, which explanations were considered, what work was performed and what follow-up found. The saved investigation thread could also be paused and resumed.
+
+A later investigation can retrieve that history instead of starting from an empty case file. Retaining a past outcome does not automatically turn it into a general rule for every road.
+
+**How FalkorDB supports this step:** three separate stores serve complementary purposes:
+
+| Store | What it preserves or retrieves |
+|---|---|
+| **Domain graph** | Connected reports, assessments, work and outcomes form the episode’s history for later case retrieval. |
+| **GraphRAG document graph** | Sourced organizational procedures provide cited guidance for future planning. |
+| **FalkorDBSaver checkpoint graph** | Saved workflow state lets the investigation pause and resume without treating the thread as a new case. |
+
+LangGraph coordinates the investigation roles around this saved state. Checkpoints preserve workflow continuity; the domain graph remains the source of case and operational records.
+
+## What you can inspect
+
+Open the case and follow **Report → Investigation → Evidence → Plan & approval → Work → Monitoring & memory**.
+
+You can inspect the recorded AI activity, supporting graph connections, reviewed findings, approved response, completed work and separate follow-up outcome.
+
+The verification included passing unit checks, a real journey through the application and database services, and a fresh-process read confirming that the records persisted.
+
+<details>
+<summary><strong>Supporting records and technical verification</strong></summary>
+
+These links contain machine-readable evidence and reproduction details for readers who want to examine the implementation:
+
+- [Recorded AI investigation](EXACT-ROAD-LIFECYCLE-live-wake.json)
+- [Coordinated work execution](EXACT-ROAD-LIFECYCLE-execution.json)
+- [Monitoring before closure](EXACT-ROAD-LIFECYCLE-monitoring.json)
+- [Persisted outcome verification](EXACT-ROAD-LIFECYCLE-verified-2026-10-18T164629615Z.json)
+- [Technical verification and original audit history](EXACT-ROAD-LIFECYCLE-TECHNICAL.md)
+
+</details>
