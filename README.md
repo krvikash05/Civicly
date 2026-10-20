@@ -14,7 +14,7 @@ Consider a road where potholes return after every repair. The visible damage bel
 
 Across the whole case journey, Civicly uses FalkorDB to connect a new report to relevant assets and past incidents, retrieve evidence and procedures for the agent, and track planned work across departments. After authorized work, dated follow-up and retained outcomes complete the episode’s history—so future investigations can retrieve what was tried and what happened.
 
-[**Civicly Live ↗**](https://civicly-13-55-205-208.sslip.io) · [**Follow the completed road case**](https://civicly-13-55-205-208.sslip.io/investigations?investigation=INV-B09-b9d4d66e130ed348c4f6a50e9d66a891&section=report#case-workspace) · [Two-minute walkthrough](#one-investigation-six-connected-stages)
+[**Civicly Live ↗**](https://civicly-13-55-205-208.sslip.io) · [**Watch the YT Demo**](https://youtu.be/8uem97X9VQU) · [**Follow the completed road case**](https://civicly-13-55-205-208.sslip.io/investigations?investigation=INV-B09-b9d4d66e130ed348c4f6a50e9d66a891&section=report#case-workspace) · [Two-minute walkthrough](#one-investigation-six-connected-stages)
 
 ![Civicly: better coordination for more livable cities. A 40-second illustrated overview of how FalkorDB connects reports, evidence, departments, approved work, outcomes and memory.](docs/media/civicly-preview/civicly-explainer.gif)
 
