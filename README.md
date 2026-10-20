@@ -4,7 +4,11 @@
 
 **Civicly is a FalkorDB-powered AI agent platform that investigates recurring civic problems like waterlogging, road damage and waste accumulation, and helps coordinate evidence-based action.** Its agent connects complaints to infrastructure, evidence and previous work, selects investigative tools and compares possible causes. The platform carries the findings through a reviewed plan, human approval, simulated work and follow-up verification.
 
-Consider a road that keeps developing potholes. Should the road be repaired again—or is a leaking pipe damaging the ground beneath it? Civicly helps an investigator follow the connections, compare explanations and see what evidence is needed before acting.
+Cities face everyday problems: waterlogged streets, recurring potholes, overflowing waste points, blocked drains, sewer overflows, broken streetlights and damaged footpaths. Residents experience them as problems in their neighbourhood. Municipal teams often handle them through separate complaints, records and departmental responsibilities.
+
+**The challenge is not just completing a repair—it is understanding why the problem happened, coordinating everyone needed to address it, and checking whether the intervention worked.**
+
+Consider a road where potholes return after every repair. The visible damage belongs to the Roads team, but a leaking water pipe beneath the road may be weakening the ground. Resurfacing alone could leave that cause untouched. Resolving it requires evidence, coordination between Water Utilities and Roads, the right sequence of work, and follow-up. Civicly helps teams investigate that possibility before treating it as a verified cause.
 
 **FalkorDB connects the investigation to the response.** Its domain graph links reports, infrastructure, inspection evidence, departments, tasks and outcomes. Civicly's AI investigates those records through runtime MCP; the FalkorDB GraphRAG SDK retrieves sourced procedures; FalkorDBSaver preserves the investigation thread. People review evidence and approve work, while the workspace makes the supporting graph paths inspectable.
 
