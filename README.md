@@ -62,6 +62,12 @@ Three distinctions keep that story clear:
 - **A hypothesis is not a finding:** possible explanations are assessed against evidence, and previous assessments remain available.
 - **Completed work is not verified resolution:** follow-up must establish what happened after the intervention.
 
+## Why a graph is essential to Civicly
+
+**FalkorDB powers Civicly’s investigation, knowledge and memory.** Civicly’s AI uses runtime MCP tools and bounded Cypher queries to retrieve connected infrastructure and evidence. The FalkorDB GraphRAG SDK retrieves cited procedures, while LangGraph coordinates investigation roles and FalkorDBSaver persists workflow checkpoints.
+
+Graph relationships also connect department ownership, task dependencies and verified outcomes. **Without FalkorDB, these core workflows would not operate as implemented—it is the foundation, not just the visualization.**
+
 ## Graph data model
 
 ![Full Civicly schema overview in FalkorDB Browser](docs/images/civicly-browser-schema-overview.png)
