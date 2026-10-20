@@ -265,11 +265,25 @@ Synthetic procedure assertions remain proposed guidance. Stored episode context 
 
 ## How Civicly connects to the three hackathon tracks
 
-- **Track 1 — Agents That Act on Connected Data:** FalkorDB Cypher traversals connect reports to drainage paths, underlying utilities and service records. Runtime MCP gives the agent bounded access to these connections, while inspectable graph paths show the evidence returned during an investigation.
-- **Track 2 — Agent Memory and Coordination:** LangGraph coordinates investigation roles, FalkorDBSaver preserves their shared workflow across pauses and resumes, and FalkorDB retains previous assessments, interventions and outcomes for later retrieval.
-- **Track 3 — Company Brain:** Civicly applies this track as a municipal operations brain. FalkorDB connects departments, reviewed asset responsibility, plans and decisions. The FalkorDB GraphRAG SDK retrieves cited procedures from an isolated document graph, helping ground recommendations in applicable organizational knowledge.
+### 01 · Agents That Act on Connected Data
 
-Together, these uses connect **investigation, continuity and organizational knowledge** within one case journey. The demonstrated results and remaining acceptance limits are described below.
+**Follow connections. Make informed choices.**
+
+Civicly’s AI uses bounded MCP tools to retrieve drainage paths, underlying utility relationships and service records from FalkorDB. Inspectable graph paths show the evidence returned during the investigation.
+
+### 02 · Agent Memory and Coordination
+
+**Preserve context. Coordinate the next step.**
+
+LangGraph coordinates investigation roles, while FalkorDBSaver saves the workflow across pauses and resumes. Previous assessments, interventions and outcomes remain connected in FalkorDB for later retrieval.
+
+### 03 · Company Brain
+
+**Bring organizational knowledge into the case.**
+
+Civicly applies this track as a municipal operations brain. FalkorDB connects departments, reviewed asset responsibility, plans and decisions. The GraphRAG SDK retrieves cited procedures from a separate FalkorDB document graph to ground recommendations.
+
+**One connected journey: investigation → continuity → organizational knowledge.** Demonstrated results and remaining acceptance limits follow below.
 
 ## What is demonstrated
 
