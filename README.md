@@ -22,11 +22,13 @@ Across the whole case journey, Civicly uses FalkorDB to connect a new report to 
 
 ## What can Civicly investigate?
 
-| Problem | Questions the investigation can explore | Evidence that matters | FalkorDB’s role |
+The current demo explores three civic problem categories. The same investigation approach could be extended to issues such as broken streetlights, sewer overflows and damaged footpaths, with the relevant data, evidence and workflows added.
+
+| Example civic problem | Questions Civicly’s AI may explore | Evidence Civicly’s AI seeks through MCP tools | How FalkorDB helps the investigation |
 |---|---|---|---|
-| **Waterlogging** | Is a drain blocked? Do several affected locations share a downstream restriction? Could capacity or a pump be involved? | Drainage connections, maintenance history, inspection findings and rainfall context | Traverses `DRAINS_TO` connections, identifies shared downstream assets and retrieves linked inspections and maintenance history. |
-| **Road damage** | Is the subgrade failing? Is a verified underlying utility connection relevant? Which department must act first? | Road and pipe relationships, structural observations, leak tests and repair history | Connects roads to underlying utilities through sourced `UNDERLIES` relationships and supplies department and task dependencies for coordinated repair checks. |
-| **Waste accumulation** | Was collection missed? Was capacity insufficient? Was waste deposited after collection? | Collection routes, scheduled versus actual pickups and dated field observations | Links waste points to routes through `COLLECTED_BY`, connects schedules with pickup records, and retrieves dated evidence to compare competing explanations. |
+| **Waterlogging** | Is a drain blocked? Do several affected locations share a downstream restriction? Could capacity or a pump be involved? | Drainage connections, maintenance history, inspection findings and rainfall context | Connects affected locations through the drainage network, helping the AI find shared downstream assets and check their inspection and maintenance records. |
+| **Road damage** | Is the subgrade failing? Is a verified underlying utility connection relevant? Which department must act first? | Road and pipe relationships, structural observations, leak tests and repair history | Links the road to sourced underlying-pipe relationships, repair history and inspection evidence, helping the AI assess possible causes. Department and task connections establish which work must happen first. |
+| **Waste accumulation** | Was collection missed? Was capacity insufficient? Was waste deposited after collection? | Collection routes, scheduled versus actual pickups and dated field observations | Connects collection points, routes, scheduled pickups and actual service records, helping the AI compare missed collection with other explanations using dated observations. |
 
 These are competing explanations to investigate, not causes inferred automatically from a complaint. The [demo status](#what-is-demonstrated) below distinguishes the current results for each category.
 
@@ -34,7 +36,7 @@ These are competing explanations to investigate, not causes inferred automatical
 
 **Report → Investigation → Evidence → Plan & approval → Work → Monitoring & memory**
 
-This is also the frontend navigation. A judge can start with the reported problem, follow the agent's tool choices, inspect evidence, review the proposed response and see whether later observations justify closing the episode.
+This is also the frontend navigation. A municipal analyst can start with the reported problem, follow the agent's tool choices, inspect evidence, review the proposed response and see whether later observations justify closing the episode.
 
 **Two-minute judge walkthrough:** open the [completed Market Junction road case](https://civicly-13-55-205-208.sslip.io/investigations?investigation=INV-B09-b9d4d66e130ed348c4f6a50e9d66a891&section=report#case-workspace), then use the six stage buttons:
 
