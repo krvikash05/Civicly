@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Civicly · How FalkorDB powers an investigation</title>
+<style>
+:root{color-scheme:light;font-family:system-ui,sans-serif;color:#173e34;background:#edf3ef}*{box-sizing:border-box}body{margin:0;padding:30px 18px}main{max-width:1200px;margin:auto}h1{font-size:22px;margin:0 0 8px}p{color:#5f776d;margin:8px 0 20px;line-height:1.6}.screen{border:1px solid #cbdcd0;border-radius:18px;overflow:hidden;background:white;box-shadow:0 16px 50px #173e3412}img{display:block;width:100%;height:auto}.controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:16px;background:white;border-top:1px solid #d7e4dc}button,a{font:inherit}button{background:#23694f;color:white;border:1px solid #23694f;border-radius:9px;padding:9px 17px;cursor:pointer}button:hover{background:#184c38}button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid #ab7532;outline-offset:3px}input{flex:1;min-width:160px;accent-color:#23694f}output{font-variant-numeric:tabular-nums;font-size:14px}footer{font-size:14px;line-height:1.7;margin-top:16px;color:#5f776d}a{color:#23694f}
+</style>
+<main><h1>How FalkorDB powers Civicly</h1><p>A 40-second illustrated project overview. Pause or step through the story to read at your own pace.</p>
+<div class="screen"><img id="slide" src="scene-01.png" alt="Civicly helps municipal teams coordinate informed action for cleaner, healthier, more livable cities.">
+<div class="controls"><button id="previous" aria-label="Previous scene">←</button><button id="play">Pause</button><button id="next" aria-label="Next scene">→</button><input id="position" aria-label="Scene" type="range" min="0" max="7" value="0"><output id="counter" aria-live="polite">1 / 8 · A better city</output></div></div>
+<footer>Illustrated explanation, not a recording of live agent execution. Municipal data and field work are simulated. The original road plan was analyst-assisted and human-approved.<br><a href="civicly-explainer.gif">Open or download the looping GIF</a> · <a href="storyboard.png">View all eight scenes</a> · <a href="https://civicly-13-55-205-208.sslip.io" target="_blank" rel="noopener">Explore Civicly ↗</a></footer>
+</main>
+<script>
+const names=['A better city','Connected case','AI investigation','Plan and approval','Authorized work','Independent follow-up','Persistent memory','Civicly objective'];
+const descriptions=['Civicly aims to help municipal teams coordinate evidence-based responses for cleaner, healthier, more livable cities. Waterlogging, road damage and waste are the demonstrated examples.','FalkorDB connects citizen reports, road damage, an underlying pipe and past repairs. Connections guide checks rather than proving causes.','Civicly’s AI selects MCP tools to retrieve graph evidence and compare causes; GraphRAG adds sourced procedures.','Reviewed findings inform a proposed plan. Human approval binds its exact version and scope.','Water Utilities isolate and repair the pipe; verification precedes road work. Field work is simulated.','Work completion is separate from independent follow-up and a reviewed case outcome.','Case history, cited documents and workflow checkpoints have separate FalkorDB-backed stores.','Connected evidence informs investigation, people approve action, and follow-up determines the outcome.'];
+let index=0,timer=null;const slide=document.getElementById('slide'),play=document.getElementById('play'),position=document.getElementById('position'),counter=document.getElementById('counter');
+function show(n){index=(n+8)%8;slide.src=`scene-${String(index+1).padStart(2,'0')}.png`;slide.alt=descriptions[index];position.value=index;counter.textContent=`${index+1} / 8 · ${names[index]}`;}
+function pause(){clearInterval(timer);timer=null;play.textContent='Play';}
+function start(){pause();timer=setInterval(()=>show(index+1),5000);play.textContent='Pause';}
+play.onclick=()=>timer?pause():start();document.getElementById('previous').onclick=()=>{pause();show(index-1)};document.getElementById('next').onclick=()=>{pause();show(index+1)};position.oninput=()=>{pause();show(Number(position.value))};
+document.addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;if(e.key==='ArrowRight'){pause();show(index+1)}if(e.key==='ArrowLeft'){pause();show(index-1)}});
+document.addEventListener('visibilitychange',()=>{if(document.hidden)pause()});
+show(0);if(!matchMedia('(prefers-reduced-motion: reduce)').matches)start();else pause();
+</script>
+</html>

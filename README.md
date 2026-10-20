@@ -12,11 +12,11 @@ Across the whole case journey, Civicly uses FalkorDB to connect a new report to 
 
 [**Civicly Live ↗**](https://civicly-13-55-205-208.sslip.io) · [**Follow the completed road case**](https://civicly-13-55-205-208.sslip.io/investigations?investigation=INV-B09-b9d4d66e130ed348c4f6a50e9d66a891&section=report#case-workspace) · [Two-minute walkthrough](#one-investigation-six-connected-stages)
 
+![Civicly: better coordination for more livable cities. A 40-second illustrated overview of how FalkorDB connects reports, evidence, departments, approved work, outcomes and memory.](docs/media/civicly-preview/civicly-explainer.gif)
+
+*How FalkorDB powers Civicly—from connected evidence to coordinated action and verified outcomes. Illustrated workflow; municipal data and field work are simulated. [View all eight scenes](docs/media/civicly-preview/storyboard.png).*
+
 > **About the demo:** municipal data, inspections and field work are synthetic. Civicly's AI, MCP, FalkorDB, GraphRAG retrieval and saved workflow records use actual services. The hosted site lets you explore retained results; browsing does not start a paid agent run. Hosting uses a temporary hostname.
-
-![Civicly live workspace with the featured road investigation and recorded work and outcome counts](docs/images/civicly-overview.png)
-
-*The deployed workspace: start with the road case, follow its evidence and graph connections, then review the coordinated response and independent outcome. All municipal field work and observations are synthetic.*
 
 ## What can Civicly investigate?
 
